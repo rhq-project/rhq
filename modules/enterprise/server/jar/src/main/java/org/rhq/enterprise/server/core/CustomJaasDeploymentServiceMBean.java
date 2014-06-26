@@ -20,7 +20,7 @@ package org.rhq.enterprise.server.core;
 
 import javax.management.ObjectName;
 
-import org.jboss.mx.util.ObjectNameFactory;
+import org.rhq.core.util.ObjectNameFactory;
 
 /**
  * MBean interface to the service that is responsible for installing JON's JAAS login handlers.

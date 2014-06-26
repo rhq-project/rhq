@@ -22,10 +22,10 @@ import java.util.List;
 
 import javax.management.ObjectName;
 
-import org.jboss.mx.util.ObjectNameFactory;
 import org.jboss.remoting.InvokerLocator;
 
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.communications.ServiceContainer;
 import org.rhq.enterprise.communications.ServiceContainerMetricsMBean;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -131,7 +131,7 @@ public interface ServerCommunicationsServiceMBean extends ServiceContainerMetric
      * Returns the service container that houses all the server-side communications services. Will create
      * a service container for the comm services if one has not yet been created. This is typically only called
      * to add or remove listeners prior to comm service startup. Use isStarted() as necessary.
-     * 
+     *
      * @return service container object
      */
     ServiceContainer safeGetServiceContainer();
@@ -360,7 +360,7 @@ public interface ServerCommunicationsServiceMBean extends ServiceContainerMetric
      * Returns <code>true</code> if the server should always start up in maintenance mode.
      * If <code>false</code>, the server will startup in the same state it was in when it
      * was shutdown.
-     * 
+     *
      * @return <code>true</code> if the server should always start up in MM
      */
     Boolean getMaintenanceModeAtStartup();
@@ -374,7 +374,7 @@ public interface ServerCommunicationsServiceMBean extends ServiceContainerMetric
     /**
      * Sets the flag to indicate if the server should always start up in maintenance mode.
      * See {@link #getMaintenanceModeAtStartup()} for more.
-     * 
+     *
      * @param flag
      */
     void setMaintenanceModeAtStartup(Boolean flag);

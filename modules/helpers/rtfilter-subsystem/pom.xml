@@ -18,7 +18,7 @@
   <name>RHQ Response-Time Filter - JBoss AS7 Subsystem</name>
 
   <properties>
-    <version.jboss.as>7.1.1.Final</version.jboss.as>
+    <version.jboss.as>${jboss.version}</version.jboss.as> <!-- defined in root pom -->
     <version.junit>4.8.2</version.junit>
     <moduleName>${project.groupId}.${project.artifactId}</moduleName>
   </properties>
@@ -99,7 +99,7 @@
     <!-- test deps -->
     <dependency>
       <groupId>org.jboss.as</groupId>
-      <artifactId>jboss-as-subsystem-test</artifactId>
+      <artifactId>jboss-as-subsystem-test-framework</artifactId>
       <version>${version.jboss.as}</version>
       <scope>test</scope>
     </dependency>

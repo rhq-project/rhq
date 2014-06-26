@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -1026,14 +1027,16 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // return all with no optional data
         c.addFilterName(TEST_PREFIX);
+        c.addSortName(PageOrdering.ASC);
         bundles = bundleManager.findBundlesByCriteria(overlord, c);
         assertNotNull(bundles);
         assertEquals(2, bundles.size());
         b = bundles.get(0);
         name = "one";
         assertNotNull(b);
-        assertTrue(b.getBundleType().getName(), b.getName().contains(name));
-        assertTrue(b.getBundleType().getName(), b.getBundleType().getName().contains(name));
+        assertTrue(b.getName() + " does not contain [" + name + "]", b.getName().contains(name));
+        assertTrue(b.getBundleType().getName() + " does not contain [" + name + "]", b.getBundleType().getName()
+            .contains(name));
         try {
             b.getBundleVersions().isEmpty();
             fail("Should have thrown LazyInitializationException");
@@ -1046,8 +1049,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         b = bundles.get(1);
         name = "two";
         assertNotNull(b);
-        assertTrue(b.getBundleType().getName(), b.getName().contains(name));
-        assertTrue(b.getBundleType().getName(), b.getBundleType().getName().contains(name));
+        assertTrue(b.getName() + " does not contain [" + name + "]", b.getName().contains(name));
+        assertTrue(b.getBundleType().getName() + " does not contain [" + name + "]", b.getBundleType().getName()
+            .contains(name));
 
         // return bundle "two" using all criteria and with all optional data
         c.addFilterId(b.getId());
@@ -1059,8 +1063,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(bundles);
         assertEquals(1, bundles.size());
         b = bundles.get(0);
-        assertTrue(b.getBundleType().getName(), b.getName().contains(name));
-        assertTrue(b.getBundleType().getName(), b.getBundleType().getName().contains(name));
+        assertTrue(b.getName() + " does not contain [" + name + "]", b.getName().contains(name));
+        assertTrue(b.getBundleType().getName() + " does not contain [" + name + "]", b.getBundleType().getName()
+            .contains(name));
         assertNotNull(b.getBundleVersions());
         assertEquals(1, b.getBundleVersions().size());
         BundleVersion bv = b.getBundleVersions().get(0);
@@ -1075,7 +1080,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     public void testFindBundlesByCriteriaPaging() throws Exception {
         Bundle b = null;
         for (int i = 0; i < 9; i++) {
-            createBundle("name" + (i + 1));
+            createBundle("name0" + (i + 1));
         }
         Bundle b10 = createBundle("name10");
 
@@ -1083,6 +1088,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         PageList<Bundle> bs;
 
         // return first 5
+        c.addSortName(PageOrdering.ASC); // without sorting we'll get no predictable ordering
         c.addFilterName(TEST_PREFIX);
         c.setPaging(0, 5);
         c.fetchBundleVersions(true);
@@ -1122,7 +1128,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     @Test(enabled = TESTS_ENABLED)
     public void testFindAndDeleteBundlesByCriteriaQuery() throws Exception {
-        // verify that all bundle version objects are actually parsed. 
+        // verify that all bundle version objects are actually parsed.
         Map<String, Bundle> bundleNames = new HashMap<String, Bundle>();
         final int bundleCount = 50;
 
@@ -1164,7 +1170,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             bundleManager.deleteBundle(overlord, id);
         }
 
-        // check if the last name is equal to "name01" 
+        // check if the last name is equal to "name01"
         assertEquals("The name should be \"name01\"", b01.getName(), prevName);
 
         // test that entire list parsed spanning multiple pages
@@ -1221,11 +1227,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     @Test(enabled = TESTS_ENABLED)
     public void testFindBundleVersionsByCriteriaPaging() throws Exception {
+        TreeMap<Integer, BundleVersion> createdBVs = new TreeMap<Integer, BundleVersion>();
         Bundle b1 = createBundle("one");
-        for (int i = 0; i < 59; i++) {
-            createBundleVersion(b1.getName(), "1." + String.format("%02d", i + 1), b1);
+        for (int i = 0; i <= 59; i++) {
+            BundleVersion bv = createBundleVersion(b1.getName(), "1." + String.format("%02d", i + 1), b1);
+            createdBVs.put(bv.getId(), bv);
         }
-        BundleVersion bv60 = createBundleVersion(b1.getName(), "1.60", b1);
 
         BundleVersionCriteria c = new BundleVersionCriteria();
         PageList<BundleVersion> bvs;
@@ -1240,19 +1247,25 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertEquals(10, bvs.size());
         assertFalse(bvs.get(0).equals(bvs.get(1)));
 
-        // return last 3
+        // return last 3, and make sure they match the last three - note that we sorted on ID so our TreeMap is sorted on ID too
         c.addFilterName(TEST_PREFIX);
         c.setPaging(19, 3);
         bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
         assertNotNull(bvs);
         assertEquals(3, bvs.size());
-        assertFalse(bvs.get(0).equals(bvs.get(1)));
-        assertEquals(bv60, bvs.get(2));
+        assertFalse(bvs.get(0).equals(bvs.get(1))); // just make sure there isn't a duplicate - stupid test, but whatever
+
+        assertEquals(bvs.get(2), createdBVs.lastEntry().getValue());
+        createdBVs.remove(createdBVs.lastEntry().getKey());
+        assertEquals(bvs.get(1), createdBVs.lastEntry().getValue());
+        createdBVs.remove(createdBVs.lastEntry().getKey());
+        assertEquals(bvs.get(0), createdBVs.lastEntry().getValue());
+        createdBVs.remove(createdBVs.lastEntry().getKey());
     }
 
     @Test(enabled = ENABLED)
     public void testFindAndDeleteBundleVersionsByCriteriaQuery() throws Exception {
-        //verify that all bundle version objects are actually parsed. 
+        //verify that all bundle version objects are actually parsed.
         Map<String, BundleVersion> bundleVersionVersions = new HashMap<String, BundleVersion>();
 
         final int bundleVersionCount = 220;
@@ -1377,7 +1390,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         Subject subject = createNewSubject(TEST_USER_NAME);
         Role role = createNewRoleForSubject(subject, TEST_ROLE_NAME);
 
-        subject = createSession(subject); // start a session so we can use this subject in SLSB calls 
+        subject = createSession(subject); // start a session so we can use this subject in SLSB calls
 
         BundleGroup bundleGroup = new BundleGroup(TEST_BUNDLE_GROUP_NAME);
         bundleGroup.setDescription("test");
@@ -1415,7 +1428,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(bundleGroups);
         assertEquals("Should be able to see unassociated bundle group", 1, bundleGroups.size());
 
-        // allow bundle group delete        
+        // allow bundle group delete
         bundleManager.deleteBundleGroups(subject, new int[] { bundleGroup.getId() });
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
 
@@ -1480,12 +1493,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             // expected
         }
 
-        // allow bundle assign via global manage_bundle_groups 
+        // allow bundle assign via global manage_bundle_groups
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
         bundleManager.assignBundlesToBundleGroups(subject, new int[] { bundleGroup.getId() },
             new int[] { bundle.getId() });
 
-        // allow bundle unassign via global manage_bundle_groups 
+        // allow bundle unassign via global manage_bundle_groups
         bundleManager.unassignBundlesFromBundleGroups(subject, new int[] { bundleGroup.getId() },
             new int[] { bundle.getId() });
 
@@ -1504,7 +1517,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             // expected
         }
 
-        // allow bundle unassign via global delete 
+        // allow bundle unassign via global delete
         addRolePermissions(role, Permission.DELETE_BUNDLES);
         bundleManager.unassignBundlesFromBundleGroups(subject, new int[] { bundleGroup.getId() },
             new int[] { bundle.getId() });
@@ -1598,7 +1611,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         Subject subject = createNewSubject(TEST_USER_NAME);
         Role role = createNewRoleForSubject(subject, TEST_ROLE_NAME);
 
-        subject = createSession(subject); // start a session so we can use this subject in SLSB calls 
+        subject = createSession(subject); // start a session so we can use this subject in SLSB calls
 
         // create bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
@@ -1638,7 +1651,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertEquals("1.0", bv1.getVersion());
         assert 0 == bv1.getVersionOrder();
 
-        // create second role 
+        // create second role
         Role role2 = createNewRoleForSubject(subject, TEST_ROLE_NAME + "_2");
         addRolePermissions(role2, Permission.CREATE_BUNDLES_IN_GROUP);
 
@@ -1746,7 +1759,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         Subject subject = createNewSubject(TEST_USER_NAME);
         Role role = createNewRoleForSubject(subject, TEST_ROLE_NAME);
 
-        subject = createSession(subject); // start a session so we can use this subject in SLSB calls 
+        subject = createSession(subject); // start a session so we can use this subject in SLSB calls
 
         // create bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
@@ -1791,7 +1804,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     public void testAuthzBundleDest() throws Exception {
         Subject subject = createNewSubject(TEST_USER_NAME);
         Role role = createNewRoleForSubject(subject, TEST_ROLE_NAME);
-        subject = createSession(subject); // start a session so we can use this subject in SLSB calls 
+        subject = createSession(subject); // start a session so we can use this subject in SLSB calls
 
         // create bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
@@ -1804,7 +1817,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         addRoleBundleGroup(role, bundleGroup);
         addRolePermissions(role, Permission.CREATE_BUNDLES_IN_GROUP);
 
-        // allow bundle creation in bg (has create perm)        
+        // allow bundle creation in bg (has create perm)
         Bundle b1 = createBundle(subject, "one", bundleGroup.getId());
         assertNotNull(b1);
         BundleVersion bv1 = createBundleVersion(subject, b1.getName() + "-1", null, b1);
@@ -1884,7 +1897,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     public void testAuthzBundleDeploy() throws Exception {
         Subject subject = createNewSubject(TEST_USER_NAME);
         Role role = createNewRoleForSubject(subject, TEST_ROLE_NAME);
-        subject = createSession(subject); // start a session so we can use this subject in SLSB calls 
+        subject = createSession(subject); // start a session so we can use this subject in SLSB calls
 
         // create bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
@@ -1897,7 +1910,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         addRoleBundleGroup(role, bundleGroup);
         addRolePermissions(role, Permission.CREATE_BUNDLES_IN_GROUP);
 
-        // allow bundle creation in bg (has create perm)        
+        // allow bundle creation in bg (has create perm)
         Bundle b1 = createBundle(subject, "one", bundleGroup.getId());
         assertNotNull(b1);
         BundleVersion bv1 = createBundleVersion(subject, b1.getName() + "-1", null, b1);
@@ -1929,7 +1942,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         // test with global perm
         testAuthzBundleDeployInternal(subject, role, bd1, dest1, platformResourceGroup, Permission.DEPLOY_BUNDLES);
 
-        // test with bundle group perm        
+        // test with bundle group perm
         testAuthzBundleDeployInternal(subject, role, bd1, dest1, platformResourceGroup,
             Permission.DEPLOY_BUNDLES_TO_GROUP);
     }

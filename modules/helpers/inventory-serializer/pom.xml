@@ -13,8 +13,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>gnu-getopt</groupId>
-            <artifactId>getopt</artifactId>
+            <groupId>gnu.getopt</groupId>
+            <artifactId>java-getopt</artifactId>
         </dependency>
         <dependency>
             <groupId>jboss</groupId>

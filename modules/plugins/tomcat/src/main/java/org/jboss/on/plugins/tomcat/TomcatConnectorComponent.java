@@ -22,8 +22,6 @@
  */
 package org.jboss.on.plugins.tomcat;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Set;
 
@@ -32,11 +30,12 @@ import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -263,6 +262,47 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
 
         if (getResourceContext().getParentResourceComponent().getResourceContext().getVersion().startsWith("5")) {
             report.getConfiguration().remove(CONFIG_V5_KEEP_ALIVE_TIMEOUT);
+        }
+        
+        EmsBean bean = super.getEmsBean();
+        for (String key : report.getConfiguration().getSimpleProperties().keySet()) {
+        	EmsAttribute attribute = bean.getAttribute(key); 
+        	if (attribute == null) {
+        		log.debug("Removing " + key + " does correspond to an attribut");
+        		report.getConfiguration().remove(key);
+        		continue; // skip unsupported attributes
+        	}
+        	PropertyDefinitionSimple def = configDef.getPropertyDefinitionSimple(key);
+        	if (!def.isRequired()) {
+        		PropertySimple prop = report.getConfiguration().getSimple(key); 
+        		if (prop instanceof PropertySimple) {
+        			PropertySimple pro = (PropertySimple) prop;
+        			if (pro.getStringValue() == null || (pro.getStringValue() != null && pro.getStringValue().equals("null"))) {
+        				String p = context.getResourceType().getResourceConfigurationDefinition().getDefaultTemplate().getConfiguration().getSimpleValue(key);
+        				log.debug("Using default value for " + key + " value: " + def.getDefaultValue());
+        				switch (def.getType()) {
+        				case INTEGER: {
+        					pro.setIntegerValue(Integer.valueOf(p));
+        					break;
+        				}
+        				case LONG: {
+        					pro.setLongValue((long) Long.valueOf(p));
+        					break;
+        				}
+        				case BOOLEAN: {
+        					pro.setBooleanValue(Boolean.valueOf(p));
+        				}
+        				/* Other type are not used in storeconfig */
+        				default:
+        					if (p !=null)
+        						pro.setStringValue(p);
+        					else if (pro.getStringValue() != null)
+        						pro.setStringValue(null);
+        					break;
+        				}
+        			}
+        		}
+        	}
         }
 
         super.updateResourceConfiguration(report);

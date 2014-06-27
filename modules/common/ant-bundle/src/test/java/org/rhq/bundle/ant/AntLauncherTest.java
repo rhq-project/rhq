@@ -22,13 +22,14 @@
  */
 package org.rhq.bundle.ant;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -57,6 +58,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeploymentsMetadata;
 import org.rhq.core.util.updater.DestinationComplianceMode;
 import org.rhq.core.util.updater.FileHashcodeMap;
@@ -97,7 +99,7 @@ public class AntLauncherTest {
 
         AntLauncher ant = new AntLauncher(validate);
 
-        BundleAntProject project = ant.parseBundleDeployFile(getBuildXml(recipeFile), null);
+        BundleAntProject project = ant.parseBundleDeployFile(getFileFromTestClasses(recipeFile), null);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
         assert bundleFiles != null;
@@ -132,14 +134,14 @@ public class AntLauncherTest {
         AntLauncher ant = new AntLauncher(true);
 
         try {
-            ant.parseBundleDeployFile(getBuildXml("test-bundle-no-manage-root-dir-nor-compliance.xml"), null);
+            ant.parseBundleDeployFile(getFileFromTestClasses("test-bundle-no-manage-root-dir-nor-compliance.xml"), null);
             Assert.fail("Parsing a bundle with no explicit manageRootDir should have failed.");
         } catch (InvalidBuildFileException e) {
             assert "The deployment unit must specifically declare compliance mode of the destination directory.".equals(
                 e.getMessage());
         }
 
-        BundleAntProject project = ant.parseBundleDeployFile(getBuildXml(
+        BundleAntProject project = ant.parseBundleDeployFile(getFileFromTestClasses(
             "test-bundle-with-manage-root-dir.xml"), null);
         assert project != null;
         BundleTask bundleTask = findBundleTask(project);
@@ -181,7 +183,7 @@ public class AntLauncherTest {
         Properties inputProps = createInputProperties("/test-bundle-v1-input.properties");
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml(recipeFile), inputProps,
+        BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile), inputProps,
             buildListeners);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
@@ -255,7 +257,7 @@ public class AntLauncherTest {
         Properties inputProps = createInputProperties("/test-bundle-v2-input.properties");
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml(recipeFile), inputProps,
+        BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile), inputProps,
             buildListeners);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
@@ -324,7 +326,7 @@ public class AntLauncherTest {
         Properties inputProps = createInputProperties("/test-bundle-v2-input.properties");
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml(recipeFile),
+        BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile),
             inputProps, buildListeners);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
@@ -392,7 +394,7 @@ public class AntLauncherTest {
         Properties inputProps = createInputProperties("/test-bundle-compressed-archives-input.properties", dryRun);
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml(recipeFile),
+        BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile),
             inputProps, buildListeners);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
@@ -483,7 +485,7 @@ public class AntLauncherTest {
         List<BuildListener> buildListeners = createBuildListeners();
 
         BundleAntProject project = ant.executeBundleDeployFile(
-            getBuildXml(recipeFile), inputProps, buildListeners);
+            getFileFromTestClasses(recipeFile), inputProps, buildListeners);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
         assert bundleFiles != null;
@@ -570,7 +572,7 @@ public class AntLauncherTest {
         Properties inputProps = createInputProperties("/test-audit-input.properties");
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml(recipeFile), inputProps,
+        BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile), inputProps,
             buildListeners);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
@@ -702,13 +704,62 @@ public class AntLauncherTest {
     }
 
     public void testNotDeployedFiles() throws Exception {
+        testNotDeployedFiles(getFileFromTestClasses("ant-properties/deploy.xml"));
+    }
+
+    public void testAntPropertiesUsedForTokenReplacement() throws Exception {
+        testNotDeployedFiles();
+
+        Properties props = readPropsFile(new File(DEPLOY_DIR, "deployed.file"));
+
+        assert "user provided value".equals(props.getProperty("user.provided")) : "user.provided";
+        assert "bundle provided value".equals(props.getProperty("bundle.provided")) : "bundle.provided";
+        assert "a".equals(props.get("a.from.properties.file")) : "a.from.properties.file";
+        assert "b".equals(props.get("b.from.properties.file")) : "b.from.properties.file";
+    }
+
+    public void testAntPropertiesLoadFromAbsolutePath() throws Exception {
+        File tempDir = FileUtil.createTempDirectory("ant-launcher-test", null, null);
+
+        try {
+            //prepare the test bundle.. update the recipe with an absolute path to a properties file.
+            File deployXml = new File(tempDir, "deploy.xml");
+
+            FileUtil.copyFile(getFileFromTestClasses("ant-properties/deploy.xml"), deployXml);
+
+            //copy the other file from the bundle, too, into the correct location
+            FileUtil.copyFile(getFileFromTestClasses("ant-properties/deployed.file"), new File(tempDir,
+                "deployed.file"));
+
+            File absoluteLocation = new File(tempDir, "absolute-location");
+            assert absoluteLocation.mkdir() : "Failed to create dir under temp";
+
+            String deployXmlContents = StreamUtil.slurp(new InputStreamReader(new FileInputStream(deployXml)));
+
+            File absolutePropertiesLocation = new File(absoluteLocation, "in-bundle.properties");
+            FileUtil
+                .copyFile(getFileFromTestClasses("ant-properties/in-bundle.properties"), absolutePropertiesLocation);
+
+            deployXmlContents = deployXmlContents.replace("<property file=\"in-bundle.properties\"/>",
+                "<property file=\"" + absolutePropertiesLocation.getAbsolutePath() + "\"/>");
+
+            FileUtil.writeFile(new ByteArrayInputStream(deployXmlContents.getBytes()), deployXml);
+
+            //k, now the test itself...
+            testNotDeployedFiles(deployXml);
+        } finally {
+            FileUtil.purge(tempDir, true);
+        }
+    }
+
+    private void testNotDeployedFiles(File deployXml) throws Exception {
         FileUtil.purge(DEPLOY_DIR, true);
 
         AntLauncher ant = new AntLauncher(true);
         Properties inputProps = createInputProperties(null);
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("ant-properties/deploy.xml"), inputProps,
+        BundleAntProject project = ant.executeBundleDeployFile(deployXml, inputProps,
             buildListeners);
 
         assert project != null;
@@ -721,17 +772,6 @@ public class AntLauncherTest {
         assert new File(DEPLOY_DIR, "deployed.file").exists() : "deployed.file missing";
         assert !new File(DEPLOY_DIR, "in-bundle.properties")
             .exists() : "in-bundle.properties deployed but shouldn't have";
-    }
-
-    public void testAntPropertiesUsedForTokenReplacement() throws Exception {
-        testNotDeployedFiles();
-
-        Properties props = readPropsFile(new File(DEPLOY_DIR, "deployed.file"));
-
-        assert "user provided value".equals(props.getProperty("user.provided")) : "user.provided";
-        assert "bundle provided value".equals(props.getProperty("bundle.provided")) : "bundle.provided";
-        assert "a".equals(props.get("a.from.properties.file")) : "a.from.properties.file";
-        assert "b".equals(props.get("b.from.properties.file")) : "b.from.properties.file";
     }
 
     private void testUrlFilesAndArchives(boolean validate, String recipeFile) throws Exception {
@@ -757,7 +797,7 @@ public class AntLauncherTest {
             inputProps.setProperty("rhq.test.url.dir", tmpUrlLocation.toURI().toURL().toString()); // we use this so our recipe can use URLs
             List<BuildListener> buildListeners = createBuildListeners();
 
-            BundleAntProject project = ant.executeBundleDeployFile(getBuildXml(recipeFile), inputProps,
+            BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile), inputProps,
                 buildListeners);
             assert project != null;
 
@@ -870,9 +910,9 @@ public class AntLauncherTest {
         return props;
     }
 
-    private File getBuildXml(String name) throws Exception {
+    private File getFileFromTestClasses(String name) throws Exception {
         File file = new File(ANT_BASEDIR, name);
-        assert file.exists() : "The test Ant build script doesn't exist: " + file.getAbsolutePath();
+        assert file.exists() : "The file doesn't exist: " + file.getAbsolutePath();
         return file;
     }
 

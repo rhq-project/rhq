@@ -2398,12 +2398,6 @@
               <statement desc="Optimize query for rhq_alert_definition templates (counts)">
                 CREATE INDEX rhq_adef_resource_type_idx ON rhq_alert_definition(resource_type_id)
               </statement>
-              <statement>
-                CREATE INDEX rhq_adef_enabled_idx ON rhq_alert_definition(enabled)
-              </statement>
-              <statement>
-                CREATE INDEX rhq_adef_deleted_idx ON rhq_alert_definition(deleted)
-              </statement>
             </schema-directSQL>
           </schemaSpec>
 

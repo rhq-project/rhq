@@ -36,12 +36,6 @@
         <index name="RHQ_ADEF_RESOURCE_TYPE_IDX">
             <field ref="RESOURCE_TYPE_ID"/>
         </index>
-        <index name="RHQ_ADEF_ENABLED_IDX">
-            <field ref="ENABLED"/>
-        </index>
-        <index name="RHQ_ADEF_DELETED_IDX">
-            <field ref="DELETED"/>
-        </index>
     </table>
 
     <table name="RHQ_ALERT_DAMPEN_EVENT">

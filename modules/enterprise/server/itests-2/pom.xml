@@ -19,8 +19,10 @@
     <rhq.ant-bundle.serverplugin.path>${settings.localRepository}/org/rhq/rhq-serverplugin-ant-bundle/${project.version}/rhq-serverplugin-ant-bundle-${project.version}.jar</rhq.ant-bundle.serverplugin.path>
     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
     <jboss.unzip.location>${basedir}/target/${jboss.eap.version}</jboss.unzip.location>
-    <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m -Djava.security.manager
+    <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m
+      -DXXXjava.security.manager
       -Djava.security.policy==${jboss.unzip.location}/security.policy
+      -Djboss.modules.policy-permissions=true
       -Drhq.ant-bundle.serverplugin.path=${rhq.ant-bundle.serverplugin.path}
       -Drunning.itests-2=true
     </jboss.vm.args>
@@ -103,7 +105,16 @@
                     <replacetoken>&lt;/security-domains></replacetoken>
                     <replacevalue><![CDATA[
                 <!-- FOR RHQ TESTING -->
-                <security-domain name="RHQDSSecurityDomain" cache-type="default">
+                <security-domain name="RHQDSSecurityDomainXa" cache-type="default">
+                    <authentication>
+                        <login-module code="ConfiguredIdentity" flag="required">
+                            <module-option name="userName" value="${rhq.test.ds.user-name}"/>
+                            <module-option name="principal" value="${rhq.test.ds.user-name}"/>
+                            <module-option name="password" value="${rhq.test.ds.password}"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="RHQDSSecurityDomainNoTx" cache-type="default">
                     <authentication>
                         <login-module code="ConfiguredIdentity" flag="required">
                             <module-option name="userName" value="${rhq.test.ds.user-name}"/>
@@ -144,10 +155,10 @@
                   </replacefilter>
 
                   <replacefilter>
-                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:naming:1.2"></replacetoken>
+                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:naming:1.4"></replacetoken>
                     <replacevalue><![CDATA[
         <!-- FOR RHQ TESTING -->
-        <subsystem xmlns="urn:jboss:domain:messaging:1.3">
+        <subsystem xmlns="urn:jboss:domain:messaging:1.4">
             <hornetq-server>
                 <persistence-enabled>true</persistence-enabled>
                 <journal-file-size>102400</journal-file-size>
@@ -243,7 +254,7 @@
                 </jms-destinations>
             </hornetq-server>
         </subsystem>
-        <subsystem xmlns="urn:jboss:domain:naming:1.2">]]></replacevalue>
+        <subsystem xmlns="urn:jboss:domain:naming:1.4">]]></replacevalue>
                   </replacefilter>
 
                   <replacefilter>
@@ -261,9 +272,9 @@
 
 
                   <replacefilter>
-                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:infinispan:1.4"></replacetoken>
+                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:infinispan:1.5"></replacetoken>
                     <replacevalue><![CDATA[
-        <subsystem xmlns="urn:jboss:domain:infinispan:1.4">
+        <subsystem xmlns="urn:jboss:domain:infinispan:1.5">
             <!-- FOR RHQ TESTING -->
             <cache-container name="rhq" jndi-name="java:jboss/infinispan/rhq">
                 <local-cache name="rhqCache">
@@ -387,7 +398,7 @@
                         <max-pool-size>5</max-pool-size>
                     </pool>
                     <security>
-                        <security-domain>RHQDSSecurityDomain</security-domain>
+                        <security-domain>RHQDSSecurityDomainNoTx</security-domain>
                     </security>
                     <validation>
                         <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
@@ -402,7 +413,7 @@
                         <prepared-statement-cache-size>75</prepared-statement-cache-size>
                     </statement>
                 </datasource>
-                <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
+                <xa-datasource jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
                     <xa-datasource-property name="DatabaseName">${rhq.test.ds.db-name}</xa-datasource-property>
                     <xa-datasource-property name="PortNumber">${rhq.test.ds.port}</xa-datasource-property>
                     <xa-datasource-property name="ServerName">${rhq.test.ds.server-name}</xa-datasource-property>
@@ -413,7 +424,7 @@
                         <max-pool-size>50</max-pool-size>
                     </xa-pool>
                     <security>
-                        <security-domain>RHQDSSecurityDomain</security-domain>
+                        <security-domain>RHQDSSecurityDomainXa</security-domain>
                     </security>
                     <validation>
                         <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
@@ -463,7 +474,7 @@
                         <max-pool-size>5</max-pool-size>
                     </pool>
                     <security>
-                        <security-domain>RHQDSSecurityDomain</security-domain>
+                        <security-domain>RHQDSSecurityDomainNoTx</security-domain>
                     </security>
                     <validation>
                         <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker" />
@@ -479,7 +490,7 @@
                         <prepared-statement-cache-size>75</prepared-statement-cache-size>
                     </statement>
                 </datasource>
-                <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
+                <xa-datasource jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
                     <xa-datasource-property name="URL">${rhq.test.ds.connection-url}</xa-datasource-property>
                     <driver>oracle</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
@@ -493,7 +504,7 @@
                         <no-tx-separate-pools>true</no-tx-separate-pools>
                     </xa-pool>
                     <security>
-                        <security-domain>RHQDSSecurityDomain</security-domain>
+                        <security-domain>RHQDSSecurityDomainXa</security-domain>
                     </security>
                     <validation>
                         <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker" />
@@ -625,6 +636,18 @@
           <artifactId>jboss-javaee-6.0</artifactId>
           <scope>provided</scope>
           <type>pom</type>
+        </dependency>
+
+        <!-- when not explicitly defining xnio, we were getting odd AbstractMethodError exceptions in Arquillian due to pulling in older xnio versions -->
+        <dependency>
+            <groupId>org.jboss.xnio</groupId>
+            <artifactId>xnio-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.xnio</groupId>
+            <artifactId>xnio-nio</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

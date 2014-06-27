@@ -76,11 +76,8 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
     private ScheduledExecutorService threadPool;
 
-    public ConfigurationManager(PluginContainerConfiguration configuration,
-            ComponentService componentService,
-            ConfigManagementFactory factory, AgentServiceStreamRemoter streamRemoter,
-            InventoryManager inventoryManager)
-    {
+    public ConfigurationManager(PluginContainerConfiguration configuration, ComponentService componentService,
+        ConfigManagementFactory factory, AgentServiceStreamRemoter streamRemoter, InventoryManager inventoryManager) {
         super(ConfigurationAgentService.class, streamRemoter);
         this.componentService = componentService;
         configMgmtFactory = factory;
@@ -88,14 +85,17 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         LoggingThreadFactory threadFactory = new LoggingThreadFactory(SENDER_THREAD_POOL_NAME, true);
         threadPool = new ScheduledThreadPoolExecutor(1, threadFactory);
 
-        ConfigurationCheckExecutor configurationChecker = new ConfigurationCheckExecutor(
-            getConfigurationServerService());
-
-        if (pluginContainerConfiguration.getConfigurationDiscoveryPeriod() > 0
+        if (pluginContainerConfiguration.getConfigurationDiscoveryInterval() > 0
+            && pluginContainerConfiguration.getConfigurationDiscoveryPeriod() > 0
             && pluginContainerConfiguration.isInsideAgent()) {
+
+            ConfigurationCheckExecutor configurationChecker = new ConfigurationCheckExecutor(
+                getConfigurationServerService(), pluginContainerConfiguration.getConfigurationDiscoveryPeriod(),
+                pluginContainerConfiguration.getConfigurationDiscoveryLimit());
+
             threadPool.scheduleAtFixedRate(configurationChecker,
                 pluginContainerConfiguration.getConfigurationDiscoveryInitialDelay(),
-                pluginContainerConfiguration.getConfigurationDiscoveryPeriod(), TimeUnit.SECONDS);
+                pluginContainerConfiguration.getConfigurationDiscoveryInterval(), TimeUnit.SECONDS);
         }
     }
 

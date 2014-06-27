@@ -157,7 +157,8 @@ public class ServerInstallUtil {
 
     private static final String RHQ_DATASOURCE_NAME_NOTX = "NoTxRHQDS";
     private static final String RHQ_DATASOURCE_NAME_XA = "RHQDS";
-    private static final String RHQ_DS_SECURITY_DOMAIN = "RHQDSSecurityDomain";
+    private static final String RHQ_DS_SECURITY_DOMAIN_NOTX = "RHQDSSecurityDomainNoTx";
+    private static final String RHQ_DS_SECURITY_DOMAIN_XA = "RHQDSSecurityDomainXa";
     private static final String RHQ_USER_SECURITY_DOMAIN = "RHQUserSecurityDomain";
     private static final String RHQ_REST_SECURITY_DOMAIN = "RHQRESTSecurityDomain";
     private static final String JDBC_LOGIN_MODULE_NAME = "org.rhq.enterprise.server.core.jaas.JDBCLoginModule";
@@ -170,7 +171,6 @@ public class ServerInstallUtil {
     private static final String RHQ_CACHE_CONTAINER = "rhq";
     private static final String RHQ_CACHE = "rhqCache";
     private static final String RHQ_MGMT_USER = "rhqadmin";
-    private static final String RHQ_MGMT_USER_PASSWORD = "rhq.server.management.password";
     private static final String XA_DATASOURCE_CLASS_POSTGRES = "org.postgresql.xa.PGXADataSource";
     private static final String XA_DATASOURCE_CLASS_ORACLE = "oracle.jdbc.xa.client.OracleXADataSource";
 
@@ -307,7 +307,18 @@ public class ServerInstallUtil {
         final String obfuscatedPassword = buildExpression(ServerProperties.PROP_DATABASE_PASSWORD, serverProperties,
             true);
         final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
-        final String securityDomain = RHQ_DS_SECURITY_DOMAIN;
+        String securityDomain = RHQ_DS_SECURITY_DOMAIN_XA;
+        if (!client.isSecurityDomain(securityDomain)) {
+            client.createNewSecureIdentitySecurityDomain72(securityDomain, dbUsername, obfuscatedPassword);
+            LOG.info("Security domain [" + securityDomain + "] created");
+        } else {
+            LOG.info("Security domain [" + securityDomain + "] already exists, skipping the creation request");
+            client.updateSecureIdentitySecurityDomainCredentials(securityDomain, dbUsername, obfuscatedPassword);
+            LOG.info("Credentials have been updated for security domain [" + securityDomain + "]");
+        }
+
+        // we need separate security domains per datasource due to BZ 1102332
+        securityDomain = RHQ_DS_SECURITY_DOMAIN_NOTX;
         if (!client.isSecurityDomain(securityDomain)) {
             client.createNewSecureIdentitySecurityDomain72(securityDomain, dbUsername, obfuscatedPassword);
             LOG.info("Security domain [" + securityDomain + "] created");
@@ -591,7 +602,7 @@ public class ServerInstallUtil {
             noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
                 "${rhq.server.database.connection-url:jdbc:postgresql://127.0.0.1:5432/rhq}", JDBC_DRIVER_POSTGRES,
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, false, 2, 5, 75,
-                RHQ_DS_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
+                RHQ_DS_SECURITY_DOMAIN_NOTX, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", true, props);
             noTxDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
         } else {
@@ -607,7 +618,8 @@ public class ServerInstallUtil {
             xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_POSTGRES,
                 XA_DATASOURCE_CLASS_POSTGRES,
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, 5, 50, (Boolean) null,
-                (Boolean) null, 75, (String) null, RHQ_DS_SECURITY_DOMAIN, (String) null, "TRANSACTION_READ_COMMITTED",
+                (Boolean) null, 75, (String) null, RHQ_DS_SECURITY_DOMAIN_XA, (String) null,
+                "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
 
         } else {
@@ -636,7 +648,8 @@ public class ServerInstallUtil {
             noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
                 "${rhq.server.database.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:rhq}", JDBC_DRIVER_ORACLE,
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, false, 2, 5, 75,
-                RHQ_DS_SECURITY_DOMAIN, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
+                RHQ_DS_SECURITY_DOMAIN_NOTX,
+                "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
                 "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", true, props);
         } else {
@@ -648,9 +661,8 @@ public class ServerInstallUtil {
             props.put("URL", "${rhq.server.database.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:rhq}");
 
             xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_ORACLE,
-                XA_DATASOURCE_CLASS_ORACLE,
-                "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, 5, 50, (Boolean) null,
-                Boolean.TRUE, 75, (String) null, RHQ_DS_SECURITY_DOMAIN,
+                XA_DATASOURCE_CLASS_ORACLE, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15,
+                5, 50, (Boolean) null, Boolean.TRUE, 75, (String) null, RHQ_DS_SECURITY_DOMAIN_XA,
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
                 "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", props);

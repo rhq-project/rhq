@@ -52,8 +52,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
 
     public static final ViewName VIEW_ID = new ViewName("Help", MSG.common_title_help(), IconEnum.HELP);
 
-    private static final ViewName SECTION_PRODUCT_VIEW_ID = new ViewName("Product", MSG.view_help_section_product());
-
+    public static final ViewName SECTION_PRODUCT_VIEW_ID = new ViewName("Product", MSG.view_help_section_product());
     private final ProductInfo productInfo = CoreGUI.get().getProductInfo();
     private final MessageConstants messageConstants = CoreGUI.getMessageConstants();
     private boolean contentFromProductInfo;
@@ -100,7 +99,6 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
                 }
             });
         aboutItem.setRefreshRequired(true);
-
         return new NavigationSection(SECTION_PRODUCT_VIEW_ID, aboutItem);
     }
 

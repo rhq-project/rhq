@@ -59,6 +59,7 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
     private static final String DOMAIN_CONFIG_TRAIT = "domain-config-file";
     private static final String HOST_CONFIG_TRAIT = "host-config-file";
     private static final String DOMAIN_HOST_TRAIT = "domain-host-name";
+    private static final String DOMAIN_NAME_TRAIT = "domain-name";
     private static final String PROCESS_TYPE_DC = "Domain Controller";
 
     private boolean domainController; // determines whether this HC is also DC
@@ -89,6 +90,9 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
                 collectConfigTrait(report, request);
             } else if (requestName.equals(DOMAIN_HOST_TRAIT)) {
                 MeasurementDataTrait data = new MeasurementDataTrait(request, findASDomainHostName());
+                report.addData(data);
+            } else if (requestName.equals(DOMAIN_NAME_TRAIT)) {
+                MeasurementDataTrait data = new MeasurementDataTrait(request, readAttribute("name"));
                 report.addData(data);
             }
             else {

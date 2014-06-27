@@ -22,8 +22,7 @@ import java.util.Map;
 
 import javax.management.ObjectName;
 
-import org.jboss.mx.util.ObjectNameFactory;
-
+import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.communications.ServiceContainer;
 import org.rhq.enterprise.server.remote.RemoteSafeInvocationHandlerMetrics.Calltime;
 
@@ -70,7 +69,7 @@ public interface RemoteSafeInvocationHandlerMetricsMBean {
     /**
      * Returns a map of individual invocations and their metrics such
      * as number of times invoked, min/max/avg execution times.
-     * 
+     *
      * @return calltime data
      */
     Map<String, Calltime> getCallTimeData();
@@ -80,7 +79,7 @@ public interface RemoteSafeInvocationHandlerMetricsMBean {
      * map that is returned contains only primitive objects so remote clients do not have
      * to have this MBean class definition in their classloaders. The order of the map
      * values is important - each element in the array is as follows:
-     * 
+     *
      * <ol>
      * <li>count</li>
      * <li>successes</li>
@@ -89,7 +88,7 @@ public interface RemoteSafeInvocationHandlerMetricsMBean {
      * <li>maximum execution time</li>
      * <li>average execution time</li>
      * </ol>
-     * 
+     *
      * @return the calltime data stored in a map containing primitive arrays. Keyed on API name.
      */
     Map<String, long[]> getCallTimeDataAsPrimitives();

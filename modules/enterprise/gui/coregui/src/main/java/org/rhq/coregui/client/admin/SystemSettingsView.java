@@ -311,6 +311,11 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
         driftGroup.setOrder(4);
         driftGroup.setDefaultHidden(false);
 
+        PropertyGroupDefinition proxyGroup = new PropertyGroupDefinition("proxy");
+        proxyGroup.setDisplayName(MSG.view_admin_systemSettings_group_HttpProxy());
+        proxyGroup.setOrder(5);
+        proxyGroup.setDefaultHidden(false);
+
         for (SystemSetting prop : SystemSetting.values()) {
 
             //don't include the readonly properties in the configuration editor
@@ -565,6 +570,13 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 pd.setDefaultValue("");
                 break;
 
+            case LDAP_FOLLOW_REFERRALS:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPFollowReferrals_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPFollowReferrals_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("false");
+                break;
+
             ///////////////////////////////////////////
             // Drift Server Configuration Properties //
             ///////////////////////////////////////////
@@ -581,7 +593,41 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
 
                 pd.setEnumeratedValues(options, false);
                 break;
+            /*
+             * Proxy Server Settings
+             */
+            case HTTP_PROXY_SERVER_HOST:
+                pd.setDescription(MSG.view_admin_systemSettings_HttpProxyHost_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_HttpProxyHost_name());
+                pd.setPropertyGroupDefinition(proxyGroup);
+                pd.setDefaultValue(null);
+                break;
+
+            case HTTP_PROXY_SERVER_PORT:
+                pd.setDescription(MSG.view_admin_systemSettings_HttpProxyPort_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_HttpProxyPort_name());
+                pd.setPropertyGroupDefinition(proxyGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(0), Long.valueOf(65535)));
+                pd.setDefaultValue("0");
+                break;
+
+            case HTTP_PROXY_SERVER_USERNAME:
+                pd.setDescription(MSG.view_admin_systemSettings_HttpProxyUsername_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_HttpProxyUsername_name());
+                pd.setPropertyGroupDefinition(proxyGroup);
+                pd.setDefaultValue(null);
+                break;
+
+            case HTTP_PROXY_SERVER_PASSWORD:
+                pd.setDescription(MSG.view_admin_systemSettings_HttpProxyPassword_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_HttpProxyPassword_name());
+                pd.setPropertyGroupDefinition(proxyGroup);
+                pd.setDefaultValue(null);
+                break;
+
             }
+            
+
         }
 
         //

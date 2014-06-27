@@ -19,6 +19,10 @@
 
 package org.rhq.modules.plugins.jbossas7;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -63,7 +67,7 @@ public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscove
         // key and path.
         Set<DiscoveredResourceDetails> details = super.discoverResources(context);
 
-        if (DISABLED) {
+        if (DISABLED || null == details || details.isEmpty()) {
             return details;
         }
 
@@ -72,6 +76,11 @@ public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscove
         // property, that value reflects the actual DMR used to query EAP.
         // Note that the version string is always set to the parent's version for these
         // resources which are logically part of the umbrella deployment.
+
+        // Work with a list because we may update the key, which is used in the DiscoveredResourceDetails.equals()
+        ArrayList<DiscoveredResourceDetails> updatedDetails = new ArrayList<DiscoveredResourceDetails>(details);
+        HashMap<String, Integer> keyCount = new HashMap<String, Integer>(updatedDetails.size());
+        details.clear();
 
         Configuration config = context.getDefaultPluginConfiguration();
         String configPath = config.getSimpleValue("path", "");
@@ -124,8 +133,30 @@ public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscove
                 }
             }
             detail.setResourceKey(sb.toString());
+            Integer count = keyCount.get(detail.getResourceKey());
+            keyCount.put(detail.getResourceKey(), (null == count ? 1 : ++count));
         }
 
+        // Now, make sure that after we've stripped the versions that we don't end up with multiple discoveries
+        // for the same key, this is an indication that there are multiple versions of the same Deployment deployed.
+        // In this case we remove the duplicates and issue a warning so the user can hopefully rectify the situation.
+        for (Map.Entry<String, Integer> entry : keyCount.entrySet()) {
+            if (entry.getValue() > 1) {
+                log.warn("Discovered multiple resources with resource key [" + entry.getKey()
+                    + "].  This is not allowed and they will be removed from discovery.  This is typically caused by "
+                    + "having multiple versions of the same Deployment deployed.  To solve the problem either remove "
+                    + "all but one version of the problem deployment or disable versioned deployment handling by "
+                    + "setting -Drhq.as7.VersionedSubsystemDiscovery.pattern=disable for the agent.");
+                for (Iterator<DiscoveredResourceDetails> i = updatedDetails.iterator(); i.hasNext();) {
+                    DiscoveredResourceDetails detail = i.next();
+                    if (detail.getResourceKey().equals(entry.getKey())) {
+                        i.remove();
+                    }
+                }
+            }
+        }
+
+        details.addAll(updatedDetails);
         return details;
     }
 

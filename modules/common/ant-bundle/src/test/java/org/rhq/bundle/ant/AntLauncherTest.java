@@ -38,6 +38,17 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.ws.Endpoint;
+import javax.xml.ws.Provider;
+import javax.xml.ws.Service;
+import javax.xml.ws.ServiceMode;
+import javax.xml.ws.WebServiceProvider;
+import javax.xml.ws.http.HTTPBinding;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.DefaultLogger;
 import org.apache.tools.ant.Project;
@@ -62,6 +73,12 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeploymentsMetadata;
 import org.rhq.core.util.updater.DestinationComplianceMode;
 import org.rhq.core.util.updater.FileHashcodeMap;
+import org.rhq.test.PortScout;
+
+import io.undertow.Undertow;
+import io.undertow.server.BlockingHttpExchange;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 
 /**
  * @author John Mazzitelli
@@ -69,6 +86,8 @@ import org.rhq.core.util.updater.FileHashcodeMap;
  */
 @Test
 public class AntLauncherTest {
+    private static final Log LOG = LogFactory.getLog(AntLauncherTest.class);
+
     private static final File DEPLOY_DIR = new File("target/test-ant-bundle").getAbsoluteFile();
     private static final String ANT_BASEDIR = "target/test-classes";
     private static final File REDHAT_RELEASE_FILE = new File("/etc/redhat-release");
@@ -704,18 +723,12 @@ public class AntLauncherTest {
     }
 
     public void testNotDeployedFiles() throws Exception {
-        testNotDeployedFiles(getFileFromTestClasses("ant-properties/deploy.xml"));
+        testNotDeployedFiles(getFileFromTestClasses("ant-properties/deploy.xml.properties-in-bundle"), true);
     }
 
     public void testAntPropertiesUsedForTokenReplacement() throws Exception {
         testNotDeployedFiles();
-
-        Properties props = readPropsFile(new File(DEPLOY_DIR, "deployed.file"));
-
-        assert "user provided value".equals(props.getProperty("user.provided")) : "user.provided";
-        assert "bundle provided value".equals(props.getProperty("bundle.provided")) : "bundle.provided";
-        assert "a".equals(props.get("a.from.properties.file")) : "a.from.properties.file";
-        assert "b".equals(props.get("b.from.properties.file")) : "b.from.properties.file";
+        checkPropertiesFromExternalFileReplaced();
     }
 
     public void testAntPropertiesLoadFromAbsolutePath() throws Exception {
@@ -725,7 +738,7 @@ public class AntLauncherTest {
             //prepare the test bundle.. update the recipe with an absolute path to a properties file.
             File deployXml = new File(tempDir, "deploy.xml");
 
-            FileUtil.copyFile(getFileFromTestClasses("ant-properties/deploy.xml"), deployXml);
+            FileUtil.copyFile(getFileFromTestClasses("ant-properties/deploy.xml.properties-out-of-bundle"), deployXml);
 
             //copy the other file from the bundle, too, into the correct location
             FileUtil.copyFile(getFileFromTestClasses("ant-properties/deployed.file"), new File(tempDir,
@@ -740,19 +753,80 @@ public class AntLauncherTest {
             FileUtil
                 .copyFile(getFileFromTestClasses("ant-properties/in-bundle.properties"), absolutePropertiesLocation);
 
-            deployXmlContents = deployXmlContents.replace("<property file=\"in-bundle.properties\"/>",
-                "<property file=\"" + absolutePropertiesLocation.getAbsolutePath() + "\"/>");
+            deployXmlContents = deployXmlContents.replace("%%REPLACE_ME%%",
+                "file=\"" + absolutePropertiesLocation.getAbsolutePath() + "\"");
 
             FileUtil.writeFile(new ByteArrayInputStream(deployXmlContents.getBytes()), deployXml);
 
             //k, now the test itself...
-            testNotDeployedFiles(deployXml);
+            testNotDeployedFiles(deployXml, false);
+            checkPropertiesFromExternalFileReplaced();
         } finally {
             FileUtil.purge(tempDir, true);
         }
     }
 
-    private void testNotDeployedFiles(File deployXml) throws Exception {
+    public void testAntPropertiesLoadFromURL() throws Exception {
+        File tempDir = FileUtil.createTempDirectory("ant-launcher-test", null, null);
+        Undertow undertow = null;
+
+        try {
+            //prepare the test bundle.. update the recipe with an absolute path to a properties file.
+            File deployXml = new File(tempDir, "deploy.xml");
+
+            FileUtil.copyFile(getFileFromTestClasses("ant-properties/deploy.xml.properties-out-of-bundle"), deployXml);
+
+            //copy the other file from the bundle, too, into the correct location
+            FileUtil.copyFile(getFileFromTestClasses("ant-properties/deployed.file"), new File(tempDir,
+                "deployed.file"));
+
+            //fire up minimal server
+            PortScout portScout = new PortScout();
+            int port = 0;
+            try {
+                port = portScout.getNextFreePort();
+            } finally {
+                portScout.close();
+            }
+
+            undertow = Undertow.builder().addHttpListener(port, "localhost").setHandler(new HttpHandler() {
+                @Override
+                public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+                    httpServerExchange.startBlocking();
+                    FileInputStream in = new FileInputStream(
+                        getFileFromTestClasses("ant-properties/in-bundle.properties"));
+                    try {
+                        StreamUtil.copy(in, httpServerExchange.getOutputStream(), false);
+                    } catch (Exception e) {
+                        LOG.error("Failed to handle the HTTP request for loading properties.", e);
+                        throw e;
+                    } finally {
+                        StreamUtil.safeClose(in);
+                    }
+                }
+            }).build();
+
+            undertow.start();
+
+            String deployXmlContents = StreamUtil.slurp(new InputStreamReader(new FileInputStream(deployXml)));
+
+            deployXmlContents = deployXmlContents.replace("%%REPLACE_ME%%",
+                "url=\"http://localhost:" + port + "\"");
+
+            FileUtil.writeFile(new ByteArrayInputStream(deployXmlContents.getBytes()), deployXml);
+
+            //k, now the test itself...
+            testNotDeployedFiles(deployXml, false);
+            checkPropertiesFromExternalFileReplaced();
+        } finally {
+            FileUtil.purge(tempDir, true);
+            if (undertow != null) {
+                undertow.stop();
+            }
+        }
+    }
+
+    private void testNotDeployedFiles(File deployXml, boolean expectPropertiesFileInBundle) throws Exception {
         FileUtil.purge(DEPLOY_DIR, true);
 
         AntLauncher ant = new AntLauncher(true);
@@ -765,13 +839,22 @@ public class AntLauncherTest {
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
         assert bundleFiles != null;
-        assert bundleFiles.size() == 2 : bundleFiles;
+        assert bundleFiles.size() == (expectPropertiesFileInBundle ? 2 : 1) : bundleFiles;
         assert bundleFiles.contains("deployed.file") : bundleFiles;
-        assert bundleFiles.contains("in-bundle.properties") : bundleFiles;
+        assert !expectPropertiesFileInBundle || bundleFiles.contains("in-bundle.properties") : bundleFiles;
 
         assert new File(DEPLOY_DIR, "deployed.file").exists() : "deployed.file missing";
         assert !new File(DEPLOY_DIR, "in-bundle.properties")
             .exists() : "in-bundle.properties deployed but shouldn't have";
+    }
+
+    private void checkPropertiesFromExternalFileReplaced() throws Exception {
+        Properties props = readPropsFile(new File(DEPLOY_DIR, "deployed.file"));
+
+        assert "user provided value".equals(props.getProperty("user.provided")) : "user.provided";
+        assert "bundle provided value".equals(props.getProperty("bundle.provided")) : "bundle.provided";
+        assert "a".equals(props.get("a.from.properties.file")) : "a.from.properties.file";
+        assert "b".equals(props.get("b.from.properties.file")) : "b.from.properties.file";
     }
 
     private void testUrlFilesAndArchives(boolean validate, String recipeFile) throws Exception {

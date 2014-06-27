@@ -86,6 +86,19 @@
             <artifactId>liquibase-core</artifactId>
         </dependency>
 
+        <!-- test deps -->
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>test-utils</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.undertow</groupId>
+            <artifactId>undertow-core</artifactId>
+            <version>1.0.15.Final</version>
+        </dependency>
     </dependencies>
 
     <build>

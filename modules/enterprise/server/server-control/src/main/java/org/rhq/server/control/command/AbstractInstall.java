@@ -36,6 +36,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import org.apache.commons.cli.CommandLine;
@@ -696,8 +697,16 @@ public abstract class AbstractInstall extends ControlCommand {
             String setupPref = PREF_RHQ_AGENT_CONFIGURATION_SETUP_FLAG;
             preferencesNode.putBoolean(setupPref, true);
 
-            preferencesNode.flush();
-            preferencesNode.sync();
+            try {
+                preferencesNode.flush();
+                preferencesNode.sync();
+            } catch (BackingStoreException bse) {
+                log.error("Failed to store agent preferences, for Linux systems we require writable user.home ["
+                    + System.getProperty("user.home")
+                    + "]. You can also set different location for agent preferences by setting \"-Djava.util.prefs.userRoot=/some/path/\""
+                    + " java system property. You may need to put this property to RHQ_CONTROL_ADDIDIONAL_JAVA_OPTS and RHQ_AGENT_ADDIDIONAL_JAVA_OPTS env variables.");
+                throw bse;
+            }
 
             log.info("Finished configuring the agent");
         } catch (Exception e) {

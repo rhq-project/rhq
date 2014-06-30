@@ -486,24 +486,32 @@ public class AgentManagerBean implements AgentManagerLocal {
         try {
             Properties properties = getAgentUpdateVersionFileContent();
 
-            String supportedAgentBuilds = properties.getProperty(RHQ_AGENT_SUPPORTED_BUILDS); // this is optional
-            String latestAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
-            if (latestAgentBuild == null) {
-                throw new NullPointerException("no agent build number in file");
+            String supportedAgentVersion = properties.getProperty(RHQ_AGENT_LATEST_VERSION);
+            if (supportedAgentVersion == null) {
+                throw new NullPointerException("no agent version in file");
             }
+
+            String supportedAgentBuilds = properties.getProperty(RHQ_AGENT_SUPPORTED_BUILDS); // this is optional
 
             boolean isSupported;
 
-            if (supportedAgentBuilds == null || supportedAgentBuilds.isEmpty()) {
-                // we weren't given a regex of supported versions, make a simple string equality test on latest agent version
-                ComparableVersion agent = new ComparableVersion(agentVersionInfo.getBuild());
-                ComparableVersion server = new ComparableVersion(latestAgentBuild);
-                isSupported = agent.equals(server);
-            } else {
-                // we were given a regex of supported versions, check the agent version to see if it matches the regex
-                isSupported = agentVersionInfo.getBuild().matches(supportedAgentBuilds);
-            }
+            ComparableVersion agent = new ComparableVersion(agentVersionInfo.getVersion());
+            ComparableVersion server = new ComparableVersion(supportedAgentVersion);
 
+            //Non strict checking enabled.
+            if (Boolean.getBoolean("rhq.server.agent-update.nonstrict-version-check")) {
+                return agent.equals(server);
+            } else {
+
+                //if no list of supportedBuilds provided then,    
+                if (supportedAgentBuilds == null || supportedAgentBuilds.isEmpty()) {
+                    String supportedAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
+                    return agent.equals(server) && agentVersionInfo.getBuild().equals(supportedAgentBuild);
+                } else {
+                    // we were given a regex of supported versions, check the agent version to see if it matches the regex
+                    isSupported = agentVersionInfo.getBuild().matches(supportedAgentBuilds);
+                }
+            }
             return isSupported;
         } catch (Exception e) {
             log.warn("Cannot determine if agent version [" + agentVersionInfo + "] is supported. Cause: " + e);

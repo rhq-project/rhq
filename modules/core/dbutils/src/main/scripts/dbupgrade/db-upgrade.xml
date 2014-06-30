@@ -2392,7 +2392,15 @@
                 </statement>
               </schema-directSQL>
             </schemaSpec>
-       
+
+          <schemaSpec version="2.152">
+            <schema-directSQL ignoreError="true">
+              <statement desc="Optimize query for rhq_alert_definition templates (counts)">
+                CREATE INDEX rhq_adef_resource_type_idx ON rhq_alert_definition(resource_type_id)
+              </statement>
+            </schema-directSQL>
+          </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

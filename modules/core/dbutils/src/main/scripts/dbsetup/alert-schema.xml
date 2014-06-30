@@ -33,6 +33,9 @@
         <column name="DAMPENING_VALUE_UNITS" type="SMALLINT"/>
         <column name="DAMPENING_PERIOD" type="INTEGER"/>
         <column name="DAMPENING_PERIOD_UNITS" type="SMALLINT"/>
+        <index name="RHQ_ADEF_RESOURCE_TYPE_IDX">
+            <field ref="RESOURCE_TYPE_ID"/>
+        </index>
     </table>
 
     <table name="RHQ_ALERT_DAMPEN_EVENT">

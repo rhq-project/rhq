@@ -75,6 +75,15 @@ public class AgentSupportedBuildTest {
         checkOK(regex, "cafebabe2");
         checkOK(regex, "abcdef8");
         checkFail(regex, "cafebabe9");
+
+        // regex test #5 - tests for lists of accepted builds
+        // Ex. 3.2.0.GA   | 3.2 Update 01 | 3.2 Update 02 | 
+        regex = ".*(cafebabe0|cafebabe1|cafebabe2|abcdef8).*";
+        checkOK(regex, "test:cafebabe0");
+        checkOK(regex, "abeabe\\:cafebabe1");
+        checkOK(regex, "cafebabe2");
+        checkOK(regex, "abcdef8");
+        checkFail(regex, "cafebabe9");
     }
 
     public void testLatestAgentBuildCheckRegex() {

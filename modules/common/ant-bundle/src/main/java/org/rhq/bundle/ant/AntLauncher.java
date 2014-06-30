@@ -284,9 +284,15 @@ public class AntLauncher {
         for (String file : files.values()) {
             project.getBundleFileNames().add(file);
         }
+
         Map<File, String> archives = deployment.getLocalArchiveNames();
         for (String archive : archives.values()) {
             project.getBundleFileNames().add(archive);
+        }
+
+        List<String> propertyFiles = bundleTask.getLocalPropertyFiles();
+        for(String propFile : propertyFiles) {
+            project.getBundleFileNames().add(propFile);
         }
 
         // note that we do NOT add url-files and url-archives to the BundleFileNames because those are

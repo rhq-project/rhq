@@ -8,8 +8,8 @@
         <rhq:input-property name="user.provided" description="This is provided by the user." required="false"
                             defaultValue = "user provided value"/>
 
-        <property name="bundle.provided" value="bundle provided value"/>
-        <property file="in-bundle.properties"/>
+        <rhq:property name="bundle.provided" value="bundle provided value"/>
+        <rhq:property file="../test-ant-bundle-sibling/in-bundle.properties" relativeToDeployDir="true" />
 
         <rhq:deployment-unit name="sample-deployment-unit" compliance="full">
             <rhq:file name="deployed.file" replace="true" />

@@ -38,15 +38,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.ws.Endpoint;
-import javax.xml.ws.Provider;
-import javax.xml.ws.Service;
-import javax.xml.ws.ServiceMode;
-import javax.xml.ws.WebServiceProvider;
-import javax.xml.ws.http.HTTPBinding;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.tools.ant.BuildListener;
@@ -76,7 +67,6 @@ import org.rhq.core.util.updater.FileHashcodeMap;
 import org.rhq.test.PortScout;
 
 import io.undertow.Undertow;
-import io.undertow.server.BlockingHttpExchange;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
@@ -89,6 +79,7 @@ public class AntLauncherTest {
     private static final Log LOG = LogFactory.getLog(AntLauncherTest.class);
 
     private static final File DEPLOY_DIR = new File("target/test-ant-bundle").getAbsoluteFile();
+    private static final File WORKING_DIR = new File("target/test-ant-working-dir").getAbsoluteFile();
     private static final String ANT_BASEDIR = "target/test-classes";
     private static final File REDHAT_RELEASE_FILE = new File("/etc/redhat-release");
 
@@ -101,7 +92,9 @@ public class AntLauncherTest {
 
     @AfterClass
     public void afterClass() {
+        FileUtil.purge(new File(DEPLOY_DIR.getParentFile(), "test-ant-bundle-sibling"), true);
         FileUtil.purge(DEPLOY_DIR, true);
+        FileUtil.purge(WORKING_DIR, true);
     }
 
     public void testParse_legacy() throws Exception {
@@ -722,12 +715,21 @@ public class AntLauncherTest {
         testUrlFilesAndArchives(true, "test-bundle-url.xml");
     }
 
-    public void testNotDeployedFiles() throws Exception {
-        testNotDeployedFiles(getFileFromTestClasses("ant-properties/deploy.xml.properties-in-bundle"), true);
+    public void testNotDeployedPropertyFile() throws Exception {
+        testNotDeployedFiles(getFileFromTestClasses("ant-properties/deploy.xml.properties-in-bundle"), true, false);
+    }
+
+    public void testNotDeployedRhqPropertyFile() throws Exception {
+        testNotDeployedFiles(getFileFromTestClasses("ant-properties/deploy.xml.rhq-property-tag-in-bundle"), true, false);
+    }
+
+    public void testDeployedPropertyFile() throws Exception {
+        testNotDeployedFiles(getFileFromTestClasses("ant-properties/deploy.xml.properties-in-bundle-props-deployed"),
+            true, true);
     }
 
     public void testAntPropertiesUsedForTokenReplacement() throws Exception {
-        testNotDeployedFiles();
+        testNotDeployedPropertyFile();
         checkPropertiesFromExternalFileReplaced();
     }
 
@@ -759,7 +761,7 @@ public class AntLauncherTest {
             FileUtil.writeFile(new ByteArrayInputStream(deployXmlContents.getBytes()), deployXml);
 
             //k, now the test itself...
-            testNotDeployedFiles(deployXml, false);
+            testNotDeployedFiles(deployXml, false, false);
             checkPropertiesFromExternalFileReplaced();
         } finally {
             FileUtil.purge(tempDir, true);
@@ -816,7 +818,7 @@ public class AntLauncherTest {
             FileUtil.writeFile(new ByteArrayInputStream(deployXmlContents.getBytes()), deployXml);
 
             //k, now the test itself...
-            testNotDeployedFiles(deployXml, false);
+            testNotDeployedFiles(deployXml, false, false);
             checkPropertiesFromExternalFileReplaced();
         } finally {
             FileUtil.purge(tempDir, true);
@@ -826,8 +828,25 @@ public class AntLauncherTest {
         }
     }
 
-    private void testNotDeployedFiles(File deployXml, boolean expectPropertiesFileInBundle) throws Exception {
+    public void testRhqPropertiesLoadFromDestination() throws Exception {
+        File sideDir = new File(DEPLOY_DIR.getParentFile(), "test-ant-bundle-sibling");
+        assert sideDir.mkdir() : "Failed to create a side directory";
+
+        FileUtil.copyFile(getFileFromTestClasses("ant-properties/in-bundle.properties"),
+            new File(sideDir, "in-bundle.properties"));
+
+        testNotDeployedFiles(getFileFromTestClasses("ant-properties/deploy.xml.rhq-property-tag-in-destination"), false,
+            false);
+    }
+
+    private void testNotDeployedFiles(File deployXml, boolean expectPropertiesFileInBundle,
+        boolean expectPropertiesFileInDestination) throws Exception {
         FileUtil.purge(DEPLOY_DIR, true);
+        FileUtil.purge(WORKING_DIR, true);
+
+        FileUtil.copyDirectory(deployXml.getParentFile(), WORKING_DIR);
+
+        deployXml = new File(WORKING_DIR, deployXml.getName());
 
         AntLauncher ant = new AntLauncher(true);
         Properties inputProps = createInputProperties(null);
@@ -844,8 +863,9 @@ public class AntLauncherTest {
         assert !expectPropertiesFileInBundle || bundleFiles.contains("in-bundle.properties") : bundleFiles;
 
         assert new File(DEPLOY_DIR, "deployed.file").exists() : "deployed.file missing";
-        assert !new File(DEPLOY_DIR, "in-bundle.properties")
-            .exists() : "in-bundle.properties deployed but shouldn't have";
+        assert expectPropertiesFileInDestination == new File(DEPLOY_DIR, "in-bundle.properties")
+            .exists() : "in-bundle.properties " + (expectPropertiesFileInDestination ? "not deployed but should have"
+                : "deployed but shouldn't have");
     }
 
     private void checkPropertiesFromExternalFileReplaced() throws Exception {

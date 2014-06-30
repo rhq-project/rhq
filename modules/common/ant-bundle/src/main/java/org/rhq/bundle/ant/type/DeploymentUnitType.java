@@ -25,7 +25,6 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -74,8 +73,6 @@ public class DeploymentUnitType extends AbstractBundleType {
     private Map<File, Boolean> archivesExploded = new HashMap<File, Boolean>();
     private Map<URL, Boolean> urlArchivesExploded = new HashMap<URL, Boolean>();
     private Map<File, String> localArchiveNames = new LinkedHashMap<File, String>();
-
-    private Set<Object> notDeployed = new HashSet<Object>();
 
     private SystemServiceType systemService;
     private Pattern ignorePattern;
@@ -192,8 +189,6 @@ public class DeploymentUnitType extends AbstractBundleType {
             Set<File> allRawFilesToReplace = new HashSet<File>(this.rawFilesToReplace);
             Map<File, Boolean> allArchivesExploded = new HashMap<File, Boolean>(this.archivesExploded);
 
-            removeNotDeployedFiles(allArchives, allFiles, allArchiveReplacePatterns, allRawFilesToReplace, allArchivesExploded);
-
             downloadFilesFromUrlEndpoints(allArchives, allFiles, allArchiveReplacePatterns, allRawFilesToReplace,
                 allArchivesExploded);
 
@@ -275,51 +270,6 @@ public class DeploymentUnitType extends AbstractBundleType {
             }
         }
         return;
-    }
-
-    private void removeNotDeployedFiles(Map<File, File> allArchives, Map<File, File> allFiles,
-        Map<File, Pattern> allArchiveReplacePatterns, Set<File> allRawFilesToReplace,
-        Map<File, Boolean> allArchivesExploded) {
-
-        Iterator<Map.Entry<File, File>> it = allArchives.entrySet().iterator();
-        while (it.hasNext()) {
-            File key = it.next().getKey();
-            if (notDeployed.contains(key)) {
-                it.remove();
-            }
-        }
-
-        it = allFiles.entrySet().iterator();
-        while (it.hasNext()) {
-            File key = it.next().getKey();
-            if (notDeployed.contains(key)) {
-                it.remove();
-            }
-        }
-
-        Iterator<Map.Entry<File, Pattern>> it2 = allArchiveReplacePatterns.entrySet().iterator();
-        while (it2.hasNext()) {
-            File key = it2.next().getKey();
-            if (notDeployed.contains(key)) {
-                it.remove();
-            }
-        }
-
-        Iterator<Map.Entry<File, Boolean>> it3 = allArchivesExploded.entrySet().iterator();
-        while (it3.hasNext()) {
-            File key = it3.next().getKey();
-            if (notDeployed.contains(key)) {
-                it.remove();
-            }
-        }
-
-        Iterator<File> it4 = allRawFilesToReplace.iterator();
-        while (it4.hasNext()) {
-            File key = it4.next();
-            if (notDeployed.contains(key)) {
-                it.remove();
-            }
-        }
     }
 
     /**
@@ -591,10 +541,6 @@ public class DeploymentUnitType extends AbstractBundleType {
     }
 
     public void addConfigured(FileType file) {
-        if (!file.isDeploy()) {
-            notDeployed.add(file.getSource());
-        }
-
         File destFile = file.getDestinationFile();
         if (destFile == null) {
             File destDir = file.getDestinationDir();
@@ -608,10 +554,6 @@ public class DeploymentUnitType extends AbstractBundleType {
     }
 
     public void addConfigured(UrlFileType file) {
-        if (!file.isDeploy()) {
-            notDeployed.add(file.getSource());
-        }
-
         File destFile = file.getDestinationFile();
         if (destFile == null) {
             File destDir = file.getDestinationDir();
@@ -624,10 +566,6 @@ public class DeploymentUnitType extends AbstractBundleType {
     }
 
     public void addConfigured(ArchiveType archive) {
-        if (!archive.isDeploy()) {
-            notDeployed.add(archive.getSource());
-        }
-
         this.archives.put(archive.getSource(), archive.getDestinationDir());
         this.localArchiveNames.put(archive.getSource(), archive.getName());
         Pattern replacePattern = archive.getReplacePattern();
@@ -639,10 +577,6 @@ public class DeploymentUnitType extends AbstractBundleType {
     }
 
     public void addConfigured(UrlArchiveType archive) {
-        if (!archive.isDeploy()) {
-            notDeployed.add(archive.getSource());
-        }
-
         this.urlArchives.put(archive.getSource(), archive.getDestinationDir());
         Pattern replacePattern = archive.getReplacePattern();
         if (replacePattern != null) {

@@ -24,6 +24,7 @@ import org.apache.tools.ant.Task;
 import org.apache.tools.ant.TaskContainer;
 import org.apache.tools.ant.taskdefs.Property;
 import org.apache.tools.ant.taskdefs.PropertyHelperTask;
+import org.apache.tools.ant.util.FileUtils;
 
 import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.bundle.ant.DeploymentPhase;
@@ -48,6 +49,7 @@ public class BundleTask extends AbstractBundleTask {
     private String description;
     private Map<String, DeploymentUnitType> deploymentUnits = new HashMap<String, DeploymentUnitType>();
     private List<Property> properties = new ArrayList<Property>();
+    private List<String> localPropertyFiles = new ArrayList<String>();
 
     @Override
     public void maybeConfigure() throws BuildException {
@@ -79,10 +81,6 @@ public class BundleTask extends AbstractBundleTask {
      */
     @Override
     public void execute() throws BuildException {
-        for(Property p : properties) {
-            p.execute();
-        }
-
         Hashtable projectProps = getProject().getProperties();
 
         // Make sure the requires System properties are defined and valid.
@@ -115,6 +113,11 @@ public class BundleTask extends AbstractBundleTask {
         getProject().setDeploymentId(deploymentId);
         log(DeployPropertyNames.DEPLOY_ID + "=\"" + deploymentId + "\"", Project.MSG_DEBUG);
 
+        //k, now that we have the properties pushed to the project, let's init the subtasks
+        for (Property p : properties) {
+            p.execute();
+        }
+
         if (this.deploymentUnits.size() != 1) {
             throw new BuildException("The rhq:bundle task must contain exactly one rhq:deploymentUnit element.");
         }
@@ -138,6 +141,8 @@ public class BundleTask extends AbstractBundleTask {
                     + validPhaseNames + ".");
         }
         getProject().setDeploymentPhase(deploymentPhase);
+
+        cleanPropertyFilesFromBaseDir(deploymentUnit);
 
         String dryRunString = (String) projectProps.get(DeployPropertyNames.DEPLOY_DRY_RUN);
         boolean dryRun = Boolean.valueOf(dryRunString);
@@ -200,9 +205,33 @@ public class BundleTask extends AbstractBundleTask {
         inputProperty.init();        
     }
 
-    public void addConfigured(Property property) {
+    public void addConfigured(Property property) throws Exception {
         property.init();
         properties.add(property);
+
+        File propertyFile = property.getFile();
+        if (propertyFile != null && isSubPath(propertyFile, getProject().getBaseDir())) {
+            localPropertyFiles.add(FileUtils.getRelativePath(getProject().getBaseDir(), propertyFile));
+        }
+    }
+
+    public void addConfigured(PropertyTask propertyTask) throws Exception {
+        propertyTask.init();
+        properties.add(propertyTask);
+
+        File propertyFile = propertyTask.getFile();
+
+        //relativeToDeployDir means that the property file is not part of the bundle but exists somewhere
+        //in or "around" the deploy dir of this bundle.
+        if (propertyFile != null && !propertyTask.isRelativeToDeployDir() &&
+            isSubPath(propertyFile, getProject().getBaseDir())) {
+
+            localPropertyFiles.add(FileUtils.getRelativePath(getProject().getBaseDir(), propertyFile));
+        }
+    }
+
+    public List<String> getLocalPropertyFiles() {
+        return localPropertyFiles;
     }
 
     public void add(DeploymentUnitType deployment) {
@@ -244,5 +273,37 @@ public class BundleTask extends AbstractBundleTask {
         if (this.deploymentUnits.isEmpty()) {
             throw new BuildException("At least one 'rhq:deploymentUnit' child element must be specified.");
         }
+    }
+
+    private void cleanPropertyFilesFromBaseDir(DeploymentUnitType deploymentUnit) {
+        for (Property p : properties) {
+            if (p instanceof PropertyTask) {
+                if (((PropertyTask) p).isRelativeToDeployDir()) {
+                    continue;
+                }
+            }
+
+            if (p.getFile() != null && !deploymentUnit.getFiles().containsKey(p.getFile().getAbsoluteFile())
+                && isSubPath(p.getFile(), getProject().getBaseDir())) {
+
+                //noinspection ResultOfMethodCallIgnored
+                p.getFile().delete();
+            }
+        }
+    }
+
+    private static boolean isSubPath(File file, File possibleParent) {
+        file = file.getAbsoluteFile();
+        possibleParent = possibleParent.getAbsoluteFile();
+
+        while (file != null) {
+            if (file.equals(possibleParent)) {
+                return true;
+            }
+
+            file = file.getParentFile();
+        }
+
+        return false;
     }
 }

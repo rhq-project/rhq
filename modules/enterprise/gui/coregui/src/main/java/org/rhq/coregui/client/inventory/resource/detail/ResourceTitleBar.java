@@ -72,8 +72,8 @@ public class ResourceTitleBar extends EnhancedVLayout {
     private EnhancedHLayout top;
     //represents normally closed region of Resource details[to verbosely describe resource across all tabs]
     private EnhancedHLayout details;
-    private static final String FAV_ICON = "[SKIN]/Favorite_24_Selected.png";
-    private static final String NOT_FAV_ICON = "[SKIN]/Favorite_24.png";
+    private static final String FAV_ICON = "Favorite_24_Selected.png";
+    private static final String NOT_FAV_ICON = "Favorite_24.png";
     private static final String EXPANDED_ICON = "[SKIN]/ListGrid/row_expanded.png";
     private static final String COLLAPSED_ICON = "[SKIN]/ListGrid/row_collapsed.png";
     private static final String COLLAPSED_TOOLTIP = MSG.view_portlet_inventory_tooltip_expand();

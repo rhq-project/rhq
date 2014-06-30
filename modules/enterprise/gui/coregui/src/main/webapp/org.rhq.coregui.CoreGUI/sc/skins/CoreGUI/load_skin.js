@@ -31,9 +31,11 @@ isc.loadSkin = function (theWindow) {
             isc.RPCManager.addClassProperties({ promptStyle:"cursor" });
         }
 
+
         isc.Button.addProperties({
-            height: 23
+            height: 22,
                   });
+
 
         // define IButton so examples that support the new SmartClient skin image-based
         // button will fall back on the CSS-based Button with this skin
@@ -68,25 +70,31 @@ isc.loadSkin = function (theWindow) {
         // 1) Scrollbars
         //----------------------------------------
         // NOTE: not used by default in Simplicity
-      /*  isc.SimpleScrollThumb.addProperties({
-            baseStyle:"scrollThumb",
+        isc.SimpleScrollThumb.addProperties({
+            baseStyle:"scrollThumb" /*,
             hSrc:"[SKIN]hthumb_grip.png",
-            vSrc:"[SKIN]vthumb_grip.png"
+            vSrc:"[SKIN]vthumb_grip.png"*/
         });
 
         isc.Scrollbar.addProperties({
             baseStyle:"scrollbar",
+            showRollOver:false,
+              btnSize:15,
+              showCorner:false,
+              allowThumbDownState:false,
+              allowThumbOverState:false,
+              showTrackEnds:false,
+          /*  hSrc:"[SKIN]hscroll.png",
+          showRollOver:true,
             btnSize:18,
             hSrc:"[SKIN]hscroll.png",
-            hThumbClass:isc.HSimpleScrollThumb,
-            showRollOver:true,
             thumbInset:0,
             thumbMinSize:20,
             thumbOverlap:2,
-            vSrc:"[SKIN]vscroll.png",
+            vSrc:"[SKIN]vscroll.png",*/
+            hThumbClass:isc.HSimpleScrollThumb,
             vThumbClass:isc.VSimpleScrollThumb
-        });*/
-
+        });
 
         //----------------------------------------
         // 3) Resizebars
@@ -186,13 +194,11 @@ isc.loadSkin = function (theWindow) {
                 alternateRecordStyles : false,
                 tallBaseStyle: "treeTallCell",
                 normalBaseStyle: "treeCell",
-                openerIconSize: 22 ,
+                openerIconSize: 16,
+                iconSize:16,
+                folderIcon: "[SKIN]folder.png",
                 sortAscendingImage:{src:"[SKINIMG]blank.gif", width:7, height:7},
                 sortDescendingImage:{src:"[SKINIMG]blank.gif", width:7, height:7}
-
-/*                sortAscendingImage:{src:"[SKINIMG]ListGrid/sort_ascending.gif", width:7, height:7},
-                sortDescendingImage:{src:"[SKINIMG]ListGrid/sort_descending.gif", width:7, height:7}
-                */
             })
         }
 
@@ -324,6 +330,7 @@ isc.loadSkin = function (theWindow) {
             isc.SelectItem.addProperties({
                 textBoxStyle:"selectItemText",
                 showFocusedPickerIcon:false,
+                showOverIcons:false,
                 pickerIconSrc:"[SKIN]/pickers/comboBoxPicker.gif",
                 height:22,
                 pickerIconWidth:18
@@ -336,7 +343,7 @@ isc.loadSkin = function (theWindow) {
                 pendingTextBoxStyle:"comboBoxItemPendingText",
                 showFocusedPickerIcon:false,
                 pickerIconSrc:"[SKIN]/pickers/comboBoxPicker.gif",
-                height:22,
+                height:27,
                 pickerIconWidth:18
             });
         }
@@ -445,20 +452,20 @@ isc.loadSkin = function (theWindow) {
             isc.ToolStrip.addProperties({
                 defaultLayoutAlign:"center"
             });
-            isc.ToolStrip.changeDefaults("formWrapperDefaults",{cellPadding:3});
+          isc.ToolStrip.changeDefaults("formWrapperDefaults",{cellPadding:0});
         }
 
         if (isc.ToolStripMenuButton) {
 
             isc.overwriteClass("ToolStripMenuButton", "MenuButton").addProperties({
                 showTitle:false,
-                showRollOver:true,
+                showRollOver:false,
                 showDown:true,
-                labelVPad:0,
+                //labelVPad:0,
                 //labelHPad:7,
                 autoFit:true,
-                baseStyle : "toolbarButton"/*,
-                height:22*/
+                baseStyle : "toolbarButton",
+                height:23
             });
         }
 
@@ -469,7 +476,7 @@ isc.loadSkin = function (theWindow) {
                 title:null,
                 showRollOver:true,
                 showDown:true,
-                labelVPad:0,
+                //labelVPad:0,
                 //labelHPad:7,
                 autoFit:true,
                 baseStyle : "toolbarButton"

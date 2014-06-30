@@ -118,7 +118,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
         detailsHolder.setAlign(VerticalAlignment.TOP);
         //detailsHolder.setWidth100();
         //detailsHolder.setHeight100();
-        //detailsHolder.setMargin(4);
+
         detailsHolder.hide();
 
         addMember(detailsHolder);

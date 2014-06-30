@@ -50,6 +50,7 @@ import org.rhq.coregui.client.alert.definitions.ResourceAlertDefinitionsView;
 import org.rhq.coregui.client.components.FullHTMLPane;
 import org.rhq.coregui.client.components.tab.SubTab;
 import org.rhq.coregui.client.components.tab.TwoLevelTab;
+import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.view.ViewFactory;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.drift.ResourceDriftDefinitionsView;
@@ -130,7 +131,7 @@ public class ResourceDetailView extends
 
     public ResourceDetailView(ResourceTreeView platformTree) {
         super(BASE_VIEW_PATH, createTitleBar(platformTree), createTabs());
-        addStyleName("resourceDetail");
+        addStyleName("resourcedetail");
         summaryTab = getTabSet().getTabByName(Tab.Summary.NAME);
         summaryActivity = summaryTab.getSubTabByName(Tab.Summary.SubTab.ACTIVITY);
         summaryTimeline = summaryTab.getSubTabByName(Tab.Summary.SubTab.TIMELINE);
@@ -329,6 +330,11 @@ public class ResourceDetailView extends
         }
     }
 
+    private final static Canvas viewWithoutHeader(Table t) {
+      t.setShowHeader(false);
+      return t;
+    }
+
     private void updateSummaryTabContent() {
         updateSubTab(this.summaryTab, this.summaryActivity, true, true, new ViewFactory() {
             @Override
@@ -340,7 +346,7 @@ public class ResourceDetailView extends
         updateSubTab(this.summaryTab, this.summaryTimeline, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new TimelineView(resourceComposite);
+              return new TimelineView(resourceComposite);
             }
         });
     }
@@ -354,7 +360,7 @@ public class ResourceDetailView extends
         ViewFactory viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return ResourceCompositeSearchView.getChildrenOf(resourceComposite);
+              return viewWithoutHeader(ResourceCompositeSearchView.getChildrenOf(resourceComposite));
             }
         };
         updateSubTab(this.inventoryTab, this.inventoryChildren, visible, true, viewFactory);
@@ -363,7 +369,7 @@ public class ResourceDetailView extends
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new ChildHistoryView(resourceComposite);
+              return viewWithoutHeader(new ChildHistoryView(resourceComposite));
             }
         };
         updateSubTab(this.inventoryTab, this.inventoryChildHistory, visible, true, viewFactory);
@@ -381,8 +387,8 @@ public class ResourceDetailView extends
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new PluginConfigurationHistoryListView(resourceComposite.getResourcePermission().isInventory(),
-                    resourceComposite.getResource().getId());
+              return viewWithoutHeader( new PluginConfigurationHistoryListView(resourceComposite.getResourcePermission().isInventory(),
+                    resourceComposite.getResource().getId()));
             }
         };
         updateSubTab(this.inventoryTab, this.inventoryConnHistory, visible, true, viewFactory);
@@ -391,7 +397,7 @@ public class ResourceDetailView extends
         updateSubTab(this.inventoryTab, this.inventoryGroups, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return ResourceGroupListView.getGroupsOf(resource.getId(), canModifyMembership);
+              return viewWithoutHeader(ResourceGroupListView.getGroupsOf(resource.getId(), canModifyMembership));
             }
         });
 
@@ -399,7 +405,7 @@ public class ResourceDetailView extends
         viewFactory = (!enabled) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new ResourceAgentView(resourceId);
+              return new ResourceAgentView(resourceId);
             }
         };
         updateSubTab(this.inventoryTab, this.inventoryAgent, true, enabled, viewFactory);
@@ -409,14 +415,14 @@ public class ResourceDetailView extends
         updateSubTab(this.alertsTab, this.alertHistory, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return ResourceAlertHistoryView.get(resourceComposite);
+              return viewWithoutHeader( ResourceAlertHistoryView.get(resourceComposite) );
             }
         });
 
         updateSubTab(this.alertsTab, this.alertDef, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new ResourceAlertDefinitionsView(resourceComposite);
+              return viewWithoutHeader( new ResourceAlertDefinitionsView(resourceComposite));
             }
         });
     }
@@ -447,7 +453,7 @@ public class ResourceDetailView extends
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new TraitsView(resource.getId());
+                return viewWithoutHeader(new TraitsView(resource.getId()));
             }
         };
         updateSubTab(this.monitoringTab, this.monitorTraits, visible, true, viewFactory);
@@ -456,7 +462,7 @@ public class ResourceDetailView extends
             new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new ResourceSchedulesView(resourceComposite);
+                    return viewWithoutHeader(new ResourceSchedulesView(resourceComposite));
                 }
             });
 
@@ -476,7 +482,7 @@ public class ResourceDetailView extends
             updateSubTab(this.eventsTab, this.eventHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return EventCompositeHistoryView.get(resourceComposite);
+                      return viewWithoutHeader(EventCompositeHistoryView.get(resourceComposite));
                 }
             });
         }
@@ -494,7 +500,7 @@ public class ResourceDetailView extends
             updateSubTab(this.operationsTab, this.operationsSchedules, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new ResourceOperationScheduleListView(resourceComposite);
+                    return viewWithoutHeader(new ResourceOperationScheduleListView(resourceComposite));
                 }
             });
 
@@ -522,10 +528,8 @@ public class ResourceDetailView extends
             updateSubTab(this.configurationTab, this.configHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    ResourceConfigurationHistoryListView view = new ResourceConfigurationHistoryListView(resourceComposite.getResourcePermission()
-                        .isConfigureWrite(), resource.getId());
-                    view.setShowHeader(false);
-                    return view;
+                      return viewWithoutHeader(new ResourceConfigurationHistoryListView(resourceComposite.getResourcePermission()
+                        .isConfigureWrite(), resource.getId()));
                 }
             });
         }
@@ -537,7 +541,7 @@ public class ResourceDetailView extends
             updateSubTab(this.driftTab, this.driftDefinitions, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return ResourceDriftDefinitionsView.get(resourceComposite);
+                    return viewWithoutHeader (ResourceDriftDefinitionsView.get(resourceComposite));
                 }
             });
         }

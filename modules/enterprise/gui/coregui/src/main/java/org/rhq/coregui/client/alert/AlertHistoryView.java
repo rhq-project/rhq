@@ -71,7 +71,7 @@ import org.rhq.coregui.client.util.message.Message;
  * @author Heiko W. Rupp
  * @author John Mazzitelli
  */
-public class AlertHistoryView extends TableSection<AlertDataSource> implements HasViewName {
+public class AlertHistoryView extends TableSection<AlertDataSource>  implements HasViewName {
 
     public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentAlerts", MSG.common_title_recent_alerts(),
         IconEnum.RECENT_ALERTS);
@@ -116,10 +116,10 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         setInitialCriteriaFixed(false);
         setDataSource(new AlertDataSource(context));
     }
-    
+
     public AlertHistoryView(String tableTitle, int[] resourceIds) {
         super(tableTitle, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
-        
+
         Criteria initialCriteria = new Criteria();
         AlertPriority[] priorityValues = AlertPriority.values();
         String[] priorityNames = new String[priorityValues.length];
@@ -181,7 +181,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
      * that only trim their views to the top N alerts can override this to
      * return false so they don't delete or acknowledge alerts that aren't displayed
      * to the user.
-     * 
+     *
      * @return this default implementation returns true
      */
     protected boolean canSupportDeleteAndAcknowledgeAll() {
@@ -256,7 +256,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     // CoreGUI.goToView(LinkManager.getEntityTabLink(context, "Alerts", "Definitions/0"));
-                    // the above doesn't work because EntityContext doesn't know if it is autogroup or not 
+                    // the above doesn't work because EntityContext doesn't know if it is autogroup or not
                     // -> using the relative URL hack
                     String oldurl = History.getToken();
                     String lastChunk = oldurl.substring(oldurl.lastIndexOf("/") + 1);
@@ -372,7 +372,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
     public ViewName getViewName() {
         return SUBSYSTEM_VIEW_ID;
     }
-    
+
     public void setShowNewDefinitionButton(boolean showNewDefinitionButton) {
         this.showNewDefinitionButton = showNewDefinitionButton;
     }

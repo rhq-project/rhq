@@ -117,7 +117,7 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
         addMember(dashboardView);
 
         footer = new EnhancedToolStrip();
-        //footer.setPadding(5);
+        footer.setStyleName("footer");
         footer.setWidth100();
         footer.setMembersMargin(15);
 

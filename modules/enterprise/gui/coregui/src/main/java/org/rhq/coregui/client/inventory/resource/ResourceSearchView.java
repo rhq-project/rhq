@@ -83,7 +83,7 @@ import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * The list view for {@link Resource}s. If not specified a default title is assigned.  If not specified the list will
- * be initially sorted by resource name, ascending. 
+ * be initially sorted by resource name, ascending.
  *
  * @author Jay Shaughnessy
  * @author Greg Hinkle
@@ -159,6 +159,7 @@ public class ResourceSearchView extends Table {
 
         final RPCDataSource<Resource, ResourceCriteria> datasource = getDataSourceInstance();
         setDataSource(datasource);
+        setStyleName("resourcesearchlist");
     }
 
     // suppress unchecked warnings because the subclasses may have different generic types for the datasource

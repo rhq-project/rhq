@@ -67,8 +67,6 @@ public class SubTabLayout extends EnhancedVLayout {
 
         setWidth100();
         setHeight100();
-//        setMargin(0);
-//        setPadding(0);
 
         buttonBar = new EnhancedToolStrip();
         buttonBar.setWidth100();

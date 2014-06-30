@@ -76,6 +76,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
 
     public ResourceGroupListView() {
         this(DEFAULT_TITLE);
+
     }
 
     public ResourceGroupListView(String title) {
@@ -83,21 +84,15 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
     }
 
     public ResourceGroupListView(Criteria criteria, String title, String headerIcon) {
-        super(title, criteria);
-
-        if (headerIcon != null) {
-            setTitleIcon(headerIcon);
-        }
+        super(title, criteria, headerIcon);
 
         final ResourceGroupCompositeDataSource datasource = ResourceGroupCompositeDataSource.getInstance();
         setDataSource(datasource);
+        setStyleName("resourcegrouplist");
     }
 
     public ResourceGroupListView(Criteria criteria) {
-        super(null, criteria);
-
-        final ResourceGroupCompositeDataSource datasource = ResourceGroupCompositeDataSource.getInstance();
-        setDataSource(datasource);
+        this(criteria, null, null);
     }
 
     public void setShowDeleteButton(boolean showDeleteButton) {

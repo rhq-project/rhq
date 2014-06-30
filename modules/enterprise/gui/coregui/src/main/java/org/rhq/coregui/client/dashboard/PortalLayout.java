@@ -66,7 +66,6 @@ public class PortalLayout extends EnhancedHLayout {
         }
 
         this.dashboardView = dashboardView;
-        //setMargin(4);
         this.setStyleName("portalLayout");
         setMembersMargin(4);
 

@@ -122,14 +122,18 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem recentOperationsItem = new NavigationItem(OperationHistoryView.SUBSYSTEM_VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
-                    return new SubsystemOperationHistoryListView(getGlobalPermissions().contains(
+                    SubsystemOperationHistoryListView v = new SubsystemOperationHistoryListView(getGlobalPermissions().contains(
                         Permission.MANAGE_INVENTORY));
+                    v.setShowHeader(false);
+                    return v;
                 }
             });
 
         NavigationItem recentAlertsItem = new NavigationItem(AlertHistoryView.SUBSYSTEM_VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new SubsystemRecentAlertsView(getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+                SubsystemRecentAlertsView v = new SubsystemRecentAlertsView(getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+                v.setShowHeader(false);
+                return v;
             }
         });
 

@@ -212,6 +212,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         this.sortSpecifiers = sortSpecifiers;
         this.excludedFieldNames = excludedFieldNames;
         this.autoFetchData = autoFetchData;
+        setStyleName("commontable");
     }
 
     /**
@@ -421,7 +422,6 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
             // add a toolstrip at the top of screen for navigation, date range controls, etc...
             this.topExtraWidgets = new EnhancedToolStrip();
-            topExtraWidgets.setPadding(5);
             topExtraWidgets.setWidth100();
             topExtraWidgets.setMembersMargin(15);
             topExtraWidgets.hide();
@@ -450,14 +450,17 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
             // This is hidden from view unless extra widgets are actually added to the table above the main footer.
             this.footerExtraWidgets = new EnhancedToolStrip();
-            footerExtraWidgets.setPadding(5);
+            //footerExtraWidgets.setPadding(5);
             footerExtraWidgets.setWidth100();
             footerExtraWidgets.setMembersMargin(15);
             footerExtraWidgets.hide();
+            footerExtraWidgets.setStyleName("footerExtraWidgets");
+
             contents.addMember(footerExtraWidgets);
 
             this.footer = new EnhancedToolStrip();
-            footer.setPadding(5);
+            footer.addStyleName("footer");
+            //footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
             if (!showFooter) {
@@ -478,6 +481,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             });
 
             Label tableInfo = new Label();
+            tableInfo.setStyleName("tableInfo");
             tableInfo.setWrap(false);
             setTableInfo(tableInfo);
             refreshRowCount();
@@ -652,6 +656,8 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
         if (isShowFooterRefresh()) {
             this.refreshButton = new EnhancedIButton(MSG.common_button_refresh());
+            refreshButton.setOverflow(Overflow.VISIBLE);
+
             refreshButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     disableAllFooterControls();
@@ -707,7 +713,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     }
 
     public void setFilterFormItems(FormItem... formItems) {
-        setShowHeader(false);
+        //setShowHeader(false);
         this.filterForm.setItems(formItems);
         this.filterForm.setNumCols(4);
     }
@@ -1205,7 +1211,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
         public TableFilter(Table<?> table) {
             super();
-            setOverflow(Overflow.VISIBLE);
+            //setOverflow(Overflow.HIDDEN);
             setWidth100();
             this.table = table;
         }

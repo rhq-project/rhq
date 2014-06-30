@@ -21,8 +21,6 @@ package org.rhq.enterprise.server.plugins.jboss.software;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 
 import churchillobjects.rss4j.RssDocument;
@@ -38,6 +36,9 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
@@ -49,6 +50,8 @@ import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
 import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Hook into the server to field requests on JBoss software related packages.
@@ -83,6 +86,9 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
     private final Log log = LogFactory.getLog(this.getClass());
 
     public void initialize(Configuration configuration) throws Exception {
+        SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        SystemSettings settings = systemManager.getSystemSettings(overlord);
         url = safeGetConfigurationProperty("url", configuration);
 
         if (url == null) {
@@ -102,6 +108,23 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
         String sProxyPort = safeGetConfigurationProperty("proxyPort", configuration);
         if (sProxyPort != null) {
             proxyPort = Integer.parseInt(sProxyPort);
+        }
+
+        // default to global HTTP Proxy settings
+        if (proxyUrl == null) {
+            proxyUrl = settings.get(SystemSetting.HTTP_PROXY_SERVER_HOST);
+        }
+        if (proxyUsername == null) {
+            proxyUsername = settings.get(SystemSetting.HTTP_PROXY_SERVER_USERNAME);
+        }
+        if (proxyPassword == null) {
+            proxyPassword = settings.get(SystemSetting.HTTP_PROXY_SERVER_PASSWORD);
+        }
+        if (sProxyPort == null) {
+            sProxyPort = settings.get(SystemSetting.HTTP_PROXY_SERVER_PORT);
+            if (sProxyPort != null) {
+                proxyPort = Integer.parseInt(sProxyPort);
+            }
         }
     }
 

@@ -324,17 +324,17 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/servlet/jboss-servlet-api_3.0_spec/1.0.2.Final/jboss-servlet-api_3.0_spec-1.0.2.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/msc/jboss-msc/1.0.2.GA/jboss-msc-1.0.2.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jboss-dmr/1.1.1.Final/jboss-dmr-1.1.1.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-naming/7.4.0.Final-redhat-SNAPSHOT/jboss-as-naming-7.4.0.Final-redhat-SNAPSHOT.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-naming/7.4.0.Final-redhat-SNAPSHOT/jboss-as-naming-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-server/7.4.0.Final-redhat-SNAPSHOT/jboss-as-server-7.4.0.Final-redhat-SNAPSHOT.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-server/7.4.0.Final-redhat-SNAPSHOT/jboss-as-server-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-ee/7.4.0.Final-redhat-SNAPSHOT/jboss-as-ee-7.4.0.Final-redhat-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-ejb3/7.4.0.Final-redhat-SNAPSHOT/jboss-as-ejb3-7.4.0.Final-redhat-SNAPSHOT.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-ejb3/7.4.0.Final-redhat-SNAPSHOT/jboss-as-ejb3-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/as/jboss-as-naming/7.4.0.Final-redhat-4/jboss-as-naming-7.4.0.Final-redhat-4.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-naming/7.4.0.Final-redhat-SNAPSHOT/jboss-as-naming-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/as/jboss-as-server/7.4.0.Final-redhat-4/jboss-as-server-7.4.0.Final-redhat-4.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-server/7.4.0.Final-redhat-SNAPSHOT/jboss-as-server-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/as/jboss-as-ee/7.4.0.Final-redhat-4/jboss-as-ee-7.4.0.Final-redhat-4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/as/jboss-as-ejb3/7.4.0.Final-redhat-4/jboss-as-ejb3-7.4.0.Final-redhat-4.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-ejb3/7.4.0.Final-redhat-SNAPSHOT/jboss-as-ejb3-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/staxmapper/1.1.0.Final/staxmapper-1.1.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/modules/jboss-modules/1.3.3.Final/jboss-modules-1.3.3.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-subsystem-test-framework/7.4.0.Final-redhat-SNAPSHOT/jboss-as-subsystem-test-framework-7.4.0.Final-redhat-SNAPSHOT.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-subsystem-test-framework/7.4.0.Final-redhat-SNAPSHOT/jboss-as-subsystem-test-framework-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-controller/7.4.0.Final-redhat-SNAPSHOT/jboss-as-controller-7.4.0.Final-redhat-SNAPSHOT.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-controller/7.4.0.Final-redhat-SNAPSHOT/jboss-as-controller-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-controller-client/7.4.0.Final-redhat-SNAPSHOT/jboss-as-controller-client-7.4.0.Final-redhat-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-model-test/7.4.0.Final-redhat-SNAPSHOT/jboss-as-model-test-7.4.0.Final-redhat-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-network/7.4.0.Final-redhat-SNAPSHOT/jboss-as-network-7.4.0.Final-redhat-SNAPSHOT.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-network/7.4.0.Final-redhat-SNAPSHOT/jboss-as-network-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/as/jboss-as-subsystem-test-framework/7.4.0.Final-redhat-4/jboss-as-subsystem-test-framework-7.4.0.Final-redhat-4.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-subsystem-test-framework/7.4.0.Final-redhat-SNAPSHOT/jboss-as-subsystem-test-framework-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/as/jboss-as-controller/7.4.0.Final-redhat-4/jboss-as-controller-7.4.0.Final-redhat-4.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-controller/7.4.0.Final-redhat-SNAPSHOT/jboss-as-controller-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/as/jboss-as-controller-client/7.4.0.Final-redhat-4/jboss-as-controller-client-7.4.0.Final-redhat-4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/as/jboss-as-model-test/7.4.0.Final-redhat-4/jboss-as-model-test-7.4.0.Final-redhat-4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/as/jboss-as-network/7.4.0.Final-redhat-4/jboss-as-network-7.4.0.Final-redhat-4.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-network/7.4.0.Final-redhat-SNAPSHOT/jboss-as-network-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-links/2.3.5.Final/resteasy-links-2.3.5.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jaxrs/2.3.5.Final/resteasy-jaxrs-2.3.5.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jackson-provider/2.3.5.Final/resteasy-jackson-provider-2.3.5.Final.jar"/>
@@ -377,9 +377,9 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/wordnik/swagger-annotations_2.9.1/1.2.3/swagger-annotations_2.9.1-1.2.3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/yaml/snakeyaml/1.8/snakeyaml-1.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/joda-time/joda-time/2.1/joda-time-2.1.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-install/2.1.4.1/byteman-install-2.1.4.1.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-install/2.1.4.1/byteman-install-2.1.4.1-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-submit/2.1.4.1/byteman-submit-2.1.4.1.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-submit/2.1.4.1/byteman-submit-2.1.4.1-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-bmunit/2.1.4.1/byteman-bmunit-2.1.4.1.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-2.1.4.1-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-install/2.1.4.1/byteman-install-2.1.4.1-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-submit/2.1.4.1/byteman-submit-2.1.4.1-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-2.1.4.1-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/trove4j/trove4j/3.0.3/trove4j-3.0.3.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-all/1.2.12/cassandra-all-1.2.12.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/thrift/libthrift/0.7.0/libthrift-0.7.0.jar"/>
@@ -399,5 +399,6 @@
 	<classpathentry kind="var" path="M2_REPO/com/codahale/metrics/metrics-core/3.0.1/metrics-core-3.0.1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/datastax/cassandra/cassandra-driver-core/1.0.5/cassandra-driver-core-1.0.5.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/jolbox/bonecp/0.8.0.RELEASE/bonecp-0.8.0.RELEASE.jar"/>
+	<classpathentry kind="var" path="M2_REPO/io/undertow/undertow-core/1.0.15.Final/undertow-core-1.0.15.Final.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

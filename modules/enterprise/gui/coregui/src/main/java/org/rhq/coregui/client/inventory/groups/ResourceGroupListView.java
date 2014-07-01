@@ -114,7 +114,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                 String categoryName = (String) value;
                 GroupCategory category = GroupCategory.valueOf(categoryName);
                 String icon = ImageManager.getGroupIcon(category);
-                return "<img src=\"" + ImageManager.getFullImagePath(icon) + "\" />";
+                return "<img class='tableImage' src=\"" + ImageManager.getFullImagePath(icon) + "\" />";
             }
         });
         categoryField.setShowHover(true);

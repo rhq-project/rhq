@@ -1318,10 +1318,11 @@ selectItemPickerIcon,
     border-bottom:2px dotted #548ACA;
 }
 
-/*.listTable img {
+.tableImage {
   width:16px;
   height:16px;
-}*/
+}
+
 /* for filterEditor */
 .recordEditorCell {
 

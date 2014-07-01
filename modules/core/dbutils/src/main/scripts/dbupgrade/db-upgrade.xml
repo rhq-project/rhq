@@ -2379,7 +2379,7 @@
                 </statement>
                 <statement targetDBVendor="oracle" desc="Adding metrics cache table activation time">
                   INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
-0                 VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', '-1', null, 0)
+                  VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', '-1', null, 0)
                 </statement>
               </schema-directSQL>
             </schemaSpec>
@@ -2392,7 +2392,17 @@
                 </statement>
               </schema-directSQL>
             </schemaSpec>
-       
+
+            <schemaSpec version="2.152">
+              <schema-directSQL ignoreError="true">
+                <statement desc="Change nightly index to false. unlikely but can set back to true if desired.">
+                  UPDATE rhq_system_config
+                     SET property_value='false', default_property_value='false'
+                   WHERE id=35
+                </statement>
+              </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

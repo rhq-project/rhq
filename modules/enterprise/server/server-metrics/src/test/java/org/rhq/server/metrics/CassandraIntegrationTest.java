@@ -70,7 +70,7 @@ public class CassandraIntegrationTest {
     private final Log log = LogFactory.getLog(CassandraIntegrationTest.class);
 
     @BeforeSuite
-    @DeployCluster(numNodes = 2, username = RHQADMIN, password = RHQADMIN_PASSWORD, waitForSchemaAgreement = true)
+    @DeployCluster(numNodes = 1, username = RHQADMIN, password = RHQADMIN_PASSWORD, waitForSchemaAgreement = true)
     public void deployCluster() throws Exception {
         dateTimeService = new DateTimeService();
 

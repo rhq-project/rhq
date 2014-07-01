@@ -115,6 +115,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         dao = new MetricsDAO(storageSession, configuration);
         metricsServer.setDAO(dao);
+        metricsServer.init();
 
         purgeDB();
     }
@@ -866,17 +867,10 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         assertEquals(actualData.size(), buckets.getNumDataPoints(), "Expected to get back 60 data points.");
 
         MeasurementDataNumericHighLowComposite expectedBucket0 = new MeasurementDataNumericHighLowComposite(
-            buckets.get(0).getStartTime(), divide(3.0 + 5.0, 2), 6.0, 1.0);
+            buckets.get(0).getStartTime(), 5.0, 6.0, 4.0);
 
         assertPropertiesMatch("The data for bucket 0 does not match expected values", expectedBucket0,
             actualData.get(0), TEST_PRECISION);
-
-        // make sure the max for the invalid metric was updated
-        List<AggregateNumericMetric> updatedMetrics = Lists.newArrayList(dao.findSixHourMetrics(scheduleId,
-            bucket0Time.getMillis(), bucket0Time.plusSeconds(10).getMillis()));
-
-        assertEquals(updatedMetrics.size(), 1, "Expected to get back 1 updated metric");
-        assertEquals(updatedMetrics.get(0).getMax(), 3.0, "Failed to update the max for invalid metric");
     }
 
     @Test

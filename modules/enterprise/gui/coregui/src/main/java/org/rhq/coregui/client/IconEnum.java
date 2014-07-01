@@ -42,7 +42,7 @@ public enum IconEnum {
 
     INVENTORY("global/Inventory_16.png","global/Inventory_24.png"),
     DISCOVERY_QUEUE("global/AutoDiscovery_16.png","global/AutoDiscovery_24.png"),
-    ALL_RESOURCES("resources/all_resources.png"),
+    ALL_RESOURCES("resources/all_resources.png","resources/all_resources.png"),
     PLATFORMS("types/Platform_type_16.png","types/Platform_type_24.png"),
     SERVERS("types/Server_type_16.png", "types/Server_type_24.png"),
     SERVICES("types/Service_type_16.png", "types/Service_type_24.png"),

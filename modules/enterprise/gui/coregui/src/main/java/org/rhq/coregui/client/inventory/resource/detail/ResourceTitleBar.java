@@ -266,6 +266,9 @@ public class ResourceTitleBar extends EnhancedVLayout {
 
         //modify VLayout settings
         setWidth100();
+        setHeight(30);
+        setPadding(5);
+        setMembersMargin(5);
     }
 
     public void update() {
@@ -289,6 +292,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
         });
 
         badge = new Img(ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE), 24, 24);
+        badge.setLayoutAlign(VerticalAlignment.CENTER);
 
         TagEditorView tagEditorView = new TagEditorView(resource.getTags(), !resourceComposite.getResourcePermission()
             .isInventory(), new TagsChangedCallback() {
@@ -312,8 +316,10 @@ public class ResourceTitleBar extends EnhancedVLayout {
         loadTags(tagEditorView);
 
         //add expand/collapse icon
-        expandCollapseArrow = new Img(COLLAPSED_ICON, 24, 24);
+        expandCollapseArrow = new Img(COLLAPSED_ICON, 16, 16);
         expandCollapseArrow.setTooltip(COLLAPSED_TOOLTIP);
+        expandCollapseArrow.setLayoutAlign(VerticalAlignment.CENTER);
+
         expandCollapseArrow.addClickHandler(new ClickHandler() {
             private boolean collapsed = true;
 

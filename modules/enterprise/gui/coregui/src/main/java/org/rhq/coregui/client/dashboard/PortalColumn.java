@@ -40,7 +40,7 @@ public class PortalColumn extends VStack {
 
         // Allow column specific vertical scrolling to see off-screen portlets. Takes up real estate but allows
         // a user to see specific portlets in each column at the same time.
-        setOverflow(Overflow.AUTO);
+      //  setOverflow(Overflow.AUTO);
 
         // enable predefined component animation
         setAnimateMembers(true);

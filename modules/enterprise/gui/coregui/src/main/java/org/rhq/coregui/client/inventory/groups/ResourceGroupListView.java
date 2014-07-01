@@ -88,7 +88,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
 
         final ResourceGroupCompositeDataSource datasource = ResourceGroupCompositeDataSource.getInstance();
         setDataSource(datasource);
-        setStyleName("resourcegrouplist");
+      //  setStyleName("resourcegrouplist");
     }
 
     public ResourceGroupListView(Criteria criteria) {

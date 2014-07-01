@@ -32,9 +32,7 @@ isc.loadSkin = function (theWindow) {
         }
 
 
-        isc.Button.addProperties({
-            height: 22,
-                  });
+        isc.Button.addProperties({ height: 22 });
 
 
         // define IButton so examples that support the new SmartClient skin image-based
@@ -84,16 +82,8 @@ isc.loadSkin = function (theWindow) {
               allowThumbDownState:false,
               allowThumbOverState:false,
               showTrackEnds:false,
-          /*  hSrc:"[SKIN]hscroll.png",
-          showRollOver:true,
-            btnSize:18,
-            hSrc:"[SKIN]hscroll.png",
-            thumbInset:0,
-            thumbMinSize:20,
-            thumbOverlap:2,
-            vSrc:"[SKIN]vscroll.png",*/
-            hThumbClass:isc.HSimpleScrollThumb,
-            vThumbClass:isc.VSimpleScrollThumb
+              hThumbClass:isc.HSimpleScrollThumb,
+              vThumbClass:isc.VSimpleScrollThumb
         });
 
         //----------------------------------------
@@ -132,22 +122,14 @@ isc.loadSkin = function (theWindow) {
         })
 
         if (isc.SectionItem) {
-            isc.SectionItem.addProperties({
-                height:31
-            });
+            isc.SectionItem.addProperties({ height:31 });
         }
         if (isc.SectionStack) {
-            isc.SectionStack.addProperties({
-                headerHeight:31
-            });
-
-
+            isc.SectionStack.addProperties({ headerHeight:31 });
         }
 
 
-        isc.SectionHeader.addProperties({
-          icon:"[SKIN]SectionHeader/opener.png"
-        });
+        isc.SectionHeader.addProperties({ icon:"[SKIN]SectionHeader/opener.png" });
 
         if (isc.ListGrid) {
             isc.ListGrid.addProperties({
@@ -156,8 +138,6 @@ isc.loadSkin = function (theWindow) {
                 editFailedCSSText:"color:FF6347;",
                 errorIconSrc : "[SKINIMG]actions/exclamation.png",
                 tallBaseStyle: "tallCell",
-              //  backgroundColor:null,
-              //  headerBackgroundColor:null,
                 expansionFieldImageWidth : 8,
                 expansionFieldImageHeight : 8,
                 headerBaseStyle : "headerButton",
@@ -168,16 +148,13 @@ isc.loadSkin = function (theWindow) {
                 showHeaderMenuButton:true,
                 headerMenuButtonConstructor:"HeaderMenuButton",
                 headerMenuButtonWidth:17,
-
                 groupLeadingIndent : 1,
                 groupIconPadding : 3,
                 groupIcon: "[SKINIMG]/ListGrid/group.gif",
-
                 summaryRowStyle:"gridSummaryCell",
                 groupSummaryStyle:"groupSummaryCell",
                 sortAscendingImage:{src:"[SKINIMG][SKINIMG]ListGrid/sort_ascending.gif", width:5, height:5},
                 sortDescendingImage:{src:"[SKINIMG][SKINIMG]ListGrid/sort_descending.gif", width:5, height:5},
-
                 checkboxFieldImageWidth : 13,
                 checkboxFieldImageHeight : 13
             });
@@ -244,48 +221,50 @@ isc.loadSkin = function (theWindow) {
             isc.Window.addProperties({
                 showHeaderBackground: false,
                 showFooter:false,
-                membersMargin : 0,
+                membersMargin : 5,
                 modalMaskOpacity : 10
             });
             isc.Window.changeDefaults("headerDefaults", {
                 height:25,
                 layoutMargin:0,
-                membersMargin:0
+                membersMargin:3
             });
             isc.Window.changeDefaults("headerIconDefaults", {
                 width:15,
-                height:15
-
+                height:15,
+                src: "[SKIN]/headerIcons/headerIcon.png",
             });
 
             isc.Window.changeDefaults("closeButtonDefaults", {
+                src:"[SKIN]/headerIcons/close.png",
                 showRollOver:false,
                 showDown:false,
                 width:15,
                 height:15
             });
             isc.Window.changeDefaults("minimizeButtonDefaults", {
+                src:"[SKIN]/headerIcons/minimize.png",
                 showRollOver:false,
                 showDown:false,
                 width:15,
                 height:15
             });
-            /*
 
             isc.Window.changeDefaults("restoreButtonDefaults", {
-                src:"[SKIN]/headerIcons/cascade.gif",
-                showRollOver:true,
+                src:"[SKIN]/headerIcons/restore.png",
+                showRollOver:false,
                 showDown:false,
                 width:15,
                 height:15
             });
+
             isc.Window.changeDefaults("maximizeButtonDefaults", {
-                src:"[SKIN]/headerIcons/maximize.png",
-                showRollOver:true,
-                width:15,
-                height:15
-            });
-            */
+              src:"[SKIN]/headerIcons/maximize.png",
+              opacity:isc._edgeOpacity,
+              showRollOver:false,
+              width:15,
+              height:15
+            })
             isc.Window.changeDefaults("toolbarDefaults", {
                 buttonConstructor: "IButton"
             }) ;
@@ -297,19 +276,19 @@ isc.loadSkin = function (theWindow) {
             }
         }
 
-      /*  if (isc.Dialog) {
+        if (isc.Dialog) {
             isc.Dialog.addProperties({
-                bodyColor: "#f6f6f6"
+                bodyColor: "#fff"
             });
-        }*/
+        }
 
         // Dynamic form skinning
         if (isc.FormItem) {
             isc.FormItem.addProperties({
                 defaultIconSrc:"[SKIN]/DynamicForm/default_formItem_icon.gif",
                 errorIconSrc : "[SKINIMG]actions/exclamation.png",
-                iconHeight:18,
-                iconWidth:18,
+                iconHeight:24,
+                iconWidth:24,
                 iconVAlign:"middle"
             });
         }
@@ -440,7 +419,7 @@ isc.loadSkin = function (theWindow) {
                 baseWeekendStyle:"dateChooserWeekend",
                 baseBottomButtonStyle:"dateChooserBottomButton",
                 alternateWeekStyles:false,
-                todayButtonHeight:20,
+                todayButtonHeight:20
               //  edgeCenterBackgroundColor:"#FFFFFF",
               //  backgroundColor:"#FFFFFF",
               //  border:"1px solid #868686"
@@ -479,8 +458,8 @@ isc.loadSkin = function (theWindow) {
                 //labelVPad:0,
                 //labelHPad:7,
                 autoFit:true,
-                baseStyle : "toolbarButton"
-  //              height:22
+                baseStyle : "toolbarButton",
+                height:23
             });
         }
 
@@ -501,13 +480,13 @@ isc.loadSkin = function (theWindow) {
             });
         }
 
-        if (isc.TileGrid) {
+        /*if (isc.TileGrid) {
             isc.TileGrid.addProperties({
                 valuesShowRollOver: true,
                 styleName:null,
                 showEdges:false
             });
-        }
+        }*/
 
         if (isc.Calendar) {
             isc.Calendar.changeDefaults("datePickerButtonDefaults", {
@@ -523,10 +502,7 @@ isc.loadSkin = function (theWindow) {
         }
 
         if (isc.Hover) {
-            isc.addProperties(isc.Hover.hoverCanvasDefaults, {
-                showShadow:false,
-                shadowDepth:5
-            })
+            isc.addProperties(isc.Hover.hoverCanvasDefaults, { showShadow:false });
         }
 
         isc.pickerImgType = "gif";
@@ -538,5 +514,4 @@ isc.loadSkin = function (theWindow) {
 }
 
 
-// call the loadSkin routine
 isc.loadSkin();

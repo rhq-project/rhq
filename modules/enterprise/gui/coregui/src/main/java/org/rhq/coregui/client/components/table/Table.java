@@ -212,7 +212,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         this.sortSpecifiers = sortSpecifiers;
         this.excludedFieldNames = excludedFieldNames;
         this.autoFetchData = autoFetchData;
-        setStyleName("commontable");
+	//        setStyleName("commontable");
     }
 
     /**
@@ -304,8 +304,9 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         addMember(contents);
 
         filterForm = new TableFilter(this);
-        filterForm.setWidth100();
+	//        filterForm.setWidth100();
         filterForm.addStyleName("tableFilter");
+
         // Table filters and search bar are currently mutually exclusive.
         if (getSearchSubsystem() == null) {
             configureTableFilters();
@@ -454,7 +455,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             footerExtraWidgets.setWidth100();
             footerExtraWidgets.setMembersMargin(15);
             footerExtraWidgets.hide();
-            footerExtraWidgets.setStyleName("footerExtraWidgets");
+	    //            footerExtraWidgets.setStyleName("footerExtraWidgets");
 
             contents.addMember(footerExtraWidgets);
 
@@ -481,7 +482,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             });
 
             Label tableInfo = new Label();
-            tableInfo.setStyleName("tableInfo");
+	    //            tableInfo.setStyleName("tableInfo");
             tableInfo.setWrap(false);
             setTableInfo(tableInfo);
             refreshRowCount();
@@ -509,6 +510,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError(MSG.view_table_drawFail(this.toString()), e);
         }
+
 
         markForRedraw();
     }
@@ -656,7 +658,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
         if (isShowFooterRefresh()) {
             this.refreshButton = new EnhancedIButton(MSG.common_button_refresh());
-            refreshButton.setOverflow(Overflow.VISIBLE);
+	    //            refreshButton.setOverflow(Overflow.VISIBLE);
 
             refreshButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -800,7 +802,6 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         final ListGrid listGrid = getListGrid();
 
         Criteria criteria = getCurrentCriteria();
-        Log.debug(getClass().getName() + ".refresh() using criteria [" + CriteriaUtility.toString(criteria) + "]...");
         listGrid.setCriteria(criteria);
 
         if (resetPaging) {
@@ -1211,8 +1212,8 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
         public TableFilter(Table<?> table) {
             super();
-            //setOverflow(Overflow.HIDDEN);
-            setWidth100();
+            setOverflow(Overflow.VISIBLE);
+            setAutoWidth();
             this.table = table;
         }
 

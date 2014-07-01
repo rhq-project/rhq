@@ -279,39 +279,4 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         return new NavigationSection(GROUPS_SECTION_VIEW_ID, allGroupsItem, dynagroupDefinitionsItem,
             compatibleGroupsItem, mixedGroupsItem, problemGroupsItem);
     }
-/*
-    private class ResourceSearchViewWrapper extends ResourceSearchView implements HasViewName {
-
-        private ViewName viewName;
-
-        private final boolean showIgnoreButton;
-        private final boolean showUnignoreButton;
-
-        public ResourceSearchViewWrapper(ViewName viewName, Criteria criteria, String headerIcon) {
-            this(true, false, viewName, criteria, headerIcon);
-        }
-
-        public ResourceSearchViewWrapper(boolean showIgnoredButton, boolean showUnignoreButton, ViewName viewName,
-            Criteria criteria, String headerIcon) {
-            super(criteria, viewName.getTitle(), headerIcon);
-            this.viewName = viewName;
-            this.showIgnoreButton = showIgnoredButton;
-            this.showUnignoreButton = showUnignoreButton;
-        }
-
-        @Override
-        public ViewName getViewName() {
-            return viewName;
-        }
-
-        @Override
-        protected boolean shouldShowIgnoreButton() {
-            return this.showIgnoreButton;
-        }
-
-        @Override
-        protected boolean shouldShowUnignoreButton() {
-            return this.showUnignoreButton;
-        }
-    }*/
 }

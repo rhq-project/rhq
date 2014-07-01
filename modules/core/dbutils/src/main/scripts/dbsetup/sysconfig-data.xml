@@ -96,8 +96,8 @@
               DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="FALSE"/>
 
         <!-- Whether to reindex the data tables nightly -->
-        <data ID="35" PROPERTY_KEY="DATA_REINDEX_NIGHTLY" PROPERTY_VALUE="true"
-              DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
+        <data ID="35" PROPERTY_KEY="DATA_REINDEX_NIGHTLY" PROPERTY_VALUE="false"
+              DEFAULT_PROPERTY_VALUE="false" FREAD_ONLY="FALSE"/>
 
         <!-- How long to keep alerts around -->
         <data ID="36" PROPERTY_KEY="ALERT_PURGE" PROPERTY_VALUE="2678400000"
@@ -122,7 +122,7 @@
         <!-- How old does availability have to be in order to get purged -->
         <data ID="55" PROPERTY_KEY="AVAILABILITY_PURGE" PROPERTY_VALUE="31536000000"
               DEFAULT_PROPERTY_VALUE="31536000000" FREAD_ONLY="FALSE"/>
-              
+
         <data ID="56" PROPERTY_KEY="RESOURCE_GENERIC_PROPERTIES_UPGRADE" PROPERTY_VALUE="false"
               DEFAULT_PROPERTY_VALUE="false" FREAD_ONLY="FALSE"/>
 

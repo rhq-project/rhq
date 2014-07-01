@@ -100,6 +100,23 @@
             <version>1.0.15.Final</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- undertow 1.0.15.Final requires xnio in this version, not the version defined in parent pom -->
+
+        <dependency>
+            <groupId>org.jboss.xnio</groupId>
+            <artifactId>xnio-api</artifactId>
+            <version>3.2.0.Final</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.xnio</groupId>
+            <artifactId>xnio-nio</artifactId>
+            <version>3.2.0.Final</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

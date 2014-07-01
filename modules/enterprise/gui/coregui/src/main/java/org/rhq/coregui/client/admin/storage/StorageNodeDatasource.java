@@ -28,7 +28,6 @@ import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FI
 import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_FAILED_OPERATION;
 import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ID;
 import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MEMORY;
-import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MTIME;
 import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_OPERATION_MODE;
 import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RESOURCE_ID;
 import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_STATUS;
@@ -37,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.user.client.Random;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -84,6 +84,8 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
     // filters
     public static final String FILTER_ADDRESS = FIELD_ADDRESS.propertyName();
     public static final String FILTER_OPERATION_MODE = FIELD_OPERATION_MODE.propertyName();
+
+    public static final int AGGREGATE_FOR_LAST_N_HOURS = 8;
     private static StorageNodeDatasource instance;
         
     private StorageNodeDatasource() {
@@ -310,20 +312,18 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         public static final String KEY_TOTAL_DISK = "Load"; // todo: calculation for sparkline graphs
         public static final String KEY_OWNERSHIP = "Ownership";
         public static final String KEY_TOKENS = "Tokens";
-        
-        
-        private int id;
 
-        public static StorageNodeLoadCompositeDatasource getInstance(int id) {
-            return new StorageNodeLoadCompositeDatasource(id);
+        private int storageNodeId;
+
+        public static StorageNodeLoadCompositeDatasource getInstance(int storageNodeId) {
+            return new StorageNodeLoadCompositeDatasource(storageNodeId);
         }
 
-        public StorageNodeLoadCompositeDatasource(int id) {
-            super();
-            this.id = id;
-            setID("storageNodeLoad");
+        public StorageNodeLoadCompositeDatasource(int storageNodeId) {
+            super("storageNodeLoad" + storageNodeId + "-" + Random.nextDouble());
+            this.storageNodeId = storageNodeId;
             List<DataSourceField> fields = addDataSourceFields();
-            addFields(fields);
+            super.addFields(fields);
         }
 
         @Override
@@ -370,26 +370,32 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response, StorageNodeCriteria criteria) {
             final StorageNode node = new StorageNode();
-            node.setId(id);
+            node.setId(storageNodeId);
+            // set dummy address because StorageNode.equals method ignores id field
+            node.setAddress(String.valueOf(storageNodeId));
+            Log.debug("Executing fetch for storage node [id=" + storageNodeId + "]");
             executeFetch(node, new AsyncCallback<StorageNodeLoadComposite>() {
-                    public void onSuccess(final StorageNodeLoadComposite loadComposite) {
-                        ListGridRecord[] records = makeListGridRecords(loadComposite);
-                        response.setData(records);
-                        response.setTotalRows(records.length);
-                        StorageNodeLoadCompositeDatasource.this.processResponse(request.getRequestId(), response);
-                    }
+                public void onSuccess(final StorageNodeLoadComposite loadComposite) {
+                    Log.debug("Data for storage node [id=" + storageNodeId + "] arrived: " + loadComposite);
+                    ListGridRecord[] records = makeListGridRecords(loadComposite);
+                    response.setData(records);
+                    response.setTotalRows(records.length);
+                    StorageNodeLoadCompositeDatasource.this.processResponse(request.getRequestId(), response);
+                }
 
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Unable to fetch storage node load details.", caught);
-                        response.setStatus(DSResponse.STATUS_FAILURE);
-                        StorageNodeLoadCompositeDatasource.this.processResponse(request.getRequestId(), response);
-                    }
-                });
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.warn("Failed to execute fetch for storage node [id=" + storageNodeId + "]");
+                    CoreGUI.getErrorHandler().handleError(MSG.view_adminTopology_storageNodes_fetchFail(), caught);
+                    response.setStatus(DSResponse.STATUS_FAILURE);
+                    StorageNodeLoadCompositeDatasource.this.processResponse(request.getRequestId(), response);
+                }
+            });
         }
 
         private static void executeFetch(final StorageNode node, final AsyncCallback<StorageNodeLoadComposite> callback) {
-            GWTServiceLookup.getStorageService().getLoad(node, 8, MeasurementUtils.UNIT_HOURS, callback);
+            GWTServiceLookup.getStorageService().getLoad(node, AGGREGATE_FOR_LAST_N_HOURS, MeasurementUtils.UNIT_HOURS,
+                callback);
         }
 
         private ListGridRecord[] makeListGridRecords(StorageNodeLoadComposite loadComposite) {

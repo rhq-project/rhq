@@ -460,6 +460,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         loadLabel.setTooltip("Contains selected metrics collected for last 8 hours.");
         loadLabel.setHoverWidth(300);
         loadLayout.setMembers(spacer, loadLabel, loadDataComponent);
+        loadDataComponent.redraw();
 
         if (detailsAndLoadLayout == null) {
             detailsAndLoadLayout = new EnhancedHLayout();

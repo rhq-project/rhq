@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
@@ -60,27 +61,34 @@ import com.datastax.driver.core.policies.RoundRobinPolicy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.cassandra.util.ClusterBuilder;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.core.CoreServer;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.JMXUtil;
+import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.server.metrics.CallTimeConfiguration;
+import org.rhq.server.metrics.CallTimeDAO;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsConstants;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.StorageSession;
+import org.rhq.server.metrics.TraitsConfiguration;
+import org.rhq.server.metrics.TraitsDAO;
 
 /**
  * @author John Sanda
@@ -116,11 +124,14 @@ public class StorageClientManager implements StorageClientManagerMBean{
     private MetricsConfiguration metricsConfiguration;
     private MetricsDAO metricsDAO;
     private MetricsServer metricsServer;
+    private TraitsDAO traitsDAO;
+    private CallTimeDAO callTimeDAO;
     private boolean initialized;
     private StorageClusterMonitor storageClusterMonitor;
 
     private String cachedStorageUsername;
     private String cachedStoragePassword;
+
 
     public void scheduleStorageSessionMaintenance() {
         // each time the webapp is reloaded, we don't want to create duplicate jobs
@@ -183,9 +194,26 @@ public class StorageClientManager implements StorageClientManagerMBean{
             metricsConfiguration = new MetricsConfiguration();
             metricsDAO = new MetricsDAO(session, metricsConfiguration);
 
+            // TODO make this work at runtime...
+            Subject subject = LookupUtil.getSubjectManager().getOverlord();
+            SystemSettings settings = systemManager.getSystemSettings(subject);
+            String traitPurgeThresholdStr = settings.get(SystemSetting.TRAIT_PURGE_PERIOD.getInternalName());
+            TraitsConfiguration config = new TraitsConfiguration();
+            if (traitPurgeThresholdStr != null) {
+                config.setTTLDays(Integer.parseInt(traitPurgeThresholdStr));
+            }
+            traitsDAO = new TraitsDAO(session, config);
+
+            // TODO same issue
+            String callTimeStr = settings.get(SystemSetting.RT_DATA_PURGE_PERIOD.getInternalName());
+            CallTimeConfiguration ctconfig = new CallTimeConfiguration();
+            if (callTimeStr != null) {
+                config.setTTLDays(Integer.parseInt(callTimeStr));
+            }
+            callTimeDAO = new CallTimeDAO(session, ctconfig);
+
             initMetricsServer();
             JMXUtil.registerMBean(this, OBJECT_NAME);
-            initialized = true;
 
             initialized = true;
             LOG.info("Storage client subsystem is now initialized");
@@ -251,6 +279,8 @@ public class StorageClientManager implements StorageClientManagerMBean{
 
             session.registerNewSession(wrappedSession);
             metricsDAO.initPreparedStatements();
+            traitsDAO.initPreparedStatements();
+            callTimeDAO.initPreparedStatements();
             return true;
         }
 
@@ -293,6 +323,16 @@ public class StorageClientManager implements StorageClientManagerMBean{
 
         metricsDAO = null;
 
+        if (traitsDAO != null) {
+            traitsDAO.shutdown();
+            traitsDAO = null;
+        }
+
+        if (callTimeDAO != null) {
+            callTimeDAO.shutdown();
+            callTimeDAO = null;
+        }
+
         try {
             if (cluster != null) {
                 cluster.shutdown();
@@ -310,6 +350,16 @@ public class StorageClientManager implements StorageClientManagerMBean{
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public MetricsDAO getMetricsDAO() {
         return metricsDAO;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public CallTimeDAO getCallTimeDAO() {
+        return callTimeDAO;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public TraitsDAO getTraitsDAO() {
+        return traitsDAO;
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)

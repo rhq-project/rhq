@@ -49,7 +49,6 @@ public class AggregateDataMigrator extends AbstractMigrationWorker implements Ca
 
     private final Log log = LogFactory.getLog(AggregateDataMigrator.class);
 
-    private final DataMigratorConfiguration config;
     private final String selectQuery;
     private final String deleteQuery;
     private final String countQuery;
@@ -62,9 +61,9 @@ public class AggregateDataMigrator extends AbstractMigrationWorker implements Ca
      */
     public AggregateDataMigrator(MetricsTable metricsTable, DataMigratorConfiguration config)
         throws Exception {
+        super(config);
 
         this.metricsTable = metricsTable;
-        this.config = config;
 
         if (MetricsTable.ONE_HOUR.equals(this.metricsTable)) {
             this.selectQuery = MigrationQuery.SELECT_1H_DATA.toString();
@@ -104,43 +103,7 @@ public class AggregateDataMigrator extends AbstractMigrationWorker implements Ca
     public void migrate() throws Exception {
         performMigration(Task.Migrate);
         if (config.isDeleteDataImmediatelyAfterMigration()) {
-            deleteTableData();
-        }
-    }
-
-    private long getRowCount(String countQuery) {
-        StatelessSession session = getSQLSession(config);
-
-        org.hibernate.Query query = session.createSQLQuery(countQuery);
-        query.setReadOnly(true);
-        query.setTimeout(DataMigrator.SQL_TIMEOUT);
-        long count = Long.parseLong(query.uniqueResult().toString());
-
-        closeSQLSession(session);
-
-        return count;
-    }
-
-    private void deleteTableData() throws Exception {
-        int failureCount = 0;
-        while (failureCount < MAX_NUMBER_OF_FAILURES) {
-            try {
-                StatelessSession session = getSQLSession(config);
-                session.getTransaction().begin();
-                org.hibernate.Query nativeQuery = session.createSQLQuery(this.deleteQuery);
-                nativeQuery.executeUpdate();
-                session.getTransaction().commit();
-                closeSQLSession(session);
-                log.info("- " + metricsTable.toString() + " - Cleaned -");
-            } catch (Exception e) {
-                log.error("Failed to delete " + metricsTable.toString()
-                    + " data. Attempting to delete data one more time...");
-
-                failureCount++;
-                if (failureCount == MAX_NUMBER_OF_FAILURES) {
-                    throw e;
-                }
-            }
+            deleteTableData(this.deleteQuery);
         }
     }
 
@@ -154,7 +117,7 @@ public class AggregateDataMigrator extends AbstractMigrationWorker implements Ca
         int failureCount;
 
         int lastMigratedRecord = 0;
-        ExistingDataSource dataSource = getExistingDataSource(selectQuery, task, config);
+        ExistingDataSource dataSource = getExistingDataSource(selectQuery, task);
         dataSource.initialize();
 
         telemetry.getMigrationTimer().start();

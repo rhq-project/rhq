@@ -47,6 +47,17 @@ public class CallTimeDataComposite implements Serializable {
     private CallTimeDataComposite() {
     }
 
+    public CallTimeDataComposite(String callDestination, double minimum,
+            double maximum, double total, long count, double average)
+    {
+        this.callDestination = callDestination;
+        this.minimum = minimum;
+        this.maximum = maximum;
+        this.total = total;
+        this.count = count;
+        this.average = average;
+    }
+
     public CallTimeDataComposite(@NotNull String callDestination, @NotNull Number minimum, @NotNull Number maximum,
         @NotNull Number total, @NotNull Number count, @NotNull Number average) {
         this.callDestination = callDestination;

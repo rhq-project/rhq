@@ -36,7 +36,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.testng.annotations.Test;
-
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
@@ -108,18 +107,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     protected void afterMethod() {
 
         try {
-            // delete values
-            callTimeDataManager.purgeCallTimeData(new Date());
-
             beginTx();
-
-            // delete keys
-            List<Integer> resourceIds = new ArrayList<Integer>();
-            resourceIds.add(resource1.getId());
-            resourceIds.add(resource2.getId());
-            Query q = em.createNamedQuery(CallTimeDataKey.QUERY_DELETE_BY_RESOURCES);
-            q.setParameter("resourceIds", resourceIds);
-            q.executeUpdate();
 
             resource1 = em.merge(resource1);
             for (MeasurementSchedule sched : resource1.getSchedules()) {
@@ -433,13 +421,13 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         String value4 = "test-value4";
 
         // method findLiveDataForGroup adds prefix with resource id which is part of equals
-        MeasurementData expectedData1 = makeMeasurement(time1, schedule1.getId(), value1, name1);
+        MeasurementData expectedData1 = makeMeasurement(time1, schedule1, value1, name1);
         expectedData1.setName(resource1.getId() + ":" + name1);
-        MeasurementData expectedData2 = makeMeasurement(time2, schedule2.getId(), value2, name2);
+        MeasurementData expectedData2 = makeMeasurement(time2, schedule2, value2, name2);
         expectedData2.setName(resource2.getId() + ":" + name2);
-        MeasurementData expectedData3 = makeMeasurement(time3, schedule3.getId(), value3, name3);
+        MeasurementData expectedData3 = makeMeasurement(time3, schedule3, value3, name3);
         expectedData3.setName(resource2.getId() + ":" + name3);
-        MeasurementData expectedData4 = makeMeasurement(time4, schedule2.getId(), value4, name4);
+        MeasurementData expectedData4 = makeMeasurement(time4, schedule2, value4, name4);
         expectedData4.setName(resource2.getId() + ":" + name4);
 
         expectedResult1 = new HashSet<MeasurementData>(1);
@@ -457,10 +445,10 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         // mock the MeasurementAgentService
         MeasurementAgentService mockedMeasurementService = mock(MeasurementAgentService.class);
         when(mockedMeasurementService.getRealTimeMeasurementValue(eq(resource1.getId()), any(Set.class))).thenReturn(
-            new HashSet<MeasurementData>(Arrays.asList(makeMeasurement(time1, schedule1.getId(), value1, name1))));
+            new HashSet<MeasurementData>(Arrays.asList(makeMeasurement(time1, schedule1, value1, name1))));
         when(mockedMeasurementService.getRealTimeMeasurementValue(eq(resource2.getId()), any(Set.class))).thenReturn(
-            new HashSet<MeasurementData>(Arrays.asList(makeMeasurement(time2, schedule2.getId(), value2, name2),
-                makeMeasurement(time3, schedule3.getId(), value3, name3))));
+            new HashSet<MeasurementData>(Arrays.asList(makeMeasurement(time2, schedule2, value2, name2),
+                makeMeasurement(time3, schedule3, value3, name3))));
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.measurementService = mockedMeasurementService;
     }
@@ -556,7 +544,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
                 expectedResult.add((MeasurementDataTrait) data);
             }
             // add the trait data (it stores it in db (without name field))
-            measurementDataManager.addTraitData(expectedResult);
+            addTraitData(expectedResult);
             
             // get back the trait data
             List<MeasurementDataTrait> actualResult = measurementDataManager.findTraits(overlord, resource1.getId(), definitionCt1.getId());
@@ -570,6 +558,12 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         }
     }
     
+    private void addTraitData(Set<MeasurementDataTrait> traits) throws InterruptedException {
+        measurementDataManager.addTraitData(traits);
+        // TODO make the above method synchronous?
+        Thread.sleep(500);
+    }
+
     @Test
     public void testAddAndFindTrait2() throws Exception {
         // prepare DB
@@ -615,7 +609,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             }
             
             // add the trait data (it stores it in db (without name field))
-            measurementDataManager.addTraitData(traitsData);
+            addTraitData(traitsData);
             
             // get back the trait data
             List<MeasurementDataTrait> actualResult = measurementDataManager.findTraits(overlord, resource2.getId(), definitionCt2.getId());
@@ -666,7 +660,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
                 expectedResult.add((MeasurementDataTrait) data);
             }
             // add the trait data (it stores it in db (without name field))
-            measurementDataManager.addTraitData(expectedResult);
+            addTraitData(expectedResult);
             
             // get back the trait data by schedule id
             MeasurementDataTraitCriteria criteria = new MeasurementDataTraitCriteria();
@@ -733,7 +727,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
                 expectedResult.add((MeasurementDataTrait) data);
             }
             // add the trait data (it stores it in db (without name field))
-            measurementDataManager.addTraitData(expectedResult);
+            addTraitData(expectedResult);
             
             // get back the trait data
             List<MeasurementDataTrait> actualResult = measurementDataManager.findCurrentTraitsForResource(overlord, resource2.getId(), null);
@@ -760,7 +754,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
                 expectedResult.add((MeasurementDataTrait) data);
             }
             // add the trait data (it stores it in db (without name field))
-            measurementDataManager.addTraitData(expectedResult);
+            addTraitData(expectedResult);
             
             // get back the trait data
             List<MeasurementDataTrait> actualResult = measurementDataManager.findCurrentTraitsForResource(overlord, resource2.getId(), null);
@@ -775,8 +769,8 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     }
     
 
-    private MeasurementData makeMeasurement(long time, int scheduleId, String value, String name) {
-        MeasurementData measurement = new MeasurementDataTrait(new MeasurementDataPK(time, scheduleId), value);
+    private MeasurementData makeMeasurement(long time, MeasurementSchedule schedule, String value, String name) {
+        MeasurementData measurement = new MeasurementDataTrait(new MeasurementDataPK(time, schedule.getId()), value);
         measurement.setName(name);
         return measurement;
     }

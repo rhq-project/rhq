@@ -197,7 +197,7 @@ public interface MeasurementScheduleManagerLocal extends MeasurementScheduleMana
      * @param  resourceId  PK of the resource we're interested in
      * @param  dataType    DataType of the desired results use null for no filtering
      * @param  displayType the display type desired or null for no filtering
-     * @param  enabledOnly should we restrict the query to certain enablement state? null means "don't care".
+     * @param  enabledOnly true to restrict the query to enabled metrics only, false means any
      *
      * @return List of MeasuremenSchedules for the given resource
      */

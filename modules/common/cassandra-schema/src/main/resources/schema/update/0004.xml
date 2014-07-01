@@ -1,0 +1,29 @@
+<updatePlan>
+    <step>
+        CREATE TABLE rhq.measurement_data_traits (
+          schedule_id int,
+          time timestamp,
+          value text,
+          PRIMARY KEY (schedule_id, time)
+        ) WITH CLUSTERING ORDER BY (time desc)
+          AND compression={'sstable_compression': 'LZ4Compressor'};
+    </step>
+
+    <step>
+        CREATE TABLE rhq.calltime (
+            schedule_id int,
+            start timeuuid,
+            end timestamp,
+            dest text,
+            min double,
+            max double,
+            total double,
+            count bigint,
+            PRIMARY KEY (schedule_id, start)
+        ) WITH CLUSTERING ORDER BY (start asc);
+    </step>
+    <step>
+          CREATE INDEX calltime_dest ON rhq.calltime(dest);
+    </step>
+
+</updatePlan>

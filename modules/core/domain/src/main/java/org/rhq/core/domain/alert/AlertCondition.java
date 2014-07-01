@@ -52,7 +52,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 
 /**
  * An alert condition (e.g. ActiveThreads > 100) as configured in an alert definition.
- * 
+ *
  * @author Joseph Marques
  */
 @Entity
@@ -97,7 +97,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
         + "     AND ms.definition = md " //
         + "     AND ms.resource = res " //
         + "     AND mb IS NOT NULL " //
-        + "     AND ac.category = 'BASELINE' "), // 
+        + "     AND ac.category = 'BASELINE' "), //
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_CHANGE, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionChangesCategoryComposite " //
         + "       ( " //
@@ -121,18 +121,8 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionTraitCategoryComposite " //
         + "       ( " //
         + "         ac, " //
-        + "         ms.id, " //
-        + "         (" //
-        + "           SELECT md.value " //
-        + "             FROM MeasurementDataTrait md " //
-        + "            WHERE md.schedule = ms " //
-        + "              AND md.id.timestamp = " //
-        + "                ( " //
-        + "                  SELECT max(imd.id.timestamp) " //
-        + "                    FROM MeasurementDataTrait imd " //
-        + "                   WHERE ms.id = imd.schedule.id " //
-        + "                ) " //
-        + "         ) " //
+        + "         res.id, " //
+        + "         ms.id " //
         + "       ) " //
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
@@ -414,7 +404,7 @@ public class AlertCondition implements Serializable {
      * Identifies the measurement definition of the metric that is to be compared when determining
      * if the condition is true. This is null if the condition category is not a metric-related one
      * (metric related categories are THRESHOLD, TRAIT, BASELINE and CHANGE; others are not).
-     * 
+     *
      * @return measurement definition or null
      */
     public MeasurementDefinition getMeasurementDefinition() {
@@ -427,7 +417,7 @@ public class AlertCondition implements Serializable {
 
     /**
      * The name of the condition whose semantics are different based on this condition's category:
-     * 
+     *
      * AVAILABILITY: The relevant Avail AlertConditionOperator name
      * THRESHOLD: the name of the metric (TODO: today its the display name, very bad for i18n purposes)
      * BASELINE: the name of the metric (TODO: today its the display name, very bad for i18n purposes)
@@ -441,9 +431,9 @@ public class AlertCondition implements Serializable {
      * DRIFT: the name of the drift definition that triggered the drift detection. This is actually a
      *        regex that allows the user to match more than one drift definition if they so choose.
      *        (this value may be null, in which case it doesn't matter which drift definition were the ones
-     *         in which the drift was detected) 
+     *         in which the drift was detected)
      * RANGE: the name of the metric (TODO: today its the display name, very bad for i18n purposes)
-     * 
+     *
      * @return additional information about the condition
      */
     public String getName() {
@@ -455,12 +445,12 @@ public class AlertCondition implements Serializable {
     }
 
     /**
-     * THRESHOLD and BASELINE: one of these comparators: "<", ">" or "=" 
+     * THRESHOLD and BASELINE: one of these comparators: "<", ">" or "="
      * For calltime alert conditions (i.e. category CHANGE for calltime metric definitions),
      * comparator will be one of these comparators: "HI", "LO", "CH" (where "CH" means "change").
      * RANGE: one of these comparators "<", ">" (meaning inside and outside the range respectively)
      *        or one of these "<=", ">=" (meaning inside and outside inclusive respectively)
-     * 
+     *
      * Other types of conditions will return <code>null</code> (i.e. this will be
      * null if the condition does not compare values).
      *
@@ -479,10 +469,10 @@ public class AlertCondition implements Serializable {
      * This is only valid for conditions of category THRESHOLD, BASELINE, RANGE and CHANGE (but
      * only where CHANGE is for a calltime metric alert condition). All other
      * condition types will return <code>null</code>.
-     * 
+     *
      * Note: If RANGE condition, this threshold is always the LOW end of the range.
      *       The high end of the range is in {@link #getOption()}.
-     *  
+     *
      * @return threshold value or null
      */
     public Double getThreshold() {

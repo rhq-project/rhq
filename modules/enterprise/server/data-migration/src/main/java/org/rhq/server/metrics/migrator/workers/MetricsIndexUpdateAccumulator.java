@@ -58,7 +58,6 @@ public class MetricsIndexUpdateAccumulator extends AbstractMigrationWorker {
     private final Map<Integer, Set<Long>> accumulator = new HashMap<Integer, Set<Long>>();
 
     private final MetricsTable table;
-    private final DataMigratorConfiguration config;
 
     private final long timeLimit;
     private final PreparedStatement updateMetricsIndex;
@@ -68,8 +67,8 @@ public class MetricsIndexUpdateAccumulator extends AbstractMigrationWorker {
     private int currentCount = 0;
 
     public MetricsIndexUpdateAccumulator(MetricsTable table, DataMigratorConfiguration config) {
+        super(config);
         this.table = table;
-        this.config = config;
 
         if (MetricsTable.RAW.equals(table) || MetricsTable.ONE_HOUR.equals(table)
             || MetricsTable.SIX_HOUR.equals(table)) {
@@ -135,7 +134,7 @@ public class MetricsIndexUpdateAccumulator extends AbstractMigrationWorker {
     }
 
     private long getLastAggregationTime(MetricsTable migratedTable) {
-        StatelessSession session = getSQLSession(config);
+        StatelessSession session = getSQLSession();
 
         long aggregationSlice = Integer.MAX_VALUE;
         Duration duration = null;

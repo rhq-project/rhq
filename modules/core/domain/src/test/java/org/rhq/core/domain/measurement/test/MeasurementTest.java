@@ -303,47 +303,6 @@ public class MeasurementTest extends AbstractEJB3Test {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    @Test(groups = "integration.ejb3")
-    public void testTraitQuery() throws Exception {
-        System.out.println("testTraitQuery ...");
-        getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-        try {
-            MeasurementDefinition def = setupTables(em);
-            MeasurementSchedule sched = def.getSchedules().get(0);
-            Resource resource = sched.getResource();
-            int resourceId = resource.getId();
-
-            MeasurementDataPK pk = new MeasurementDataPK(sched.getId());
-            MeasurementDataTrait mdt = new MeasurementDataTrait(pk, "Hello World");
-            em.persist(mdt);
-            em.flush();
-
-            Query q = em.createNamedQuery(MeasurementDataTrait.FIND_CURRENT_FOR_RESOURCE);
-            q.setParameter("resourceId", resourceId);
-            List<Object[]> res = q.getResultList();
-            System.out.println("testTraitQuery: found " + res.size() + " item(s)");
-            if (res.size() > 0) {
-                MeasurementDataTrait foo = (MeasurementDataTrait) res.get(0)[0];
-                String name = (String) res.get(0)[1];
-                System.out.println("  and it is " + foo.toString() + " and name " + name);
-            }
-
-            Query q2 = em.createNamedQuery(MeasurementDataTrait.FIND_CURRENT_FOR_SCHEDULES);
-            List<Integer> ids = new ArrayList<Integer>();
-            ids.add(1);
-            ids.add(2);
-            ids.add(3);
-            ids.add(sched.getId());
-            q2.setParameter("scheduleIds", ids);
-            List<MeasurementDataTrait> traits = q.getResultList();
-            assert traits.size() >= 1; // at least the one for the schedule above should be found
-        } finally {
-            getTransactionManager().rollback();
-        }
-    }
-
     /**
      * Setup some entities to check query against them etc.
      *

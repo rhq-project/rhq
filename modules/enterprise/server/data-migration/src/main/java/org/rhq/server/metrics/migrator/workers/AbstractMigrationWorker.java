@@ -20,10 +20,11 @@
 
 package org.rhq.server.metrics.migrator.workers;
 
+import java.util.Date;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.StatelessSession;
-
 import org.rhq.server.metrics.migrator.DataMigrator;
 import org.rhq.server.metrics.migrator.DataMigrator.DataMigratorConfiguration;
 import org.rhq.server.metrics.migrator.DataMigrator.DatabaseType;
@@ -37,7 +38,14 @@ import org.rhq.server.metrics.migrator.datasources.ScrollableDataSource;
  *
  */
 public abstract class AbstractMigrationWorker {
+
     private final Log log = LogFactory.getLog(AbstractMigrationWorker.class);
+
+    protected final DataMigratorConfiguration config;
+
+    public AbstractMigrationWorker(DataMigratorConfiguration config) {
+        this.config = config;
+    }
 
     /**
      * Returns a list of all the raw SQL metric tables.
@@ -61,7 +69,7 @@ public abstract class AbstractMigrationWorker {
         return tables;
     }
 
-    protected ExistingDataSource getExistingDataSource(String query, Task task, DataMigratorConfiguration config) {
+    protected ExistingDataSource getExistingDataSource(String query, Task task) {
         if (Task.Migrate.equals(task)) {
             if (DatabaseType.Oracle.equals(config.getDatabaseType())) {
                 return new ScrollableDataSource(config.getEntityManager(), config.getDatabaseType(), query);
@@ -90,7 +98,7 @@ public abstract class AbstractMigrationWorker {
         return new ScrollableDataSource(config.getEntityManager(), config.getDatabaseType(), query);
     }
 
-    protected void prepareSQLSession(StatelessSession session, DataMigratorConfiguration config) {
+    protected void prepareSQLSession(StatelessSession session) {
         if (DatabaseType.Postgres.equals(config.getDatabaseType())) {
             log.debug("Preparing SQL connection with timeout: " + DataMigrator.SQL_TIMEOUT);
 
@@ -101,11 +109,11 @@ public abstract class AbstractMigrationWorker {
         }
     }
 
-    protected StatelessSession getSQLSession(DataMigratorConfiguration config) {
+    protected StatelessSession getSQLSession() {
         StatelessSession session = ((org.hibernate.Session) config.getEntityManager().getDelegate())
             .getSessionFactory().openStatelessSession();
 
-        prepareSQLSession(session, config);
+        prepareSQLSession(session);
 
         return session;
     }
@@ -120,4 +128,54 @@ public abstract class AbstractMigrationWorker {
         }
     }
 
+    protected final long getRowCount(String countQuery) {
+        StatelessSession session = getSQLSession();
+
+        org.hibernate.Query query = session.createSQLQuery(countQuery);
+        query.setReadOnly(true);
+        query.setTimeout(DataMigrator.SQL_TIMEOUT);
+        long count = Long.parseLong(query.uniqueResult().toString());
+
+        closeSQLSession(session);
+
+        return count;
+    }
+
+    protected final void deleteTableData(String deleteQuery) throws Exception {
+        int failureCount = 0;
+        int max = CallTimeDataMigrator.MAX_NUMBER_OF_FAILURES;
+        while (failureCount < max) {
+            try {
+                StatelessSession session = getSQLSession();
+                session.getTransaction().begin();
+                org.hibernate.Query nativeQuery = session.createSQLQuery(deleteQuery);
+                nativeQuery.executeUpdate();
+                session.getTransaction().commit();
+                closeSQLSession(session);
+                log.info("- " + deleteQuery + " - done -");
+            } catch (Exception e) {
+                log.error(deleteQuery + " failed. Attempting to delete data one more time...");
+
+                failureCount++;
+                if (failureCount == max) {
+                    throw e;
+                }
+            }
+        }
+    }
+
+    /**
+     * Convert an object to a date.
+     */
+    protected static Date date(Object o) {
+        if (o == null)
+            return null;
+        if (o instanceof Date)
+            return (Date)o;
+        // PostGres uses UNIX epoc time
+        if (o instanceof Number)
+            return new Date(((Number)o).longValue() * 1000);
+        throw new IllegalStateException("date?" + o);
+    }
+    
 }

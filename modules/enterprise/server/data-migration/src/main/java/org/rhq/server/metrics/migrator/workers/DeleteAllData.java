@@ -34,15 +34,13 @@ public class DeleteAllData extends AbstractMigrationWorker implements CallableMi
 
     private final Log log = LogFactory.getLog(DeleteAllData.class);
 
-    private final DataMigratorConfiguration config;
-
     public DeleteAllData(DataMigratorConfiguration config) {
-        this.config = config;
+        super(config);
     }
 
     public void migrate() {
         org.hibernate.Query nativeQuery;
-        StatelessSession session = getSQLSession(config);
+        StatelessSession session = getSQLSession();
 
         if (config.isRun1HAggregateDataMigration()) {
             session.getTransaction().begin();
@@ -77,6 +75,23 @@ public class DeleteAllData extends AbstractMigrationWorker implements CallableMi
                 session.getTransaction().commit();
                 log.info("- " + table + " - Cleaned -");
             }
+        }
+
+        if (config.isRunTraitMigration()) {
+            session.getTransaction().begin();
+            nativeQuery = session.createSQLQuery(MigrationQuery.DELETE_TRAIT_DATA.getQuery());
+            nativeQuery.executeUpdate();
+            session.getTransaction().commit();
+            log.info("- trait data - Cleaned -");
+        }
+
+        if (config.isRunCallTimeMigration()) {
+            session.getTransaction().begin();
+            nativeQuery = session.createSQLQuery(MigrationQuery.DELETE_CALL_TIME_DATA_VALUE.getQuery());
+            nativeQuery = session.createSQLQuery(MigrationQuery.DELETE_CALL_TIME_DATA_KEY.getQuery());
+            nativeQuery.executeUpdate();
+            session.getTransaction().commit();
+            log.info("- call time - Cleaned -");
         }
 
         closeSQLSession(session);

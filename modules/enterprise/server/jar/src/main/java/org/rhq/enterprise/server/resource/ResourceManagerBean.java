@@ -56,7 +56,6 @@ import org.quartz.JobDetail;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
-
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.alert.Alert;
@@ -88,12 +87,9 @@ import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ResourceAvailability;
-import org.rhq.core.domain.measurement.calltime.CallTimeDataKey;
-import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationScheduleEntity;
 import org.rhq.core.domain.resource.Agent;
@@ -141,6 +137,7 @@ import org.rhq.enterprise.server.resource.disambiguation.Disambiguator;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.ResourceHandlerBean;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -182,6 +179,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     private MeasurementScheduleManagerLocal measurementScheduleManager;
     @EJB
     private AvailabilityManagerLocal availabilityManager;
+    @EJB
+    StorageClientManager storageClientManager;
 
     public void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException {
         Resource parent = null;
@@ -691,13 +690,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     private boolean uninventoryResourceBulkDeleteAsyncWork(Subject overlord, int resourceId) {
+
+        // storage manager cleanup
+
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        for (MeasurementSchedule sched : resource.getSchedules()) {
+            // could restrict by measurement type?
+            int scheduleId = sched.getId();
+            storageClientManager.getCallTimeDAO().deleteSchedule(scheduleId);
+            storageClientManager.getTraitsDAO().deleteSchedule(scheduleId);
+        }
+
         String[] namedQueriesToExecute = new String[] { //
         StorageNode.QUERY_UPDATE_REMOVE_LINKED_RESOURCES, //remove storage node resource links
             ResourceRepo.DELETE_BY_RESOURCES, //
             MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, // baseline BEFORE schedules
-            MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES, // traits BEFORE schedules
-            CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, // call time data values BEFORE schedules & call time data keys
-            CallTimeDataKey.QUERY_DELETE_BY_RESOURCES, // call time data keys BEFORE schedules
             MeasurementOOB.DELETE_FOR_RESOURCES, //
             MeasurementSchedule.DELETE_BY_RESOURCES, // schedules AFTER baselines, traits, and calltime data
             Availability.QUERY_DELETE_BY_RESOURCES, //

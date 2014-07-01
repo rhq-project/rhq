@@ -30,7 +30,6 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.SimpleTrigger;
 import org.quartz.StatefulJob;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
@@ -40,9 +39,7 @@ import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
-import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.storage.StorageClientManager;
@@ -120,40 +117,13 @@ public class DataPurgeJob extends AbstractStatefulJob {
     }
 
     private void purgeEverything(Properties systemConfig) {
-        purgeCallTimeData(LookupUtil.getCallTimeDataManager(), systemConfig);
         purgeEventData(LookupUtil.getEventManager(), systemConfig);
         purgeAlertData(LookupUtil.getAlertManager(), systemConfig);
         purgeUnusedAlertDefinitions(LookupUtil.getAlertDefinitionManager());
         purgeOrphanedAlertConditions(LookupUtil.getAlertConditionManager());
         purgeOrphanedAlertNotifications(LookupUtil.getAlertNotificationManager());
-        purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
         purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
         purgeOrphanedDriftFiles(LookupUtil.getDriftManager(), systemConfig);
-    }
-
-    private void purgeMeasurementTraitData(MeasurementDataManagerLocal measurementDataManager, Properties systemConfig) {
-        long timeStart = System.currentTimeMillis();
-        LOG.info("Trait data purge starting at " + new Date(timeStart));
-        int traitsPurged = 0;
-
-        try {
-            long threshold;
-            String traitPurgeThresholdStr = systemConfig.getProperty(RHQConstants.TraitPurge);
-            if (traitPurgeThresholdStr == null) {
-                threshold = timeStart - (1000L * 60 * 60 * 24 * 365);
-                LOG.debug("No purge traits threshold found - will purge traits older than one year");
-            } else {
-                threshold = timeStart - Long.parseLong(traitPurgeThresholdStr);
-            }
-
-            LOG.info("Purging traits that are older than " + new Date(threshold));
-            traitsPurged = measurementDataManager.purgeTraits(threshold);
-        } catch (Exception e) {
-            LOG.error("Failed to purge trait data. Cause: " + e, e);
-        } finally {
-            long duration = System.currentTimeMillis() - timeStart;
-            LOG.info("Traits data purged [" + traitsPurged + "] - completed in [" + duration + "]ms");
-        }
     }
 
     private void purgeAvailabilityData(AvailabilityManagerLocal availabilityManager, Properties systemConfig) {
@@ -177,23 +147,6 @@ public class DataPurgeJob extends AbstractStatefulJob {
         } finally {
             long duration = System.currentTimeMillis() - timeStart;
             LOG.info("Availability data purged [" + availsPurged + "] - completed in [" + duration + "]ms");
-        }
-    }
-
-    private void purgeCallTimeData(CallTimeDataManagerLocal callTimeDataManager, Properties systemConfig) {
-        long timeStart = System.currentTimeMillis();
-        LOG.info("Measurement calltime data purge starting at " + new Date(timeStart));
-        int calltimePurged = 0;
-
-        try {
-            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.RtDataPurge));
-            LOG.info("Purging calltime data that is older than " + new Date(threshold));
-            calltimePurged = callTimeDataManager.purgeCallTimeData(new Date(threshold));
-        } catch (Exception e) {
-            LOG.error("Failed to purge calltime data. Cause: " + e, e);
-        } finally {
-            long duration = System.currentTimeMillis() - timeStart;
-            LOG.info("Calltime purged [" + calltimePurged + "] - completed in [" + duration + "]ms");
         }
     }
 

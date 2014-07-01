@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.jetbrains.annotations.NotNull;
-
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 
 /**
@@ -43,6 +42,7 @@ public class CallTimeData implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private int scheduleId;
+
     private Map<String, CallTimeDataValue> values = new HashMap<String, CallTimeDataValue>();
 
     /**
@@ -51,7 +51,14 @@ public class CallTimeData implements Serializable {
      * @param schedule the schedule for which this data was collected
      */
     public CallTimeData(MeasurementScheduleRequest schedule) {
-        this.scheduleId = schedule.getScheduleId();
+        this(schedule.getScheduleId());
+    }
+
+    /**
+     * Constructs a new <code>CallTimeData</code>.
+     */
+    public CallTimeData(int scheduleId) {
+        this.scheduleId = scheduleId;
     }
 
     /**

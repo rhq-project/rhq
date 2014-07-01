@@ -927,7 +927,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         synchronized(this) {
             //only update the caches if the settings were actually changed
             if (cachedSystemSettings == null ||
-                !cachedSystemSettings.get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME).equals(
+                !safeEquals(cachedSystemSettings.get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME),
                     settings.get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME))) {
                 cachedSystemSettings = settings;
 
@@ -940,5 +940,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                 }
             }
         }
+    }
+
+    private static boolean safeEquals(Object a, Object b) {
+        return a == null ? b == null : (b != null && a.equals(b));
     }
 }

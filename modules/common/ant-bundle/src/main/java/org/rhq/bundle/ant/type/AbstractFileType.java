@@ -64,8 +64,4 @@ public abstract class AbstractFileType extends AbstractBundleType {
         }
         this.source = getProject().resolveFile(name);
     }
-
-    public void setSource(File source) {
-        this.source = source;
-    }
 }

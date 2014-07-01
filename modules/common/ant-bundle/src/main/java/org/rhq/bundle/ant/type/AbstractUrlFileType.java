@@ -36,7 +36,6 @@ import org.apache.tools.ant.BuildException;
 public abstract class AbstractUrlFileType extends AbstractBundleType {
     private String url;
     private URL source;
-    private boolean deploy = true;
 
     /**
      * Returns the base filename of the URL (no parent paths will be in the returned name).
@@ -75,13 +74,5 @@ public abstract class AbstractUrlFileType extends AbstractBundleType {
             throw new BuildException("URL specified by 'url' attribute [" + urlString
                 + "] is malformed - it must be a valid URL.");
         }
-    }
-
-    public boolean isDeploy() {
-        return deploy;
-    }
-
-    public void setDeploy(boolean deploy) {
-        this.deploy = deploy;
     }
 }

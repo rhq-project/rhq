@@ -9,6 +9,9 @@ import org.apache.tools.ant.util.FileUtils;
 import org.rhq.bundle.ant.BundleAntProject;
 
 /**
+ * An extension of the Ant's standard property task that supports referencing files relative to the RHQ's Ant bundle's
+ * deploy directory.
+ *
  * @author Lukas Krejci
  * @since 4.12
  */
@@ -22,11 +25,6 @@ public class PropertyTask extends Property {
 
     public void setRelativeToDeployDir(boolean relativeToDeployDir) {
         this.relativeToDeployDir = relativeToDeployDir;
-    }
-
-    public void setFile(String file) {
-        //TODO implement
-        super.setFile(new File(file));
     }
 
     @Override
@@ -48,6 +46,4 @@ public class PropertyTask extends Property {
 
         super.execute();
     }
-
-
 }

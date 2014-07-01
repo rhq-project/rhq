@@ -32,13 +32,13 @@
 
          <c:group name="proxy" displayName="Proxy Settings" hiddenByDefault="true">
             <c:simple-property name="proxyUrl" displayName="Proxy Host" type="string" required="false"
-                               description="Optional. Hostname or IP address of the HTTP proxy server to use for this connection."/>
+                               description="Optional. Hostname or IP address of the HTTP proxy server to use for this connection. This setting is deprecated and if not set, it defaults to appropriate setting in System Settings - Server HTTP Proxy Settings"/>
             <c:simple-property name="proxyPort" displayName="Proxy Port" type="string" required="false"
-                               description="Optional. TCP port of the HTTP proxy server to use for this connection."/>
+                               description="Optional. TCP port of the HTTP proxy server to use for this connection. This setting is deprecated and if not set, it defaults to appropriate setting in System Settings - Server HTTP Proxy Settings"/>
             <c:simple-property name="proxyUsername" displayName="Proxy Username" type="string" required="false"
-                               description="Optional. If the proxy server requires authentication, this is the user to log in as."/>
+                               description="Optional. If the proxy server requires authentication, this is the user to log in as. This setting is deprecated and if not set, it defaults to appropriate setting in System Settings - Server HTTP Proxy Settings"/>
             <c:simple-property name="proxyPassword" displayName="Proxy Password" type="password" required="false"
-                               description="Optional. If the proxy server requires authentication, this is the password for the user."/>
+                               description="Optional. If the proxy server requires authentication, this is the password for the user. This setting is deprecated and if not set, it defaults to appropriate setting in System Settings - Server HTTP Proxy Settings"/>
          </c:group>
 
       </configuration>

@@ -109,7 +109,7 @@ public class DeploymentUnitType extends AbstractBundleType {
             DestinationComplianceMode complianceToUse = DestinationComplianceMode.instanceOrDefault(this.compliance);
 
             File deployDir = getProject().getDeployDir();
-            TemplateEngine templateEngine = createTemplateEngine(getProject().getUserProperties());
+            TemplateEngine templateEngine = createTemplateEngine(getProject().getProperties());
             int deploymentId = getProject().getDeploymentId();
             DeploymentProperties deploymentProps = new DeploymentProperties(deploymentId, getProject().getBundleName(),
                 getProject().getBundleVersion(), getProject().getBundleDescription(), complianceToUse);
@@ -188,6 +188,7 @@ public class DeploymentUnitType extends AbstractBundleType {
             Map<File, Pattern> allArchiveReplacePatterns = new HashMap<File, Pattern>(this.archiveReplacePatterns);
             Set<File> allRawFilesToReplace = new HashSet<File>(this.rawFilesToReplace);
             Map<File, Boolean> allArchivesExploded = new HashMap<File, Boolean>(this.archivesExploded);
+
             downloadFilesFromUrlEndpoints(allArchives, allFiles, allArchiveReplacePatterns, allRawFilesToReplace,
                 allArchivesExploded);
 
@@ -593,12 +594,10 @@ public class DeploymentUnitType extends AbstractBundleType {
     private TemplateEngine createTemplateEngine(Hashtable<String, String> properties) {
         TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
 
-        // add tags to Template Engine tokens
+        // add properties to Template Engine tokens
         if (properties != null) {
-            for (String s : properties.keySet()) {
-                if (s.startsWith(DeployPropertyNames.DEPLOY_TAG_PREFIX)) {
-                    templateEngine.getTokens().put(s, properties.get(s));
-                }
+            for (Map.Entry<String, String> e : properties.entrySet()) {
+                templateEngine.getTokens().put(e.getKey(), e.getValue());
             }
         }
 

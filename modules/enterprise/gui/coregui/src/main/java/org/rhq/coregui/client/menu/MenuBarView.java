@@ -163,6 +163,8 @@ public class MenuBarView extends EnhancedVLayout {
         new MenuItem(HelpView.VIEW_ID)
     };
 
+    public static final String LAST_MENU_ITEM_ID = "menu" + (MENU_ITEMS.length - 1);
+
     public static final ViewName LOGOUT_VIEW_ID = new ViewName("LogOut", MSG.view_menuBar_logout());
     private final ProductInfo productInfo = CoreGUI.get().getProductInfo();
     private String currentlySelectedSection = DashboardsView.VIEW_ID.getName();

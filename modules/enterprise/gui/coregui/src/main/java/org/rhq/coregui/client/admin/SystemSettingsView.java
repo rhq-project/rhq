@@ -453,7 +453,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 pd.setDescription(MSG.view_admin_systemSettings_DataReindex_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_DataReindex_name());
                 pd.setPropertyGroupDefinition(dataManagerGroup);
-                pd.setDefaultValue("true");
+                pd.setDefaultValue("false");
                 break;
 
             //////////////////////////////////////////////

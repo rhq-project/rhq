@@ -203,8 +203,12 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                     return new HTMLFlow(MSG.view_adminTopology_storageNodes_noLoad());
                 }
                 int id = record.getAttributeAsInt(FIELD_ID);
-                return new StorageNodeLoadComponent(id, null);
+                Log.debug("Expanding Storage Node [id=" + id + "] row");
+                StorageNodeLoadComponent component = new StorageNodeLoadComponent(id, null);
+                component.redraw();
+                return component;
             }
+            
         };
         listGrid.setCanExpandRecords(true);
         return listGrid;

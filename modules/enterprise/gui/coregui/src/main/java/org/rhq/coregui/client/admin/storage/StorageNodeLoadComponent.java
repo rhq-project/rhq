@@ -25,7 +25,9 @@ import static org.rhq.coregui.client.admin.storage.StorageNodeDatasource.WARN_CO
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.user.client.Random;
 import com.google.gwt.user.client.Timer;
+import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -41,6 +43,7 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.admin.storage.StorageNodeDatasource.StorageNodeLoadCompositeDatasource;
 import org.rhq.coregui.client.util.BrowserUtility;
+import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
@@ -89,6 +92,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
                 }
             }
         };
+        loadGrid.setID(this.getClass().getName() + storageNodeId + "-" + Random.nextDouble());
         loadGrid.setWidth100();
         loadGrid.setHeight(200);
         loadGrid.setAutoFitData(Autofit.VERTICAL);
@@ -98,33 +102,16 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
             fields.add(0, new ListGridField("sparkline", MSG.view_adminTopology_storageNodes_detail_chart(), 75));
         }
         loadGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
-        loadGrid.setAutoFetchData(true);
         loadGrid.setHoverWidth(300);
-
-        ToolStrip toolStrip = new ToolStrip();
-        IButton settingsButton = new IButton(MSG.common_title_settings());
-        settingsButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                CoreGUI.goToView(StorageNodeAdminView.VIEW_PATH + "/" + storageNodeId + "/Config");
-            }
-        });
-        settingsButton.setExtraSpace(5);
-        toolStrip.addMember(settingsButton);
-        
-        IButton refreshButton = new IButton(MSG.common_button_refresh());
-        refreshButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                loadGrid.fetchData();
-            }
-        });
-        refreshButton.setExtraSpace(5);
-        toolStrip.addMember(refreshButton);
         loadGrid.setDataSource(datasource);
+        loadGrid.setAutoFetchData(true);
+//        loadGrid.fetchData();
         if (showSparkLine) {
             loadGrid.addDataArrivedHandler(new DataArrivedHandler() {
                 @Override
                 public void onDataArrived(DataArrivedEvent event) {
                     showSparkLineGraphs();
+                    loadGrid.redraw();
                 }
             });
         }

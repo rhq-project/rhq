@@ -425,6 +425,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         loadLabel.setTooltip(MSG.view_adminTopology_storageNodes_detail_loadHover());
         loadLabel.setHoverWidth(300);
         loadLayout.setMembers(spacer, loadLabel, loadDataComponent);
+        loadDataComponent.redraw();
 
         if (detailsAndLoadLayout == null) {
             detailsAndLoadLayout = new EnhancedHLayout();

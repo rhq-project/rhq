@@ -11029,7 +11029,7 @@
 
   <service name="EJB3"
            discovery="SubsystemDiscovery"
-           class="BaseComponent"
+           class="Ejb3Component"
            description="The configuration of the ejb3 subsystem."
            singleton="true">
 

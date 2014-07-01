@@ -75,5 +75,4 @@ public abstract class AbstractUrlFileType extends AbstractBundleType {
                 + "] is malformed - it must be a valid URL.");
         }
     }
-
 }

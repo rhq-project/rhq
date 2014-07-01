@@ -1,0 +1,6 @@
+# Deployed file can contain values of any Ant properties:
+
+user.provided=@@user.provided@@
+bundle.provided=@@bundle.provided@@
+a.from.properties.file=@@a.from.properties.file@@
+b.from.properties.file=@@b.from.properties.file@@

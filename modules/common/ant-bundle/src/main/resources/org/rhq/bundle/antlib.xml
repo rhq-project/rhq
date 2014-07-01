@@ -6,6 +6,8 @@
     <!-- bundle task -->
     <taskdef name="bundle" classname="org.rhq.bundle.ant.task.BundleTask"/>
 
+    <taskdef name="property" classname="org.rhq.bundle.ant.task.PropertyTask"/>
+
     <!-- bundle task's child types -->
     <typedef name="input-property" classname="org.rhq.bundle.ant.type.InputPropertyType"/>
     <typedef name="deployment-unit" classname="org.rhq.bundle.ant.type.DeploymentUnitType"/>

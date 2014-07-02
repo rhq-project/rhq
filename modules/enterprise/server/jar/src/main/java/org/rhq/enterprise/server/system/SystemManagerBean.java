@@ -143,14 +143,18 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @Timeout
     public void reloadConfigCache(Timer timer) {
         try {
-            // note: I could have added a timestamp column, looked at it and see if its newer than our
-            //       currently cached config and if so, load in the config then. But that's still
-            //       1 roundtrip to the database, and maybe 2 (if the config is different). So we
-            //       still have the same amount of roundtrips, and to make the code easier, without
-            //       a need for the timestamp column/checking, we just load in the full config now.
-            //       We never need 2 round trips, and this table is small enough that selecting the
-            //       all its rows is really not going to effect performance much.
+            // reload the cache because it's fast and we'd need to make a db round-trip just to check if it's
+            // stale.  if the cache was stale then after the reload also perform any system reconfiguration
+            // that may be necessary given changes.
+            String oldLastUpdate = getCachedSettings().get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME);
+
             systemManager.loadSystemConfigurationCacheInNewTx();
+
+            String newLastUpdate = getCachedSettings().get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME);
+
+            if (!safeEquals(oldLastUpdate, newLastUpdate)) {
+                systemManager.reconfigureSystem(subjectManager.getOverlord());
+            }
         } catch (Throwable t) {
             LOG.error("Failed to reload the system config cache - will try again later. Cause: " + t);
         }

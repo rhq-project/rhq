@@ -1463,7 +1463,7 @@ selectItemPickerIcon,
 }
 .tallCellSelected,
 .tallCellSelectedDark {
-background: none repeat scroll 0 0 #0099d3 !important;
+background: none repeat scroll 0 0 #fbfbfb !important;
 color:#fff;
 }
 

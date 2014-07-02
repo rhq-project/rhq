@@ -22,6 +22,7 @@ package org.rhq.modules.plugins.jbossas7;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -33,6 +34,9 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
+import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.ReadResource;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * The ResourceComponent for a "Web Runtime" Resource.
@@ -114,10 +118,38 @@ public class WebRuntimeComponent extends BaseComponent<BaseComponent<?>> {
         super.getValues(report, requests);
     }
 
+    private ManagedASComponent findManagedASServerComponent() {
+        BaseComponent<?> component = this;
+        while ((component != null) && !(component instanceof ManagedASComponent)) {
+            component = (BaseComponent<?>) component.context.getParentResourceComponent();
+        }
+        return (ManagedASComponent) component;
+    }
+
+    private File findLogDirForManagedDeployment() {
+        Address logDirAddress = new Address(findManagedASServerComponent().getServerAddress());
+        logDirAddress.add("path", "jboss.server.log.dir");
+        ReadResource readResource = new ReadResource(logDirAddress);
+        Result result = getASConnection().execute(readResource);
+        if (result.isSuccess()) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> resultData = (Map<String, Object>) result.getResult();
+            String dir = resultData.get("path").toString();
+            if (resultData.get("relative-to") != null) {
+                return new File(resultData.get("relative-to").toString(), dir);
+            }
+            return new File(dir);
+        }
+        return null;
+    }
+
     private File findLogFile() {
         File logFile = null;
         ServerPluginConfiguration serverPluginConfig = getServerComponent().getServerPluginConfiguration();
         File logDir = serverPluginConfig.getLogDir();
+        if ((BaseComponent<?>) getServerComponent() instanceof HostControllerComponent) {
+            logDir = findLogDirForManagedDeployment();
+        }
         if (logDir != null && logDir.isDirectory()) {
             try {
                 String virtualHost = readAttribute("virtual-host");

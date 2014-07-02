@@ -18,14 +18,13 @@
  */
 package org.rhq.plugins.jmx.test;
 
-import static org.testng.Assert.assertEquals;
-
 import java.util.Collections;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
@@ -43,19 +42,19 @@ public class ObjectNameQueryUtilityDelegateTest {
         assert onqu.getQueryTemplate().equals("java.lang:type=MemoryPool,name=Code Cache");
 
         onqu = new ObjectNameQueryUtility("java.lang:type=MemoryPool,name=%name%");
-        assertEquals(onqu.getTranslatedQuery(), "java.lang:type=MemoryPool,name=*");
+        assert onqu.getTranslatedQuery().equals("java.lang:type=MemoryPool,*");
         assert onqu.getVariableProperties().size() == 1;
         assert onqu.getVariableProperties().get("name").equals("name");
 
         onqu = new ObjectNameQueryUtility("java.lang:type=Threading");
 
         onqu = new ObjectNameQueryUtility("java.lang:type=%foo%");
-        assert onqu.getTranslatedQuery().equals("java.lang:type=*");
+        assert onqu.getTranslatedQuery().equals("java.lang:*");
         assert onqu.getVariableProperties().size() == 1;
         assert onqu.getVariableProperties().get("type").equals("foo");
 
         onqu = new ObjectNameQueryUtility("jboss.esb.*:service=Queue,name=%name%");
-        assert onqu.getTranslatedQuery().equals("jboss.esb.*:service=Queue,name=*");
+        assert onqu.getTranslatedQuery().equals("jboss.esb.*:service=Queue,*");
         assert onqu.getVariableProperties().size() == 1;
         assert onqu.getVariableProperties().get("name").equals("name");
         ObjectName testON = new ObjectName(
@@ -65,7 +64,7 @@ public class ObjectNameQueryUtilityDelegateTest {
         assert onqu.formatMessage(formulatedMessageTemplate).equals("Name of queue: quickstart_helloworld_Request_gw");
 
         onqu = new ObjectNameQueryUtility("java.lang:type=%MyType%,name=%MyName%,app=%MyApp%,foo=%MyFoo%");
-        assertEquals(onqu.getTranslatedQuery(), "java.lang:type=*,name=*,app=*,foo=*");
+        assert onqu.getTranslatedQuery().equals("java.lang:*");
         assert onqu.getVariableProperties().size() == 4;
         testON = new ObjectName("java.lang:type=A,name=B,app=C,foo=D");
         onqu.setMatchedKeyValues(testON.getKeyPropertyList());
@@ -84,11 +83,11 @@ public class ObjectNameQueryUtilityDelegateTest {
         assert onqu.getQueryTemplate().equals("*:type=HttpMetricInspector,name=%name%");
         assert onqu.getVariableProperties().size() == 1;
         assert onqu.getVariableProperties().get("name").equals("name");
-        testON = new ObjectName("FooBarABCDEFGHIJKLMNOPQRSTUVWXYZ:type=HttpMetricInspector,name=ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        testON = new ObjectName("FooBarABCDEFGHIJKLMNOPQRSTUVWXYZ:type=HttpMetricInspector,name=ABCDEFGHIJKLMNOPQRSTUVWXYZöABCDEFGHIJKLMNOPQRSTUVWXYZ");
         onqu.setMatchedKeyValues(testON.getKeyPropertyList());
         formulatedMessageTemplate = "Http metrics for endpoint {name}";
         String res = onqu.formatMessage(formulatedMessageTemplate);
-        assert res.equals("Http metrics for endpoint ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ") : res;
+        assert res.equals("Http metrics for endpoint ABCDEFGHIJKLMNOPQRSTUVWXYZöABCDEFGHIJKLMNOPQRSTUVWXYZ") : res;
 
 
     }

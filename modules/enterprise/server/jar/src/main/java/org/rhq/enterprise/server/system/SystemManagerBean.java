@@ -90,12 +90,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     private final String[] TABLES_TO_VACUUM = { "RHQ_RESOURCE", "RHQ_CONFIG", "RHQ_CONFIG_PROPERTY", "RHQ_AGENT" };
 
-    private final String[] TABLES_TO_REINDEX = { "RHQ_MEASUREMENT_DATA_NUM_1D", "RHQ_MEASUREMENT_DATA_NUM_6H",
-        "RHQ_MEASUREMENT_DATA_NUM_1H", "RHQ_MEASUREMENT_DATA_TRAIT", "RHQ_CALLTIME_DATA_KEY",
+    private final String[] TABLES_TO_REINDEX = { "RHQ_MEASUREMENT_DATA_TRAIT", "RHQ_CALLTIME_DATA_KEY",
         "RHQ_CALLTIME_DATA_VALUE", "RHQ_AVAILABILITY" };
 
-    private final String[] ORA_INDEXES_TO_REBUILD = { "RHQ_MEAS_DATA_1H_ID_TIME_PK", "RHQ_MEAS_DATA_6H_ID_TIME_PK",
-        "RHQ_MEAS_DATA_1D_ID_TIME_PK", "RHQ_MEAS_BASELINE_CTIME_IDX", "RHQ_MEAS_DATA_TRAIT_ID_TIME_PK" };
+    private final String[] ORA_INDEXES_TO_REBUILD = { "RHQ_MEAS_BASELINE_CTIME_IDX", "RHQ_MEAS_DATA_TRAIT_ID_TIME_PK" };
 
     private static final Log LOG = LogFactory.getLog(SystemManagerBean.class);
 
@@ -145,14 +143,18 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @Timeout
     public void reloadConfigCache(Timer timer) {
         try {
-            // note: I could have added a timestamp column, looked at it and see if its newer than our
-            //       currently cached config and if so, load in the config then. But that's still
-            //       1 roundtrip to the database, and maybe 2 (if the config is different). So we
-            //       still have the same amount of roundtrips, and to make the code easier, without
-            //       a need for the timestamp column/checking, we just load in the full config now.
-            //       We never need 2 round trips, and this table is small enough that selecting the
-            //       all its rows is really not going to effect performance much.
+            // reload the cache because it's fast and we'd need to make a db round-trip just to check if it's
+            // stale.  if the cache was stale then after the reload also perform any system reconfiguration
+            // that may be necessary given changes.
+            String oldLastUpdate = getCachedSettings().get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME);
+
             systemManager.loadSystemConfigurationCacheInNewTx();
+
+            String newLastUpdate = getCachedSettings().get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME);
+
+            if (!safeEquals(oldLastUpdate, newLastUpdate)) {
+                systemManager.reconfigureSystem(subjectManager.getOverlord());
+            }
         } catch (Throwable t) {
             LOG.error("Failed to reload the system config cache - will try again later. Cause: " + t);
         }
@@ -214,7 +216,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         SystemSettings ret = new SystemSettings();
         SystemSettings unmasked = getUnmaskedSystemSettings(true);
 
-        for(Map.Entry<SystemSetting, String> entry : unmasked.entrySet()) {
+        for (Map.Entry<SystemSetting, String> entry : unmasked.entrySet()) {
             if (entry.getKey().isPublic()) {
                 if (entry.getKey().getType() == PropertySimpleType.PASSWORD) {
                     entry.setValue(PropertySimple.MASKED_VALUE);
@@ -236,7 +238,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     @Override
     public void deobfuscate(SystemSettings systemSettings) {
-        for(Map.Entry<SystemSetting, String> entry : systemSettings.entrySet()) {
+        for (Map.Entry<SystemSetting, String> entry : systemSettings.entrySet()) {
             String value = entry.getValue();
             if (value != null && entry.getKey().getType() == PropertySimpleType.PASSWORD) {
                 entry.setValue(PicketBoxObfuscator.decode(value));
@@ -259,7 +261,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     private SystemSettings removePrivateSettings(SystemSettings settings) {
         SystemSettings cleansed = new SystemSettings(settings);
-        for(SystemSetting s : SystemSetting.values()) {
+        for (SystemSetting s : SystemSetting.values()) {
             if (!s.isPublic()) {
                 cleansed.remove(s);
             }
@@ -293,8 +295,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
         boolean changed = false;
 
-        SystemConfiguration lastUpdateTime = existingConfigMap
-            .get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME.getInternalName());
+        SystemConfiguration lastUpdateTime = existingConfigMap.get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME
+            .getInternalName());
 
         // verify each new setting and persist them to the database
         // note that if a new setting is the same as the old one, we do nothing - leave the old entity as is
@@ -362,8 +364,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         if (changed) {
             if (lastUpdateTime == null) {
                 lastUpdateTime = new SystemConfiguration(
-                    SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME.getInternalName(),
-                    Long.toString(System.currentTimeMillis()));
+                    SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME.getInternalName(), Long.toString(System
+                        .currentTimeMillis()));
                 lastUpdateTime.setFreadOnly(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME.isReadOnly());
                 entityManager.persist(lastUpdateTime);
             } else {
@@ -515,7 +517,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                 return Boolean.toString(false);
             }
         default:
-            switch(prop.getType()) {
+            switch (prop.getType()) {
             case BOOLEAN:
                 if ("0".equals(value)) {
                     return Boolean.FALSE.toString();
@@ -937,10 +939,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
         settings.setDriftPlugins(getDriftServerPlugins());
 
-        synchronized(this) {
+        synchronized (this) {
             //only update the caches if the settings were actually changed
-            if (cachedSystemSettings == null ||
-                !safeEquals(cachedSystemSettings.get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME),
+            if (cachedSystemSettings == null
+                || !safeEquals(cachedSystemSettings.get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME),
                     settings.get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME))) {
                 cachedSystemSettings = settings;
 

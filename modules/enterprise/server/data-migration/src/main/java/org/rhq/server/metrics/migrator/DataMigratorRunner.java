@@ -539,6 +539,11 @@ public class DataMigratorRunner {
             configuration.put(deleteDataOption, value);
         }
 
+        if (commandLine.hasOption(deleteOnlyOption.getLongOpt())) {
+            value = tryParseBoolean(commandLine.getOptionValue(deleteOnlyOption.getLongOpt()), true);
+            configuration.put(deleteOnlyOption, value);
+        }
+
         if (commandLine.hasOption(estimateOnlyOption.getLongOpt())) {
             value = tryParseBoolean(commandLine.getOptionValue(estimateOnlyOption.getLongOpt()), true);
             configuration.put(estimateOnlyOption, value);

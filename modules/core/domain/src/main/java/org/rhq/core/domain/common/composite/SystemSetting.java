@@ -85,7 +85,6 @@ public enum SystemSetting {
     LDAP_BIND_PW("CAM_LDAP_BIND_PW", PropertySimpleType.PASSWORD, false, false, true),
     LDAP_NAMING_FACTORY("CAM_LDAP_NAMING_FACTORY_INITIAL", PropertySimpleType.STRING, true, true, true),
     LDAP_GROUP_USE_POSIX("CAM_LDAP_GROUP_USE_POSIX", PropertySimpleType.BOOLEAN, false, true, true),
-    LDAP_FOLLOW_REFERRALS("CAM_LDAP_FOLLOW_REFERRALS", PropertySimpleType.BOOLEAN, false, true, true),
 
     ACTIVE_DRIFT_PLUGIN("ACTIVE_DRIFT_PLUGIN", PropertySimpleType.STRING, false, true, true),
 
@@ -166,6 +165,8 @@ public enum SystemSetting {
     GUIDE_ENABLED("CAM_GUIDE_ENABLED", PropertySimpleType.STRING, true, false, true),
     @Deprecated
     RT_COLLECT_IP_ADDRS("CAM_RT_COLLECT_IP_ADDRS", PropertySimpleType.STRING, true, false, true),
+
+    LDAP_FOLLOW_REFERRALS("CAM_LDAP_FOLLOW_REFERRALS", PropertySimpleType.BOOLEAN, false, true, true),
 
     /**
      * This is a bit magical, because the system itself updates it if any other property gets updated even though

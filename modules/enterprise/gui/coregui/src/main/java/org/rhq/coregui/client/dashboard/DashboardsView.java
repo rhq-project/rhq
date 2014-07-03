@@ -180,7 +180,7 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
 
         tabSet.setWidth100();
         tabSet.setHeight100();
-
+        tabSet.setStyleName("dashboardTabs");
         editButton = new EnhancedIButton(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
         editButton.setAutoFit(true);
         editButton.addClickHandler(new ClickHandler() {

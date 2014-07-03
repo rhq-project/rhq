@@ -139,7 +139,7 @@ public class ResourceGroupDetailView extends
 
     public ResourceGroupDetailView(String baseViewPath) {
         super(baseViewPath, createTitleBar(baseViewPath), createTabs());
-        addStyleName("groupdetail");
+        addStyleName("groupDetail");
 
         summaryTab = getTabSet().getTabByName(Tab.Summary.NAME);
         summaryActivity = summaryTab.getSubTabByName(Tab.Summary.SubTab.ACTIVITY);

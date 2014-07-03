@@ -77,9 +77,9 @@ import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
  * @author Jirka Kremser
  */
 public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposite, StorageNodeCriteria> {
-    public static final String OK_COLOR = "color: #26aa26;";
-    public static final String WARN_COLOR = "color: #ed9b26;";
-    public static final String DONT_MISS_ME_COLOR = "font-weight: bold; color: #d64949;";
+    public static final String OK_CLASS = "storageNodeOk";
+    public static final String WARN_CLASS = "storageNodeWarn";
+    public static final String DONT_MISS_ME_CLASS = "storageNodeProblem";
 
     // filters
     public static final String FILTER_ADDRESS = FIELD_ADDRESS.propertyName();
@@ -146,7 +146,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 if (listGridRecord.getAttribute(FIELD_ERROR_MESSAGE.propertyName()) != null
                     || listGridRecord.getAttribute(FIELD_FAILED_OPERATION.propertyName()) != null) {
-                    return "<span style='" + DONT_MISS_ME_COLOR + "'>" + value.toString() + "</span>";
+                    return "<span class='" + DONT_MISS_ME_CLASS + "'>" + value.toString() + "</span>";
                 } else
                     return value.toString();
             }
@@ -275,16 +275,16 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             if (from.getFreeDiskToDataSizeRatio().getMax() < 0.7) {
                 record.setAttribute(
                     FIELD_DISK.propertyName(),
-                    "<span style='" + DONT_MISS_ME_COLOR + "'>"
+                    "<span class='" + DONT_MISS_ME_CLASS + "'>"
                         + MSG.view_adminTopology_storageNodes_diskInsufficient() + "</span>");
             } else if (from.getFreeDiskToDataSizeRatio().getMax() < 1.5) {
                 record
                     .setAttribute(FIELD_DISK.propertyName(),
-                        "<span style='" + WARN_COLOR + "'>" + MSG.view_adminTopology_storageNodes_diskWarning()
+                        "<span class='" + WARN_CLASS + "'>" + MSG.view_adminTopology_storageNodes_diskWarning()
                             + "</span>");
             } else {
                 record.setAttribute(FIELD_DISK.propertyName(),
-                    "<span style='" + OK_COLOR + "'>" + MSG.view_adminTopology_storageNodes_diskSufficient()
+                    "<span class='" + OK_CLASS + "'>" + MSG.view_adminTopology_storageNodes_diskSufficient()
                         + "</span>");
             }
         }

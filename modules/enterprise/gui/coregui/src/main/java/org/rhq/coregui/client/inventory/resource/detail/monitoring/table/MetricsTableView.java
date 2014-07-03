@@ -99,6 +99,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
     public MetricsTableView(Resource resource, AbstractD3GraphListView abstractD3GraphListView,
         Set<Integer> expandedRows) {
         super();
+        setStyleName("metricsTableView");
         this.resource = resource;
         this.abstractD3GraphListView = abstractD3GraphListView;
         dashboardMenuMap = new LinkedHashMap<String, String>();

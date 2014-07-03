@@ -163,7 +163,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
 
     private ValuesManager topLevelPropertiesValuesManager = new ValuesManager();
 
-    private Label loadingLabel = new Label("<b>" + MSG.common_msg_loading() + "</b>");
+    private Label loadingLabel = new Label( MSG.common_msg_loading() );
 
     private int resourceId;
     private int resourceTypeId;
@@ -565,7 +565,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
             String title = "<div style=\"float:left; font-weight: bold;\">"
                 + group.getDisplayName()
                 + "</div>"
-                + (group.getDescription() != null ? ("<div style='padding-left: 10px; font-weight: normal; font-size: smaller; float: left;'>"
+                + (group.getDescription() != null ? ("<div style='border 1px solid red;padding-left: 10px; font-weight: normal; font-size: smaller; float: left;'>"
                     + " - " + group.getDescription() + "</div>")
                     : "");
             section = new SectionStackSection(title);
@@ -600,6 +600,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
         form.setNumCols(4);
         form.setCellPadding(5);
         form.setColWidths(190, 28, 210);
+        form.setStyleName("propertiesForm");
 
 
         List<FormItem> fields = new ArrayList<FormItem>();
@@ -758,9 +759,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
     protected StaticTextItem buildNameItem(PropertyDefinition propertyDefinition) {
         StaticTextItem nameItem = new StaticTextItem();
         nameItem.setStartRow(true);
-        String title = "<b>"
-            + (propertyDefinition.getDisplayName() != null ? propertyDefinition.getDisplayName() : propertyDefinition
-                .getName()) + "</b>";
+        String title =  (propertyDefinition.getDisplayName() != null ? propertyDefinition.getDisplayName() : propertyDefinition
+                .getName());
         nameItem.setValue(title);
         nameItem.setShowTitle(false);
         return nameItem;

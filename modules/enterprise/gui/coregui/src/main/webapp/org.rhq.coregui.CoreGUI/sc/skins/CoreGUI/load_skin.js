@@ -11,8 +11,8 @@ isc.loadSkin = function (theWindow) {
         isc.Canvas.setProperties({
             // use synthetic scrollbars in mobile and for Macs, since from OSX Lion onward,
             // scrollbars are not shown by default
-            showCustomScrollbars:isc.Browser.isMobile || isc.Browser.isMac,
-            groupBorderCSS :"1px solid #165fa7"
+            showCustomScrollbars:true //isc.Browser.isMobile || isc.Browser.isMac,
+            //groupBorderCSS :"1px solid #165fa7"
         });
 
         if(isc.Browser.isIE && isc.Browser.version >= 7) {
@@ -52,7 +52,8 @@ isc.loadSkin = function (theWindow) {
             if (isc.IMenuButton.markAsFrameworkClass != null) isc.IMenuButton.markAsFrameworkClass();
             isc.MenuButton.addProperties({
                 // copy the header (.button) background-color to match when sort arrow is hidden
-                baseStyle : "button"
+                baseStyle : "button",
+                showShadow:false
             });
         }
 
@@ -259,7 +260,7 @@ isc.loadSkin = function (theWindow) {
             });
 
             isc.Window.changeDefaults("maximizeButtonDefaults", {
-              src:"[SKIN]/headerIcons/maximize.png",
+              src:"[SKIN]/headerIcons/maximize.gif",
               opacity:isc._edgeOpacity,
               showRollOver:false,
               width:15,
@@ -282,6 +283,14 @@ isc.loadSkin = function (theWindow) {
             });
         }
 
+        if (isc.DynamicForm) {
+            isc.DynamicForm.addProperties({
+                  //border:"1px solid rgb(207, 207, 207)",
+                  border:null,
+                  cellBorder:0,
+                  groupBorderCSS:"none"
+            });
+        }
         // Dynamic form skinning
         if (isc.FormItem) {
             isc.FormItem.addProperties({
@@ -440,6 +449,7 @@ isc.loadSkin = function (theWindow) {
                 showTitle:false,
                 showRollOver:false,
                 showDown:true,
+                showShadow:false,
                 //labelVPad:0,
                 //labelHPad:7,
                 autoFit:true,

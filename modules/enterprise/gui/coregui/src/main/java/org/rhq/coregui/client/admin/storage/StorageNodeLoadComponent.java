@@ -18,9 +18,9 @@
  */
 package org.rhq.coregui.client.admin.storage;
 
-import static org.rhq.coregui.client.admin.storage.StorageNodeDatasource.DONT_MISS_ME_COLOR;
-import static org.rhq.coregui.client.admin.storage.StorageNodeDatasource.OK_COLOR;
-import static org.rhq.coregui.client.admin.storage.StorageNodeDatasource.WARN_COLOR;
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasource.DONT_MISS_ME_CLASS;
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasource.OK_CLASS;
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasource.WARN_CLASS;
 
 import java.util.List;
 import java.util.Map;
@@ -59,32 +59,31 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
         Map<String, List<MeasurementDataNumericHighLowComposite>> sparkLineData) {
         super(5);
         setPadding(5);
-        setBackgroundColor("#ffffff");
         this.sparkLineData = sparkLineData;
         final boolean showSparkLine = sparkLineData != null && !sparkLineData.isEmpty();
         loadGrid = new ListGrid() {
             @Override
             protected String getCellCSSText(ListGridRecord record, int rowNum, int colNum) {
-                if ("avg".equals(getFieldName(colNum)) 
+                if ("avg".equals(getFieldName(colNum))
                     && (StorageNodeLoadCompositeDatasource.KEY_HEAP_PERCENTAGE.equals(record.getAttribute("id")) ||
                         StorageNodeLoadCompositeDatasource.KEY_DATA_DISK_SPACE_PERCENTAGE.equals(record.getAttribute("id")) ||
                         StorageNodeLoadCompositeDatasource.KEY_TOTAL_DISK_SPACE_PERCENTAGE.equals(record.getAttribute("id")))) {
                     if (record.getAttributeAsFloat("avgFloat") > .85) {
-                        return DONT_MISS_ME_COLOR;
+                        return DONT_MISS_ME_CLASS;
                     } else if (record.getAttributeAsFloat("avgFloat") > .7) {
-                        return WARN_COLOR;
+                        return WARN_CLASS;
                     } else {
-                        return OK_COLOR;
+                        return OK_CLASS;
                     }
                 } else if ("max".equals(getFieldName(colNum))
                     && StorageNodeLoadCompositeDatasource.KEY_FREE_DISK_TO_DATA_SIZE_RATIO.equals(record
                         .getAttribute("id"))) {
                     if (record.getAttributeAsFloat("avgFloat") < .7) {
-                        return DONT_MISS_ME_COLOR;
+                        return DONT_MISS_ME_CLASS;
                     } else if (record.getAttributeAsFloat("avgFloat") < 1.5) {
-                        return WARN_COLOR;
+                        return WARN_CLASS;
                     } else {
-                        return OK_COLOR;
+                        return OK_CLASS;
                     }
                 }
                 else {
@@ -116,7 +115,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
             });
         }
         addMember(loadGrid);
-        
+
     }
 
     private void showSparkLineGraphs() {
@@ -140,7 +139,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
             }
             // if graph content returned
             someChartedData = lastValue != -1;
-            
+
             // collapse the data into comma delimited list for consumption by third party javascript library (jquery.sparkline)
             StringBuilder commaDelimitedList = new StringBuilder();
             for (MeasurementDataNumericHighLowComposite d : data) {

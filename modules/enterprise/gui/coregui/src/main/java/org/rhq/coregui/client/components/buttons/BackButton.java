@@ -22,37 +22,32 @@
  */
 package org.rhq.coregui.client.components.buttons;
 
-import com.smartgwt.client.widgets.StretchImgButton;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-
+import com.smartgwt.client.types.Cursor;
 import org.rhq.coregui.client.CoreGUI;
 
 /**
  * @author Greg Hinkle
  */
-public class BackButton extends StretchImgButton {
+public class BackButton extends Canvas {
 
     public BackButton() {
         super();
-        setSrc("buttons/back/back.png");
     }
 
     public BackButton(String title, final String anchor) {
         this();
-        setTitle("<b>" + title + "</b>");
+        setTitle(title);
+        setContents(" \u00AB " + title);
+        setCursor(Cursor.POINTER);
         setID("backButton");
         addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 CoreGUI.goToView(anchor);
             }
         });
-        setAutoFit(true);
-        setHeight(22);
-        setWrap(false);
-        setShowDown(false);
-
-        setCapSize(20);
         setStyleName("backLink");
     }
 }

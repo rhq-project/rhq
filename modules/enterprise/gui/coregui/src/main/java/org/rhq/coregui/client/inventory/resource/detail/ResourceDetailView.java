@@ -131,7 +131,7 @@ public class ResourceDetailView extends
 
     public ResourceDetailView(ResourceTreeView platformTree) {
         super(BASE_VIEW_PATH, createTitleBar(platformTree), createTabs());
-        addStyleName("resourcedetail");
+        addStyleName("resourceDetail");
         summaryTab = getTabSet().getTabByName(Tab.Summary.NAME);
         summaryActivity = summaryTab.getSubTabByName(Tab.Summary.SubTab.ACTIVITY);
         summaryTimeline = summaryTab.getSubTabByName(Tab.Summary.SubTab.TIMELINE);

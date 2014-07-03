@@ -4,7 +4,12 @@
 /*RHQ Overrides*/
 
 body {
-    line-height: 1.66667;
+  /*  line-height: 1.66667;*/
+    font-size:12px;
+}
+
+td {
+  font-size:12px;
 }
 
 .scrollbar {
@@ -19,33 +24,35 @@ border-color:rgb(207, 207, 207);
 
 }
 
-.graphDateTimeRangeLabel {
-  font-size:12px;
-}
+.graphDateTimeRangeLabel { font-size:12px; }
 
 .subtitle { font-weight:bolder; }
-.subtitle::before
-{
-content:"( ";
-}
 
-.subtitle::after
-{
-content:" )";
-}
+.subtitle::before { content:"( "; }
+.subtitle::after { content:" )"; }
 
-.portalLayout {
-  margin:5px 0;
-}
+.portalLayout { margin:5px 0; }
+
 .resourceSummary .HeaderLabel,
 .resourceSummary .subtitle {
   margin-bottom:5px;
 }
 
-.HeaderLabel, .SectionHeader {
+/*.groupLabel {
+    color:#333333;
+    padding-left:5px; padding-right:5px;
+}*/
+
+.backLink {
+  display:block;
+  width:100%;
+}
+.groupLabel, .HeaderLabel, .SectionHeader {
     font-size: 24px;
     color: rgb(51,51,51);
     font-weight: 300;
+    margin-left:0;
+    padding-left:0;
 }
 
 a, a:link, a:visited {
@@ -77,17 +84,6 @@ a, a:link, a:visited {
     border-width: 0px;
     margin: 0;
     visibility:hidden;
-}
-
-
-.subtabbar * {
-    font-size:12px;
-}
-
-.subtabbar {
-  border-bottom:1px solid rgb(201,201,201);
-  padding:5px 0 0 21px;
-  margin-bottom:20px;
 }
 
 
@@ -324,8 +320,30 @@ a.nbi-link {
 General
 ============================================================*/
 
-body {
-    -webkit-tap-highlight-color:rgba(0,0,0,0);
+.storageNodeOk {
+  color: #26aa26;
+}
+
+.storageNodeWarn {
+  color: #ed9b26;
+}
+
+.storageNodeProblem {
+  font-weight: 700; color: #d64949;
+}
+
+.propertiesForm {
+  border:none !important;
+}
+
+.subtabbar * {
+  /*  font-size:12px; */
+}
+
+.subtabbar {
+  border-bottom:1px solid rgb(201,201,201);
+  padding:5px 0 0 21px;
+  margin-bottom:20px;
 }
 
 /*a:link {
@@ -360,19 +378,14 @@ body {
     opacity: 0.9;
 }
 
-/* group label */
-.groupLabel {
-     font-size:11px;
-    color:#333333;
-    padding-left:5px; padding-right:5px;
-}
+
 
 
 .footer {
   padding:5px 0px 5px 0 !important;
 }
 .footer * {
-  font-size:12px;
+/*  font-size:12px; */
 }
 /*============================================================
 Button (also used as MenuButton base style)
@@ -386,7 +399,7 @@ Button (also used as MenuButton base style)
 .buttonSelectedDown,
 .buttonSelectedOver,
 .buttonSelectedDisabled {
-
+  padding:2px 6px;
   margin: 0;
   font-weight: 600;
   cursor: pointer;
@@ -394,28 +407,21 @@ Button (also used as MenuButton base style)
   white-space: nowrap;
   line-height: 1.66666667;
   border-radius: 1px;
-  font-size:12px;
-
   background-color: #eeeeee;
   background-image: -webkit-linear-gradient(top, #fafafa 0%, #ededed 100%);
   background-image: linear-gradient(to bottom, #fafafa 0%, #ededed 100%);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', endColorstr='#ffededed', GradientType=0);
   color: #4d5258;
-
-
   border: 1px solid #b7b7b7;
-
   box-shadow:0 2px 3px rgba(0, 0, 0, 0.1);
-
 }
 
 .buttonOver {
   color: #4d5258;
   background-color: #dadada;
   border-color: #989898;
-text-decoration: none;
-
+  text-decoration: none;
 }
 
 .buttonDown {
@@ -453,9 +459,15 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cccccc', end
 }
 
 .buttonSelectedDisabled {
-    font-size:11px; color:#666666;
+    color:#666666;
 }
 
+.configurationEditorHeaderCell {
+  border:1px solid rgb(209,209,209) !important;
+}
+
+
+.configurationEditorHeaderCell,
 .headerButton,
 .headerButtonOver,
 .headerButtonDown,
@@ -464,13 +476,14 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cccccc', end
 .headerButtonSelectedDown,
 .headerButtonSelectedOver,
 .headerButtonSelectedDisabled {
-     font-size:12px;
-     background-color: #f6f6f6;
-    padding:2px 2px 2px 5px;
-    font-weight:600;
-    border-bottom: 1px solid rgb(209, 209, 209);
-    border-right: 1px solid rgb(209, 209, 209);
-     border-top: 2px solid transparent;
+  background-color: #f6f6f6;
+  border-color:rgb(209,209,209);
+  border-top-color:transparent;
+  border-style:solid;
+  padding:2px 2px 2px 5px;
+  font-weight:600;
+  border-width:2px 1px 1px 0;
+
 }
 
 .headerButton img,
@@ -552,7 +565,6 @@ filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', en
     border-color: transparent;
     border-style: solid;
     border-width: 1px 0;
-    font-size:12px;
     text-align: left;
     vertical-align: middle;
 }
@@ -640,9 +652,7 @@ background-color:#dfedfa;
     border-right: 1px solid #FFFFFF;
     border-bottom: 1px solid #FFFFFF;
 }
-.windowStatusBar {
-     font-size:11px;
-}
+
 .modalMask {
     background-color:black;
 }
@@ -673,11 +683,11 @@ background-color:#dfedfa;
 ============================================================*/
 
 .tabSetContainer {
-    font-size:12px;
     background-color:#FFFFFF;
     border-width:1px 0;
     border-color: #dddddd transparent transparent transparent;
     border-style:solid;
+    padding-top:5px;
 }
 
 .tabBarTop {
@@ -753,7 +763,6 @@ background-color:#dfedfa;
 }
 
 .SubTabButtonSelected, .SubTabButton {
-  font-size:12px;
   border-style:solid;
   border-width:0 0 1px 0;
   border-color:transparent;
@@ -815,7 +824,7 @@ background-color:#dfedfa;
 .nestedFormContainer,
 .nestedFormContainerFocused,
 .nestedFormContainerDisabled {
-    font-size:12px;
+  /*  font-size:12px;*/
 }
 
 .formTitle,
@@ -863,7 +872,6 @@ background-color:#dfedfa;
 .labelAnchorError,
 .labelAnchorFocused,
 .formCell {
-     font-size:12px;
 /*     margin-bottom:0;*/
     /* padding: 2px 6px !important;*/
      /*border: 1px solid transparent;*/
@@ -1389,13 +1397,13 @@ selectItemPickerIcon,
 .specialColSelectedOver,
 .specialColDisabled,
 .groupNode {
-	font-size:12px; text-overflow:ellipsis;
-    border-bottom:1px solid;
-    border-bottom-color: #e2e2e2;
+  text-overflow:ellipsis;
+  border-bottom:1px solid;
+  border-bottom-color: #e2e2e2;
 }
 
 .specialCol {
-	font-size:12px; text-overflow:ellipsis;
+	text-overflow:ellipsis;
 	color:black;
     background-color:#f7f7f7;
 }
@@ -1461,10 +1469,21 @@ selectItemPickerIcon,
 .recordSummaryCellSelectedDark {
     background:#ffeb90;
 }
+
 .tallCellSelected,
 .tallCellSelectedDark {
 background: none repeat scroll 0 0 #0099d3 !important;
 color:#fff;
+}
+
+.metricsTableView .tallCellOverDark,
+.metricsTableView .tallCellSelectedDark,
+.metricsTableView .tallCellSelectedOverDark,
+.metricsTableView .tallCellOver,
+.metricsTableView .tallCellSelectedOver,
+.metricsTableView .tallCellSelected {
+  background-color:#fbfbfb !important;
+  color:#333;
 }
 
 .tallCellSelected a,
@@ -1538,7 +1557,7 @@ color:#fff;
 .treeTallCellSelectedOverDark,
 .treeTallCellDisabled,
 .treeTallCellDisabledDark {
-	font-size:12px; text-overflow:ellipsis;
+	text-overflow:ellipsis;
 	color:rgb(51,51,51);
   background-color:rgb(250,250,250);
   border-width:1px 0 1px 0;
@@ -1817,9 +1836,8 @@ background: none repeat scroll 0 0 #0099d3 !important;
   margin-top:5px;
 }
 
-
-.resourcedetail,
-.groupdetail,
+.groupDetail,
+.resourceDetail,
 .resourcesearchlist {
   padding:0 10px 5px 0px;
 }
@@ -1840,22 +1858,25 @@ background: none repeat scroll 0 0 #0099d3 !important;
   background-color:#fff;
 }
 
-.groupdetail .tabBarTop .tabButtonTop img,
-.groupdetail .tabBarTop .tabButtonTopOver img,
-.groupdetail .tabBarTop .tabButtonTopSelected img,
-.groupdetail .tabBarTop .tabButtonTopSelectedOver img,
-.groupdetail .tabBarTop .tabButtonTopDown img,
-.groupdetail .tabBarTop .tabButtonTopSelectedDown img,
-.groupdetail .tabBarTop .tabButtonTopSelectedDisabled img,
-.groupdetail .tabBarTop .tabButtonTopDisabled img ,
-.resourcedetail .tabBarTop .tabButtonTop img,
-.resourcedetail .tabBarTop .tabButtonTopOver img,
-.resourcedetail .tabBarTop .tabButtonTopSelected img,
-.resourcedetail .tabBarTop .tabButtonTopSelectedOver img,
-.resourcedetail .tabBarTop .tabButtonTopDown img,
-.resourcedetail .tabBarTop .tabButtonTopSelectedDown img,
-.resourcedetail .tabBarTop .tabButtonTopSelectedDisabled img,
-.resourcedetail .tabBarTop .tabButtonTopDisabled img {
+.dashboardTabs .tabButtonTop img,
+.dashboardTabs .tabButtonTopOver img,
+.dashboardTabs .tabButtonTopSelected img,
+.dashboardTabs .tabButtonTopSelectedOver img,
+.dashboardTabs .tabButtonTopDown img,
+.dashboardTabs .tabButtonTopSelectedDown img,
+.dashboardTabs .tabButtonTopSelectedDisabled img,
+.dashboardTabs .tabButtonTopDisabled img {
+  display:block;
+}
+
+.tabButtonTop img,
+.tabButtonTopOver img,
+.tabButtonTopSelected img,
+.tabButtonTopSelectedOver img,
+.tabButtonTopDown img,
+.tabButtonTopSelectedDown img,
+.tabButtonTopSelectedDisabled img,
+.tabButtonTopDisabled img {
   display:none;
   width:7px;
   height:7px;

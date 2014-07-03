@@ -73,7 +73,7 @@ import org.rhq.coregui.client.util.message.Message;
 
 /**
  * Shows details of a storage node.
- * 
+ *
  * @author Jirka Kremser
  */
 public class StorageNodeDetailView extends EnhancedVLayout implements BookmarkableView {
@@ -99,6 +99,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         super();
         this.storageNodeId = storageNodeId;
         this.header = header;
+        header.setStyleName("HeaderLabel");
         setHeight100();
         setWidth100();
         setOverflow(Overflow.AUTO);
@@ -126,8 +127,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                         onFailure(new Exception("No storage nodes have been found."));
                     }
                     final StorageNode node = storageNodes.get(0);
-                    header.setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'> "
-                        + MSG.view_adminTopology_storageNodes_node() + " (" + node.getAddress() + ")</div>");
+                    header.setContents(MSG.view_adminTopology_storageNodes_node() + " (" + node.getAddress() + ")");
 
                     prepareDetailsSection(node);
                     fetchStorageNodeConfigurationComposite(node);

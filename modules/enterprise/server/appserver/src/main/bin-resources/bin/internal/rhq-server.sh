@@ -93,10 +93,10 @@ check_status ()
     if [ -f "$_JVM_PIDFILE" ]; then
         _JVM_PID=`cat "$_JVM_PIDFILE"`
         if [ -n "$_JVM_PID" ] && kill -0 $_JVM_PID 2>/dev/null ; then
-            _JVM_STATUS=`printf "%-30s (pid %-7s) is %s" "JBossAS Java VM child process" $_SERVER_PID $1`
+            _JVM_STATUS=`printf "%-30s (pid %-7s) is %s" "JBossAS Java VM child process" $_JVM_PID $1`
             _JVM_RUNNING=1
         else
-            _JVM_STATUS=`printf "%-30s (pid %-7s) is down" "JBossAS Java VM child process" $_SERVER_PID`
+            _JVM_STATUS=`printf "%-30s (pid %-7s) is down" "JBossAS Java VM child process" $_JVM_PID`
             _JVM_RUNNING=0
         fi
     else

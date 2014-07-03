@@ -22,12 +22,12 @@ package org.rhq.core.domain.common.composite;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
+/**
+ * This is an enum - ADD NEW ENTRIES AT THE END TO PRESERVE ORDINAL VALUES!
+ */
 public enum SystemSetting {
     /** Base URL for the application - (i think this is only used for alert emails) */
     BASE_URL("CAM_BASE_URL", PropertySimpleType.STRING, false, true, true),
-    
-    /** Is user without any assigned role allowed to see the web UI */
-    LOGIN_WITHOUT_ROLES_ENABLED("ENABLE_LOGIN_WITHOUT_ROLES", PropertySimpleType.BOOLEAN, false, true, true),
 
     /** how long can an agent be quiet (i.e. not send an avail report) before we consider it down and backfill it */
     AGENT_MAX_QUIET_TIME_ALLOWED("AGENT_MAX_QUIET_TIME_ALLOWED", PropertySimpleType.LONG, false, true, true),
@@ -75,20 +75,32 @@ public enum SystemSetting {
     BASE_LINE_DATASET("CAM_BASELINE_DATASET", PropertySimpleType.LONG, false, true, true),
 
     LDAP_BASED_JAAS_PROVIDER("CAM_JAAS_PROVIDER", PropertySimpleType.BOOLEAN, false, true, true),
+
     LDAP_NAMING_PROVIDER_URL("CAM_LDAP_NAMING_PROVIDER_URL", PropertySimpleType.STRING, false, true, true),
+
     USE_SSL_FOR_LDAP("CAM_LDAP_PROTOCOL", PropertySimpleType.BOOLEAN, false, true, true),
+
     LDAP_LOGIN_PROPERTY("CAM_LDAP_LOGIN_PROPERTY", PropertySimpleType.STRING, false, false, true),
+
     LDAP_FILTER("CAM_LDAP_FILTER", PropertySimpleType.STRING, false, false, true),
+
     LDAP_GROUP_FILTER("CAM_LDAP_GROUP_FILTER", PropertySimpleType.STRING, false, false, true),
+
     LDAP_GROUP_MEMBER("CAM_LDAP_GROUP_MEMBER", PropertySimpleType.STRING, false, false, true),
+
     LDAP_GROUP_PAGING("CAM_LDAP_GROUP_PAGING", PropertySimpleType.BOOLEAN, false, true, true),
+
     LDAP_GROUP_QUERY_PAGE_SIZE("CAM_LDAP_GROUP_QUERY_PAGE_SIZE", PropertySimpleType.LONG, false, true, true),
+
     LDAP_BASE_DN("CAM_LDAP_BASE_DN", PropertySimpleType.STRING, false, false, true),
+
     LDAP_BIND_DN("CAM_LDAP_BIND_DN", PropertySimpleType.STRING, false, false, true),
+
     LDAP_BIND_PW("CAM_LDAP_BIND_PW", PropertySimpleType.PASSWORD, false, false, true),
+
     LDAP_NAMING_FACTORY("CAM_LDAP_NAMING_FACTORY_INITIAL", PropertySimpleType.STRING, true, true, true),
+
     LDAP_GROUP_USE_POSIX("CAM_LDAP_GROUP_USE_POSIX", PropertySimpleType.BOOLEAN, false, true, true),
-    LDAP_FOLLOW_REFERRALS("CAM_LDAP_FOLLOW_REFERRALS", PropertySimpleType.BOOLEAN, false, true, true),
 
     ACTIVE_DRIFT_PLUGIN("ACTIVE_DRIFT_PLUGIN", PropertySimpleType.STRING, false, true, true),
 
@@ -96,7 +108,8 @@ public enum SystemSetting {
      * allow plugin initiated resource name & description upgrades (resource key is always upgradable)
      * making this readonly because it is not currently supported by UI code
      */
-    ALLOW_RESOURCE_GENERIC_PROPERTIES_UPGRADE("RESOURCE_GENERIC_PROPERTIES_UPGRADE", PropertySimpleType.BOOLEAN, true, true, true),
+    ALLOW_RESOURCE_GENERIC_PROPERTIES_UPGRADE("RESOURCE_GENERIC_PROPERTIES_UPGRADE", PropertySimpleType.BOOLEAN, true,
+        true, true),
 
     /**
      * @deprecated This attribute is no longer maintained and might not reflect the true version of the running server.
@@ -158,23 +171,19 @@ public enum SystemSetting {
      */
     STORAGE_PASSWORD("STORAGE_PASSWORD", PropertySimpleType.PASSWORD, true, true, false),
 
-    /**
-     * Setting this property deactivates the metrics_cache table. Data will not be pulled from metrics_cache until
-     * the time specified by this property has been reached. This applies to both past and current data. There are two
-     * use cases for this - 1) data migration during upgrade and 2) cache partition resizing (i.e., number of schedules
-     * stored per partition)
-     */
-    METRICS_CACHE_ACTIVATION_TIME("METRICS_CACHE_ACTIVATION_TIME", PropertySimpleType.LONG, false, false, true),
-
     //these seem to be unused yet still present in the database...
     @Deprecated
     HELP_USER("CAM_HELP_USER", PropertySimpleType.STRING, true, false, true),
+
     @Deprecated
     HELP_PASSWORD("CAM_HELP_PASSWORD", PropertySimpleType.PASSWORD, true, false, true),
+
     @Deprecated
     SYSLOG_ACTIONS_ENABLED("CAM_SYSLOG_ACTIONS_ENABLED", PropertySimpleType.STRING, true, false, true),
+
     @Deprecated
     GUIDE_ENABLED("CAM_GUIDE_ENABLED", PropertySimpleType.STRING, true, false, true),
+
     @Deprecated
     RT_COLLECT_IP_ADDRS("CAM_RT_COLLECT_IP_ADDRS", PropertySimpleType.STRING, true, false, true),
 
@@ -189,6 +198,19 @@ public enum SystemSetting {
      * Right now, it's used when remotely controlling/installing/uninstalling agents.
      */
     REMOTE_SSH_PASSWORD_DEFAULT("REMOTE_SSH_PASSWORD_DEFAULT", PropertySimpleType.PASSWORD, false, false, true),
+
+    /** Is user without any assigned role allowed to see the web UI */
+    LOGIN_WITHOUT_ROLES_ENABLED("ENABLE_LOGIN_WITHOUT_ROLES", PropertySimpleType.BOOLEAN, false, true, true),
+
+    /**
+     * Setting this property deactivates the metrics_cache table. Data will not be pulled from metrics_cache until
+     * the time specified by this property has been reached. This applies to both past and current data. There are two
+     * use cases for this - 1) data migration during upgrade and 2) cache partition resizing (i.e., number of schedules
+     * stored per partition)
+     */
+    METRICS_CACHE_ACTIVATION_TIME("METRICS_CACHE_ACTIVATION_TIME", PropertySimpleType.LONG, false, false, true),
+
+    LDAP_FOLLOW_REFERRALS("CAM_LDAP_FOLLOW_REFERRALS", PropertySimpleType.BOOLEAN, false, true, true),
 
     HTTP_PROXY_SERVER_HOST("HTTP_PROXY_SERVER_HOST", PropertySimpleType.STRING, false, false, true),
 
@@ -212,7 +234,8 @@ public enum SystemSetting {
     private final boolean requiringValue;
     private final boolean isPublic;
 
-    private SystemSetting(String name, PropertySimpleType type, boolean readOnly, boolean valueRequired, boolean isPublic) {
+    private SystemSetting(String name, PropertySimpleType type, boolean readOnly, boolean valueRequired,
+        boolean isPublic) {
         this.internalName = name;
         this.type = type;
         this.readOnly = readOnly;

@@ -7,6 +7,10 @@ body {
     line-height: 1.66667;
 }
 
+:focus {
+    outline: 0px !important; /* removing the dotted outline globally */
+}
+
 .scrollbar {
   border-width:1px;
   border-style:solid;
@@ -394,7 +398,7 @@ Button (also used as MenuButton base style)
   cursor: pointer;
   background-image: none;
   white-space: nowrap;
-  line-height: 1.66666667;
+  line-height: 1.5;
   padding: 2px 6px;
   border-radius: 1px;
   font-size:12px;
@@ -626,7 +630,7 @@ filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', en
    left: 0px;
    top: 38px !important;
    margin-bottom: 5px;
-   background-color: #fff;
+   background-color: #fff !important;
 }
 
 .windowHeader,
@@ -635,6 +639,7 @@ filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', en
 .dialogHeaderHilite {
 color: #333;
 background-color: #f5f5f5;
+margin-right: -4px;
 margin-right: -4px;
 z-index: 9202034 !important;
 vertical-align: middle;
@@ -647,7 +652,6 @@ border-top-right-radius: 0;
 border-top-left-radius: 0;
 
 }
-
 
 .windowHeader *,
 .windowHeaderHilite *,
@@ -783,12 +787,15 @@ border-top-left-radius: 0;
 
 
 .SubTabButtonOver,
+.SubTabButtonFocused,
+.SubTabButton:active,
 .SubTabButton:hover {
-  border-color:#c9c8c8;;
+  border-color:#c9c8c8;
   color: #222;
 }
 
-.SubTabButtonSelected, .SubTabButton {
+.SubTabButtonSelected,
+.SubTabButton {
   font-size:12px;
   border-style:solid;
   border-width:0 0 4px 0;
@@ -1543,27 +1550,26 @@ border-top-left-radius: 0;
 }
 .tallCellSelected,
 .tallCellSelectedDark {
-background: none repeat scroll 0 0 #fbfbfb !important;
-color:#fff;
+background: none repeat scroll 0 0 #ddf8ff !important;
 }
-
+/*
 .tallCellSelected a,
 .tallCellSelectedOver a,
 .tallCellSelectedOverDark a,
 .tallCellSelectedDark a  {
   color:#fff !important;
 }
+*/
 .cellSelectedOver,
 .cellSelectedOverDark,
 .specialColSelectedOver,
 .recordSummaryCellSelectedOver,
 .recordSummaryCellSelectedOverDark {
-    background:#ffeb90;
+    background:#d4edfa;
 }
 .tallCellSelectedOver,
 .tallCellSelectedOverDark {
-  background: none repeat scroll 0 0 #0099d3 !important;
-  color: #fff;
+  background: none repeat scroll 0 0 #ddf8ff !important;
 }
 
 

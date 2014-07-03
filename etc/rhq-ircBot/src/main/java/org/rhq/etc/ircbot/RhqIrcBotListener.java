@@ -85,6 +85,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         JON_DEVS.add("stefan_n");
         JON_DEVS.add("tsegismont");
         JON_DEVS.add("lzoubek");
+        JON_DEVS.add("Yak");
     }
 
     private final String server;

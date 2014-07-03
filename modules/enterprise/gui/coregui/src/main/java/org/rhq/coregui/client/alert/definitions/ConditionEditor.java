@@ -184,15 +184,12 @@ public class ConditionEditor extends EnhancedVLayout {
         if (operationDefinitions != null && operationDefinitions.size() > 0) {
             this.supportsOperations = true;
         }
+    }
 
-        // initialize the form
-        form = new DynamicForm() {
-            @Override
-            protected void onInit() {
-                super.onInit();
-                onFormInit(this);
-            }
-        };
+    @Override
+    protected void onInit() {
+        super.onInit();
+        initForm();
 
         HLayout wrapper = new HLayout();
         wrapper.setLayoutMargin(20);
@@ -204,8 +201,7 @@ public class ConditionEditor extends EnhancedVLayout {
         addMember(buildToolStrip());
     }
 
-    private void onFormInit(final DynamicForm form) {
-
+    private void initForm() {
         conditionTypeSelectItem = new SortedSelectItem("conditionType",
             MSG.view_alert_definition_condition_editor_option_label());
         LinkedHashMap<String, String> condTypes = new LinkedHashMap<String, String>(7);
@@ -324,7 +320,8 @@ public class ConditionEditor extends EnhancedVLayout {
         formItems.add(0, conditionTypeSelectItem);
         formItems.add(spacer2);
 
-        form.setFields(formItems.toArray(new FormItem[formItems.size()]));
+        form = new DynamicForm();
+        form.setItems(formItems.toArray(new FormItem[formItems.size()]));
     }
 
     private ToolStrip buildToolStrip() {
@@ -884,8 +881,11 @@ public class ConditionEditor extends EnhancedVLayout {
         SelectItem traitSelection = new SortedSelectItem(TRAIT_METRIC_ITEMNAME,
             MSG.view_alert_definition_condition_editor_metric_trait_change_value());
         traitSelection.setValueMap(traitsMap);
-        traitSelection.setDefaultValue(editMode ? String.valueOf(existingCondition.getMeasurementDefinition().getId())
-            : traitsMap.keySet().iterator().next()); // just use the first one if it is not in edit mode
+        if (editMode) {
+            traitSelection.setDefaultValue(String.valueOf(existingCondition.getMeasurementDefinition().getId()));
+        } else {
+            traitSelection.setDefaultToFirstOption(true);
+        }
         traitSelection.setWidth("*");
         traitSelection.setRedrawOnChange(true);
         traitSelection.setShowIfCondition(ifFunc);
@@ -995,8 +995,11 @@ public class ConditionEditor extends EnhancedVLayout {
 
         SelectItem opSelection = new SortedSelectItem(OPERATION_NAME_ITEMNAME, MSG.common_title_value());
         opSelection.setValueMap(ops);
-        opSelection.setDefaultValue(editMode ? existingCondition.getName() : ops.keySet().iterator().next());
-        // just use the first one if it is not in edit mode
+        if (editMode) {
+            opSelection.setDefaultValue(existingCondition.getName());
+        } else {
+            opSelection.setDefaultToFirstOption(true);
+        }
 
         opSelection.setWidth("*");
         opSelection.setRedrawOnChange(true);
@@ -1145,8 +1148,11 @@ public class ConditionEditor extends EnhancedVLayout {
         SelectItem metricSelection = new SortedSelectItem(itemName,
             MSG.view_alert_definition_condition_editor_metric_threshold_name());
         metricSelection.setValueMap(metricsMap);
-        metricSelection.setDefaultValue(editMode ? String.valueOf(existingCondition.getMeasurementDefinition().getId())
-            : metricsMap.keySet().iterator().next()); // just use the first one if it is not in edit mode
+        if (editMode) {
+            metricSelection.setDefaultValue(String.valueOf(existingCondition.getMeasurementDefinition().getId()));
+        } else {
+            metricSelection.setDefaultToFirstOption(true);
+        }
         metricSelection.setWidth("*");
         metricSelection.setRedrawOnChange(true);
         metricSelection.setShowIfCondition(ifFunc);
@@ -1165,8 +1171,11 @@ public class ConditionEditor extends EnhancedVLayout {
         SelectItem metricSelection = new SortedSelectItem(itemName,
             MSG.view_alert_definition_condition_editor_metric_calltime_common_name());
         metricSelection.setValueMap(metricsMap);
-        metricSelection.setDefaultValue(editMode ? String.valueOf(existingCondition.getMeasurementDefinition().getId())
-            : metricsMap.keySet().iterator().next()); // just use the first one if it is not in edit mode
+        if (editMode) {
+            metricSelection.setDefaultValue(String.valueOf(existingCondition.getMeasurementDefinition().getId()));
+        } else {
+            metricSelection.setDefaultToFirstOption(true);
+        }
         metricSelection.setWidth("*");
         metricSelection.setRedrawOnChange(true);
         metricSelection.setShowIfCondition(ifFunc);
@@ -1239,24 +1248,21 @@ public class ConditionEditor extends EnhancedVLayout {
 
         metricDropDownMenu.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
-                MeasurementDefinition measDef = getMeasurementDefinition(form.getValueAsString(metricDropDownMenu
-                    .getName()));
+                MeasurementDefinition measDef = getMeasurementDefinition(metricDropDownMenu.getValueAsString());
                 baseUnitsItem.setValue(measDef.getUnits() == MeasurementUnits.NONE ? MSG
-                    .view_alert_definition_condition_editor_common_baseUnits_none()
-                    : measDef.getUnits() == MeasurementUnits.MILLISECONDS ? MeasurementUnits.SECONDS : measDef
-                        .getUnits());
+                    .view_alert_definition_condition_editor_common_baseUnits_none() : measDef.getUnits().toString());
                 List<MeasurementUnits> availableUnits = measDef.getUnits().getFamilyUnits();
                 baseUnitsItem.setTooltip(MSG.view_alert_definition_condition_editor_common_baseUnits_availableUnits()
                     + (availableUnits.isEmpty() || availableUnits.get(0) == MeasurementUnits.NONE ? MSG
                         .view_alert_definition_condition_editor_common_baseUnits_none() : availableUnits));
             }
         });
-        // initialize the field with proper value
-        MeasurementUnits units = editMode ? existingCondition.getMeasurementDefinition().getUnits()
-            : ConditionEditor.this.resourceType.getMetricDefinitions().iterator().next().getUnits();
+        // initialize the field, the default will be the first entry in the value map
+        MeasurementDefinition defaultMeasDef = getMeasurementDefinition((String) metricDropDownMenu
+            .getAttributeAsMap("valueMap").keySet().iterator().next());
+        MeasurementUnits units = defaultMeasDef.getUnits();
         baseUnitsItem.setValue(units == MeasurementUnits.NONE ? MSG
-            .view_alert_definition_condition_editor_common_baseUnits_none()
-            : units == MeasurementUnits.MILLISECONDS ? MeasurementUnits.SECONDS : units);
+            .view_alert_definition_condition_editor_common_baseUnits_none() : units.toString());
         List<MeasurementUnits> availableUnits = units.getFamilyUnits();
         baseUnitsItem.setTooltip(MSG.view_alert_definition_condition_editor_common_baseUnits_availableUnits()
             + (availableUnits.isEmpty() || availableUnits.get(0) == MeasurementUnits.NONE ? MSG

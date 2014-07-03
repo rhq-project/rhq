@@ -43,6 +43,7 @@ public class BackButton extends Canvas {
         setContents(" \u00AB " + title);
         setCursor(Cursor.POINTER);
         setID("backButton");
+        setHeight(30);
         addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 CoreGUI.goToView(anchor);

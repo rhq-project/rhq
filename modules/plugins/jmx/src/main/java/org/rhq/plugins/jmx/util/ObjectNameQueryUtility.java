@@ -26,7 +26,6 @@ import org.rhq.core.domain.configuration.Configuration;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.regex.Matcher;
@@ -46,32 +45,23 @@ import java.util.regex.Pattern;
  * will be translated into "A foo called bar". This can be useful for naming resources and descriptions using parts of a
  * mapped ObjectName.
  *
- * <p/>Also supported are names such as "foo:name=bar_%port%". The query will
- * then be "foo:name=bar_*". Note that suffixes aren't supported at this time.
- *
  * @author Greg Hinkle
  */
 public class ObjectNameQueryUtility {
+    private String queryTemplate;
 
-    private final String queryTemplate;
+    private Map<String, String> variableProperties = new HashMap<String, String>();
 
-    private final Map<String, String> variableProperties = new HashMap<String, String>();
+    private Map<String, String> variableValues = new HashMap<String, String>();
 
-    private final Map<String, String> variableValues = new HashMap<String, String>();
-
-    /**
-     * Associates the key with the prefix of the value expected.
-     */
-    private final Map<String, String> valuePrefix = new HashMap<String, String>();
-
-    private final Set<String> nonVariableProperties = new HashSet<String>();
+    private Set<String> nonVariableProperties = new HashSet<String>();
 
     private String translatedQuery;
 
     /**
      * Builds a mapped query utility object and finds the variables in the supplied object name query template.
      *
-     * @param objectNameQueryTemplate string of form "a:b=%c%,d=e,f=xyz_%g%"
+     * @param objectNameQueryTemplate string of form "a:b=%c%,d=e,f=%g%"
      */
     public ObjectNameQueryUtility(String objectNameQueryTemplate) {
         this.queryTemplate = objectNameQueryTemplate;
@@ -111,15 +101,10 @@ public class ObjectNameQueryUtility {
      *         foo:A=%a%,B=%b% is the queryTemplate but objectName found is foo:A=alpha)
      */
     public boolean setMatchedKeyValues(Map<String, String> keyProperties) {
-        for (Entry<String, String> entry : keyProperties.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue();
+        for (String key : keyProperties.keySet()) {
             if (this.variableProperties.containsKey(key)) {
                 String realKey = this.variableProperties.get(key);
-                String prefix = this.valuePrefix.get(key);
-                if (prefix != null) {
-                    value = value.substring(prefix.length());
-                }
+                String value = keyProperties.get(key);
 
                 this.variableValues.put(realKey, value);
             }
@@ -137,8 +122,8 @@ public class ObjectNameQueryUtility {
      * @return the formatted text with variables replaced
      */
     public String formatMessage(String message) {
-        for (Entry<String, String> e : variableValues.entrySet()) {
-            message = message.replaceAll("\\{" + e.getKey() + "\\}", e.getValue());
+        for (String key : variableValues.keySet()) {
+            message = message.replaceAll("\\{" + key + "\\}", this.variableValues.get(key));
         }
 
         return message;
@@ -176,37 +161,31 @@ public class ObjectNameQueryUtility {
     private void buildMatchMap(String objectNameQueryTemplate) {
         StringBuilder queryBuilder = new StringBuilder();
 
-        Pattern p = Pattern.compile("([^:]*\\:)(.*)");
+        Pattern p = Pattern.compile("^([^:]*\\:)(.*)$");
         Matcher m = p.matcher(objectNameQueryTemplate);
-        assert m.matches(): "ObjectName did not match expected regular expression: " + objectNameQueryTemplate;
+        if (!m.find()) {
+            assert false : "ObjectName did not match expected regular expression: " + objectNameQueryTemplate;
+        }
 
         queryBuilder.append(m.group(1));
         String keyProps = m.group(2);
         String[] keys = keyProps.split(",");
 
         boolean firstVar = true;
-        Pattern p2 = Pattern.compile("([^=]*)=([^%=]*)%(.*)%");
-        Pattern p3 = Pattern.compile("([^=]*)=(.*)");
+        boolean onlyVar = true;
         for (String key : keys) {
+            Pattern p2 = Pattern.compile("^([^=]*)=\\%(.*)\\%$");
             Matcher m2 = p2.matcher(key);
-            if (m2.matches()) {
-                String name = m2.group(1);
-                String prefix = m2.group(2);
-                String value = m2.group(3);
-                valuePrefix.put(name, prefix);
-                variableProperties.put(name, value);
-                if (firstVar) {
-                    firstVar = false;
-                } else {
-                    queryBuilder.append(",");
-                }
-                queryBuilder.append(name).append('=').append(prefix).append('*');
+            if (m2.find()) {
+                variableProperties.put(m2.group(1), m2.group(2));
             } else {
+                Pattern p3 = Pattern.compile("^([^=]*)=(.*)$");
                 Matcher m3 = p3.matcher(key);
-                if (m3.matches()) {
+                if (m3.find()) {
                     nonVariableProperties.add(m3.group(1));
                 }
 
+                onlyVar = false;
                 if (firstVar) {
                     firstVar = false;
                 } else {
@@ -217,7 +196,11 @@ public class ObjectNameQueryUtility {
             }
         }
 
-        if (keys.length == 0) {
+        if (variableProperties.size() > 0) {
+            if (!onlyVar) {
+                queryBuilder.append(",");
+            }
+
             queryBuilder.append("*");
         }
 
@@ -232,5 +215,4 @@ public class ObjectNameQueryUtility {
         }
         return false;
     }
-
 }

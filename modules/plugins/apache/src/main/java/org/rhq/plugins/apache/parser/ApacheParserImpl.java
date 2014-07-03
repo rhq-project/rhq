@@ -33,6 +33,7 @@ import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 public class ApacheParserImpl implements ApacheParser {
 
     private final static String INCLUDE_DIRECTIVE = "Include";
+    private final static String INCLUDEOPTIONAL_DIRECTIVE = "IncludeOptional";
     private static final String SERVER_ROOT_DIRECTIVE = "ServerRoot";
     private final ApacheDirectiveTree tree;
     private ApacheDirectiveStack stack;
@@ -60,20 +61,22 @@ public class ApacheParserImpl implements ApacheParser {
             return;
         }
 
-        if (directive.getName().equals(INCLUDE_DIRECTIVE)) {
+        String directiveName = directive.getName();
+
+        if (directiveName.equals(INCLUDE_DIRECTIVE) || directiveName.equals(INCLUDEOPTIONAL_DIRECTIVE)) {
             List<File> files = getIncludeFiles(directive.getValuesAsString());
             for (File fl : files) {
                 if (fl.exists() && fl.isFile()) {
                     ApacheConfigReader.searchFile(fl.getAbsolutePath(), this);
                 }
             }
-        } else if (directive.getName().equals(SERVER_ROOT_DIRECTIVE)) {
+        } else if (directiveName.equals(SERVER_ROOT_DIRECTIVE)) {
             this.serverRootPath = AugeasNodeValueUtil.unescape(directive.getValuesAsString());
         }
 
         if (nodeInspector != null) {
             //let the inspector process this directive in case it sees something of interest
-            nodeInspector.inspect(directive.getName(), directive.getValues(), directive.getValuesAsString());
+            nodeInspector.inspect(directiveName, directive.getValues(), directive.getValuesAsString());
         }
 
         directive.setParentNode(stack.getLastDirective());

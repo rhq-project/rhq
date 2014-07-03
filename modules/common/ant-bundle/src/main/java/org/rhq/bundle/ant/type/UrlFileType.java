@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.bundle.ant.type;
 
 import java.io.File;
@@ -39,6 +40,11 @@ public class UrlFileType extends AbstractUrlFileType {
     private File destinationDir;
     private File destinationFile;
     private boolean replace;
+    private HandoverHolder handoverHolder;
+
+    public UrlFileType() {
+        handoverHolder = new HandoverHolder();
+    }
 
     public File getDestinationDir() {
         return this.destinationDir;
@@ -51,6 +57,7 @@ public class UrlFileType extends AbstractUrlFileType {
                 "Both 'destinationDir' and 'destinationFile' attributes are defined - only one or the other may be specified.");
         }
         this.destinationDir = new File(destinationDir);
+        ensureHandoverOrDestinationIsConfigured();
     }
 
     public File getDestinationFile() {
@@ -66,6 +73,7 @@ public class UrlFileType extends AbstractUrlFileType {
                 "Both 'destinationDir' and 'destinationFile' attributes are defined - only one or the other may be specified.");
         }
         this.destinationFile = new File(destinationFile);
+        ensureHandoverOrDestinationIsConfigured();
     }
 
     public boolean isReplace() {
@@ -74,5 +82,22 @@ public class UrlFileType extends AbstractUrlFileType {
 
     public void setReplace(boolean replace) {
         this.replace = replace;
+    }
+
+    @Override
+    public void addConfigured(Handover handover) {
+        handoverHolder.addConfigured(handover);
+        ensureHandoverOrDestinationIsConfigured();
+    }
+
+    @Override
+    public Handover getHandover() {
+        return handoverHolder.getHandover();
+    }
+
+    private void ensureHandoverOrDestinationIsConfigured() {
+        if (handoverHolder.getHandover() != null && (destinationDir != null || destinationFile != null)) {
+            throw new BuildException("Configure either handover or destination");
+        }
     }
 }

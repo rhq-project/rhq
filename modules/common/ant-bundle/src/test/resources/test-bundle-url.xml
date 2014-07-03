@@ -2,7 +2,7 @@
 
 <!--
   ~ RHQ Management Platform
-  ~ Copyright (C) 2013 Red Hat, Inc.
+  ~ Copyright (C) 2005-2014 Red Hat, Inc.
   ~ All rights reserved.
   ~
   ~ This program is free software; you can redistribute it and/or modify
@@ -15,31 +15,38 @@
   ~ GNU General Public License for more details.
   ~
   ~ You should have received a copy of the GNU General Public License
-  ~ along with this program; if not, write to the Free Software
-  ~ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  ~ along with this program; if not, write to the Free Software Foundation, Inc.,
+  ~ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
   -->
 
 <project name="test-bundle" default="main" xmlns:rhq="antlib:org.rhq.bundle">
 
-    <rhq:bundle name="test" version="1">
+  <rhq:bundle name="test" version="1">
 
-        <rhq:input-property name="X" />
+    <rhq:input-property name="X"/>
 
-        <rhq:deployment-unit name="appserver" compliance="full">
-            <rhq:url-file url="${rhq.test.url.dir}/subdir/test0.txt" replace="false" />
-            <rhq:url-file url="${rhq.test.url.dir}/subdir/test1.txt" destinationFile="another/foo.txt" replace="false" />
-            <rhq:url-file url="${rhq.test.url.dir}/subdir/test2.txt" destinationDir="second.dir" replace="true" />
-            <rhq:url-archive url="${rhq.test.url.dir}/subdir/test.zip" exploded="false" />
-            <rhq:url-archive url="${rhq.test.url.dir}/subdir/test-explode.zip" exploded="true" />
-            <rhq:url-archive url="${rhq.test.url.dir}/subdir/test-replace.zip" exploded="false">
-                <rhq:replace>
-                    <rhq:fileset includes="template.txt"/>
-                </rhq:replace>
-            </rhq:url-archive>
-        </rhq:deployment-unit>
+    <rhq:deployment-unit name="appserver" compliance="full">
+      <rhq:url-file url="${rhq.test.url.dir}/subdir/test0.txt" replace="false"/>
+      <rhq:url-file url="${rhq.test.url.dir}/subdir/test1.txt" destinationFile="another/foo.txt" replace="false"/>
+      <rhq:url-file url="${rhq.test.url.dir}/subdir/test2.txt" destinationDir="second.dir" replace="true"/>
+      <rhq:url-archive url="${rhq.test.url.dir}/subdir/test.zip" exploded="false"/>
+      <rhq:url-archive url="${rhq.test.url.dir}/subdir/test-explode.zip" exploded="true"/>
+      <rhq:url-archive url="${rhq.test.url.dir}/subdir/test-replace.zip" exploded="false">
+        <rhq:replace>
+          <rhq:fileset includes="template.txt"/>
+        </rhq:replace>
+      </rhq:url-archive>
+      <!-- Just here to check that we can mix content to handover with content to be deployed without messing around in the deployer -->
+      <rhq:url-file url="${rhq.test.url.dir}/subdir/prepareDatasource.cli">
+        <rhq:handover action="execute-script"/>
+      </rhq:url-file>
+      <rhq:url-archive url="${rhq.test.url.dir}/subdir/fileToHandover.zip">
+        <rhq:handover action="deployment"/>
+      </rhq:url-archive>
+    </rhq:deployment-unit>
 
-    </rhq:bundle>
+  </rhq:bundle>
 
-    <target name="main"/>
+  <target name="main"/>
 
 </project>

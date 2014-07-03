@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,16 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.bundle.ant;
+
+import static org.rhq.core.util.stream.StreamUtil.slurp;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -30,6 +39,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -37,6 +49,10 @@ import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
+import io.undertow.Undertow;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -47,13 +63,15 @@ import org.apache.tools.ant.Target;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.UnknownElement;
 import org.apache.tools.ant.helper.AntXMLContext;
-import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.bundle.ant.task.BundleTask;
 import org.rhq.bundle.ant.type.DeploymentUnitType;
+import org.rhq.bundle.ant.type.HandoverInfo;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -65,10 +83,6 @@ import org.rhq.core.util.updater.DeploymentsMetadata;
 import org.rhq.core.util.updater.DestinationComplianceMode;
 import org.rhq.core.util.updater.FileHashcodeMap;
 import org.rhq.test.PortScout;
-
-import io.undertow.Undertow;
-import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
 
 /**
  * @author John Mazzitelli
@@ -90,6 +104,11 @@ public class AntLauncherTest {
         deploymentId = 0;
     }
 
+    @BeforeMethod
+    public void beforeTest() {
+        FileUtil.purge(DEPLOY_DIR, true);
+    }
+
     @AfterClass
     public void afterClass() {
         FileUtil.purge(new File(DEPLOY_DIR.getParentFile(), "test-ant-bundle-sibling"), true);
@@ -106,69 +125,65 @@ public class AntLauncherTest {
     }
 
     private void testParse(boolean validate, String recipeFile) throws Exception {
-        // We want to test with an empty deploy dir to ensure nothing gets installed there after a parse
-        FileUtil.purge(DEPLOY_DIR, true);
-
         AntLauncher ant = new AntLauncher(validate);
 
         BundleAntProject project = ant.parseBundleDeployFile(getFileFromTestClasses(recipeFile), null);
-        assert project != null;
+        assertNotNull(project);
         Set<String> bundleFiles = project.getBundleFileNames();
-        assert bundleFiles != null;
-        assert bundleFiles.size() == 4 : bundleFiles;
-        assert bundleFiles.contains("test-v1.properties") : bundleFiles;
-        assert bundleFiles.contains("file.zip") : bundleFiles;
-        assert bundleFiles.contains("foo-script") : bundleFiles; // from install-system-service
-        assert bundleFiles.contains("foo-config") : bundleFiles; // from install-system-service
+        assertNotNull(bundleFiles);
+        assertEquals(bundleFiles.size(), 5, String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("prepareDatasource.cli"), String.valueOf(bundleFiles)); // handed over file
+        assertTrue(bundleFiles.contains("test-v1.properties"), String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("file.zip"), String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("foo-script"), String.valueOf(bundleFiles)); // from install-system-service
+        assertTrue(bundleFiles.contains("foo-config"), String.valueOf(bundleFiles)); // from install-system-service
 
-        assert project.getBundleName().equals("example.com (JBoss EAP 4.3)");
-        assert project.getBundleVersion().equals("1.0");
-        assert project.getBundleDescription().equals("example.com corporate website hosted on JBoss EAP 4.3");
+        assertEquals(project.getBundleName(), "example.com (JBoss EAP 4.3)");
+        assertEquals(project.getBundleVersion(), "1.0");
+        assertEquals(project.getBundleDescription(), "example.com corporate website hosted on JBoss EAP 4.3");
 
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
-        assert configDef.getPropertyDefinitions().size() == 1 : configDef.getPropertyDefinitions();
+        assertEquals(configDef.getPropertyDefinitions().size(), 1, String.valueOf(configDef.getPropertyDefinitions()));
         PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
-        assert propDef != null;
-        assert propDef.getType() == PropertySimpleType.INTEGER;
-        assert propDef.getDefaultValue().equals("8080");
-        assert propDef.getDescription().equals("This is where the product will listen for incoming messages");
-        assert propDef.isRequired();
+        assertNotNull(propDef);
+        assertEquals(propDef.getType(), PropertySimpleType.INTEGER);
+        assertEquals(propDef.getDefaultValue(), "8080");
+        assertEquals(propDef.getDescription(), "This is where the product will listen for incoming messages");
+        assertTrue(propDef.isRequired());
 
         // all we did was parse, nothing should really have been extracted or installed
-        assert !DEPLOY_DIR.exists() : "Nothing should have been installed to the deploy dir";
+        assertFalse(DEPLOY_DIR.exists(), "Nothing should have been installed to the deploy dir");
     }
 
     public void testParseWithNoDestinationComplianceCheck() throws Exception {
-        // We want to test with an empty deploy dir to ensure nothing gets installed there after a parse
-        FileUtil.purge(DEPLOY_DIR, true);
-
         //instantiate the launcher in the new validating mode (new as of RHQ 4.9.0)
         AntLauncher ant = new AntLauncher(true);
 
         try {
             ant.parseBundleDeployFile(getFileFromTestClasses("test-bundle-no-manage-root-dir-nor-compliance.xml"), null);
-            Assert.fail("Parsing a bundle with no explicit manageRootDir should have failed.");
+            fail("Parsing a bundle with no explicit manageRootDir should have failed.");
         } catch (InvalidBuildFileException e) {
-            assert "The deployment unit must specifically declare compliance mode of the destination directory.".equals(
-                e.getMessage());
+            assertEquals(e.getMessage(),
+                "The deployment unit must specifically declare compliance mode of the destination directory.");
         }
 
-        BundleAntProject project = ant.parseBundleDeployFile(getFileFromTestClasses(
-            "test-bundle-with-manage-root-dir.xml"), null);
-        assert project != null;
+        BundleAntProject project = ant.parseBundleDeployFile(
+            getFileFromTestClasses("test-bundle-with-manage-root-dir.xml"), null);
+        assertNotNull(project);
         BundleTask bundleTask = findBundleTask(project);
-        assert bundleTask != null;
-        assert bundleTask.getDeploymentUnits() != null;
-        assert bundleTask.getDeploymentUnits().size() == 1;
+        assertNotNull(bundleTask);
+        assertNotNull(bundleTask.getDeploymentUnits());
+        assertEquals(bundleTask.getDeploymentUnits().size(), 1);
         DeploymentUnitType deploymentUnit = bundleTask.getDeploymentUnits().values().iterator().next();
-        assert deploymentUnit != null;
+        assertNotNull(deploymentUnit);
 
         //assert the compatibility with the legacy attribute
-        assert "false".equals(deploymentUnit.getManageRootDir());
-        assert DestinationComplianceMode.filesAndDirectories == deploymentUnit.getCompliance();
+        //noinspection deprecation
+        assertEquals(deploymentUnit.getManageRootDir(), "false");
+        assertEquals(DestinationComplianceMode.filesAndDirectories, deploymentUnit.getCompliance());
 
         // all we did was parse, nothing should really have been extracted or installed
-        assert !DEPLOY_DIR.exists() : "Nothing should have been installed to the deploy dir";
+        assertFalse(DEPLOY_DIR.exists(), "Nothing should have been installed to the deploy dir");
     }
 
     public void testInstall_legacy() throws Exception {
@@ -181,12 +196,7 @@ public class AntLauncherTest {
     }
 
     private void testInstall(boolean validate, String recipeFile) throws Exception {
-
-        if (skipNonRHLinux("testInstall"))
-            return;
-
-        // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
-        FileUtil.purge(DEPLOY_DIR, true);
+        skipNonRHLinux();
 
         // but we do want to add an unrelated file to see that it goes away - since we have manageRootDir=true
         File unrelatedFile = writeFile("unrelated content", DEPLOY_DIR, "unrelated-file.txt");
@@ -197,54 +207,54 @@ public class AntLauncherTest {
 
         BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile), inputProps,
             buildListeners);
-        assert project != null;
+        assertNotNull(project);
         Set<String> bundleFiles = project.getBundleFileNames();
-        assert bundleFiles != null;
-        assert bundleFiles.size() == 4 : bundleFiles;
-        assert bundleFiles.contains("test-v1.properties") : bundleFiles;
-        assert bundleFiles.contains("file.zip") : bundleFiles;
-        assert bundleFiles.contains("foo-script") : bundleFiles; // from install-system-service
-        assert bundleFiles.contains("foo-config") : bundleFiles; // from install-system-service
+        assertNotNull(bundleFiles);
+        assertEquals(bundleFiles.size(), 5, String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("prepareDatasource.cli"), String.valueOf(bundleFiles)); // handed over file
+        assertTrue(bundleFiles.contains("test-v1.properties"), String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("file.zip"), String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("foo-script"), String.valueOf(bundleFiles)); // from install-system-service
+        assertTrue(bundleFiles.contains("foo-config"), String.valueOf(bundleFiles)); // from install-system-service
 
-        assert project.getBundleName().equals("example.com (JBoss EAP 4.3)");
-        assert project.getBundleVersion().equals("1.0");
-        assert project.getBundleDescription().equals("example.com corporate website hosted on JBoss EAP 4.3");
+        assertEquals(project.getBundleName(), "example.com (JBoss EAP 4.3)");
+        assertEquals(project.getBundleVersion(), "1.0");
+        assertEquals(project.getBundleDescription(), "example.com corporate website hosted on JBoss EAP 4.3");
 
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
-        assert configDef.getPropertyDefinitions().size() == 1 : configDef.getPropertyDefinitions();
+        assertEquals(configDef.getPropertyDefinitions().size(), 1, String.valueOf(configDef.getPropertyDefinitions()));
         PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
-        assert propDef != null;
-        assert propDef.getType() == PropertySimpleType.INTEGER;
-        assert propDef.getDefaultValue().equals("8080");
-        assert propDef.getDescription().equals("This is where the product will listen for incoming messages");
-        assert propDef.isRequired();
+        assertNotNull(propDef);
+        assertEquals(propDef.getType(), PropertySimpleType.INTEGER);
+        assertEquals(propDef.getDefaultValue(), "8080");
+        assertEquals(propDef.getDescription(), "This is where the product will listen for incoming messages");
+        assertTrue(propDef.isRequired());
 
         // make sure our test infrastruction setup the input properties correctly
         Configuration config = project.getConfiguration();
-        assert config.getProperties().size() == 1 : config.getProperties();
-        assert "10000".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
+        assertEquals(config.getProperties().size(), 1, String.valueOf(config.getProperties()));
+        assertEquals(config.getSimpleValue("listener.port", null), "10000", String.valueOf(config.getProperties()));
 
         String preinstallTargetExecuted = (String) project.getProperties().get("preinstallTargetExecuted");
-        assert preinstallTargetExecuted.equals("1a");
+        assertEquals(preinstallTargetExecuted, "1a");
         String postinstallTargetExecuted = (String) project.getProperties().get("postinstallTargetExecuted");
-        assert postinstallTargetExecuted.equals("1b");
+        assertEquals(postinstallTargetExecuted, "1b");
 
-        assert new File(DEPLOY_DIR, "subdir/test.properties").exists() : "missing file";
-        assert new File(DEPLOY_DIR, "archived-bundle-file.txt").exists() : "missing archived bundle file";
-        assert new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties").exists() : "missing subdir archive file";
-        assert !unrelatedFile.exists() : "unrelated file was not removed during the install";
-        assert readPropsFile(new File(DEPLOY_DIR, "subdir/test.properties")).getProperty("junk.listener.port").equals(
+        assertTrue(new File(DEPLOY_DIR, "subdir/test.properties").exists(), "missing file");
+        assertTrue(new File(DEPLOY_DIR, "archived-bundle-file.txt").exists(), "missing archived bundle file");
+        assertTrue(new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties").exists(),
+            "missing subdir archive file");
+        assertFalse(unrelatedFile.exists(), "unrelated file was not removed during the install");
+        assertEquals(readPropsFile(new File(DEPLOY_DIR, "subdir/test.properties")).getProperty("junk.listener.port"),
             "10000");
-        assert readPropsFile(new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties")).getProperty(
-            "templatized.variable").equals("10000");
+        assertEquals(readPropsFile(new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties"))
+            .getProperty("templatized.variable"), "10000");
     }
 
-    private boolean skipNonRHLinux(String meth) {
+    private void skipNonRHLinux() {
         if (!System.getProperty("os.name").equals("Linux") || !REDHAT_RELEASE_FILE.exists()) {
-            System.out.println("Skipping " + meth + "() as this only works on Red Hat Linux flavors");
-            return true;
+            throw new SkipException("This test only works on Red Hat Linux flavors");
         }
-        return false;
     }
 
     @Test(dependsOnMethods = "testInstall_legacy")
@@ -259,8 +269,7 @@ public class AntLauncherTest {
 
     private void testUpgrade(boolean validate, String recipeFile) throws Exception {
 
-        if (skipNonRHLinux("testUpgrade"))
-            return;
+        skipNonRHLinux();
 
         // add an unrelated file to see that it gets deleted as part of the upgrade
         File unrelatedFile = writeFile("unrelated content", DEPLOY_DIR, "unrelated-file.txt");
@@ -271,46 +280,49 @@ public class AntLauncherTest {
 
         BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile), inputProps,
             buildListeners);
-        assert project != null;
+        assertNotNull(project);
         Set<String> bundleFiles = project.getBundleFileNames();
-        assert bundleFiles != null;
-        assert bundleFiles.size() == 4 : bundleFiles;
-        assert bundleFiles.contains("test-v2.properties") : bundleFiles;
-        assert bundleFiles.contains("file.zip") : bundleFiles;
-        assert bundleFiles.contains("foo-script") : bundleFiles; // from install-system-service
-        assert bundleFiles.contains("foo-config") : bundleFiles; // from install-system-service
+        assertNotNull(bundleFiles);
+        assertEquals(bundleFiles.size(), 5, String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("fileToHandover.zip"), String.valueOf(bundleFiles)); // handed over file
+        assertTrue(bundleFiles.contains("test-v2.properties"), String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("file.zip"), String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("foo-script"), String.valueOf(bundleFiles)); // from install-system-service
+        assertTrue(bundleFiles.contains("foo-config"), String.valueOf(bundleFiles)); // from install-system-service
 
-        assert project.getBundleName().equals("example.com (JBoss EAP 4.3)");
-        assert project.getBundleVersion().equals("2.5");
-        assert project.getBundleDescription().equals("updated bundle");
+        assertEquals(project.getBundleName(), "example.com (JBoss EAP 4.3)");
+        assertEquals(project.getBundleVersion(), "2.5");
+        assertEquals(project.getBundleDescription(), "updated bundle");
 
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
-        assert configDef.getPropertyDefinitions().size() == 1 : configDef.getPropertyDefinitions();
+        assertEquals(configDef.getPropertyDefinitions().size(), 1, String.valueOf(configDef.getPropertyDefinitions()));
         PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
-        assert propDef != null;
-        assert propDef.getType() == PropertySimpleType.INTEGER;
-        assert propDef.getDefaultValue().equals("9090");
-        assert propDef.getDescription().equals("This is where the product will listen for incoming messages");
-        assert propDef.isRequired();
+        assertNotNull(propDef);
+        assertEquals(propDef.getType(), PropertySimpleType.INTEGER);
+        assertEquals(propDef.getDefaultValue(), "9090");
+        assertEquals(propDef.getDescription(), "This is where the product will listen for incoming messages");
+        assertTrue(propDef.isRequired());
 
         // make sure our test infrastruction setup the input properties correctly
         Configuration config = project.getConfiguration();
-        assert config.getProperties().size() == 1;
-        assert "20000".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
+        assertEquals(config.getProperties().size(), 1);
+        assertEquals(config.getSimpleValue("listener.port", null), "20000", String.valueOf(config.getProperties()));
 
         String preinstallTargetExecuted = (String) project.getProperties().get("preinstallTargetExecuted");
-        assert preinstallTargetExecuted.equals("2a");
+        assertEquals(preinstallTargetExecuted, "2a");
         String postinstallTargetExecuted = (String) project.getProperties().get("postinstallTargetExecuted");
-        assert postinstallTargetExecuted.equals("2b");
+        assertEquals(postinstallTargetExecuted, "2b");
 
-        assert new File(DEPLOY_DIR, "subdir/test.properties").exists() : "missing file";
-        assert new File(DEPLOY_DIR, "archived-bundle-file.txt").exists() : "missing archived bundle file";
-        assert new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties").exists() : "missing subdir archive file";
-        assert !unrelatedFile.exists() : "we are managing root dir so unrelated file should be removed during upgrade";
-        assert readPropsFile(new File(DEPLOY_DIR, "subdir/test.properties")).getProperty("junk.listener.port").equals(
+        assertTrue(new File(DEPLOY_DIR, "subdir/test.properties").exists(), "missing file");
+        assertTrue(new File(DEPLOY_DIR, "archived-bundle-file.txt").exists(), "missing archived bundle file");
+        assertTrue(new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties").exists(),
+            "missing subdir archive file");
+        assertFalse(unrelatedFile.exists(),
+            "we are managing root dir so unrelated file should be removed during upgrade");
+        assertEquals(readPropsFile(new File(DEPLOY_DIR, "subdir/test.properties")).getProperty("junk.listener.port"),
             "20000");
-        assert readPropsFile(new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties")).getProperty(
-            "templatized.variable").equals("20000");
+        assertEquals(readPropsFile(new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties"))
+            .getProperty("templatized.variable"), "20000");
     }
 
     public void testUpgradeNoManageRootDir_legacy() throws Exception {
@@ -323,8 +335,7 @@ public class AntLauncherTest {
 
     private void testUpgradeNoManageRootDir(boolean validate, String recipeFile) throws Exception {
 
-        if (skipNonRHLinux("testInstall"))
-            return;
+        skipNonRHLinux();
 
         // We want to test an upgrade, so do *not* wipe out the deploy dir - let's re-invoke testInstall
         // to get us to an initial state of the v1 bundle installed
@@ -332,54 +343,56 @@ public class AntLauncherTest {
 
         // we still want the unrelated file - we want to see that manageRootDir=false works (unrelated files should not be deleted)
         File unrelatedFile = writeFile("unrelated content", DEPLOY_DIR, "unrelated-file.txt");
-        assert unrelatedFile.exists() : "our initial install test method should have prepared an unmanaged file";
+        assertTrue(unrelatedFile.exists(), "our initial install test method should have prepared an unmanaged file");
 
         AntLauncher ant = new AntLauncher(validate);
         Properties inputProps = createInputProperties("/test-bundle-v2-input.properties");
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile),
-            inputProps, buildListeners);
-        assert project != null;
+        BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile), inputProps,
+            buildListeners);
+        assertNotNull(project);
         Set<String> bundleFiles = project.getBundleFileNames();
-        assert bundleFiles != null;
-        assert bundleFiles.size() == 4 : bundleFiles;
-        assert bundleFiles.contains("test-v2.properties") : bundleFiles;
-        assert bundleFiles.contains("file.zip") : bundleFiles;
-        assert bundleFiles.contains("foo-script") : bundleFiles; // from install-system-service
-        assert bundleFiles.contains("foo-config") : bundleFiles; // from install-system-service
+        assertNotNull(bundleFiles);
+        assertEquals(bundleFiles.size(), 4, String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("test-v2.properties"), String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("file.zip"), String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("foo-script"), String.valueOf(bundleFiles)); // from install-system-service
+        assertTrue(bundleFiles.contains("foo-config"), String.valueOf(bundleFiles)); // from install-system-service
 
-        assert project.getBundleName().equals("example.com (JBoss EAP 4.3)");
-        assert project.getBundleVersion().equals("2.5");
-        assert project.getBundleDescription().equals("updated bundle");
+        assertEquals(project.getBundleName(), "example.com (JBoss EAP 4.3)");
+        assertEquals(project.getBundleVersion(), "2.5");
+        assertEquals(project.getBundleDescription(), "updated bundle");
 
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
-        assert configDef.getPropertyDefinitions().size() == 1 : configDef.getPropertyDefinitions();
+        assertEquals(configDef.getPropertyDefinitions().size(), 1, String.valueOf(configDef.getPropertyDefinitions()));
         PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
-        assert propDef != null;
-        assert propDef.getType() == PropertySimpleType.INTEGER;
-        assert propDef.getDefaultValue().equals("9090");
-        assert propDef.getDescription().equals("This is where the product will listen for incoming messages");
-        assert propDef.isRequired();
+        assertNotNull(propDef);
+        assertEquals(propDef.getType(), PropertySimpleType.INTEGER);
+        assertEquals(propDef.getDefaultValue(), "9090");
+        assertEquals(propDef.getDescription(), "This is where the product will listen for incoming messages");
+        assertTrue(propDef.isRequired());
 
         // make sure our test infrastruction setup the input properties correctly
         Configuration config = project.getConfiguration();
-        assert config.getProperties().size() == 1;
-        assert "20000".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
+        assertEquals(config.getProperties().size(), 1);
+        assertEquals(config.getSimpleValue("listener.port", null), "20000", String.valueOf(config.getProperties()));
 
         String preinstallTargetExecuted = (String) project.getProperties().get("preinstallTargetExecuted");
-        assert preinstallTargetExecuted.equals("2a");
+        assertEquals(preinstallTargetExecuted, "2a");
         String postinstallTargetExecuted = (String) project.getProperties().get("postinstallTargetExecuted");
-        assert postinstallTargetExecuted.equals("2b");
+        assertEquals(postinstallTargetExecuted, "2b");
 
-        assert new File(DEPLOY_DIR, "subdir/test.properties").exists() : "missing file";
-        assert new File(DEPLOY_DIR, "archived-bundle-file.txt").exists() : "missing archived bundle file";
-        assert new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties").exists() : "missing subdir archive file";
-        assert unrelatedFile.exists() : "we are NOT managing root dir so unrelated file should NOT be removed during upgrade";
-        assert readPropsFile(new File(DEPLOY_DIR, "subdir/test.properties")).getProperty("junk.listener.port").equals(
+        assertTrue(new File(DEPLOY_DIR, "subdir/test.properties").exists(), "missing file");
+        assertTrue(new File(DEPLOY_DIR, "archived-bundle-file.txt").exists(), "missing archived bundle file");
+        assertTrue(new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties").exists(),
+            "missing subdir archive file");
+        assertTrue(unrelatedFile.exists(),
+            "we are NOT managing root dir so unrelated file should NOT be removed during upgrade");
+        assertEquals(readPropsFile(new File(DEPLOY_DIR, "subdir/test.properties")).getProperty("junk.listener.port"),
             "20000");
-        assert readPropsFile(new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties")).getProperty(
-            "templatized.variable").equals("20000");
+        assertEquals(readPropsFile(new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties"))
+            .getProperty("templatized.variable"), "20000");
     }
 
     public void testInstallCompressedZipNoDryRun_legacy() throws Exception {
@@ -399,51 +412,53 @@ public class AntLauncherTest {
     }
 
     private void testInstallCompressedZip(boolean dryRun, boolean validate, String recipeFile) throws Exception {
-        // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
-        FileUtil.purge(DEPLOY_DIR, true);
-
         AntLauncher ant = new AntLauncher(validate);
         Properties inputProps = createInputProperties("/test-bundle-compressed-archives-input.properties", dryRun);
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile),
-            inputProps, buildListeners);
-        assert project != null;
+        BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile), inputProps,
+            buildListeners);
+        assertNotNull(project);
         Set<String> bundleFiles = project.getBundleFileNames();
-        assert bundleFiles != null;
-        assert bundleFiles.size() == 1 : bundleFiles;
-        assert bundleFiles.contains("file.zip") : bundleFiles;
+        assertNotNull(bundleFiles);
+        assertEquals(bundleFiles.size(), 1, String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("file.zip"), String.valueOf(bundleFiles));
 
-        assert project.getBundleName().equals("test compressed archive files");
-        assert project.getBundleVersion().equals("1.0");
-        assert project.getBundleDescription() == null;
+        assertEquals(project.getBundleName(), "test compressed archive files");
+        assertEquals(project.getBundleVersion(), "1.0");
+        assertNull(project.getBundleDescription());
 
         // while we are here, let's see that we have 0 config props
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
-        assert configDef.getPropertyDefinitions().size() == 0 : configDef.getPropertyDefinitions();
+        assertEquals(configDef.getPropertyDefinitions().size(), 0, String.valueOf(configDef.getPropertyDefinitions()));
         Configuration config = project.getConfiguration();
-        assert config.getProperties().size() == 0 : config.getProperties();
+        assertEquals(config.getProperties().size(), 0, String.valueOf(config.getProperties()));
 
         if (!dryRun) {
-            assert new File(DEPLOY_DIR, "file.zip").exists() : "should be here, we told it to stay compressed";
+            assertTrue(new File(DEPLOY_DIR, "file.zip").exists(), "should be here, we told it to stay compressed");
         } else {
-            assert !new File(DEPLOY_DIR, "file.zip").exists() : "dry run - should not be here";
+            assertFalse(new File(DEPLOY_DIR, "file.zip").exists(), "dry run - should not be here");
         }
 
-        assert !new File(DEPLOY_DIR, "archived-bundle-file.txt").exists() : "should not have exploded this";
-        assert !new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties").exists() : "should not have exploded this";
-        assert !new File(DEPLOY_DIR, "archived-subdir").isDirectory() : "should not still have the exploded dir";
+        assertFalse(new File(DEPLOY_DIR, "archived-bundle-file.txt").exists(), "should not have exploded this");
+        assertFalse(new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties").exists(),
+            "should not have exploded this");
+        assertFalse(new File(DEPLOY_DIR, "archived-subdir").isDirectory(), "should not still have the exploded dir");
 
         DeploymentsMetadata dm = new DeploymentsMetadata(DEPLOY_DIR);
         if (!dryRun) {
             FileHashcodeMap fhm = dm.getCurrentDeploymentFileHashcodes();
-            assert !fhm.containsKey("archived-bundle-file.txt") : "should not have metadata - this is inside the compressed zip";
-            assert !fhm.containsKey("archived-subdir/archived-file-in-subdir.properties") : "should not have metadata - this is inside the compressed zip";
-            assert fhm.containsKey("file.zip") : "should have metadata for this - we didn't explode it, we just have this compressed file";
+            assertFalse(fhm.containsKey("archived-bundle-file.txt"),
+                "should not have metadata - this is inside the compressed zip");
+            assertFalse(fhm.containsKey("archived-subdir/archived-file-in-subdir.properties"),
+                "should not have metadata - this is inside the compressed zip");
+            assertTrue(fhm.containsKey("file.zip"),
+                String
+                    .valueOf("should have metadata for this - we didn't explode it, we just have this compressed file"));
 
             // test that we created the zip OK. Note that our test did not do any file replacing/realization of templates
-            final String[] templateVarValue = new String[] { null };
-            final Integer[] entries = new Integer[] { 0 };
+            final String[] templateVarValue = new String[1];
+            final int[] entries = new int[1];
             ZipUtil.walkZipFile(new File(DEPLOY_DIR, "file.zip"), new ZipUtil.ZipEntryVisitor() {
                 @Override
                 public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
@@ -453,17 +468,18 @@ public class AntLauncherTest {
                         templateVarValue[0] = props.getProperty("templatized.variable");
                     }
                     if (!entry.isDirectory()) {
-                        entries[0] = Integer.valueOf(entries[0].intValue() + 1);
+                        entries[0] = entries[0] + 1;
                     }
                     return true;
                 }
             });
-            assert templateVarValue[0] != null && templateVarValue[0].equals("@@listener.port@@") : templateVarValue[0];
-            assert entries[0].intValue() == 2 : entries[0]; // we only counted the file entries
+            assertNotNull(templateVarValue[0]);
+            assertEquals(templateVarValue[0], "@@listener.port@@");
+            assertEquals(entries[0], 2, String.valueOf(entries[0])); // we only counted the file entries
         } else {
             try {
                 dm.getCurrentDeploymentFileHashcodes();
-                assert false : "this was a dry run, we should not have written our metadata to the filesystem";
+                fail("this was a dry run, we should not have written our metadata to the filesystem");
             } catch (Exception e) {
                 // expected
             }
@@ -488,55 +504,58 @@ public class AntLauncherTest {
         testInstallCompressedZipWithTemplatizedFiles(true, true, "test-bundle-compressed-archives-with-replace.xml");
     }
 
-    private void testInstallCompressedZipWithTemplatizedFiles(boolean dryRun, boolean validate, String recipeFile) throws Exception {
-        // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
-        FileUtil.purge(DEPLOY_DIR, true);
-
+    private void testInstallCompressedZipWithTemplatizedFiles(boolean dryRun, boolean validate, String recipeFile)
+        throws Exception {
         AntLauncher ant = new AntLauncher(validate);
         Properties inputProps = createInputProperties("/test-bundle-compressed-archives-input.properties", dryRun);
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(
-            getFileFromTestClasses(recipeFile), inputProps, buildListeners);
-        assert project != null;
+        BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile), inputProps,
+            buildListeners);
+        assertNotNull(project);
         Set<String> bundleFiles = project.getBundleFileNames();
-        assert bundleFiles != null;
-        assert bundleFiles.size() == 1 : bundleFiles;
-        assert bundleFiles.contains("file.zip") : bundleFiles;
+        assertNotNull(bundleFiles);
+        assertEquals(bundleFiles.size(), 1, String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("file.zip"), String.valueOf(bundleFiles));
 
-        assert project.getBundleName().equals("test compressed archive files");
-        assert project.getBundleVersion().equals("1.0");
-        assert project.getBundleDescription() == null;
+        assertEquals(project.getBundleName(), "test compressed archive files");
+        assertEquals(project.getBundleVersion(), "1.0");
+        assertNull(project.getBundleDescription());
 
         // we have one property that we use to realize our content
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
-        assert configDef.getPropertyDefinitions().size() == 1 : configDef.getPropertyDefinitions();
+        assertEquals(configDef.getPropertyDefinitions().size(), 1, String.valueOf(configDef.getPropertyDefinitions()));
         PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
-        assert propDef != null;
-        assert propDef.getType() == PropertySimpleType.INTEGER;
-        assert propDef.getDefaultValue() == null : "recipe didn't define a default for our property";
-        assert propDef.getDescription() == null : "recipe didn't define a description for our property";
-        assert propDef.isRequired() : "recipe didn't make the property required, but the default should be required";
+        assertNotNull(propDef);
+        assertEquals(propDef.getType(), PropertySimpleType.INTEGER);
+        assertNull(propDef.getDefaultValue(), "recipe didn't define a default for our property");
+        assertNull(propDef.getDescription(), "recipe didn't define a description for our property");
+        assertTrue(propDef.isRequired(), "recipe didn't make the property required, but the default should be required");
 
         if (!dryRun) {
-            assert new File(DEPLOY_DIR, "file.zip").exists() : "should be here, we told it to stay compressed";
+            assertTrue(new File(DEPLOY_DIR, "file.zip").exists(), "should be here, we told it to stay compressed");
         } else {
-            assert !new File(DEPLOY_DIR, "file.zip").exists() : "this was a dry run, should not be here";
+            assertFalse(new File(DEPLOY_DIR, "file.zip").exists(), "this was a dry run, should not be here");
         }
-        assert !new File(DEPLOY_DIR, "archived-bundle-file.txt").exists() : "should not have exploded this";
-        assert !new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties").exists() : "should not have exploded this";
-        assert !new File(DEPLOY_DIR, "archived-subdir").isDirectory() : "should not still have the exploded dir";
+        assertFalse(new File(DEPLOY_DIR, "archived-bundle-file.txt").exists(), "should not have exploded this");
+        assertFalse(new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties").exists(),
+            "should not have exploded this");
+        assertFalse(new File(DEPLOY_DIR, "archived-subdir").isDirectory(), "should not still have the exploded dir");
 
         DeploymentsMetadata dm = new DeploymentsMetadata(DEPLOY_DIR);
         if (!dryRun) {
             FileHashcodeMap fhm = dm.getCurrentDeploymentFileHashcodes();
-            assert !fhm.containsKey("archived-bundle-file.txt") : "should not have metadata - this is inside the compressed zip";
-            assert !fhm.containsKey("archived-subdir/archived-file-in-subdir.properties") : "should not have metadata - this is inside the compressed zip";
-            assert fhm.containsKey("file.zip") : "should have metadata for this - we didn't explode it, we just have this compressed file";
+            assertFalse(fhm.containsKey("archived-bundle-file.txt"),
+                "should not have metadata - this is inside the compressed zip");
+            assertFalse(fhm.containsKey("archived-subdir/archived-file-in-subdir.properties"),
+                "should not have metadata - this is inside the compressed zip");
+            assertTrue(fhm.containsKey("file.zip"),
+                String
+                    .valueOf("should have metadata for this - we didn't explode it, we just have this compressed file"));
 
             // test that the file in the zip is realized
-            final String[] templateVarValue = new String[] { null };
-            final Integer[] entries = new Integer[] { 0 };
+            final String[] templateVarValue = new String[1];
+            final int[] entries = new int[1];
             ZipUtil.walkZipFile(new File(DEPLOY_DIR, "file.zip"), new ZipUtil.ZipEntryVisitor() {
                 @Override
                 public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
@@ -546,17 +565,18 @@ public class AntLauncherTest {
                         templateVarValue[0] = props.getProperty("templatized.variable");
                     }
                     if (!entry.isDirectory()) {
-                        entries[0] = Integer.valueOf(entries[0].intValue() + 1);
+                        entries[0] = entries[0] + 1;
                     }
                     return true;
                 }
             });
-            assert templateVarValue[0] != null && templateVarValue[0].equals("12345") : templateVarValue[0];
-            assert entries[0].intValue() == 2 : entries[0]; // we only counted the file entries
+            assertNotNull(templateVarValue[0]);
+            assertEquals(templateVarValue[0], "12345");
+            assertEquals(entries[0], 2, String.valueOf(entries[0])); // we only counted the file entries
         } else {
             try {
                 dm.getCurrentDeploymentFileHashcodes();
-                assert false : "this was a dry run, we should not have written our metadata to the filesystem";
+                fail("this was a dry run, we should not have written our metadata to the filesystem");
             } catch (Exception e) {
                 // expected
             }
@@ -575,41 +595,38 @@ public class AntLauncherTest {
     // but it does verify the audit tag getting processed correctly.
     // you have to look at the test logs to see the audit messages
     // TODO: write a ant build listener to listen for this messages, parse them and verify they are correct
-    //       this test should then ask the listener at the end if everything was OK and assert false if not
+    //       this test should then ask the listener at the end if everything was OK and assertTrue(false if not
     private void testAuditMessages(boolean validate, String recipeFile) throws Exception {
-        // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
-        FileUtil.purge(DEPLOY_DIR, true);
-
         AntLauncher ant = new AntLauncher(validate);
         Properties inputProps = createInputProperties("/test-audit-input.properties");
         List<BuildListener> buildListeners = createBuildListeners();
 
         BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile), inputProps,
             buildListeners);
-        assert project != null;
+        assertNotNull(project);
         Set<String> bundleFiles = project.getBundleFileNames();
-        assert bundleFiles != null;
-        assert bundleFiles.size() == 1 : bundleFiles;
-        assert bundleFiles.contains("test-audit.properties") : bundleFiles;
+        assertNotNull(bundleFiles);
+        assertEquals(bundleFiles.size(), 1, String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("test-audit.properties"), String.valueOf(bundleFiles));
 
         // sanity check - make sure our recipe defined this property
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
-        assert configDef.getPropertyDefinitions().size() == 1 : configDef.getPropertyDefinitions();
+        assertEquals(configDef.getPropertyDefinitions().size(), 1, String.valueOf(configDef.getPropertyDefinitions()));
         PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
-        assert propDef != null;
+        assertNotNull(propDef);
 
         // make sure our test infrastruction setup the input properties correctly
         Configuration config = project.getConfiguration();
-        assert config.getProperties().size() == 1 : config.getProperties();
-        assert "777".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
+        assertEquals(config.getProperties().size(), 1, String.valueOf(config.getProperties()));
+        assertEquals(config.getSimpleValue("listener.port", null), "777", String.valueOf(config.getProperties()));
 
         String preinstallTargetExecuted = (String) project.getProperties().get("preinstallTargetExecuted");
-        assert preinstallTargetExecuted.equals("1a");
+        assertEquals(preinstallTargetExecuted, "1a");
         String postinstallTargetExecuted = (String) project.getProperties().get("postinstallTargetExecuted");
-        assert postinstallTargetExecuted.equals("1b");
+        assertEquals(postinstallTargetExecuted, "1b");
 
-        assert new File(DEPLOY_DIR, "test-audit.properties").exists() : "missing file";
-        assert readPropsFile(new File(DEPLOY_DIR, "test-audit.properties")).getProperty("my.listener.port").equals(
+        assertTrue(new File(DEPLOY_DIR, "test-audit.properties").exists(), "missing file");
+        assertEquals(readPropsFile(new File(DEPLOY_DIR, "test-audit.properties")).getProperty("my.listener.port"),
             "777");
     }
 
@@ -622,9 +639,6 @@ public class AntLauncherTest {
     }
 
     private void testSubdirectoriesInRecipe(boolean validate, String origRecipeFile) throws Exception {
-        // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
-        FileUtil.purge(DEPLOY_DIR, true);
-
         // we need to create our own directory structure - let's build a temporary ant basedir
         // and put our recipe in there as well as a subdirectory with a test raw file and test zip file
         File antBasedir = FileUtil.createTempDirectory("anttest", ".test", null);
@@ -650,27 +664,32 @@ public class AntLauncherTest {
             List<BuildListener> buildListeners = createBuildListeners();
 
             BundleAntProject project = ant.executeBundleDeployFile(recipeFile, inputProps, buildListeners);
-            assert project != null;
+            assertNotNull(project);
             Set<String> bundleFiles = project.getBundleFileNames();
-            assert bundleFiles != null;
-            assert bundleFiles.size() == 7 : bundleFiles;
-            assert bundleFiles.contains("subdir/test0.txt") : bundleFiles;
-            assert bundleFiles.contains("subdir/test1.txt") : bundleFiles;
-            assert bundleFiles.contains("subdir/test2.txt") : bundleFiles;
-            assert bundleFiles.contains("subdir/test.zip") : bundleFiles;
-            assert bundleFiles.contains("subdir/test-explode.zip") : bundleFiles;
-            assert bundleFiles.contains("subdir/test-replace.zip") : bundleFiles;
-            assert bundleFiles.contains("subdir/test-replace2.zip") : bundleFiles;
+            assertNotNull(bundleFiles);
+            assertEquals(bundleFiles.size(), 7, String.valueOf(bundleFiles));
+            assertTrue(bundleFiles.contains("subdir/test0.txt"), String.valueOf(bundleFiles));
+            assertTrue(bundleFiles.contains("subdir/test1.txt"), String.valueOf(bundleFiles));
+            assertTrue(bundleFiles.contains("subdir/test2.txt"), String.valueOf(bundleFiles));
+            assertTrue(bundleFiles.contains("subdir/test.zip"), String.valueOf(bundleFiles));
+            assertTrue(bundleFiles.contains("subdir/test-explode.zip"), String.valueOf(bundleFiles));
+            assertTrue(bundleFiles.contains("subdir/test-replace.zip"), String.valueOf(bundleFiles));
+            assertTrue(bundleFiles.contains("subdir/test-replace2.zip"), String.valueOf(bundleFiles));
 
-            assert new File(DEPLOY_DIR, "subdir/test0.txt").exists() : "missing raw file from default destination location";
-            assert new File(DEPLOY_DIR, "another/foo.txt").exists() : "missing raw file from the destinationFile";
-            assert new File(DEPLOY_DIR, "second.dir/test2.txt").exists() : "missing raw file from the destinationDir";
-            assert !new File(DEPLOY_DIR, "subdir/test1.txt").exists() : "should not be here because destinationFile was specified";
-            assert !new File(DEPLOY_DIR, "subdir/test2.txt").exists() : "should not be here because destinationFile was specified";
-            assert new File(DEPLOY_DIR, "subdir/test.zip").exists() : "missing unexploded zip file";
-            assert new File(DEPLOY_DIR, "subdir/test-replace.zip").exists() : "missing unexploded zip file";
-            assert new File(DEPLOY_DIR, "second.dir/test-replace2.zip").exists() : "missing unexploded second zip file";
-            assert !new File(DEPLOY_DIR, "subdir/test-explode.zip").exists() : "should have been exploded";
+            assertTrue(new File(DEPLOY_DIR, "subdir/test0.txt").exists(),
+                "missing raw file from default destination location");
+            assertTrue(new File(DEPLOY_DIR, "another/foo.txt").exists(), "missing raw file from the destinationFile");
+            assertTrue(new File(DEPLOY_DIR, "second.dir/test2.txt").exists(),
+                "missing raw file from the destinationDir");
+            assertFalse(new File(DEPLOY_DIR, "subdir/test1.txt").exists(),
+                "should not be here because destinationFile was specified");
+            assertFalse(new File(DEPLOY_DIR, "subdir/test2.txt").exists(),
+                "should not be here because destinationFile was specified");
+            assertTrue(new File(DEPLOY_DIR, "subdir/test.zip").exists(), "missing unexploded zip file");
+            assertTrue(new File(DEPLOY_DIR, "subdir/test-replace.zip").exists(), "missing unexploded zip file");
+            assertTrue(new File(DEPLOY_DIR, "second.dir/test-replace2.zip").exists(),
+                "missing unexploded second zip file");
+            assertFalse(new File(DEPLOY_DIR, "subdir/test-explode.zip").exists(), "should have been exploded");
 
             // test that the file in the zip is realized
             final String[] templateVarValue = new String[] { null };
@@ -685,7 +704,8 @@ public class AntLauncherTest {
                     return true;
                 }
             });
-            assert templateVarValue[0] != null && templateVarValue[0].equals("alpha-omega") : templateVarValue[0];
+            assertNotNull(templateVarValue[0]);
+            assertEquals(templateVarValue[0], "alpha-omega");
 
             // test that the file in the second zip is realized
             final String[] templateVarValue2 = new String[] { null };
@@ -700,7 +720,8 @@ public class AntLauncherTest {
                     return true;
                 }
             });
-            assert templateVarValue2[0] != null && templateVarValue2[0].equals("alpha-omega") : templateVarValue2[0];
+            assertNotNull(templateVarValue2[0]);
+            assertEquals(templateVarValue2[0], "alpha-omega");
 
         } finally {
             FileUtil.purge(antBasedir, true);
@@ -720,7 +741,8 @@ public class AntLauncherTest {
     }
 
     public void testNotDeployedRhqPropertyFile() throws Exception {
-        testNotDeployedFiles(getFileFromTestClasses("ant-properties/deploy.xml.rhq-property-tag-in-bundle"), true, false);
+        testNotDeployedFiles(getFileFromTestClasses("ant-properties/deploy.xml.rhq-property-tag-in-bundle"), true,
+            false);
     }
 
     public void testDeployedPropertyFile() throws Exception {
@@ -743,8 +765,8 @@ public class AntLauncherTest {
             FileUtil.copyFile(getFileFromTestClasses("ant-properties/deploy.xml.properties-out-of-bundle"), deployXml);
 
             //copy the other file from the bundle, too, into the correct location
-            FileUtil.copyFile(getFileFromTestClasses("ant-properties/deployed.file"), new File(tempDir,
-                "deployed.file"));
+            FileUtil.copyFile(getFileFromTestClasses("ant-properties/deployed.file"),
+                new File(tempDir, "deployed.file"));
 
             File absoluteLocation = new File(tempDir, "absolute-location");
             assert absoluteLocation.mkdir() : "Failed to create dir under temp";
@@ -779,8 +801,8 @@ public class AntLauncherTest {
             FileUtil.copyFile(getFileFromTestClasses("ant-properties/deploy.xml.properties-out-of-bundle"), deployXml);
 
             //copy the other file from the bundle, too, into the correct location
-            FileUtil.copyFile(getFileFromTestClasses("ant-properties/deployed.file"), new File(tempDir,
-                "deployed.file"));
+            FileUtil.copyFile(getFileFromTestClasses("ant-properties/deployed.file"),
+                new File(tempDir, "deployed.file"));
 
             //fire up minimal server
             PortScout portScout = new PortScout();
@@ -812,8 +834,7 @@ public class AntLauncherTest {
 
             String deployXmlContents = StreamUtil.slurp(new InputStreamReader(new FileInputStream(deployXml)));
 
-            deployXmlContents = deployXmlContents.replace("%%REPLACE_ME%%",
-                "url=\"http://localhost:" + port + "\"");
+            deployXmlContents = deployXmlContents.replace("%%REPLACE_ME%%", "url=\"http://localhost:" + port + "\"");
 
             FileUtil.writeFile(new ByteArrayInputStream(deployXmlContents.getBytes()), deployXml);
 
@@ -832,11 +853,11 @@ public class AntLauncherTest {
         File sideDir = new File(DEPLOY_DIR.getParentFile(), "test-ant-bundle-sibling");
         assert sideDir.mkdir() : "Failed to create a side directory";
 
-        FileUtil.copyFile(getFileFromTestClasses("ant-properties/in-bundle.properties"),
-            new File(sideDir, "in-bundle.properties"));
+        FileUtil.copyFile(getFileFromTestClasses("ant-properties/in-bundle.properties"), new File(sideDir,
+            "in-bundle.properties"));
 
-        testNotDeployedFiles(getFileFromTestClasses("ant-properties/deploy.xml.rhq-property-tag-in-destination"), false,
-            false);
+        testNotDeployedFiles(getFileFromTestClasses("ant-properties/deploy.xml.rhq-property-tag-in-destination"),
+            false, false);
     }
 
     private void testNotDeployedFiles(File deployXml, boolean expectPropertiesFileInBundle,
@@ -852,8 +873,7 @@ public class AntLauncherTest {
         Properties inputProps = createInputProperties(null);
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(deployXml, inputProps,
-            buildListeners);
+        BundleAntProject project = ant.executeBundleDeployFile(deployXml, inputProps, buildListeners);
 
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
@@ -863,9 +883,8 @@ public class AntLauncherTest {
         assert !expectPropertiesFileInBundle || bundleFiles.contains("in-bundle.properties") : bundleFiles;
 
         assert new File(DEPLOY_DIR, "deployed.file").exists() : "deployed.file missing";
-        assert expectPropertiesFileInDestination == new File(DEPLOY_DIR, "in-bundle.properties")
-            .exists() : "in-bundle.properties " + (expectPropertiesFileInDestination ? "not deployed but should have"
-                : "deployed but shouldn't have");
+        assert expectPropertiesFileInDestination == new File(DEPLOY_DIR, "in-bundle.properties").exists() : "in-bundle.properties "
+            + (expectPropertiesFileInDestination ? "not deployed but should have" : "deployed but shouldn't have");
     }
 
     private void checkPropertiesFromExternalFileReplaced() throws Exception {
@@ -878,9 +897,6 @@ public class AntLauncherTest {
     }
 
     private void testUrlFilesAndArchives(boolean validate, String recipeFile) throws Exception {
-        // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
-        FileUtil.purge(DEPLOY_DIR, true);
-
         // we need to create our own directory structure so we can use file: URLs
         File tmpUrlLocation = FileUtil.createTempDirectory("anttest", ".url", null);
         Set<File> downloadedFiles = null;
@@ -891,9 +907,12 @@ public class AntLauncherTest {
             writeFile("file0", subdir, "test0.txt"); // filename must match recipe
             writeFile("file1", subdir, "test1.txt"); // filename must match recipe
             writeFile("X=@@X@@\n", subdir, "test2.txt"); // filename must match recipe
+            writeFile("pipo", subdir, "prepareDatasource.cli"); // filename must match recipe
             createZip(new String[] { "one", "two" }, subdir, "test.zip", new String[] { "one.txt", "two.txt" });
             createZip(new String[] { "3", "4" }, subdir, "test-explode.zip", new String[] { "three.txt", "four.txt" });
             createZip(new String[] { "X=@@X@@\n" }, subdir, "test-replace.zip", new String[] { "template.txt" }); // will be exploded then recompressed
+            createZip(new String[] { "one", "two" }, subdir, "fileToHandover.zip",
+                new String[] { "one.txt", "two.txt" });
 
             AntLauncher ant = new AntLauncher(validate);
             Properties inputProps = createInputProperties("/test-bundle-url-input.properties");
@@ -902,37 +921,42 @@ public class AntLauncherTest {
 
             BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses(recipeFile), inputProps,
                 buildListeners);
-            assert project != null;
+            assertNotNull(project);
 
             Set<String> bundleFiles = project.getBundleFileNames();
-            assert bundleFiles != null;
-            assert bundleFiles.size() == 0 : "we don't have any bundle files - only downloaded files from URLs: "
-                + bundleFiles;
+            assertNotNull(bundleFiles);
+            assertEquals(bundleFiles.size(), 0, "we don't have any bundle files - only downloaded files from URLs: "
+                + bundleFiles);
 
             downloadedFiles = project.getDownloadedFiles();
-            assert downloadedFiles != null;
-            assert downloadedFiles.size() == 6 : downloadedFiles;
+            assertNotNull(downloadedFiles);
+            assertEquals(downloadedFiles.size(), 8, String.valueOf(downloadedFiles));
             ArrayList<String> expectedDownloadedFileNames = new ArrayList<String>();
             // remember, we store url downloaded files under the names of their destination file/dir, not source location
             expectedDownloadedFileNames.add("test0.txt");
             expectedDownloadedFileNames.add("foo.txt");
             expectedDownloadedFileNames.add("test2.txt");
+            expectedDownloadedFileNames.add("prepareDatasource.cli");
             expectedDownloadedFileNames.add("test.zip");
             expectedDownloadedFileNames.add("test-explode.zip");
             expectedDownloadedFileNames.add("test-replace.zip");
+            expectedDownloadedFileNames.add("fileToHandover.zip");
             for (File downloadedFile : downloadedFiles) {
-                assert expectedDownloadedFileNames.contains(downloadedFile.getName()) : "We downloaded a file but its not in the project's list: "
-                    + downloadedFile;
+                assertTrue(expectedDownloadedFileNames.contains(downloadedFile.getName()),
+                    "We downloaded a file but its not in the project's list: " + downloadedFile);
             }
 
-            assert new File(DEPLOY_DIR, "test0.txt").exists() : "missing raw file from default destination location";
-            assert new File(DEPLOY_DIR, "another/foo.txt").exists() : "missing raw file from the destinationFile";
-            assert new File(DEPLOY_DIR, "second.dir/test2.txt").exists() : "missing raw file from the destinationDir";
-            assert !new File(DEPLOY_DIR, "test1.txt").exists() : "should not be here because destinationFile was specified";
-            assert !new File(DEPLOY_DIR, "test2.txt").exists() : "should not be here because destinationFile was specified";
-            assert new File(DEPLOY_DIR, "test.zip").exists() : "missing unexploded zip file";
-            assert new File(DEPLOY_DIR, "test-replace.zip").exists() : "missing unexploded zip file";
-            assert !new File(DEPLOY_DIR, "test-explode.zip").exists() : "should have been exploded";
+            assertTrue(new File(DEPLOY_DIR, "test0.txt").exists(), "missing raw file from default destination location");
+            assertTrue(new File(DEPLOY_DIR, "another/foo.txt").exists(), "missing raw file from the destinationFile");
+            assertTrue(new File(DEPLOY_DIR, "second.dir/test2.txt").exists(),
+                "missing raw file from the destinationDir");
+            assertFalse(new File(DEPLOY_DIR, "test1.txt").exists(),
+                "should not be here because destinationFile was specified");
+            assertFalse(new File(DEPLOY_DIR, "test2.txt").exists(),
+                "should not be here because destinationFile was specified");
+            assertTrue(new File(DEPLOY_DIR, "test.zip").exists(), "missing unexploded zip file");
+            assertTrue(new File(DEPLOY_DIR, "test-replace.zip").exists(), "missing unexploded zip file");
+            assertFalse(new File(DEPLOY_DIR, "test-explode.zip").exists(), "should have been exploded");
 
             // test that the file in the zip is realized
             final String[] templateVarValue = new String[] { null };
@@ -947,7 +971,8 @@ public class AntLauncherTest {
                     return true;
                 }
             });
-            assert templateVarValue[0] != null && templateVarValue[0].equals("9876") : templateVarValue[0];
+            assertNotNull(templateVarValue[0]);
+            assertEquals(templateVarValue[0], "9876");
 
             // test that our raw file was realized
             File realizedFile = new File(DEPLOY_DIR, "second.dir/test2.txt");
@@ -955,7 +980,7 @@ public class AntLauncherTest {
             FileInputStream inStream = new FileInputStream(realizedFile);
             try {
                 props.load(inStream);
-                assert props.getProperty("X", "<unset>").equals("9876");
+                assertEquals(props.getProperty("X", "<unset>"), "9876");
             } finally {
                 inStream.close();
             }
@@ -967,6 +992,177 @@ public class AntLauncherTest {
                 }
             }
         }
+    }
+
+    public void testHandover() throws Exception {
+        AntLauncher ant = new AntLauncher(true);
+
+        final List<HandoverInfoArgument> handoverInfoArguments = new ArrayList<HandoverInfoArgument>();
+        HandoverTarget handoverTarget = new HandoverTarget() {
+            @Override
+            public boolean handoverContent(HandoverInfo handoverInfo) {
+                HandoverInfoArgument handoverInfoArgument;
+                try {
+                    handoverInfoArgument = new HandoverInfoArgument(handoverInfo);
+                } catch (IOException e) {
+                    return false;
+                }
+                handoverInfoArguments.add(handoverInfoArgument);
+                try {
+                    FileUtil.writeFile(handoverInfo.getContent(), handoverInfoArgument.handoverInfoTestContentFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+        };
+        ant.setHandoverTarget(handoverTarget);
+
+        List<BuildListener> buildListeners = createBuildListeners();
+        Properties inputProps = createInputProperties("/handover-test-bundle-input.properties");
+
+        BundleAntProject project = ant.executeBundleDeployFile(getFileFromTestClasses("handover-test-bundle.xml"),
+            inputProps, buildListeners);
+        assertNotNull(project);
+        assertEquals(project.getBundleName(), "example.com (EAP 6)");
+        assertEquals(project.getBundleVersion(), "1.0");
+        assertEquals(project.getBundleDescription(), "example.com corporate website hosted on EAP 6");
+
+        Set<String> bundleFiles = project.getBundleFileNames();
+        assertNotNull(bundleFiles);
+        assertEquals(bundleFiles.size(), 2, String.valueOf(bundleFiles));
+        assertTrue(bundleFiles.contains("prepareDatasource.cli"), String.valueOf(bundleFiles)); // handed over file
+        assertTrue(bundleFiles.contains("fileToHandover.zip"), String.valueOf(bundleFiles)); // handed over archive
+
+        ConfigurationDefinition projectConfigDef = project.getConfigurationDefinition();
+        assertEquals(projectConfigDef.getPropertyDefinitions().size(), 3,
+            String.valueOf(projectConfigDef.getPropertyDefinitions()));
+
+        PropertyDefinitionSimple propDef = projectConfigDef.getPropertyDefinitionSimple("myapp.datasource.property");
+        assertNotNull(propDef);
+        assertEquals(propDef.getType(), PropertySimpleType.INTEGER);
+        assertTrue(propDef.isRequired());
+
+        propDef = projectConfigDef.getPropertyDefinitionSimple("myapp.listener.port");
+        assertNotNull(propDef);
+        assertEquals(propDef.getType(), PropertySimpleType.INTEGER);
+        assertTrue(propDef.isRequired());
+
+        propDef = projectConfigDef.getPropertyDefinitionSimple("myapp.runtime.name");
+        assertNotNull(propDef);
+        assertEquals(propDef.getType(), PropertySimpleType.STRING);
+        assertTrue(propDef.isRequired());
+
+        Configuration projectConfig = project.getConfiguration();
+        assertNotNull(projectConfig);
+        assertEquals(projectConfig.getProperties().size(), 3, String.valueOf(projectConfig.getProperties()));
+        assertEquals(projectConfig.getSimpleValue("myapp.datasource.property"), "10",
+            String.valueOf(projectConfig.getProperties()));
+        assertEquals(projectConfig.getSimpleValue("myapp.listener.port"), "9777",
+            String.valueOf(projectConfig.getProperties()));
+        assertEquals(projectConfig.getSimpleValue("myapp.runtime.name"), "site.war",
+            String.valueOf(projectConfig.getProperties()));
+
+        assertEquals(handoverInfoArguments.size(), 2, String.valueOf(handoverInfoArguments));
+        Iterator<HandoverInfoArgument> handoverInfoIterator = handoverInfoArguments.iterator();
+
+        HandoverInfoArgument handoverInfoArgument = handoverInfoIterator.next();
+        HandoverInfo handoverInfo = handoverInfoArgument.handoverInfo;
+        InputStream cliScriptContent = getClass().getClassLoader().getResourceAsStream("prepareDatasource.cli");
+        assertNotNull(cliScriptContent);
+        FileInputStream actualContent = new FileInputStream(handoverInfoArgument.handoverInfoTestContentFile);
+        assertEquals(slurp(actualContent), slurp(cliScriptContent));
+        assertEquals(handoverInfo.getFilename(), "prepareDatasource.cli");
+        assertEquals(handoverInfo.getAction(), "execute-script");
+        assertEquals(handoverInfo.getParams(), Collections.emptyMap());
+        assertEquals(handoverInfo.isRevert(), false);
+
+        handoverInfoArgument = handoverInfoIterator.next();
+        handoverInfo = handoverInfoArgument.handoverInfo;
+        final Properties[] propertiesHolder = new Properties[1];
+        ZipUtil.walkZipFile(handoverInfoArgument.handoverInfoTestContentFile, new ZipUtil.ZipEntryVisitor() {
+            @Override
+            public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
+                String entryName = entry.getName();
+                if (entryName.equals("archived-subdir/archived-file-in-subdir.properties")) {
+                    Properties properties = new Properties();
+                    properties.load(stream);
+                    propertiesHolder[0] = properties;
+                }
+                return true;
+            }
+        });
+        Properties properties = propertiesHolder[0];
+        assertNotNull(properties);
+        assertEquals(properties.size(), 3, String.valueOf(properties));
+        assertEquals(properties.getProperty("templatized.variable"), "9777", String.valueOf(properties));
+        assertEquals(handoverInfo.getFilename(), "fileToHandover.zip");
+        assertEquals(handoverInfo.getAction(), "deployment");
+        assertEquals(handoverInfo.getParams(), new HashMap<String, String>() {
+            {
+                put("runtimeName", "site.war");
+            }
+        });
+        assertEquals(handoverInfo.isRevert(), false);
+    }
+
+    public void testHandoverFailure() throws Exception {
+        AntLauncher ant = new AntLauncher(true);
+
+        final List<HandoverInfoArgument> handoverInfoArguments = new ArrayList<HandoverInfoArgument>();
+        HandoverTarget handoverTarget = new HandoverTarget() {
+            @Override
+            public boolean handoverContent(HandoverInfo handoverInfo) {
+                HandoverInfoArgument handoverInfoArgument;
+                try {
+                    handoverInfoArgument = new HandoverInfoArgument(handoverInfo);
+                } catch (IOException e) {
+                    return false;
+                }
+                handoverInfoArguments.add(handoverInfoArgument);
+                return false;
+            }
+        };
+        ant.setHandoverTarget(handoverTarget);
+
+        List<BuildListener> buildListeners = createBuildListeners();
+        Properties inputProps = createInputProperties("/handover-test-bundle-input.properties");
+
+        try {
+            ant.executeBundleDeployFile(getFileFromTestClasses("handover-test-bundle.xml"), inputProps, buildListeners);
+            fail("Expected RuntimeException because of failed handover");
+        } catch (RuntimeException expected) {
+        }
+
+        // We still expect the callback to be called twice, as the first handover has a failonerror="false" attribute
+        assertEquals(handoverInfoArguments.size(), 2, String.valueOf(handoverInfoArguments));
+    }
+
+    public void testHandoverFailonerrorAttribute() throws Exception {
+        AntLauncher ant = new AntLauncher(true);
+
+        final List<HandoverInfoArgument> handoverInfoArguments = new ArrayList<HandoverInfoArgument>();
+        HandoverTarget handoverTarget = new HandoverTarget() {
+            @Override
+            public boolean handoverContent(HandoverInfo handoverInfo) {
+                HandoverInfoArgument handoverInfoArgument;
+                try {
+                    handoverInfoArgument = new HandoverInfoArgument(handoverInfo);
+                } catch (IOException e) {
+                    return false;
+                }
+                handoverInfoArguments.add(handoverInfoArgument);
+                return !handoverInfo.getFilename().equals("prepareDatasource.cli");
+            }
+        };
+        ant.setHandoverTarget(handoverTarget);
+
+        List<BuildListener> buildListeners = createBuildListeners();
+        Properties inputProps = createInputProperties("/handover-test-bundle-input.properties");
+
+        ant.executeBundleDeployFile(getFileFromTestClasses("handover-test-bundle.xml"), inputProps, buildListeners);
+
+        assertEquals(handoverInfoArguments.size(), 2, String.valueOf(handoverInfoArguments));
     }
 
     private List<BuildListener> createBuildListeners() {
@@ -1015,7 +1211,7 @@ public class AntLauncherTest {
 
     private File getFileFromTestClasses(String name) throws Exception {
         File file = new File(ANT_BASEDIR, name);
-        assert file.exists() : "The file doesn't exist: " + file.getAbsolutePath();
+        assertTrue(file.exists(), "The file doesn't exist: " + file.getAbsolutePath());
         return file;
     }
 
@@ -1049,7 +1245,7 @@ public class AntLauncherTest {
             stream = new FileOutputStream(zipFile);
             out = new ZipOutputStream(stream);
 
-            assert content.length == entryName.length;
+            assertEquals(content.length, entryName.length);
             for (int i = 0; i < content.length; i++) {
                 ZipEntry zipAdd = new ZipEntry(entryName[i]);
                 zipAdd.setTime(System.currentTimeMillis());
@@ -1090,6 +1286,23 @@ public class AntLauncherTest {
             return (resolvedTask != null) ? resolvedTask : task;
         } else {
             return task;
+        }
+    }
+
+    private static class HandoverInfoArgument {
+        final HandoverInfo handoverInfo;
+        final File handoverInfoTestContentFile;
+
+        private HandoverInfoArgument(HandoverInfo handoverInfo) throws IOException {
+            this.handoverInfo = handoverInfo;
+            handoverInfoTestContentFile = File.createTempFile(HandoverInfoArgument.class.getSimpleName() + "-", ".tmp");
+            handoverInfoTestContentFile.deleteOnExit();
+        }
+
+        @Override
+        public String toString() {
+            return "HandoverInfoArgument[" + "handoverInfo=" + handoverInfo + ", handoverInfoTestContentFile="
+                + handoverInfoTestContentFile + ']';
         }
     }
 }

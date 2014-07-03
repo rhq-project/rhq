@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,13 +16,19 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.EXECUTION;
+import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.INVALID_ACTION;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,8 +44,9 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.bundle.BundleHandoverRequest;
+import org.rhq.core.pluginapi.bundle.BundleHandoverResponse;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
@@ -53,7 +60,9 @@ import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOpts;
 import org.rhq.modules.plugins.jbossas7.helper.JdrReportRunner;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -63,22 +72,25 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  *
  * @author Heiko W. Rupp
  */
-public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T>
- implements
+public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T> implements
     MeasurementFacet, OperationFacet, SupportFacet {
 
-    private final Log log = LogFactory.getLog(StandaloneASComponent.class);
+    private static final Log LOG = LogFactory.getLog(StandaloneASComponent.class);
 
     private static final String SERVER_CONFIG_TRAIT = "config-file";
+    private static final String MULTICAST_ADDRESS_TRAIT = "multicastAddress";
+    private static final String DEPLOY_DIR_TRAIT = "deployDir";
+    private static final String TEMP_DIR_TRAIT = "temp-dir";
+
     private static final String JAVA_OPTS_ADDITIONAL_PROP = "javaOptsAdditional";
 
     private static final Address ENVIRONMENT_ADDRESS = new Address("core-service=server-environment");
 
     @Override
-    public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext<T> resourceContext) throws Exception {
         super.start(resourceContext);
         updateAdditionalJavaOpts(resourceContext);
-    };
+    }
 
     @Override
     protected AS7Mode getMode() {
@@ -92,9 +104,9 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
             String requestName = request.getName();
             if (requestName.equals(SERVER_CONFIG_TRAIT)) {
                 collectConfigTrait(report, request);
-            } else if (requestName.equals("multicastAddress")) {
+            } else if (requestName.equals(MULTICAST_ADDRESS_TRAIT)) {
                 collectMulticastAddressTrait(report, request);
-            } else if (requestName.equals("deployDir")) {
+            } else if (requestName.equals(DEPLOY_DIR_TRAIT)) {
                 resolveDeployDir(report, request);
             } else {
                 leftovers.add(request); // handled below
@@ -113,7 +125,7 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
     private void resolveDeployDir(MeasurementReport report, MeasurementScheduleRequest request) {
 
         if ("JDG".equals(pluginConfiguration.getSimpleValue("productType", "AS7"))) {
-            log.debug("This is a JDG server, so there is no deployDir");
+            LOG.debug("This is a JDG server, so there is no deployDir");
             MeasurementDataTrait trait = new MeasurementDataTrait(request, "- not applicable to JDG -");
             report.addData(trait);
             return;
@@ -124,6 +136,7 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         ReadResource op = new ReadResource(scanner);
         Result res = getASConnection().execute(op);
         if (res.isSuccess()) {
+            @SuppressWarnings("unchecked")
             Map<String, String> scannerMap = (Map<String, String>) res.getResult();
             String path = scannerMap.get("path");
             String relativeTo = scannerMap.get("relative-to");
@@ -135,7 +148,7 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
             MeasurementDataTrait trait = new MeasurementDataTrait(request, deployDir);
             report.addData(trait);
         } else {
-            log.error("No default deployment scanner was found, returning no value");
+            LOG.error("No default deployment scanner was found, returning no value");
         }
     }
 
@@ -145,6 +158,7 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         ReadResource op = new ReadResource(addr);
         Result res = getASConnection().execute(op);
         if (res.isSuccess()) {
+            @SuppressWarnings("unchecked")
             Map<String, String> pathMap = (Map<String, String>) res.getResult();
             String path = pathMap.get("path");
             String relativeToProp = pathMap.get("relative-to");
@@ -155,7 +169,7 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
                 return new File(basePath, path);
             }
         }
-        log.warn("The requested path property " + relativeTo + " is not registered in the server, so not resolving it.");
+        LOG.warn("The requested path property " + relativeTo + " is not registered in the server, so not resolving it.");
         return new File(relativeTo);
     }
 
@@ -251,6 +265,87 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         super.updateResourceConfiguration(report);
     }
 
+    /**
+     * Handles content handed over during a bundle deployment.<br>
+     * <br>
+     * This component supports the following actions:<br>
+     * <br>
+     * <strong>action = deployment: deploys the content to the server</strong><br>
+     * <br>
+     * Optional parameters:<br>
+     * <ul>
+     *     <li>runtimeName: Runtime name of the uploaded file (e.g. 'my.war'); if not present, the file name is used</li>
+     * </ul>
+     * <br>
+     * <strong>action = execute-script: executes a server CLI script</strong><br>
+     * <br>
+     * Optional parameters:<br>
+     * <ul>
+     *     <li>waitTime (in seconds): how long to wait for completion; defaults to an hour</li>
+     *     <li>killOnTimeout (true/false): should the CLI process be killed if timeout is reached; defaults to false</li>
+     * </ul>
+     *
+     * @param handoverRequest handover parameters and context
+     * @return a report object indicating success or failure
+     */
+    @Override
+    public BundleHandoverResponse handleContent(BundleHandoverRequest handoverRequest) {
+        try {
+            if (handoverRequest.getAction().equals("deployment")) {
+                return handleDeployment(handoverRequest);
+            }
+            if (handoverRequest.getAction().equals("execute-script")) {
+                return handleExecuteScript(handoverRequest);
+            }
+            return BundleHandoverResponse.failure(INVALID_ACTION);
+        } catch (Exception e) {
+            return BundleHandoverResponse.failure(EXECUTION, "Unexpected handover failure", e);
+        }
+    }
+
+    private BundleHandoverResponse handleDeployment(BundleHandoverRequest request) {
+        HandoverContentUploader contentUploader = new HandoverContentUploader(request, getASConnection());
+        boolean uploaded = contentUploader.upload();
+        if (!uploaded) {
+            return contentUploader.getFailureResponse();
+        }
+
+        String filename = contentUploader.getFilename();
+        String runtimeName = contentUploader.getRuntimeName();
+        String hash = contentUploader.getHash();
+
+        Redeployer redeployer = new Redeployer(runtimeName, hash, getASConnection());
+        if (redeployer.deploymentExists()) {
+            Result result = redeployer.redeployOnServer();
+            if (result.isRolledBack()) {
+                return BundleHandoverResponse.failure(EXECUTION, result.getFailureDescription());
+            }
+            return BundleHandoverResponse.success();
+        }
+
+        Operation addDeploymentStep = new Operation("add", "deployment", runtimeName);
+        List<Object> addDeploymentContentProperty = new ArrayList<Object>(1);
+        Map<String, Object> contentValues = new HashMap<String, Object>();
+        contentValues.put("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
+        addDeploymentContentProperty.add(contentValues);
+        addDeploymentStep.addAdditionalProperty("content", addDeploymentContentProperty);
+        addDeploymentStep.addAdditionalProperty("name", filename);
+        addDeploymentStep.addAdditionalProperty("runtime-name", runtimeName);
+
+        Operation deployStep = new Operation("deploy", addDeploymentStep.getAddress());
+
+        CompositeOperation compositeOperation = new CompositeOperation();
+        compositeOperation.addStep(addDeploymentStep);
+        compositeOperation.addStep(deployStep);
+
+        Result result = getASConnection().execute(compositeOperation, 300);
+        if (!result.isSuccess()) {
+            return BundleHandoverResponse.failure(EXECUTION, result.getFailureDescription());
+        } else {
+            return BundleHandoverResponse.success();
+        }
+    }
+
     @NotNull
     @Override
     protected Address getEnvironmentAddress() {
@@ -270,16 +365,19 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         return "base-dir";
     }
 
+    @Override
+    protected String getTempDirAttributeName() {
+        return TEMP_DIR_TRAIT;
+    }
+
     /**
      * Updates JAVA_OPTS in standalone.conf and standalone.conf.bat files.
      * If JAVA_OPTS is set, then new config is added or updated in the file
      * If JAVA_OPTS is unset, then the config file will be cleared of any traced the config set via RHQ
-     *
-     * @param resourceContext
      */
     private void updateAdditionalJavaOpts(ResourceContext<T> resourceContext) {
         if (resourceContext.getPluginConfiguration().getSimpleValue(ServerPluginConfiguration.Property.HOME_DIR) == null) {
-            log.error("Additional JAVA_OPTS cannot be configured because "
+            LOG.error("Additional JAVA_OPTS cannot be configured because "
                 + ServerPluginConfiguration.Property.HOME_DIR + " property not set");
             return;
         }
@@ -288,10 +386,11 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
             ServerPluginConfiguration.Property.HOME_DIR));
         File binDirectory = new File(baseDirectory, "bin");
 
-        String additionalJavaOptsContent = resourceContext.getPluginConfiguration().getSimpleValue(JAVA_OPTS_ADDITIONAL_PROP);
+        String additionalJavaOptsContent = resourceContext.getPluginConfiguration().getSimpleValue(
+            JAVA_OPTS_ADDITIONAL_PROP);
 
-        File configFile = null;
-        AdditionalJavaOpts additionalJavaOptsConfig = null;
+        File configFile;
+        AdditionalJavaOpts additionalJavaOptsConfig;
         if (OperatingSystemType.WINDOWS.equals(resourceContext.getSystemInformation().getOperatingSystemType())) {
             configFile = new File(binDirectory, "standalone.conf.bat");
             additionalJavaOptsConfig = new AdditionalJavaOpts.WindowsConfiguration();
@@ -307,7 +406,7 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
                 additionalJavaOptsConfig.clean(configFile);
             }
         } catch (Exception e) {
-            log.error("Unable to update configuration file with additional JAVA_OPTS set via RHQ.", e);
+            LOG.error("Unable to update configuration file with additional JAVA_OPTS set via RHQ.", e);
         }
     }
 
@@ -323,4 +422,3 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         throw new Exception("Cannot obtain report, resource is not UP");
     }
 }
-

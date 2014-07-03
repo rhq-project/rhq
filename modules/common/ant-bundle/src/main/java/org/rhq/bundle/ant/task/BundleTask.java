@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,23 +13,11 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.bundle.ant.task;
-
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.Task;
-import org.apache.tools.ant.TaskContainer;
-import org.apache.tools.ant.taskdefs.Property;
-import org.apache.tools.ant.taskdefs.PropertyHelperTask;
-import org.apache.tools.ant.util.FileUtils;
-
-import org.rhq.bundle.ant.DeployPropertyNames;
-import org.rhq.bundle.ant.DeploymentPhase;
-import org.rhq.bundle.ant.type.DeploymentUnitType;
-import org.rhq.bundle.ant.type.InputPropertyType;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -37,6 +25,16 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.taskdefs.Property;
+import org.apache.tools.ant.util.FileUtils;
+
+import org.rhq.bundle.ant.DeployPropertyNames;
+import org.rhq.bundle.ant.DeploymentPhase;
+import org.rhq.bundle.ant.type.DeploymentUnitType;
+import org.rhq.bundle.ant.type.InputPropertyType;
 
 /**
  * The rhq:bundle task defines the metadata needed to deploy, redeploy, or undeploy an RHQ bundle.
@@ -59,7 +57,7 @@ public class BundleTask extends AbstractBundleTask {
         validateAttributes();
         // TODO: Figure out why the Ant parse() method is not initializing the child Type objects.
         //validateTypes();
-        
+
         getProject().setBundleName(this.name);
         getProject().setBundleVersion(this.version);
         getProject().setBundleDescription(this.description);
@@ -136,9 +134,9 @@ public class BundleTask extends AbstractBundleTask {
             for (DeploymentPhase phase : phases) {
                 validPhaseNames.add(phase.name().toLowerCase());
             }
-            throw new BuildException("Value of property '" + DeployPropertyNames.DEPLOY_PHASE
-                    + "' (" + deploymentPhaseName + ") is not a valid deployment phase - the valid phases are "
-                    + validPhaseNames + ".");
+            throw new BuildException("Value of property '" + DeployPropertyNames.DEPLOY_PHASE + "' ("
+                + deploymentPhaseName + ") is not a valid deployment phase - the valid phases are " + validPhaseNames
+                + ".");
         }
         getProject().setDeploymentPhase(deploymentPhase);
 
@@ -153,34 +151,36 @@ public class BundleTask extends AbstractBundleTask {
         boolean clean = Boolean.valueOf(cleanString);
 
         log("Executing '" + deploymentPhase + "' phase for deployment with id [" + deploymentId + "] from bundle '"
-                + this.name + "' version " + this.version + " using config "
-                + getProject().getConfiguration().toString(true) + " [dryRun=" + dryRun + ", revert=" + revert
-                + ", clean=" + clean + "]...");
+            + this.name + "' version " + this.version + " using config "
+            + getProject().getConfiguration().toString(true) + " [dryRun=" + dryRun + ", revert=" + revert + ", clean="
+            + clean + "]...");
         deploymentUnit.init();
         switch (deploymentPhase) {
-            case INSTALL:
-                // TODO: Revert doesn't really make sense for an initial install.
-                deploymentUnit.install(revert, clean);
-                break;
-            case START:
-                deploymentUnit.start();
-                break;
-            case STOP:
-                deploymentUnit.stop();
-                break;
-            case UPGRADE:
-                deploymentUnit.upgrade(revert, clean);
-                break;
-            case UNINSTALL:
-                deploymentUnit.uninstall();
-                break;
+        case INSTALL:
+            // TODO: Revert doesn't really make sense for an initial install.
+            deploymentUnit.install(revert, clean);
+            break;
+        case START:
+            deploymentUnit.start();
+            break;
+        case STOP:
+            deploymentUnit.stop();
+            break;
+        case UPGRADE:
+            deploymentUnit.upgrade(revert, clean);
+            break;
+        case UNINSTALL:
+            deploymentUnit.uninstall();
+            break;
         }
     }
 
+    @Override
     public String getDescription() {
         return description;
     }
 
+    @Override
     public void setDescription(String description) {
         this.description = description;
     }
@@ -201,8 +201,9 @@ public class BundleTask extends AbstractBundleTask {
         this.version = version;
     }
 
+    @SuppressWarnings("unused")
     public void addConfigured(InputPropertyType inputProperty) {
-        inputProperty.init();        
+        inputProperty.init();
     }
 
     public void addConfigured(Property property) throws Exception {
@@ -223,8 +224,8 @@ public class BundleTask extends AbstractBundleTask {
 
         //relativeToDeployDir means that the property file is not part of the bundle but exists somewhere
         //in or "around" the deploy dir of this bundle.
-        if (propertyFile != null && !propertyTask.isRelativeToDeployDir() &&
-            isSubPath(propertyFile, getProject().getBaseDir())) {
+        if (propertyFile != null && !propertyTask.isRelativeToDeployDir()
+            && isSubPath(propertyFile, getProject().getBaseDir())) {
 
             localPropertyFiles.add(FileUtils.getRelativePath(getProject().getBaseDir(), propertyFile));
         }

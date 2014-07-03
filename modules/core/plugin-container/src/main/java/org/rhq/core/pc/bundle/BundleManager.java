@@ -19,6 +19,9 @@
 
 package org.rhq.core.pc.bundle;
 
+import static java.util.concurrent.TimeUnit.HOURS;
+import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
@@ -67,6 +70,9 @@ import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
+import org.rhq.core.pluginapi.bundle.BundleHandoverFacet;
+import org.rhq.core.pluginapi.bundle.BundleHandoverRequest;
+import org.rhq.core.pluginapi.bundle.BundleHandoverResponse;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 import org.rhq.core.pluginapi.bundle.BundlePurgeResult;
 import org.rhq.core.util.MessageDigestGenerator;
@@ -81,46 +87,71 @@ import org.rhq.core.util.file.FileUtil;
  * @author John Mazzitelli
  */
 public class BundleManager extends AgentService implements BundleAgentService, BundleManagerProvider, ContainerService {
-    private static final Log log = LogFactory.getLog(BundleManager.class);
+    private static final Log LOG = LogFactory.getLog(BundleManager.class);
 
-    private final String AUDIT_DEPLOYMENT_ENDED = "Deployment Ended";
-    private final String AUDIT_DEPLOYMENT_STARTED = "Deployment Started";
-    private final String AUDIT_DEPLOYMENT_SCHEDULED = "Deployment Scheduled";
-    private final String AUDIT_FILE_DOWNLOAD_ENDED = "File Download Started";
-    private final String AUDIT_FILE_DOWNLOAD_STARTED = "File Download Started";
+    private static final String AUDIT_DEPLOYMENT_ENDED = "Deployment Ended";
+    private static final String AUDIT_DEPLOYMENT_STARTED = "Deployment Started";
+    private static final String AUDIT_DEPLOYMENT_SCHEDULED = "Deployment Scheduled";
+    private static final String AUDIT_FILE_DOWNLOAD_ENDED = "File Download Started";
+    private static final String AUDIT_FILE_DOWNLOAD_STARTED = "File Download Started";
 
-    private final String AUDIT_PURGE_STARTED = "Purge Started";
-    private final String AUDIT_PURGE_ENDED = "Purge Ended";
+    private static final String AUDIT_PURGE_STARTED = "Purge Started";
+    private static final String AUDIT_PURGE_ENDED = "Purge Ended";
 
     private final PluginContainerConfiguration configuration;
     private final ExecutorService deployerThreadPool;
-    private final InventoryManager im;
-    private final MeasurementManager mm;
+    private final InventoryManager inventoryManager;
+    private final MeasurementManager measurementManager;
 
-    public BundleManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter, InventoryManager im, MeasurementManager mm) {
+    public BundleManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter,
+        InventoryManager inventoryManager, MeasurementManager measurementManager) {
         super(BundleAgentService.class, streamRemoter);
         this.configuration = configuration;
         LoggingThreadFactory threadFactory = new LoggingThreadFactory("BundleDeployment", true);
         this.deployerThreadPool = Executors.newSingleThreadExecutor(threadFactory); // single-threaded so only one deployment at a time
-        this.im = im;
-        this.mm = mm;
+        this.inventoryManager = inventoryManager;
+        this.measurementManager = measurementManager;
     }
 
+    @Override
     public void shutdown() {
         // pass false, so we don't interrupt a plugin in the middle of a bundle deployment
         PluginContainer.shutdownExecutorService(this.deployerThreadPool, false);
     }
 
+    @Override
     public List<PackageVersion> getAllBundleVersionPackageVersions(BundleVersion bundleVersion) throws Exception {
         int bvId = bundleVersion.getId();
         List<PackageVersion> pvs = getBundleServerService().getAllBundleVersionPackageVersions(bvId);
         return pvs;
     }
 
+    @Override
     public long getFileContent(PackageVersion packageVersion, OutputStream outputStream) throws Exception {
         outputStream = remoteOutputStream(outputStream);
         long size = getBundleServerService().downloadPackageBits(packageVersion, outputStream);
         return size;
+    }
+
+    @Override
+    public BundleHandoverResponse handoverContent(Resource bundleTarget, BundleHandoverRequest handoverRequest) {
+        try {
+            BundleHandoverFacet component = getBundleHandoverFacet(bundleTarget.getId(), HOURS.toMillis(1));
+            BundleHandoverResponse report = component.handleContent(handoverRequest);
+            if (report == null) {
+                return BundleHandoverResponse.failure(FailureType.EXECUTION, "Plugin component returned null report");
+            }
+            return report;
+        } catch (PluginContainerException e) {
+            return BundleHandoverResponse.failure(FailureType.PLUGIN_CONTAINER, "Caught a plugin container exception",
+                e);
+        }
+    }
+
+    private BundleHandoverFacet getBundleHandoverFacet(int bundleTargetId, long timeout)
+        throws PluginContainerException {
+        return ComponentUtil.getComponent(bundleTargetId, BundleHandoverFacet.class, FacetLockType.WRITE, timeout,
+            false, true, false);
     }
 
     @Override
@@ -134,12 +165,12 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             // find the resource that will handle the bundle processing
             BundleType bundleType = bundleDeployment.getBundleVersion().getBundle().getBundleType();
             ResourceType resourceType = bundleType.getResourceType();
-            Set<Resource> resources = im.getResourcesWithType(resourceType);
+            Set<Resource> resources = inventoryManager.getResourcesWithType(resourceType);
             if (resources.isEmpty()) {
                 throw new Exception("No bundle plugin supports bundle type [" + bundleType + "]");
             }
             final int bundleHandlerResourceId = resources.iterator().next().getId();
-            final ResourceContainer resourceContainer = im.getResourceContainer(bundleHandlerResourceId);
+            final ResourceContainer resourceContainer = inventoryManager.getResourceContainer(bundleHandlerResourceId);
             if (null == resourceContainer.getResourceContext()) {
                 throw new Exception("No bundle plugin resource available to handle deployment for bundle type ["
                     + bundleType
@@ -150,6 +181,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                 "Scheduled deployment time: " + request.getRequestedDeployTimeAsString());
 
             Runnable deployerRunnable = new Runnable() {
+                @Override
                 public void run() {
                     try {
                         // pull down the bundle files that the plugin will need in order to process the bundle
@@ -194,10 +226,10 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                                 result.getErrorMessage());
                         }
                     } catch (InterruptedException ie) {
-                        log.error("Failed to complete bundle deployment due to interrupt", ie);
+                        LOG.error("Failed to complete bundle deployment due to interrupt", ie);
                         completeDeployment(resourceDeployment, BundleDeploymentStatus.FAILURE, "Deployment interrupted");
                     } catch (Throwable t) {
-                        log.error("Failed to complete bundle deployment", t);
+                        LOG.error("Failed to complete bundle deployment", t);
                         completeDeployment(resourceDeployment, BundleDeploymentStatus.FAILURE, "Deployment failed: "
                             + ThrowableUtil.getAllMessages(t));
                     }
@@ -206,7 +238,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
 
             this.deployerThreadPool.execute(deployerRunnable);
         } catch (Throwable t) {
-            log.error("Failed to schedule bundle request: " + request, t);
+            LOG.error("Failed to schedule bundle request: " + request, t);
             response.setErrorMessage(t);
         }
 
@@ -224,12 +256,12 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             // find the resource that will purge the bundle
             BundleType bundleType = bundleDeployment.getBundleVersion().getBundle().getBundleType();
             ResourceType resourceType = bundleType.getResourceType();
-            Set<Resource> resources = im.getResourcesWithType(resourceType);
+            Set<Resource> resources = inventoryManager.getResourcesWithType(resourceType);
             if (resources.isEmpty()) {
                 throw new Exception("No bundle plugin supports bundle type [" + bundleType + "]");
             }
             final int bundleHandlerResourceId = resources.iterator().next().getId();
-            final ResourceContainer resourceContainer = im.getResourceContainer(bundleHandlerResourceId);
+            final ResourceContainer resourceContainer = inventoryManager.getResourceContainer(bundleHandlerResourceId);
             if (null == resourceContainer.getResourceContext()) {
                 throw new Exception("No bundle plugin resource available to handle purge for bundle type ["
                     + bundleType
@@ -260,7 +292,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                     Status.FAILURE, "Failed: " + deploymentMessage, result.getErrorMessage());
             }
         } catch (Throwable t) {
-            log.error("Failed to purge bundle: " + request, t);
+            LOG.error("Failed to purge bundle: " + request, t);
             response.setErrorMessage(t);
         }
 
@@ -276,7 +308,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
      * @param bundleResourceDeployment not null
      * @param action not null
      * @param info not null
-     * @param message
+     * @param message optional
      */
     public void auditDeployment(BundleResourceDeployment bundleResourceDeployment, String action, String info,
         String message) {
@@ -284,6 +316,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             message, null);
     }
 
+    @Override
     public void auditDeployment(BundleResourceDeployment bundleResourceDeployment, String action, String info,
         BundleResourceDeploymentHistory.Category category, BundleResourceDeploymentHistory.Status status,
         String message, String attachment) {
@@ -296,7 +329,9 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         }
         BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory("Bundle Plugin", action, info,
             category, status, message, attachment);
-        log.debug("Reporting deployment step [" + history + "] to Server...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Reporting deployment step [" + history + "] to Server...");
+        }
         getBundleServerService().addDeploymentHistory(bundleResourceDeployment.getId(), history);
     }
 
@@ -306,14 +341,13 @@ public class BundleManager extends AgentService implements BundleAgentService, B
      * subdirectories and child files are left untouched, but all files and directories found in peer
      * directories are wiped. This helps clean out our temp directory so we don't fill up the file system
      * with old downloaded files that we don't need anymore. See BZ 752550.
-     *
-     * @param currentBundleVersionFilesDir
      */
     private void removeOldDownloadedBundleFiles(final File currentBundleVersionFilesDir) {
         File parent = null;
         try {
             parent = currentBundleVersionFilesDir.getParentFile();
             File[] doomedFiles = parent.listFiles(new FileFilter() {
+                @Override
                 public boolean accept(File child) {
                     return !currentBundleVersionFilesDir.equals(child);
                 }
@@ -322,7 +356,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                 FileUtil.purge(doomedFile, true);
             }
         } catch (Exception e) {
-            log.warn("Failed to clean up old downloaded bundle files in ["
+            LOG.warn("Failed to clean up old downloaded bundle files in ["
                 + parent
                 + "]. You can ignore this but if the agent is asked to deploy a lot of bundles, the file system may fill up."
                 + " Cause: " + e);
@@ -361,10 +395,10 @@ public class BundleManager extends AgentService implements BundleAgentService, B
 
                     long size = getFileContent(packageVersion, fos);
 
-                    if (packageVersion.getFileSize() != null && size != packageVersion.getFileSize().longValue()) {
+                    if (packageVersion.getFileSize() != null && size != packageVersion.getFileSize()) {
                         String message = "Downloaded bundle file [" + packageVersion + "] but its size was [" + size
                             + "] when it was expected to be [" + packageVersion.getFileSize() + "].";
-                        log.warn(message);
+                        LOG.warn(message);
                         auditDeployment(resourceDeployment, AUDIT_FILE_DOWNLOAD_ENDED, packageVersion.getDisplayName(),
                             null, BundleResourceDeploymentHistory.Status.WARN, message, null);
                     } else {
@@ -373,7 +407,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                     }
                 } catch (Exception e2) {
                     String message = "Failed to downloaded bundle file [" + packageVersion + "] " + e2;
-                    log.warn(message);
+                    LOG.warn(message);
                     auditDeployment(resourceDeployment, AUDIT_FILE_DOWNLOAD_ENDED, packageVersion.getDisplayName(),
                         null, BundleResourceDeploymentHistory.Status.FAILURE, message, null);
                 } finally {
@@ -428,10 +462,10 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                     + packageVersion.getSHA256() + "], actual=[" + realHash + "]");
             }
         } else {
-            log.debug("Package version [" + packageVersion + "] has no MD5/SHA256 hash - not verifying it");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Package version [" + packageVersion + "] has no MD5/SHA256 hash - not verifying it");
+            }
         }
-
-        return;
     }
 
     /**
@@ -454,7 +488,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
 
         // get the resource entity stored in our local inventory
         Resource resource = bundleResourceDeployment.getResource();
-        ResourceContainer container = im.getResourceContainer(resource);
+        ResourceContainer container = inventoryManager.getResourceContainer(resource);
         resource = container.getResource();
 
         // find out the type of base location that is specified by the bundle destination
@@ -509,7 +543,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             break;
         }
         case measurementTrait: {
-            baseLocation = mm.getTraitValue(container, destBaseDirValueName);
+            baseLocation = measurementManager.getTraitValue(container, destBaseDirValueName);
             if (baseLocation == null) {
                 throw new IllegalArgumentException("Cannot obtain trait [" + destBaseDirName + "] for resource ["
                     + resource.getName() + "]");

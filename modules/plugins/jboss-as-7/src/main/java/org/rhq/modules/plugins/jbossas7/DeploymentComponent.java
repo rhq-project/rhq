@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,7 +60,6 @@ import org.rhq.core.util.file.ContentFileInfo;
 import org.rhq.core.util.file.JarContentFileInfo;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -71,9 +69,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Heiko W. Rupp
  */
 public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> implements OperationFacet, ContentFacet {
-
-
     private static final String DOMAIN_DATA_CONTENT_SUBDIR = "/data/content";
+
     private File deploymentFile;
 
     @Override
@@ -209,36 +206,29 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         String hash = resultNode.get("BYTES_VALUE").getTextValue();
 
         try {
-            redeployOnServer(detail.getKey().getName(), hash);
-            response.setOverallRequestResult(ContentResponseResult.SUCCESS);
-            //we just deployed a different file on the AS7 server, so let's refresh ourselves
-            deploymentFile = determineDeploymentFile();
-            DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(detail.getKey(),
-                ContentResponseResult.SUCCESS);
-            response.addPackageResponse(packageResponse);
+            Redeployer redeployer = new Redeployer(detail.getKey().getName(), hash, getASConnection());
+            Result result = redeployer.redeployOnServer();
+            if (result.isRolledBack()) {
+                response.setOverallRequestResult(ContentResponseResult.FAILURE);
+                response.setOverallRequestErrorMessage(result.getFailureDescription());
+            } else {
+                response.setOverallRequestResult(ContentResponseResult.SUCCESS);
+                //we just deployed a different file on the AS7 server, so let's refresh ourselves
+                deploymentFile = determineDeploymentFile();
+                DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(detail.getKey(),
+                    ContentResponseResult.SUCCESS);
+                response.addPackageResponse(packageResponse);
+            }
 
         } catch (Exception e) {
             response.setOverallRequestResult(ContentResponseResult.FAILURE);
         }
 
-        getLog().info("Result of deployment of " + resourceType.getName() + " Resource with key [" + detail.getKey() + "]: "
-            + response);
+        getLog().info(
+            "Result of deployment of " + resourceType.getName() + " Resource with key [" + detail.getKey() + "]: "
+                + response);
 
         return response;
-    }
-
-    private void redeployOnServer(String name, String hash) throws Exception {
-
-        Operation op = new Operation("full-replace-deployment", new Address());
-        op.addAdditionalProperty("name", name);
-        List<Object> content = new ArrayList<Object>(1);
-        Map<String, Object> contentValues = new HashMap<String, Object>();
-        contentValues.put("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
-        content.add(contentValues);
-        op.addAdditionalProperty("content", content);
-        Result result = getASConnection().execute(op);
-        if (result.isRolledBack())
-            throw new Exception(result.getFailureDescription());
     }
 
     @Override
@@ -292,11 +282,11 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
      * </ul>
      * @return A file object pointing to the deployed file or null if there is no content
      */
+    @SuppressWarnings("unchecked")
     private File determineDeploymentFile() {
         Operation op = new ReadAttribute(getAddress(), "content");
         Result result = getASConnection().execute(op);
 
-        @SuppressWarnings("unchecked")
         List<Map<String, Object>> content = (List<Map<String, Object>>) result.getResult();
         if (content == null || content.isEmpty()) {
             // No content -> check for server group
@@ -306,7 +296,6 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
                 op = new ReadResource(new Address("deployment", name));
                 result = getASConnection().execute(op);
                 if (result.isSuccess()) {
-                    @SuppressWarnings("unchecked")
                     Map<String, Object> contentMap = (Map<String, Object>) result.getResult();
                     content = (List<Map<String, Object>>) contentMap.get("content");
                     if (content.get(0).containsKey("path")) {
@@ -314,7 +303,6 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
                         String relativeTo = (String) content.get(0).get("relative-to");
                         deploymentFile = getDeploymentFileFromPath(relativeTo, path);
                     } else if (content.get(0).containsKey("hash")) {
-                        @SuppressWarnings("unchecked")
                         String base64Hash = ((Map<String, String>) content.get(0).get("hash")).get("BYTES_VALUE");
                         byte[] hash = Base64.decode(base64Hash);
                         ServerGroupComponent sgc = (ServerGroupComponent) context.getParentResourceComponent();
@@ -326,8 +314,9 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
                     return deploymentFile;
                 }
             } else {
-                getLog().warn("Could not determine the location of the deployment - the content descriptor wasn't found for deployment"
-                    + getAddress() + ".");
+                getLog().warn(
+                    "Could not determine the location of the deployment - the content descriptor wasn't found for deployment"
+                        + getAddress() + ".");
                 return null;
             }
         }
@@ -344,7 +333,6 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             String relativeTo = (String) content.get(0).get("relative-to");
             deploymentFile = getDeploymentFileFromPath(relativeTo, path);
         } else if (content.get(0).containsKey("hash")) {
-            @SuppressWarnings("unchecked")
             String base64Hash = ((Map<String, String>) content.get(0).get("hash")).get("BYTES_VALUE");
             byte[] hash = Base64.decode(base64Hash);
             Address contentPathAddress;
@@ -376,8 +364,9 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             }
             deploymentFile = getDeploymentFileFromHash(hash, contentPath);
         } else {
-            getLog().warn("Failed to determine the deployment file of " + getAddress()
-                + " deployment. Neither path nor hash attributes were available.");
+            getLog().warn(
+                "Failed to determine the deployment file of " + getAddress()
+                    + " deployment. Neither path nor hash attributes were available.");
         }
 
         return deploymentFile;
@@ -442,9 +431,6 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
     /**
      * Shamelessly copied from the AS5 plugin.
-     *
-     * @param sha256
-     * @return
      */
     private static String getVersion(String sha256) {
         return "[sha256=" + sha256 + "]";
@@ -456,9 +442,6 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
      * It will attempt to retrieve the version for both archived or exploded deployments.
      *
      * Shamelessly copied from the AS5 plugin
-     *
-     * @param file component file
-     * @return
      */
     private String getDisplayVersion(File file) {
         //JarContentFileInfo extracts the version from archived and exploded deployments

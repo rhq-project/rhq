@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.bundle.ant;
 
 import java.io.File;
@@ -57,7 +58,7 @@ import org.rhq.bundle.ant.type.DeploymentUnitType;
  * @author Ian Springer
  */
 public class AntLauncher {
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final Log LOG = LogFactory.getLog(AntLauncher.class);
 
     // "out of box" we will provide the ant contrib optional tasks (from ant-contrib.jar)
     private static final String ANTCONTRIB_ANT_TASKS = "net/sf/antcontrib/antcontrib.properties";
@@ -68,10 +69,10 @@ public class AntLauncher {
     // private constant ProjectHelper2.REFID_CONTEXT value
     private static final String REFID_CONTEXT = "ant.parsing.context";
 
-    // TODO (ips, 04/28/10): Figure out a way to avoid assuming the prefix is "rhq".
     private static final String BUNDLE_TASK_NAME = "rhq:bundle";
 
     private boolean requireExplicitCompliance;
+    private HandoverTarget handoverTarget;
 
     /**
      * For backwards compatibility reasons, this calls {@link #AntLauncher(boolean) AntLauncher(false)}.
@@ -102,6 +103,10 @@ public class AntLauncher {
         this.requireExplicitCompliance = requireExplicitCompliance;
     }
 
+    public void setHandoverTarget(HandoverTarget handoverTarget) {
+        this.handoverTarget = handoverTarget;
+    }
+
     /**
      * Executes the specified bundle deploy Ant build file (i.e. rhq-deploy.xml).
      *
@@ -119,6 +124,9 @@ public class AntLauncher {
         BundleAntProject parsedProject = parseBundleDeployFile(buildFile, buildProperties);
 
         BundleAntProject project = createProject(buildFile, false, buildProperties);
+        if (handoverTarget != null) {
+            project.setHandoverTarget(handoverTarget);
+        }
 
         // The parse above got us all the bundle files names. The rest of this method
         // will be able to re-determine everything else for 'project' but these filenames.
@@ -141,9 +149,6 @@ public class AntLauncher {
             // which contains the rhq:bundle task.
             ProjectHelper.configureProject(project, buildFile);
 
-            // Should we execute the default target here?
-            //project.executeTarget(project.getDefaultTarget());
-
             return project;
         } catch (Exception e) {
             throw new RuntimeException("Failed to execute bundle deploy file [" + buildFile.getAbsolutePath()
@@ -154,6 +159,9 @@ public class AntLauncher {
     public BundleAntProject parseBundleDeployFile(File buildFile, Properties buildProperties)
         throws InvalidBuildFileException {
         BundleAntProject project = createProject(buildFile, true, buildProperties);
+        if (handoverTarget != null) {
+            project.setHandoverTarget(handoverTarget);
+        }
 
         ProjectHelper2 projectHelper = new ProjectHelper2();
         try {
@@ -168,12 +176,15 @@ public class AntLauncher {
 
         validateAndPreprocess(project);
 
-        log.debug("==================== PARSED BUNDLE ANT BUILD FILE ====================");
-        log.debug(" Bundle Name: " + project.getBundleName());
-        log.debug(" Bundle Version: " + project.getBundleVersion());
-        log.debug(" Bundle Description: " + project.getBundleDescription());
-        log.debug(" Deployment Config Def: " + project.getConfigurationDefinition().getPropertyDefinitions().values());
-        log.debug("======================================================================");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("==================== PARSED BUNDLE ANT BUILD FILE ====================");
+            LOG.debug(" Bundle Name: " + project.getBundleName());
+            LOG.debug(" Bundle Version: " + project.getBundleVersion());
+            LOG.debug(" Bundle Description: " + project.getBundleDescription());
+            LOG.debug(" Deployment Config Def: "
+                + project.getConfigurationDefinition().getPropertyDefinitions().values());
+            LOG.debug("======================================================================");
+        }
 
         return project;
     }
@@ -188,8 +199,7 @@ public class AntLauncher {
             for (Map.Entry<Object, Object> property : buildProperties.entrySet()) {
                 // On the assumption that these properties will be slurped in via Properties.load we
                 // need to escape backslashes to have them treated as literals
-                project.setProperty(property.getKey().toString(), property.getValue().toString().replace("\\",
-                    "\\\\"));
+                project.setProperty(property.getKey().toString(), property.getValue().toString().replace("\\", "\\\\"));
             }
         }
         project.setProperty(MagicNames.ANT_FILE, buildFile.getAbsolutePath());
@@ -210,8 +220,8 @@ public class AntLauncher {
     private void addTaskDefsForBundledTasks(BundleAntProject project) throws IOException, ClassNotFoundException {
         Properties taskDefs = buildTaskDefProperties(project.getCoreLoader());
         for (Map.Entry<Object, Object> taskDef : taskDefs.entrySet()) {
-            project.addTaskDefinition(taskDef.getKey().toString(), Class.forName(taskDef.getValue().toString(), true,
-                project.getCoreLoader()));
+            project.addTaskDefinition(taskDef.getKey().toString(),
+                Class.forName(taskDef.getValue().toString(), true, project.getCoreLoader()));
         }
     }
 
@@ -228,13 +238,13 @@ public class AntLauncher {
                 try {
                     taskDefProps.load(taskDefsStream);
                 } catch (Exception e) {
-                    log.warn("Ant task definitions [" + customTaskDef
+                    LOG.warn("Ant task definitions [" + customTaskDef
                         + "] failed to load - ant bundles cannot use their tasks", e);
                 } finally {
                     taskDefsStream.close();
                 }
             } else {
-                log.warn("Missing ant task definitions [" + customTaskDef + "] - ant bundles cannot use their tasks");
+                LOG.warn("Missing ant task definitions [" + customTaskDef + "] - ant bundles cannot use their tasks");
             }
         }
         return taskDefProps;
@@ -291,7 +301,7 @@ public class AntLauncher {
         }
 
         List<String> propertyFiles = bundleTask.getLocalPropertyFiles();
-        for(String propFile : propertyFiles) {
+        for (String propFile : propertyFiles) {
             project.getBundleFileNames().add(propFile);
         }
 

@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+
+<!--
+  ~ RHQ Management Platform
+  ~ Copyright (C) 2005-2014 Red Hat, Inc.
+  ~ All rights reserved.
+  ~
+  ~ This program is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation version 2 of the License.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program; if not, write to the Free Software Foundation, Inc.,
+  ~ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+  -->
+
+<project name="handover-test-bundle" default="main" xmlns:rhq="antlib:org.rhq.bundle">
+
+  <rhq:bundle name="example.com (EAP 6)" version="1.0"
+              description="example.com corporate website hosted on EAP 6">
+
+    <rhq:input-property
+        name="myapp.datasource.property"
+        required="true"
+        type="integer"/>
+
+    <rhq:input-property
+        name="myapp.listener.port"
+        required="true"
+        type="integer"/>
+
+    <rhq:input-property
+        name="myapp.runtime.name"
+        required="true"/>
+
+    <rhq:deployment-unit name="example.com deployment unit" compliance="full">
+      <rhq:file name="prepareDatasource.cli">
+        <rhq:handover action="execute-script" failonerror="false"/>
+      </rhq:file>
+      <rhq:archive name="fileToHandover.zip">
+        <rhq:replace>
+          <rhq:fileset includes="**/*.properties"/>
+        </rhq:replace>
+        <rhq:handover action="deployment">
+          <rhq:handover-param name="runtimeName" value="${myapp.runtime.name}"/>
+        </rhq:handover>
+      </rhq:archive>
+    </rhq:deployment-unit>
+
+  </rhq:bundle>
+
+  <target name="main"/>
+
+</project>

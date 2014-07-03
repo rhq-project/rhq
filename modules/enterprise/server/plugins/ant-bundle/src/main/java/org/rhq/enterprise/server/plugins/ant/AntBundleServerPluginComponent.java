@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.plugins.ant;
 
 import java.io.ByteArrayInputStream;
@@ -53,12 +54,12 @@ import org.rhq.enterprise.server.plugin.pc.bundle.UnknownRecipeException;
  * @author John Mazzitelli
  */
 public class AntBundleServerPluginComponent implements ServerPluginComponent, BundleServerPluginFacet {
-
-    private final Log log = LogFactory.getLog(AntBundleServerPluginComponent.class);
+    private static final Log LOG = LogFactory.getLog(AntBundleServerPluginComponent.class);
 
     private ServerPluginContext context;
     private File tmpDirectory;
 
+    @Override
     public void initialize(ServerPluginContext context) throws Exception {
         this.context = context;
         this.tmpDirectory = new File(this.context.getTemporaryDirectory(), "ant-bundle-server-plugin");
@@ -67,22 +68,34 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
         if (!this.tmpDirectory.exists() || !this.tmpDirectory.isDirectory()) {
             throw new Exception("Failed to create tmp dir [" + this.tmpDirectory + "] - cannot process Ant bundles");
         }
-        log.debug("The Ant bundle plugin has been initialized: " + this);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("The Ant bundle plugin has been initialized: " + this);
+        }
     }
 
+    @Override
     public void start() {
-        log.debug("The Ant bundle plugin has started: " + this);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("The Ant bundle plugin has started: " + this);
+        }
     }
 
+    @Override
     public void stop() {
-        log.debug("The Ant bundle plugin has stopped: " + this);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("The Ant bundle plugin has stopped: " + this);
+        }
     }
 
+    @Override
     public void shutdown() {
-        log.debug("The Ant bundle plugin has been shut down: " + this);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("The Ant bundle plugin has been shut down: " + this);
+        }
     }
 
-    public RecipeParseResults parseRecipe(String recipe) throws UnknownRecipeException, Exception {
+    @Override
+    public RecipeParseResults parseRecipe(String recipe) throws Exception {
 
         // all Ant recipes must use the RHQ custom ant library; if the recipe doesn't have the
         // string of that antlib URI, that means this probably isn't an Ant recipe in the first place
@@ -109,16 +122,16 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
             BundleAntProject project = antLauncher.parseBundleDeployFile(recipeFile, null);
 
             // obtain the parse results
-            deploymentProps = new DeploymentProperties(0, project.getBundleName(), project.getBundleVersion(), project
-                .getBundleDescription(), project.getDestinationCompliance());
+            deploymentProps = new DeploymentProperties(0, project.getBundleName(), project.getBundleVersion(),
+                project.getBundleDescription(), project.getDestinationCompliance());
 
             bundleFiles = project.getBundleFileNames();
             configDef = project.getConfigurationDefinition();
         } catch (Throwable t) {
-            if (log.isDebugEnabled()) {
+            if (LOG.isDebugEnabled()) {
                 try {
-                    log.debug(new String(StreamUtil.slurp(new FileInputStream(logFile))));
-                } catch (Exception e) {
+                    LOG.debug(new String(StreamUtil.slurp(new FileInputStream(logFile))));
+                } catch (Exception ignore) {
                 }
             }
             throw new Exception("Failed to parse the bundle Ant script.", t);
@@ -131,34 +144,27 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
         return results;
     }
 
-    public BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws UnknownRecipeException,
-        Exception {
+    @Override
+    public BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws Exception {
         if (null == distributionFile) {
             throw new IllegalArgumentException("distributionFile == null");
         }
 
-        BundleDistributionInfo info = null;
-        String recipe = null;
-        RecipeParseResults recipeParseResults = null;
-
         // try and parse the recipe, if successful then process the distributionFile completely 
         RecipeVisitor recipeVisitor = new RecipeVisitor(this, "deploy.xml");
         ZipUtil.walkZipFile(distributionFile, recipeVisitor);
-        recipe = recipeVisitor.getRecipe();
-        recipeParseResults = recipeVisitor.getResults();
+        String recipe = recipeVisitor.getRecipe();
+        RecipeParseResults recipeParseResults = recipeVisitor.getResults();
 
         if (null == recipeParseResults) {
             throw new UnknownRecipeException("Not an Ant Bundle");
         }
 
         // if we parsed the recipe then this is a distribution we can deal with, get the bundle file Map                 
-        BundleFileVisitor bundleFileVisitor = new BundleFileVisitor(recipeParseResults.getBundleMetadata()
-            .getBundleName(), recipeParseResults.getBundleFileNames());
+        BundleFileVisitor bundleFileVisitor = new BundleFileVisitor(recipeParseResults.getBundleFileNames());
         ZipUtil.walkZipFile(distributionFile, bundleFileVisitor);
 
-        info = new BundleDistributionInfo(recipe, recipeParseResults, bundleFileVisitor.getBundleFiles());
-
-        return info;
+        return new BundleDistributionInfo(recipe, recipeParseResults, bundleFileVisitor.getBundleFiles());
     }
 
     private static class RecipeVisitor implements ZipUtil.ZipEntryVisitor {
@@ -172,6 +178,7 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
             this.recipeName = recipeName;
         }
 
+        @Override
         public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
             if (this.recipeName.equalsIgnoreCase(entry.getName())) {
                 // this should be safe downcast, recipes are not that big
@@ -179,6 +186,7 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
                 ByteArrayOutputStream out = new ByteArrayOutputStream((contentSize > 0) ? contentSize : 32768);
                 StreamUtil.copy(stream, out, false);
                 this.recipe = new String(out.toByteArray());
+                //noinspection UnusedAssignment
                 out = null; // no need for this anymore, help out GC
                 this.results = this.facet.parseRecipe(this.recipe);
                 return false; // we found the file we are looking for so stop walking
@@ -200,12 +208,13 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
         private Map<String, File> bundleFiles;
         private File tmpDir;
 
-        public BundleFileVisitor(String bundleName, Set<String> bundleFileNames) throws IOException {
+        BundleFileVisitor(Set<String> bundleFileNames) throws IOException {
             this.bundleFileNames = bundleFileNames;
             this.bundleFiles = new HashMap<String, File>(bundleFileNames.size());
             this.tmpDir = FileUtil.createTempDirectory("ant-bundle", ".dir", null);
         }
 
+        @Override
         public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
             if (bundleFileNames.contains(entry.getName())) {
 
@@ -241,10 +250,7 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
         if (this.context == null) {
             return "<no context>";
         }
-
-        StringBuilder str = new StringBuilder();
-        str.append("plugin-key=").append(this.context.getPluginEnvironment().getPluginKey()).append(",");
-        str.append("plugin-url=").append(this.context.getPluginEnvironment().getPluginUrl());
-        return str.toString();
+        return "plugin-key=" + this.context.getPluginEnvironment().getPluginKey() + "," + "plugin-url="
+            + this.context.getPluginEnvironment().getPluginUrl();
     }
 }

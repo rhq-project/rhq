@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,16 +13,23 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.ant;
+
+import static org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Category.AUDIT_MESSAGE;
+import static org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Category.DEPLOY_STEP;
+import static org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status.FAILURE;
+import static org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status.SUCCESS;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,13 +45,12 @@ import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.bundle.ant.BundleAntProject;
 import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.bundle.ant.DeploymentPhase;
+import org.rhq.bundle.ant.HandoverTarget;
 import org.rhq.bundle.ant.InvalidBuildFileException;
 import org.rhq.bundle.ant.LoggerAntBuildListener;
+import org.rhq.bundle.ant.type.HandoverInfo;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
-import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
-import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Category;
-import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -54,12 +60,16 @@ import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
+import org.rhq.core.pluginapi.bundle.BundleHandoverContext;
+import org.rhq.core.pluginapi.bundle.BundleHandoverRequest;
+import org.rhq.core.pluginapi.bundle.BundleHandoverResponse;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 import org.rhq.core.pluginapi.bundle.BundlePurgeRequest;
 import org.rhq.core.pluginapi.bundle.BundlePurgeResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeployDifferences;
@@ -72,32 +82,30 @@ import org.rhq.core.util.updater.FileHashcodeMap;
  */
 @SuppressWarnings("unchecked")
 public class AntBundlePluginComponent implements ResourceComponent, BundleFacet {
-
-    private final Log log = LogFactory.getLog(AntBundlePluginComponent.class);
-
-    private ResourceContext resourceContext;
+    private static final Log LOG = LogFactory.getLog(AntBundlePluginComponent.class);
 
     private File tmpDirectory;
 
+    @Override
     public void start(ResourceContext context) throws Exception {
-        this.resourceContext = context;
         this.tmpDirectory = new File(context.getTemporaryDirectory(), "ant-bundle-plugin");
         this.tmpDirectory.mkdirs();
         if (!this.tmpDirectory.exists() || !this.tmpDirectory.isDirectory()) {
             throw new Exception("Failed to create tmp dir [" + this.tmpDirectory + "] - cannot process Ant bundles.");
         }
-        return;
     }
 
+    @Override
     public void stop() {
-        return;
     }
 
+    @Override
     public AvailabilityType getAvailability() {
         return AvailabilityType.UP;
     }
 
-    public BundleDeployResult deployBundle(BundleDeployRequest request) {
+    @Override
+    public BundleDeployResult deployBundle(final BundleDeployRequest request) {
         BundleDeployResult result = new BundleDeployResult();
         try {
             BundleResourceDeployment resourceDeployment = request.getResourceDeployment();
@@ -132,29 +140,29 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 buildListeners.add(auditor);
 
                 // Parse and execute the Ant script.
-                executeDeploymentPhase(recipeFile, antProps, buildListeners, DeploymentPhase.STOP);
+                executeDeploymentPhase(recipeFile, antProps, buildListeners, DeploymentPhase.STOP, null);
                 File deployDir = request.getAbsoluteDestinationDirectory();
                 DeploymentsMetadata deployMetadata = new DeploymentsMetadata(deployDir);
                 DeploymentPhase installPhase = (deployMetadata.isManaged()) ? DeploymentPhase.UPGRADE
                     : DeploymentPhase.INSTALL;
-                BundleAntProject project = executeDeploymentPhase(recipeFile, antProps, buildListeners, installPhase);
-                executeDeploymentPhase(recipeFile, antProps, buildListeners, DeploymentPhase.START);
+                BundleAntProject project = executeDeploymentPhase(recipeFile, antProps, buildListeners, installPhase,
+                    new PluginContainerHandoverTarget(request));
+                executeDeploymentPhase(recipeFile, antProps, buildListeners, DeploymentPhase.START, null);
 
                 // Send the diffs to the Server so it can store them as an entry in the deployment history.
                 BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
                 DeployDifferences diffs = project.getDeployDifferences();
 
-                String msg = new StringBuilder("Added files=").append(diffs.getAddedFiles().size())
-                    .append("; Deleted files=").append(diffs.getDeletedFiles().size())
-                    .append(" (see attached details for more information)").toString();
+                String msg = "Added files=" + diffs.getAddedFiles().size() + "; Deleted files="
+                    + diffs.getDeletedFiles().size() + " (see attached details for more information)";
                 String fullDetails = formatDiff(diffs);
                 bundleManagerProvider.auditDeployment(resourceDeployment, "Deployment Differences", project.getName(),
-                    BundleResourceDeploymentHistory.Category.DEPLOY_STEP, null, msg, fullDetails);
+                    DEPLOY_STEP, null, msg, fullDetails);
             } catch (Throwable t) {
-                if (log.isDebugEnabled()) {
+                if (LOG.isDebugEnabled()) {
                     try {
-                        log.debug(new String(StreamUtil.slurp(new FileInputStream(logFile))));
-                    } catch (Exception e) {
+                        LOG.debug(new String(StreamUtil.slurp(new FileInputStream(logFile))));
+                    } catch (Exception ignored) {
                     }
                 }
                 throw new Exception("Failed to execute the bundle Ant script", t);
@@ -167,12 +175,13 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
             }
 
         } catch (Throwable t) {
-            log.error("Failed to deploy bundle [" + request + "]", t);
+            LOG.error("Failed to deploy bundle [" + request + "]", t);
             result.setErrorMessage(t);
         }
         return result;
     }
 
+    @Override
     public BundlePurgeResult purgeBundle(BundlePurgeRequest request) {
         BundlePurgeResult result = new BundlePurgeResult();
         try {
@@ -240,7 +249,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                             deleteSuccessesDetails.append(path).append("\n");
                         }
                         bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge", "External files were purged",
-                            Category.AUDIT_MESSAGE, Status.SUCCESS, "[" + externalDeleteSuccesses.size() + "] of ["
+                            AUDIT_MESSAGE, SUCCESS, "[" + externalDeleteSuccesses.size() + "] of ["
                                 + totalExternalFiles
                                 + "] external files were purged. See attached details for the list",
                             deleteSuccessesDetails.toString());
@@ -251,8 +260,8 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                             deleteFailuresDetails.append(path).append("\n");
                         }
                         bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
-                            "External files failed to be purged", Category.AUDIT_MESSAGE, Status.FAILURE, "["
-                                + externalDeleteFailures.size() + "] of [" + totalExternalFiles
+                            "External files failed to be purged", AUDIT_MESSAGE, FAILURE,
+                            "[" + externalDeleteFailures.size() + "] of [" + totalExternalFiles
                                 + "] external files failed to be purged. See attached details for the list",
                             deleteFailuresDetails.toString());
                     }
@@ -265,24 +274,24 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 FileUtil.purge(deployDir, true);
                 if (!deployDir.exists()) {
                     bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
-                        "The destination directory has been purged", Category.AUDIT_MESSAGE, Status.SUCCESS,
-                        "Directory purged: " + deployDirAbsolutePath, null);
+                        "The destination directory has been purged", AUDIT_MESSAGE, SUCCESS, "Directory purged: "
+                            + deployDirAbsolutePath, null);
                 } else {
                     bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
-                        "The destination directory failed to be purged", Category.AUDIT_MESSAGE, Status.FAILURE,
+                        "The destination directory failed to be purged", AUDIT_MESSAGE, FAILURE,
                         "The directory that failed to be purged: " + deployDirAbsolutePath, null);
                 }
             } else {
                 if (!errorPurgingDeployDirContent) {
                     bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
                         "The managed bundle content was removed from the destination directory; "
-                            + "other unmanaged content may still remain", Category.AUDIT_MESSAGE, Status.SUCCESS,
-                        "Deploy Directory: " + deployDirAbsolutePath, null);
+                            + "other unmanaged content may still remain", AUDIT_MESSAGE, SUCCESS, "Deploy Directory: "
+                            + deployDirAbsolutePath, null);
                 } else {
                     bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
                         "Not all managed bundle content was able to be removed from the destination directory. "
-                            + "That managed content along with other unmanaged content still remain",
-                        Category.AUDIT_MESSAGE, Status.FAILURE, "Deploy Directory: " + deployDirAbsolutePath, null);
+                            + "That managed content along with other unmanaged content still remain", AUDIT_MESSAGE,
+                        FAILURE, "Deploy Directory: " + deployDirAbsolutePath, null);
                 }
 
                 // make sure we remove the metadata directory, too - since it may still have sensitive files that were backed up
@@ -292,25 +301,27 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                         bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
                             "Failed to purge the metadata directory from the destination directory. "
                                 + "It may still contain backed up files from previous bundle deployments.",
-                            Category.AUDIT_MESSAGE, Status.FAILURE,
+                            AUDIT_MESSAGE, FAILURE,
                             "Metadata Directory: " + metadataDirectoryToPurge.getAbsolutePath(), null);
                     }
                 }
             }
 
         } catch (Throwable t) {
-            log.error("Failed to purge bundle [" + request + "]", t);
+            LOG.error("Failed to purge bundle [" + request + "]", t);
             result.setErrorMessage(t);
         }
         return result;
     }
 
     private BundleAntProject executeDeploymentPhase(File recipeFile, Properties antProps,
-        List<BuildListener> buildListeners, DeploymentPhase phase) throws InvalidBuildFileException {
+        List<BuildListener> buildListeners, DeploymentPhase phase, HandoverTarget handoverTarget)
+        throws InvalidBuildFileException {
+        //noinspection deprecation
         AntLauncher antLauncher = new AntLauncher();
+        antLauncher.setHandoverTarget(handoverTarget);
         antProps.setProperty(DeployPropertyNames.DEPLOY_PHASE, phase.name());
-        BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, antProps, buildListeners);
-        return project;
+        return antLauncher.executeBundleDeployFile(recipeFile, antProps, buildListeners);
     }
 
     private Properties createAntProperties(BundleDeployRequest request) {
@@ -431,5 +442,84 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
         }
 
         return str.toString();
+    }
+
+    private static class PluginContainerHandoverTarget implements HandoverTarget {
+        final BundleDeployRequest request;
+
+        PluginContainerHandoverTarget(BundleDeployRequest request) {
+            this.request = request;
+        }
+
+        @Override
+        public boolean handoverContent(HandoverInfo handoverInfo) {
+            BundleResourceDeployment resourceDeployment = request.getResourceDeployment();
+            BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
+
+            BundleHandoverContext.Builder contextBuilder = new BundleHandoverContext.Builder();
+            contextBuilder.setRevert(handoverInfo.isRevert());
+
+            BundleHandoverRequest.Builder handoverRequestBuilder = new BundleHandoverRequest.Builder();
+            handoverRequestBuilder.setContent(handoverInfo.getContent()) //
+                .setFilename(handoverInfo.getFilename()) //
+                .setAction(handoverInfo.getAction()).setParams(handoverInfo.getParams())//
+                .setContext(contextBuilder.create());
+
+            BundleHandoverRequest bundleHandoverRequest = handoverRequestBuilder.createBundleHandoverRequest();
+            BundleHandoverResponse handoverResponse = bundleManagerProvider.handoverContent(
+                resourceDeployment.getResource(), bundleHandoverRequest);
+
+            boolean success = handoverResponse.isSuccess();
+            try {
+
+                StringWriter attachmentStringWriter = new StringWriter();
+                PrintWriter attachmentPrintWriter = new PrintWriter(attachmentStringWriter, true);
+                attachmentPrintWriter.println(bundleHandoverRequest);
+
+                if (success) {
+                    bundleManagerProvider.auditDeployment(resourceDeployment, "Handover",
+                        "Successful content handover to bundle target resource", AUDIT_MESSAGE, SUCCESS,
+                        handoverResponse.getMessage(), attachmentStringWriter.toString());
+                } else {
+                    String handoverFailure = getHandoverFailure(handoverResponse);
+                    Throwable handoverResponseThrowable = handoverResponse.getThrowable();
+                    if (handoverResponseThrowable != null) {
+                        attachmentPrintWriter.println();
+                        attachmentPrintWriter.println(ThrowableUtil.getAllMessages(handoverResponseThrowable));
+                    }
+
+                    bundleManagerProvider.auditDeployment(resourceDeployment, "Handover", handoverFailure,
+                        AUDIT_MESSAGE, FAILURE, handoverResponse.getMessage(), attachmentStringWriter.toString());
+                }
+            } catch (Exception e) {
+                LOG.warn("Unexpected failure while auditing deployment", e);
+            }
+            return success;
+        }
+
+        private String getHandoverFailure(BundleHandoverResponse handoverReport) {
+            String handoverFailure;
+            switch (handoverReport.getFailureType()) {
+            case INVALID_ACTION:
+                handoverFailure = "Invalid handover action";
+                break;
+            case MISSING_PARAMETER:
+                handoverFailure = "Missing required handover parameter";
+                break;
+            case INVALID_PARAMETER:
+                handoverFailure = "Invalid handover parameter";
+                break;
+            case PLUGIN_CONTAINER:
+                handoverFailure = "Handover invocation failed in the plugin container";
+                break;
+            case EXECUTION:
+                handoverFailure = "Handover failed during execution";
+                break;
+            default:
+                handoverFailure = "Unknown handover failure";
+                break;
+            }
+            return handoverFailure;
+        }
     }
 }

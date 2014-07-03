@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -11,17 +11,31 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.bundle.ant.type;
 
+import static org.rhq.core.util.file.FileUtil.copyFile;
+import static org.rhq.core.util.file.FileUtil.createTempDirectory;
+import static org.rhq.core.util.file.FileUtil.purge;
+import static org.rhq.core.util.file.FileUtil.writeFile;
+import static org.rhq.core.util.stream.StreamUtil.copy;
+import static org.rhq.core.util.stream.StreamUtil.safeClose;
+import static org.rhq.core.util.stream.StreamUtil.slurp;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -31,6 +45,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -38,12 +55,13 @@ import org.apache.tools.ant.Target;
 
 import org.rhq.bundle.ant.BundleAntProject.AuditStatus;
 import org.rhq.bundle.ant.DeployPropertyNames;
+import org.rhq.bundle.ant.HandoverTarget;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.template.TemplateEngine;
+import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeployDifferences;
 import org.rhq.core.util.updater.Deployer;
 import org.rhq.core.util.updater.DeploymentData;
@@ -60,6 +78,8 @@ public class DeploymentUnitType extends AbstractBundleType {
 
     private DestinationComplianceMode compliance;
 
+    // -------- Containers for file and archives to lay down
+
     private Map<File, File> files = new LinkedHashMap<File, File>();
     private Map<URL, File> urlFiles = new LinkedHashMap<URL, File>();
     private Set<File> rawFilesToReplace = new LinkedHashSet<File>();
@@ -73,6 +93,10 @@ public class DeploymentUnitType extends AbstractBundleType {
     private Map<File, Boolean> archivesExploded = new HashMap<File, Boolean>();
     private Map<URL, Boolean> urlArchivesExploded = new HashMap<URL, Boolean>();
     private Map<File, String> localArchiveNames = new LinkedHashMap<File, String>();
+
+    // ------- Container for files and archives to handover (ordered)
+
+    private List<HasHandover> contentToHandover = new ArrayList<HasHandover>();
 
     private SystemServiceType systemService;
     private Pattern ignorePattern;
@@ -103,12 +127,15 @@ public class DeploymentUnitType extends AbstractBundleType {
                     + " backed up files and the old deployment content will be made", null);
         }
 
+        File baseDir = getProject().getBaseDir();
+        File handoverRemoteContentDownloadDirectory = null;
         try {
             boolean dryRun = getProject().isDryRun();
 
             DestinationComplianceMode complianceToUse = DestinationComplianceMode.instanceOrDefault(this.compliance);
 
             File deployDir = getProject().getDeployDir();
+            @SuppressWarnings("unchecked")
             TemplateEngine templateEngine = createTemplateEngine(getProject().getProperties());
             int deploymentId = getProject().getDeploymentId();
             DeploymentProperties deploymentProps = new DeploymentProperties(deploymentId, getProject().getBundleName(),
@@ -154,6 +181,10 @@ public class DeploymentUnitType extends AbstractBundleType {
                 haveSomethingToDo = true;
                 log("Deploying archives from URL " + this.urlArchives + "...", Project.MSG_VERBOSE);
             }
+            if (!this.contentToHandover.isEmpty()) {
+                haveSomethingToDo = true;
+                log("Handing over " + this.contentToHandover.size() + " file(s)/archive(s)...", Project.MSG_VERBOSE);
+            }
             if (!haveSomethingToDo) {
                 throw new BuildException(
                     "You must specify at least one file to deploy via nested file, archive, url-file, url-archive types in your recipe");
@@ -192,10 +223,13 @@ public class DeploymentUnitType extends AbstractBundleType {
             downloadFilesFromUrlEndpoints(allArchives, allFiles, allArchiveReplacePatterns, allRawFilesToReplace,
                 allArchivesExploded);
 
+            handoverRemoteContentDownloadDirectory = createTempDirectory("handover-", ".download", baseDir);
+            Map<HasHandover, File> downloadedFilesToHandover = downloadRemoteContentToHandover(handoverRemoteContentDownloadDirectory);
+
             try {
-                DeploymentData deploymentData = new DeploymentData(deploymentProps, getProject().getBaseDir(),
-                    deployDir, allFiles, allRawFilesToReplace, allArchives, allArchiveReplacePatterns, templateEngine,
-                    this.ignorePattern, allArchivesExploded);
+                DeploymentData deploymentData = new DeploymentData(deploymentProps, baseDir, deployDir, allFiles,
+                    allRawFilesToReplace, allArchives, allArchiveReplacePatterns, templateEngine, this.ignorePattern,
+                    allArchivesExploded);
                 Deployer deployer = new Deployer(deploymentData);
                 DeployDifferences diffs = getProject().getDeployDifferences();
 
@@ -209,6 +243,45 @@ public class DeploymentUnitType extends AbstractBundleType {
                     deployer.redeployAndRestoreBackupFiles(diffs, clean, dryRun);
                 } else {
                     deployer.deploy(diffs, clean, dryRun);
+                }
+
+                HandoverTarget handoverTarget = getProject().getHandoverTarget();
+                if (handoverTarget != null) {
+                    for (HasHandover hasHandoverReference : contentToHandover) {
+                        Handover handoverTag = hasHandoverReference.getHandover();
+                        File source = getFileSource(hasHandoverReference, downloadedFilesToHandover, templateEngine);
+                        FileInputStream contentStream = new FileInputStream(source);
+
+                        HandoverInfo.Builder builder = new HandoverInfo.Builder();
+                        builder.setContent(contentStream);
+                        builder.setFilename(source.getName());
+                        builder.setAction(handoverTag.getAction());
+                        builder.setParams(handoverTag.getHandoverParams());
+                        builder.setRevert(revert);
+                        HandoverInfo handoverInfo = builder.createHandoverInfo();
+
+                        if (!dryRun) {
+                            try {
+                                boolean handoverSuccess = handoverTarget.handoverContent(handoverInfo);
+                                String informationMessage = "Source: " + source.getName() + ", " + handoverTag;
+                                if (handoverSuccess) {
+                                    getProject().auditLog(AuditStatus.INFO, "Handover",
+                                        "Handover target reported success", informationMessage, null);
+                                } else {
+                                    if (handoverTag.isFailonerror()) {
+                                        getProject().auditLog(AuditStatus.FAILURE, "Handover",
+                                            "Handover target reported a failure", informationMessage, null);
+                                        throw new Exception("Handover failed: " + handoverTag);
+                                    } else {
+                                        getProject().auditLog(AuditStatus.WARN, "Handover",
+                                            "Handover target reported a failure", informationMessage, null);
+                                    }
+                                }
+                            } finally {
+                                safeClose(contentStream);
+                            }
+                        }
+                    }
                 }
 
                 // we only want to emit audit trail when something is really going to happen on disk; don't log if doing a dry run
@@ -268,8 +341,42 @@ public class DeploymentUnitType extends AbstractBundleType {
             } else {
                 throw new BuildException(t);
             }
+        } finally {
+            purge(handoverRemoteContentDownloadDirectory, true);
         }
-        return;
+    }
+
+    private File getFileSource(HasHandover hasHandoverReference, Map<HasHandover, File> downloadedFilesToHandover,
+        TemplateEngine templateEngine) throws Exception {
+        File source;
+        if (hasHandoverReference instanceof UrlFileType) {
+            UrlFileType urlFileType = (UrlFileType) hasHandoverReference;
+            source = downloadedFilesToHandover.get(urlFileType);
+            if (urlFileType.isReplace()) {
+                processFileWithTemplateEngine(source, templateEngine);
+            }
+        } else if (hasHandoverReference instanceof UrlArchiveType) {
+            UrlArchiveType urlArchiveType = (UrlArchiveType) hasHandoverReference;
+            source = downloadedFilesToHandover.get(urlArchiveType);
+            if (urlArchiveType.getReplacePattern() != null) {
+                processArchiveWithTemplateEngine(source, urlArchiveType.getReplacePattern(), templateEngine);
+            }
+        } else if (hasHandoverReference instanceof FileType) {
+            FileType fileType = (FileType) hasHandoverReference;
+            source = fileType.getSource();
+            if (fileType.isReplace()) {
+                processFileWithTemplateEngine(source, templateEngine);
+            }
+        } else if (hasHandoverReference instanceof ArchiveType) {
+            ArchiveType archiveType = (ArchiveType) hasHandoverReference;
+            source = archiveType.getSource();
+            if (archiveType.getReplacePattern() != null) {
+                processArchiveWithTemplateEngine(source, archiveType.getReplacePattern(), templateEngine);
+            }
+        } else {
+            throw new RuntimeException("Unsupported type: " + hasHandoverReference.getClass().getName());
+        }
+        return source;
     }
 
     /**
@@ -338,8 +445,6 @@ public class DeploymentUnitType extends AbstractBundleType {
                 }
             }
 
-            return;
-
         } catch (Exception e) {
             // can't do anything with any files we did download - be nice and clean up
             try {
@@ -353,6 +458,43 @@ public class DeploymentUnitType extends AbstractBundleType {
         }
     }
 
+    private Map<HasHandover, File> downloadRemoteContentToHandover(File handoverDownloadDirectory) throws Exception {
+        Map<HasHandover, File> result = new HashMap<HasHandover, File>();
+
+        for (HasHandover hasHandoverReference : contentToHandover) {
+
+            URL source;
+            String baseName;
+            if (hasHandoverReference instanceof UrlFileType) {
+                UrlFileType urlFileType = (UrlFileType) hasHandoverReference;
+                source = urlFileType.getSource();
+                baseName = urlFileType.getBaseName();
+            } else if (hasHandoverReference instanceof UrlArchiveType) {
+                UrlArchiveType urlArchiveType = (UrlArchiveType) hasHandoverReference;
+                source = urlArchiveType.getSource();
+                baseName = urlArchiveType.getBaseName();
+            } else {
+                continue;
+            }
+
+            Set<File> downloadedFiles = getProject().getDownloadedFiles();
+            try {
+                File tmpFile = new File(handoverDownloadDirectory, baseName);
+                download(source, tmpFile);
+                downloadedFiles.add(tmpFile);
+                result.put(hasHandoverReference, tmpFile);
+            } catch (Exception e) {
+                // can't do anything with any files we did download - be nice and clean up
+                for (File file : downloadedFiles) {
+                    file.delete();
+                }
+                throw e;
+            }
+        }
+
+        return result;
+    }
+
     private void download(URL url, File tmpFile) throws Exception {
         getProject().auditLog(AuditStatus.SUCCESS, "File Download Started", "Downloading file from URL",
             "Downloading file from URL: " + url, null);
@@ -362,7 +504,7 @@ public class DeploymentUnitType extends AbstractBundleType {
             InputStream in = url.openStream();
             tmpFile.getParentFile().mkdirs(); // if this fails, our next line will throw a file-not-found error and we'll abort
             OutputStream out = new FileOutputStream(tmpFile);
-            size = StreamUtil.copy(in, out);
+            size = copy(in, out);
         } catch (Exception e) {
             getProject().auditLog(AuditStatus.FAILURE, "File Download Failed",
                 "Failed to download content from a remote server", "Failed to download file from: " + url,
@@ -522,6 +664,7 @@ public class DeploymentUnitType extends AbstractBundleType {
         this.postinstallTarget = postinstallTarget;
     }
 
+    @SuppressWarnings("unused")
     public void addConfigured(SystemServiceType systemService) {
         if (this.systemService != null) {
             throw new IllegalStateException(
@@ -540,20 +683,30 @@ public class DeploymentUnitType extends AbstractBundleType {
         }
     }
 
+    @SuppressWarnings("unused")
     public void addConfigured(FileType file) {
+        this.localFileNames.put(file.getSource(), file.getName());
+        if (file.getHandover() != null) {
+            contentToHandover.add(file);
+            return;
+        }
         File destFile = file.getDestinationFile();
         if (destFile == null) {
             File destDir = file.getDestinationDir();
             destFile = new File(destDir, file.getSource().getName());
         }
         this.files.put(file.getSource(), destFile); // key=full absolute path, value=could be relative or absolute
-        this.localFileNames.put(file.getSource(), file.getName());
         if (file.isReplace()) {
             this.rawFilesToReplace.add(file.getSource());
         }
     }
 
+    @SuppressWarnings("unused")
     public void addConfigured(UrlFileType file) {
+        if (file.getHandover() != null) {
+            contentToHandover.add(file);
+            return;
+        }
         File destFile = file.getDestinationFile();
         if (destFile == null) {
             File destDir = file.getDestinationDir();
@@ -565,9 +718,14 @@ public class DeploymentUnitType extends AbstractBundleType {
         }
     }
 
+    @SuppressWarnings("unused")
     public void addConfigured(ArchiveType archive) {
-        this.archives.put(archive.getSource(), archive.getDestinationDir());
         this.localArchiveNames.put(archive.getSource(), archive.getName());
+        if (archive.getHandover() != null) {
+            contentToHandover.add(archive);
+            return;
+        }
+        this.archives.put(archive.getSource(), archive.getDestinationDir());
         Pattern replacePattern = archive.getReplacePattern();
         if (replacePattern != null) {
             this.archiveReplacePatterns.put(archive.getSource(), replacePattern);
@@ -576,7 +734,12 @@ public class DeploymentUnitType extends AbstractBundleType {
         this.archivesExploded.put(archive.getSource(), exploded);
     }
 
+    @SuppressWarnings("unused")
     public void addConfigured(UrlArchiveType archive) {
+        if (archive.getHandover() != null) {
+            contentToHandover.add(archive);
+            return;
+        }
         this.urlArchives.put(archive.getSource(), archive.getDestinationDir());
         Pattern replacePattern = archive.getReplacePattern();
         if (replacePattern != null) {
@@ -586,6 +749,7 @@ public class DeploymentUnitType extends AbstractBundleType {
         this.urlArchivesExploded.put(archive.getSource(), exploded);
     }
 
+    @SuppressWarnings("unused")
     public void addConfigured(IgnoreType ignore) {
         List<FileSet> fileSets = ignore.getFileSets();
         this.ignorePattern = getPattern(fileSets);
@@ -610,5 +774,60 @@ public class DeploymentUnitType extends AbstractBundleType {
         templateEngine.getTokens().put(DeployPropertyNames.DEPLOY_DIR,
             getProject().getProperty(DeployPropertyNames.DEPLOY_DIR));
         return templateEngine;
+    }
+
+    private void processFileWithTemplateEngine(File file, TemplateEngine templateEngine) throws Exception {
+        byte[] contentBytes = slurp(new FileInputStream(file));
+        String processedContent = templateEngine.replaceTokens(new String(contentBytes));
+        writeFile(new ByteArrayInputStream(processedContent.getBytes()), file);
+    }
+
+    private void processArchiveWithTemplateEngine(File archive, Pattern realizeRegex, TemplateEngine templateEngine)
+        throws Exception {
+        File baseDir = getProject().getBaseDir();
+        File tempFile = null;
+        ZipOutputStream zipOutputStream = null;
+        try {
+            tempFile = File.createTempFile("handover-archive-processing-", ".tmp", baseDir);
+            zipOutputStream = new ZipOutputStream(new FileOutputStream(tempFile));
+            ZipUtil.walkZipFile(archive, new ArchiveEntryVisitor(zipOutputStream, realizeRegex, templateEngine));
+            safeClose(zipOutputStream);
+            copyFile(tempFile, archive);
+        } finally {
+            safeClose(zipOutputStream);
+            if (tempFile != null) {
+                tempFile.delete();
+            }
+        }
+    }
+
+    private static class ArchiveEntryVisitor implements ZipUtil.ZipEntryVisitor {
+        private final ZipOutputStream zipOutputStream;
+        private final Pattern realizeRegex;
+        private final TemplateEngine templateEngine;
+
+        public ArchiveEntryVisitor(ZipOutputStream zipOutputStream, Pattern realizeRegex, TemplateEngine templateEngine) {
+            this.zipOutputStream = zipOutputStream;
+            this.realizeRegex = realizeRegex;
+            this.templateEngine = templateEngine;
+        }
+
+        @Override
+        public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
+            String pathName = entry.getName();
+            zipOutputStream.putNextEntry(new ZipEntry(pathName));
+            if (entry.isDirectory()) {
+                return true;
+            }
+            if (!realizeRegex.matcher(pathName).matches()) {
+                copy(stream, zipOutputStream, false);
+                return true;
+            }
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            copy(stream, baos, false);
+            String processedContent = templateEngine.replaceTokens(baos.toString());
+            copy(new ByteArrayInputStream(processedContent.getBytes()), zipOutputStream, false);
+            return true;
+        }
     }
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -52,6 +52,8 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.pluginapi.bundle.BundleHandoverRequest;
+import org.rhq.core.pluginapi.bundle.BundleHandoverResponse;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.OperatingSystemType;
@@ -292,5 +294,9 @@ public class ProcessingRecipeContextTest {
             return 0;
         }
 
+        @Override
+        public BundleHandoverResponse handoverContent(Resource bundleTarget, BundleHandoverRequest handoverRequest) {
+            return null;
+        }
     }
 }

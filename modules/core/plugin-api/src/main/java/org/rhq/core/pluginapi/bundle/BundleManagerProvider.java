@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pluginapi.bundle;
 
 import java.io.OutputStream;
@@ -25,6 +26,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.resource.Resource;
 
 /**
  * Provides bundle functionality that plugin components will need in order to process bundles.
@@ -71,4 +73,13 @@ public interface BundleManagerProvider {
      * @throws Exception on failure
      */
     long getFileContent(PackageVersion packageVersion, OutputStream outputStream) throws Exception;
+
+    /**
+     * Requests participation of the bundle target resource component in the bundle deployment.
+     *
+     * @param bundleTarget bundle target resource
+     * @param handoverRequest handover parameters and context 
+     * @return a report object indicating success or failure
+     */
+    BundleHandoverResponse handoverContent(Resource bundleTarget, BundleHandoverRequest handoverRequest);
 }

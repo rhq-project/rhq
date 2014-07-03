@@ -2,7 +2,7 @@
 
 <!--
   ~ RHQ Management Platform
-  ~ Copyright (C) 2005-2013 Red Hat, Inc.
+  ~ Copyright (C) 2005-2014 Red Hat, Inc.
   ~ All rights reserved.
   ~
   ~ This program is free software; you can redistribute it and/or modify
@@ -996,7 +996,7 @@
             units="milliseconds" destinationType="Method Name"/>
 '>
 	<!ENTITY executeCliOperations '
-	<operation name="executeCommands" description="Executes command via jboss-cli" displayName="Execute CLI commands" timeout="60">
+	<operation name="executeCommands" description="Executes command via jboss-cli" displayName="Execute CLI commands" timeout="3600">
 		<parameters>
 			<c:simple-property name="commands" type="longString" required="true" description="Commands to be executed" />
 			<c:simple-property name="triggerAvailability" type="boolean" default="false" defaultValue="false" description="Trigger availability scan asynchronously on successfull script finish." />
@@ -1005,10 +1005,10 @@
 			<c:simple-property name="killOnTimeout" required="false" type="boolean" defaultValue="false" description="If true, the script will be forcibly terminated if the wait time expires before the script finishes. In other words, the script process will be killed if it times out. Default is false." />
 		</parameters>
 		<results>
-        	<c:simple-property name="operationResult"/>
+        	<c:simple-property name="operationResult" type="longString"/>
       	</results>
 	</operation>
-	<operation name="executeScript" description="Executes script via jboss-cli" displayName="Execute CLI script" timeout="60">
+	<operation name="executeScript" description="Executes script via jboss-cli" displayName="Execute CLI script" timeout="3600">
 		<parameters>
 			<c:simple-property name="file" type="string" displayName="Script file" required="true" description="JBoss CLI script file. Relative path based on AS Home Directory can be used." />
 			<c:simple-property name="triggerAvailability" type="boolean" default="false" defaultValue="false" description="Trigger availability scan asynchronously on successfull script finish." />
@@ -1017,7 +1017,7 @@
 			<c:simple-property name="killOnTimeout" required="false" type="boolean" defaultValue="false" description="If true, the script will be forcibly terminated if the wait time expires before the script finishes. In other words, the script process will be killed if it times out. Default is false." />
 		</parameters>
 		<results>
-        	<c:simple-property name="operationResult"/>
+        	<c:simple-property name="operationResult" type="longString"/>
       	</results>
 	</operation>
 '>
@@ -1100,19 +1100,19 @@
     <metric property="_internal:maxTime" category="performance" dataType="measurement" defaultInterval="120000"
             displayType="summary" measurementType="dynamic" description="Max time for a request since last metric get" units="milliseconds"
             displayName="Maximum request time"/>
-
     &serverKindMetrics;
     <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
-
     <metric property="domain-config-file" displayName="Domain Config File" dataType="trait" displayType="summary" defaultInterval="3600000"
             description="The name of the domain configuration file this host controller is using"/>
     <metric property="host-config-file" displayName="Host Config File" dataType="trait" displayType="summary" defaultInterval="3600000"
             description="The name of the host configuration file this host controller is using"/>
     <metric property="domain-host-name" displayName="Domain Host Name"  dataType="trait" displayType="summary" defaultInterval="3600000"
             description="The name of the host in domain this host controller is using"/>
-
     <metric property="domain-name" displayName="Domain Name"  dataType="trait" displayType="summary" defaultInterval="3600000"
             description="The name of the managed domain this Host Controller belongs to."/>
+    <metric property="domain-temp-dir" dataType="trait" displayName="Temporary Directory" defaultInterval="600000"
+            defaultOn="true"
+            description="The temporary directory (usually 'domain/tmp'). May serve as deployment directory for handover bundles'"/>
 
     <event name="logEntry" description="an entry in a log file"/>
 
@@ -1181,6 +1181,13 @@
         <include path="welcome-content"/>
       </includes>
     </drift-definition>
+
+    <bundle-target>
+      <destination-base-dir name="Temp Directory" description="The temporary directory for a host controller">
+        <value-context>measurementTrait</value-context>
+        <value-name>domain-temp-dir</value-name>
+      </destination-base-dir>
+    </bundle-target>
 
     <help>
       <![CDATA[
@@ -1518,7 +1525,10 @@
     <metric property="config-file" dataType="trait" displayName="Server Config File" displayType="summary" defaultInterval="3600000"
             description="The name of the server configuration file this server is using"/>
     <metric property="deployDir" dataType="trait" displayName="Deploy Directory" defaultInterval="600000" defaultOn="true"
-            description="The deployment directory for bundles (usually 'standalone/deployments'"/>
+            description="The deployment directory for file based bundles (usually 'standalone/deployments')"/>
+    <metric property="temp-dir" dataType="trait" displayName="Temporary Directory" defaultInterval="600000"
+            defaultOn="true"
+            description="The temporary directory (usually 'standalone/tmp'). May serve as deployment directory for handover only bundles'"/>
 
     <event name="logEntry" description="an entry in a log file"/>
 
@@ -1633,6 +1643,10 @@
       <destination-base-dir name="Deploy Directory" description="The deployment directory for a standalone server">
         <value-context>measurementTrait</value-context>
         <value-name>deployDir</value-name>
+      </destination-base-dir>
+      <destination-base-dir name="Temp Directory" description="The temporary directory for a standalone server">
+        <value-context>measurementTrait</value-context>
+        <value-name>temp-dir</value-name>
       </destination-base-dir>
     </bundle-target>
 
@@ -13674,7 +13688,118 @@
     <h5>Interaction with Versioned Deployment Support</h5>
     If utilizing versioned deployments as described above, it is recommended to leave the MISSING Policy as DOWN (the
     default).  Otherwise, while updating versions it is possible during the update window to have the resource removed
-    or ignored. 
+    or ignored.
+
+    <h3>Bundle Handover Support (Since RHQ 4.12)</h3>
+    <p>The <em>Standalone Server</em> and <em>Host Controller</em> resource types from this plugin support the Bundle
+    Content Handover feature introduced in RHQ 4.12. The following sections show example recipes for bundle deployments
+    with resources of these types as bundle targets. They also define the list of actions and parameters the resource
+    component understands.</p>
+
+    <h5>Standalone Server</h5>
+    This resource type supports the following actions:<br>
+    <br>
+    <strong>action = deployment: deploys the content to the server</strong><br>
+    Optional parameters:<br>
+    <ul>
+        <li>runtimeName: Runtime name of the uploaded file (e.g. 'my.war'); if not present, the file name is used</li>
+    </ul>
+    <br>
+    <strong>action = execute-script: executes a server CLI script</strong><br>
+    Optional parameters:<br>
+    <ul>
+        <li>waitTime (in seconds): how long to wait for completion; defaults to an hour</li>
+        <li>killOnTimeout (true/false): should the CLI process be killed if timeout is reached; defaults to false</li>
+    </ul>
+    <p>Sample ANT bundle recipe</p>
+    <pre>
+    &lt;?xml version="1.0"?&gt;
+
+    &lt;project name="handover-bundle" default="main" xmlns:rhq="antlib:org.rhq.bundle"&gt;
+
+      &lt;rhq:bundle name="example.com (EAP 6)" version="1.1"
+                  description="example.com corporate website hosted on EAP 6"&gt;
+
+        &lt;rhq:input-property
+            name="myapp.runtime.name"
+            defaultValue="website.war"
+            required="true"/&gt;
+
+        &lt;rhq:deployment-unit name="example.com deployment unit" compliance="filesAndDirectories"&gt;
+          &lt;rhq:file name="prepareDatasource.cli"&gt;
+            &lt;rhq:handover action="execute-script" failonerror="false"/&gt;
+          &lt;/rhq:file&gt;
+          &lt;rhq:archive name="website.war"&gt;
+            &lt;rhq:handover action="deployment"&gt;
+              &lt;rhq:handover-param name="runtimeName" value="${myapp.runtime.name}"/&gt;
+            &lt;/rhq:handover&gt;
+          &lt;/rhq:archive&gt;
+        &lt;/rhq:deployment-unit&gt;
+
+      &lt;/rhq:bundle&gt;
+
+      &lt;target name="main"/&gt;
+
+    &lt;/project&gt;
+    </pre>
+
+    <h5>Host Controller</h5>
+    This component supports the following actions:<br>
+    <br>
+    <strong>action = deployment: deploys the content to a server group</strong><br>
+    Required parameters:<br>
+    <ul>
+        <li>serverGroup: The name of the server group this deployment should be deployed to</li>
+    </ul>
+    Optional parameters:<br>
+    <ul>
+        <li>runtimeName: Runtime name of the uploaded file (e.g. 'my.war'); if not present, the file name is used</li>
+    </ul>
+    <br>
+    <strong>action = execute-script: executes a server CLI script</strong><br>
+    Optional parameters:<br>
+    <ul>
+        <li>waitTime (in seconds): how long to wait for completion; defaults to an hour</li>
+        <li>killOnTimeout (true/false): should the CLI process be killed if timeout is reached; defaults to false</li>
+    </ul>
+    <br>
+    <p>Sample ANT bundle recipe</p>
+    <pre>
+    &lt;?xml version="1.0"?&gt;
+
+    &lt;project name="handover-bundle" default="main" xmlns:rhq="antlib:org.rhq.bundle"&gt;
+
+      &lt;rhq:bundle name="example.com (EAP 6)" version="1.1"
+                  description="example.com corporate website hosted on EAP 6"&gt;
+
+        &lt;rhq:input-property
+            name="myapp.runtime.name"
+            defaultValue="website.war"
+            required="true"/&gt;
+        &lt;rhq:input-property
+            name="server.group"
+            defaultValue="main-server-group-01"
+            required="true"/&gt;
+
+        &lt;rhq:deployment-unit name="example.com deployment unit" compliance="filesAndDirectories"&gt;
+          &lt;rhq:file name="prepareDatasource.cli"&gt;
+            &lt;rhq:handover action="execute-script" failonerror="false"/&gt;
+          &lt;/rhq:file&gt;
+          &lt;rhq:archive name="website.war"&gt;
+            &lt;rhq:handover action="deployment"&gt;
+              &lt;rhq:handover-param name="runtimeName" value="${myapp.runtime.name}"/&gt;
+              &lt;rhq:handover-param name="serverGroup" value="${server.group}"/&gt;
+            &lt;/rhq:handover&gt;
+          &lt;/rhq:archive&gt;
+        &lt;/rhq:deployment-unit&gt;
+
+      &lt;/rhq:bundle&gt;
+
+      &lt;target name="main"/&gt;
+
+    &lt;/project&gt;
+    </pre>
+
     ]]>
   </help>
 

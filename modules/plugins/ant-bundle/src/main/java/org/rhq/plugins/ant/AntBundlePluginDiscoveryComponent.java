@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.ant;
 
 import java.util.HashSet;
@@ -30,7 +31,6 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  */
 @SuppressWarnings("unchecked")
 public class AntBundlePluginDiscoveryComponent implements ResourceDiscoveryComponent {
-    //private final Log log = LogFactory.getLog(FileTemplateBundlePluginDiscoveryComponent.class);
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
 

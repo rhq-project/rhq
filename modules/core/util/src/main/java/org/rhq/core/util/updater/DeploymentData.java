@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.core.util.updater;
 
 import java.io.File;
@@ -165,9 +166,6 @@ public class DeploymentData {
         }
         if (rawFiles == null) {
             rawFiles = new HashMap<File, File>(0);
-        }
-        if ((zipFiles.size() == 0) && (rawFiles.size() == 0)) {
-            throw new IllegalArgumentException("No archives or raw files specified - nothing to do");
         }
         if (zipsExploded == null) {
             zipsExploded = new HashMap<File, Boolean>(0);

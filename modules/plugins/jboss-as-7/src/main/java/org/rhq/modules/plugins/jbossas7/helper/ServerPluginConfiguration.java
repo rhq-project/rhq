@@ -70,6 +70,10 @@ public class ServerPluginConfiguration {
         this.pluginConfig = pluginConfig;
     }
 
+    public Configuration getPluginConfig() {
+        return pluginConfig;
+    }
+
     public String getHostname() {
         return this.pluginConfig.getSimpleValue(Property.HOSTNAME);
     }
@@ -185,8 +189,8 @@ public class ServerPluginConfiguration {
     }
 
     public void setHostConfigFile(File hostConfigFile) {
-        this.pluginConfig.setSimpleValue(Property.HOST_CONFIG_FILE, (hostConfigFile != null) ?
-                hostConfigFile.toString() : null);
+        this.pluginConfig.setSimpleValue(Property.HOST_CONFIG_FILE,
+            (hostConfigFile != null) ? hostConfigFile.toString() : null);
     }
 
     @Deprecated

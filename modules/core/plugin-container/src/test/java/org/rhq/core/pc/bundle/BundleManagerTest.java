@@ -245,8 +245,7 @@ public class BundleManagerTest {
     private class MockBundleManager extends BundleManager {
 
         public MockBundleManager() {
-            super(pcConfig, new MockAgentServiceStreamRemoter(), im,
-                    new MockMeasurementManager(pcConfig));
+            super(pcConfig, new MockAgentServiceStreamRemoter(), im, new MockMeasurementManager(pcConfig));
         }
 
         public String absolutePathToAssert;
@@ -278,8 +277,7 @@ public class BundleManagerTest {
 
         @Override
         public BundlePurgeResult purgeBundle(BundlePurgeRequest request) {
-            BundlePurgeResult result = new BundlePurgeResult();
-            return result;
+            return new BundlePurgeResult();
         }
     }
 
@@ -473,8 +471,7 @@ public class BundleManagerTest {
         public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, Set<MeasurementScheduleRequest> requests) {
             // anytime this method gets called, it means our tests are asking for the test trait value. It will
             // always be the same value for all tests.
-            MeasurementDataTrait data = new MeasurementDataTrait(requests.iterator().next(),
-                BUNDLE_CONFIG_LOCATION_MT);
+            MeasurementDataTrait data = new MeasurementDataTrait(requests.iterator().next(), BUNDLE_CONFIG_LOCATION_MT);
             Set<MeasurementData> values = new HashSet<MeasurementData>();
             values.add(data);
             return values;

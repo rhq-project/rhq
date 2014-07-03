@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.plugins.ant;
 
 import java.io.ByteArrayInputStream;
@@ -60,6 +61,8 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
+import org.rhq.core.pluginapi.bundle.BundleHandoverRequest;
+import org.rhq.core.pluginapi.bundle.BundleHandoverResponse;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 import org.rhq.core.pluginapi.bundle.BundlePurgeRequest;
 import org.rhq.core.pluginapi.bundle.BundlePurgeResult;
@@ -1074,6 +1077,11 @@ public class AntBundlePluginComponentTest {
 
         public long getFileContent(PackageVersion packageVersion, OutputStream outputStream) throws Exception {
             return 0;
+        }
+
+        @Override
+        public BundleHandoverResponse handoverContent(Resource bundleTarget, BundleHandoverRequest handoverRequest) {
+            return null;
         }
     }
 }

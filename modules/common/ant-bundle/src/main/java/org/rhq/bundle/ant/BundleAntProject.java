@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.bundle.ant;
 
 import java.io.File;
@@ -54,7 +55,7 @@ public class BundleAntProject extends Project {
     // these statuses should match those of see BundleResourceDeploymentHistory.Status
     public enum AuditStatus {
         SUCCESS, FAILURE, WARN, INFO
-    };
+    }
 
     // Bundle-level attributes
     private boolean parseOnly;
@@ -74,6 +75,8 @@ public class BundleAntProject extends Project {
 
     //note that this will have to change once we start supporting multiple deployment units.
     private DestinationComplianceMode destinationCompliance;
+
+    private HandoverTarget handoverTarget;
 
     // results of project execution
     private DeployDifferences deployDiffs = new DeployDifferences();
@@ -177,6 +180,14 @@ public class BundleAntProject extends Project {
         this.destinationCompliance = destinationCompliance;
     }
 
+    public HandoverTarget getHandoverTarget() {
+        return handoverTarget;
+    }
+
+    public void setHandoverTarget(HandoverTarget handoverTarget) {
+        this.handoverTarget = handoverTarget;
+    }
+
     /**
      * If there were url-file or url-archives, this returns the set of files
      * that were downloaded from the URLs.
@@ -212,7 +223,7 @@ public class BundleAntProject extends Project {
         str.append("___");
         str.append((action != null) ? action : "Audit Message");
         str.append("___");
-        str.append((info != null) ? info : "Timestamp: " + new Date().toString());
+        str.append((info != null) ? info : "Timestamp: ").append(new Date());
         str.append("___");
         str.append((message != null) ? message : "");
         str.append("___");

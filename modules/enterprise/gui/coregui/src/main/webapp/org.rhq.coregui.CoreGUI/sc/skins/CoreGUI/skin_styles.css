@@ -35,14 +35,6 @@ td {
   margin-bottom:5px;
 }
 
-/*.groupLabel {
-    color:#333333;
-    padding-left:5px; padding-right:5px;
-}*/
-
-.backLink {
-
-}
 
 .groupLabel img, .HeaderLabel img {
   width:24px;
@@ -92,11 +84,6 @@ a, a:link, a:visited { text-decoration: none !important; }
   visibility:hidden;
 }
 
-/*
-.subtabbar {
-  margin-bottom:20px;
-}
-*/
 
 .subtabbar {
   border-bottom:1px solid rgb(201,201,201);
@@ -323,9 +310,6 @@ a.nbi-link {
   border-right: 1px solid transparent !important;
 }
 
-.nbi-link:hover {
-}
-
 .nbi-caret {
   padding-right: 7px;
   padding-left: 3px;
@@ -375,7 +359,6 @@ General
     -moz-border-radius: 4px;
     -webkit-border-radius: 4px;
     background-color:#595959;
-  /*  border:1px solid #808080;*/
     border: 2px solid #999;
     padding:5px;
     opacity: 0.9;
@@ -386,9 +369,6 @@ General
 
 .footer {
   padding:5px 0px 5px 0 !important;
-}
-.footer * {
-/*  font-size:12px; */
 }
 /*============================================================
 Button (also used as MenuButton base style)
@@ -647,20 +627,18 @@ filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', en
 .windowHeaderHilite,
 .dialogHeader,
 .dialogHeaderHilite {
-color: #333;
-background-color: #f5f5f5;
-margin-right: -4px;
-margin-right: -4px;
-z-index: 9202034 !important;
-vertical-align: middle;
-height: 35px !important;
-/*padding: 10px 15px !important;*/
-top: 0px !important;
-left: 0px !important;
-border-bottom: 1px solid #ddd;
-border-top-right-radius: 0;
-border-top-left-radius: 0;
-
+  color: #333;
+  background-color: #f5f5f5;
+  margin-right: -4px;
+  margin-right: -4px;
+  z-index: 9202034 !important;
+  vertical-align: middle;
+  height: 35px !important;
+  top: 0px !important;
+  left: 0px !important;
+  border-bottom: 1px solid #ddd;
+  border-top-right-radius: 0;
+  border-top-left-radius: 0;
 }
 
 .windowHeader *,
@@ -796,7 +774,7 @@ border-top-left-radius: 0;
   color: #222;
 }
 
-.SubTabButtonSelected, .SubTabButton {
+.SubTabButtonSelected, .SubTabButton,
 .SubTabButtonSelected,
 .SubTabButton {
   font-size:12px;
@@ -853,16 +831,6 @@ border-top-left-radius: 0;
   Forms
 ============================================================*/
 
-/* general form styles */
-.formRow {}
-.formCell,
-.formCellFocused,
-.formCellDisabled,
-.nestedFormContainer,
-.nestedFormContainerFocused,
-.nestedFormContainerDisabled {
-  /*  font-size:12px;*/
-}
 
 .formCell select {
    width: 100%;
@@ -938,9 +906,6 @@ border-top-left-radius: 0;
 .labelAnchorError,
 .labelAnchorFocused,
 .formCell {
-/*     margin-bottom:0;*/
-    /* padding: 2px 6px !important;*/
-     /*border: 1px solid transparent;*/
      color: #4d5258;
      vertical-align: middle;
 }
@@ -970,7 +935,9 @@ border-top-left-radius: 0;
 .headerItem,
 .headerItemDisabled,
 .headerItemError {
-    font-size:14px; font-weight:bold; color:##333333;
+    font-size:14px;
+    font-weight:bold;
+    color:#333333;
 }
 
 /* text items */
@@ -1398,7 +1365,6 @@ border-top-left-radius: 0;
 ============================================================*/
 
 .listGrid {
-/*    border: 1px solid #A7ABB4; */
     background:none rgb(250, 250, 250);
     border: 1px solid rgb(208, 208, 208);
 
@@ -1490,20 +1456,7 @@ border-top-left-radius: 0;
     background-color:#f7f7f7;
 }
 
-/*
-.tallCell,
-.tallCellDark,
-.tallCellOver,
-.tallCellOverDark,
-.tallCellSelected,
-.tallCellSelectedDark,
-.tallCellSelectedOver,
-.tallCellSelectedOverDark,
-.tallCellDisabled,
-.tallCellDisabledDark {
 
- }
-*/
 .cellDark,
 .recordSummaryCell,
 .recordSummaryCellDark {
@@ -1570,14 +1523,7 @@ border-top-left-radius: 0;
   color:#333;
   background: none repeat scroll 0 0 #ddf8ff !important;
 }
-/*
-.tallCellSelected a,
-.tallCellSelectedOver a,
-.tallCellSelectedOverDark a,
-.tallCellSelectedDark a  {
-  color:#fff !important;
-}
-*/
+
 .cellSelectedOver,
 .cellSelectedOverDark,
 .specialColSelectedOver,
@@ -1644,19 +1590,6 @@ border-top-left-radius: 0;
   border-color:transparent;
   border-style:solid;
 }
-
-/*
-.treeTallCell,
-.treeTallCellDark,
-.treeTallCellOver,
-.treeTallCellOverDark,
-.treeTallCellSelected,
-.treeTallCellSelectedDark,
-.treeTallCellSelectedOver,
-.treeTallCellSelectedOverDark,
-.treeTallCellDisabled,
-.treeTallCellDisabledDark {  }
-*/
 
 .treeCellDark,
 .treeTallCellDark {
@@ -1746,18 +1679,14 @@ background: none repeat scroll 0 0 #0099d3 !important;
   border:1px solid transparent;
 }
 
-/* line 2330, ../_internalSource/EnterpriseSeries/sass/_base.scss */
 .vScrollThumbOver {
-
   background: #eaeaea; /* Old browsers */
-
   background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#eaeaea), color-stop(100%,#f8f8f8)); /* Chrome,Safari4+ */
   background: -webkit-linear-gradient(top, #eaeaea 0%,#f8f8f8 100%); /* Chrome10+,Safari5.1+ */
   background: -o-linear-gradient(top, #eaeaea 0%,#f8f8f8 100%); /* Opera 11.10+ */
   background: -ms-linear-gradient(top, #eaeaea 0%,#f8f8f8 100%); /* IE10+ */
   background: linear-gradient(to bottom, #eaeaea 0%,#f8f8f8 100%); /* W3C */
   filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eaeaea', endColorstr='#f8f8f8',GradientType=0 ); /* IE6-9 */
-  copy
   border: 1px solid #cccccc;
   -moz-border-radius: 2px;
   -webkit-border-radius: 2px;
@@ -1768,7 +1697,6 @@ background: none repeat scroll 0 0 #0099d3 !important;
 
   -moz-box-shadow: inset 1px -1px 0 0 rgba(255, 255, 255, 0.2) , inset 0 1px 0 1px #ededed;
   -webkit-box-shadow: rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.0470588) 0px 1px 2px 0px;
-  -o-box-shadow: inset 1px -1px 0 0rgba(255, 255, 255, 0.2) , inset 0 1px 0 1px #ededed;
   box-shadow:  0px 1px 0  rgba(255, 255, 255, 0.2)  inset, 0 1px 2px   rgba(0, 0, 0, 0.05);
 
   margin-bottom: 1px;
@@ -1953,9 +1881,6 @@ background: none repeat scroll 0 0 #0099d3 !important;
   height:7px;
 }
 
-
-
-
 .tabButtonTopOver,
 .tabButtonTopSelected,
 .tabButtonTopSelectedOver {
@@ -1976,42 +1901,3 @@ background: none repeat scroll 0 0 #0099d3 !important;
 .tabButtonTopDisabled {
 color:rgb(128,128,128);
 }
-
-/* bottom
-.tabButtonBottom,
-.tabButtonBottomOver,
-.tabButtonBottomSelected,
-.tabButtonBottomSelectedOver,
-.tabButtonBottomDown,
-.tabButtonBottomSelectedDown,
-.tabButtonBottomSelectedDisabled,
-.tabButtonBottomDisabled {
-    padding: 2px;
-    border: 1px solid #C0C3C7;
-    background: green;
-
-    font-size-adjust:none;
-    font-stretch:normal;
-    font-style:normal;
-    font-variant:normal;
-    font-weight:normal;
-    white-space: nowrap;
-    vertical-align: middle;
-    cursor: pointer;
-    overflow: visible;
-}
-.tabButtonBottomOver,
-.tabButtonBottomSelected,
-.tabButtonBottomSelectedOver {
-    background: red;
-}
-
-.tabButtonBottomDown,
-.tabButtonBottomSelectedDown {
-    background: blue;
-}
-
-.tabButtonBottomSelectedDisabled,
-.tabButtonBottomDisabled {
-    background: yellow;
-}*/

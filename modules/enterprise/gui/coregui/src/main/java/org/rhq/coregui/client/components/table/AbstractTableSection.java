@@ -58,7 +58,7 @@ import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
  *
  * @param <DS> the datasource used to obtain data for the table
  * @param <ID> the type used for IDs. This identifies the type used to uniquely refer to a row in the table
- * 
+ *
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
@@ -118,7 +118,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
         detailsHolder.setAlign(VerticalAlignment.TOP);
         //detailsHolder.setWidth100();
         //detailsHolder.setHeight100();
-        detailsHolder.setMargin(4);
+
         detailsHolder.hide();
 
         addMember(detailsHolder);
@@ -151,7 +151,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
      * {@link #showDetails(com.smartgwt.client.widgets.grid.ListGridRecord)}</br>
      * </br>
      * In general, in overrides, call super.configureTable *after* manipulating the ListGrid fields.
-     * 
+     *
      * @see org.rhq.coregui.client.components.table.Table#configureTable()
      */
     @Override
@@ -188,7 +188,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
 
     /**
      * Override if you don't want FIELD_NAME to be wrapped ina link.
-     * @return the name of the field to be wrapped, or null if no field should be wrapped. 
+     * @return the name of the field to be wrapped, or null if no field should be wrapped.
      */
     protected String getDetailsLinkColumnName() {
         return FIELD_NAME;
@@ -196,7 +196,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
 
     /**
      * Override if you don't want the detailsLinkColumn to have the default link wrapper.
-     * @return the desired CellFormatter. 
+     * @return the desired CellFormatter.
      */
     protected CellFormatter getDetailsLinkColumnCellFormatter() {
         return new CellFormatter() {
@@ -252,9 +252,9 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
     /**
      * Subclasses define how they want to format their identifiers. These uniquely identify
      * rows in the table. Typical values/types for IDs are Integers or Strings.
-     * 
+     *
      * @param record the individual record that contains the ID to be extracted and returned
-     * 
+     *
      * @return the ID of the given row/record from the table.
      */
     protected abstract ID getId(ListGridRecord record);
@@ -264,7 +264,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
      * This method is usually called when a user clicks a 'New' button.
      *
      * Subclasses are free to override this if they need a custom way to show the details view.
-     * 
+     *
      * @see #showDetails(ListGridRecord)
      */
     public void newDetails() {
@@ -279,7 +279,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
      * @param id the id of the row whose details are to be shown; Must be a valid ID.
      *
      * @see #showDetails(ListGridRecord)
-     * 
+     *
      * @throws IllegalArgumentException if id is invalid
      */
     public abstract void showDetails(ID id);
@@ -303,7 +303,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
     /**
      * Given the ID of a particular item, this returns a path string suitable for placement in a URL such that that URL will
      * identify the particular item.
-     * 
+     *
      * @return how the ID can be represented within a view path (i.e. in a URL)
      * @param id the ID that identifies the item to be referred by in a URL
      */
@@ -367,9 +367,9 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
                 contents.hide();
 
                 /*
-                 * if the programmer chooses to go directly from the detailView in create-mode to the 
+                 * if the programmer chooses to go directly from the detailView in create-mode to the
                  * detailsView in edit-mode, the content canvas will already be hidden, which means the
-                 * animateHide would be a no-op (the event won't fire).  this causes the detailsHolder 
+                 * animateHide would be a no-op (the event won't fire).  this causes the detailsHolder
                  * to keep a reference to the previous detailsView (the one in create-mode) instead of the
                  * newly returned reference from getDetailsView(ID) that was called when the renderView
                  * methods were called hierarchically down to render the new detailsView in edit-mode.
@@ -442,7 +442,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
             }
         }
     }
-    
+
     public void setHeader(Canvas header) {
         this.header = header;
     }

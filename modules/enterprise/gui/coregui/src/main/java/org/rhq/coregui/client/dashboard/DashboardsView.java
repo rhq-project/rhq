@@ -180,7 +180,7 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
 
         tabSet.setWidth100();
         tabSet.setHeight100();
-
+        tabSet.setStyleName("dashboardTabs");
         editButton = new EnhancedIButton(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
         editButton.setAutoFit(true);
         editButton.addClickHandler(new ClickHandler() {
@@ -229,7 +229,7 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
 
                 // If re-selecting a Dashboard, make sure it, and its portlets, are up to date
                 if (selectedDashboardView.isDrawn()) {
-                    // I think this should work with markForRedraw but for some reason it does not                    
+                    // I think this should work with markForRedraw but for some reason it does not
                     selectedDashboardView.redraw();
                 }
             }
@@ -281,9 +281,8 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
         dashboard.setName(MSG.common_title_default());
         dashboard.setCategory(DashboardCategory.INVENTORY);
         dashboard.setColumns(2);
-        // only leftmost column width is currently settable, the rest are equally divided        
+        // only leftmost column width is currently settable, the rest are equally divided
         dashboard.setColumnWidths("32%");
-        dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
         boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName());

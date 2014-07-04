@@ -86,11 +86,11 @@ import org.rhq.coregui.client.util.message.MessageCenterView;
  * @author Libor Zoubek
  */
 public class MenuBarView extends EnhancedVLayout {
-    
+
     public static final String MSG_CENTER_BTN_CONTENT = "<span class='fa fa-flag'> ";
     public static final String BTN_FAV_ID = "fav-btn";
     public static final String BTN_MSG_CENTER_ID = "msg-center-btn";
- 
+
     public static final MenuItem[] MENU_ITEMS = {
         new MenuItem(DashboardsView.VIEW_ID),
         new MenuItem(InventoryView.VIEW_ID)
@@ -144,7 +144,7 @@ public class MenuBarView extends EnhancedVLayout {
                      ),
                 new MenuItem(AdministrationView.SECTION_CONFIGURATION_VIEW_ID,AdministrationView.VIEW_ID)
                     .subItems(
-                        new MenuItem(SystemSettingsView.VIEW_ID,Permission.MANAGE_SETTINGS, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),                        
+                        new MenuItem(SystemSettingsView.VIEW_ID,Permission.MANAGE_SETTINGS, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
                         new MenuItem(AlertDefinitionTemplateTypeView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
                         new MenuItem(DriftDefinitionTemplateTypeView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
                         new MenuItem(MetricTemplateTypeView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
@@ -186,6 +186,9 @@ public class MenuBarView extends EnhancedVLayout {
         aboutModalWindow = new AboutModalWindow(productInfo);
         messageCenter = new MessageCenterView();
         messageBar = new MessageBar();
+        // messageBar.setHeight(1);
+        // messageBar.setMaxHeight(1);
+        messageBar.setVisible(false);
         favoritesButton = new FavoritesButton();
         injectMenuFunctions(this);
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
@@ -213,7 +216,7 @@ public class MenuBarView extends EnhancedVLayout {
             updateMenuVisibility(child);
         }
     }
-    
+
  // This is our JSNI method that will be called on form submit
     private native void injectMenuFunctions(MenuBarView view) /*-{
       $wnd.__gwt_showMessageCenter = $entry(function(){
@@ -261,7 +264,7 @@ public class MenuBarView extends EnhancedVLayout {
             this.setContents(createBarContent());
             History.addValueChangeHandler(this);
         }
-        
+
         @Override
         protected void onDraw() {
             updateActiveMenuItem(History.getToken());
@@ -332,7 +335,7 @@ public class MenuBarView extends EnhancedVLayout {
              +"</a>"
              +"<ul class='dropdown-menu'>"
              + "<li><a href='#Administration/Security/Users/"+user.getId()+"'>Account Details</a></li>"
-             + "<li class='divider'></li>" 
+             + "<li class='divider'></li>"
                +"<li>"
                  +"<a href='#"+LOGOUT_VIEW_ID.getName()+"'>"+LOGOUT_VIEW_ID.getTitle()+"</a>"
                +"</li>"
@@ -346,7 +349,7 @@ public class MenuBarView extends EnhancedVLayout {
                 + "</nav>");
             return sb.toString();
         }
-        
+
         private String getMenuItems() {
             StringBuilder sb = new StringBuilder();
             int i = 0;
@@ -380,7 +383,7 @@ public class MenuBarView extends EnhancedVLayout {
                 if (level == 0) {
                     item.append("<div class='navbar-btn-group'>");
                     item.append("<a class='navbar-btn-item nbi-link' href='#"+sectionName.getName()+"'>" + sectionName.getTitle() + "</a>");
-                    item.append("<a class='navbar-btn-item nbi-caret' data-toggle='dropdown'><b class='caret'></b></a>");    
+                    item.append("<a class='navbar-btn-item nbi-caret' data-toggle='dropdown'><b class='caret'></b></a>");
                 } else {
                     item.append("<a href='#"+sectionName.getName()+"'>" + sectionName.getTitle() + "</a>");
                 }

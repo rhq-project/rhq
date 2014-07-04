@@ -139,12 +139,12 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout, V extends 
         }
     }
 
-    // This is invoked by events fired in TwoLevelTabSet whenever a tab/subtab combo has been selected. 
+    // This is invoked by events fired in TwoLevelTabSet whenever a tab/subtab combo has been selected.
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
 
-        // Establishing the proper tabbed view may involve tab add/remove and async loading of content. While doing this 
-        // we want to prevent user initiation of another tab change. To block users from clicking tabs we 
-        // disable the tab set.  We re-enable the tabset when safe. (see this method and also selectTab()). 
+        // Establishing the proper tabbed view may involve tab add/remove and async loading of content. While doing this
+        // we want to prevent user initiation of another tab change. To block users from clicking tabs we
+        // disable the tab set.  We re-enable the tabset when safe. (see this method and also selectTab()).
 
         String historyToken = tabSelectedEvent.getHistoryToken();
 
@@ -216,7 +216,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout, V extends 
         // ignored. We re-enable the event handling when safe. (see selectTab()).  Similarly, even when navigating
         // within the same entity, when changing tabs we need to suppress smartgwt generated tab events (when
         // calling TabSet.selectTab). That event can conflict with our subtab management, navigating the user
-        // to the default subtab for the tab and overriding our explicit navigation to a non-default subtab. 
+        // to the default subtab for the tab and overriding our explicit navigation to a non-default subtab.
         this.tabSet.setIgnoreSelectEvents(true);
 
         if (getSelectedItemId() == null || getSelectedItemId() != id || viewPath.isRefresh()) {
@@ -228,7 +228,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout, V extends 
             //
             // until we finish the following work we're susceptible to fast-click issues in
             // tree navigation.  So, wait until after it's done to notify listeners that the view is
-            // safely rendered.  Make sure to notify even on failure.            
+            // safely rendered.  Make sure to notify even on failure.
             try {
                 this.selectTab(this.tabName, this.subTabName, viewPath);
             } finally {
@@ -251,7 +251,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout, V extends 
             SubTab subtab = null;
 
             // if the requested tab is not available for the tabset then select the default tab/subtab. Fire
-            // an event in order to navigate to the new path 
+            // an event in order to navigate to the new path
             if (tab == null || tab.getDisabled()) {
                 this.tabSet.setIgnoreSelectEvents(false);
                 subtab = selectDefaultTabAndSubTab();
@@ -263,7 +263,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout, V extends 
 
             // due to our attempt to perform sticky tabbing we may request an invalid subtab when
             // switching resources. If the requested subtab is not available the select the default subtab
-            // for the tab. Fire an event in order to navigate to the new path. 
+            // for the tab. Fire an event in order to navigate to the new path.
             if (subtab == null || tab.getLayout().isSubTabDisabled(subtab)) {
                 this.tabSet.setIgnoreSelectEvents(false);
                 subtab = selectDefaultSubTab(tab);

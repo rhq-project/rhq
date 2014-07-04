@@ -127,9 +127,9 @@ public class ResourceTreeView extends EnhancedVLayout {
     private void buildTree() {
         treeGrid = new CustomResourceTreeGrid();
 
-        treeGrid.setOpenerImage("resources/dir.png");
-        treeGrid.setOpenerIconSize(16);
-
+        //treeGrid.setOpenerImage("resources/dir.png");
+        //treeGrid.setOpenerIconSize(16);
+        //treeGrid.setIconSize(24);
         // don't auto-fetch data, the initial fetch is requested manually using initial lineage information
         treeGrid.setAutoFetchData(false);
 

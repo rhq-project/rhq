@@ -136,7 +136,12 @@
       <scope>provided</scope>
     </dependency>
 
-
+<dependency>
+  <groupId>com.smartgwt</groupId>
+  <artifactId>smartgwt-skins</artifactId>
+  <version>${smartgwt.version}</version>
+  <scope>provided</scope>
+</dependency>
 
 
         <!-- for file uploads -->

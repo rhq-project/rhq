@@ -63,7 +63,7 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
     private EnhancedIButton saveButton;
     private boolean oddRow;
     private final StorageNodeConfigurationComposite configuration;
-    
+
     private static String FIELD_HEAP_MAX = "heap_max";
     private static String FIELD_HEAP_NEW = "heap_new";
     private static String FIELD_THREAD_STACK_SIZE = "thread_stack_size";
@@ -71,7 +71,7 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
 
     public StorageNodeConfigurationEditor(final StorageNodeConfigurationComposite configuration) {
         super();
-        this.configuration = configuration; 
+        this.configuration = configuration;
     }
 
     private void save(final StorageNodeConfigurationComposite configuration) {
@@ -91,12 +91,12 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
     private List<FormItem> buildOneFormRowWithCombobox(String name, String title, String value, String description) {
         return buildOneFormRow(name, title, value, description, true, null);
     }
-    
+
     private List<FormItem> buildOneFormRowWithValidator(String name, String title, String value, String description,
         Validator validator) {
         return buildOneFormRow(name, title, value, description, false, validator);
     }
-    
+
     private List<FormItem> buildOneFormRow(String name, String title, String value, String description,
         boolean unitsDropdown, Validator validator) {
         List<FormItem> fields = new ArrayList<FormItem>();
@@ -187,7 +187,6 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         form.setColWidths(190, 220, "*");
         form.setIsGroup(true);
         form.setGroupTitle(MSG.view_adminTopology_storageNodes_settings_specific());
-        form.setBorder("1px solid #AAA");
         oddRow = true;
 
         List<FormItem> items = buildHeaderItems();
@@ -203,7 +202,7 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
                 MSG.view_adminTopology_storageNodes_settings_heapNewSizeName(),
                 configuration.getHeapNewSize(),
                 MSG.view_adminTopology_storageNodes_settings_heapNewSizeDescription()));
-        
+
         IsIntegerValidator validator = new IsIntegerValidator();
         items.addAll(buildOneFormRowWithValidator(FIELD_THREAD_STACK_SIZE,
             MSG.view_adminTopology_storageNodes_settings_threadStackSizeName(), configuration.getThreadStackSize(),
@@ -216,16 +215,16 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         form.setWidth100();
         form.setOverflow(Overflow.VISIBLE);
         setWidth100();
-        
+
         LayoutSpacer spacer = new LayoutSpacer();
         spacer.setWidth100();
-        
+
         ToolStrip toolStrip = buildToolStrip();
         setMembers(form, spacer, toolStrip);
         form.validate();
         markForRedraw();
     }
-    
+
     private EnhancedToolStrip buildToolStrip() {
         saveButton = new EnhancedIButton(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
@@ -264,7 +263,7 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
 
         return toolStrip;
     }
-    
+
     private StorageNodeConfigurationComposite getConfiguration() {
         StorageNodeConfigurationComposite configuration = new StorageNodeConfigurationComposite(
             this.configuration.getStorageNode());
@@ -274,31 +273,31 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         configuration.setJmxPort(Integer.parseInt(form.getValueAsString(FIELD_JMX_PORT)));
         return configuration;
     }
-    
+
     private boolean checkNewHeapLowerThanMaxHeap() {
         // let's be paranoid
         Object maxHeapObject = form.getField(FIELD_HEAP_MAX).getValue();
         Object newHeapObject = form.getField(FIELD_HEAP_NEW).getValue();
-        
+
         String maxHeapString = maxHeapObject != null ? maxHeapObject.toString().trim() : "";
         String newHeapString = newHeapObject != null ? newHeapObject.toString().trim() : "";
-        
+
         if (maxHeapString.isEmpty() || newHeapString.isEmpty()) {
             return false;
         }
-        
+
         int maxHeap = Integer.parseInt(maxHeapString.substring(0, maxHeapString.length() - 2));
         int newHeap = Integer.parseInt(newHeapString.substring(0, newHeapString.length() - 2));
-        
+
         boolean isMaxHeapInMegs = maxHeapString.toLowerCase().indexOf("m") != -1;
         boolean isNewHeapInMegs = newHeapString.toLowerCase().indexOf("m") != -1;
-        
+
         maxHeap = isMaxHeapInMegs ? maxHeap : maxHeap * 1024;
         newHeap = isNewHeapInMegs ? newHeap : newHeap * 1024;
-        
+
         return newHeap < maxHeap;
     }
-    
+
     private String getJVMMemoryString(String raw) {
         if (raw == null || raw.trim().isEmpty()) {
             throw new IllegalArgumentException("input string is null or empty");

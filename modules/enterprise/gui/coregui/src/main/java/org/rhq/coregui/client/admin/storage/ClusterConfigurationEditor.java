@@ -136,7 +136,6 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         form.setColWidths(190, 220, "*");
         form.setIsGroup(true);
         form.setGroupTitle(groupTitle);
-        form.setBorder("1px solid #AAA");
         form.setWidth100();
         form.setOverflow(Overflow.VISIBLE);
         form.setExtraSpace(15);
@@ -151,8 +150,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
 
     private void prepareForms() {
         setWidth100();
-        clusterForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'>"
-            + "<b>" + MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings() + "</b></span><br/>"
+        clusterForm = buildForm("<div align='left'><div>"
+            + MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings() + "</div><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings_desc() + "</div>");
 
         List<FormItem> items = buildHeaderItems();
@@ -176,10 +175,9 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         items.addAll(gossipPortItems);
         clusterForm.setFields(items.toArray(new FormItem[items.size()]));
 
-        deploymentForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'>"
-            + "<b>"
+        deploymentForm = buildForm("<div align='left'><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_deployments()
-            + "</b></span><br/>"
+            + "</div><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_deployments_desc() + "</div>");
         FormItemBuilder.resetOddRow();
         items = buildHeaderItems();
@@ -201,10 +199,9 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         items.addAll(automaticDeploymentItems);
         deploymentForm.setFields(items.toArray(new FormItem[items.size()]));
 
-        credentialsForm = buildForm("<div align='left'><span style='text-align: left; font-family: Arial, Verdana, sans-serif !important;'>"
-            + "<b>"
+        credentialsForm = buildForm("<div align='left'><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_credentials()
-            + "</b></span><br/>"
+            + "</div><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_credentials_desc() + "</div>");
         FormItemBuilder.resetOddRow();
         items = buildHeaderItems();

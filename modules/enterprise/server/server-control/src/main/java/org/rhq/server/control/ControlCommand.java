@@ -66,6 +66,9 @@ public abstract class ControlCommand {
     protected static final String STORAGE_BASEDIR_NAME = "rhq-storage";
     protected static final String AGENT_BASEDIR_NAME = "rhq-agent";
 
+    protected static final String RHQ_SERVER_PIDFILE_DIR_ENV_VARIABLE = "RHQ_SERVER_PIDFILE_DIR";
+    protected static final String RHQ_AGENT_PIDFILE_DIR_ENV_VARIABLE = "RHQ_AGENT_PIDFILE_DIR";
+
     private final File defaultStorageBasedir;
     private final File defaultAgentBasedir;
 
@@ -326,8 +329,22 @@ public abstract class ControlCommand {
         return null;
     }
 
+    private File getPidFile(String pidFilename, File baseDir, String envVariable) {
+        File pidFile = null;
+        if(envVariable != null && envVariable.length() > 0) {
+            pidFile = new File(envVariable, pidFilename);
+        } else {
+            pidFile = new File(baseDir, pidFilename);
+        }
+        return pidFile;
+    }
+
     protected String getServerPid() throws IOException {
-        File pidFile = new File(binDir, "rhq-server.pid");
+        String rhqServerPidDir = System.getenv(RHQ_SERVER_PIDFILE_DIR_ENV_VARIABLE);
+        String pidFilename = "rhq-server.pid";
+
+        File pidFile = getPidFile(pidFilename, binDir, rhqServerPidDir);
+
         if (pidFile.exists()) {
             return StreamUtil.slurp(new FileReader(pidFile));
         }
@@ -336,7 +353,10 @@ public abstract class ControlCommand {
 
     protected String getAgentPid() throws IOException {
         File agentBinDir = new File(getAgentBasedir(), "bin");
-        File pidFile = new File(agentBinDir, "rhq-agent.pid");
+        String rhqAgentPidDir = System.getenv(RHQ_AGENT_PIDFILE_DIR_ENV_VARIABLE);
+        String pidFilename = "rhq-agent.pid";
+
+        File pidFile = getPidFile(pidFilename, agentBinDir, rhqAgentPidDir);
 
         if (pidFile.exists()) {
             return StreamUtil.slurp(new FileReader(pidFile));

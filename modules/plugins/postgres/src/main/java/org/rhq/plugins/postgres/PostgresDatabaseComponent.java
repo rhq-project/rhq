@@ -218,12 +218,16 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
 
             if ((colName != null) && !colName.equals("")) {
                 buf.append(colName).append(" ").append(colType);
-                if ((length != null) && (length.getIntegerValue() != null)) {
-                    buf.append("(" + length.getIntegerValue() + ")");
-                }
 
-                if ((precision != null) && (precision.getIntegerValue() != null)) {
-                    buf.append("(" + precision.getIntegerValue() + ")");
+                // PostgreSQL does not use length or precision info with arrays
+                if(!isArrayColumnType(colType)) {
+                    if ((length != null) && (length.getIntegerValue() != null)) {
+                        buf.append("(" + length.getIntegerValue() + ")");
+                    }
+
+                    if ((precision != null) && (precision.getIntegerValue() != null)) {
+                        buf.append("(" + precision.getIntegerValue() + ")");
+                    }
                 }
 
                 if ((colDefault != null) && (colDefault.getStringValue() != null)) {
@@ -268,6 +272,13 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
         }
 
         return report;
+    }
+
+    private boolean isArrayColumnType(String columnType) {
+        if(columnType != null && columnType.trim().endsWith("[]")) {
+            return true;
+        }
+        return false;
     }
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,

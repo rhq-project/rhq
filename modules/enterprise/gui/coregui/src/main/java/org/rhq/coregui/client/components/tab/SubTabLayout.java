@@ -67,14 +67,11 @@ public class SubTabLayout extends EnhancedVLayout {
 
         setWidth100();
         setHeight100();
-        setMargin(0);
-        setPadding(0);
 
         buttonBar = new EnhancedToolStrip();
-        buttonBar.setBackgroundColor("grey");
         buttonBar.setWidth100();
-        buttonBar.setBorder(null);
         buttonBar.setMembersMargin(30);
+        buttonBar.setStyleName("subtabbar");
 
         addMember(buttonBar);
     }

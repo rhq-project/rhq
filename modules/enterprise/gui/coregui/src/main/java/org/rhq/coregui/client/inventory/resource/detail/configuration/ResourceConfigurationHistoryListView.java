@@ -31,7 +31,7 @@ import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * The main view that lists all resource configuration history items.
- * 
+ *
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
@@ -55,7 +55,8 @@ public class ResourceConfigurationHistoryListView extends
      * @param resourceId a Resource ID
      */
     public ResourceConfigurationHistoryListView(boolean hasWritePerm, int resourceId) {
-        super(VIEW_ID.getTitle(), hasWritePerm, resourceId);
+        //super(VIEW_ID.getTitle(), hasWritePerm, resourceId);
+        super("Hello!", hasWritePerm, resourceId);
         ResourceConfigurationHistoryDataSource datasource = new ResourceConfigurationHistoryDataSource();
         setDataSource(datasource);
     }

@@ -25,6 +25,8 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
@@ -77,9 +79,10 @@ public class OverviewForm extends EnhancedDynamicForm {
         setLeft("10%");
         setWidth("80%");
         if (isDisplayCondensed()) {
-            setPadding(5);
+            //setPadding(5);
             setColWidths(150, 220, 150, 220);
             setWidth("45%");
+            this.setAlign(Alignment.LEFT);
         }
 
         if (this.resourceComposite != null) {
@@ -162,6 +165,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         // Name
         final FormItem nameItem = (modifiable) ? new EditableFormItem() : new StaticTextItem();
         nameItem.setName("name");
+
         nameItem.setTitle(MSG.view_summaryOverviewForm_field_name());
         nameItem.setValue(resource.getName());
         nameItem.setAttribute(OUTPUT_AS_HTML_ATTRIBUTE, true);
@@ -344,6 +348,9 @@ public class OverviewForm extends EnhancedDynamicForm {
         }
 
         setItems(formItems.toArray(new FormItem[formItems.size()]));
+        this.setTitleAlign(Alignment.LEFT);
+        this.setTitleOrientation(TitleOrientation.LEFT);
+        this.setWrapItemTitles(false);
     }
 
     public void loadData() {

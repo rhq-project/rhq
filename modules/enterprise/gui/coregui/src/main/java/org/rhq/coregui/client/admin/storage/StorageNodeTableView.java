@@ -104,7 +104,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                     public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                         return imgHTML(ImageManager
                             .getAvailabilityIconFromAvailType(value == null ? AvailabilityType.UNKNOWN
-                                : (AvailabilityType) value));
+                                : (AvailabilityType) value), 16,16);
                     }
                 });
             }
@@ -208,7 +208,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                 component.redraw();
                 return component;
             }
-            
+
         };
         listGrid.setCanExpandRecords(true);
         return listGrid;

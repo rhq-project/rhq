@@ -248,7 +248,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         results.append("<table><tr>");
         if (0 == total) {
             results.append(getColumn(false,
-                "<img src=\"" + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(null)) + "\" /> 0"));
+                "<img height=\"12\" width=\"12\" src=\"" + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(null)) + "\" /> 0"));
             results.append(getColumn(true));
             results.append(getColumn(false));
 

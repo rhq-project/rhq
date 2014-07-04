@@ -75,7 +75,7 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
                 if (value!=null) {
                     icon = "global/Plugin_16.png";
                 }
-                return "<img src=\"" + ImageManager.getFullImagePath(icon) + "\" />";
+                return "<img class='tableImage' src=\"" + ImageManager.getFullImagePath(icon) + "\" />";
             }
         });
         originField.setShowHover(true);

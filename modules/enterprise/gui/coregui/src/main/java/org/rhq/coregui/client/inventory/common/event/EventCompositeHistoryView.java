@@ -235,7 +235,7 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
      * that only trim their views to the top N events can override this to
      * return false so they don't delete events that aren't displayed
      * to the user.
-     * 
+     *
      * @return this default implementation returns true
      */
     protected boolean canSupportDeleteAndPurgeAll() {

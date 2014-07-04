@@ -726,16 +726,19 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
         Set<MeasurementScheduleRequest> skmRequests = new HashSet<MeasurementScheduleRequest>(requests.size());
         Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
+        String tempDirAttributeName = getTempDirAttributeName();
         for (MeasurementScheduleRequest request : requests) {
             String requestName = request.getName();
             if (requestName.equals("startTime")) {
                 collectStartTimeTrait(report, request);
-            } else if (requestName.equals(getTempDirAttributeName())) {
-                collectEnvironmentTrait(report, request);
-            } else if (requestName.startsWith("_skm:")) { // handled below
-                skmRequests.add(request);
             } else {
-                leftovers.add(request); // handled below
+                if (tempDirAttributeName != null && requestName.equals(tempDirAttributeName)) {
+                    collectEnvironmentTrait(report, request);
+                } else if (requestName.startsWith("_skm:")) { // handled below
+                    skmRequests.add(request);
+                } else {
+                    leftovers.add(request); // handled below
+                }
             }
         }
 
@@ -836,7 +839,15 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     @NotNull
     protected abstract String getBaseDirAttributeName();
 
-    protected abstract String getTempDirAttributeName();
+    /**
+     * Default implentation. Override in concrete subclasses and return the the temporary directory attribute name,
+     * found on the node at {@link #getEnvironmentAddress()}.
+     *
+     * @return the temp dir attribute name or null if no such attribute exists
+     */
+    protected String getTempDirAttributeName() {
+        return null;
+    }
 
     protected void collectConfigTrait(MeasurementReport report, MeasurementScheduleRequest request) {
         String value = readEnvironmentAttribute(request);

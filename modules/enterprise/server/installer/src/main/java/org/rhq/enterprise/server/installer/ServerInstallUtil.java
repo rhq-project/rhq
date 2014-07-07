@@ -75,7 +75,7 @@ import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
-import org.rhq.core.util.obfuscation.ObfuscationVault;
+import org.rhq.core.util.obfuscation.PropertyObfuscationVault;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 
@@ -382,7 +382,7 @@ public class ServerInstallUtil {
         final VaultJBossASClient client = new VaultJBossASClient(mcc);
 
         if (!client.isVault()) {
-            ModelNode request = client.createNewVaultRequest(ObfuscationVault.class.getName());
+            ModelNode request = client.createNewVaultRequest(PropertyObfuscationVault.class.getName());
             ModelNode results = client.execute(request);
             if (!VaultJBossASClient.isSuccess(results)) {
                 throw new FailureException(results, "Failed to create the RHQ vault");

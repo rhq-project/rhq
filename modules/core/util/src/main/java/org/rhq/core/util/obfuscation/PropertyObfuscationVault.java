@@ -35,7 +35,7 @@ import org.jboss.security.vault.SecurityVaultException;
  * @author Stefan Negrea
  *
  */
-public class ObfuscationVault implements SecurityVault {
+public class PropertyObfuscationVault implements SecurityVault {
 
     private static final Log LOG = LogFactory.getLog(SecurityVault.class);
 

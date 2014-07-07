@@ -1181,6 +1181,15 @@
         <include path="welcome-content"/>
       </includes>
     </drift-definition>
+    <drift-definition name="Template-Configuration Files" description="Monitor server configuration directory for drift.">
+      <basedir>
+        <value-context>pluginConfiguration</value-context>
+        <value-name>configDir</value-name>
+      </basedir>
+      <excludes>
+        <exclude path="." pattern="*_history/**/*"/>
+      </excludes>
+    </drift-definition>
 
     <bundle-target>
       <destination-base-dir name="Temp Directory" description="The temporary directory for a host controller">
@@ -1629,6 +1638,15 @@
         <value-context>measurementTrait</value-context>
         <value-name>deployDir</value-name>
       </basedir>
+    </drift-definition>
+    <drift-definition name="Template-Configuration Files" description="Monitor server configuration directory for drift.">
+      <basedir>
+        <value-context>pluginConfiguration</value-context>
+        <value-name>configDir</value-name>
+      </basedir>
+      <excludes>
+        <exclude path="." pattern="*_history/**/*"/>
+      </excludes>
     </drift-definition>
 
     <bundle-target>

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,8 +24,7 @@ package org.rhq.plugins.server;
 
 import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -50,55 +49,25 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 public class JBossAS7JMXDiscoveryComponent<T extends ResourceComponent<JBossAS7JMXComponent<?>>> implements
     ResourceDiscoveryComponent<T>, ClassLoaderFacet<ResourceComponent<JBossAS7JMXComponent<?>>> {
 
-    private Log log = LogFactory.getLog(JBossAS7JMXDiscoveryComponent.class);
+    private static final Log LOG = LogFactory.getLog(JBossAS7JMXDiscoveryComponent.class);
 
+    /**
+     * @deprecated as of RHQ4.12, this discovery component should no longer implement the
+     * {@link org.rhq.core.pluginapi.inventory.ClassLoaderFacet}
+     */
     @Override
+    @Deprecated
     public List<URL> getAdditionalClasspathUrls(
         ResourceDiscoveryContext<ResourceComponent<JBossAS7JMXComponent<?>>> context, DiscoveredResourceDetails details)
         throws Exception {
-
-        Configuration pluginConfig = details.getPluginConfiguration();
-        String clientJarLocation = pluginConfig.getSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_CLIENT_JAR_LOCATION);
-        if (clientJarLocation == null) {
-            log.warn("Missing the client jar location - cannot connect to the JBossAS instance: "
-                + details.getResourceKey());
-            return null;
-        }
-
-        File clientJarDir = new File(clientJarLocation);
-        if (!clientJarDir.isDirectory()) {
-            log.warn("The client jar location [" + clientJarDir.getAbsolutePath()
-                + "] does not exist - cannot connect to the JBossAS instance: " + details.getResourceKey());
-            return null;
-        }
-
-        ArrayList<URL> clientJars = new ArrayList<URL>();
-        for (File clientJarFile : clientJarDir.listFiles()) {
-            if (clientJarFile.getName().endsWith(".jar")) {
-                clientJars.add(clientJarFile.toURI().toURL());
-            }
-        }
-
-        if (clientJars.size() == 0) {
-            log.warn("The client jar location [" + clientJarDir.getAbsolutePath()
-                + "] is missing client jars - cannot connect to the JBossAS instance: " + details.getResourceKey());
-            return null;
-        }
-
-        return clientJars;
+        return Collections.emptyList();
     }
 
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context) {
-
-        HashSet<DiscoveredResourceDetails> result = new HashSet<DiscoveredResourceDetails>();
         ResourceContext<?> parentResourceContext = context.getParentResourceContext();
         Configuration parentPluginConfig = parentResourceContext.getPluginConfiguration();
 
-        // TODO: use additional methods to look around for other places where this can be find
-        // for example, we might be able to look in the /modules directory for some jars to
-        // use if the bin/client dir is gone.  Also, if for some reason we shouldn't use this jar,
-        // we may need to instead use various additional jars required by jbossas/bin/jconsole.sh.
         File rhqServerFile = null;
         File clientJarDir = null;
 
@@ -109,7 +78,7 @@ public class JBossAS7JMXDiscoveryComponent<T extends ResourceComponent<JBossAS7J
             if (homeDirFile.exists()) {
                 clientJarDir = new File(homeDirFile, "bin/client");
                 if (!clientJarDir.exists()) {
-                    log.warn("The client jar location [" + clientJarDir.getAbsolutePath()
+                    LOG.warn("The client jar location [" + clientJarDir.getAbsolutePath()
                         + "] does not exist - will not be able to connect to the AS7 instance");
                 }
 
@@ -118,11 +87,12 @@ public class JBossAS7JMXDiscoveryComponent<T extends ResourceComponent<JBossAS7J
         }
 
         // If the parent is not an RHQ server then just return.
-        if (null == rhqServerFile || !rhqServerFile.exists()) {
-            return result;
+        // If clientJar was not found then just return
+        if (null == rhqServerFile || !rhqServerFile.exists() || !clientJarDir.exists()) {
+            return Collections.emptySet();
         }
 
-        String clientJarLocation = (clientJarDir != null) ? clientJarDir.getAbsolutePath() : null;
+        String clientJarLocation = clientJarDir.getAbsolutePath();
 
         String key = "RHQServerSubsystems";
         String name = "RHQ Server Subsystems";
@@ -152,8 +122,6 @@ public class JBossAS7JMXDiscoveryComponent<T extends ResourceComponent<JBossAS7J
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, name,
             version, description, pluginConfig, null);
 
-        result.add(resource);
-
-        return result;
+        return Collections.singleton(resource);
     }
 }

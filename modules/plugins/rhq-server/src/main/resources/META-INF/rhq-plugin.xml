@@ -19,10 +19,9 @@
     discovery="JBossAS7JMXDiscoveryComponent"
     class="JBossAS7JMXComponent"
     description="Container for RHQ Server subsystem JMX MBeans"
-    singleton="true"
-    classLoader="instance">
+    singleton="true">
 
-    <runs-inside>
+  <runs-inside>
       <parent-resource-type
         name="JBossAS7 Standalone Server"
         plugin="JBossAS7" />
@@ -57,7 +56,7 @@
         name="clientJarLocation"
         type="directory"
         required="true"
-        description="The directory where the AS client jar(s) are located. Whatever jars are located in here are placed in the plugin classloader." />
+        description="The directory where the CLI client jar is located."/>
     </plugin-configuration>
 
     <service

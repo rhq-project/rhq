@@ -69,7 +69,7 @@ public class SuspectMetricHandler extends AbstractRestBean implements SuspectMet
 
                 CsvWriter<MeasurementOOBComposite> csvWriter = new CsvWriter<MeasurementOOBComposite>();
                 csvWriter.setColumns("resourceName", "ancestry", "scheduleName", "formattedBaseband",
-                    "formattedOutlier");
+                    "formattedOutlier", "factor");
 
                 csvWriter.setPropertyConverter("ancestry", new PropertyConverter<MeasurementOOBComposite>() {
                     @Override

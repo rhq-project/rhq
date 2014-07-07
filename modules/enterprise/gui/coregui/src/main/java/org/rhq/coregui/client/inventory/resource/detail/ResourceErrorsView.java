@@ -47,6 +47,7 @@ import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.detail.ResourceErrorsDataSource.Field;
 import org.rhq.coregui.client.util.message.Message;
@@ -138,8 +139,8 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
         ResourceComposite resourceComposite = titleBar.getResource();
         Set<Permission> resourcePermissions = resourceComposite.getResourcePermission().getPermissions();
         final boolean canModifyResource = resourcePermissions.contains(Permission.MODIFY_RESOURCE);
-        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AbstractTableAction(
-            canModifyResource ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
+        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), ButtonColor.RED,
+            new AbstractTableAction(canModifyResource ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
             public void executeAction(final ListGridRecord[] selection, Object actionValue) {
                 if (selection == null || selection.length == 0) {
                     return;

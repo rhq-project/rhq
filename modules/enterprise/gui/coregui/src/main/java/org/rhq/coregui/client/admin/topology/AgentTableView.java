@@ -49,6 +49,7 @@ import org.rhq.coregui.client.admin.agent.install.RemoteAgentInstallView.Type;
 import org.rhq.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -154,8 +155,8 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
     }
 
     private void setupNewButton() {
-        addTableAction(MSG.common_button_new(), null, new AuthorizedTableAction(this, TableActionEnablement.ALWAYS,
-            Permission.MANAGE_INVENTORY) {
+        addTableAction(MSG.common_button_new(), null, ButtonColor.BLUE, new AuthorizedTableAction(this,
+            TableActionEnablement.ALWAYS, Permission.MANAGE_INVENTORY) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 newDetails();
             }
@@ -163,8 +164,8 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
     }
 
     private void setupStartButton() {
-        addTableAction(MSG.common_button_start(), null, new AuthorizedTableAction(this, TableActionEnablement.SINGLE,
-            Permission.MANAGE_INVENTORY) {
+        addTableAction(MSG.common_button_start(), null, ButtonColor.GRAY, new AuthorizedTableAction(this,
+            TableActionEnablement.SINGLE, Permission.MANAGE_INVENTORY) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 if (selections == null || selections.length == 0) {
                     return; // do nothing since nothing is selected (we really shouldn't get here)
@@ -204,8 +205,8 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
     }
 
     private void setupStopButton() {
-        addTableAction(MSG.common_button_stop(), null, new AuthorizedTableAction(this, TableActionEnablement.SINGLE,
-            Permission.MANAGE_INVENTORY) {
+        addTableAction(MSG.common_button_stop(), null, ButtonColor.GRAY, new AuthorizedTableAction(this,
+            TableActionEnablement.SINGLE, Permission.MANAGE_INVENTORY) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 if (selections == null || selections.length == 0) {
                     return; // do nothing since nothing is selected (we really shouldn't get here)
@@ -245,7 +246,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
     }
 
     private void setupDeleteButton() {
-        addTableAction(MSG.common_button_delete(), MSG.view_adminTopology_agent_delete_confirm(),
+        addTableAction(MSG.common_button_delete(), MSG.view_adminTopology_agent_delete_confirm(), ButtonColor.RED,
             new AuthorizedTableAction(this, TableActionEnablement.SINGLE, Permission.MANAGE_INVENTORY) {
                 public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                     if (selections == null || selections.length == 0) {
@@ -341,7 +342,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
     }
 
     private void showUpdateMembersAction() {
-        addTableAction(MSG.view_groupInventoryMembers_button_updateMembership(), new AuthorizedTableAction(this,
+        addTableAction(MSG.view_groupInventoryMembers_button_updateMembership(), ButtonColor.BLUE, new AuthorizedTableAction(this,
             TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 AffinityGroupAgentsSelector.show(id, AgentTableView.this);

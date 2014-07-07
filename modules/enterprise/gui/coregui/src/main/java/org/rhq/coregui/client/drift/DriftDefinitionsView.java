@@ -42,6 +42,7 @@ import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.drift.wizard.DriftAddDefinitionWizard;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -135,7 +136,7 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
         TableActionEnablement detectNowEnablement = hasWriteAccess ? TableActionEnablement.SINGLE
             : TableActionEnablement.NEVER;
 
-        addTableAction(MSG.common_button_new(), null, new TableAction() {
+        addTableAction(MSG.common_button_new(), null, ButtonColor.BLUE, new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return hasWriteAccess;
             }
@@ -145,14 +146,15 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
             }
         });
 
-        addTableAction(MSG.common_button_delete(), MSG.view_drift_confirm_deleteDefs(), new AbstractTableAction(
-            deleteEnablement) {
+        addTableAction(MSG.common_button_delete(), MSG.view_drift_confirm_deleteDefs(), ButtonColor.RED,
+            new AbstractTableAction(deleteEnablement) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 delete(selection);
             }
         });
 
-        addTableAction(MSG.common_button_delete_all(), MSG.view_drift_confirm_deleteAllDefs(), new TableAction() {
+        addTableAction(MSG.common_button_delete_all(), MSG.view_drift_confirm_deleteAllDefs(), ButtonColor.RED,
+            new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 ListGrid grid = getListGrid();
                 ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
@@ -164,7 +166,7 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
             }
         });
 
-        addTableAction(MSG.view_drift_button_detectNow(), null, new AbstractTableAction(
+        addTableAction(MSG.view_drift_button_detectNow(), null, ButtonColor.GRAY, new AbstractTableAction(
             detectNowEnablement) {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {

@@ -53,6 +53,7 @@ import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.coregui.client.inventory.resource.AncestryUtil;
@@ -95,6 +96,31 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
             SortDirection.DESCENDING);
         getListGrid().setSort(new SortSpecifier[] { sortSpec });
 
+        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), ButtonColor.RED, new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                int count = selection.length;
+                return (count >= 1 && hasControlPermission());
+            }
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                deleteSelectedRecords();
+            }
+        });
+
+        addTableAction(MSG.view_operationHistoryList_button_forceDelete(), getDeleteConfirmMessage(), ButtonColor.RED,
+            new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    int count = selection.length;
+                    return (count >= 1 && hasControlPermission());
+                }
+
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    DSRequest requestProperties = new DSRequest();
+                    requestProperties.setAttribute("force", true);
+                    deleteSelectedRecords(requestProperties);
+                }
+            });
+        
         // the below addTableAction and the enclosing TableAction anon class code is taken from
         // OperationHistoryView. I don't know why we have an abstract operation history list hierarchy separate
         // from OperationHistoryView. Perhaps independently developed and the developer of one didn't know the other
@@ -144,36 +170,12 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
             }
         });
 
-        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), new TableAction() {
-            public boolean isEnabled(ListGridRecord[] selection) {
-                int count = selection.length;
-                return (count >= 1 && hasControlPermission());
-            }
-
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                deleteSelectedRecords();
-            }
-        });
-
-        addTableAction(MSG.view_operationHistoryList_button_forceDelete(), getDeleteConfirmMessage(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    int count = selection.length;
-                    return (count >= 1 && hasControlPermission());
-                }
-
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    DSRequest requestProperties = new DSRequest();
-                    requestProperties.setAttribute("force", true);
-                    deleteSelectedRecords(requestProperties);
-                }
-            });
-
         if (showNewScheduleButton()) {
             TableActionInfo rescheduleAction = new TableActionInfoBuilder(MSG.common_button_reschedule(),
                 new RescheduleTableAction()).setTooltip(MSG.common_button_reschedule_tooltip()).createTableActionInfo();
             addTableAction(rescheduleAction);
-            addTableAction(MSG.common_button_new() + " " + MSG.common_button_schedule(), new NewScheduleTableAction());
+            addTableAction(MSG.common_button_new() + " " + MSG.common_button_schedule(), ButtonColor.BLUE,
+                new NewScheduleTableAction());
         }
         super.configureTable();
     }

@@ -51,6 +51,7 @@ import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.menu.MenuBarView;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.message.Message.Severity;
@@ -223,8 +224,8 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
             }
         });
 
-        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AbstractTableAction(
-            TableActionEnablement.ANY) {
+        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), ButtonColor.RED,
+            new AbstractTableAction(TableActionEnablement.ANY) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 try {
@@ -240,8 +241,8 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
             }
         });
 
-        addTableAction(MSG.common_button_delete_all(), MSG.common_msg_areYouSure(), new AbstractTableAction(
-            TableActionEnablement.ALWAYS) {
+        addTableAction(MSG.common_button_delete_all(), MSG.common_msg_areYouSure(), ButtonColor.RED,
+            new AbstractTableAction(TableActionEnablement.ALWAYS) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 try {
@@ -260,8 +261,8 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
         maxMessagesMap.put("50", Integer.valueOf("50"));
         maxMessagesMap.put("100", Integer.valueOf("100"));
         maxMessagesMap.put("200", Integer.valueOf("200"));
-        addTableAction(MSG.view_messageCenter_maxMessages(), null, maxMessagesMap, new AbstractTableAction(
-            TableActionEnablement.ALWAYS) {
+        addTableAction(MSG.view_messageCenter_maxMessages(), null, maxMessagesMap, ButtonColor.GRAY,
+            new AbstractTableAction(TableActionEnablement.ALWAYS) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 try {
@@ -391,8 +392,8 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
             setShowMinimizeButton(true);
             setShowMaximizeButton(true);
             setShowCloseButton(true);
-            setIsModal(false);
-            setShowModalMask(false);
+            setIsModal(true);
+            setShowModalMask(true);
             setWidth(700);
             setHeight(300);
             setShowResizer(true);

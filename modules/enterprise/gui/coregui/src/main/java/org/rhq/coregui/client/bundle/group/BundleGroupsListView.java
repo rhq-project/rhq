@@ -41,6 +41,7 @@ import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
@@ -118,15 +119,15 @@ public class BundleGroupsListView extends TableSection<BundleGroupsDataSource> i
 
         boolean hasAuthz = globalPermissions.contains(Permission.MANAGE_BUNDLE_GROUPS);
 
-        addTableAction(MSG.common_button_new(), null, new AbstractTableAction((hasAuthz) ? TableActionEnablement.ALWAYS
-            : TableActionEnablement.NEVER) {
+        addTableAction(MSG.common_button_new(), null, ButtonColor.BLUE, new AbstractTableAction(
+            (hasAuthz) ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
         });
 
-        addTableAction(MSG.common_button_delete(), MSG.view_bundleGroup_deleteConfirm(), new AbstractTableAction(
-            (hasAuthz) ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
+        addTableAction(MSG.common_button_delete(), MSG.view_bundleGroup_deleteConfirm(), ButtonColor.RED,
+            new AbstractTableAction((hasAuthz) ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
             public void executeAction(ListGridRecord[] selections, Object actionValue) {
                 if (selections == null || selections.length == 0) {
                     return;

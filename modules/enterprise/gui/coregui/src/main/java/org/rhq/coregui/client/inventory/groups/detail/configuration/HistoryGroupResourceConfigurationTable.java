@@ -45,6 +45,7 @@ import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.message.Message;
@@ -117,7 +118,7 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
         ListGrid listGrid = getListGrid();
         listGrid.setFields(fieldId, fieldDateCreated, fieldLastUpdated, fieldStatus, fieldUser);
 
-        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(),
+        addTableAction(MSG.common_button_delete(),  MSG.common_msg_areYouSure(), ButtonColor.RED,
             new AbstractTableAction(this.groupPerms.isInventory() ? TableActionEnablement.ANY
                 : TableActionEnablement.NEVER) {
 
@@ -155,7 +156,7 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
                 }
             });
 
-        addTableAction(MSG.view_group_resConfig_table_viewSettings(), new AbstractTableAction(
+        addTableAction(MSG.view_group_resConfig_table_viewSettings(), ButtonColor.BLUE, new AbstractTableAction(
             TableActionEnablement.SINGLE) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {

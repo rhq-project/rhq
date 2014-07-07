@@ -53,6 +53,7 @@ import org.rhq.coregui.client.components.table.ResourceAuthorizedTableAction;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -189,26 +190,9 @@ public class AlertHistoryView extends TableSection<AlertDataSource>  implements 
     }
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {
-
-        addTableAction(MSG.common_button_delete(), MSG.view_alerts_delete_confirm(), new ResourceAuthorizedTableAction(
-            AlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null : Permission.MANAGE_ALERTS),
-            new RecordExtractor<Integer>() {
-                public Collection<Integer> extract(Record[] records) {
-                    List<Integer> result = new ArrayList<Integer>(records.length);
-                    for (Record record : records) {
-                        result.add(record.getAttributeAsInt("resourceId"));
-                    }
-                    return result;
-                }
-            }) {
-
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                delete(selection);
-            }
-        });
-        addTableAction(MSG.common_button_ack(), MSG.view_alerts_ack_confirm(), new ResourceAuthorizedTableAction(
-            AlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null : Permission.MANAGE_ALERTS),
-            new RecordExtractor<Integer>() {
+        addTableAction(MSG.common_button_ack(), MSG.view_alerts_ack_confirm(), ButtonColor.BLUE,
+            new ResourceAuthorizedTableAction(AlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null
+                : Permission.MANAGE_ALERTS), new RecordExtractor<Integer>() {
                 public Collection<Integer> extract(Record[] records) {
                     List<Integer> result = new ArrayList<Integer>(records.length);
                     for (Record record : records) {
@@ -222,19 +206,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource>  implements 
                 acknowledge(selection);
             }
         });
-
         if (canSupportDeleteAndAcknowledgeAll()) {
-            addTableAction(MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(), new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    ListGrid grid = getListGrid();
-                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
-                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
-                }
-
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    deleteAll();
-                }
-            });
             addTableAction(MSG.common_button_ack_all(), MSG.view_alerts_ack_confirm_all(), new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     ListGrid grid = getListGrid();
@@ -247,8 +219,40 @@ public class AlertHistoryView extends TableSection<AlertDataSource>  implements 
                 }
             });
         }
+
+        addTableAction(MSG.common_button_delete(), MSG.view_alerts_delete_confirm(), ButtonColor.RED,
+            new ResourceAuthorizedTableAction(AlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null
+                : Permission.MANAGE_ALERTS), new RecordExtractor<Integer>() {
+                public Collection<Integer> extract(Record[] records) {
+                    List<Integer> result = new ArrayList<Integer>(records.length);
+                    for (Record record : records) {
+                        result.add(record.getAttributeAsInt("resourceId"));
+                    }
+                    return result;
+                }
+            }) {
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                delete(selection);
+            }
+        });
+        if (canSupportDeleteAndAcknowledgeAll()) {
+            addTableAction(MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(), ButtonColor.RED,
+                new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    ListGrid grid = getListGrid();
+                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
+                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
+                }
+
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    deleteAll();
+                }
+            });
+        }
         if (!context.isSubsystemView() && showNewDefinitionButton) {
-            addTableAction(MSG.common_button_new() + " " + MSG.common_title_definition(), new TableAction() {
+            addTableAction(MSG.common_button_new() + " " + MSG.common_title_definition(), ButtonColor.BLUE,
+                new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     // todo: this.permissions.isAlert()
                     return hasWriteAccess;

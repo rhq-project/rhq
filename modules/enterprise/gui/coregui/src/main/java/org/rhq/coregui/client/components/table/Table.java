@@ -27,6 +27,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.rhq.core.domain.search.SearchSubsystem;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.InitializableView;
+import org.rhq.coregui.client.RefreshableView;
+import org.rhq.coregui.client.components.TitleBar;
+import org.rhq.coregui.client.components.form.DateFilterItem;
+import org.rhq.coregui.client.components.form.EnhancedSearchBarItem;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
+import org.rhq.coregui.client.util.CriteriaUtility;
+import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
+
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
@@ -71,23 +88,6 @@ import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
-
-import org.rhq.core.domain.search.SearchSubsystem;
-import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.InitializableView;
-import org.rhq.coregui.client.RefreshableView;
-import org.rhq.coregui.client.components.TitleBar;
-import org.rhq.coregui.client.components.form.DateFilterItem;
-import org.rhq.coregui.client.components.form.EnhancedSearchBarItem;
-import org.rhq.coregui.client.util.CriteriaUtility;
-import org.rhq.coregui.client.util.Log;
-import org.rhq.coregui.client.util.RPCDataSource;
-import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
-import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
-import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.coregui.client.util.message.Message;
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
@@ -591,6 +591,24 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             if (null == tableAction.getValueMap()) {
                 // button action
                 IButton button = new EnhancedIButton(tableAction.getTitle());
+                // set the id prefix to be able to match in css on this element
+                if (tableAction.getButtonColor() != null) {
+                    switch (tableAction.getButtonColor()) {
+                    case BLUE:
+                        button.setID("primary" + id + tableAction.getTitle());
+                        break;
+                    case RED:
+                        button.setID("destructive" + id + tableAction.getTitle());
+                        break;
+                    default:
+                        break;
+                    }
+                }
+                // just in case, someone forgot to explicitly set the red color (works only for English)
+                if (tableAction.getTitle().toLowerCase().contains("delete")
+                    || tableAction.getTitle().toLowerCase().contains("remove")) {
+                    button.setID("destructive" + id + tableAction.getTitle());
+                }
                 button.setTooltip(tableAction.getTooltip());
                 button.setDisabled(true);
                 button.setOverflow(Overflow.VISIBLE);
@@ -988,7 +1006,11 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * completion. Failure to do so may leave the widgets disabled.
      */
     public void addTableAction(String title, TableAction tableAction) {
-        this.addTableAction(title, null, null, tableAction);
+        this.addTableAction(title, null, null, null, tableAction);
+    }
+    
+    public void addTableAction(String title, ButtonColor buttonColor, TableAction tableAction) {
+        this.addTableAction(title, null, null, buttonColor, tableAction);
     }
 
     /**
@@ -998,7 +1020,11 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * completion. Failure to do so may leave the widgets disabled.
      */
     public void addTableAction(String title, String confirmation, TableAction tableAction) {
-        this.addTableAction(title, confirmation, null, tableAction);
+        this.addTableAction(title, confirmation, null, null, tableAction);
+    }
+    
+    public void addTableAction(String title, String confirmation, ButtonColor buttonColor, TableAction tableAction) {
+        this.addTableAction(title, confirmation, null, buttonColor, tableAction);
     }
 
     /**
@@ -1007,9 +1033,12 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addTableAction(String title, String confirmation, Map<String, Object> valueMap, TableAction tableAction) {
+    public void addTableAction(String title, String confirmation, Map<String, Object> valueMap, ButtonColor buttonColor, TableAction tableAction) {
         TableActionInfo info = new TableActionInfo.TableActionInfoBuilder(title, tableAction)
-                .setConfirmMessage(confirmation).setValueMap(valueMap).createTableActionInfo();
+            .setConfirmMessage(confirmation)
+            .setValueMap(valueMap)
+            .setButtonColor(buttonColor == null ? ButtonColor.GRAY : buttonColor)
+            .createTableActionInfo();
         tableActions.add(info);
     }
 
@@ -1305,14 +1334,25 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         private Map<String, Object> valueMap;
         private TableAction action;
         private Canvas actionCanvas;
+        private ButtonColor buttonColor;
 
         private TableActionInfo(String title, String tooltip, String confirmMessage, Map<String, Object> valueMap,
             TableAction action) {
+            this(title, tooltip, confirmMessage,valueMap, action, ButtonColor.GRAY);
+        }
+        
+        public enum ButtonColor {
+            RED, BLUE, GRAY
+        }
+        
+        private TableActionInfo(String title, String tooltip, String confirmMessage, Map<String, Object> valueMap,
+            TableAction action, ButtonColor buttonColor) {
             this.title = title;
             this.tooltip = tooltip;
             this.confirmMessage = confirmMessage;
             this.valueMap = valueMap;
             this.action = action;
+            this.buttonColor = buttonColor;
         }
 
         public String getTitle() {
@@ -1342,6 +1382,14 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         public void setAction(TableAction action) {
             this.action = action;
         }
+        
+        public ButtonColor getButtonColor() {
+            return buttonColor;
+        }
+
+        public void setButtonColor(ButtonColor buttonColor) {
+            this.buttonColor = buttonColor;
+        }
 
         public static class TableActionInfoBuilder {
             private String title;
@@ -1349,6 +1397,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             private String confirmMessage;
             private Map<String, Object> valueMap;
             private TableAction action;
+            private ButtonColor buttonColor;
 
             public TableActionInfoBuilder(String title, TableAction action) {
                 this.title = title;
@@ -1369,9 +1418,15 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 this.valueMap = valueMap;
                 return this;
             }
+            
+            public TableActionInfoBuilder setButtonColor(ButtonColor buttonColor) {
+                this.buttonColor = buttonColor;
+                return this;
+            }
 
             public TableActionInfo createTableActionInfo() {
-                return new TableActionInfo(title, tooltip, confirmMessage, valueMap, action);
+                return new TableActionInfo(title, tooltip, confirmMessage, valueMap, action,
+                    buttonColor == null ? ButtonColor.GRAY : buttonColor);
             }
         }
     }

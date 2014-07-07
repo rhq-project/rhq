@@ -53,6 +53,7 @@ import org.rhq.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.coregui.client.components.table.IconField;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.coregui.client.inventory.groups.wizard.GroupCreateWizard;
@@ -175,7 +176,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
             availabilityChildrenField, availabilityDescendantsField);
 
         if (this.showDeleteButton) {
-            addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AuthorizedTableAction(this,
+            addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), ButtonColor.RED, new AuthorizedTableAction(this,
                 TableActionEnablement.ANY, Permission.MANAGE_INVENTORY) {
                 public void executeAction(ListGridRecord[] selections, Object actionValue) {
                     int[] groupIds = new int[selections.length];
@@ -202,7 +203,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         }
 
         if (this.showNewButton) {
-            addTableAction(MSG.common_button_new(), new AuthorizedTableAction(this, Permission.MANAGE_INVENTORY) {
+            addTableAction(MSG.common_button_new(), ButtonColor.BLUE, new AuthorizedTableAction(this, Permission.MANAGE_INVENTORY) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     GroupCategory category = null;
                     String categoryString = getInitialCriteria() == null ? null : getInitialCriteria().getAttribute(

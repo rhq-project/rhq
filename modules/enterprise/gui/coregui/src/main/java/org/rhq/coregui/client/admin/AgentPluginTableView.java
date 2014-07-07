@@ -67,6 +67,7 @@ import org.rhq.coregui.client.components.form.RadioGroupWithComponentsItem;
 import org.rhq.coregui.client.components.form.TimeUnit;
 import org.rhq.coregui.client.components.form.UnitType;
 import org.rhq.coregui.client.components.table.AuthorizedTableAction;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
@@ -110,7 +111,7 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
 
-        addTableAction(MSG.common_button_enable(), MSG.common_msg_areYouSure(), new AuthorizedTableAction(this,
+        addTableAction(MSG.common_button_enable(), MSG.common_msg_areYouSure(), ButtonColor.BLUE, new AuthorizedTableAction(this,
             TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
             public void executeAction(ListGridRecord[] selections, Object actionValue) {
                 int[] selectedIds = getSelectedIds(selections);
@@ -171,7 +172,7 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
             }
         });
 
-        addTableAction(MSG.common_button_delete(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
+        addTableAction(MSG.common_button_delete(), ButtonColor.RED, new AuthorizedTableAction(this, TableActionEnablement.ANY,
             Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 ArrayList<String> selectedNames = getSelectedNames(selections);

@@ -35,7 +35,7 @@ border-color:rgb(207, 207, 207);
 .subtitle::before { content:"( "; }
 .subtitle::after { content:" )"; }
 
-.portalLayout { margin:5px 0; }
+.portalLayout { margin:5px 5px; }
 
 .resourceSummary .HeaderLabel,
 .resourceSummary .subtitle {
@@ -338,6 +338,15 @@ General
   font-weight: 700; color: #d64949;
 }
 
+.storageConfig {
+  font-size: 12px !important;
+  font-weight: 400 !important;
+}
+
+.storageConfig div:first-child {
+  font-weight: bold !important;
+}
+
 .propertiesForm {
   border:none !important;
 }
@@ -383,11 +392,8 @@ General
     opacity: 0.9;
 }
 
-
-
-
 .footer {
-  padding:5px 0px 5px 0 !important;
+  padding:5px 5px 12px 1px !important;
 }
 /*============================================================
 Button (also used as MenuButton base style)
@@ -440,11 +446,6 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cccccc', end
 
 }
 
-.buttonDisabled {
-    color: #999999;
-    border-color: #C3C3C3;
-}
-
 .buttonSelected,
 .buttonSelectedDown,
 .buttonSelectedOver,
@@ -462,8 +463,70 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cccccc', end
     background-image: -webkit-gradient(linear, left top, left bottom, from(#cccccc), to(#ffffff));
 }
 
-.buttonSelectedDisabled {
-    color:#666666;
+.buttonDisabled {
+    background-color: #f8f8f8!important;
+    background-image: none!important;
+    border-color: #d1d1d1!important;
+    color: #969696!important;
+    opacity: 1;
+    box-shadow: none;
+}
+
+
+div[eventproxy^="destructive"] > table > tbody > tr > .button,
+div[eventproxy^="destructive"] > table > tbody > tr > .buttonSelected {
+background-color: #84050c;
+    background-image: -webkit-linear-gradient(top,#d60915 0,#ac0710 100%);
+    background-image: linear-gradient(to bottom,#d60915 0,#ac0710 100%);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffd60915', endColorstr='#ffac0710', GradientType=0);
+    border-color: #450e0e;
+    color: #fff;
+}
+
+div[eventproxy^="destructive"] > table > tbody > tr > .buttonOver,
+div[eventproxy^="destructive"] > table > tbody > tr > .buttonDown,
+div[eventproxy^="destructive"] > table > tbody > tr > .button:hover,
+div[eventproxy^="destructive"] > table > tbody > tr > .button:focus,
+div[eventproxy^="destructive"] > table > tbody > tr > .button:active {
+    color: #ffffff;
+    background-image: -webkit-linear-gradient(top,#d60915 0,#ac0710 100%);
+    background-image: linear-gradient(to bottom,#d60915 0,#ac0710 100%);
+    background-color: #ab070f;
+    border-color: #781919;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.2) inset;
+}
+
+
+div[eventproxy^="primary"] > table > tbody > tr > .button,
+div[eventproxy^="primary"] > table > tbody > tr > .buttonSelected {
+    background-color: #189ad1;
+    background-image: -webkit-linear-gradient(top,#1cace8 0,#1998cc 100%);
+    background-image: linear-gradient(to bottom,#1cace8 0,#1998cc 100%);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff1cace8', endColorstr='#ff1998cc', GradientType=0);
+    border-color: #267da1;
+    color: #fff;
+}
+
+div[eventproxy^="primary"] > table > tbody > tr > .buttonOver,
+div[eventproxy^="primary"] > table > tbody > tr > .buttonSelectedOver,
+div[eventproxy^="primary"] > table > tbody > tr > .buttonDown,
+div[eventproxy^="primary"] > table > tbody > tr > .button:hover,
+div[eventproxy^="primary"] > table > tbody > tr > .button:focus,
+div[eventproxy^="primary"] > table > tbody > tr > .button:active {
+    background-image: -webkit-linear-gradient(top,#1cace8 0,#1998cc 100%);
+    background-image: linear-gradient(to bottom,#1cace8 0,#1998cc 100%);
+    color: #fff;
+    background-color: #147fac;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.2) inset;
+    border-color: #1a576f;
+}
+
+
+.btn-primaryDisabled {
+  background-color: #189ad1 !important;
+  border-color: #267da1 !important;
 }
 
 .configurationEditorHeaderCell {
@@ -584,6 +647,7 @@ filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', en
     border-width: 1px 0;
     text-align: left;
     vertical-align: middle;
+    height: auto !important;
 }
 
 .menuItem {
@@ -689,7 +753,8 @@ filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', en
 }
 
 .modalMask {
-    background-color:black;
+    background-color:#000;
+    opacity: 0.5 !important;
 }
 
 
@@ -881,7 +946,8 @@ filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', en
    box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px rgba(102,175,233,.6);
 }
 
-.EvenRow {
+.EvenRow,
+.EvenRowFocused {
    background-color:#f0f0f0;
 }
 

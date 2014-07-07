@@ -54,6 +54,7 @@ import org.rhq.coregui.client.admin.AdministrationView;
 import org.rhq.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.StringUtility;
@@ -247,8 +248,8 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
             }
         };
 
-        addTableAction(MSG.view_adminTopology_storageNodes_run_undeploySelected(), null, new AuthorizedTableAction(
-            this, TableActionEnablement.SINGLE, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.view_adminTopology_storageNodes_run_undeploySelected(), null, ButtonColor.RED,
+            new AuthorizedTableAction(this, TableActionEnablement.SINGLE, Permission.MANAGE_SETTINGS) {
 
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
@@ -282,8 +283,8 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
             }
         };
 
-        addTableAction(MSG.view_adminTopology_storageNodes_run_deploySelected(), null, new AuthorizedTableAction(this,
-            TableActionEnablement.SINGLE, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.view_adminTopology_storageNodes_run_deploySelected(), null, ButtonColor.BLUE,
+            new AuthorizedTableAction(this, TableActionEnablement.SINGLE, Permission.MANAGE_SETTINGS) {
 
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
@@ -305,8 +306,8 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         operationsMap.put(MSG.view_adminTopology_storageNodes_run_disableDebug(), "stopRPCServer");
         operationsMap.put(MSG.view_adminTopology_storageNodes_run_enableDebug(), "startRPCServer");
 
-        addTableAction(MSG.common_title_operation(), null, operationsMap, new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.common_title_operation(), null, operationsMap, ButtonColor.GRAY, new AuthorizedTableAction(
+            this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
 
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {

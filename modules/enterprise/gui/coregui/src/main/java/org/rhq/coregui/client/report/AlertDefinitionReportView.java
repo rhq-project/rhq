@@ -59,6 +59,7 @@ import org.rhq.coregui.client.alert.definitions.AbstractAlertDefinitionsDataSour
 import org.rhq.coregui.client.components.ReportExporter;
 import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -109,7 +110,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
     }
 
     private void addExportAction() {
-        addTableAction("Export", MSG.common_button_reports_export(), new AbstractTableAction() {
+        addTableAction("Export", MSG.common_button_reports_export(), ButtonColor.BLUE, new AbstractTableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return enableIfRecordsExist(getListGrid());

@@ -19,11 +19,29 @@
 
 package org.rhq.coregui.client.operation;
 
-import static org.rhq.coregui.client.components.table.Table.TableActionInfo.TableActionInfoBuilder;
-
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+
+import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.components.form.DateFilterItem;
+import org.rhq.coregui.client.components.form.EnumSelectItem;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.TableActionInfoBuilder;
+import org.rhq.coregui.client.components.table.TableAction;
+import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.view.HasViewName;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.OperationGWTServiceAsync;
+import org.rhq.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Option;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -36,24 +54,6 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
-import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.IconEnum;
-import org.rhq.coregui.client.ImageManager;
-import org.rhq.coregui.client.components.form.DateFilterItem;
-import org.rhq.coregui.client.components.form.EnumSelectItem;
-import org.rhq.coregui.client.components.table.TableAction;
-import org.rhq.coregui.client.components.table.TableSection;
-import org.rhq.coregui.client.components.view.HasViewName;
-import org.rhq.coregui.client.components.view.ViewName;
-import org.rhq.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.coregui.client.gwt.OperationGWTServiceAsync;
-import org.rhq.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
-import org.rhq.coregui.client.util.message.Message;
-import org.rhq.coregui.client.util.message.Message.Option;
-import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * A view that displays a paginated table of operation history. Support exists of subsystem and resource contexts.
@@ -168,7 +168,31 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     }
 
     protected void setupTableInteractions() {
+        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), ButtonColor.RED, new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                int count = selection.length;
+                return (count >= 1 && hasControlPermission());
+            }
 
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                deleteSelectedRecords();
+            }
+        });
+
+        addTableAction(MSG.view_operationHistoryList_button_forceDelete(), getDeleteConfirmMessage(), ButtonColor.RED,
+            new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    int count = selection.length;
+                    return (count >= 1 && hasControlPermission());
+                }
+
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    DSRequest requestProperties = new DSRequest();
+                    requestProperties.setAttribute("force", true);
+                    deleteSelectedRecords(requestProperties);
+                }
+            });
+        
         addTableAction(MSG.common_button_cancel(), MSG.view_operationHistoryList_cancelConfirm(), new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 int count = selection.length;
@@ -213,36 +237,13 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
             }
         });
 
-        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), new TableAction() {
-            public boolean isEnabled(ListGridRecord[] selection) {
-                int count = selection.length;
-                return (count >= 1 && hasControlPermission());
-            }
-
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                deleteSelectedRecords();
-            }
-        });
-
-        addTableAction(MSG.view_operationHistoryList_button_forceDelete(), getDeleteConfirmMessage(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    int count = selection.length;
-                    return (count >= 1 && hasControlPermission());
-                }
-
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    DSRequest requestProperties = new DSRequest();
-                    requestProperties.setAttribute("force", true);
-                    deleteSelectedRecords(requestProperties);
-                }
-            });
-
         if (!context.isSubsystemView() && showNewScheduleButton) {
             TableActionInfo rescheduleAction = new TableActionInfoBuilder(MSG.common_button_reschedule(),
-                new RescheduleTableAction()).setTooltip(MSG.common_button_reschedule_tooltip()).createTableActionInfo();
+                new RescheduleTableAction()).setTooltip(MSG.common_button_reschedule_tooltip())
+                .setButtonColor(ButtonColor.BLUE).createTableActionInfo();
             addTableAction(rescheduleAction);
-            addTableAction(MSG.common_button_new() + " " + MSG.common_button_schedule(), new NewScheduleTableAction());
+            addTableAction(MSG.common_button_new() + " " + MSG.common_button_schedule(), ButtonColor.BLUE,
+                new NewScheduleTableAction());
         }
     }
 

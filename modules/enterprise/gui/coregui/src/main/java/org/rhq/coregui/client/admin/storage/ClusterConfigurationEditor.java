@@ -150,7 +150,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
 
     private void prepareForms() {
         setWidth100();
-        clusterForm = buildForm("<div align='left'><div>"
+        clusterForm = buildForm("<div align='left' class='storageConfig'><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings() + "</div><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings_desc() + "</div>");
 
@@ -175,7 +175,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         items.addAll(gossipPortItems);
         clusterForm.setFields(items.toArray(new FormItem[items.size()]));
 
-        deploymentForm = buildForm("<div align='left'><div>"
+        deploymentForm = buildForm("<div align='left' class='storageConfig'><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_deployments()
             + "</div><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_deployments_desc() + "</div>");
@@ -199,7 +199,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         items.addAll(automaticDeploymentItems);
         deploymentForm.setFields(items.toArray(new FormItem[items.size()]));
 
-        credentialsForm = buildForm("<div align='left'><div>"
+        credentialsForm = buildForm("<div align='left' class='storageConfig'><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_credentials()
             + "</div><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_credentials_desc() + "</div>");

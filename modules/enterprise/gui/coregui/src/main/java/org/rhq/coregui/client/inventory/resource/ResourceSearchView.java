@@ -72,6 +72,7 @@ import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.coregui.client.report.DriftComplianceReportResourceSearchView;
@@ -173,7 +174,7 @@ public class ResourceSearchView extends Table {
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
         addTableAction(MSG.common_button_uninventory(), MSG.view_inventory_resources_uninventoryConfirm(),
-            new ResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
+            ButtonColor.RED, new ResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
                 Permission.DELETE_RESOURCE, new RecordExtractor<Integer>() {
 
                     public Collection<Integer> extract(Record[] records) {
@@ -296,7 +297,7 @@ public class ResourceSearchView extends Table {
                 }
             });
 
-        addTableAction(MSG.common_button_enable(), MSG.view_inventory_resources_enableConfirm(),
+        addTableAction(MSG.common_button_enable(), MSG.view_inventory_resources_enableConfirm(), ButtonColor.BLUE,
             new AvailabilityTypeResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
                 EnumSet.of(AvailabilityType.DISABLED), Permission.DELETE_RESOURCE,
                 new RecordExtractor<AvailabilityType>() {

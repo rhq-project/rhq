@@ -53,6 +53,7 @@ import org.rhq.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.upload.PluginFileUploadForm;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -93,8 +94,8 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
 
-        addTableAction(MSG.common_button_enable(), MSG.common_msg_areYouSure(), new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.common_button_enable(), MSG.common_msg_areYouSure(), ButtonColor.BLUE,
+            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
             public void executeAction(ListGridRecord[] selections, Object actionValue) {
                 int[] selectedIds = getSelectedIds(selections);
                 GWTServiceLookup.getPluginService().enableServerPlugins(selectedIds,
@@ -156,7 +157,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        addTableAction(MSG.common_button_delete(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
+        addTableAction(MSG.common_button_delete(), ButtonColor.RED, new AuthorizedTableAction(this, TableActionEnablement.ANY,
             Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 ArrayList<String> selectedNames = getSelectedNames(selections);

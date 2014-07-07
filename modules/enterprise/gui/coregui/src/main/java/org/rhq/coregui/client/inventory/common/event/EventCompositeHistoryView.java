@@ -50,6 +50,7 @@ import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
@@ -167,8 +168,8 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
         if (canSupportDeleteAndPurgeAll()) {
             TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
                 : TableActionEnablement.NEVER;
-            addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AbstractTableAction(
-                singleTargetEnablement) {
+            addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), ButtonColor.RED,
+                new AbstractTableAction(singleTargetEnablement) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     deleteButtonPressed(selection);
                 }
@@ -176,8 +177,8 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
 
             TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS
                 : TableActionEnablement.NEVER;
-            addTableAction(MSG.common_button_purgeAll(), MSG.common_msg_areYouSure(), new AbstractTableAction(
-                multipleTargetEnablement) {
+            addTableAction(MSG.common_button_purgeAll(), MSG.common_msg_areYouSure(), ButtonColor.RED,
+                new AbstractTableAction(multipleTargetEnablement) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     purgeButtonPressed();
                 }

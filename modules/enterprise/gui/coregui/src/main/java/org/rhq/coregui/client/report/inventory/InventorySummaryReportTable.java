@@ -26,12 +26,14 @@ import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.*;
+
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.components.ReportExporter;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableAction;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -147,7 +149,7 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
     }
 
     private void addExportAction() {
-        addTableAction("Export",  MSG.common_button_reports_export(), new TableAction() {
+        addTableAction("Export",  MSG.common_button_reports_export(), ButtonColor.BLUE, new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return true;

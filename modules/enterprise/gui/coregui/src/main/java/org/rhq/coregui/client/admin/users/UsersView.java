@@ -36,6 +36,7 @@ import org.rhq.coregui.client.admin.AdministrationView;
 import org.rhq.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -83,8 +84,8 @@ public class UsersView extends TableSection<UsersDataSource> implements HasViewN
         List<ListGridField> fields = createFields();
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
-        addTableAction(MSG.common_button_new(), createNewAction());
-        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), createDeleteAction());
+        addTableAction(MSG.common_button_new(), ButtonColor.BLUE, createNewAction());
+        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), ButtonColor.RED, createDeleteAction());
 
         super.configureTable();
     }

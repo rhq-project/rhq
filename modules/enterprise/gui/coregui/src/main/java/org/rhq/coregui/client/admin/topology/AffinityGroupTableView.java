@@ -55,6 +55,7 @@ import org.rhq.coregui.client.admin.AdministrationView;
 import org.rhq.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -96,15 +97,15 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
     }
 
     private void showActions() {
-        addTableAction(MSG.view_adminTopology_affinityGroups_createNew(), new AuthorizedTableAction(this,
-            TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.view_adminTopology_affinityGroups_createNew(), ButtonColor.BLUE, new AuthorizedTableAction(
+            this, TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 showCreateAffinityGroupWindow();
             }
         });
 
-        addTableAction(MSG.view_adminTopology_server_removeSelected(), null, new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.view_adminTopology_server_removeSelected(), null, ButtonColor.RED,
+            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 final List<String> selectedNames = getSelectedNames(selections);
                 String message = MSG.view_adminTopology_message_removeAGroupsConfirm(selectedNames.toString());

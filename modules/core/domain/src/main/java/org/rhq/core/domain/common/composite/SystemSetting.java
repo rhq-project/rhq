@@ -208,7 +208,7 @@ public enum SystemSetting {
      * use cases for this - 1) data migration during upgrade and 2) cache partition resizing (i.e., number of schedules
      * stored per partition)
      */
-    METRICS_CACHE_ACTIVATION_TIME("METRICS_CACHE_ACTIVATION_TIME", PropertySimpleType.LONG, false, false, false),
+    METRICS_CACHE_ACTIVATION_TIME("METRICS_CACHE_ACTIVATION_TIME", PropertySimpleType.LONG, true, false, false),
 
     LDAP_FOLLOW_REFERRALS("CAM_LDAP_FOLLOW_REFERRALS", PropertySimpleType.BOOLEAN, false, true, true),
 

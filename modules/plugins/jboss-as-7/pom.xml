@@ -840,7 +840,19 @@
                   <goal>verify</goal>
                 </goals>
               </execution>
-              
+              <execution>
+                <id>ResourcesDomainServerTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/BundleContentHandoverTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+
               <execution>
                 <id>nonpc</id>
                 <configuration>

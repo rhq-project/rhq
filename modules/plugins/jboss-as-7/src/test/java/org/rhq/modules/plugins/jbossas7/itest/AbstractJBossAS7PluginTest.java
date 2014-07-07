@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,9 +21,6 @@ package org.rhq.modules.plugins.jbossas7.itest;
 
 import java.io.File;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.domain.configuration.Configuration;
@@ -32,6 +29,9 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.plugin.testutil.AbstractAgentPluginTest;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.modules.plugins.jbossas7.ASConnection;
+import org.rhq.modules.plugins.jbossas7.ASConnectionParams;
+import org.rhq.modules.plugins.jbossas7.ASConnectionParamsBuilder;
 import org.rhq.modules.plugins.jbossas7.itest.domain.DomainServerComponentTest;
 import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.test.arquillian.AfterDiscovery;
@@ -43,24 +43,21 @@ import org.rhq.test.arquillian.AfterDiscovery;
  */
 public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest {
 
-    private static final Log log = LogFactory.getLog(AbstractJBossAS7PluginTest.class);
-
-    protected static final String PLUGIN_NAME = "JBossAS7";
-
+    public static final String PLUGIN_NAME = "JBossAS7";
     public static final File JBOSS_HOME = new File(FileUtils.getCanonicalPath(System.getProperty("jboss7.home")));
-
     public static final String MANAGEMENT_USERNAME = "admin";
     public static final String MANAGEMENT_PASSWORD = "admin";
 
-    protected static final boolean enableInitialDiscovery = true;
-    private static boolean createdManagementUsers;
+    public static final String DC_HOST = System.getProperty("jboss.domain.bindAddress");
+    public static final int DC_HTTP_PORT = Integer.valueOf(System.getProperty("jboss.domain.httpManagementPort"));
+    public static final String DC_USER = AbstractJBossAS7PluginTest.MANAGEMENT_USERNAME;
+    public static final String DC_PASS = AbstractJBossAS7PluginTest.MANAGEMENT_PASSWORD;
 
-    /*
+    /**
      * Every test sub-class requires a management user, create it up front
      */
-    @AfterDiscovery()
+    @AfterDiscovery
     public void installManagementUsersTest() throws Exception {
-        if (!createdManagementUsers) {
             System.out.println("== Installing management users...");
 
             Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
@@ -72,7 +69,6 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
             Resource standaloneServer = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
                 StandaloneServerComponentTest.RESOURCE_KEY, true);
             installManagementUser(standaloneServer);
-        }
     }
 
     protected Resource validatePlatform() throws Exception {
@@ -150,28 +146,13 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
         return PLUGIN_NAME;
     }
 
-    // Not currently used.
-    // TODO: If needed they may need to be modified to recursively start the ancestors first, because you can't
-    //       start a resource whose parent is not started.
-    //
-    //    protected void restartResourceComponent(Resource resource) throws PluginContainerException {
-    //        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
-    //        inventoryManager.deactivateResource(resource);
-    //        ResourceContainer serverContainer = inventoryManager.getResourceContainer(resource);
-    //        inventoryManager.activateResource(resource, serverContainer, true);
-    //    }
-    //
-    //    /**
-    //     * Use to ensure a resourceComponent is started. After discovery it may take unacceptably long for
-    //     * the resource to activate. If already active this call is a no-op.
-    //     *
-    //     * @param resource
-    //     * @throws PluginContainerException
-    //     */
-    //    protected void startResourceComponent(Resource resource) throws PluginContainerException {
-    //        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
-    //        ResourceContainer serverContainer = inventoryManager.getResourceContainer(resource);
-    //        inventoryManager.activateResource(resource, serverContainer, true);
-    //    }
-
+    public ASConnection getDomainControllerASConnection() {
+        ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
+            .setHost(DC_HOST) //
+            .setPort(DC_HTTP_PORT) //
+            .setUsername(DC_USER) //
+            .setPassword(DC_PASS) //
+            .createASConnectionParams();
+        return new ASConnection(asConnectionParams);
+    }
 }

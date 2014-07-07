@@ -59,8 +59,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.modules.plugins.jbossas7.ASConnection;
-import org.rhq.modules.plugins.jbossas7.ASConnectionParams;
-import org.rhq.modules.plugins.jbossas7.ASConnectionParamsBuilder;
 import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.ModuleOptionType;
 import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.Value;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
@@ -96,22 +94,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
 
     private static Resource securityResource = null;
 
-    protected static String DC_HOST = System.getProperty("jboss.domain.bindAddress");
-    protected static int DC_HTTP_PORT = Integer.valueOf(System.getProperty("jboss.domain.httpManagementPort"));
-    protected static String DC_USER = AbstractJBossAS7PluginTest.MANAGEMENT_USERNAME;
-    protected static String DC_PASS = AbstractJBossAS7PluginTest.MANAGEMENT_PASSWORD;
-
-    ASConnection getASConnection() {
-        ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
-            .setHost(DC_HOST) //
-            .setPort(DC_HTTP_PORT) //
-            .setUsername(DC_USER) //
-            .setPassword(DC_PASS) //
-            .createASConnectionParams();
-        return new ASConnection(asConnectionParams);
-    }
-
-    public static final ResourceType RESOURCE_TYPE = new ResourceType(SECURITY_RESOURCE_TYPE, PLUGIN_NAME,
+    private static final ResourceType RESOURCE_TYPE = new ResourceType(SECURITY_RESOURCE_TYPE, PLUGIN_NAME,
         ResourceCategory.SERVICE, null);
     private static final String RESOURCE_KEY = SECURITY_RESOURCE_KEY;
     private static Resource testSecurityDomain = null;
@@ -179,7 +162,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         String securityDomainId = TEST_DOMAIN + "2";
         destination.addSegment(SECURITY_DOMAIN_RESOURCE_KEY + "=" + securityDomainId);
 
-        ASConnection connection = getASConnection();
+        ASConnection connection = getDomainControllerASConnection();
         Result result = new Result();
         Operation op = null;
         //delete old one if present to setup clean slate

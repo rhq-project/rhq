@@ -97,7 +97,7 @@ public class AgentConfiguration {
             throw new IllegalArgumentException(LOG.getMsgString(AgentI18NResourceKeys.PREFS_MUST_NOT_BE_NULL));
         }
 
-        m_preferences = prefs;
+        m_preferences = new ObfuscatedPreferences(prefs);
     }
 
     /**

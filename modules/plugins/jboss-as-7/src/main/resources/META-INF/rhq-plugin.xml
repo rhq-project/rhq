@@ -9153,6 +9153,47 @@
 
   </service>
 
+  <service name="Resource Adapters Runtime"
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           description="Configuration of the resource adapters subsystem."
+           singleton="true"
+           >
+
+    <runs-inside>
+      <parent-resource-type name="Deployment" plugin="&pluginName;"/>
+      <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
+      <parent-resource-type name="ManagedServerDeployment" plugin="&pluginName;"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="subsystem=resource-adapters"/>
+    </plugin-configuration>
+
+    <service name="Connection Definition Runtime"
+             discovery="SubsystemDiscovery"
+             class="RAConnectionDefinitionRuntimeComponent"
+             description="Specifies the connection definitions."
+             >
+      <plugin-configuration>
+       <c:simple-property name="path" readOnly="true" default="statistics=statistics/connection-definitions"/>
+      </plugin-configuration>
+
+      <metric property="ActiveCount" description="The active count"/>
+      <metric property="AvailableCount" description="The available count"/>
+      <metric property="AverageBlockingTime" description="The average time spent blocking for a connection"/>
+      <metric property="AverageCreationTime" description="The average time spent creating a physical connection"/>
+      <metric property="CreatedCount" description="The created count"/>
+      <metric property="DestroyedCount" description="The destroyed count"/>
+      <metric property="MaxCreationTime" description="The maximum time for creating a physical connection"/>
+      <metric property="MaxUsedCount" description="The maximum number of connections used"/>
+      <metric property="MaxWaitTime" description="The maximum wait time for a connection"/>
+      <metric property="TimedOut" description="The timed out count"/>
+      <metric property="TotalBlockingTime" description="The total blocking time"/>
+      <metric property="TotalCreationTime" description="The total time spent creating physical connections"/>
+
+    </service>
+  </service>
 
   <service name="Web Runtime"
            class="WebRuntimeComponent"

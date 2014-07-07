@@ -22,10 +22,13 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertConditionOperator;
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
@@ -162,9 +165,21 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                     protocol = "http";
                 }
 
-                return protocol + "://" + request.getServerName() + ":" + request.getServerPort() +
-                    "/coregui/#Resource/" + alert.getAlertDefinition().getResource().getId() + "/Alerts/History/" +
-                    alert.getId();
+                String prefix = protocol + "://" + request.getServerName() + ":" + request.getServerPort() + "/coregui";
+
+                AlertDefinition alertDefinition = alert.getAlertDefinition();
+                switch (AlertDefinitionContext.get(alertDefinition)) {
+                case Group:
+                    ResourceGroup group = alertDefinition.getGroup();
+                    boolean isAutogroup = group.getAutoGroupParentResource() != null;
+                    return prefix + "/" + (isAutogroup ? "#Resource/AutoGroup/" : "#ResourceGroup/")
+                        + group.getId() + "/Alerts/History/" + alert.getId();
+                case Resource:
+                    return prefix + "/#Resource/" + alertDefinition.getResource().getId() + "/Alerts/History/" +
+                        alert.getId();
+                default:
+                    return prefix;
+                }
             }
 
             private String getConditionText(Alert alert) {

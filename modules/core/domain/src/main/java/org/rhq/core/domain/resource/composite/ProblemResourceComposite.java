@@ -82,6 +82,9 @@ public class ProblemResourceComposite implements Serializable {
         return resourceName;
     }
 
+    /**
+     * Returns resource ancestry, may be null if the alert is not for a resource.
+     */
     public String getAncestry() {
         return ancestry;
     }

@@ -60,6 +60,7 @@ import org.rhq.common.jbossas.client.controller.MessagingJBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.common.jbossas.client.controller.SocketBindingJBossASClient;
 import org.rhq.common.jbossas.client.controller.TransactionsJBossASClient;
+import org.rhq.common.jbossas.client.controller.VaultJBossASClient;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient.ConnectorConfiguration;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient.SSLConfiguration;
@@ -74,6 +75,7 @@ import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.obfuscation.ObfuscationVault;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 
@@ -368,6 +370,31 @@ public class ServerInstallUtil {
     }
 
     /**
+     * Creates the Vault required for RHQ property obfuscation.
+     *
+     * @param mcc the JBossAS management client
+     * @param serverProperties server properties
+     * @throws Exception
+     */
+    public static void createObfuscationVault(ModelControllerClient mcc, HashMap<String, String> serverProperties)
+        throws Exception {
+
+        final VaultJBossASClient client = new VaultJBossASClient(mcc);
+
+        if (!client.isVault()) {
+            ModelNode request = client.createNewVaultRequest(ObfuscationVault.class.getName());
+            ModelNode results = client.execute(request);
+            if (!VaultJBossASClient.isSuccess(results)) {
+                throw new FailureException(results, "Failed to create the RHQ vault");
+            } else {
+                LOG.info("RHQ Vault created");
+            }
+        } else {
+            LOG.info("A vault already exists, skipping the creation request");
+        }
+    }
+
+    /**
      * Creates the JMS Queues required for Drift and Alerting.
      *
      * @param mcc the JBossAS management client
@@ -505,7 +532,7 @@ public class ServerInstallUtil {
         switch (supportedDbType) {
         case POSTGRES: {
             if (client.isJDBCDriver(JDBC_DRIVER_POSTGRES)) {
-                LOG.info("Postgres JDBC driver is already deployed");
+                LOG.info("Postgres JDBC$ driver is already deployed");
             } else {
                 results = client.execute(postgresDriverRequest);
                 if (!DatasourceJBossASClient.isSuccess(results)) {
@@ -1533,12 +1560,14 @@ public class ServerInstallUtil {
         // truststore
         ssl.setCaCertificateFile(buildExpression("rhq.server.tomcat.security.truststore.file", serverProperties, false));
         ssl.setCaCertificationPassword(buildExpression("rhq.server.tomcat.security.truststore.password",
-            serverProperties, true));
-        ssl.setTruststoreType(buildExpression("rhq.server.tomcat.security.truststore.type", serverProperties, true));
+            serverProperties, true, true, true));
+        ssl.setTruststoreType(buildExpression("rhq.server.tomcat.security.truststore.type", serverProperties, true,
+            true, false));
 
         // keystore
         ssl.setCertificateKeyFile(buildExpression("rhq.server.tomcat.security.keystore.file", serverProperties, false));
-        ssl.setPassword(buildExpression("rhq.server.tomcat.security.keystore.password", serverProperties, true));
+        ssl.setPassword(buildExpression("rhq.server.tomcat.security.keystore.password", serverProperties, true, true,
+            true));
         ssl.setKeyAlias(buildExpression("rhq.server.tomcat.security.keystore.alias", serverProperties, true));
         ssl.setKeystoreType(buildExpression("rhq.server.tomcat.security.keystore.type", serverProperties, true));
 
@@ -1585,6 +1614,11 @@ public class ServerInstallUtil {
         }
     }
 
+    private static String buildExpression(String propName, HashMap<String, String> defaultProperties,
+        boolean supportsExpression) {
+        return buildExpression(propName, defaultProperties, supportsExpression, false, false);
+    }
+
     /**
      * You would think this would be simple - just set a value to ${propName:defaultVal} but some
      * JBossAS attributes don't support expressions when you think they could or should. In this
@@ -1603,13 +1637,33 @@ public class ServerInstallUtil {
      * @return the attribute expression value (or real value if supportsExpression is false).
      */
     private static String buildExpression(String propName, HashMap<String, String> defaultProperties,
-        boolean supportsExpression) {
+        boolean supportsExpression, boolean vault, boolean restricted) {
 
         if (supportsExpression) {
-            if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
-                return "${" + propName + ":" + defaultProperties.get(propName) + "}";
+            String expressionFormat = null;
+
+            if (!vault) {
+                if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
+                    expressionFormat = "${%s:%s}";
+                } else {
+                    expressionFormat = "${%s}";
+                }
             } else {
-                return "${" + propName + "}";
+                String attributeType = "restricted";
+                if(!restricted){
+                    attributeType = "open";
+                }
+                if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
+                    expressionFormat = "${VAULT::" + attributeType + "::%s::%s}";
+                } else {
+                    expressionFormat = "${VAULT::" + attributeType + "::%s:: }";
+                }
+            }
+
+            if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
+                return String.format(expressionFormat, propName, defaultProperties.get(propName));
+            } else {
+                return String.format(expressionFormat, propName);
             }
         } else {
             if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {

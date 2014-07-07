@@ -399,6 +399,7 @@
         <delete dir="${jboss.home}/domain" />
 
         <antcall target="prepare-welcome-content" />
+    	<antcall target="prepare-picketbox-module" />
 
         <!-- TODO: setup our own welcome-content that points to our app -->
         <!--
@@ -526,6 +527,15 @@ checkIfRunning(16);]]>
     &lt;p class="WarnBlock" id="progress">Starting ..&lt;/p>&#xA;
     &lt;sub>You will be automatically redirected once the server is up and running. If this takes more than 10 minutes, please check the server log for possible issues.&lt;/sub>&#xA;
   &lt;/div>'/>
+    </target>
+
+   <target name="prepare-picketbox-module">
+       <echo>Changing the picketbox module dependencies for custom vault</echo>
+
+       <replaceregexp file="${jboss.home}/modules/system/layers/base/org/picketbox/main/module.xml" flags="gis" match='&lt;module name="org.jboss.security.xacml"/>' 
+            replace='&lt;module name="org.jboss.security.xacml"/>&#xA;
+           &lt;module name="org.rhq.rhq-installer-util"/>
+        '/>
     </target>
 
     <target name="package-connectors">
@@ -740,10 +750,10 @@ rhq.server.tomcat.security.secure-socket-protocol=TLS
 #rhq.server.tomcat.security.algorithm=SunX509
 rhq.server.tomcat.security.keystore.alias=RHQ
 rhq.server.tomcat.security.keystore.file=${jboss.server.config.dir}/rhq.keystore
-rhq.server.tomcat.security.keystore.password=RHQManagement
+rhq.server.tomcat.security.keystore.password=5fb458952ebdaa86aa0b4e8d3eac5d13
 rhq.server.tomcat.security.keystore.type=JKS
 rhq.server.tomcat.security.truststore.file=${jboss.server.config.dir}/rhq.truststore
-rhq.server.tomcat.security.truststore.password=RHQManagement
+rhq.server.tomcat.security.truststore.password=5fb458952ebdaa86aa0b4e8d3eac5d13
 rhq.server.tomcat.security.truststore.type=JKS
 
 # Server-side SSL Security Configuration (for incoming messages from agents)
@@ -752,8 +762,8 @@ rhq.communications.connector.security.secure-socket-protocol=TLS
 rhq.communications.connector.security.keystore.file=${jboss.server.config.dir}/rhq.keystore
 #rhq.communications.connector.security.keystore.algorithm=SunX509
 rhq.communications.connector.security.keystore.type=JKS
-rhq.communications.connector.security.keystore.password=RHQManagement
-rhq.communications.connector.security.keystore.key-password=RHQManagement
+rhq.communications.connector.security.keystore.password=5fb458952ebdaa86aa0b4e8d3eac5d13
+rhq.communications.connector.security.keystore.key-password=5fb458952ebdaa86aa0b4e8d3eac5d13
 rhq.communications.connector.security.keystore.alias=RHQ
 rhq.communications.connector.security.truststore.file=${jboss.server.config.dir}/rhq.truststore
 #rhq.communications.connector.security.truststore.algorithm=SunX509
@@ -766,13 +776,13 @@ rhq.server.client.security.secure-socket-protocol=TLS
 rhq.server.client.security.keystore.file=${jboss.server.config.dir}/rhq.keystore
 #rhq.server.client.security.keystore.algorithm=SunX509
 rhq.server.client.security.keystore.type=JKS
-rhq.server.client.security.keystore.password=RHQManagement
-rhq.server.client.security.keystore.key-password=RHQManagement
+rhq.server.client.security.keystore.password=5fb458952ebdaa86aa0b4e8d3eac5d13
+rhq.server.client.security.keystore.key-password=5fb458952ebdaa86aa0b4e8d3eac5d13
 rhq.server.client.security.keystore.alias=RHQ
 rhq.server.client.security.truststore.file=${jboss.server.config.dir}/rhq.truststore
 #rhq.server.client.security.truststore.algorithm=SunX509
 rhq.server.client.security.truststore.type=JKS
-rhq.server.client.security.truststore.password=RHQManagement
+rhq.server.client.security.truststore.password=5fb458952ebdaa86aa0b4e8d3eac5d13
 rhq.server.client.security.server-auth-mode-enabled=false
 
 # Operations/controls timeout

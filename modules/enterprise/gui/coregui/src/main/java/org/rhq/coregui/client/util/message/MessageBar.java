@@ -190,18 +190,18 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
         StringBuilder sb = new StringBuilder();
         switch (severity) {
             case Blank: {
-                sb.append("<div class='alert alert-success'>");
+            sb.append("<div class='alert alert-success' style='float:right;'>");
                 sb.append("<span class='pficon pficon-ok'></span>");
                 break;
             }
             case Info: {
-                sb.append("<div class='alert alert-info'>");
+            sb.append("<div class='alert alert-info' style='float:right;'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon pficon-info'></span>");
                 break;
             }
             case Warning: {
-                sb.append("<div class='alert alert-warning'>");
+            sb.append("<div class='alert alert-warning' style='float:right;'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon-layered'>");
                 sb.append("  <span class='pficon pficon-warning-triangle'></span>");
@@ -210,7 +210,7 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
                 break;
             }
             case Error: {
-                sb.append("<div class='alert alert-danger'>");
+            sb.append("<div class='alert alert-danger' style='float:right;'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon-layered'>");
                 sb.append("  <span class='pficon pficon-error-octagon'></span>");

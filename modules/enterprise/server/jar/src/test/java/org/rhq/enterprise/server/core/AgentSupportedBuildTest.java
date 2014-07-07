@@ -16,17 +16,19 @@ import org.rhq.core.clientapi.server.core.AgentVersion;
 public class AgentSupportedBuildTest {
 
     private String agentLatestBuild;
+    private String agentLatestVersion;
     private String supportedBuildsRegex;
 
     // our agent manager to use to run the check - its the real AgentManagerBean that doesn't require any EE infrastructure for this test
     private AgentManagerBean agentManager = new AgentManagerStub();
 
     public void testLatestAgentBuildCheck() {
-        AgentVersion agentVersionInfo = setLatestAgentVersionAndBuildToCheck("cafebabe0", "1.0.GA", "cafebabe0");
+        AgentVersion agentVersionInfo = setLatestAgentVersionAndBuildToCheck("1.0.GA", "cafebabe0", "1.0.GA",
+            "cafebabe0");
         assert true == agentManager.isAgentVersionSupported(agentVersionInfo);
-        agentVersionInfo = setLatestAgentVersionAndBuildToCheck("cafebabe0", "1.0.RC1", "cafebabe1");
+        agentVersionInfo = setLatestAgentVersionAndBuildToCheck("1.0.GA", "cafebabe0", "1.0.RC1", "cafebabe1");
         assert false == agentManager.isAgentVersionSupported(agentVersionInfo);
-        agentVersionInfo = setLatestAgentVersionAndBuildToCheck("1.0.GA", "2.0.GA", "cafebabe2");
+        agentVersionInfo = setLatestAgentVersionAndBuildToCheck("1.0.GA", "nocafe", "2.0.GA", "cafebabe2");
         assert false == agentManager.isAgentVersionSupported(agentVersionInfo);
     }
 
@@ -105,6 +107,7 @@ public class AgentSupportedBuildTest {
     }
 
     private void check(String supportedBuilds, String agentBuildToCheck, boolean expectedResult) {
+        //Version string completely ignored in this case and only specific build identifier matters.
         AgentVersion agentVersionInfo = setSupportedBuildsToCheck(supportedBuilds, "", agentBuildToCheck);
         assert expectedResult == agentManager.isAgentVersionSupported(agentVersionInfo) : "supportedBuilds="
             + supportedBuilds + "; agentBuildToCheck=" + agentBuildToCheck;
@@ -117,10 +120,12 @@ public class AgentSupportedBuildTest {
         return new AgentVersion(agentVersionToCheck, agentBuildToCheck);
     }
 
-    private AgentVersion setLatestAgentVersionAndBuildToCheck(String agentLatestBuild, String agentVersionToCheck,
+    private AgentVersion setLatestAgentVersionAndBuildToCheck(String agentLatestVersion, String agentLatestBuild,
+        String agentVersionToCheck,
         String agentBuildToCheck) {
         this.supportedBuildsRegex = null;
         this.agentLatestBuild = agentLatestBuild;
+        this.agentLatestVersion = agentLatestVersion;
 
         return new AgentVersion(agentVersionToCheck, agentBuildToCheck);
     }
@@ -130,9 +135,11 @@ public class AgentSupportedBuildTest {
         public Properties getAgentUpdateVersionFileContent() {
             // these are private constants in the subclass, so we don't have access to them - just redefine them here
             final String RHQ_AGENT_LATEST_BUILD = "rhq-agent.latest.build-number";
+            final String RHQ_AGENT_LATEST_VERSION = "rhq-agent.latest.version";
             final String RHQ_AGENT_SUPPORTED_BUILDS = "rhq-agent.supported.builds";
 
             Properties p = new Properties();
+            p.put(RHQ_AGENT_LATEST_VERSION, AgentSupportedBuildTest.this.agentLatestVersion);
             p.put(RHQ_AGENT_LATEST_BUILD, AgentSupportedBuildTest.this.agentLatestBuild);
 
             // this is optional, a system does not have to have this set

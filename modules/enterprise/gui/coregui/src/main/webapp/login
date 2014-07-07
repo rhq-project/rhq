@@ -9,6 +9,10 @@
 
     <!-- support internationalized characters -->
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/>
+    
+    <!-- progressbar on the top -->
+    <script src="js/pace.min.js" ></script>
+    <link href="css/pace.css" rel="stylesheet" />
 
     <!-- PatternFly -->
     <script src="js/jquery-login-page-only-1.11.1.min.js"></script>

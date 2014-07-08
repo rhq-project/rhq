@@ -805,6 +805,18 @@
                 </goals>
               </execution>
               <execution>
+                <id>BundleContentHandoverStandaloneTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/BundleContentHandoverTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
                 <id>SecurityModuleOptionsTest</id>
                 <configuration>
                   <includes>

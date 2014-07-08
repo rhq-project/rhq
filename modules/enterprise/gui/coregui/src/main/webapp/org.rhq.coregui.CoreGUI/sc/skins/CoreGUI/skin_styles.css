@@ -686,8 +686,7 @@ filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', en
 
 
 .windowBackground,
-.dialogBackground { 
-    margin-bottom: 20px;
+.dialogBackground {
     background-color: #fff !important;
     border: 1px solid #ddd;
     border-radius: 1px;

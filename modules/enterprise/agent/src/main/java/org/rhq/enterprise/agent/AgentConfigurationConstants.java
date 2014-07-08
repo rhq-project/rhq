@@ -18,10 +18,8 @@
  */
 package org.rhq.enterprise.agent;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 
 /**
@@ -431,13 +429,13 @@ public interface AgentConfigurationConstants {
     /**
      * The password used to access the keystore file.
      */
-    @Restricted
+    @ObfuscatedPreferences.Restricted
     String CLIENT_SENDER_SECURITY_KEYSTORE_PASSWORD = PROPERTY_NAME_PREFIX + "client.security.keystore.password";
 
     /**
      * The password to gain access to the key found in the keystore.
      */
-    @Restricted
+    @ObfuscatedPreferences.Restricted
     String CLIENT_SENDER_SECURITY_KEYSTORE_KEY_PASSWORD = PROPERTY_NAME_PREFIX
         + "client.security.keystore.key-password";
 
@@ -476,7 +474,7 @@ public interface AgentConfigurationConstants {
     /**
      * The password used to access the truststore file.
      */
-    @Restricted
+    @ObfuscatedPreferences.Restricted
     String CLIENT_SENDER_SECURITY_TRUSTSTORE_PASSWORD = PROPERTY_NAME_PREFIX + "client.security.truststore.password";
 
     /**
@@ -806,16 +804,12 @@ public interface AgentConfigurationConstants {
     /**
      * Communications security keystore password
      */
-    @Restricted
+    @ObfuscatedPreferences.Restricted
     String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_PASSWORD = "rhq.communications.connector.security.keystore.password";
 
     /**
      * Communications security actual key password
      */
-    @Restricted
+    @ObfuscatedPreferences.Restricted
     String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_KEY_PASSWORD = "rhq.communications.connector.security.keystore.key-password";
-
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface Restricted {
-    }
 }

@@ -18,10 +18,12 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.agent;
+package org.rhq.core.util.obfuscation;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,27 +32,29 @@ import java.util.prefs.NodeChangeListener;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 
-import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
-import org.rhq.enterprise.agent.AgentConfigurationConstants.Restricted;
-
 /**
  * @author Stefan Negrea
  *
  */
 public class ObfuscatedPreferences extends Preferences {
 
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface Restricted {
+    }
+
     private Preferences actualPreferences;
 
     private Set<String> restrictedProperties = new HashSet<String>();
 
-    public ObfuscatedPreferences(Preferences actualPreferences) {
+    @SuppressWarnings("rawtypes")
+    public ObfuscatedPreferences(Preferences actualPreferences, Class classz) {
         this.actualPreferences = actualPreferences;
 
-        for (Field field : AgentConfigurationConstants.class.getFields()) {
+        for (Field field : classz.getFields()) {
             Restricted restricted = field.getAnnotation(Restricted.class);
             if (restricted != null) {
                 try {
-                    String restrictedProperty = field.get(AgentConfigurationConstants.class).toString();
+                    String restrictedProperty = field.get(classz).toString();
                     restrictedProperties.add(restrictedProperty);
                     String retrieveToObfuscate = this.get(restrictedProperty, null);
                 } catch (Exception e) {

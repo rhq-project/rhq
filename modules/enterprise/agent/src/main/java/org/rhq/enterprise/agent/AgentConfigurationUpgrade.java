@@ -26,6 +26,7 @@ import java.util.prefs.Preferences;
 import mazz.i18n.Logger;
 
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
@@ -225,7 +226,8 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
         }
 
         public void upgrade(Preferences preferences) {
-            ObfuscatedPreferences obfuscatedPreferences = new ObfuscatedPreferences(preferences);
+            ObfuscatedPreferences obfuscatedPreferences = new ObfuscatedPreferences(preferences,
+                AgentConfigurationConstants.class);
         }
     }
 }

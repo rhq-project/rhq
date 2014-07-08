@@ -437,17 +437,6 @@ Button (also used as MenuButton base style)
   padding: 2px 6px;
 }
 
-/* for FF only, they are special */
-@-moz-document url-prefix() {
-  .buttonOver {
-    color: #4d5258;
-    background-color: #dadada;
-    border-color: #989898;
-    text-decoration: none;
-    padding: 2px 6px 2px 1px;
-  }
-}
-
 .buttonDown {
 background: #cccccc; /* Old browsers */
 background: -moz-linear-gradient(top, #cccccc 0%, #ffffff 100%); /* FF3.6+ */
@@ -486,6 +475,21 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cccccc', end
     box-shadow: none;
 }
 
+/* FF only */
+@-moz-document url-prefix() {
+  div[eventproxy^="menuButton"] > table > tbody > tr > .buttonOver,
+  div[eventproxy^="menuButton"] > table > tbody > tr > .buttonSelectedOver,
+  div[eventproxy^="menuButton"] > table > tbody > tr > .buttonDown,
+  div[eventproxy^="menuButton"] > table > tbody > tr > .button:hover,
+  div[eventproxy^="menuButton"] > table > tbody > tr > .button:focus,
+  div[eventproxy^="menuButton"] > table > tbody > tr > .button:active {
+    color: #4d5258;
+    border-color: #989898;
+    text-decoration: none;
+    padding: 2px 6px 2px 1px;
+  }
+}
+
 
 div[eventproxy^="destructive"] > table > tbody > tr > .button,
 div[eventproxy^="destructive"] > table > tbody > tr > .buttonSelected {
@@ -499,6 +503,7 @@ background-color: #84050c;
 }
 
 div[eventproxy^="destructive"] > table > tbody > tr > .buttonOver,
+div[eventproxy^="destructive"] > table > tbody > tr > .buttonSelectedOver,
 div[eventproxy^="destructive"] > table > tbody > tr > .buttonDown,
 div[eventproxy^="destructive"] > table > tbody > tr > .button:hover,
 div[eventproxy^="destructive"] > table > tbody > tr > .button:focus,

@@ -242,14 +242,12 @@ padding: 0;
 /* navbar special buttons (main menuitem link + caret button for dropdown */
 
 .navbar-btn-group {
-  margin-top: 14px;
+  margin-top: 13.5px;
   margin-bottom: 15px;
 }
 
 .navbar-btn-item {
-  padding: 10px 20px;
-  padding-top: 13px;
-  padding-bottom: 13px;
+  padding: 11px 20px 13px;
   line-height: 1;
   text-shadow: none;
   background: transparent;

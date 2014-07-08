@@ -70,6 +70,7 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
         list.add(new Step5to6()); // goes from v5 to v6
         list.add(new Step6to7()); // goes from v6 to v7
         list.add(new Step7to8()); // goes from v7 to v8
+        list.add(new Step8to9()); // goes from v8 to v9
         return list;
     }
 
@@ -215,6 +216,16 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
                 preferences.put(ServiceContainerConfigurationConstants.COMMAND_AUTHENTICATOR,
                     SecurityTokenCommandAuthenticator.class.getName());
             }
+        }
+    }
+
+    static class Step8to9 extends PreferencesUpgradeStep {
+        public int getSupportedConfigurationSchemaVersion() {
+            return 9;
+        }
+
+        public void upgrade(Preferences preferences) {
+            ObfuscatedPreferences obfuscatedPreferences = new ObfuscatedPreferences(preferences);
         }
     }
 }

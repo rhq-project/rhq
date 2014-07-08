@@ -59,7 +59,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                file conforms to.  This is the schema for the rhq.agent
                preferences.
                -->
-               <entry key="rhq.agent.configuration-schema-version" value="8" />
+               <entry key="rhq.agent.configuration-schema-version" value="9" />
 
                <!--
                _______________________________________________________________

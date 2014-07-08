@@ -276,6 +276,9 @@ public class Installer {
             LOG.info("***     ");
             LOG.info("*** Encoded password for standalone.xml with vault without default:");
             LOG.info("***     ${VAULT::restricted::" + associatedProperty + ":: }");
+            LOG.info("***     ");
+            LOG.info("*** Encoded password for agent-configuration.xml:");
+            LOG.info("***     <entry key=\"" + associatedProperty + "\" value=\"" + encodedPassword + "\" />");
 
             return new WhatToDo[] { WhatToDo.DO_NOTHING };
         }

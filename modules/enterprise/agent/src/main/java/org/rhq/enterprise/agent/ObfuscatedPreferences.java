@@ -52,8 +52,7 @@ public class ObfuscatedPreferences extends Preferences {
                 try {
                     String restrictedProperty = field.get(AgentConfigurationConstants.class).toString();
                     restrictedProperties.add(restrictedProperty);
-                    String test = this.get(restrictedProperty, null);
-                    System.out.println(restrictedProperty + " " + test);
+                    String retrieveToObfuscate = this.get(restrictedProperty, null);
                 } catch (Exception e) {
                     //nothing to do, the field is just not accesible
                 }
@@ -65,9 +64,17 @@ public class ObfuscatedPreferences extends Preferences {
     public void put(String key, String value) {
         if (restrictedProperties.contains(key)) {
             try {
-                actualPreferences.put(key, PicketBoxObfuscator.encode(value));
-            } catch (Exception e) {
+                //if the user passes an obfuscated value then store it as is
+                //first try to decode, if it succeeds then the value is already
+                //obfuscated
+                String unobfuscatedValue = PicketBoxObfuscator.decode(value);
                 actualPreferences.put(key, value);
+            } catch (Exception ex) {
+                try {
+                    actualPreferences.put(key, PicketBoxObfuscator.encode(value));
+                } catch (Exception ex2) {
+                    actualPreferences.put(key, value);
+                }
             }
         } else {
             actualPreferences.put(key, value);
@@ -85,7 +92,9 @@ public class ObfuscatedPreferences extends Preferences {
                 }
 
                 return PicketBoxObfuscator.decode(value);
-            } catch (Exception e) {
+            } catch (Exception ex) {
+                //if an exception is thrown that means the value
+                //is not encoded restore the
                 String value = actualPreferences.get(key, null);
 
                 if (value == null) {
@@ -94,7 +103,7 @@ public class ObfuscatedPreferences extends Preferences {
 
                 try {
                     actualPreferences.put(key, PicketBoxObfuscator.encode(value));
-                } catch (Exception exp) {
+                } catch (Exception ex2) {
                     //do nothing, decoding failed, encoding failed too ...
                     //just move on
                 }

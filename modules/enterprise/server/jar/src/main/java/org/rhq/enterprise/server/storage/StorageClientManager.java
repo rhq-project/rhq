@@ -568,7 +568,7 @@ public class StorageClientManager implements StorageClientManagerMBean{
     }
 
     private long getCacheActivationTime() {
-        SystemSettings settings = systemManager.getSystemSettings(subjectManager.getOverlord());
+        SystemSettings settings = systemManager.getObfuscatedSystemSettings(true);
         return Long.parseLong(settings.get(SystemSetting.METRICS_CACHE_ACTIVATION_TIME));
     }
 }

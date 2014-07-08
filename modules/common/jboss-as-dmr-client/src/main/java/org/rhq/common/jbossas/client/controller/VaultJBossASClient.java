@@ -36,7 +36,7 @@ public class VaultJBossASClient extends JBossASClient {
     }
 
     /**
-     * Checks to see if there is already a vault with the given name.
+     * Checks to see if there is already a vault configured.
      *
      * @return true if the vault is already configured
      */

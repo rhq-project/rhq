@@ -100,7 +100,7 @@ public class SuspectMetricHandler extends AbstractRestBean implements SuspectMet
     private void formatBaseband(MeasurementOOBComposite oob) {
         String min = MeasurementConverter.format(oob.getBlMin(), oob.getUnits(), true);
         String max = MeasurementConverter.format(oob.getBlMax(), oob.getUnits(), true);
-        oob.setFormattedBaseband(min + ", " + max);
+        oob.setFormattedBaseband(min + " " + max);
     }
 
 }

@@ -53,12 +53,12 @@ import org.rhq.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.upload.PluginFileUploadForm;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -194,7 +194,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        IButton scanForUpdatesButton = new EnhancedIButton(MSG.view_admin_plugins_scan());
+        IButton scanForUpdatesButton = new EnhancedIButton(MSG.view_admin_plugins_scan(), ButtonColor.BLUE);
         scanForUpdatesButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 GWTServiceLookup.getPluginService().scanAndRegister(new AsyncCallback<Void>() {
@@ -215,7 +215,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        IButton restartMasterPCButton = new EnhancedIButton(MSG.view_admin_plugins_restartMasterPC());
+        IButton restartMasterPCButton = new EnhancedIButton(MSG.view_admin_plugins_restartMasterPC(), ButtonColor.RED);
         restartMasterPCButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 Message msg = new Message(MSG.view_admin_plugins_restartMasterPCStarted(), Severity.Info);

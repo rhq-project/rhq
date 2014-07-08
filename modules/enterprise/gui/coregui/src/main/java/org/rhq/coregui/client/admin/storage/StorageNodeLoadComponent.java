@@ -27,23 +27,16 @@ import java.util.Map;
 
 import com.google.gwt.user.client.Random;
 import com.google.gwt.user.client.Timer;
-import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.types.Autofit;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.admin.storage.StorageNodeDatasource.StorageNodeLoadCompositeDatasource;
 import org.rhq.coregui.client.util.BrowserUtility;
-import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**

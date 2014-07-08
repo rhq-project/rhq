@@ -37,7 +37,6 @@ import org.rhq.coregui.client.PermissionsLoadedListener;
 import org.rhq.coregui.client.PermissionsLoader;
 import org.rhq.coregui.client.components.TitleBar;
 import org.rhq.coregui.client.components.view.AbstractSectionedLeftNavigationView;
-import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.NavigationItem;
 import org.rhq.coregui.client.components.view.NavigationSection;
 import org.rhq.coregui.client.components.view.ViewFactory;

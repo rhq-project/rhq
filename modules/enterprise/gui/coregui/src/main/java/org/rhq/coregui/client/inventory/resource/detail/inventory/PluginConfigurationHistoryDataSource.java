@@ -21,7 +21,6 @@ package org.rhq.coregui.client.inventory.resource.detail.inventory;
 import java.util.HashSet;
 import java.util.Map;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;

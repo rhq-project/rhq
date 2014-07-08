@@ -49,11 +49,12 @@ import org.rhq.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 import org.rhq.coregui.client.util.message.MessageCenter;
-import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A view for editing a group's current plugin configuration.
@@ -93,7 +94,7 @@ public class GroupPluginConfigurationEditView extends EnhancedVLayout implements
         toolStrip.setMembersMargin(5);
         toolStrip.setLayoutMargin(5);
 
-        this.saveButton = new EnhancedIButton(MSG.common_button_save());
+        this.saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
         this.saveButton.setTooltip(MSG.view_group_pluginConfig_edit_saveTooltip());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {

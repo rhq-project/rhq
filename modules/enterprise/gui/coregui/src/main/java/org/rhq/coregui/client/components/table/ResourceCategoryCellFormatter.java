@@ -2,6 +2,7 @@ package org.rhq.coregui.client.components.table;
 
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;

@@ -48,7 +48,6 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.criteria.ServerCriteria;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
@@ -58,6 +57,7 @@ import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * Component for assigning the servers into affinity group.
@@ -206,7 +206,7 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
                 closeAndRefresh(parrent, false);
             }
         });
-        IButton save = new EnhancedIButton(MSG.common_button_save());
+        IButton save = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
         save.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 List<Integer> actuallySelected = getIdList(selector.getSelectedRecords());

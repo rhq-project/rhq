@@ -32,9 +32,10 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * @author Jay Shaughnessy
@@ -77,7 +78,7 @@ public class ResourceResourceGroupsView extends EnhancedVLayout {
         toolStrip.setMembersMargin(5);
         toolStrip.setLayoutMargin(5);
 
-        IButton saveButton = new EnhancedIButton(MSG.common_button_save());
+        IButton saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();

@@ -32,8 +32,8 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
-import org.rhq.coregui.client.util.measurement.MeasurementParser;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.measurement.MeasurementParser;
 
 public class TestNumberFormatView extends EnhancedVLayout {
 

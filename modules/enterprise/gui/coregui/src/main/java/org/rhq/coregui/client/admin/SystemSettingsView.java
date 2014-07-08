@@ -54,6 +54,7 @@ import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -142,7 +143,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 toolStrip.setMembersMargin(5);
                 toolStrip.setLayoutMargin(5);
 
-                saveButton = new EnhancedIButton(MSG.common_button_save());
+                saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
                 saveButton.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
                         save();

@@ -5,7 +5,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.coregui.client.components.ReportExporter;
 import org.rhq.coregui.client.components.table.AbstractTableAction;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 

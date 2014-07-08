@@ -42,6 +42,7 @@ import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * This is a window for displaying portlet settings. The window contains a form which in turn will contain the
@@ -104,7 +105,7 @@ public class PortletSettingsWindow extends Window {
                     PortletSettingsWindow.this.destroy();
                 }
             });
-            IButton save = new EnhancedIButton(MSG.common_button_save());
+            IButton save = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
             save.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (form.validate()) {
@@ -142,7 +143,7 @@ public class PortletSettingsWindow extends Window {
                     PortletSettingsWindow.this.destroy();
                 }
             });
-            IButton save = new EnhancedIButton(MSG.common_button_save());
+            IButton save = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
             save.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (editor.validate()) {

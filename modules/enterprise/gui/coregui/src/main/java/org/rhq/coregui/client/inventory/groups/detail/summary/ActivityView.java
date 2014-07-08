@@ -52,7 +52,6 @@ import org.rhq.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdate
 import org.rhq.coregui.client.dashboard.portlets.groups.GroupEventsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
-import org.rhq.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
 import org.rhq.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;

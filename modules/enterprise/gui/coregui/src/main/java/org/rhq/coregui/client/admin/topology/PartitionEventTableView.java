@@ -21,25 +21,6 @@ package org.rhq.coregui.client.admin.topology;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
-import org.rhq.core.domain.cloud.PartitionEventType;
-import org.rhq.core.domain.criteria.PartitionEventCriteria;
-import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.IconEnum;
-import org.rhq.coregui.client.LinkManager;
-import org.rhq.coregui.client.admin.AdministrationView;
-import org.rhq.coregui.client.components.form.EnumSelectItem;
-import org.rhq.coregui.client.components.table.AuthorizedTableAction;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
-import org.rhq.coregui.client.components.table.TableActionEnablement;
-import org.rhq.coregui.client.components.table.TableSection;
-import org.rhq.coregui.client.components.view.HasViewName;
-import org.rhq.coregui.client.components.view.ViewName;
-import org.rhq.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.coregui.client.util.StringUtility;
-import org.rhq.coregui.client.util.message.Message;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
@@ -52,6 +33,25 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
+import org.rhq.core.domain.cloud.PartitionEventType;
+import org.rhq.core.domain.criteria.PartitionEventCriteria;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.admin.AdministrationView;
+import org.rhq.coregui.client.components.form.EnumSelectItem;
+import org.rhq.coregui.client.components.table.AuthorizedTableAction;
+import org.rhq.coregui.client.components.table.TableActionEnablement;
+import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.view.HasViewName;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * Shows the table of all partition events.

@@ -18,7 +18,6 @@
  */
 package org.rhq.coregui.client.dashboard;
 
-import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VStack;
 

@@ -22,10 +22,11 @@
  */
 package org.rhq.coregui.client.components.buttons;
 
+import com.smartgwt.client.types.Cursor;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.types.Cursor;
+
 import org.rhq.coregui.client.CoreGUI;
 
 /**

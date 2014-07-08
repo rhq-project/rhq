@@ -27,12 +27,8 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
-import org.rhq.coregui.client.UserSessionManager;
-import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
 import org.rhq.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.coregui.client.util.Log;
-import org.rhq.coregui.client.util.message.Message;
-import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * Common Metric Graph capability used across multiple metric rendering graphs.

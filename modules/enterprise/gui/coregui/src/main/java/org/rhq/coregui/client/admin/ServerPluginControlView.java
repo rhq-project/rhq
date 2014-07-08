@@ -51,10 +51,10 @@ import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.coregui.client.components.form.SortedSelectItem;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.PluginGWTServiceAsync;
-import org.rhq.coregui.client.util.message.Message;
-import org.rhq.coregui.client.util.message.Message.Severity;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedVStack;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * A component used to invoke controls on a server plugin.

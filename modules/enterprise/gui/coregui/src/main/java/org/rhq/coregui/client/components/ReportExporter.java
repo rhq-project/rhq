@@ -20,6 +20,11 @@
  */
 package org.rhq.coregui.client.components;
 
+import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
+import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;
+import static com.smartgwt.client.types.RelativeDateRangePosition.END;
+import static com.smartgwt.client.types.RelativeDateRangePosition.START;
+
 import java.util.Date;
 
 import com.google.gwt.http.client.URL;
@@ -28,11 +33,6 @@ import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.smartgwt.client.util.DateUtil;
 
 import org.rhq.coregui.client.util.Log;
-
-import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
-import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;
-import static com.smartgwt.client.types.RelativeDateRangePosition.END;
-import static com.smartgwt.client.types.RelativeDateRangePosition.START;
 /**
  * Exporter for building urls to reports (csv).
  * The reports are RESTful urls opened up in a new window.

@@ -27,7 +27,6 @@ import java.util.Set;
 
 import com.google.gwt.i18n.client.NumberFormat;
 
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;

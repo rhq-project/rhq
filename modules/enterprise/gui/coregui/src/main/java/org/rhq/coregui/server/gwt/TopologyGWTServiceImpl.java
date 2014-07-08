@@ -25,7 +25,6 @@ package org.rhq.coregui.server.gwt;
 import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
-
 import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.PartitionEvent;

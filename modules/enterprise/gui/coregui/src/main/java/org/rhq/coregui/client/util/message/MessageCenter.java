@@ -18,13 +18,11 @@
  */
 package org.rhq.coregui.client.util.message;
 
-import org.rhq.coregui.client.util.Log;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import java.util.logging.Logger;
+import org.rhq.coregui.client.util.Log;
 
 /**
  * @author Greg Hinkle

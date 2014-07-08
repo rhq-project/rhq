@@ -18,8 +18,6 @@
  */
 package org.rhq.coregui.client.inventory.groups.detail;
 
-import static org.rhq.coregui.client.inventory.resource.detail.ResourceDetailView.Tab;
-
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -71,6 +69,7 @@ import org.rhq.coregui.client.inventory.groups.detail.monitoring.traits.TraitsVi
 import org.rhq.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleListView;
 import org.rhq.coregui.client.inventory.groups.detail.summary.ActivityView;
+import org.rhq.coregui.client.inventory.resource.detail.ResourceDetailView.Tab;
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.CalltimeView;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.util.BrowserUtility;

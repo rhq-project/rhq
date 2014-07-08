@@ -59,7 +59,6 @@ import org.rhq.coregui.client.alert.definitions.AbstractAlertDefinitionsDataSour
 import org.rhq.coregui.client.components.ReportExporter;
 import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.Table;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -67,6 +66,7 @@ import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * A tabular report that shows alert definitions on all resources in inventory.

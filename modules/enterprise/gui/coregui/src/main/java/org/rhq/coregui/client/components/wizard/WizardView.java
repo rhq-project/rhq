@@ -41,6 +41,7 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * @author Greg Hinkle
@@ -203,7 +204,7 @@ public class WizardView extends EnhancedVLayout {
         }
         buttonBar.addMember(previousButton);
 
-        nextButton = new EnhancedIButton(NEXT);
+        nextButton = new EnhancedIButton(NEXT, ButtonColor.BLUE);
         nextButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
 

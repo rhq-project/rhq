@@ -23,11 +23,11 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
+import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 
 /**
  * @author Greg Hinkle

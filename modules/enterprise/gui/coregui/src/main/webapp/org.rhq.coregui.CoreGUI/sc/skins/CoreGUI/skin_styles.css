@@ -55,6 +55,10 @@ border-color:rgb(207, 207, 207);
     padding-left:0;
 }
 
+.groupLabel {
+    background-color: transparent !important;
+}
+
 a, a:link, a:visited {
     text-decoration: none !important;
 }
@@ -430,6 +434,18 @@ Button (also used as MenuButton base style)
   background-color: #dadada;
   border-color: #989898;
   text-decoration: none;
+  padding: 2px 6px;
+}
+
+/* for FF only, they are special */
+@-moz-document url-prefix() {
+  .buttonOver {
+    color: #4d5258;
+    background-color: #dadada;
+    border-color: #989898;
+    text-decoration: none;
+    padding: 2px 6px 2px 1px;
+  }
 }
 
 .buttonDown {

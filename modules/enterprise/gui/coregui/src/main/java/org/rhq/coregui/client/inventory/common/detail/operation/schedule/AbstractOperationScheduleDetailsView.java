@@ -19,10 +19,6 @@
 
 package org.rhq.coregui.client.inventory.common.detail.operation.schedule;
 
-import static org.rhq.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource.Field;
-import static org.rhq.coregui.client.util.message.Message.Option;
-import static org.rhq.coregui.client.util.message.Message.Severity;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
@@ -73,12 +69,15 @@ import org.rhq.coregui.client.components.form.UnitType;
 import org.rhq.coregui.client.components.trigger.JobTriggerEditor;
 import org.rhq.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource.Field;
 import org.rhq.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.coregui.client.util.FormUtility;
 import org.rhq.coregui.client.util.TypeConversionUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Option;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * A view for viewing or editing an RHQ {@link org.rhq.core.domain.operation.bean.OperationSchedule operation schedule}.

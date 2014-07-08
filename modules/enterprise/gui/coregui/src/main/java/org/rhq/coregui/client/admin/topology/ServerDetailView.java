@@ -56,9 +56,11 @@ import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.StringUtility;
-import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * Shows details of a server.
@@ -217,9 +219,8 @@ public class ServerDetailView extends EnhancedVLayout implements BookmarkableVie
         lastUpdateItem.setValue(TimestampCellFormatter.format(Long.valueOf(server.getMtime()),
             TimestampCellFormatter.DATE_TIME_FORMAT_LONG));
 
-        IButton saveButton = new IButton();
+        IButton saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
         saveButton.setOverflow(Overflow.VISIBLE);
-        saveButton.setTitle(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 if (form.validate()) {

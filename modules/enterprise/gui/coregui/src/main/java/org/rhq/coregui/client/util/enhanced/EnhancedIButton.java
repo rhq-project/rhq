@@ -6,13 +6,24 @@ import com.smartgwt.client.widgets.IButton;
  * @author Jay Shaughnessy
  */
 public class EnhancedIButton extends IButton {
-
-    public EnhancedIButton() {
-        this(null);
+    
+    public enum ButtonColor {
+        RED, BLUE, GRAY
     }
 
+    public EnhancedIButton() {
+        this(null, ButtonColor.GRAY);
+    }
+    
     public EnhancedIButton(String title) {
+        this(title, ButtonColor.GRAY);
+    }
+
+    public EnhancedIButton(String title, ButtonColor buttonColor) {
         super(title);
+        if (!ButtonColor.GRAY.equals(buttonColor)) {
+            setID((ButtonColor.BLUE.equals(buttonColor) ? "primary" : "destructive") + id + title);
+        }
         init();
     }
 

@@ -50,11 +50,11 @@ import org.rhq.coregui.client.components.table.RecordExtractor;
 import org.rhq.coregui.client.components.table.RoleAuthorizedTableAction;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.ErrorHandler;
 import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 

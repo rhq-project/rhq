@@ -21,7 +21,6 @@ package org.rhq.coregui.client.util.rpc;
 import java.util.HashSet;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.smartgwt.client.widgets.Img;
 
 import org.rhq.coregui.client.CoreGUI;

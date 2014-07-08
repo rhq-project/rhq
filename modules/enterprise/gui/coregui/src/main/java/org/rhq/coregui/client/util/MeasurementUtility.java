@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import com.google.gwt.i18n.client.DateTimeFormat;
 
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 
 public class MeasurementUtility {

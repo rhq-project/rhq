@@ -67,8 +67,9 @@ import org.rhq.coregui.client.components.form.EnhancedSearchBarItem;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * Similar to (i.e. originally a copy of) Table but instead of encapsulating a ListGrid, it manages a list of 
@@ -407,7 +408,7 @@ public abstract class Carousel extends EnhancedHLayout implements RefreshableVie
         });
         footer.addMember(previousButton);
 
-        nextButton = new EnhancedIButton(MSG.common_button_next());
+        nextButton = new EnhancedIButton(MSG.common_button_next(), ButtonColor.BLUE);
         nextButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 disableAllFooterControls();

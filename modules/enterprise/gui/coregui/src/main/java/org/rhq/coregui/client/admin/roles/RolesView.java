@@ -33,9 +33,9 @@ import org.rhq.coregui.client.admin.AdministrationView;
 import org.rhq.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.components.table.TableSection;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * A table that lists all roles and provides the ability to view details of or delete those roles and to create new

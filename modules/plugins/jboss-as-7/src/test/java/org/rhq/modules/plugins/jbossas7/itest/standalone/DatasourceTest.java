@@ -21,6 +21,9 @@ package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
 import static org.rhq.core.domain.resource.CreateResourceStatus.SUCCESS;
 import static org.rhq.core.domain.resource.ResourceCategory.SERVICE;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.PLUGIN_NAME;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_TYPE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -64,8 +67,8 @@ public class DatasourceTest extends AbstractJBossAS7PluginTest {
     public void initialDiscoveryTest() throws Exception {
 
         Resource platform = validatePlatform();
-        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
+        Resource server = waitForResourceByTypeAndKey(platform, platform, STANDALONE_RESOURCE_TYPE,
+            STANDALONE_RESOURCE_KEY);
         datasourceSubsystemResource = waitForResourceByTypeAndKey(platform, server, new ResourceType(
             DATASOURCES_SUBSYSTEM_RESOURCE_TYPE_NAME, getPluginName(), SERVICE, null),
             DATASOURCES_SUBSYSTEM_RESOURCE_KEY);

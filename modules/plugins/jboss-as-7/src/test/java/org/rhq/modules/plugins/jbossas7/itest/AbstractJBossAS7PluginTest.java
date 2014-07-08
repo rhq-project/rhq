@@ -19,7 +19,13 @@
 
 package org.rhq.modules.plugins.jbossas7.itest;
 
-import java.io.File;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_TYPE;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.MANAGEMENT_PASSWORD;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.MANAGEMENT_USERNAME;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.PLUGIN_NAME;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_TYPE;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
@@ -28,12 +34,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.plugin.testutil.AbstractAgentPluginTest;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.pluginapi.util.FileUtils;
-import org.rhq.modules.plugins.jbossas7.ASConnection;
-import org.rhq.modules.plugins.jbossas7.ASConnectionParams;
-import org.rhq.modules.plugins.jbossas7.ASConnectionParamsBuilder;
-import org.rhq.modules.plugins.jbossas7.itest.domain.DomainServerComponentTest;
-import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.test.arquillian.AfterDiscovery;
 
 /**
@@ -43,32 +43,21 @@ import org.rhq.test.arquillian.AfterDiscovery;
  */
 public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest {
 
-    public static final String PLUGIN_NAME = "JBossAS7";
-    public static final File JBOSS_HOME = new File(FileUtils.getCanonicalPath(System.getProperty("jboss7.home")));
-    public static final String MANAGEMENT_USERNAME = "admin";
-    public static final String MANAGEMENT_PASSWORD = "admin";
-
-    public static final String DC_HOST = System.getProperty("jboss.domain.bindAddress");
-    public static final int DC_HTTP_PORT = Integer.valueOf(System.getProperty("jboss.domain.httpManagementPort"));
-    public static final String DC_USER = AbstractJBossAS7PluginTest.MANAGEMENT_USERNAME;
-    public static final String DC_PASS = AbstractJBossAS7PluginTest.MANAGEMENT_PASSWORD;
-
     /**
      * Every test sub-class requires a management user, create it up front
      */
     @AfterDiscovery
     public void installManagementUsersTest() throws Exception {
-            System.out.println("== Installing management users...");
+        System.out.println("== Installing management users...");
 
-            Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
+        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
 
-            Resource domainServer = getResourceByTypeAndKey(platform, DomainServerComponentTest.RESOURCE_TYPE,
-                DomainServerComponentTest.RESOURCE_KEY, true);
-            installManagementUser(domainServer);
+        Resource domainServer = getResourceByTypeAndKey(platform, DOMAIN_RESOURCE_TYPE, DOMAIN_RESOURCE_KEY, true);
+        installManagementUser(domainServer);
 
-            Resource standaloneServer = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-                StandaloneServerComponentTest.RESOURCE_KEY, true);
-            installManagementUser(standaloneServer);
+        Resource standaloneServer = getResourceByTypeAndKey(platform, STANDALONE_RESOURCE_TYPE,
+            STANDALONE_RESOURCE_KEY, true);
+        installManagementUser(standaloneServer);
     }
 
     protected Resource validatePlatform() throws Exception {
@@ -102,10 +91,8 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
         Resource platform = validatePlatform();
 
         if (serverOnly) {
-            waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-                StandaloneServerComponentTest.RESOURCE_KEY);
-            waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
-                DomainServerComponentTest.RESOURCE_KEY);
+            waitForResourceByTypeAndKey(platform, platform, STANDALONE_RESOURCE_TYPE, STANDALONE_RESOURCE_KEY);
+            waitForResourceByTypeAndKey(platform, platform, DOMAIN_RESOURCE_TYPE, DOMAIN_RESOURCE_KEY);
         } else {
             waitForAsyncDiscoveryToStabilize(platform);
         }
@@ -144,15 +131,5 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
     @Override
     protected String getPluginName() {
         return PLUGIN_NAME;
-    }
-
-    public ASConnection getDomainControllerASConnection() {
-        ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
-            .setHost(DC_HOST) //
-            .setPort(DC_HTTP_PORT) //
-            .setUsername(DC_USER) //
-            .setPassword(DC_PASS) //
-            .createASConnectionParams();
-        return new ASConnection(asConnectionParams);
     }
 }

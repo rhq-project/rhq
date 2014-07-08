@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
+
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.PLUGIN_NAME;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_TYPE;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -52,8 +57,7 @@ public class TemplatedResourcesTest extends AbstractJBossAS7PluginTest {
     @RunDiscovery(discoverServices = true, discoverServers = true)
     public void initialDiscoveryTest() throws Exception {
         platform = validatePlatform();
-        server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
+        server = waitForResourceByTypeAndKey(platform, platform, STANDALONE_RESOURCE_TYPE, STANDALONE_RESOURCE_KEY);
     }
 
     @Test(priority = 11)
@@ -117,8 +121,7 @@ public class TemplatedResourcesTest extends AbstractJBossAS7PluginTest {
     private ResourceData[] testResourceData = new ResourceData[] {
         new ResourceData("Infinispan", "subsystem=infinispan", "Cache", "__type"),
         new ResourceData("Threads", "subsystem=threads", "ThreadPool", "__type"),
-        new ResourceData("Messaging", "subsystem=messaging", "Path", "__name")
-    };
+        new ResourceData("Messaging", "subsystem=messaging", "Path", "__name") };
 
     private static class ResourceData {
         final String resourceTypeName;

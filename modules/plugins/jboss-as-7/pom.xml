@@ -841,7 +841,7 @@
                 </goals>
               </execution>
               <execution>
-                <id>BundleContentHandoverTest</id>
+                <id>BundleContentHandoverDomainTest</id>
                 <configuration>
                   <includes>
                     <include>org/rhq/modules/plugins/jbossas7/itest/domain/BundleContentHandoverTest.java</include>

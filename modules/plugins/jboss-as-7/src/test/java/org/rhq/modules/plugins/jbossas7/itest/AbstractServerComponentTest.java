@@ -19,6 +19,7 @@
 
 package org.rhq.modules.plugins.jbossas7.itest;
 
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.JBOSS_HOME;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -103,7 +104,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         inventoryManager.activateResource(getServerResource(), serverContainer, true);
 
         Assert.assertNotNull(ipce, "InvalidPluginConfigurationException was not thrown by server component's "
-                + "start() method due to invalid baseDir.");
+            + "start() method due to invalid baseDir.");
 
         // Change the expectedRuntimeProductName property
         String originalExpectedRuntimeProductName = pluginConfig.getSimpleValue("expectedRuntimeProductName");
@@ -128,7 +129,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         inventoryManager.activateResource(getServerResource(), serverContainer, true);
 
         Assert.assertNotNull(ipce, "InvalidPluginConfigurationException was not thrown by server component's "
-                + "start() method due to invalid productType.");
+            + "start() method due to invalid productType.");
     }
 
     protected void validatePluginConfiguration(Configuration pluginConfig) {
@@ -225,11 +226,10 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         try {
             c = new Configuration();
             script = File.createTempFile("test", "script");
-            writeFile("ls",script);
-            c.put(new PropertySimple("file",script.getAbsolutePath()));
+            writeFile("ls", script);
+            c.put(new PropertySimple("file", script.getAbsolutePath()));
             invokeOperationAndAssertSuccess(getServerResource(), "executeScript", c);
-        }
-        finally {
+        } finally {
             script.delete();
         }
     }

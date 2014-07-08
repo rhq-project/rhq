@@ -19,6 +19,9 @@
 
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_TYPE;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,15 +37,13 @@ import org.rhq.test.arquillian.RunDiscovery;
  */
 @Test(groups = { "integration", "pc", "domain" }, singleThreaded = true)
 public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
-    private Resource platform;
     private Resource server;
 
     @Test(priority = 10, groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
     public void initialDiscoveryTest() throws Exception {
-        platform = validatePlatform();
-        server = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
-            DomainServerComponentTest.RESOURCE_KEY);
+        Resource platform = validatePlatform();
+        server = waitForResourceByTypeAndKey(platform, platform, DOMAIN_RESOURCE_TYPE, DOMAIN_RESOURCE_KEY);
         waitForAsyncDiscoveryToStabilize(server);
     }
 

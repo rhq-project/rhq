@@ -20,8 +20,9 @@
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
 import static java.lang.Boolean.TRUE;
-import static org.rhq.modules.plugins.jbossas7.itest.standalone.AfterSuiteTest.DOMAIN_RESOURCE_KEY;
-import static org.rhq.modules.plugins.jbossas7.itest.standalone.AfterSuiteTest.DOMAIN_RESOURCE_TYPE;
+import static org.rhq.modules.plugins.jbossas7.test.util.ASConnectionFactory.getDomainControllerASConnection;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_TYPE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -143,9 +144,8 @@ public class BundleContentHandoverTest extends AbstractJBossAS7PluginTest {
             TimeUnit.MINUTES.toMillis(5), true, true, false);
     }
 
-    private String getFailureMessage(BundleHandoverResponse response) {
+    public static String getFailureMessage(BundleHandoverResponse response) {
         return response.getFailureType() + ": " + response.getMessage() + " "
             + ThrowableUtil.getAllMessages(response.getThrowable());
     }
-
 }

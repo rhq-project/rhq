@@ -226,6 +226,7 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
         }
 
         public void upgrade(Preferences preferences) {
+            @SuppressWarnings("unused")
             ObfuscatedPreferences obfuscatedPreferences = new ObfuscatedPreferences(preferences,
                 AgentConfigurationConstants.class);
         }

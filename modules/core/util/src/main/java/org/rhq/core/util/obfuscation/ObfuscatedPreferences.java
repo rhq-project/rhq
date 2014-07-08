@@ -56,6 +56,7 @@ public class ObfuscatedPreferences extends Preferences {
                 try {
                     String restrictedProperty = field.get(classz).toString();
                     restrictedProperties.add(restrictedProperty);
+                    @SuppressWarnings("unused")
                     String retrieveToObfuscate = this.get(restrictedProperty, null);
                 } catch (Exception e) {
                     //nothing to do, the field is just not accesible
@@ -71,6 +72,7 @@ public class ObfuscatedPreferences extends Preferences {
                 //if the user passes an obfuscated value then store it as is
                 //first try to decode, if it succeeds then the value is already
                 //obfuscated
+                @SuppressWarnings("unused")
                 String unobfuscatedValue = PicketBoxObfuscator.decode(value);
                 actualPreferences.put(key, value);
             } catch (Exception ex) {

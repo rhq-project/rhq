@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.core.comm;
 
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences.Restricted;
+
 /**
  * These are the names of the known server configuration preferences. All configuration preferences are stored in flat
  * properties (there is no hierarchy - simply a set of name/value pairs).
@@ -186,11 +188,13 @@ public interface ServerConfigurationConstants {
     /**
      * The password used to access the keystore file.
      */
+    @Restricted
     String CLIENT_SENDER_SECURITY_KEYSTORE_PASSWORD = PROPERTY_NAME_PREFIX + "client.security.keystore.password";
 
     /**
      * The password to gain access to the key found in the keystore.
      */
+    @Restricted
     String CLIENT_SENDER_SECURITY_KEYSTORE_KEY_PASSWORD = PROPERTY_NAME_PREFIX
         + "client.security.keystore.key-password";
 
@@ -212,6 +216,7 @@ public interface ServerConfigurationConstants {
     /**
      * The password used to access the truststore file.
      */
+    @Restricted
     String CLIENT_SENDER_SECURITY_TRUSTSTORE_PASSWORD = PROPERTY_NAME_PREFIX + "client.security.truststore.password";
 
     /**

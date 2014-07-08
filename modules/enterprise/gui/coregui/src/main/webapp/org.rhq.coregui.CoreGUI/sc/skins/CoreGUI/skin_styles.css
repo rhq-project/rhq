@@ -994,6 +994,9 @@ filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', en
 .labelAnchorFocused {
      color: #4d5258;
      vertical-align: middle;
+     border-color: transparent;
+     border-style: solid;
+     border-width: 1px 0;
 }
 
 .textItem,
@@ -1140,9 +1143,6 @@ filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', en
 .tallPickListCellDark,
 .pickListCellSelected,
 .tallPickListCellSelectedDark {
-    border-color: transparent;
-    border-style: solid;
-    border-width: 1px 0;
     overflow:visible;
 }
 
@@ -1151,6 +1151,7 @@ filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', en
 .tallPickListCellSelected,
 .tallPickListCellSelectedDark {
   border-color:#b3d3e7;
+  overflow:visible;
   background-color:#dfedfa;
 }
 

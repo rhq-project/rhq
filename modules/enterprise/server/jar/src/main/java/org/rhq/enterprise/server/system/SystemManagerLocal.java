@@ -24,6 +24,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 
 /**
@@ -134,6 +135,8 @@ public interface SystemManagerLocal extends SystemManagerRemote {
 
     boolean isDebugModeEnabled();
 
+    boolean isLoginWithoutRolesEnabled();
+
     boolean isExperimentalFeaturesEnabled();
 
     boolean isLdapAuthorizationEnabled();
@@ -189,4 +192,13 @@ public interface SystemManagerLocal extends SystemManagerRemote {
     SystemSettings getObfuscatedSystemSettings(boolean includePrivateSettings);
 
     void deobfuscate(SystemSettings systemSettings);
+
+    /**
+     * Internal use only.  Sets any setting (other than LAST_SYSTEM_CONFIG_UPDATE_TIME) regardless of whether
+     * it is private or read-only.  Guarantees proper cache update.  Performs no validation or un/masking.
+     *
+     * @param setting
+     * @param value
+     */
+    void setSystemSetting(SystemSetting setting, String value);
 }

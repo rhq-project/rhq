@@ -200,5 +200,17 @@ public interface SystemManagerLocal extends SystemManagerRemote {
      * @param setting
      * @param value
      */
-    void setSystemSetting(SystemSetting setting, String value);
+    void setAnySystemSetting(SystemSetting setting, String value);
+
+    /**
+     * Internal use only.  Like {@link SystemManagerRemote#setSystemSettings(Subject, SystemSettings)} but can
+     * bypass validation and also ignore the readOnly constraint.
+     *
+     * @param settings
+     * @param skipValidation if true, skip validation
+     * @param ignoreReadOnly if true, ignore the readOnly constraint and set new values if supplied
+     * @param value
+     */
+    void setAnySystemSettings(SystemSettings settings, boolean skipValidation, boolean ignoreReadOnly);
+
 }

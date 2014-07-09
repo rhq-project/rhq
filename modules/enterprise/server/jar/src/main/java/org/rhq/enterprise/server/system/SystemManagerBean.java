@@ -254,18 +254,18 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void setSystemSettings(Subject subject, SystemSettings settings) {
-        setSystemSettings(removePrivateSettings(settings), false, false);
+        setAnySystemSettings(removePrivateSettings(settings), false, false);
     }
 
     @Override
-    public void setSystemSetting(SystemSetting setting, String value) {
+    public void setAnySystemSetting(SystemSetting setting, String value) {
         if (SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME == setting) {
             return;
         }
 
         SystemSettings settings = getUnmaskedSystemSettings(true);
         settings.put(setting, value);
-        setSystemSettings(settings, true, true);
+        setAnySystemSettings(settings, true, true);
     }
 
     private SystemSettings removePrivateSettings(SystemSettings settings) {
@@ -287,10 +287,11 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                     + "only allows updating of storage cluster settings.");
             }
         }
-        setSystemSettings(settings, false, true);
+        setAnySystemSettings(settings, false, true);
     }
 
-    private void setSystemSettings(SystemSettings settings, boolean skipValidation, boolean ignoreReadOnly) {
+    @Override
+    public void setAnySystemSettings(SystemSettings settings, boolean skipValidation, boolean ignoreReadOnly) {
         // first, we need to get the current settings so we'll know if we need to persist or merge the new ones
         @SuppressWarnings("unchecked")
         List<SystemConfiguration> configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL)
@@ -482,7 +483,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
         SystemSettings settings = SystemSettings.fromMap(map);
 
-        setSystemSettings(settings, skipValidation, false);
+        setAnySystemSettings(settings, skipValidation, false);
     }
 
     @Override

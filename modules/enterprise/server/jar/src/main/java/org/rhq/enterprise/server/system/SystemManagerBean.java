@@ -259,6 +259,17 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         setSystemSettings(removePrivateSettings(settings), false, false);
     }
 
+    @Override
+    public void setSystemSetting(SystemSetting setting, String value) {
+        if (SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME == setting) {
+            return;
+        }
+
+        SystemSettings settings = getUnmaskedSystemSettings(true);
+        settings.put(setting, value);
+        setSystemSettings(settings, true, true);
+    }
+
     private SystemSettings removePrivateSettings(SystemSettings settings) {
         SystemSettings cleansed = new SystemSettings(settings);
         for (SystemSetting s : SystemSetting.values()) {
@@ -281,7 +292,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         setSystemSettings(settings, false, true);
     }
 
-    private void setSystemSettings(SystemSettings settings, boolean skipValidation, boolean updateStorageSettings) {
+    private void setSystemSettings(SystemSettings settings, boolean skipValidation, boolean ignoreReadOnly) {
         // first, we need to get the current settings so we'll know if we need to persist or merge the new ones
         @SuppressWarnings("unchecked")
         List<SystemConfiguration> configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL)
@@ -345,7 +356,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                     //SystemSetting#isReadOnly should be a superset of the "fReadOnly" field in the database
                     //but let's just be super paranoid here...
                     if ((prop.isReadOnly() || (existingConfig.getFreadOnly() != null && existingConfig.getFreadOnly()
-                        .booleanValue())) && !(isStorageSetting(prop) || updateStorageSettings)) {
+                        .booleanValue())) && !(isStorageSetting(prop) || ignoreReadOnly)) {
                         throw new IllegalArgumentException("The setting [" + prop.getInternalName()
                             + "] is read-only - you cannot change its current value! Current value is ["
                             + existingConfig.getPropertyValue() + "] while the new value was [" + value + "].");

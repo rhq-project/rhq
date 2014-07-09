@@ -38,9 +38,7 @@ import javax.persistence.Table;
  * @author <a href="mailto:ghinkle@jboss.com">Greg Hinkle</a>
  */
 @Entity
-@NamedQueries( {
-    @NamedQuery(name = SystemConfiguration.QUERY_FIND_ALL, query = "SELECT c FROM SystemConfiguration AS c"),
-    @NamedQuery(name = SystemConfiguration.FIND_PROPERTY_BY_KEY, query = "SELECT c FROM SystemConfiguration AS c WHERE c.propertyKey = :key") })
+@NamedQueries({ @NamedQuery(name = SystemConfiguration.QUERY_FIND_ALL, query = "SELECT c FROM SystemConfiguration AS c") })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_SYSTEM_CONFIG_ID_SEQ", sequenceName = "RHQ_SYSTEM_CONFIG_ID_SEQ")
 @Table(name = "RHQ_SYSTEM_CONFIG")
 public class SystemConfiguration implements Serializable {

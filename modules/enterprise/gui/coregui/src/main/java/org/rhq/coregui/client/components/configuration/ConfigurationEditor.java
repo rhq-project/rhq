@@ -130,9 +130,9 @@ import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -1079,7 +1079,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
         if (!propertyReadOnly) {
-            IButton addRowButton = new IButton();
+            IButton addRowButton = new EnhancedIButton();
+            addRowButton.setWidth("40px");
             addRowButton.setIcon(Window.getImgURL(ImageManager.getAddIcon()));
             addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {

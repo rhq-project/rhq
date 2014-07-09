@@ -9,7 +9,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>4.12.0-SNAPSHOT</version>
+      <version>4.12.0</version>
    </parent>
 
    <groupId>org.rhq</groupId>

@@ -432,7 +432,7 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
      * Helper methods
      ---------------*/
     private void setSystemSetting(final SystemSetting setting, final String value) throws Exception {
-        systemManager.setSystemSetting(setting, value);
+        systemManager.setAnySystemSetting(setting, value);
     }
 
     private void setLdapGroupFilter(String filter) throws Exception {

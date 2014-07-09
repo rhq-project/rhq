@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -71,6 +71,7 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
     private Connection databaseConnection;
     private PostgresPooledConnectionProvider pooledConnectionProvider;
 
+    @Override
     public void start(ResourceContext<PostgresServerComponent<?>> context) throws Exception {
         this.resourceContext = context;
         databaseName = resourceContext.getPluginConfiguration().getSimple("databaseName").getStringValue();
@@ -83,6 +84,7 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
         }
     }
 
+    @Override
     public void stop() {
         this.resourceContext = null;
         databaseName = null;
@@ -105,6 +107,7 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
         return useOwnJdbcConnections ? pooledConnectionProvider : postgresServerComponent.getPooledConnectionProvider();
     }
 
+    @Override
     public Connection getConnection() {
         if (useOwnJdbcConnections) {
             return postgresServerComponent.getConnection();
@@ -114,6 +117,7 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
         }
     }
 
+    @Override
     public void removeConnection() {
         try {
             if ((this.databaseConnection != null) && !this.databaseConnection.isClosed()) {
@@ -147,6 +151,7 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
         return config;
     }
 
+    @Override
     public AvailabilityType getAvailability() {
         if (useOwnJdbcConnections) {
             Connection jdbcConnection = null;
@@ -166,6 +171,7 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
         return databaseName;
     }
 
+    @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
         Connection jdbcConnection = null;
         PreparedStatement statement = null;
@@ -179,7 +185,7 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
             if (!resultSet.next()) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Result set is empty: " + QUERY_DATABASE_SIZE);
-   }
+                }
             }
             for (MeasurementScheduleRequest request : metrics) {
                 report.addData(new MeasurementDataNumeric(request, resultSet.getDouble(request.getName())));
@@ -191,6 +197,7 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
         }
     }
 
+    @Override
     public CreateResourceReport createResource(CreateResourceReport report) {
         StringBuilder buf = new StringBuilder();
         Configuration configuration = report.getResourceConfiguration();
@@ -220,18 +227,18 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
                 buf.append(colName).append(" ").append(colType);
 
                 // PostgreSQL does not use length or precision info with arrays
-                if(!isArrayColumnType(colType)) {
+                if (!isArrayColumnType(colType)) {
                     if ((length != null) && (length.getIntegerValue() != null)) {
-                        buf.append("(" + length.getIntegerValue() + ")");
+                        buf.append("(").append(length.getIntegerValue()).append(")");
                     }
 
                     if ((precision != null) && (precision.getIntegerValue() != null)) {
-                        buf.append("(" + precision.getIntegerValue() + ")");
+                        buf.append("(").append(precision.getIntegerValue()).append(")");
                     }
                 }
 
                 if ((colDefault != null) && (colDefault.getStringValue() != null)) {
-                    buf.append(" DEFAULT " + colDefault.getStringValue());
+                    buf.append(" DEFAULT ").append(colDefault.getStringValue());
                 }
 
                 if ((colNullable != null) && (colNullable.getBooleanValue() != null)
@@ -275,14 +282,11 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
     }
 
     private boolean isArrayColumnType(String columnType) {
-        if(columnType != null && columnType.trim().endsWith("[]")) {
-            return true;
-        }
-        return false;
+        return columnType != null && columnType.trim().endsWith("[]");
     }
 
-    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
-        Exception {
+    @Override
+    public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if ("resetStatistics".equals(name)) {
             return resetStatistics();
         } else if ("invokeSql".equals(name)) {
@@ -320,41 +324,44 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
             String sql = parameters.getSimple("sql").getStringValue();
 
             OperationResult result = new OperationResult();
-            if (parameters.getSimple("type").getStringValue().equals("update")) {
+            if ("update".equals(parameters.getSimpleValue("type"))) {
                 int updateCount = statement.executeUpdate(sql);
                 result.getComplexResults().put(new PropertySimple("result", "Query updated " + updateCount + " rows"));
-            } else {
-                resultSet = statement.executeQuery(sql);
-
-                ResultSetMetaData md = resultSet.getMetaData();
-                StringBuilder buf = new StringBuilder();
-                int rowCount = 0;
-
-                buf.append("<table>");
-                buf.append("<th>");
-                for (int i = 1; i <= md.getColumnCount(); i++) {
-                    buf.append("<td>");
-                    buf.append(md.getColumnName(i) + " (" + md.getColumnTypeName(i) + ")");
-                    buf.append("</td>");
-                }
-                buf.append("</th>");
-
-                while (resultSet.next()) {
-                    rowCount++;
-                    buf.append("<tr>");
-                    for (int i = 1; i <= md.getColumnCount(); i++) {
-                        buf.append("<td>");
-                        buf.append(resultSet.getString(i));
-                        buf.append("</td>");
-                    }
-                    buf.append("</tr>");
-                }
-
-                buf.append("</table>");
-                result.getComplexResults().put(new PropertySimple("result", "Query returned " + rowCount + " rows"));
-                result.getComplexResults().put(new PropertySimple("contents", buf.toString()));
+                return result;
             }
+
+            resultSet = statement.executeQuery(sql);
+
+            ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+
+            InvokeSqlResult invokeSqlResult = new InvokeSqlResult(resultSetMetaData.getColumnCount());
+
+            for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
+                invokeSqlResult.setColumnHeader(i - 1,
+                    resultSetMetaData.getColumnName(i) + " (" + resultSetMetaData.getColumnTypeName(i) + ")");
+            }
+
+            while (resultSet.next()) {
+                String[] row = invokeSqlResult.createRow();
+                for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
+                    row[i - 1] = resultSet.getString(i);
+                }
+                invokeSqlResult.addRow(row);
+            }
+
+            InvokeSqlResultExporter exporter;
+            if ("formattedText".equals(parameters.getSimpleValue("outputFormat"))) {
+                exporter = new InvokeSqlResultFormattedTextExporter();
+            } else {
+                exporter = new InvokeSqlResultHtmlExporter();
+            }
+
+            result.getComplexResults().put(
+                new PropertySimple("result", "Query returned " + invokeSqlResult.getRows().size() + " row(s)"));
+            result.getComplexResults().put(new PropertySimple("contents", exporter.export(invokeSqlResult)));
+
             return result;
+
         } catch (SQLException e) {
             OperationResult result = new OperationResult("Failed to invoke SQL");
             result.setErrorMessage(e.getMessage());
@@ -363,4 +370,5 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
             DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
         }
     }
+
 }

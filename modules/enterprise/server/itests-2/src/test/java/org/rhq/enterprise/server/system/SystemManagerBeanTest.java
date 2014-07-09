@@ -88,7 +88,8 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
     }
 
     @SuppressWarnings("deprecation")
-    public void testGetSystemConfiguration() {
+    public void testGetSystemSettings() {
+        assert null != systemManager.getSystemSettings(overlord);
         assert null != systemManager.getSystemConfiguration(overlord);
     }
 
@@ -115,14 +116,23 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
             boolean currentUseSslForLdap = Boolean.valueOf(settings.get(SystemSetting.USE_SSL_FOR_LDAP));
             settings.put(SystemSetting.USE_SSL_FOR_LDAP, Boolean.toString(!currentUseSslForLdap));
 
-            systemManager.setSystemSettings(overlord, settings);
+            systemManager.setAnySystemSettings(settings, false, true);
 
             settings = systemManager.getUnmaskedSystemSettings(false);
             config = systemManager.getSystemConfiguration(overlord);
 
             checkFormats(settings, config);
+
+            try {
+                // test this remote method but it can sometimes get hit by test interaction, so be lenient
+                systemManager.setSystemSettings(overlord, origSettings);
+            } catch (IllegalArgumentException e) {
+                // sometimes expected due to test interaction
+            } catch (Exception e) {
+                fail("Should not have thrown anything other than IllegalArgumentException, not " + e);
+            }
         } finally {
-            systemManager.setSystemSettings(overlord, origSettings);
+            systemManager.setAnySystemSettings(origSettings, false, true);
         }
     }
 
@@ -131,12 +141,12 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
         SystemSettings unmasked = systemManager.getUnmaskedSystemSettings(true);
         SystemSettings obfuscated = systemManager.getObfuscatedSystemSettings(true);
 
-        for(SystemSetting setting : SystemSetting.values()) {
+        for (SystemSetting setting : SystemSetting.values()) {
             if (setting.getType() == PropertySimpleType.PASSWORD) {
                 if (masked.containsKey(setting) && masked.get(setting) != null) {
                     assertEquals("Unexpected unmasked value", PropertySimple.MASKED_VALUE, masked.get(setting));
-                    assertEquals("Unmasked and obfuscated values don't correspond", obfuscated.get(setting), PicketBoxObfuscator.encode(
-                        unmasked.get(setting)));
+                    assertEquals("Unmasked and obfuscated values don't correspond", obfuscated.get(setting),
+                        PicketBoxObfuscator.encode(unmasked.get(setting)));
                 }
             }
         }
@@ -150,7 +160,7 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
         SystemSettings settings = systemManager.getSystemSettings(overlord);
         SystemSettings copy = (SystemSettings) settings.clone();
 
-        systemManager.setSystemSettings(overlord, settings);
+        systemManager.setAnySystemSettings(settings, false, true);
 
         settings = systemManager.getSystemSettings(overlord);
 
@@ -162,7 +172,7 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
         SystemSettings copy = (SystemSettings) settings.clone();
 
         systemManager.deobfuscate(settings);
-        systemManager.setSystemSettings(overlord, settings);
+        systemManager.setAnySystemSettings(settings, false, true);
 
         settings = systemManager.getObfuscatedSystemSettings(true);
 

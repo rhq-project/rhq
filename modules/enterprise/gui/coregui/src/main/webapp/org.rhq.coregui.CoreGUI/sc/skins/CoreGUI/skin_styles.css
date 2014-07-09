@@ -12,6 +12,13 @@ td {
     font-size: 12px;
 }
 
+hr {
+    background-color: #C9C9C9;
+    color: #C9C9C9;
+    border: 0;
+    height: 1px;
+}
+
 :focus {
     outline: 0px !important; /* removing the dotted outline globally */
 }
@@ -362,8 +369,8 @@ General
     font-weight: bold !important;
 }
 
-.propertiesForm {
-    border: none !important;
+.propertiesForm { /*bz1116774*/
+    border-bottom: 1px solid #C9C9C9;
 }
 
 .subtabbar * {
@@ -653,6 +660,11 @@ div[eventproxy^="primary"] > table > tbody > tr > .button:active {
 
 .menuTable hr {
     margin: 0px
+}
+
+/* transparent background for menu -> bottom shadow is transparent */
+div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
+    background-color: transparent !important;
 }
 
 .menu,

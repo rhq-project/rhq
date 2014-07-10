@@ -216,36 +216,11 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
             }
 
             PropertyMap column = (PropertyMap) c;
+            PostgresTableComponent.ColumnDefinition columnDefinition = new PostgresTableComponent.ColumnDefinition(column);
+
             String colName = column.getSimple("columnName").getStringValue();
-            String colType = column.getSimple("columnType").getStringValue();
-            PropertySimple length = column.getSimple("columnLength");
-            PropertySimple precision = column.getSimple("columnPrecision");
-            PropertySimple colDefault = column.getSimple("columnDefault");
-            PropertySimple colNullable = column.getSimple("columnNullable");
-
             if ((colName != null) && !colName.equals("")) {
-                buf.append(colName).append(" ").append(colType);
-
-                // PostgreSQL does not use length or precision info with arrays
-                if (!isArrayColumnType(colType)) {
-                    if ((length != null) && (length.getIntegerValue() != null)) {
-                        buf.append("(").append(length.getIntegerValue()).append(")");
-                    }
-
-                    if ((precision != null) && (precision.getIntegerValue() != null)) {
-                        buf.append("(").append(precision.getIntegerValue()).append(")");
-                    }
-                }
-
-                if ((colDefault != null) && (colDefault.getStringValue() != null)) {
-                    buf.append(" DEFAULT ").append(colDefault.getStringValue());
-                }
-
-                if ((colNullable != null) && (colNullable.getBooleanValue() != null)
-                    && colNullable.getBooleanValue().equals(Boolean.FALSE)) {
-                    buf.append(" NOT NULL");
-                }
-
+                buf.append(columnDefinition.getColumnSql());
                 first = false;
             }
         }
@@ -279,10 +254,6 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
         }
 
         return report;
-    }
-
-    private boolean isArrayColumnType(String columnType) {
-        return columnType != null && columnType.trim().endsWith("[]");
     }
 
     @Override

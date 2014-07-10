@@ -217,7 +217,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
         ProcessInfo agentProcess = discoveryContext.getSystemInformation().getThisProcess();
         setStartScriptPluginConfigProps(process, commandLine, pluginConfig, agentProcess);
-        setUserAndPasswordPluginConfigProps(serverPluginConfig, hostConfig, baseDir);
+        setUserAndPasswordPluginConfigProps(serverPluginConfig, hostConfig);
 
         String key = createKeyForLocalResource(serverPluginConfig);
         HostPort hostPort = hostConfig.getDomainControllerHostPort(commandLine);
@@ -289,9 +289,9 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
     protected abstract ProcessInfo getPotentialStartScriptProcess(ProcessInfo process);
 
-    private void setUserAndPasswordPluginConfigProps(ServerPluginConfiguration serverPluginConfig, HostConfiguration hostConfig,
-                                                     File baseDir) {
-        Properties mgmtUsers = getManagementUsers(hostConfig, getMode(), baseDir);
+    private void setUserAndPasswordPluginConfigProps(ServerPluginConfiguration serverPluginConfig,
+        HostConfiguration hostConfig) {
+        Properties mgmtUsers = getManagementUsers(hostConfig, getMode(), serverPluginConfig);
         String user;
         String password;
         if (!mgmtUsers.isEmpty()) {
@@ -564,9 +564,10 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     }
 
     // never returns null
-    private Properties getManagementUsers(HostConfiguration hostConfig, AS7Mode mode, File baseDir) {
+    private Properties getManagementUsers(HostConfiguration hostConfig, AS7Mode mode,
+        ServerPluginConfiguration pluginConfig) {
         String realm = hostConfig.getManagementSecurityRealm();
-        File mgmUsersPropsFile = hostConfig.getSecurityPropertyFile(baseDir, mode, realm);
+        File mgmUsersPropsFile = hostConfig.getSecurityPropertyFile(pluginConfig, realm);
 
         Properties props = new Properties();
 

@@ -74,6 +74,28 @@ public class ServerPluginConfiguration {
         return pluginConfig;
     }
 
+    /**
+     * returns detected path based on given path name 
+     * @see <a href="https://docs.jboss.org/author/display/AS7/Admin+Guide#AdminGuide-Paths">https://docs.jboss.org/author/display/AS7/Admin+Guide#AdminGuide-Paths</a>
+     * @param pathName - is path name defined in AS7 config xml file
+     * @return File representing absolute path, return null if given pathName is not known
+     */
+    public File getPath(String pathName) {
+        if ("jboss.home.dir".equals(pathName)) {
+            return getHomeDir();
+        }
+        if ("jboss.server.base.dir".equals(pathName)) {
+            return getBaseDir();
+        }
+        if ("jboss.server.config.dir".equals(pathName) || "jboss.domain.config.dir".equals(pathName)) {
+            return getConfigDir();
+        }
+        if ("jboss.server.log.dir".equals(pathName)) {
+            return getLogDir();
+        }
+        return null;
+    }
+
     public String getHostname() {
         return this.pluginConfig.getSimpleValue(Property.HOSTNAME);
     }

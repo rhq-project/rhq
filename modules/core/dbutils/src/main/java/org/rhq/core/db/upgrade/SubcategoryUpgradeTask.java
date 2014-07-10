@@ -32,7 +32,7 @@ public class SubcategoryUpgradeTask implements DatabaseUpgradeTask {
         Integer rowId;
         String subcategoryName;
         for (Object[] row : results) {
-            rowId = (Integer) row[0];
+            rowId = databaseType.getInteger(row[0]);
             subcategoryName = (String) row[1];
 
             if (subcategoryName != null && !subcategoryName.isEmpty()) {

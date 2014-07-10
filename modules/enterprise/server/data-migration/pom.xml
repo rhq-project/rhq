@@ -11,6 +11,7 @@
   </parent>
 
   <artifactId>rhq-data-migration</artifactId>
+  <version>4.9.0.JON320GA</version>
   <name>RHQ Cassandra Data Migration</name>
 
   <properties>

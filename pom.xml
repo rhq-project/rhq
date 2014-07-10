@@ -327,7 +327,7 @@
     <rhq-scripting-python.version>${rhq.pom.version}</rhq-scripting-python.version>
     <rhq-enterprise-server-appserver.version>${rhq.pom.version}</rhq-enterprise-server-appserver.version>
     <rhq-server-client-api.version>${rhq.pom.version}</rhq-server-client-api.version>
-    <rhq-data-migration.version>${rhq.pom.version}</rhq-data-migration.version>
+    <rhq-data-migration.version>${rhq.pom.version}-redhat-1</rhq-data-migration.version>
     <rhq-enterprise-server-ear.version>${rhq.pom.version}</rhq-enterprise-server-ear.version>
     <rhq-installer-util.version>${rhq.pom.version}-redhat-1</rhq-installer-util.version>
     <rhq-server-itests-2.version>${rhq.pom.version}</rhq-server-itests-2.version>

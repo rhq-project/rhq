@@ -534,6 +534,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         form.setTitleOrientation(TitleOrientation.TOP);
         anotherUserName = new TextItem("userName", MSG.dataSource_users_field_name());
         anotherUserPassword = new PasswordItem("password", MSG.common_title_password());
+        anotherUserPassword.setAttribute("autocomplete", "off");
         verifyUserButton = new ButtonItem("verify",
             MSG.view_alert_definition_notification_cliScript_editor_verifyAuthentication());
 

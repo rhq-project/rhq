@@ -71,6 +71,7 @@
     <module>ant-bundle</module>
     <module>validate-all-serverplugins</module>
     <module>packagetype-cli</module>
+    <module>wfly-patch-bundle</module>
   </modules>
 
 </project>

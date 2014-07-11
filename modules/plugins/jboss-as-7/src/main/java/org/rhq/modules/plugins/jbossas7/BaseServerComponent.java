@@ -28,7 +28,6 @@ import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.I
 import static org.rhq.modules.plugins.jbossas7.JBossProductType.AS;
 import static org.rhq.modules.plugins.jbossas7.JBossProductType.WILDFLY8;
 import static org.rhq.modules.plugins.jbossas7.util.ProcessExecutionLogger.logExecutionResults;
-import static org.rhq.modules.plugins.jbossas7.util.PropertyReplacer.replacePropertyPatterns;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -67,12 +66,9 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
-import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
-import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.file.FileUtil;
@@ -391,43 +387,11 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             return operationResult;
         }
 
-        String startScriptPrefix = startScriptConfig.getStartScriptPrefix();
-        File startScriptFile = getStartScriptFile();
-        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(startScriptPrefix,
-            startScriptFile);
-
-        List<String> arguments = processExecution.getArguments();
-        if (arguments == null) {
-            arguments = new ArrayList<String>();
-            processExecution.setArguments(arguments);
-        }
-
-        List<String> startScriptArgs = startScriptConfig.getStartScriptArgs();
-        for (String startScriptArg : startScriptArgs) {
-            startScriptArg = replacePropertyPatterns(startScriptArg, pluginConfiguration);
-            arguments.add(startScriptArg);
-        }
-
-        Map<String, String> startScriptEnv = startScriptConfig.getStartScriptEnv();
-        for (String envVarName : startScriptEnv.keySet()) {
-            String envVarValue = startScriptEnv.get(envVarName);
-            envVarValue = replacePropertyPatterns(envVarValue, pluginConfiguration);
-            startScriptEnv.put(envVarName, envVarValue);
-        }
-        processExecution.setEnvironmentVariables(startScriptEnv);
-
-        // When running on Windows 9x, standalone.bat and domain.bat need the cwd to be the AS bin dir in order to find
-        // standalone.bat.conf and domain.bat.conf respectively.
-        processExecution.setWorkingDirectory(startScriptFile.getParent());
-        processExecution.setCaptureOutput(true);
-        processExecution.setWaitForCompletion(0);
-
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("About to execute the following process: [" + processExecution + "]");
-        }
-        SystemInfo systemInfo = context.getSystemInformation();
-        ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
+        ProcessExecutionResults results = CliExecutor
+            .onServer(context.getPluginConfiguration(), getMode(), context.getSystemInformation())
+            .startServer();
         logExecutionResults(results);
+
         if (results.getError() != null) {
             operationResult.setErrorMessage(results.getError().getMessage());
         } else if (results.getExitCode() != null && results.getExitCode() != 0) {
@@ -460,38 +424,28 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             return result;
         }
 
-        long waitTime;
-        PropertySimple waitTimeProp = parameters.getSimple("waitTime");
-        Long waitTimePropLongValue = waitTimeProp == null ? null : waitTimeProp.getLongValue();
-        if (waitTimePropLongValue == null) {
-            waitTime = HOURS.toMillis(1);
-        } else {
-            waitTime = waitTimePropLongValue * 1000L;
-            if (waitTime <= 0) {
-                result.setErrorMessage("waitTime parameter must be positive integer");
-                return result;
-            }
+        long waitTime = Integer.parseInt(parameters.getSimpleValue("waitTime", "3600"));
+        if (waitTime <= 0) {
+            result.setErrorMessage("waitTime parameter must be positive integer");
+            return result;
         }
-
-        boolean killOnTimeout = false;
-        if (Boolean.parseBoolean(parameters.getSimpleValue("killOnTimeout", "false"))) {
-            killOnTimeout = true;
-        }
-
-        CliExecutor cliExecutor = new CliExecutor(getMode(), serverPluginConfig, startScriptConfig,
-            context.getSystemInformation());
+        CliExecutor runner = CliExecutor.onServer(context.getPluginConfiguration(), getMode(),
+            context.getSystemInformation()).waitingFor(waitTime * 1000)
+            .killingOnTimeout(Boolean.parseBoolean(parameters.getSimpleValue("killOnTimeout", "false")));
 
         ProcessExecutionResults results;
         String commands = parameters.getSimpleValue("commands");
         if (commands != null) {
-            results = cliExecutor.executeCliCommand(commands, waitTime, killOnTimeout);
+            results = runner.executeCliCommand(commands);
         } else {
             File script = new File(parameters.getSimpleValue("file"));
             if (!script.isAbsolute()) {
-                script = new File(serverPluginConfig.getHomeDir(), parameters.getSimpleValue("file"));
+                script = new File(serverPluginConfig.getHomeDir(), script.getPath());
             }
-            results = cliExecutor.executeCliScript(script.getAbsolutePath(), waitTime, killOnTimeout);
+
+            results = runner.executeCliScript(script);
         }
+        logExecutionResults(results);
 
         if (results.getError() != null) {
             result.setErrorMessage(results.getError().getMessage());
@@ -805,10 +759,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             scriptFile = File.createTempFile(handoverRequest.getFilename(), ".tmp", context.getTemporaryDirectory());
             FileUtil.writeFile(handoverRequest.getContent(), scriptFile);
 
-            CliExecutor cliExecutor = new CliExecutor(getMode(), getServerPluginConfiguration(),
-                getStartScriptConfiguration(), context.getSystemInformation());
-            ProcessExecutionResults results = cliExecutor.executeCliScript(scriptFile.getAbsolutePath(), waitTime,
-                killOnTimeout);
+            ProcessExecutionResults results = CliExecutor.onServer(
+                getServerPluginConfiguration().getPluginConfig(), getMode(), context.getSystemInformation())
+                .waitingFor(waitTime).killingOnTimeout(killOnTimeout).executeCliScript(scriptFile);
 
             Throwable error = results.getError();
             if (error != null) {
@@ -970,7 +923,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 MeasurementDataTrait data = new MeasurementDataTrait(request, val);
                 report.addData(data);
             }
-
         } else if (LOG.isDebugEnabled()) {
             LOG.debug("getSKMRequests failed: " + res.getFailureDescription());
         }

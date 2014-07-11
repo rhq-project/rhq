@@ -1482,7 +1482,6 @@
 
     <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>
 
-
     <operation name="reload" description="Make the server re-load the (changed) configuration. To load a different startup config use 'restart'" displayName="Reload">
       <results>
         <c:simple-property name="operationResult"/>
@@ -1512,6 +1511,58 @@
         <c:simple-property name="operationResult"/>
       </results>
     </operation>
+    <operation name="rollbackPatch" description="Rolls back the specified patch.">
+        <parameters>
+            <c:simple-property name="patch-id" displayName="Patch Id" required="true" type="string">
+                <c:description>
+                    The ID of the patch to roll back.
+                </c:description>
+            </c:simple-property>
+            <c:simple-property name="restartImmediately" required="true" type="boolean" default="true">
+                <c:description>
+                    For the rollback to take effect, the server must be restarted. Set this to true if you want to do
+                    that immediately, false if you want to do it manually at some later point in time.
+                </c:description>
+            </c:simple-property>
+            <c:simple-property name="reset-configuration" displayName="Reset Configuration" required="true"
+                               default="false" type="boolean">
+                <c:description>
+                    Signifies whether the rollback operation should
+                    reset the installation configurations to their state
+                    before the patch was applied.
+                </c:description>
+            </c:simple-property>
+            <c:simple-property name="override-all" displayName="Override All" required="false" type="boolean">
+                <c:description>
+                    Signifies to bypass any content verification on the
+                    miscellaneous items changed by the patch. Default is "false".
+                </c:description>
+            </c:simple-property>
+            <c:simple-property name="override-modules" displayName="Override Modules" required="false" type="boolean">
+                <c:description>
+                    Signifies to bypass any content verification on the
+                    modules and OSGi bundles affected by the patch. Default is "false".
+                </c:description>
+            </c:simple-property>
+            <c:simple-property name="override" displayName="Override" required="false" type="longString">
+                <c:description>
+                    The value is a comma-separated list of the miscellaneous
+                    items in the patch that can be overridden on the server
+                    whether the item reports a conflict or not.
+                </c:description>
+            </c:simple-property>
+            <c:simple-property name="preserve" displayName="Preserve" required="false" type="longString">
+                <c:description>
+                    The value is a comma-separated list of the miscellaneous
+                    items that must be preserved and not modified by
+                    applying or rolling back a patch.
+                </c:description>
+            </c:simple-property>
+        </parameters>
+        <results>
+            <c:simple-property name="operationResult"/>
+        </results>
+    </operation>
     &executeCliOperations;
 
     <metric property="_internal:mgmtRequests" category="performance" dataType="measurement" defaultInterval="120000"
@@ -1540,6 +1591,18 @@
             description="The temporary directory (usually 'standalone/tmp'). May serve as deployment directory for handover only bundles'"/>
 
     <event name="logEntry" description="an entry in a log file"/>
+
+    <content name="wflyPatch" displayName="Wildfly/JBoss EAP Patch" category="deployable" supportsArchitecture="false"
+             description="Wildfly/JBoss EAP Patch">
+        <configuration>
+            <c:simple-property name="restartImmediately" type="boolean" required="true" default="true">
+                <c:description>
+                    For the rollback to take effect, the server must be restarted. Set this to true if you want to do
+                    that immediately, false if you want to do it manually at some later point in time.
+                </c:description>
+            </c:simple-property>
+        </configuration>
+    </content>
 
     <resource-configuration>
 
@@ -1666,6 +1729,13 @@
         <value-context>measurementTrait</value-context>
         <value-name>temp-dir</value-name>
       </destination-base-dir>
+      <destination-definition name="Patches">
+        <description>Use this location to apply patches to the server</description>
+        <connection>STANDALONE</connection>
+        <referenced-configuration>
+          <all of="pluginConfiguration"/>
+        </referenced-configuration>
+      </destination-definition>
     </bundle-target>
 
     <help>
@@ -13691,6 +13761,26 @@
     </resource-configuration>
   </service>
 
+
+  <service name="Wildfly/JBoss EAP Patch Handler"
+           discovery="PatchHandlerDiscoveryComponent"
+           class="PatchHandlerComponent"
+           singleton="true"
+           description="Handles installation of patches of Wildfly or JBoss EAP application servers and their variants">
+
+      <runs-inside>
+          <parent-resource-type name="Windows"  plugin="Platforms"/>
+          <parent-resource-type name="Linux"    plugin="Platforms"/>
+          <parent-resource-type name="Solaris"  plugin="Platforms"/>
+          <parent-resource-type name="HP-UX"    plugin="Platforms"/>
+          <parent-resource-type name="AIX"      plugin="Platforms"/>
+          <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
+          <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+      </runs-inside>
+
+      <bundle type="Wildfly Patch" />
+  </service>
+
   <help >
     <![CDATA[
     <h3>Versioned Deployments (Since RHQ 4.12)</h3>
@@ -13770,6 +13860,26 @@
         <li>waitTime (in seconds): how long to wait for completion; defaults to an hour</li>
         <li>killOnTimeout (true/false): should the CLI process be killed if timeout is reached; defaults to false</li>
     </ul>
+    <br>
+    <strong>action = patch: installs a patch on the server</strong><br>
+    Optional parameters:<br>
+    <ul>
+        <li>override: The value is a comma-separated list of the miscellaneous
+                      items in the patch that can be overridden on the server
+                      whether the item reports a conflict or not.</li>
+        <li>preserve: The value is a comma-separated list of the miscellaneous
+                      items that must be preserved and not modified by
+                      applying or rolling back a patch.</li>
+        <li>override-all: The argument does not expect any value and is
+                          optional. The default is 'false'.
+                          It signifies to bypass any content verification on the
+                          miscellaneous items changed by the patch.</li>
+        <li>override-modules: The argument does not expect any value and is
+                              optional. The default is 'false'.
+                              It signifies to bypass any content verification on the
+                              modules and OSGi bundles affected by the patch.</li>
+    </ul>
+    <br>
     <p>Sample ANT bundle recipe</p>
     <pre>
     &lt;?xml version="1.0"?&gt;
@@ -13861,5 +13971,4 @@
 
     ]]>
   </help>
-
 </plugin>

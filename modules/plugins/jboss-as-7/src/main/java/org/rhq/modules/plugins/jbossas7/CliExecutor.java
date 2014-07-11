@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2014 Red Hat, Inc.
+ * Copyright (C) 2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,99 +19,206 @@
 
 package org.rhq.modules.plugins.jbossas7;
 
-import static org.rhq.modules.plugins.jbossas7.util.ProcessExecutionLogger.logExecutionResults;
-import static org.rhq.modules.plugins.jbossas7.util.PropertyReplacer.replacePropertyPatterns;
-
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
+import org.rhq.modules.plugins.jbossas7.util.PropertyReplacer;
 
 /**
+ * @author Lukas Krejci
  * @author Thomas Segismont
+ *
+ * @since 4.12
  */
-class CliExecutor {
+final class CliExecutor {
+
     private static final Log LOG = LogFactory.getLog(CliExecutor.class);
 
-    private final AS7Mode serverMode;
+    private static final long MAX_PROCESS_WAIT_TIME = 3600000L;
+
     private final ServerPluginConfiguration serverPluginConfig;
-    private final StartScriptConfiguration startScriptConfig;
+    private final Configuration pluginConfiguration;
+    private final Map<String, String> startScriptEnv;
+    private final AS7Mode serverMode;
     private final SystemInfo systemInfo;
 
-    CliExecutor(AS7Mode serverMode, ServerPluginConfiguration serverPluginConfig,
-        StartScriptConfiguration startScriptConfig, SystemInfo systemInfo) {
+    private boolean disconnected;
+    private long waitTime;
+    private boolean killOnTimeout;
+
+    private CliExecutor(Configuration pluginConfiguration, AS7Mode serverMode, SystemInfo systemInfo) {
+        this.serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
+        this.pluginConfiguration = pluginConfiguration;
         this.serverMode = serverMode;
-        this.serverPluginConfig = serverPluginConfig;
-        this.startScriptConfig = startScriptConfig;
         this.systemInfo = systemInfo;
-    }
+        this.startScriptEnv = new StartScriptConfiguration(pluginConfiguration).getStartScriptEnv();
 
-    ProcessExecutionResults executeCliCommand(String commands, long waitTime, boolean killOnTimeout) {
-        StringBuilder additionalArg = new StringBuilder(commands.length());
-        for (Scanner scanner = new Scanner(commands); scanner.hasNextLine();) {
-            additionalArg.append(scanner.nextLine());
-            if (scanner.hasNextLine()) {
-                additionalArg.append(",");
-            }
-        }
-        return executeCli(Arrays.asList(additionalArg.toString()), waitTime, killOnTimeout);
-    }
-
-    ProcessExecutionResults executeCliScript(String scriptFile, long waitTime, boolean killOnTimeout) {
-        List<String> additionalArgs = Arrays.asList("--file=" + scriptFile);
-        return executeCli(additionalArgs, waitTime, killOnTimeout);
-    }
-
-    ProcessExecutionResults executeCli(List<String> additionalArgs, long waitTime, boolean killOnTimeout) {
-        File startScriptFile = new File(new File(serverPluginConfig.getHomeDir(), "bin"),
-            serverMode.getCliScriptFileName());
-
-        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(startScriptFile);
-
-        processExecution.setArguments(new ArrayList<String>(15));
-        List<String> arguments = processExecution.getArguments();
-        arguments.add("--connect");
-        arguments.add("--user=" + serverPluginConfig.getUser());
-        arguments.add("--password=" + serverPluginConfig.getPassword());
-        arguments.add("--controller=" + serverPluginConfig.getNativeHost() + ":" + serverPluginConfig.getNativePort());
-
-        arguments.addAll(additionalArgs);
-
-        Map<String, String> startScriptEnv = startScriptConfig.getStartScriptEnv();
         for (String envVarName : startScriptEnv.keySet()) {
             String envVarValue = startScriptEnv.get(envVarName);
-            envVarValue = replacePropertyPatterns(envVarValue, serverPluginConfig.getPluginConfig());
+            envVarValue = PropertyReplacer.replacePropertyPatterns(envVarValue, pluginConfiguration);
             startScriptEnv.put(envVarName, envVarValue);
         }
+    }
+
+    public static CliExecutor onServer(Configuration serverPluginConfig, AS7Mode serverMode,
+        SystemInfo systemInfo) {
+
+        return new CliExecutor(serverPluginConfig, serverMode, systemInfo);
+    }
+
+    /**
+     * 0, the default, means waiting forever. Any positive number means waiting for given number of milliseconds
+     * and timing out afterwards. Any negative value means timing out immediately.
+     */
+    public CliExecutor waitingFor(long milliseconds) {
+        this.waitTime = milliseconds;
+        return this;
+    }
+
+    public CliExecutor killingOnTimeout(boolean kill) {
+        killOnTimeout = kill;
+        return this;
+    }
+
+    public CliExecutor disconnected(boolean disconnected) {
+        this.disconnected = disconnected;
+        return this;
+    }
+
+    /**
+     * Runs (a series of) CLI commands against the server.
+     * The commands are separated by either a newline or a comma (or a mix thereof).
+     *
+     * @param commands the commands to execute in order
+     * @return the execution results
+     */
+    public ProcessExecutionResults executeCliCommand(String commands) {
+        String connect = disconnected ? null : "--connect";
+        commands = commands.replace('\n', ',');
+        String user = disconnected ? null : "--user=" + serverPluginConfig.getUser();
+        String password = disconnected ? null : "--password=" + serverPluginConfig.getPassword();
+        String controller = disconnected ? null : "--controller" + serverPluginConfig.getNativeHost() + ":"
+            + serverPluginConfig.getNativePort();
+
+        return execute(new File("bin", serverMode.getCliScriptFileName()), connect, commands, user, password,
+            controller);
+    }
+
+    /**
+     * Runs the provided script against the server.
+     *
+     * @param scriptFile the script file to run
+     * @return the execution results
+     */
+    public ProcessExecutionResults executeCliScript(File scriptFile) {
+        File homeDir = serverPluginConfig.getHomeDir();
+
+        File script = scriptFile;
+        if (!script.isAbsolute()) {
+            script = new File(homeDir, scriptFile.getPath());
+        }
+
+        String connect = disconnected ? null : "--connect";
+        String file = "--file=" + script.getAbsolutePath();
+        String user = disconnected ? null : "--user=" + serverPluginConfig.getUser();
+        String password = disconnected ? null : "--password=" + serverPluginConfig.getPassword();
+        String controller = disconnected ? null : "--controller" + serverPluginConfig.getNativeHost() + ":"
+            + serverPluginConfig.getNativePort();
+
+        return execute(new File("bin", serverMode.getCliScriptFileName()), connect, file, user, password, controller);
+    }
+
+    /**
+     * This command ignores the timeout set by the {@link #waitingFor(long)} method. It starts the process and returns
+     * immediately. Other means have to be used to determine if the server finished starting up.
+     */
+    public ProcessExecutionResults startServer() {
+        StartScriptConfiguration startScriptConfiguration = new StartScriptConfiguration(pluginConfiguration);
+        File startScriptFile = startScriptConfiguration.getStartScript();
+
+        if (startScriptFile == null) {
+            startScriptFile = new File("bin", serverMode.getStartScriptFileName());
+        }
+
+        List<String> startScriptArgsL = startScriptConfiguration.getStartScriptArgs();
+        String[] startScriptArgs = startScriptArgsL.toArray(new String[startScriptArgsL.size()]);
+
+        for (int i = 0; i < startScriptArgs.length; ++i) {
+            startScriptArgs[i] = PropertyReplacer.replacePropertyPatterns(startScriptArgs[i], pluginConfiguration);
+        }
+
+        long origWaitTime = waitTime;
+        try {
+            //we really don't want to wait for the server start, because, hopefully, it will keep on running ;)
+            waitTime = -1;
+            return execute(startScriptFile, startScriptArgs);
+        } finally {
+            waitTime = origWaitTime;
+        }
+    }
+
+    public ProcessExecutionResults shutdownServer() {
+        boolean origDisconnected = disconnected;
+        try {
+            disconnected = false;
+            return executeCliCommand("shutdown");
+        } finally {
+            disconnected = origDisconnected;
+        }
+    }
+
+    private ProcessExecutionResults execute(File executable, String... args) {
+        File homeDir = serverPluginConfig.getHomeDir();
+        File startScriptFile = executable.isAbsolute() ? executable : new File(homeDir, executable.getPath());
+
+        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(null,
+            startScriptFile);
+
         processExecution.setEnvironmentVariables(startScriptEnv);
+
+        List<String> arguments = processExecution.getArguments();
+        if (arguments == null) {
+            arguments = new ArrayList<String>();
+            processExecution.setArguments(arguments);
+        }
+
+        for(String arg : args) {
+            if (arg != null) {
+                arguments.add(arg);
+            }
+        }
 
         // When running on Windows 9x, standalone.bat and domain.bat need the cwd to be the AS bin dir in order to find
         // standalone.bat.conf and domain.bat.conf respectively.
         processExecution.setWorkingDirectory(startScriptFile.getParent());
         processExecution.setCaptureOutput(true);
+        processExecution.setWaitForCompletion(MAX_PROCESS_WAIT_TIME);
+        processExecution.setKillOnTimeout(false);
 
-        processExecution.setWaitForCompletion(waitTime);
+        if (waitTime > 0) {
+            processExecution.setWaitForCompletion(waitTime);
+        } else if (waitTime < 0) {
+            processExecution.setWaitForCompletion(0);
+        }
+
         processExecution.setKillOnTimeout(killOnTimeout);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("About to execute the following process: [" + processExecution + "]");
         }
 
-        ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
-        logExecutionResults(results);
-        return results;
+        return systemInfo.executeProcess(processExecution);
     }
-
 }

@@ -31,12 +31,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.bind.JAXBElement;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.descriptor.plugin.Bundle;
+import org.rhq.core.clientapi.descriptor.plugin.BundleConfigFullCopy;
+import org.rhq.core.clientapi.descriptor.plugin.BundleConfigPropertyReference;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor.DestinationBaseDir;
+import org.rhq.core.clientapi.descriptor.plugin.BundleTraitReference;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.DiscoveryCallbacksType;
 import org.rhq.core.clientapi.descriptor.plugin.DiscoveryTypeCallbackType;
@@ -612,17 +617,75 @@ public class PluginMetadataParser {
 
             BundleTargetDescriptor bundleTarget = resourceDescriptor.getBundleTarget();
             if (bundleTarget != null) {
-                List<DestinationBaseDir> destBaseDirs = bundleTarget.getDestinationBaseDir();
-                if (destBaseDirs != null && destBaseDirs.size() > 0) {
+                List<Object> destDefs = bundleTarget.getDestinationBaseDirOrDestinationDefinition();
+                if (destDefs != null && destDefs.size() > 0) {
                     Configuration c = new Configuration();
                     ResourceTypeBundleConfiguration bundleConfiguration = new ResourceTypeBundleConfiguration(c);
-                    for (DestinationBaseDir destBaseDir : destBaseDirs) {
-                        String name = destBaseDir.getName();
-                        String valueContext = destBaseDir.getValueContext();
-                        String valueName = destBaseDir.getValueName();
-                        String description = destBaseDir.getDescription();
-                        bundleConfiguration.addBundleDestinationBaseDirectory(name, valueContext, valueName,
-                            description);
+                    for (Object destDef : destDefs) {
+                        if (destDef instanceof DestinationBaseDir) {
+                            DestinationBaseDir destBaseDir = (DestinationBaseDir) destDef;
+                            String name = destBaseDir.getName();
+                            String valueContext = destBaseDir.getValueContext();
+                            String valueName = destBaseDir.getValueName();
+                            String description = destBaseDir.getDescription();
+                            bundleConfiguration.addBundleDestinationBaseDirectory(name, valueContext, valueName,
+                                description);
+                        } else if (destDef instanceof BundleTargetDescriptor.DestinationDefinition) {
+                            BundleTargetDescriptor.DestinationDefinition def =
+                                (BundleTargetDescriptor.DestinationDefinition) destDef;
+
+                            ResourceTypeBundleConfiguration.BundleDestinationDefinition.Builder bld = bundleConfiguration
+                                .createDestinationDefinitionBuilder(def.getName());
+                            bld.withDescription(def.getDescription()).withConnectionString(def.getConnection());
+
+                            for (JAXBElement<?> ref : def.getReferencedConfiguration()
+                                .getMapPropertyRefOrListPropertyRefOrSimplePropertyRef()) {
+
+                                String tagName = ref.getName().getLocalPart();
+                                if ("simple-property-ref".equals(tagName)) {
+                                    BundleConfigPropertyReference r = (BundleConfigPropertyReference) ref.getValue();
+                                    if ("pluginConfiguration".equals(r.getContext())) {
+                                        bld.addPluginConfigurationSimplePropertyReference(r.getName(),
+                                            r.getTargetName());
+                                    } else if ("resourceConfiguration".equals(r.getContext())) {
+                                        bld.addResourceConfigurationSimplePropertyReference(r.getName(),
+                                            r.getTargetName());
+                                    }
+                                } else if ("list-property-ref".equals(tagName)) {
+                                    BundleConfigPropertyReference r = (BundleConfigPropertyReference) ref.getValue();
+                                    if ("pluginConfiguration".equals(r.getContext())) {
+                                        bld.addPluginConfigurationListPropertyReference(r.getName(),
+                                            r.getTargetName());
+                                    } else if ("resourceConfiguration".equals(r.getContext())) {
+                                        bld.addResourceConfigurationListPropertyReference(r.getName(),
+                                            r.getTargetName());
+                                    }
+                                } else if ("map-property-ref".equals(tagName)) {
+                                    BundleConfigPropertyReference r = (BundleConfigPropertyReference) ref.getValue();
+                                    if ("pluginConfiguration".equals(r.getContext())) {
+                                        bld.addPluginConfigurationMapPropertyReference(r.getName(),
+                                            r.getTargetName());
+                                    } else if ("resourceConfiguration".equals(r.getContext())) {
+                                        bld.addResourceConfigurationMapPropertyReference(r.getName(),
+                                            r.getTargetName());
+                                    }
+                                } else if ("trait-ref".equals(tagName)) {
+                                    BundleTraitReference r = (BundleTraitReference) ref.getValue();
+                                    bld.addMeasurementTraitReference(r.getName(), r.getTargetName());
+                                } else if ("all".equals(tagName)) {
+                                    BundleConfigFullCopy r = (BundleConfigFullCopy) ref.getValue();
+                                    if ("pluginConfiguration".equals(r.getOf())) {
+                                        bld.addFullPluginConfigurationReference(r.getPrefix());
+                                    } else if ("resourceConfiguration".equals(r.getOf())) {
+                                        bld.addFullResourceConfigurationReference(r.getPrefix());
+                                    } else if ("traits".equals(r.getOf())) {
+                                        bld.addFullMeasurementTraitsReference(r.getPrefix());
+                                    }
+                                }
+                            }
+
+                            bld.build();
+                        }
                     }
                     resourceType.setResourceTypeBundleConfiguration(bundleConfiguration);
                 }

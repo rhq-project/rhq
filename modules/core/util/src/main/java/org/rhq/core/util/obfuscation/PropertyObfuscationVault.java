@@ -31,6 +31,8 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.security.vault.SecurityVault;
 import org.jboss.security.vault.SecurityVaultException;
 
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences.RestrictedFormat;
+
 /**
  * @author Stefan Negrea
  *
@@ -101,11 +103,16 @@ public class PropertyObfuscationVault implements SecurityVault {
             String systemPropertyValue = System.getProperty(attributeName);
             if (systemPropertyValue != null && !systemPropertyValue.trim().isEmpty()) {
                 if (isRestricted) {
+                    String actualSystemPropertyValue = systemPropertyValue;
+                    if (RestrictedFormat.isRestrictedFormat(actualSystemPropertyValue)) {
+                        actualSystemPropertyValue = RestrictedFormat.retrieveValue(actualSystemPropertyValue);
+                    }
+
                     try {
-                        result = PicketBoxObfuscator.decode(systemPropertyValue).toCharArray();
+                        result = PicketBoxObfuscator.decode(actualSystemPropertyValue).toCharArray();
                     } catch (Exception e) {
                         //have a fallback in case the password not obfuscated
-                        result = systemPropertyValue.toCharArray();
+                        result = actualSystemPropertyValue.toCharArray();
                     }
                 } else {
                     result = systemPropertyValue.toCharArray();

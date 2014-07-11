@@ -45,7 +45,6 @@ public class ObfuscatedPreferences extends Preferences {
     }
 
     private static final Pattern RESTRICTED_PATTERN = Pattern.compile("RESTRICTED::.*");
-    private static final String RESTRICTED_FORMAT = "RESTRICTED::%s";
 
 
     private Preferences actualPreferences;
@@ -74,7 +73,7 @@ public class ObfuscatedPreferences extends Preferences {
             for (String key : actualPreferences.keys()) {
                 if (!restrictedPreferences.contains(key)) {
                     String storedValue = actualPreferences.get(key, null);
-                    if (storedValue != null && isRestrictedFormat(storedValue)) {
+                    if (storedValue != null && RestrictedFormat.isRestrictedFormat(storedValue)) {
                         userRestrictedPreferences.add(key);
                     }
                 }
@@ -89,8 +88,8 @@ public class ObfuscatedPreferences extends Preferences {
     public void put(String key, String value) {
         if (restrictedPreferences.contains(key) || userRestrictedPreferences.contains(key)) {
             try {
-                if (isRestrictedFormat(value)) {
-                    value = this.retrieveValue(value);
+                if (RestrictedFormat.isRestrictedFormat(value)) {
+                    value = RestrictedFormat.retrieveValue(value);
                     value = PicketBoxObfuscator.decode(value);
                 } else {
                     throw new Exception("Value not in a retricted format");
@@ -110,12 +109,12 @@ public class ObfuscatedPreferences extends Preferences {
                 //the value as is
             }
 
-            actualPreferences.put(key, formatValue(value));
+            actualPreferences.put(key, RestrictedFormat.formatValue(value));
         } else {
-            if (isRestrictedFormat(value)) {
+            if (RestrictedFormat.isRestrictedFormat(value)) {
                 userRestrictedPreferences.add(key);
 
-                value = retrieveValue(value);
+                value = RestrictedFormat.retrieveValue(value);
 
                 try {
                     PicketBoxObfuscator.decode(value);
@@ -123,7 +122,7 @@ public class ObfuscatedPreferences extends Preferences {
                     value = PicketBoxObfuscator.encode(value);
                 }
 
-                actualPreferences.put(key, formatValue(value));
+                actualPreferences.put(key, RestrictedFormat.formatValue(value));
             } else {
                 actualPreferences.put(key, value);
             }
@@ -140,8 +139,8 @@ public class ObfuscatedPreferences extends Preferences {
 
         if (restrictedPreferences.contains(key) || userRestrictedPreferences.contains(key)) {
             try {
-                if (isRestrictedFormat(value)) {
-                    value = retrieveValue(value);
+                if (RestrictedFormat.isRestrictedFormat(value)) {
+                    value = RestrictedFormat.retrieveValue(value);
                     return PicketBoxObfuscator.decode(value);
                 } else {
                     throw new Exception("Value not in a restricted format");
@@ -316,46 +315,51 @@ public class ObfuscatedPreferences extends Preferences {
         actualPreferences.exportSubtree(os);
     }
 
-    /**
-     * Checks if a property value is in a restricted format.
-     *
-     * @param str string to check
-     * @return
-     */
-    private boolean isRestrictedFormat(String str) {
-        return str != null && RESTRICTED_PATTERN.matcher(str).matches();
-    }
+    public static class RestrictedFormat {
 
-    /**
-     * Retrieves the actual value from a restricted format string.
-     *
-     * @param value
-     * @return
-     */
-    private String retrieveValue(String value) {
-        StringTokenizer tokenizer = new StringTokenizer(value, "::");
+        private static final String RESTRICTED_FORMAT = "RESTRICTED::%s";
 
-        if (!tokenizer.hasMoreTokens()) {
+        /**
+         * Checks if a property value is in a restricted format.
+         *
+         * @param str string to check
+         * @return
+         */
+        public static boolean isRestrictedFormat(String str) {
+            return str != null && RESTRICTED_PATTERN.matcher(str).matches();
+        }
+
+        /**
+         * Retrieves the actual value from a restricted format string.
+         *
+         * @param value
+         * @return
+         */
+        public static String retrieveValue(String value) {
+            StringTokenizer tokenizer = new StringTokenizer(value, "::");
+
+            if (!tokenizer.hasMoreTokens()) {
+                return null;
+            }
+
+            tokenizer.nextToken();
+
+            if (tokenizer.hasMoreTokens()) {
+                return tokenizer.nextToken();
+            }
+
             return null;
         }
 
-        tokenizer.nextToken();
-
-        if (tokenizer.hasMoreTokens()) {
-            return tokenizer.nextToken();
+        /**
+         * Formats a value in the proper restricted format.
+         *
+         * @param value
+         * @return
+         */
+        public static String formatValue(String value) {
+            return String.format(RESTRICTED_FORMAT, value);
         }
-
-        return null;
-    }
-
-    /**
-     * Formats a value in the proper restricted format.
-     *
-     * @param value
-     * @return
-     */
-    private String formatValue(String value) {
-        return String.format(RESTRICTED_FORMAT, value);
     }
 
 }

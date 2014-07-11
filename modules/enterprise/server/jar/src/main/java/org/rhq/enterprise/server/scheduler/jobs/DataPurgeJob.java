@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.scheduler.jobs;
 
 import java.util.Calendar;
@@ -31,14 +32,10 @@ import org.quartz.SimpleTrigger;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
-import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
-import org.rhq.enterprise.server.event.EventManagerLocal;
-import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
-import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.purge.PurgeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -54,12 +51,12 @@ import org.rhq.enterprise.server.util.TimingVoodoo;
 public class DataPurgeJob extends AbstractStatefulJob {
     private static final Log LOG = LogFactory.getLog(DataPurgeJob.class);
 
-    private static long HOUR = 60 * 60 * 1000L;
+    private static final long HOUR = 60 * 60 * 1000L;
 
     /**
      * Schedules a purge job to trigger right now. This will not block - it schedules the job to trigger but immediately
      * returns. This method will ensure that no two data purge jobs will execute at the same time (Quartz will ensure
-     * this since {@link DataPurgeJob} is an implementation of {@link StatefulJob}).
+     * this since {@link DataPurgeJob} is an implementation of {@link org.quartz.StatefulJob}).
      *
      * @throws Exception if failed to schedule the data purge for immediate execution
      */
@@ -95,19 +92,20 @@ public class DataPurgeJob extends AbstractStatefulJob {
     }
 
     private void purgeEverything(Properties systemConfig) {
-        purgeCallTimeData(LookupUtil.getCallTimeDataManager(), systemConfig);
-        purgeEventData(LookupUtil.getEventManager(), systemConfig);
-        purgeAlertData(LookupUtil.getAlertManager(), systemConfig);
+        PurgeManagerLocal purgeManager = LookupUtil.getPurgeManager();
+        purgeCallTimeData(purgeManager, systemConfig);
+        purgeEventData(purgeManager, systemConfig);
+        purgeAlertData(purgeManager, systemConfig);
         purgeUnusedAlertDefinitions(LookupUtil.getAlertDefinitionManager());
         purgeOrphanedAlertConditions(LookupUtil.getAlertConditionManager());
         purgeOrphanedAlertNotifications(LookupUtil.getAlertNotificationManager());
-        purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
-        purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
+        purgeMeasurementTraitData(purgeManager, systemConfig);
+        purgeAvailabilityData(purgeManager, systemConfig);
         purgeOrphanedDriftFiles(LookupUtil.getDriftManager(), systemConfig);
         purgeOperationHistoryData(LookupUtil.getOperationManager(), systemConfig);
     }
 
-    private void purgeMeasurementTraitData(MeasurementDataManagerLocal measurementDataManager, Properties systemConfig) {
+    private void purgeMeasurementTraitData(PurgeManagerLocal purgeManager, Properties systemConfig) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Trait data purge starting at " + new Date(timeStart));
         int traitsPurged = 0;
@@ -123,7 +121,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
             }
 
             LOG.info("Purging traits that are older than " + new Date(threshold));
-            traitsPurged = measurementDataManager.purgeTraits(threshold);
+            traitsPurged = purgeManager.purgeTraits(threshold);
         } catch (Exception e) {
             LOG.error("Failed to purge trait data. Cause: " + e, e);
         } finally {
@@ -159,7 +157,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeAvailabilityData(AvailabilityManagerLocal availabilityManager, Properties systemConfig) {
+    private void purgeAvailabilityData(PurgeManagerLocal purgeManager, Properties systemConfig) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Availability data purge starting at " + new Date(timeStart));
         int availsPurged = 0;
@@ -174,7 +172,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
                 threshold = timeStart - Long.parseLong(availPurgeThresholdStr);
             }
             LOG.info("Purging availablities that are older than " + new Date(threshold));
-            availsPurged = availabilityManager.purgeAvailabilities(threshold);
+            availsPurged = purgeManager.purgeAvailabilities(threshold);
         } catch (Exception e) {
             LOG.error("Failed to purge availability data. Cause: " + e, e);
         } finally {
@@ -183,7 +181,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeCallTimeData(CallTimeDataManagerLocal callTimeDataManager, Properties systemConfig) {
+    private void purgeCallTimeData(PurgeManagerLocal purgeManager, Properties systemConfig) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Measurement calltime data purge starting at " + new Date(timeStart));
         int calltimePurged = 0;
@@ -191,7 +189,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         try {
             long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.RtDataPurge));
             LOG.info("Purging calltime data that is older than " + new Date(threshold));
-            calltimePurged = callTimeDataManager.purgeCallTimeData(new Date(threshold));
+            calltimePurged = purgeManager.purgeCallTimeData(threshold);
         } catch (Exception e) {
             LOG.error("Failed to purge calltime data. Cause: " + e, e);
         } finally {
@@ -200,7 +198,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeEventData(EventManagerLocal eventManager, Properties systemConfig) {
+    private void purgeEventData(PurgeManagerLocal purgeManager, Properties systemConfig) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Event data purge starting at " + new Date(timeStart));
         int eventsPurged = 0;
@@ -208,7 +206,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         try {
             long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.EventPurge));
             LOG.info("Purging event data older than " + new Date(threshold));
-            eventsPurged = eventManager.purgeEventData(new Date(threshold));
+            eventsPurged = purgeManager.purgeEventData(threshold);
         } catch (Exception e) {
             LOG.error("Failed to purge event data. Cause: " + e, e);
         } finally {
@@ -217,7 +215,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeAlertData(AlertManagerLocal alertManager, Properties systemConfig) {
+    private void purgeAlertData(PurgeManagerLocal purgeManager, Properties systemConfig) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Alert data purge starting at " + new Date(timeStart));
         int alertsPurged = 0;
@@ -225,7 +223,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         try {
             long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.AlertPurge));
             LOG.info("Purging alert data older than " + new Date(threshold));
-            alertsPurged = alertManager.deleteAlerts(0, threshold);
+            alertsPurged = purgeManager.deleteAlerts(0, threshold);
         } catch (Exception e) {
             LOG.error("Failed to purge alert data. Cause: " + e, e);
         } finally {

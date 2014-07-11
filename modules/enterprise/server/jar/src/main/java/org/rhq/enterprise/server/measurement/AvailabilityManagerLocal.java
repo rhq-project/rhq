@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.measurement;
 
 import java.util.Date;
@@ -42,17 +43,6 @@ import org.rhq.enterprise.server.measurement.AvailabilityManagerBean.MergeInfo;
  */
 @Local
 public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
-    /**
-     * Purges all availabilities that are old. The <code>oldest</code> time is the epoch milliseconds of the oldest
-     * availability that is to be retained. The {@link Availability#getEndTime() end time} is the time that is examined.
-     * No availability row with a <code>null</code> {@link Availability#getEndTime() end time} will ever be purged.
-     *
-     * @param  oldest oldest time (in epoch milliseconds) to retain; older records get purged
-     *
-     * @return the number of availabilities that were purged
-     */
-    int purgeAvailabilities(long oldest);
-
     /**
      * Indicates if the given resource is currently up (i.e. available) or down.
      *

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.measurement.test;
 
 import static org.mockito.Matchers.any;
@@ -63,6 +64,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.purge.PurgeManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -76,8 +78,10 @@ import org.rhq.enterprise.server.util.ResourceTreeHelper;
 public class MeasurementDataManagerTest extends AbstractEJB3Test {
 
     private static final int DELTA = 20;
+
     private MeasurementDataManagerLocal measurementDataManager;
     private CallTimeDataManagerLocal callTimeDataManager;
+    private PurgeManagerLocal purgeManager;
 
     private Subject overlord;
 
@@ -94,6 +98,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         try {
             this.measurementDataManager = LookupUtil.getMeasurementDataManager();
             this.callTimeDataManager = LookupUtil.getCallTimeDataManager();
+            this.purgeManager = LookupUtil.getPurgeManager();
             this.overlord = LookupUtil.getSubjectManager().getOverlord();
 
         } catch (Throwable t) {
@@ -109,7 +114,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
 
         try {
             // delete values
-            callTimeDataManager.purgeCallTimeData(new Date());
+            purgeManager.purgeCallTimeData(System.currentTimeMillis());
 
             beginTx();
 

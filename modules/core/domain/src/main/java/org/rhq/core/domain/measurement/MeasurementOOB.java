@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.domain.measurement;
 
 import javax.persistence.Column;
@@ -30,7 +31,7 @@ import javax.persistence.Table;
  *
  * @author Heiko W. Rupp
  */
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE, query = "" //
         + "   SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite" //
         + "        ( res.name, res.id, res.ancestry, res.resourceType.id, def.displayName, sched.id, o.timestamp, def.id, o.oobFactor, " //
@@ -140,6 +141,10 @@ public class MeasurementOOB {
     public static final String GET_SCHEDULES_WITH_OOB_AGGREGATE = "GetSchedulesWithOObAggregate";
     public static final String GET_SCHEDULES_WITH_OOB_AGGREGATE_ADMIN = "GetSchedulesWithOObAggregate_admin";
     public static final String GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT = "GetSchedulesWithOObAggregateCount";
+    /**
+     * @deprecated as of RHQ 4.13, no longer used
+     */
+    @Deprecated
     public static final String DELETE_OUTDATED = "DeleteOutdatedOOBs";
     public static final String COUNT_FOR_DATE = "CountOOBForDate";
     public static final String GET_HIGHEST_FACTORS_FOR_RESOURCE = "GetHighestOOBFactorForResource";
@@ -225,8 +230,16 @@ public class MeasurementOOB {
         + "                             FROM rhq_measurement_oob \n "
         + "                            WHERE rhq_measurement_oob.schedule_id = rhq_measurement_oob_tmp.schedule_id ) )";
 
+    /**
+     * @deprecated as of RHQ 4.13, no longer used
+     */
+    @Deprecated
     public static final String TRUNCATE_TMP_TABLE = "TRUNCATE TABLE rhq_measurement_oob_tmp";
 
+    /**
+     * @deprecated as of RHQ 4.13, no longer used
+     */
+    @Deprecated
     public static final String SECURITY_ADDITION = "" //
         + " AND ( res.id IN ( SELECT rr.id  FROM Resource rr " //
         + "                     JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //

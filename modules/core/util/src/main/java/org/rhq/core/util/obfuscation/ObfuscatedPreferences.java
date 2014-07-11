@@ -27,10 +27,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.NodeChangeListener;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
+import java.util.regex.Pattern;
 
 /**
  * @author Stefan Negrea
@@ -42,9 +44,14 @@ public class ObfuscatedPreferences extends Preferences {
     public static @interface Restricted {
     }
 
+    private static final Pattern RESTRICTED_PATTERN = Pattern.compile("RESTRICTED::.*");
+    private static final String RESTRICTED_FORMAT = "RESTRICTED::%s";
+
+
     private Preferences actualPreferences;
 
-    private Set<String> restrictedProperties = new HashSet<String>();
+    private Set<String> restrictedPreferences = new HashSet<String>();
+    private Set<String> userRestrictedPreferences = new HashSet<String>();
 
     @SuppressWarnings("rawtypes")
     public ObfuscatedPreferences(Preferences actualPreferences, Class classz) {
@@ -55,69 +62,97 @@ public class ObfuscatedPreferences extends Preferences {
             if (restricted != null) {
                 try {
                     String restrictedProperty = field.get(classz).toString();
-                    restrictedProperties.add(restrictedProperty);
-                    @SuppressWarnings("unused")
-                    String retrieveToObfuscate = this.get(restrictedProperty, null);
+                    restrictedPreferences.add(restrictedProperty);
+                    this.get(restrictedProperty, null);
                 } catch (Exception e) {
                     //nothing to do, the field is just not accesible
                 }
             }
         }
+
+        try{
+            for (String key : actualPreferences.keys()) {
+                if (!restrictedPreferences.contains(key)) {
+                    String storedValue = actualPreferences.get(key, null);
+                    if (storedValue != null && isRestrictedFormat(storedValue)) {
+                        userRestrictedPreferences.add(key);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            //nothing to do since this was just an exploration to see if the
+            //user requested any other properties to be restricted
+        }
     }
 
     @Override
     public void put(String key, String value) {
-        if (restrictedProperties.contains(key)) {
+        if (restrictedPreferences.contains(key) || userRestrictedPreferences.contains(key)) {
             try {
-                //if the user passes an obfuscated value then store it as is
-                //first try to decode, if it succeeds then the value is already
-                //obfuscated
-                @SuppressWarnings("unused")
-                String unobfuscatedValue = PicketBoxObfuscator.decode(value);
-                actualPreferences.put(key, value);
-            } catch (Exception ex) {
+                if (isRestrictedFormat(value)) {
+                    value = this.retrieveValue(value);
+                    value = PicketBoxObfuscator.decode(value);
+                } else {
+                    throw new Exception("Value not in a retricted format");
+                }
+            } catch (Exception e) {
                 try {
-                    actualPreferences.put(key, PicketBoxObfuscator.encode(value));
-                } catch (Exception ex2) {
-                    actualPreferences.put(key, value);
+                    value = PicketBoxObfuscator.decode(value);
+                } catch (Exception e2) {
+                    //nothing to do, the value was not obfuscated
                 }
             }
+
+            try{
+                value = PicketBoxObfuscator.encode(value);
+            } catch (Exception ex2) {
+                //an error occurred during encoding so just store
+                //the value as is
+            }
+
+            actualPreferences.put(key, formatValue(value));
         } else {
-            actualPreferences.put(key, value);
+            if (isRestrictedFormat(value)) {
+                userRestrictedPreferences.add(key);
+
+                value = retrieveValue(value);
+
+                try {
+                    PicketBoxObfuscator.decode(value);
+                } catch (Exception e) {
+                    value = PicketBoxObfuscator.encode(value);
+                }
+
+                actualPreferences.put(key, formatValue(value));
+            } else {
+                actualPreferences.put(key, value);
+            }
         }
     }
 
     @Override
     public String get(String key, String def) {
-        if (restrictedProperties.contains(key)) {
+        String value = actualPreferences.get(key, null);
+
+        if (value == null) {
+            return def;
+        }
+
+        if (restrictedPreferences.contains(key) || userRestrictedPreferences.contains(key)) {
             try {
-                String value = actualPreferences.get(key, null);
-
-                if (value == null) {
-                    return def;
+                if (isRestrictedFormat(value)) {
+                    value = retrieveValue(value);
+                    return PicketBoxObfuscator.decode(value);
+                } else {
+                    throw new Exception("Value not in a restricted format");
                 }
-
-                return PicketBoxObfuscator.decode(value);
             } catch (Exception ex) {
-                //if an exception is thrown that means the value
-                //is not encoded restore the
-                String value = actualPreferences.get(key, null);
-
-                if (value == null) {
-                    return def;
-                }
-
-                try {
-                    actualPreferences.put(key, PicketBoxObfuscator.encode(value));
-                } catch (Exception ex2) {
-                    //do nothing, decoding failed, encoding failed too ...
-                    //just move on
-                }
+                this.put(key, value);
 
                 return value;
             }
         } else {
-            return actualPreferences.get(key, def);
+            return value;
         }
     }
 
@@ -279,6 +314,48 @@ public class ObfuscatedPreferences extends Preferences {
     @Override
     public void exportSubtree(OutputStream os) throws IOException, BackingStoreException {
         actualPreferences.exportSubtree(os);
+    }
+
+    /**
+     * Checks if a property value is in a restricted format.
+     *
+     * @param str string to check
+     * @return
+     */
+    private boolean isRestrictedFormat(String str) {
+        return str != null && RESTRICTED_PATTERN.matcher(str).matches();
+    }
+
+    /**
+     * Retrieves the actual value from a restricted format string.
+     *
+     * @param value
+     * @return
+     */
+    private String retrieveValue(String value) {
+        StringTokenizer tokenizer = new StringTokenizer(value, "::");
+
+        if (!tokenizer.hasMoreTokens()) {
+            return null;
+        }
+
+        tokenizer.nextToken();
+
+        if (tokenizer.hasMoreTokens()) {
+            return tokenizer.nextToken();
+        }
+
+        return null;
+    }
+
+    /**
+     * Formats a value in the proper restricted format.
+     *
+     * @param value
+     * @return
+     */
+    private String formatValue(String value) {
+        return String.format(RESTRICTED_FORMAT, value);
     }
 
 }

@@ -269,7 +269,7 @@ public class Installer {
             String encodedPassword = new InstallerServiceImpl(installerConfig).obfuscatePassword(String
                 .valueOf(passwordToEncode));
             LOG.info("*** Encoded password for rhq-server.properties:");
-            LOG.info("***     " + associatedProperty + "=" + encodedPassword);
+            LOG.info("***     " + associatedProperty + "=RESTRICTED::" + encodedPassword);
             LOG.info("***     ");
             LOG.info("*** Encoded password for standalone.xml with vault with default:");
             LOG.info("***     ${VAULT::restricted::" + associatedProperty + "::" + encodedPassword + "}");
@@ -278,7 +278,8 @@ public class Installer {
             LOG.info("***     ${VAULT::restricted::" + associatedProperty + ":: }");
             LOG.info("***     ");
             LOG.info("*** Encoded password for agent-configuration.xml:");
-            LOG.info("***     <entry key=\"" + associatedProperty + "\" value=\"" + encodedPassword + "\" />");
+            LOG.info("***     <entry key=\"RESTRICTED::" + associatedProperty + "\" value=\"" + encodedPassword
+                + "\" />");
 
             return new WhatToDo[] { WhatToDo.DO_NOTHING };
         }

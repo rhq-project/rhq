@@ -750,10 +750,10 @@ rhq.server.tomcat.security.secure-socket-protocol=TLS
 #rhq.server.tomcat.security.algorithm=SunX509
 rhq.server.tomcat.security.keystore.alias=RHQ
 rhq.server.tomcat.security.keystore.file=${jboss.server.config.dir}/rhq.keystore
-rhq.server.tomcat.security.keystore.password=5fb458952ebdaa86aa0b4e8d3eac5d13
+rhq.server.tomcat.security.keystore.password=RESTRICTED::5fb458952ebdaa86aa0b4e8d3eac5d13
 rhq.server.tomcat.security.keystore.type=JKS
 rhq.server.tomcat.security.truststore.file=${jboss.server.config.dir}/rhq.truststore
-rhq.server.tomcat.security.truststore.password=5fb458952ebdaa86aa0b4e8d3eac5d13
+rhq.server.tomcat.security.truststore.password=RESTRICTED::5fb458952ebdaa86aa0b4e8d3eac5d13
 rhq.server.tomcat.security.truststore.type=JKS
 
 # Server-side SSL Security Configuration (for incoming messages from agents)
@@ -762,13 +762,13 @@ rhq.communications.connector.security.secure-socket-protocol=TLS
 rhq.communications.connector.security.keystore.file=${jboss.server.config.dir}/rhq.keystore
 #rhq.communications.connector.security.keystore.algorithm=SunX509
 rhq.communications.connector.security.keystore.type=JKS
-rhq.communications.connector.security.keystore.password=5fb458952ebdaa86aa0b4e8d3eac5d13
-rhq.communications.connector.security.keystore.key-password=5fb458952ebdaa86aa0b4e8d3eac5d13
+rhq.communications.connector.security.keystore.password=RESTRICTED::5fb458952ebdaa86aa0b4e8d3eac5d13
+rhq.communications.connector.security.keystore.key-password=RESTRICTED::5fb458952ebdaa86aa0b4e8d3eac5d13
 rhq.communications.connector.security.keystore.alias=RHQ
 rhq.communications.connector.security.truststore.file=${jboss.server.config.dir}/rhq.truststore
 #rhq.communications.connector.security.truststore.algorithm=SunX509
 rhq.communications.connector.security.truststore.type=JKS
-rhq.communications.connector.security.truststore.password=RHQManagement
+rhq.communications.connector.security.truststore.password=RESTRICTED::5fb458952ebdaa86aa0b4e8d3eac5d13
 rhq.communications.connector.security.client-auth-mode=none
 
 # Client-side SSL Security Configuration (for outgoing messages to agents)
@@ -776,13 +776,13 @@ rhq.server.client.security.secure-socket-protocol=TLS
 rhq.server.client.security.keystore.file=${jboss.server.config.dir}/rhq.keystore
 #rhq.server.client.security.keystore.algorithm=SunX509
 rhq.server.client.security.keystore.type=JKS
-rhq.server.client.security.keystore.password=5fb458952ebdaa86aa0b4e8d3eac5d13
-rhq.server.client.security.keystore.key-password=5fb458952ebdaa86aa0b4e8d3eac5d13
+rhq.server.client.security.keystore.password=RESTRICTED::5fb458952ebdaa86aa0b4e8d3eac5d13
+rhq.server.client.security.keystore.key-password=RESTRICTED::5fb458952ebdaa86aa0b4e8d3eac5d13
 rhq.server.client.security.keystore.alias=RHQ
 rhq.server.client.security.truststore.file=${jboss.server.config.dir}/rhq.truststore
 #rhq.server.client.security.truststore.algorithm=SunX509
 rhq.server.client.security.truststore.type=JKS
-rhq.server.client.security.truststore.password=5fb458952ebdaa86aa0b4e8d3eac5d13
+rhq.server.client.security.truststore.password=RESTRICTED::5fb458952ebdaa86aa0b4e8d3eac5d13
 rhq.server.client.security.server-auth-mode-enabled=false
 
 # Operations/controls timeout

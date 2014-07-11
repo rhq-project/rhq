@@ -81,26 +81,23 @@ public class PropertyObfuscationVault implements SecurityVault {
      * Documentation provided since slightly changing the meaning of method parameters
      * from the overriden method.
      *
-     * @param vaultBlock  if 'restricted' then the value is obfuscated; if 'open' then value is not obfuscated
-     * @param attributeName name of system property where that contains the value
-     * @param sharedKey default value if no system property found or empty
+     * @param blockType  if 'restricted' then the value is obfuscated; if 'open' then value is not obfuscated
+     * @param systemProperty name of system property where that contains the value
+     * @param defaultValue default value if no system property found or empty
      * @return value
      * @throws SecurityVaultException
      */
     @Override
-    public char[] retrieve(String vaultBlock, String attributeName, byte[] sharedKey) throws SecurityVaultException {
-
-        LOG.info("Deobfuscations result [" + vaultBlock + "-" + attributeName + "-" + new String(sharedKey) + "] ");
-
+    public char[] retrieve(String blockType, String systemProperty, byte[] defaultValue) throws SecurityVaultException {
         try {
             boolean isRestricted = false;
-            if (RESTRICTED.equals(vaultBlock)) {
+            if (RESTRICTED.equals(blockType)) {
                 isRestricted = true;
             }
 
             char[] result = null;
 
-            String systemPropertyValue = System.getProperty(attributeName);
+            String systemPropertyValue = System.getProperty(systemProperty);
             if (systemPropertyValue != null && !systemPropertyValue.trim().isEmpty()) {
                 if (isRestricted) {
                     String actualSystemPropertyValue = systemPropertyValue;
@@ -118,16 +115,16 @@ public class PropertyObfuscationVault implements SecurityVault {
                     result = systemPropertyValue.toCharArray();
                 }
 
-            } else if (sharedKey != null && sharedKey.length != 0) {
+            } else if (defaultValue != null && defaultValue.length != 0) {
                 if (isRestricted) {
                     try {
-                        result = PicketBoxObfuscator.decode(new String(sharedKey)).toCharArray();
+                        result = PicketBoxObfuscator.decode(new String(defaultValue)).toCharArray();
                     } catch (Exception e) {
                         //have a fallback in case the password not obfuscated
-                        result = new String(sharedKey).toCharArray();
+                        result = new String(defaultValue).toCharArray();
                     }
                 } else {
-                    result = new String(sharedKey).toCharArray();
+                    result = new String(defaultValue).toCharArray();
                 }
             } else {
                 //ran out of options to de-obfuscate so throw an exception

@@ -91,24 +91,34 @@ public class PropertyObfuscationVault implements SecurityVault {
         LOG.info("Deobfuscations result [" + vaultBlock + "-" + attributeName + "-" + new String(sharedKey) + "] ");
 
         try {
-            boolean obfuscated = false;
+            boolean isRestricted = false;
             if (RESTRICTED.equals(vaultBlock)) {
-                obfuscated = true;
+                isRestricted = true;
             }
 
             char[] result = null;
 
             String systemPropertyValue = System.getProperty(attributeName);
             if (systemPropertyValue != null && !systemPropertyValue.trim().isEmpty()) {
-                if (obfuscated) {
-                    result = Obfuscator.decode(systemPropertyValue).toCharArray();
+                if (isRestricted) {
+                    try {
+                        result = PicketBoxObfuscator.decode(systemPropertyValue).toCharArray();
+                    } catch (Exception e) {
+                        //have a fallback in case the password not obfuscated
+                        result = systemPropertyValue.toCharArray();
+                    }
                 } else {
                     result = systemPropertyValue.toCharArray();
                 }
 
             } else if (sharedKey != null && sharedKey.length != 0) {
-                if (obfuscated) {
-                    result = Obfuscator.decode(new String(sharedKey)).toCharArray();
+                if (isRestricted) {
+                    try {
+                        result = PicketBoxObfuscator.decode(new String(sharedKey)).toCharArray();
+                    } catch (Exception e) {
+                        //have a fallback in case the password not obfuscated
+                        result = new String(sharedKey).toCharArray();
+                    }
                 } else {
                     result = new String(sharedKey).toCharArray();
                 }
@@ -117,7 +127,6 @@ public class PropertyObfuscationVault implements SecurityVault {
                 throw new IllegalArgumentException();
             }
 
-            LOG.info("Deobfuscations result [" + new String(result) + "] ");
             return result;
         } catch (Exception e) {
             throw new SecurityVaultException(e);

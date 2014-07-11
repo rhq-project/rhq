@@ -148,7 +148,7 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
 
         addMember(footer);
 
-        final IButton importButton = new EnhancedIButton(MSG.common_button_import());
+        final IButton importButton = new EnhancedIButton(MSG.common_button_import(), ButtonColor.BLUE);
         final IButton ignoreButton = new EnhancedIButton(MSG.view_autoDiscoveryQ_ignore(), ButtonColor.RED);
         final IButton unignoreButton = new EnhancedIButton(MSG.view_autoDiscoveryQ_unignore());
 

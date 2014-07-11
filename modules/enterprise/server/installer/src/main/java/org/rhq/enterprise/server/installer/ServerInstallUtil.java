@@ -75,6 +75,7 @@ import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences.RestrictedFormat;
 import org.rhq.core.util.obfuscation.PropertyObfuscationVault;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.util.SecurityUtil;
@@ -532,7 +533,7 @@ public class ServerInstallUtil {
         switch (supportedDbType) {
         case POSTGRES: {
             if (client.isJDBCDriver(JDBC_DRIVER_POSTGRES)) {
-                LOG.info("Postgres JDBC$ driver is already deployed");
+                LOG.info("Postgres JDBC driver is already deployed");
             } else {
                 results = client.execute(postgresDriverRequest);
                 if (!DatasourceJBossASClient.isSuccess(results)) {
@@ -1661,7 +1662,13 @@ public class ServerInstallUtil {
             }
 
             if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
-                return String.format(expressionFormat, propName, defaultProperties.get(propName));
+                String value = defaultProperties.get(propName);
+
+                if (RestrictedFormat.isRestrictedFormat(value)) {
+                    value = RestrictedFormat.retrieveValue(value);
+                }
+
+                return String.format(expressionFormat, propName, value);
             } else {
                 return String.format(expressionFormat, propName);
             }

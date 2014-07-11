@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.core.domain.measurement;
 
 import javax.persistence.Entity;
@@ -28,7 +29,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = MeasurementDataTrait.FIND_CURRENT_FOR_RESOURCE_AND_DISPLAY_TYPE, query = "SELECT trait, d.displayName "
         + "FROM MeasurementDataTrait trait JOIN trait.schedule s join s.definition d JOIN s.resource r"
         + " WHERE r.id = :resourceId "
@@ -78,11 +79,10 @@ public class MeasurementDataTrait extends MeasurementData {
 
     public static final String QUERY_DELETE_BY_RESOURCES = "MeasurementDataTrait.deleteByResources";
 
-    /*
-     * NOTE: Avoid using the AS keyword in the FROM clauses in this query, because Oracle barfs on it
-     *       (see http://download.oracle.com/docs/cd/B19306_01/server.102/b14200/ap_standard_sql003.htm, subfeature id
-     *       E051-08).
+    /**
+     * @deprecated as of RHQ 4.13, no longer used
      */
+    @Deprecated
     public static final String NATIVE_QUERY_PURGE = "" //
         + "DELETE FROM rhq_measurement_data_trait " // SQL Server doesn't like aliases, use full table name
         + "WHERE EXISTS " // rewritten as exists because H2 doesn't support multi-column conditions

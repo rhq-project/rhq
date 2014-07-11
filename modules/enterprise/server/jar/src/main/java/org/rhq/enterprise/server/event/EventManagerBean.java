@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,16 +13,16 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.event;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +30,6 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -39,8 +37,6 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.jboss.ejb3.annotation.TransactionTimeout;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -65,7 +61,6 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -109,6 +104,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
     Log log = LogFactory.getLog(EventManagerBean.class);
 
+    @Override
     public void addEventData(Map<EventSource, Set<Event>> events) {
 
         if (events == null || events.size() == 0)
@@ -215,18 +211,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         log.debug(callingMethod + ": " + stats.toString());
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(6 * 60 * 60)
-    public int purgeEventData(Date deleteUpToTime) throws SQLException {
-        Query q = entityManager.createQuery("DELETE FROM Event e WHERE e.timestamp < :cutOff");
-        q.setParameter("cutOff", deleteUpToTime.getTime());
-        long startTime = System.currentTimeMillis();
-        int deleted = q.executeUpdate();
-        MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
-        MeasurementMonitor.getMBean().setPurgedEvents(deleted);
-        return deleted;
-    }
-
+    @Override
     public int[] getEventCounts(Subject subject, int resourceId, long begin, long end, int numBuckets) {
 
         int[] buckets = new int[numBuckets];
@@ -248,6 +233,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return buckets;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public EventComposite getEventDetailForEventId(Subject subject, int eventId) throws EventException {
         Query q = entityManager.createNamedQuery(Event.GET_DETAILS_FOR_EVENT_IDS);
@@ -262,6 +248,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void deleteEventSourcesForDefinition(EventDefinition def) {
         Query q = entityManager.createNamedQuery(EventSource.QUERY_BY_EVENT_DEFINITION);
@@ -272,6 +259,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         }
     }
 
+    @Override
     public int deleteEventsForContext(Subject subject, EntityContext context, List<Integer> eventIds) {
         if (eventIds == null || eventIds.size() == 0) {
             return 0; // nothing to delete, thus 0 were deleted
@@ -302,6 +290,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return deletedCount;
     }
 
+    @Override
     public int purgeEventsForContext(Subject subject, EntityContext context) {
 
         if (context.type == EntityContext.Type.Resource) {
@@ -332,6 +321,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return deletedCount;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Map<EventSeverity, Integer> getEventCountsBySeverity(Subject subject, int resourceId, long startDate,
         long endDate) {
@@ -349,6 +339,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return results;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Map<EventSeverity, Integer> getEventCountsBySeverityForGroup(Subject subject, int groupId, long startDate,
         long endDate) {
@@ -366,6 +357,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return results;
     }
 
+    @Override
     public EventSeverity[] getSeverityBucketsByContext(Subject subject, EntityContext context, long begin, long end,
         int bucketCount) {
 
@@ -411,6 +403,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return buckets;
     }
 
+    @Override
     public PageList<EventComposite> findEventComposites(Subject subject, EntityContext context, long begin, long end,
         EventSeverity[] severities, String source, String detail, PageControl pc) {
 
@@ -457,6 +450,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return findEventCompositesByCriteria(subject, criteria);
     }
 
+    @Override
     public PageList<EventComposite> findEventCompositesByCriteria(Subject subject, EventCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
@@ -486,6 +480,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return queryRunner.execute();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -503,16 +498,19 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
      * Methods kept around because they are part of the remote interface, but all should be treated as deprecated
      */
 
+    @Override
     public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets) {
         return getSeverityBucketsByContext(subject, EntityContext.forResource(resourceId), begin, end, numBuckets);
     }
 
+    @Override
     public EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
         long begin, long end, int numBuckets) {
         return getSeverityBucketsByContext(subject, EntityContext.forAutoGroup(parentResourceId, resourceTypeId),
             begin, end, numBuckets);
     }
 
+    @Override
     public EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int resourceGroupId, long begin, long end,
         int numBuckets) {
         return getSeverityBucketsByContext(subject, EntityContext.forGroup(resourceGroupId), begin, end, numBuckets);

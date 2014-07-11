@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.core.domain.alert;
 
 import java.io.Serializable;
@@ -118,9 +119,17 @@ public class AlertConditionLog implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCES_BULK_DELETE = "AlertConditionLog.deleteByResourcesBulkDelete";
     public static final String QUERY_DELETE_BY_RESOURCE_TEMPLATE = "AlertConditionLog.deleteByResourceType";
     public static final String QUERY_DELETE_BY_RESOURCE_GROUPS = "AlertConditionLog.deleteByResourceGroups";
+    /**
+     * @deprecated as of RHQ 4.13, no longer used
+     */
+    @Deprecated
     public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertConditionLog.deleteByAlertCTime";
     public static final String QUERY_DELETE_UNMATCHED_BY_ALERT_DEFINITION_ID = "AlertConditionLog.deleteUnmatchedByAlertDefinitionId";
 
+    /**
+     * @deprecated as of RHQ 4.13, no longer used
+     */
+    @Deprecated
     public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT_CONDITION_LOG";
 
     public static final int MAX_LOG_LENGTH = 250;

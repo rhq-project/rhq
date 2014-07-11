@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.measurement.test;
 
 import java.util.ArrayList;
@@ -48,6 +49,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite.Group
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityPoint;
+import org.rhq.enterprise.server.purge.PurgeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -72,6 +74,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     private static final AvailabilityType UNKNOWN = AvailabilityType.UNKNOWN;
 
     private AvailabilityManagerLocal availabilityManager;
+    private PurgeManagerLocal purgeManager;
     private ResourceAvailabilityManagerLocal resourceAvailabilityManager;
     private ResourceManagerLocal resourceManager;
 
@@ -92,6 +95,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             prepareScheduler();
 
             this.availabilityManager = LookupUtil.getAvailabilityManager();
+            this.purgeManager = LookupUtil.getPurgeManager();
             this.resourceAvailabilityManager = LookupUtil.getResourceAvailabilityManager();
             this.resourceManager = LookupUtil.getResourceManager();
             this.overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -232,7 +236,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             beginTx();
 
-            int purged = availabilityManager.purgeAvailabilities(now - 29999); // keeps aMiddle and aNow
+            int purged = purgeManager.purgeAvailabilities(now - 29999); // keeps aMiddle and aNow
             assert purged == 2 : "Didn't purge 2 --> " + purged;
 
             Query q = em.createNamedQuery(Availability.FIND_BY_RESOURCE);
@@ -248,9 +252,9 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             assert avails.get(1).getEndTime() == null;
 
             // try to delete them all - but we never should delete the latest
-            purged = availabilityManager.purgeAvailabilities(now + 12345);
+            purged = purgeManager.purgeAvailabilities(now + 12345);
             assert purged == 1 : "Didn't purge 1 --> " + purged;
-            purged = availabilityManager.purgeAvailabilities(now + 12345);
+            purged = purgeManager.purgeAvailabilities(now + 12345);
             assert purged == 0 : "Didn't purge 0 --> " + purged;
 
             q = em.createNamedQuery(Availability.FIND_BY_RESOURCE);
@@ -415,7 +419,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         assert avails.get(1).getEndTime().equals(startMillis + 10000);
 
         // purge away all but the most recent avail
-        availabilityManager.purgeAvailabilities(System.currentTimeMillis());
+        purgeManager.purgeAvailabilities(System.currentTimeMillis());
         // platform: UP(60000) -->        
 
         avails = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(), 10000L, 20000L);

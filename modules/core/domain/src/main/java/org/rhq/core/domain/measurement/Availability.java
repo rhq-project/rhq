@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.core.domain.measurement;
 
 import java.io.Serializable;
@@ -156,6 +157,10 @@ public class Availability implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCES = "Availability.deleteByResources";
     public static final String FIND_FOR_AGENT_PLATFORM = "Availability.findForAgentPlatform";
 
+    /**
+     * @deprecated as of RHQ 4.13, no longer used
+     */
+    @Deprecated
     public static final String NATIVE_QUERY_PURGE = "DELETE FROM RHQ_AVAILABILITY WHERE END_TIME < ?";
 
     @Column(name = "ID", nullable = false)

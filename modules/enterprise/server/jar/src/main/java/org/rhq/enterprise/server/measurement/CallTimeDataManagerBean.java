@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -39,8 +38,6 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
-
-import org.jboss.ejb3.annotation.TransactionTimeout;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -99,9 +96,6 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         + "(key_id, begin_time, end_time, minimum, maximum, total, count) SELECT key.id, ?, ?, ?, ?, ?, ? FROM "
         + DATA_KEY_TABLE_NAME + " key WHERE key.schedule_id = ? AND key.call_destination = ?";
 
-    private static final String CALLTIME_VALUE_PURGE_STATEMENT = "DELETE FROM " + DATA_VALUE_TABLE_NAME
-        + " WHERE end_time < ?";
-
     private final Log log = LogFactory.getLog(CallTimeDataManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -119,6 +113,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void addCallTimeData(@NotNull
     Set<CallTimeData> callTimeDataSet) {
@@ -138,6 +133,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
 
     }
 
+    @Override
     public PageList<CallTimeDataComposite> findCallTimeDataRawForResource(Subject subject, int scheduleId,
         long beginTime, long endTime, PageControl pageControl) {
         pageControl.initDefaultOrderingField("value.beginTime", PageOrdering.ASC);
@@ -168,6 +164,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         return new PageList<CallTimeDataComposite>(results, (int) count, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
         long endTime, PageControl pageControl) {
@@ -204,18 +201,21 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         return new PageList<CallTimeDataComposite>(results, (int) count, pageControl);
     }
 
+    @Override
     public PageList<CallTimeDataComposite> findCallTimeDataForCompatibleGroup(Subject subject, int groupId,
         long beginTime, long endTime, PageControl pageControl) {
         return findCallTimeDataForContext(subject, EntityContext.forGroup(groupId), beginTime, endTime, null,
             pageControl);
     }
 
+    @Override
     public PageList<CallTimeDataComposite> findCallTimeDataForAutoGroup(Subject subject, int parentResourceId,
         int childResourceTypeId, long beginTime, long endTime, PageControl pageControl) {
         return findCallTimeDataForContext(subject, EntityContext.forAutoGroup(parentResourceId, childResourceTypeId),
             beginTime, endTime, null, pageControl);
     }
 
+    @Override
     public PageList<CallTimeDataComposite> findCallTimeDataForContext(Subject subject, EntityContext context,
         long beginTime, long endTime, String destination, PageControl pageControl) {
 
@@ -231,6 +231,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         return findCallTimeDataForContext(subject, context, criteria);
     }
 
+    @Override
     public PageList<CallTimeDataComposite> findCallTimeDataForContext(Subject subject, EntityContext context,
         CallTimeDataCriteria criteria) {
 
@@ -277,42 +278,10 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         return results;
     }
 
-    /**
-     * Deletes call-time data older than the specified time.
-     *
-     * @param deleteUpToTime call-time data older than this time will be deleted
-     */
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(6 * 60 * 60)
-    public int purgeCallTimeData(Date deleteUpToTime) throws SQLException {
-        // NOTE: Apparently, Hibernate does not support DML JPQL queries, so we're stuck using JDBC.
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        try {
-            conn = rhqDs.getConnection();
-
-            // Purge old rows from RHQ_CALLTIME_DATA_VALUE.
-            stmt = conn.prepareStatement(CALLTIME_VALUE_PURGE_STATEMENT);
-            stmt.setLong(1, deleteUpToTime.getTime());
-
-            long startTime = System.currentTimeMillis();
-            int deletedRowCount = stmt.executeUpdate();
-            MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
-            MeasurementMonitor.getMBean().setPurgedCallTimeData(deletedRowCount);
-            return deletedRowCount;
-
-            // NOTE: We do not purge unreferenced rows from RHQ_CALLTIME_DATA_KEY, because this can cause issues
-            //       (see http://jira.jboss.com/jira/browse/JBNADM-1606). Once we limit the number of keys per
-            //       resource at insertion time (see http://jira.jboss.com/jira/browse/JBNADM-2618), the key
-            //       table will not require truncation.
-        } finally {
-            JDBCUtil.safeClose(conn, stmt, null);
-        }
-    }
-
     /*
      * internal method, do not expose to the remote API
      */
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void insertCallTimeDataKeys(Set<CallTimeData> callTimeDataSet) {
 
@@ -388,6 +357,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     /*
      * internal method, do not expose to the remote API
      */
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void insertCallTimeDataValues(Set<CallTimeData> callTimeDataSet) {
         int[] results;

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.subsystem;
 
 import java.util.List;
@@ -25,9 +26,6 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
@@ -45,6 +43,7 @@ import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.purge.PurgeManagerLocal;
 import org.rhq.enterprise.server.util.QueryUtility;
 
 /**
@@ -52,8 +51,6 @@ import org.rhq.enterprise.server.util.QueryUtility;
  */
 @Stateless
 public class AlertSubsystemManagerBean implements AlertSubsystemManagerLocal {
-
-    private final Log log = LogFactory.getLog(AlertSubsystemManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -63,6 +60,9 @@ public class AlertSubsystemManagerBean implements AlertSubsystemManagerLocal {
 
     @EJB
     private AlertManagerLocal alertManager;
+
+    @EJB
+    private PurgeManagerLocal purgeManager;
 
     @SuppressWarnings("unchecked")
     public PageList<AlertHistoryComposite> getAlertHistories(Subject subject, String resourceFilter,
@@ -183,7 +183,7 @@ public class AlertSubsystemManagerBean implements AlertSubsystemManagerLocal {
     }
 
     public int purgeAllAlertHistories(Subject subject) {
-        return alertManager.deleteAlerts(0, System.currentTimeMillis());
+        return purgeManager.deleteAlerts(0, System.currentTimeMillis());
     }
 
 }

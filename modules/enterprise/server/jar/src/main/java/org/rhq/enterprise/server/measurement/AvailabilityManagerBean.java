@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.measurement;
 
 import java.text.DateFormat;
@@ -129,27 +130,12 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     @javax.annotation.Resource
     private TimerService timerService;
 
-    // doing a bulk delete in here, need to be in its own tx
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(6 * 60 * 60)
-    public int purgeAvailabilities(long oldest) {
-        try {
-            Query purgeQuery = entityManager.createNativeQuery(Availability.NATIVE_QUERY_PURGE);
-            purgeQuery.setParameter(1, oldest);
-            long startTime = System.currentTimeMillis();
-            int deleted = purgeQuery.executeUpdate();
-            MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
-            MeasurementMonitor.getMBean().setPurgedAvailabilities(deleted);
-            return deleted;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to purge availabilities older than [" + oldest + "]", e);
-        }
-    }
-
+    @Override
     public AvailabilityType getCurrentAvailabilityTypeForResource(Subject subject, int resourceId) {
         return resourceAvailabilityManager.getLatestAvailabilityType(subject, resourceId);
     }
 
+    @Override
     public Availability getCurrentAvailabilityForResource(Subject subject, int resourceId) {
         Availability retAvailability;
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
@@ -376,6 +362,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         return GroupAvailabilityType.UP;
     }
 
+    @Override
     public List<AvailabilityPoint> findAvailabilitiesForResource(Subject subject, int resourceId,
         long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints, boolean withCurrentAvailability) {
         EntityContext context = new EntityContext(resourceId, -1, -1, -1);
@@ -383,6 +370,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             withCurrentAvailability);
     }
 
+    @Override
     public List<AvailabilityPoint> findAvailabilitiesForResourceGroup(Subject subject, int groupId,
         long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints, boolean withCurrentAvailability) {
         EntityContext context = new EntityContext(-1, groupId, -1, -1);
@@ -390,6 +378,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             withCurrentAvailability);
     }
 
+    @Override
     public List<AvailabilityPoint> findAvailabilitiesForAutoGroup(Subject subject, int parentResourceId,
         int resourceTypeId, long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints,
         boolean withCurrentAvailability) {
@@ -685,6 +674,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         }
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void setResourceAvailabilities(Map<Agent, int[]> map, AvailabilityType avail) {
         long now = System.currentTimeMillis();
@@ -705,6 +695,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         return;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public boolean mergeAvailabilityReport(AvailabilityReport report) {
         int reportSize = report.getResourceAvailability().size();
@@ -1095,6 +1086,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         resourceAvailabilities = null;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateLastAvailabilityReportInNewTransaction(int agentId) {
         // should we catch exceptions here, or allow them to bubble up and be caught?
@@ -1110,6 +1102,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         query.executeUpdate();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void updateAgentResourceAvailabilities(int agentId, AvailabilityType platformAvailType,
         AvailabilityType childAvailType) {
@@ -1327,6 +1320,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
      * @return A list of availabilities that cover at least the given date range
      * @Deprecated used in portal war EventsView.jsp.  Use {@link #findAvailabilityByCriteria(Subject, AvailabilityCriteria)}
      */
+    @Override
     @SuppressWarnings("unchecked")
     @Deprecated
     public List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate) {
@@ -1338,6 +1332,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         return results;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Availability> findAvailabilityByCriteria(Subject subject, AvailabilityCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -1384,6 +1379,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
      * @Deprecated used in portal war ListAvailabilityHistoryUIBEan.  Use {@link #findAvailabilityByCriteria(Subject, AvailabilityCriteria)}
      * Note that this methods uses startTime DESC sorting, which must be explicitly set in AvailabilityCriteria.
      */
+    @Override
     @Deprecated
     public PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pageControl) {
         if (authorizationManager.canViewResource(subject, resourceId) == false) {

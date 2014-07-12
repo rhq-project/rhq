@@ -20,7 +20,7 @@ import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * Component that represents a script that is deployed in a Byteman agent.
- * 
+ *
  * @author John Mazzitelli
  */
 public class BytemanScriptComponent implements ResourceComponent<BytemanAgentComponent>, DeleteResourceFacet {
@@ -80,7 +80,7 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
 
     public void deleteResource() throws Exception {
         // we need the most up-to-date info - so ask the byteman agent for the latest data
-        Map<String, String> allScripts = getBytemanClient().getAllScripts();
+        Map<String, String> allScripts = getBytemanClient().getAllRules();
 
         // get the script name and the rules content belonging to that script
         String scriptName = this.resourceContext.getResourceKey();
@@ -117,7 +117,7 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
 
     /**
      * Returns a cached copy of all known rules for the script since the last availability check was made.
-     * 
+     *
      * @return the last known set of rules that were loaded in the remote Byteman agent. <code>null</code>
      *         if a problem occurred attempting to get the scripts
      */
@@ -134,7 +134,7 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
      * This returns <code>null</code> if the given script path is not a script managed by this plugin.
      * Even if <code>scriptPath</code> points to a valid script file, if it is not managed by this plugin,
      * <code>null</code> will be returned.
-     * 
+     *
      * @param scriptPath path to check to see if its a managed script, to be converted to a File if so
      * @return the File of the managed script, or <code>null</code> if the given path is not a managed script
      */
@@ -156,7 +156,7 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
      * was added to the Byteman agent via some other mechanism, such as Byteman's CLI tool),
      * this method will do nothing - in this case, this resource component will declare the
      * resource's availability as DOWN.
-     *  
+     *
      * @throws Exception
      */
     protected void addDeployedScript() throws Exception {

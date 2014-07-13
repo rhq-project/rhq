@@ -85,12 +85,22 @@ a, a:link, a:visited {
     overflow: visible !important;
 }
 
+.searchBar input {
+  background: url("/coregui/images/search/glass.png") no-repeat scroll right center rgba(0, 0, 0, 0);
+}
+
+.tableRowCount {
+  height:30px;
+  font-size:11px;
+}
+
 .tableFilter {
     background-color: #f6f6f6;
     border-width: 1px 1px 0 1px;
     border-style: solid;
     border-color: #d1d1d1;
-    width: 100% !important;
+    min-height:24px;
+    padding:5px;
 }
 
 .splitbar table {
@@ -108,15 +118,16 @@ a, a:link, a:visited {
     visibility: hidden;
 }
 
-.subtabbar * {
+/*.subtabbar * {
     font-size: 12px;
-}
+}*/
 
 .subtabbar {
     border-bottom: 1px solid rgb(201, 201, 201);
     padding: 5px 0 0 21px;
-    margin-bottom: 10px;
+    margin-bottom: 20px !important;
 }
+
 
 /* PatternFly Overrides */
 /* login page */
@@ -373,20 +384,7 @@ General
     border-bottom: 1px solid #C9C9C9;
 }
 
-.subtabbar * {
-    /*  font-size:12px; */
-}
 
-.subtabbar {
-    border-bottom: 1px solid rgb(201, 201, 201);
-    padding: 5px 0 0 21px;
-    margin-bottom: 20px;
-}
-
-/*a:link {
-    color:#0060BF;
-    text-decoration:underline;
-}*/
 
 .pageBackground {
     font-size: 11px;
@@ -904,7 +902,10 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
     color: #222;
 }
 
+.SubTabButtonDown,
+.SubTabButtonSelectedDisabled,
 .SubTabButtonSelected,
+.SubTabButtonDisabled,
 .SubTabButton {
     font-size: 12px;
     border-style: solid;
@@ -914,6 +915,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
     padding: 3px 0px 5px 0px;
 }
 
+.SubTabButtonDown,
 .SubTabButtonSelected {
     color: #0099d3;
     border-color: #0099d3;
@@ -1806,10 +1808,10 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 .sortNumeral {
     font-size: 7px;
 }
-
+/*
 .toolStrip {
     margin-bottom: 5px !important;
-}
+}*/
 
 /*============================================================
   Tools

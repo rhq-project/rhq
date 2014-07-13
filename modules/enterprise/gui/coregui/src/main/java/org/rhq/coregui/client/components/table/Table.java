@@ -36,6 +36,7 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionStyle;
@@ -65,6 +66,7 @@ import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
@@ -88,6 +90,7 @@ import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
+
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
@@ -205,14 +208,12 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         }
         setWidth100();
         setHeight100();
-        //setOverflow(Overflow.HIDDEN);
 
         this.titleString = tableTitle;
         this.initialCriteria = criteria;
         this.sortSpecifiers = sortSpecifiers;
         this.excludedFieldNames = excludedFieldNames;
         this.autoFetchData = autoFetchData;
-	//        setStyleName("commontable");
     }
 
     /**
@@ -304,8 +305,6 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         addMember(contents);
 
         filterForm = new TableFilter(this);
-	//        filterForm.setWidth100();
-        filterForm.addStyleName("tableFilter");
 
         // Table filters and search bar are currently mutually exclusive.
         if (getSearchSubsystem() == null) {
@@ -381,16 +380,19 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     // doOnDraw().
     @Override
     protected void onDraw() {
+
         super.onDraw();
 
         if (isInitialized()) {
             doOnDraw();
 
         } else {
+
             new Timer() {
                 final long startTime = System.currentTimeMillis();
 
                 public void run() {
+
                     if (isInitialized()) {
                         doOnDraw();
                         cancel();
@@ -412,6 +414,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     }
 
     protected void doOnDraw() {
+
         try {
             // I'm not sure this is necessary as I'm not sure it's the case that draw()/onDraw() will get called
             // multiple times. But if it did/does, this protects us by removing the current members before they
@@ -440,9 +443,30 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 contents.addMember(titleLayout, 0);
             }
 
+            HLayout tableHeader = new HLayout();
+            tableHeader.setAutoHeight();
+            tableHeader.setWidth100();
+            tableHeader.setMinMemberSize(27);
+            tableHeader.addStyleName("tableFilter");
+
             if (filterForm.hasContent()) {
-                contents.addMember(filterForm);
+                filterForm.setWidth("60%");
+                tableHeader.addMember(filterForm);
             }
+
+            Label tableInfo = new Label();
+            tableInfo.setStyleName("tableRowCount");
+            tableInfo.setWidth("*");
+            tableInfo.setWrap(false);
+            tableInfo.setOverflow(Overflow.VISIBLE);
+            tableInfo.setAlign(Alignment.CENTER);
+            tableInfo.setValign(VerticalAlignment.CENTER);
+            //tableInfo.setHeight(26);;
+            setTableInfo(tableInfo);
+            tableHeader.addMember(tableInfo);
+            contents.addMember(tableHeader);
+            refreshRowCount();
+
             // add the listGrid defined in onInit
             contents.addMember(listGrid);
 
@@ -451,17 +475,14 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
             // This is hidden from view unless extra widgets are actually added to the table above the main footer.
             this.footerExtraWidgets = new EnhancedToolStrip();
-            //footerExtraWidgets.setPadding(5);
             footerExtraWidgets.setWidth100();
             footerExtraWidgets.setMembersMargin(15);
             footerExtraWidgets.hide();
-	    //            footerExtraWidgets.setStyleName("footerExtraWidgets");
 
             contents.addMember(footerExtraWidgets);
 
             this.footer = new EnhancedToolStrip();
             footer.addStyleName("footer");
-            //footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
             if (!showFooter) {
@@ -481,11 +502,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 }
             });
 
-            Label tableInfo = new Label();
-	    //            tableInfo.setStyleName("tableInfo");
-            tableInfo.setWrap(false);
-            setTableInfo(tableInfo);
-            refreshRowCount();
+
 
             // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
             //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
@@ -535,11 +552,14 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             if (lengthIsKnown) {
                 int totalRows = this.listGrid.getTotalRows();
                 int selectedRows = this.listGrid.getSelectedRecords().length;
-                contents = MSG.view_table_totalRows(String.valueOf(totalRows), String.valueOf(selectedRows));
+                contents = MSG.view_table_totalRows("<b>" + String.valueOf(totalRows) + "</b>",
+                  "<b>" + String.valueOf(selectedRows) + "</b>");
             } else {
                 contents = MSG.view_table_totalRowsUnknown();
             }
             tableInfo.setContents(contents);
+            //tableInfo.setHeight(tableInfo.getParentCanvas().getHeight());;
+
         }
     }
 
@@ -688,7 +708,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             footer.addMember(refreshButton);
         }
 
-        footer.addMember(tableInfo);
+      //  footer.addMember(tableInfo);
 
         // Manages enable/disable buttons for the grid
         listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
@@ -734,8 +754,8 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     }
 
     public void setFilterFormItems(FormItem... formItems) {
-        //setShowHeader(false);
         this.filterForm.setItems(formItems);
+        this.filterForm.setTitleWidth(1);
         this.filterForm.setNumCols(4);
     }
 
@@ -1009,7 +1029,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     public void addTableAction(String title, TableAction tableAction) {
         this.addTableAction(title, null, null, null, tableAction);
     }
-    
+
     public void addTableAction(String title, ButtonColor buttonColor, TableAction tableAction) {
         this.addTableAction(title, null, null, buttonColor, tableAction);
     }
@@ -1023,7 +1043,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     public void addTableAction(String title, String confirmation, TableAction tableAction) {
         this.addTableAction(title, confirmation, null, null, tableAction);
     }
-    
+
     public void addTableAction(String title, String confirmation, ButtonColor buttonColor, TableAction tableAction) {
         this.addTableAction(title, confirmation, null, buttonColor, tableAction);
     }
@@ -1242,8 +1262,8 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
         public TableFilter(Table<?> table) {
             super();
-            setOverflow(Overflow.VISIBLE);
-            setAutoWidth();
+            setAlign(Alignment.LEFT);
+            setHeight(22);
             this.table = table;
         }
 
@@ -1341,7 +1361,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             TableAction action) {
             this(title, tooltip, confirmMessage,valueMap, action, ButtonColor.GRAY);
         }
-        
+
         private TableActionInfo(String title, String tooltip, String confirmMessage, Map<String, Object> valueMap,
             TableAction action, ButtonColor buttonColor) {
             this.title = title;
@@ -1379,7 +1399,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         public void setAction(TableAction action) {
             this.action = action;
         }
-        
+
         public ButtonColor getButtonColor() {
             return buttonColor;
         }
@@ -1415,7 +1435,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 this.valueMap = valueMap;
                 return this;
             }
-            
+
             public TableActionInfoBuilder setButtonColor(ButtonColor buttonColor) {
                 this.buttonColor = buttonColor;
                 return this;

@@ -34,7 +34,9 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -823,6 +825,16 @@ public abstract class AbstractInstall extends ControlCommand {
         try {
             fis = new FileInputStream(new File("bin/rhq-storage.properties"));
             properties.load(fis);
+
+            // Ignore empty values
+            Iterator<Map.Entry<Object, Object>> iterator = properties.entrySet().iterator();
+            while(iterator.hasNext()) {
+                Map.Entry<Object, Object> entry = iterator.next();
+                String value = (String) entry.getValue();
+                if(value == null || value.length() < 1) {
+                    iterator.remove();
+                }
+            }
         } finally {
             if (null != fis) {
                 fis.close();

@@ -109,7 +109,7 @@ final class CliExecutor {
         commands = commands.replace('\n', ',');
         String user = disconnected ? null : "--user=" + serverPluginConfig.getUser();
         String password = disconnected ? null : "--password=" + serverPluginConfig.getPassword();
-        String controller = disconnected ? null : "--controller" + serverPluginConfig.getNativeHost() + ":"
+        String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
             + serverPluginConfig.getNativePort();
 
         return execute(new File("bin", serverMode.getCliScriptFileName()), connect, commands, user, password,
@@ -134,7 +134,7 @@ final class CliExecutor {
         String file = "--file=" + script.getAbsolutePath();
         String user = disconnected ? null : "--user=" + serverPluginConfig.getUser();
         String password = disconnected ? null : "--password=" + serverPluginConfig.getPassword();
-        String controller = disconnected ? null : "--controller" + serverPluginConfig.getNativeHost() + ":"
+        String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
             + serverPluginConfig.getNativePort();
 
         return execute(new File("bin", serverMode.getCliScriptFileName()), connect, file, user, password, controller);

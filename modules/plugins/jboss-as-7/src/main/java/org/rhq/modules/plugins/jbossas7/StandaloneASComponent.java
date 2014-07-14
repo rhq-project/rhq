@@ -684,7 +684,7 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         }
 
         ProcessExecutionResults results = CliExecutor.onServer(context.getPluginConfiguration(), getMode(),
-            context.getSystemInformation()).executeCliCommand(command.toString());
+            context.getSystemInformation()).disconnected(true).executeCliCommand(command.toString());
 
         if (results.getError() != null || results.getExitCode() == null || results.getExitCode() != 0) {
             String message = "Applying the patch failed ";

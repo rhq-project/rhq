@@ -399,23 +399,7 @@ public class StorageInstaller {
                 }
             }
 
-            installerInfo.jmxPort = getPort(cmdLine, StorageProperty.JMX_PORT.property(), defaultJmxPort);
-            if (isPortBound(installerInfo.hostname, installerInfo.jmxPort, "jmx-port")) {
-                throw new StorageInstallerException("The jmx-port (" + installerInfo.jmxPort + ") is already in use. "
-                    + "Installation cannot proceed.", STATUS_JMX_PORT_CONFLICT);
-            }
-
-            installerInfo.cqlPort = getPort(cmdLine, StorageProperty.CQL_PORT.property(), defaultCqlPort);
-            if (isPortBound(installerInfo.hostname, installerInfo.cqlPort, StorageProperty.CQL_PORT.property())) {
-                throw new StorageInstallerException("The cql-port (" + installerInfo.cqlPort + ") is already in use. "
-                    + "Installation cannot proceed.", STATUS_CQL_PORT_CONFLICT);
-            }
-
-            installerInfo.gossipPort = getPort(cmdLine, StorageProperty.GOSSIP_PORT.property(), defaultGossipPort);
-            if (isPortBound(installerInfo.hostname, installerInfo.gossipPort, StorageProperty.GOSSIP_PORT.property())) {
-                throw new StorageInstallerException("The gossip-port (" + installerInfo.gossipPort
-                    + ") is already in use. " + "Installation cannot proceed.", STATUS_GOSSIP_PORT_CONFLICT);
-            }
+            verifyPortStatus(cmdLine, installerInfo);
 
             deploymentOptions.setCommitLogDir(commitlogDir);
             // TODO add support for specifying multiple dirs
@@ -482,6 +466,17 @@ public class StorageInstaller {
             throw new StorageInstallerException("The installation cannot proceed. An error occurred during storage "
                 + "node deployment.", e, STATUS_DEPLOYMENT_ERROR);
         }
+    }
+
+    private void verifyPortStatus(CommandLine cmdLine, InstallerInfo installerInfo) throws StorageInstallerException {
+        installerInfo.jmxPort = getPort(cmdLine, StorageProperty.JMX_PORT.property(), defaultJmxPort);
+        isPortBound(installerInfo.hostname, installerInfo.jmxPort, StorageProperty.JMX_PORT.property(), STATUS_JMX_PORT_CONFLICT);
+
+        installerInfo.cqlPort = getPort(cmdLine, StorageProperty.CQL_PORT.property(), defaultCqlPort);
+        isPortBound(installerInfo.hostname, installerInfo.cqlPort, StorageProperty.CQL_PORT.property(), STATUS_CQL_PORT_CONFLICT);
+
+        installerInfo.gossipPort = getPort(cmdLine, StorageProperty.GOSSIP_PORT.property(), defaultGossipPort);
+        isPortBound(installerInfo.hostname, installerInfo.gossipPort, StorageProperty.GOSSIP_PORT.property(), STATUS_GOSSIP_PORT_CONFLICT);
     }
 
     /**
@@ -655,19 +650,18 @@ public class StorageInstaller {
         }
     }
 
-    private boolean isPortBound(String address, int port, String portName) {
+    private void isPortBound(String address, int port, String portName, int potentialErrorCode) throws StorageInstallerException {
         ServerSocket serverSocket = null;
         try {
             serverSocket = new ServerSocket();
             serverSocket.bind(new InetSocketAddress(address, port));
-            return false;
         } catch (BindException e) {
-            return true;
+            throw new StorageInstallerException("The " + portName + " (" + address + ":" + port + ") is already in use. "
+                    + "Installation cannot proceed.", potentialErrorCode);
         } catch (IOException e) {
             // We only log a warning here and let the installation proceed in case the
             // exception is something that can be ignored.
             log.warn("An unexpected error occurred while checking the " + portName + " port", e);
-            return false;
         } finally {
             if (serverSocket != null) {
                 try {

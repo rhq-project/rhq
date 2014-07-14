@@ -221,9 +221,9 @@
 
     <server name="Cassandra Server JVM"
             sourcePlugin="JMX" sourceType="JMX Server"
-            discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
+            discovery="JvmServerDiscoveryComponent"
             class="org.rhq.plugins.jmx.EmbeddedJMXServerComponent"
-            description="The JVM of the Cassandra node"
+            description="The JVM of the Storage node"
             singleton="true">
 
       <plugin-configuration>

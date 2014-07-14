@@ -145,6 +145,8 @@ public class Start extends ControlCommand {
         env.put("JAVA_HOME", javaHome);
 
         if (isWindows()) {
+            // Force CASSANDRA_HOME to prevent starting wrong instance of Cassandra (BZ 1069855)
+            env.put("CASSANDRA_HOME", getStorageBasedir().getAbsolutePath());
             commandLine = getCommandLine("rhq-storage", "start");
             rValue = ExecutorAssist.execute(getBinDir(), commandLine, env);
             if(rValue != RHQControl.EXIT_CODE_OK) {

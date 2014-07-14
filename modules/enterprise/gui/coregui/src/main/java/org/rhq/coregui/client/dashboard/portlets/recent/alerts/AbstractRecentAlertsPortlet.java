@@ -12,9 +12,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 package org.rhq.coregui.client.dashboard.portlets.recent.alerts;
 
@@ -40,6 +40,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertFilter;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
@@ -150,7 +151,7 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     public Canvas getHelpCanvas() {
         return new HTMLFlow(MSG.view_portlet_help_recentAlerts());
     }
-    
+
     @Override
     protected void configureTable() {
         super.configureTable();
@@ -210,7 +211,10 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
 
-        filterForm.setItems(alertNameFilter, alertPrioritySelector, resultCountSelector);
+        // "Filter acknowledged", "Filter recovery alerts", "Filter recovered" - drop down
+        final SelectItem filterSelector = PortletConfigurationEditorComponent.getAlertFilterEditor(portletConfig);
+
+        filterForm.setItems(alertNameFilter, alertPrioritySelector, resultCountSelector, filterSelector);
 
         //submit handler
         customSettingsForm.addSubmitValuesHandler(new SubmitValuesHandler() {
@@ -241,6 +245,14 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
 
                 // time range settings
                 saveMeasurementRangeEditorSettings(measurementRangeEditor, portletConfig);
+
+                // filter settings
+                if(filterSelector.getValue() == null) {
+                    selectedValue = Constant.ALERT_FILTER_DEFAULT;
+                } else {
+                    selectedValue = filterSelector.getValue().toString();
+                }
+                portletConfig.put(new PropertySimple(Constant.ALERT_FILTER, selectedValue));
 
                 // persist and reload portlet
                 storedPortlet.setConfiguration(portletConfig);
@@ -446,12 +458,26 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
                     }
                 }
             }
+            String filters = this.configuration.getSimpleValue(Constant.ALERT_FILTER, Constant.ALERT_FILTER_DEFAULT);
+            if(filters != null && filters.length() > 0) {
+                String[] filterArray = filters.trim().split(",");
+                for(String filter : filterArray) {
+                    if(filter.equals(AlertFilter.ACKNOWLEDGED_STATUS.name())) {
+                        criteria.addFilterUnacknowledgedOnly(true);
+                    } else if(filter.equals(AlertFilter.RECOVERY_TYPE.name())) {
+                        criteria.addFilterRecoveryIds(Integer.valueOf(0)); // Filter all alerts with recoveryId = 0 (
+                    } else if(filter.equals(AlertFilter.RECOVERED_STATUS.name())) {
+                        criteria.addFilterRecovered(true);
+                    }
+                }
+            }
 
             // add any context related filters
             switch (getEntityContext().type) {
             case Resource:
                 criteria.addFilterResourceIds(getEntityContext().getResourceId());
                 break;
+
             case ResourceGroup:
                 criteria.addFilterResourceGroupIds(getEntityContext().getGroupId());
                 break;
@@ -459,6 +485,7 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
                 // no default
                 break;
             }
+
             criteria.fetchAlertDefinition(true);
             criteria.fetchRecoveryAlertDefinition(true);
             criteria.fetchConditionLogs(true);

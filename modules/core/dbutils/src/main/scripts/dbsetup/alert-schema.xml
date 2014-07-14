@@ -80,6 +80,7 @@
         <column name="WILL_RECOVER" required="true" default="false" type="BOOLEAN"/>
         <column name="ACK_TIME" required="false" type="LONG"/>
         <column name="ACK_SUBJECT" required="false" size="100" type="VARCHAR2"/>
+        <column name="RECOVERY_TIME" required="false" type="LONG" />
         <index name="RHQ_ALERT_IDX_TIME" unique="false">
             <field ref="CTIME"/>
         </index>

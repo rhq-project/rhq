@@ -47,6 +47,7 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertFilter;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.common.EntityContext;
@@ -83,7 +84,9 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     public static final String PRIORITY_ICON_LOW = ImageManager.getAlertIcon(AlertPriority.LOW);
 
     public static final String FILTER_PRIORITIES = "priorities";
+    public static final String FILTER_STATUS = "status";
     public static final String FILTER_RESOURCE_IDS = "resourceIds";
+    public static final String FILTER_NAME = "nameF";
 
     private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
@@ -207,6 +210,38 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         });
         fields.add(statusField);
 
+        ListGridField recoveredField = new ListGridField("recovered", MSG.common_title_recovered());
+        recoveredField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                Long recovered = listGridRecord.getAttributeAsLong("recovered");
+                if(recovered.longValue() > 0) {
+                    Img checkedImg = new Img(ImageManager.getAlertStatusCheckedIcon(),80,16);
+                    checkedImg.setImageType(ImageStyle.CENTER);
+                    return checkedImg.getInnerHTML();
+                } else {
+                    return "&nbsp;";
+                }
+            }
+        });
+        recoveredField.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object o, ListGridRecord listGridRecord, int i, int i2) {
+                Long recovered = listGridRecord.getAttributeAsLong("recovered");
+                if(recovered.longValue() > 0) {
+                    Date recoveredTime = listGridRecord.getAttributeAsDate("recoveredTime");
+                    String recoveredTimeString = TimestampCellFormatter.format(recoveredTime,
+                            TimestampCellFormatter.DATE_TIME_FORMAT_FULL);
+                    return new StringBuilder()
+                            .append("<p style='width:500px'>")
+                            .append(MSG.view_alerts_field_recovered_status_hover(recoveredTimeString))
+                            .append("</p>").toString();
+                }
+                return "";
+            }
+        });
+        recoveredField.setShowHover(true);
+        fields.add(recoveredField);
+
         if (this.entityContext.type != EntityContext.Type.Resource) {
             ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
             resourceNameField.setCellFormatter(new CellFormatter() {
@@ -235,6 +270,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             conditionLogField.setWidth("25%");
             priorityField.setWidth(50);
             statusField.setWidth(80);
+            recoveredField.setWidth(80);
             resourceNameField.setWidth("20%");
         } else {
             ctimeField.setWidth(200);
@@ -243,6 +279,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             conditionLogField.setWidth("35%");
             priorityField.setWidth(50);
             statusField.setWidth("25%");
+            recoveredField.setWidth(80);
         }
 
         return fields;
@@ -371,6 +408,25 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         criteria.fetchConditionLogs(true);
 //        criteria.fetchGroupAlertDefinition(true);
 
+        AlertFilter[] alertFilters = getArrayFilter(request, FILTER_STATUS, AlertFilter.class);
+        if(alertFilters != null && alertFilters.length > 0) {
+            // This feels duplicate from AlertsPortletDataSource..
+            for(AlertFilter filter : alertFilters) {
+                if(filter.equals(AlertFilter.ACKNOWLEDGED_STATUS)) {
+                    criteria.addFilterUnacknowledgedOnly(true);
+                } else if(filter.equals(AlertFilter.RECOVERED_STATUS)) {
+                    criteria.addFilterRecovered(true);
+                } else if(filter.equals(AlertFilter.RECOVERY_TYPE)) {
+                    criteria.addFilterRecoveryIds(Integer.valueOf(0)); // Filter all alerts with recoveryId = 0
+                }
+            }
+        }
+
+        String nameFilter = getFilter(request, FILTER_NAME, String.class);
+        if(nameFilter != null && nameFilter.length() > 0) {
+            criteria.addFilterName(nameFilter);
+        }
+
         return criteria;
     }
 
@@ -406,6 +462,10 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             record.setAttribute("acknowledgeTime", new Date(from.getAcknowledgeTime().longValue()));
         }
         record.setAttribute("acknowledgingSubject", from.getAcknowledgingSubject());
+        record.setAttribute("recovered", from.getRecoveryTime());
+        if(from.getRecoveryTime() != null && from.getRecoveryTime().longValue() > 0) {
+            record.setAttribute("recoveredTime", new Date(from.getRecoveryTime().longValue()));
+        }
 
         AlertDefinition alertDefinition = from.getAlertDefinition();
 

@@ -48,6 +48,7 @@ import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.alert.AlertFilter;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
 import org.rhq.core.domain.cloud.PartitionEventType;
@@ -611,6 +612,8 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
             return (S[]) new Server.OperationMode[size];
         } else if (genericEnumType == StorageNode.OperationMode.class) {
             return (S[]) new StorageNode.OperationMode[size];
+        } else if (genericEnumType == AlertFilter.class) {
+            return (S[]) new AlertFilter[size];
         } else {
             throw new IllegalArgumentException(MSG.dataSource_rpc_error_unsupportedEnumType(genericEnumType.getName()));
         }

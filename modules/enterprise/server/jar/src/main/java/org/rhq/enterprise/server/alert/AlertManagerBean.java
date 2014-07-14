@@ -1187,6 +1187,20 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return builder.toString();
     }
 
+    private int markAlertsRecovered(Integer alertDefinitionId) {
+        if (log.isDebugEnabled()) {
+            log.debug("Trying to mark alertDefinitionId " + alertDefinitionId + " recovered");
+        }
+        Query markRecovered = entityManager.createNamedQuery(Alert.QUERY_MARK_RECOVERED_BY_DEFINITION_ID);
+        markRecovered.setParameter("recoveryTime", System.currentTimeMillis());
+        markRecovered.setParameter("alertDefinitionId", alertDefinitionId);
+        int recoveredAlerts = markRecovered.executeUpdate();
+        if (log.isDebugEnabled()) {
+            log.debug("Recovered " + recoveredAlerts + " with alertDefinitionId " + alertDefinitionId);
+        }
+        return recoveredAlerts;
+    }
+   
     private void processRecovery(AlertDefinition firedDefinition) {
         Subject overlord = subjectManager.getOverlord();
         Integer recoveryDefinitionId = firedDefinition.getRecoveryId();
@@ -1213,6 +1227,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                  *   and also avoids the issue in BZ 1126853.
                  */
                 alertDefinitionManager.enableResourceAlertDefinitions(overlord, new int[] { recoveryDefinitionId });
+                markAlertsRecovered(recoveryDefinitionId);
             }
 
             /*

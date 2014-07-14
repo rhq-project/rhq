@@ -25,12 +25,14 @@ import java.util.List;
 import java.util.Map;
 
 import com.smartgwt.client.types.MultipleAppearance;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.form.fields.PickerIcon;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
 
+import org.rhq.core.domain.alert.AlertFilter;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -55,6 +57,8 @@ public class PortletConfigurationEditorComponent {
     public interface Constant {
         String ALERT_PRIORITY = "ALERT_PRIORITY";
         String ALERT_PRIORITY_DEFAULT = ""; // no filtering
+        String ALERT_FILTER = "ALERT_FILTER";
+        String ALERT_FILTER_DEFAULT = ""; // no filtering
         String ALERT_NAME = "ALERT_NAME";
         String EVENT_SEVERITY = "EVENT_SEVERITY";
         String EVENT_SEVERITY_DEFAULT = ""; // no filtering
@@ -86,6 +90,8 @@ public class PortletConfigurationEditorComponent {
     public static Map<String, String> CONFIG_PROPERTY_INITIALIZATION = new HashMap<String, String>();
     static {// Key, Default value
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.ALERT_PRIORITY, Constant.ALERT_PRIORITY_DEFAULT);
+        // Do not filter anything as default
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.ALERT_FILTER, Constant.ALERT_FILTER_DEFAULT);
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.ALERT_NAME, "");
         
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.EVENT_SEVERITY, Constant.EVENT_SEVERITY_DEFAULT);
@@ -242,6 +248,31 @@ public class PortletConfigurationEditorComponent {
         }
 
         return priorityFilter;
+    }
+
+    /**
+     * Multiple filter options, acknowledged, recovery alert, recovered
+
+     * @return Populated selectItem instance
+     */
+    public static SelectItem getAlertFilterEditor(Configuration portletConfig) {
+        SelectItem alertFilter = new SelectItem(Constant.ALERT_FILTER, MSG.view_alerts_table_filter_options());
+        alertFilter.setWidth(325);
+        alertFilter.setWrapTitle(false);
+        alertFilter.setMultiple(true);
+        alertFilter.setMultipleAppearance(MultipleAppearance.PICKLIST);
+
+        LinkedHashMap<String, String> filters = new LinkedHashMap<String, String>(3);
+        filters.put(AlertFilter.ACKNOWLEDGED_STATUS.name(), MSG.common_alert_filter_acknowledged_status());
+        filters.put(AlertFilter.RECOVERED_STATUS.name(), MSG.common_alert_filter_recovered_status());
+        filters.put(AlertFilter.RECOVERY_TYPE.name(), MSG.common_alert_filter_recovery_type());
+        alertFilter.setValueMap(filters);
+
+        // Populate
+        String currentValue = portletConfig.getSimpleValue(Constant.ALERT_FILTER, Constant.ALERT_FILTER_DEFAULT);
+        alertFilter.setValues(currentValue);
+
+        return alertFilter;
     }
     
     /* Multiple select combobox for event severities to display on dashboard

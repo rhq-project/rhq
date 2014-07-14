@@ -32,6 +32,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.smartgwt.client.util.DateUtil;
 
+import org.rhq.core.domain.alert.AlertFilter;
 import org.rhq.coregui.client.util.Log;
 /**
  * Exporter for building urls to reports (csv).
@@ -55,6 +56,8 @@ public class ReportExporter {
      * For recent Alerts.
      */
     String[] alertPriorityFilters;
+    String[] alertFilters;
+    String alertNameFilter = null;
     /**
      * For Recent Operations.
      */
@@ -102,11 +105,13 @@ public class ReportExporter {
         return newExporter;
     }
 
-    public static ReportExporter createExporterForRecentAlerts(String reportUrl, String[] alertPriorityList, Integer startDateOffset, Integer endDateOffset) {
+    public static ReportExporter createExporterForRecentAlerts(String reportUrl, String[] alertPriorityList, String[] alertFilterList, Integer startDateOffset, Integer endDateOffset, String nameFilter) {
         ReportExporter newExportDialog = new ReportExporter(reportUrl);
         newExportDialog.setAlertPriorityFilters(alertPriorityList);
         newExportDialog.setStartDate(addDateOffsetToNow(startDateOffset));
         newExportDialog.setEndDate(addDateOffsetToNow(endDateOffset));
+        newExportDialog.setAlertFilters(alertFilterList);
+        newExportDialog.setAlertNameFilter(nameFilter);
         return newExportDialog;
     }
 
@@ -145,6 +150,14 @@ public class ReportExporter {
         this.alertPriorityFilters = alertPriorityFilters;
     }
 
+    public void setAlertFilters(String[] alertFilters) {
+        this.alertFilters = alertFilters;
+    }
+
+    public void setAlertNameFilter(String alertNameFilter) {
+        this.alertNameFilter = alertNameFilter;
+    }
+
     public void setOperationRequestStatusList(String[] operationRequestStatuses) {
         this.operationRequestStatuses = operationRequestStatuses;
     }
@@ -178,13 +191,29 @@ public class ReportExporter {
             addQueryParameter("status", operationRequestStatusBuffer.toString().substring(0,operationRequestStatusBuffer.toString().length() -1));
         }
 
-        if(!isEmpty(alertPriorityFilters)){
+        if (!isEmpty(alertPriorityFilters)) {
             StringBuilder alertsPriorityBuffer = new StringBuilder();
             for (String alertPriority : alertPriorityFilters) {
                 alertsPriorityBuffer.append(alertPriority);
                 alertsPriorityBuffer.append(",");
             }
-            addQueryParameter("alertPriority", alertsPriorityBuffer.toString().substring(0,alertsPriorityBuffer.toString().length() -1));
+            addQueryParameter("alertPriority", alertsPriorityBuffer.toString().substring(0, alertsPriorityBuffer.toString().length() - 1));
+        }
+
+        if (!isEmpty(alertFilters)) {
+            for (String filter : alertFilters) {
+                if (filter.equals(AlertFilter.ACKNOWLEDGED_STATUS.name())) {
+                    addQueryParameter("unacknowledgedOnly", "true");
+                } else if (filter.equals(AlertFilter.RECOVERED_STATUS.name())) {
+                    addQueryParameter("filter_recovered", "true");
+                } else if (filter.equals(AlertFilter.RECOVERY_TYPE.name())) {
+                    addQueryParameter("filter_recoverytypes", "true");
+                }
+            }
+        }
+
+        if(alertNameFilter != null && alertNameFilter.length() > 0) {
+            addQueryParameter("filter_name", alertNameFilter);
         }
 
         // Drift Related

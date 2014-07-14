@@ -104,6 +104,9 @@ public class AlertHandlerBean extends AbstractRestBean {
         @ApiParam(value = "Id of a resource to limit search for") @QueryParam("resourceId") Integer resourceId,
         @ApiParam(value = "If of an alert definition to search for") @QueryParam("definitionId") Integer definitionId,
         @ApiParam(value = "Should only unacknowledged alerts be sent") @QueryParam("unacknowledgedOnly") @DefaultValue("false") boolean unacknowledgedOnly,
+        @ApiParam(value = "Should not display any recovered alerts") @QueryParam("filter_recovered") @DefaultValue("false") boolean noRecovered,
+        @ApiParam(value = "Should not display any recovery alerts") @QueryParam("filter_recoverytypes") @DefaultValue("false") boolean noRecoveryType,
+        @ApiParam(value = "Display only alerts matching this name filter") @QueryParam("filter_name") @DefaultValue("") String name,
         @Context UriInfo uriInfo, @Context HttpHeaders headers) {
 
         if (resourceId!=null && definitionId!=null) {
@@ -143,9 +146,20 @@ public class AlertHandlerBean extends AbstractRestBean {
             criteria.addFilterPriorities(alertPriority);
         }
 
+        if(name != null && name.length() > 0) {
+            criteria.addFilterName(name);
+        }
+
         if (unacknowledgedOnly) {
             criteria.addFilterUnacknowledgedOnly(Boolean.TRUE);
         }
+
+        criteria.addFilterRecovered(noRecovered);
+
+        if(noRecoveryType) {
+            criteria.addFilterRecoveryIds(Integer.valueOf(0));
+        }
+
         criteria.addSortCtime(PageOrdering.DESC);
 
         PageList<Alert> alerts = alertManager.findAlertsByCriteria(caller,criteria);
@@ -388,6 +402,7 @@ public class AlertHandlerBean extends AbstractRestBean {
         }
         ret.setAlertTime(al.getCtime());
         ret.setDescription(alertManager.prettyPrintAlertConditions(al,false));
+        ret.setRecoveryTime(al.getRecoveryTime());
 
         Resource r = fetchResource(alertDefinition.getResource().getId());
         ResourceWithType rwt;

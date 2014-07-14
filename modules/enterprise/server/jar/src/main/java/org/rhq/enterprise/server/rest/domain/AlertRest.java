@@ -42,6 +42,7 @@ public class AlertRest {
     String ackBy;
     long ackTime;
     long alertTime;
+    long recoveryTime;
     String description;
     List<Link> links = new ArrayList<Link>();
 
@@ -111,6 +112,15 @@ public class AlertRest {
 
     public void setAlertTime(long alertTime) {
         this.alertTime = alertTime;
+    }
+
+    @ApiProperty("Timestamp when the alert has recovered")
+    public long getRecoveryTime() {
+        return recoveryTime;
+    }
+
+    public void setRecoveryTime(long recoveryTime) {
+        this.recoveryTime = recoveryTime;
     }
 
     @ApiProperty("Description of the alert")

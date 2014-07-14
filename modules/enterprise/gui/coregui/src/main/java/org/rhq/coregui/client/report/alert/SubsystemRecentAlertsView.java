@@ -30,7 +30,7 @@ public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
 
                 ReportExporter exporter = ReportExporter.createExporterForRecentAlerts("recentAlerts",
-                    priorityFilter.getValues(), startDateFilter.getValueAsDays(), endDateFilter.getValueAsDays());
+                    priorityFilter.getValues(), alertFilter.getValues(), startDateFilter.getValueAsDays(), endDateFilter.getValueAsDays(), alertNameFilter.getValueAsString());
                 exporter.export();
                 refreshTableInfo();
             }

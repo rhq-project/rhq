@@ -41,7 +41,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings({ "unused", "FieldCanBeLocal" })
 public class AlertCriteria extends Criteria {
-    private static final long serialVersionUID = 3L;
+    private static final long serialVersionUID = 4L;
 
     // sort fields from the Alert itself
     public static final String SORT_FIELD_CTIME = "ctime";
@@ -67,6 +67,8 @@ public class AlertCriteria extends Criteria {
     private List<Integer> filterGroupAlertDefinitionIds; // requires overrides
     private String filterAcknowledgingSubject;
     private NonBindingOverrideFilter filterUnacknowledgedOnly; // requires overrides
+    private NonBindingOverrideFilter filterRecovered; // requires overrides, filters recovered
+    private List<Integer> filterRecoveryIds; // requires overrides
 
     private boolean fetchAlertDefinition;
     private boolean fetchConditionLogs;
@@ -99,6 +101,8 @@ public class AlertCriteria extends Criteria {
         filterOverrides.put("alertDefinitionIds", "alertDefinition.id IN ( ? )");
         filterOverrides.put("groupAlertDefinitionIds", "alertDefinition.groupAlertDefinition.id IN ( ? )");
         filterOverrides.put("unacknowledgedOnly", "acknowledgingSubject IS NULL");
+        filterOverrides.put("recoveryIds", "recoveryId IN ( ? )");
+        filterOverrides.put("recovered", "recoveryTime < 0");
 
         sortOverrides.put(SORT_FIELD_NAME, "alertDefinition.name");
         sortOverrides.put(SORT_FIELD_PRIORITY, "alertDefinition.priority");
@@ -191,6 +195,14 @@ public class AlertCriteria extends Criteria {
     public void addFilterUnacknowledgedOnly(Boolean filterUnacknowledgedOnly) {
         this.filterUnacknowledgedOnly = (Boolean.TRUE.equals(filterUnacknowledgedOnly) ? NonBindingOverrideFilter.ON
             : NonBindingOverrideFilter.OFF);
+    }
+
+    public void addFilterRecovered(boolean filterRecovered) {
+        this.filterRecovered = (filterRecovered ? NonBindingOverrideFilter.ON : NonBindingOverrideFilter.OFF);
+    }
+
+    public void addFilterRecoveryIds(Integer... filterRecoveryIds) {
+        this.filterRecoveryIds = CriteriaUtils.getListIgnoringNulls(filterRecoveryIds);
     }
 
     public void fetchAlertDefinition(boolean fetchAlertDefinition) {

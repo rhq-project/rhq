@@ -1,8 +1,7 @@
 /*
  * RHQ Management Platform
- * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.coregui.client.alert;
 
@@ -33,12 +32,17 @@ import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.fields.PickerIcon;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
+import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.alert.AlertFilter;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
@@ -82,8 +86,10 @@ public class AlertHistoryView extends TableSection<AlertDataSource>  implements 
     private static final Criteria INITIAL_CRITERIA = new Criteria();
 
     protected SelectItem priorityFilter;
+    protected SelectItem alertFilter;
     protected DateFilterItem startDateFilter;
     protected DateFilterItem endDateFilter;
+    protected TextItem alertNameFilter;
 
     private EntityContext context;
     private boolean hasWriteAccess;
@@ -151,14 +157,33 @@ public class AlertHistoryView extends TableSection<AlertDataSource>  implements 
         priorityFilter = new EnumSelectItem(AlertDataSource.FILTER_PRIORITIES, MSG.view_alerts_table_filter_priority(),
             AlertPriority.class, priorities, priorityIcons);
 
+        LinkedHashMap<String, String> filters = new LinkedHashMap<String, String>(3);
+        filters.put(AlertFilter.ACKNOWLEDGED_STATUS.name(), MSG.common_alert_filter_acknowledged_status());
+        filters.put(AlertFilter.RECOVERED_STATUS.name(), MSG.common_alert_filter_recovered_status());
+        filters.put(AlertFilter.RECOVERY_TYPE.name(), MSG.common_alert_filter_recovery_type());
+        alertFilter = new EnumSelectItem(AlertDataSource.FILTER_STATUS, MSG.view_alerts_table_filter_options(), AlertFilter.class, filters, null);
+        // The default is to select everything in EnumSelectItem helper class. Not so for filters.
+        alertFilter.setValues(null);
+
         startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date());
         endDateFilter = new DateFilterItem(DateFilterItem.END_DATE_FILTER, MSG.filter_to_date());
+
+        alertNameFilter = new TextItem(AlertDataSource.FILTER_NAME, MSG.common_title_name());
+        alertNameFilter.setWrapTitle(false);
+        alertNameFilter.setValue("");
+        PickerIcon refreshFilter = new PickerIcon(PickerIcon.CLEAR, new FormItemClickHandler() {
+            public void onFormItemClick(FormItemIconClickEvent event) {
+                alertNameFilter.clearValue();
+            }
+        });
+        alertNameFilter.setIcons(refreshFilter);
+        alertNameFilter.setIconPrompt("Resets the alert name filter.");
 
         SpacerItem spacerItem = new SpacerItem();
         spacerItem.setColSpan(2);
 
         if (isShowFilterForm()) {
-            setFilterFormItems(priorityFilter, startDateFilter, spacerItem, endDateFilter);
+            setFilterFormItems(priorityFilter, startDateFilter, alertFilter, endDateFilter, alertNameFilter);
         }
     }
 

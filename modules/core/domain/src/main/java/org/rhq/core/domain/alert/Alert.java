@@ -211,7 +211,18 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "                       JOIN aa.conditionLogs aacl " //
         + "                       JOIN aacl.condition ac " //
         + "                      WHERE ac.category = :category ) " //
-        + "           OR :category IS NULL) ") })
+        + "           OR :category IS NULL) "),
+    @NamedQuery(name = Alert.QUERY_MARK_RECOVERED_BY_DEFINITION_ID, query = "" //
+        + "UPDATE Alert AS alert " //
+        + "   SET alert.recoveryTime = :recoveryTime " //
+        + "WHERE alert.id IN ( SELECT innerA.id " //
+        + "                      FROM AlertDefinition AS ad " //
+        + "                      JOIN ad.alerts AS innerA " //
+        + "                    WHERE ad.id = :alertDefinitionId )"
+        + "  AND alert.ctime < :recoveryTime " //
+        + "  AND alert.willRecover = true " //
+        + "  AND alert.recoveryTime < 0" // don't process again
+    )})
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ALERT_ID_SEQ", sequenceName = "RHQ_ALERT_ID_SEQ")
 @Table(name = "RHQ_ALERT")
 public class Alert implements Serializable {
@@ -237,6 +248,7 @@ public class Alert implements Serializable {
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_AUTOGROUP = "Alert.findByMeasDefIdAndAutoGroup";
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCE = "Alert.findByMeasDefIdAndResource";
     public static final String QUERY_GET_ALERT_COUNT_FOR_SCHEDULES = "Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES";
+    public static final String QUERY_MARK_RECOVERED_BY_DEFINITION_ID = "Alert.markRecoveredByDefinitionId";
 
     /**
      * @deprecated as of RHQ 4.13, no longer used
@@ -284,6 +296,9 @@ public class Alert implements Serializable {
 
     @Column(name = "WILL_RECOVER", nullable = false)
     private boolean willRecover;
+
+    @Column(name = "RECOVERY_TIME")
+    private Long recoveryTime = -1L;
 
     @Column(name = "ACK_TIME")
     private Long acknowledgeTime = -1L;
@@ -388,6 +403,14 @@ public class Alert implements Serializable {
                 "An alert definition can either be a recovery definition or a definition to-be-recovered, but not both.");
         }
         this.recoveryId = actOnTriggerId;
+    }
+
+    public Long getRecoveryTime() {
+        return recoveryTime;
+    }
+
+    public void setRecoveryTime(Long recoveryTime) {
+        this.recoveryTime = recoveryTime;
     }
 
     public AlertDefinition getRecoveryAlertDefinition() {

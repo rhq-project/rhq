@@ -225,7 +225,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         // deployments makes sense).
         if (deployment.isLive()) {
             IButton revertButton = new EnhancedIButton(MSG.view_bundle_revert(), ButtonColor.RED);
-            revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
+            //revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
             revertButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(com.smartgwt.client.widgets.events.ClickEvent event) {
                     new BundleRevertWizard(deployment.getDestination()).startWizard();
@@ -234,7 +234,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
             actionLayout.addMember(revertButton);
 
             IButton purgeButton = new EnhancedIButton(MSG.view_bundle_purge(), ButtonColor.RED);
-            purgeButton.setIcon("subsystems/bundle/BundleDestinationAction_Purge_16.png");
+            //purgeButton.setIcon("subsystems/bundle/BundleDestinationAction_Purge_16.png");
             purgeButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                     SC.ask(MSG.view_bundle_dest_purgeConfirm(), new BooleanCallback() {
@@ -275,7 +275,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         }
 
         IButton deleteButton = new EnhancedIButton(MSG.common_button_delete(), ButtonColor.RED);
-        deleteButton.setIcon("subsystems/bundle/BundleDeploymentAction_Delete_16.png");
+        //deleteButton.setIcon("subsystems/bundle/BundleDeploymentAction_Delete_16.png");
         deleteButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             @Override
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent event) {

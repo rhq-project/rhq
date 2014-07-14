@@ -219,7 +219,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         VLayout layout = new EnhancedVLayout(10);
 
         IButton deployButton = new EnhancedIButton(MSG.view_bundle_deploy(), ButtonColor.BLUE);
-        deployButton.setIcon(IconEnum.BUNDLE_DEPLOY.getIcon16x16Path());
+        //deployButton.setIcon(IconEnum.BUNDLE_DEPLOY.getIcon16x16Path());
         deployButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
 
@@ -248,7 +248,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         layout.addMember(deployButton);
 
         IButton deleteButton = new EnhancedIButton(MSG.common_button_delete(), ButtonColor.RED);
-        deleteButton.setIcon(IconEnum.BUNDLE_DELETE.getIcon16x16Path());
+        //deleteButton.setIcon(IconEnum.BUNDLE_DELETE.getIcon16x16Path());
         deleteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 SC.ask(MSG.view_bundle_deleteConfirm(), new BooleanCallback() {

@@ -163,7 +163,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         AvailabilityType availabilityType;
         try {
             readAttribute(getHostAddress(), "name");
-            availabilityType = UP;
+            availabilityType = AvailabilityType.UP;
         } 
         catch (ResultFailedException e) {
             log.warn("Domain host name seems to be changed, re-reading from  "+getServerPluginConfiguration().getHostConfigFile());
@@ -171,19 +171,19 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             log.info("Detected domain host name ["+getASHostName()+"]");
             try {
                 readAttribute(getHostAddress(), "name");
-                availabilityType = UP;
+                availabilityType = AvailabilityType.UP;
             } catch (Exception ex) {
                 if (log.isDebugEnabled()) {
                     log.debug(getResourceDescription() + ": exception while checking availability", e);
                 }
-                availabilityType = DOWN;
+                availabilityType = AvailabilityType.DOWN;
             }
         }
         catch (Exception e) {
             if (log.isDebugEnabled()) {
                 log.debug(getResourceDescription() + ": exception while checking availability", e);
             }
-            availabilityType = DOWN;
+            availabilityType = AvailabilityType.DOWN;
         }
 
         try {

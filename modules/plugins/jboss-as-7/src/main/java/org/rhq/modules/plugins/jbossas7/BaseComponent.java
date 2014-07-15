@@ -208,7 +208,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
             Result res = getASConnection().execute(op);
             if (!res.isSuccess()) {
-                getLog().warn("Getting metric [" + req.getName() + "] at [ " + address + "] failed: "
+                log.warn("Getting metric [" + req.getName() + "] at [ " + address + "] failed: "
                     + res.getFailureDescription());
                 return ReadMetricResult.RequestFailed;
             }
@@ -232,7 +232,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                         addMetric2Report(report, req, val, resolveExpression);
                     }
                 } catch (NumberFormatException e) {
-                    getLog().warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
+                    log.warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
                     return ReadMetricResult.ResolveFailed;
                 }
             } else if (req.getDataType() == DataType.TRAIT) {
@@ -241,8 +241,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                     ResolveExpression resolveExpressionOperation = new ResolveExpression(expression);
                     Result result = getASConnection().execute(resolveExpressionOperation);
                     if (!result.isSuccess()) {
-                        if (getLog().isWarnEnabled()) {
-                            getLog().warn("Skipping trait [" + req.getName()
+                        if (log.isWarnEnabled()) {
+                            log.warn("Skipping trait [" + req.getName()
                                 + "] in measurement report. Could not resolve expression [" + expression
                                 + "], failureDescription:" + result.getFailureDescription());
                             return ReadMetricResult.ResolveFailed;

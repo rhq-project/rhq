@@ -63,14 +63,12 @@ public class ColumnFamilyComponent extends ComplexConfigurationResourceComponent
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
+        String columnFamilyName = this.getResourceContext().getResourceKey();
         if (name.equals("repair")) {
-            String columnFamilyName = this.getResourceContext().getPluginConfiguration().getSimpleValue("name");
             return this.getParentKeyspace().repairKeyspace(columnFamilyName);
         } else if (name.equals("compact")) {
-            String columnFamilyName = this.getResourceContext().getPluginConfiguration().getSimpleValue("name");
             return this.getParentKeyspace().compactKeyspace(columnFamilyName);
         } else if (name.equals("takeSnapshot")) {
-            String columnFamilyName = this.getResourceContext().getResourceKey();
             return this.getParentKeyspace().takeSnapshot(parameters, columnFamilyName);
         } else if (name.equals("restoreSnapshot")){
             return this.restoreSnapshot(parameters);

@@ -91,7 +91,7 @@ public class PropertyObfuscationVault implements SecurityVault {
     public char[] retrieve(String blockType, String systemProperty, byte[] defaultValue) throws SecurityVaultException {
         try {
             boolean isRestricted = false;
-            if (RESTRICTED.equals(blockType)) {
+            if (RESTRICTED.equalsIgnoreCase(blockType)) {
                 isRestricted = true;
             }
 

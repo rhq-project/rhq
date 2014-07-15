@@ -55,6 +55,48 @@ public class ObfuscatedPreferencesTest {
         static final public String TEST_PROPERTY = "com.test.two";
     }
 
+    public void testPatternCaseSensitivity() throws Exception {
+        boolean actualIsRestricted = ObfuscatedPreferences.RestrictedFormat.isRestrictedFormat("restricted::asdfasd");
+        String actualValue = ObfuscatedPreferences.RestrictedFormat.retrieveValue("restricted::asdfasd");
+        Assert.assertEquals(actualIsRestricted, true);
+        Assert.assertEquals(actualValue, "asdfasd");
+
+        actualIsRestricted = ObfuscatedPreferences.RestrictedFormat.isRestrictedFormat("RESTRICTED::123asdf");
+        actualValue = ObfuscatedPreferences.RestrictedFormat.retrieveValue("RESTRICTED::123asdf");
+        Assert.assertEquals(actualIsRestricted, true);
+        Assert.assertEquals(actualValue, "123asdf");
+
+        actualIsRestricted = ObfuscatedPreferences.RestrictedFormat.isRestrictedFormat("ReSTRiCTED::456asd");
+        actualValue = ObfuscatedPreferences.RestrictedFormat.retrieveValue("RESTRICTED::456asd");
+        Assert.assertEquals(actualIsRestricted, true);
+        Assert.assertEquals(actualValue, "456asd");
+    }
+
+    public void testPatternMatching() throws Exception {
+        boolean actualIsRestricted = ObfuscatedPreferences.RestrictedFormat.isRestrictedFormat("restricteds::asdfasd");
+        Assert.assertEquals(actualIsRestricted, false);
+
+        actualIsRestricted = ObfuscatedPreferences.RestrictedFormat.isRestrictedFormat("RESTRICTED?::asdfasd");
+        Assert.assertEquals(actualIsRestricted, false);
+
+        actualIsRestricted = ObfuscatedPreferences.RestrictedFormat.isRestrictedFormat("aReSTRiCTED::asdfasd");
+        Assert.assertEquals(actualIsRestricted, false);
+
+        actualIsRestricted = ObfuscatedPreferences.RestrictedFormat.isRestrictedFormat("RESTRICTED::asdfasd");
+        Assert.assertEquals(actualIsRestricted, true);
+    }
+
+    public void testPatternMatchingValue() throws Exception {
+        String actualValue = ObfuscatedPreferences.RestrictedFormat.retrieveValue("restricted::asdfasd");
+        Assert.assertEquals(actualValue, "asdfasd");
+
+        actualValue = ObfuscatedPreferences.RestrictedFormat.retrieveValue("restricted:: ::asdfasd");
+        Assert.assertEquals(actualValue, " ");
+
+        actualValue = ObfuscatedPreferences.RestrictedFormat.retrieveValue("restricted:: asdfasd");
+        Assert.assertEquals(actualValue, " asdfasd");
+    }
+
     public void testSimpleNonObfuscatedPut() throws Exception {
         //setup mocks
         Preferences mockPreferences = mock(Preferences.class);

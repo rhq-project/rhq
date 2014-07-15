@@ -44,9 +44,6 @@ public class ObfuscatedPreferences extends Preferences {
     public static @interface Restricted {
     }
 
-    private static final Pattern RESTRICTED_PATTERN = Pattern.compile("RESTRICTED::.*");
-
-
     private Preferences actualPreferences;
 
     private Set<String> restrictedPreferences = new HashSet<String>();
@@ -317,6 +314,7 @@ public class ObfuscatedPreferences extends Preferences {
 
     public static class RestrictedFormat {
 
+        private static final Pattern RESTRICTED_PATTERN = Pattern.compile("RESTRICTED::.*", Pattern.CASE_INSENSITIVE);
         private static final String RESTRICTED_FORMAT = "RESTRICTED::%s";
 
         /**
@@ -336,6 +334,10 @@ public class ObfuscatedPreferences extends Preferences {
          * @return
          */
         public static String retrieveValue(String value) {
+            if (!isRestrictedFormat(value)) {
+                return null;
+            }
+
             StringTokenizer tokenizer = new StringTokenizer(value, "::");
 
             if (!tokenizer.hasMoreTokens()) {

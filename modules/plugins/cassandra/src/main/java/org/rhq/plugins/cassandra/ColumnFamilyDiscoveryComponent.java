@@ -55,6 +55,7 @@ public class ColumnFamilyDiscoveryComponent extends MBeanResourceDiscoveryCompon
                 }
 
                 columnFamilyMBean.setResourceKey(resourceKey);
+                columnFamilyMBean.getPluginConfiguration().setSimpleValue("name", resourceKey);
                 columnFamilyMBean.setResourceName(resourceKey);
 
                 selectedResources.add(columnFamilyMBean);

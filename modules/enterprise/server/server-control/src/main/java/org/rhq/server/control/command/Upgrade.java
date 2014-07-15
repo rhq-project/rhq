@@ -693,25 +693,30 @@ public class Upgrade extends AbstractInstall {
             // We need to now move the new, updated agent over to the new agent location.
             // renameTo() may fail if we are crossing file system boundaries, so try a true copy as a fallback.
             if (!agentBasedir.equals(oldAgentDir)) {
-                FileUtil.purge(agentBasedir, true); // clear the way for the new upgraded agent
-                if (!oldAgentDir.renameTo(agentBasedir)) {
-                    FileUtil.copyDirectory(oldAgentDir, agentBasedir);
+                // BZ 1118906 - we need to guard against the possibility that one or both of these are symlinks which aren't
+                // "equal" to each other but yet still point to the same location. If they point to the same location
+                // it is as if they are "equal" and we should do nothing.
+                if (!agentBasedir.getCanonicalPath().equals(oldAgentDir.getCanonicalPath())) {
+                    FileUtil.purge(agentBasedir, true); // clear the way for the new upgraded agent
+                    if (!oldAgentDir.renameTo(agentBasedir)) {
+                        FileUtil.copyDirectory(oldAgentDir, agentBasedir);
 
-                    // we need to retain the execute bits for the executable scripts and libraries
-                    FileVisitor visitor = new FileVisitor() {
-                        @Override
-                        public void visit(File file) {
-                            String filename = file.getName();
-                            if (filename.contains(".so") || filename.contains(".sl") || filename.contains(".dylib")) {
-                                file.setExecutable(true);
-                            } else if (filename.endsWith(".sh")) {
-                                file.setExecutable(true);
+                        // we need to retain the execute bits for the executable scripts and libraries
+                        FileVisitor visitor = new FileVisitor() {
+                            @Override
+                            public void visit(File file) {
+                                String filename = file.getName();
+                                if (filename.contains(".so") || filename.contains(".sl") || filename.contains(".dylib")) {
+                                    file.setExecutable(true);
+                                } else if (filename.endsWith(".sh")) {
+                                    file.setExecutable(true);
+                                }
+                                }
+                        };
+
+                        FileUtil.forEachFile(new File(agentBasedir, "bin"), visitor);
+                        FileUtil.forEachFile(new File(agentBasedir, "lib"), visitor);
                             }
-                        }
-                    };
-
-                    FileUtil.forEachFile(new File(agentBasedir, "bin"), visitor);
-                    FileUtil.forEachFile(new File(agentBasedir, "lib"), visitor);
                 }
             }
 

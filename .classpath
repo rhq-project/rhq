@@ -46,6 +46,9 @@
 	<classpathentry kind="src" path="modules/core/client-api/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/client-api/src/test/java"/>
 	<classpathentry kind="src" path="modules/core/client-api/target/generated-sources/xjc"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-install/2.1.4.1/byteman-install-2.1.4.1-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-submit/2.1.4.1/byteman-submit-2.1.4.1-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-2.1.4.1-sources.jar"/>
 	<classpathentry kind="src" path="modules/core/comm-api/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/gui/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/comm/src/main/java"/>
@@ -267,7 +270,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/faces/jsf-impl/1.2_14/jsf-impl-1.2_14.jar" sourcepath="/M2_REPO/javax/faces/jsf-impl/1.2_14/jsf-impl-1.2_14-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/el/el-api/1.0/el-api-1.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/sun/facelets/jsf-facelets/1.1.15.B1/jsf-facelets-1.1.15.B1.jar" sourcepath="/M2_REPO/com/sun/facelets/jsf-facelets/1.1.15.B1/jsf-facelets-1.1.15.B1-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/mc4j/org-mc4j-ems/1.3.5-rhq/org-mc4j-ems-1.3.5-rhq.jar" sourcepath="/M2_REPO/mc4j/org-mc4j-ems/1.3.5-rhq/org-mc4j-ems-1.3.5-rhq-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/mc4j/org-mc4j-ems/1.3.6-rhq/org-mc4j-ems-1.3.6-rhq.jar" sourcepath="/M2_REPO/mc4j/org-mc4j-ems/1.3.5-rhq/org-mc4j-ems-1.3.5-rhq-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/opensymphony/quartz/quartz/1.6.5/quartz-1.6.5.jar" sourcepath="/M2_REPO/org/opensymphony/quartz/quartz/1.6.5/quartz-1.6.5-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/mail/mail/1.4.4/mail-1.4.4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-fileupload/commons-fileupload/1.3.1/commons-fileupload-1.3.1.jar"/>
@@ -318,12 +321,12 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/common/hibernate-commons-annotations/4.0.2.Final/hibernate-commons-annotations-4.0.2.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-core/4.2.13.Final/hibernate-core-4.2.13.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-entitymanager/4.2.13.Final/hibernate-entitymanager-4.2.13.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-validator/4.2.0.Final/hibernate-validator-4.2.0.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/hibernate/hibernate-validator/4.3.1.Final-redhat-1/hibernate-validator-4.3.1.Final-redhat-1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/javax/persistence/hibernate-jpa-2.0-api/1.0.1.Final/hibernate-jpa-2.0-api-1.0.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/infinispan/infinispan-core/5.2.10.Final/infinispan-core-5.2.10.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/servlet/jboss-servlet-api_3.0_spec/1.0.2.Final/jboss-servlet-api_3.0_spec-1.0.2.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/msc/jboss-msc/1.0.2.GA/jboss-msc-1.0.2.GA.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jboss-dmr/1.1.1.Final/jboss-dmr-1.1.1.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/msc/jboss-msc/1.1.5.Final/jboss-msc-1.1.5.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/jboss-dmr/1.2.0.Final/jboss-dmr-1.2.0.Final.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/as/jboss-as-naming/7.4.0.Final-redhat-4/jboss-as-naming-7.4.0.Final-redhat-4.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-naming/7.4.0.Final-redhat-SNAPSHOT/jboss-as-naming-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/as/jboss-as-server/7.4.0.Final-redhat-4/jboss-as-server-7.4.0.Final-redhat-4.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-server/7.4.0.Final-redhat-SNAPSHOT/jboss-as-server-7.4.0.Final-redhat-SNAPSHOT-sources.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/as/jboss-as-ee/7.4.0.Final-redhat-4/jboss-as-ee-7.4.0.Final-redhat-4.jar"/>
@@ -353,22 +356,22 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/descriptors/shrinkwrap-descriptors-api-base/2.0.0-alpha-3/shrinkwrap-descriptors-api-base-2.0.0-alpha-3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api/2.0.0-alpha-7/shrinkwrap-resolver-api-2.0.0-alpha-7.jar" sourcepath="/M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api/2.0.0-alpha-7/shrinkwrap-resolver-api-2.0.0-alpha-7-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api-maven/2.0.0-alpha-7/shrinkwrap-resolver-api-maven-2.0.0-alpha-7.jar" sourcepath="/M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api-maven/2.0.0-alpha-7/shrinkwrap-resolver-api-maven-2.0.0-alpha-7-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/test/arquillian-test-spi/1.0.3.Final/arquillian-test-spi-1.0.3.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/test/arquillian-test-api/1.0.3.Final/arquillian-test-api-1.0.3.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/core/arquillian-core-spi/1.0.3.Final/arquillian-core-spi-1.0.3.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/core/arquillian-core-api/1.0.3.Final/arquillian-core-api-1.0.3.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-spi/1.0.3.Final/arquillian-container-spi-1.0.3.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-test-api/1.0.3.Final/arquillian-container-test-api-1.0.3.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/config/arquillian-config-api/1.0.3.Final/arquillian-config-api-1.0.3.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-test-impl-base/1.0.3.Final/arquillian-container-test-impl-base-1.0.3.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/testng/arquillian-testng-core/1.0.3.Final/arquillian-testng-core-1.0.3.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/arquillian/test/arquillian-test-spi/1.0.4.Final/arquillian-test-spi-1.0.4.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/arquillian/test/arquillian-test-api/1.0.4.Final/arquillian-test-api-1.0.4.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/arquillian/core/arquillian-core-spi/1.0.4.Final/arquillian-core-spi-1.0.4.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/arquillian/core/arquillian-core-api/1.0.4.Final/arquillian-core-api-1.0.4.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-spi/1.0.4.Final/arquillian-container-spi-1.0.4.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-test-api/1.0.4.Final/arquillian-container-test-api-1.0.4.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/arquillian/config/arquillian-config-api/1.0.4.Final/arquillian-config-api-1.0.4.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-test-impl-base/1.0.4.Final/arquillian-container-test-impl-base-1.0.4.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/arquillian/testng/arquillian-testng-core/1.0.4.Final/arquillian-testng-core-1.0.4.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.5.2/byteman-1.5.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/ejb3/jboss-ejb3-ext-api/2.1.0/jboss-ejb3-ext-api-2.1.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/ejb/jboss-ejb-api_3.1_spec/1.0.2.Final/jboss-ejb-api_3.1_spec-1.0.2.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/jms/jboss-jms-api_1.1_spec/1.0.0.Final/jboss-jms-api_1.1_spec-1.0.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/interceptor/jboss-interceptors-api_1.1_spec/1.0.1.Final/jboss-interceptors-api_1.1_spec-1.0.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/transaction/jboss-transaction-api_1.1_spec/1.0.1.Final/jboss-transaction-api_1.1_spec-1.0.1.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/remotingjmx/remoting-jmx/1.0.2.Final/remoting-jmx-1.0.2.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/remotingjmx/remoting-jmx/1.1.0.Final/remoting-jmx-1.1.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/enterprise/cdi-api/1.0-SP4/cdi-api-1.0-SP4.jar" sourcepath="M2_REPO/javax/enterprise/cdi-api/1.0-SP4/cdi-api-1.0-SP4-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/inject/javax.inject/1/javax.inject-1.jar" sourcepath="M2_REPO/javax/inject/javax.inject/1/javax.inject-1-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/mozilla/rhino/1.7R4/rhino-1.7R4.jar"/>
@@ -377,9 +380,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/wordnik/swagger-annotations_2.9.1/1.2.3/swagger-annotations_2.9.1-1.2.3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/yaml/snakeyaml/1.8/snakeyaml-1.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/joda-time/joda-time/2.1/joda-time-2.1.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-install/2.1.4.1/byteman-install-2.1.4.1-sources.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-submit/2.1.4.1/byteman-submit-2.1.4.1-sources.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-2.1.4.1-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/trove4j/trove4j/3.0.3/trove4j-3.0.3.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-all/1.2.12/cassandra-all-1.2.12.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/thrift/libthrift/0.7.0/libthrift-0.7.0.jar"/>

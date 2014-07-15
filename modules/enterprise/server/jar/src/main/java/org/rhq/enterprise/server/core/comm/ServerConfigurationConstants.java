@@ -49,6 +49,11 @@ public interface ServerConfigurationConstants {
     String PROPERTY_NAME_PREFIX = "rhq.server.";
 
     /**
+     * The prefix that all server configuration property names start with.
+     */
+    String COMMUNICATIONS_PROPERTY_NAME_PREFIX = "rhq.communications.";
+
+    /**
      * The configuration schema version.
      */
     String CONFIG_SCHEMA_VERSION = PROPERTY_NAME_PREFIX + "configuration-schema-version";
@@ -230,4 +235,22 @@ public interface ServerConfigurationConstants {
      * If the client sender server auth mode is not specified, this is the default.
      */
     boolean DEFAULT_CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE = false;
+
+    /**
+     * Communications security keystore key password
+    */
+    @Restricted
+    String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_KEY_PASSWORD = COMMUNICATIONS_PROPERTY_NAME_PREFIX + "connector.security.keystore.key-password";
+
+    /**
+     * Communications security keystore password
+     */
+    @Restricted
+    String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_PASSWORD = COMMUNICATIONS_PROPERTY_NAME_PREFIX + "connector.security.keystore.password";
+
+    /**
+     * Communications security truststore password
+     */
+    @Restricted
+    String COMMUNICATIONS_CONNECTOR_SECURITY_TRUSTSTORE_PASSWORD = COMMUNICATIONS_PROPERTY_NAME_PREFIX + "connector.security.truststore.password";
 }

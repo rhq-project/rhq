@@ -66,6 +66,7 @@ public class DateFilterItem extends DateItem {
         this.setUseTextField(true);
         this.setEnforceDate(true);
         this.setEndDate(new Date());
+        this.setCellStyle("dateFilter");
 
     }
 

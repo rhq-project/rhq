@@ -989,6 +989,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 }
 
 .EvenRow,
+.EvenRowDisabled,
 .EvenRowFocused {
     background-color: #f0f0f0;
 }

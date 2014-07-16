@@ -368,7 +368,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
       }
       if (on) {
         $wnd.loadQ.push(on);
-        $wnd.Pace.start();
+        $wnd.Pace.restart();
       } else {
         $wnd.loadQ.shift();
         if ($wnd.loadQ.length < 1) {

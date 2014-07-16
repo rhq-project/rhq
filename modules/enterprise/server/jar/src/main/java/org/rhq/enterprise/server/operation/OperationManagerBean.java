@@ -987,7 +987,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         // The history item may have been created already, so find it in the database and
         // set the new state from our input
-        if (history.getId() != 0) {
+        boolean isNewHistory = (0 == history.getId());
+        if (!isNewHistory) {
             OperationHistory existingHistoryItem = entityManager.find(OperationHistory.class, history.getId());
             if (null == existingHistoryItem) {
                 throw new IllegalArgumentException(
@@ -1032,8 +1033,24 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         if (history.getParameters() != null) {
             history.getParameters().getId(); // eagerly reload the parameters
         }
-        storageNodeOperationsHandler.handleOperationUpdateIfNecessary(history);
+
+        // we can even alert on In-Progress (an operation just being scheduled) so we need to check the
+        // condition manager
         notifyAlertConditionCacheManager("updateOperationHistory", history);
+
+        // if this is not the initial create (i.e schedule-time of the operation) it means the
+        // operation status has likely been updated.  Notify the storage node to see if it needs
+        // to do anything in response to a storage node operation completion.  Don't pass an
+        // attached entity to an Asynchronous SLSB method that runs in its own transaction. That
+        // can cause locking with the current transaction.  Note we can't pass in just the id, because
+        // the updates to the history are not yet committed and the async method needs to see the updated
+        // history.
+        if (!isNewHistory) {
+            entityManager.flush();
+            entityManager.detach(history);
+            storageNodeOperationsHandler.handleOperationUpdateIfNecessary(history);
+        }
+
         return history;
     }
 

@@ -298,7 +298,8 @@ isc.loadSkin = function (theWindow) {
                 errorIconSrc : "[SKINIMG]actions/exclamation.png",
                 iconHeight:24,
                 iconWidth:24,
-                iconVAlign:"middle"
+                iconVAlign:"middle",
+                showOver:true
             });
         }
         if (isc.TextItem) {
@@ -321,7 +322,9 @@ isc.loadSkin = function (theWindow) {
                 showOverIcons:false,
                 pickerIconSrc:"[SKIN]/pickers/comboBoxPicker.gif",
                 height:22,
-                pickerIconWidth:18
+                pickerIconWidth:18,
+                showOver:false,
+                showFocused:false
             });
         }
 
@@ -331,7 +334,7 @@ isc.loadSkin = function (theWindow) {
                 pendingTextBoxStyle:"comboBoxItemPendingText",
                 showFocusedPickerIcon:false,
                 pickerIconSrc:"[SKIN]/pickers/comboBoxPicker.gif",
-                height:27,
+                height:22,
                 pickerIconWidth:18
             });
         }
@@ -340,15 +343,25 @@ isc.loadSkin = function (theWindow) {
         if (isc.ScrollingMenu) {
             isc.ScrollingMenu.addProperties({
                 showShadow:false,
-                shadowDepth:5
+                shadowDepth:0,
+                showOver:true,
+                showRollOver:true,
+                showOverIcons:true
+
+
             });
         }
         if (isc.DateItem) {
             isc.DateItem.addProperties({
                 height:22,
-                pickerIconWidth:16,
-                pickerIconHeight:16,
-                pickerIconSrc:"[SKIN]/DynamicForm/date_control.png"
+                pickerIconWidth:22,
+                pickerIconHeight:22,
+                pickerIconSrc:"[SKIN]/DynamicForm/date_control.png",
+                showOverIcons:false,
+                showFocusedPickerIcon:false,
+                showOver:false
+
+
             });
         }
 

@@ -26,7 +26,7 @@ import org.rhq.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * @author Ian Springer

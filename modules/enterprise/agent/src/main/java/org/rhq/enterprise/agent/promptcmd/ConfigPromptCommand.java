@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.util.prefs.Preferences;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -38,6 +40,9 @@ import javax.xml.transform.stream.StreamResult;
 import mazz.i18n.Msg;
 
 import org.w3c.dom.Document;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import org.rhq.enterprise.agent.AgentConfiguration;
 import org.rhq.enterprise.agent.AgentMain;
@@ -137,27 +142,31 @@ public class ConfigPromptCommand implements AgentPromptCommand {
         ByteArrayOutputStream unformatted = new ByteArrayOutputStream();
         preferences.exportSubtree(unformatted);
 
-        /*
-         * Filter out the <!DOCTYPE ... > as parsing the xml later
-         * would trigger a lookup over the net to http://java.sun.com,
-         * which can make this method fail if the external server is not
-         * reachable. See RHQ-520
-         */
-        String prefs = unformatted.toString();
-        int start = prefs.indexOf("<!DOCTYPE");
-        int end = prefs.indexOf(">", start);
-        String filteredPrefs = prefs.substring(0, start);
-        filteredPrefs += prefs.substring(end + 1);
-
         // now format the XML
-        ByteArrayInputStream bais = new ByteArrayInputStream(filteredPrefs.getBytes());
+        ByteArrayInputStream bais = new ByteArrayInputStream(unformatted.toByteArray());
         DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        // BZ 536138 & 1038728, don't resolve the preferences DTD.
+        docBuilder.setEntityResolver(new EntityResolver() {
+            @Override
+            public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
+                return new InputSource(new StringReader(""));
+            }
+        });
         Document doc = docBuilder.parse(bais);
         Source source = new DOMSource(doc);
         ByteArrayOutputStream output = new ByteArrayOutputStream();
+        // We'll want the DTD to output document
+        String xmlDec = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>";
+        String dtdDec = "<!DOCTYPE preferences SYSTEM \"http://java.sun.com/dtd/preferences.dtd\">";
+
+        output.write(xmlDec.getBytes("UTF-8"));
+        output.write('\n');
+        output.write(dtdDec.getBytes("UTF-8"));
+        output.write('\n');
         Result result = new StreamResult(output);
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
         transformer.transform(source, result);
 
         return output.toString();

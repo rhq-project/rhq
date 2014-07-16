@@ -16,16 +16,20 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
-import java.io.File;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_TYPE;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_TYPE;
+
 import java.util.List;
 
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
 
@@ -35,22 +39,6 @@ import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
  */
 @Test(groups = { "integration", "pc", "standalone" }, singleThreaded = true)
 public class AfterSuiteTest extends AbstractServerComponentTest {
-
-    public static final ResourceType DOMAIN_RESOURCE_TYPE = new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME,
-        ResourceCategory.SERVER, null);
-    // The key is the server host config file
-    // hostConfig: /tmp/jboss-as-6.0.0/domain/configuration/host.xml
-    public static final String DOMAIN_RESOURCE_KEY = "hostConfig: "
-        + new File(JBOSS_HOME, "domain" + File.separator + "configuration" + File.separator + "host.xml")
-            .getAbsolutePath();
-
-    public static ResourceType STANDALONE_RESOURCE_TYPE = new ResourceType("JBossAS7 Standalone Server", PLUGIN_NAME,
-        ResourceCategory.SERVER, null);
-    // The key is the server host config file
-    // hostConfig: /tmp/jboss-as-6.0.0/standalone/configuration/standalone-full-ha.xml
-    public static final String STANDALONE_RESOURCE_KEY = "hostConfig: "
-        + new File(JBOSS_HOME, "standalone" + File.separator + "configuration" + File.separator
-            + "standalone-full-ha.xml").getAbsolutePath();
 
     private boolean killStandalone;
 
@@ -75,6 +63,7 @@ public class AfterSuiteTest extends AbstractServerComponentTest {
         return killStandalone ? "jboss.standalone.portOffset" : "jboss.domain.portOffset";
     }
 
+    @Override
     @AfterSuite
     protected void killServerProcesses() {
         killStandalone = true;
@@ -85,19 +74,16 @@ public class AfterSuiteTest extends AbstractServerComponentTest {
 
     @Override
     protected String getBindAddressSystemPropertyName() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     protected String getExpectedStartScriptFileName() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     protected List<String> getExpectedStartScriptArgs() {
-        // TODO Auto-generated method stub
         return null;
     }
 }

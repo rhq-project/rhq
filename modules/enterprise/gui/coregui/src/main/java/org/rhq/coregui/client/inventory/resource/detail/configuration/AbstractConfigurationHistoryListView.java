@@ -40,7 +40,7 @@ import org.rhq.coregui.client.components.configuration.ConfigurationComparisonVi
 import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 

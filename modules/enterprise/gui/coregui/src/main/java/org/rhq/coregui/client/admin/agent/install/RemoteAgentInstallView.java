@@ -223,6 +223,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         password.setPrompt(MSG.view_remoteAgentInstall_promptPassword());
         password.setHoverWidth(300);
         password.setEndRow(true);
+        password.setAttribute("autocomplete", "off");
 
         rememberMeCheckbox = new CheckboxItem("rememberme", MSG.view_remoteAgentInstall_rememberMe());
         rememberMeCheckbox.setRequired(false);

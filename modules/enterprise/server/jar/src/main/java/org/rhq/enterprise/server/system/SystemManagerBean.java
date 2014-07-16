@@ -256,7 +256,18 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void setSystemSettings(Subject subject, SystemSettings settings) {
-        setSystemSettings(removePrivateSettings(settings), false, false);
+        setAnySystemSettings(removePrivateSettings(settings), false, false);
+    }
+
+    @Override
+    public void setAnySystemSetting(SystemSetting setting, String value) {
+        if (SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME == setting) {
+            return;
+        }
+
+        SystemSettings settings = getUnmaskedSystemSettings(true);
+        settings.put(setting, value);
+        setAnySystemSettings(settings, true, true);
     }
 
     private SystemSettings removePrivateSettings(SystemSettings settings) {
@@ -278,10 +289,11 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                     + "only allows updating of storage cluster settings.");
             }
         }
-        setSystemSettings(settings, false, true);
+        setAnySystemSettings(settings, false, true);
     }
 
-    private void setSystemSettings(SystemSettings settings, boolean skipValidation, boolean updateStorageSettings) {
+    @Override
+    public void setAnySystemSettings(SystemSettings settings, boolean skipValidation, boolean ignoreReadOnly) {
         // first, we need to get the current settings so we'll know if we need to persist or merge the new ones
         @SuppressWarnings("unchecked")
         List<SystemConfiguration> configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL)
@@ -345,7 +357,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                     //SystemSetting#isReadOnly should be a superset of the "fReadOnly" field in the database
                     //but let's just be super paranoid here...
                     if ((prop.isReadOnly() || (existingConfig.getFreadOnly() != null && existingConfig.getFreadOnly()
-                        .booleanValue())) && !(isStorageSetting(prop) || updateStorageSettings)) {
+                        .booleanValue())) && !(isStorageSetting(prop) || ignoreReadOnly)) {
                         throw new IllegalArgumentException("The setting [" + prop.getInternalName()
                             + "] is read-only - you cannot change its current value! Current value is ["
                             + existingConfig.getPropertyValue() + "] while the new value was [" + value + "].");
@@ -473,7 +485,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
         SystemSettings settings = SystemSettings.fromMap(map);
 
-        setSystemSettings(settings, skipValidation, false);
+        setAnySystemSettings(settings, skipValidation, false);
     }
 
     @Override

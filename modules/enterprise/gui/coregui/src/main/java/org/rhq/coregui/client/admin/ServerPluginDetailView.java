@@ -52,10 +52,11 @@ import org.rhq.coregui.client.components.configuration.PropertyValueChangeListen
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.PluginGWTServiceAsync;
-import org.rhq.coregui.client.util.message.Message;
-import org.rhq.coregui.client.util.message.Message.Severity;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * Shows details of a server plugin.
@@ -191,9 +192,9 @@ public class ServerPluginDetailView extends EnhancedVLayout {
                     buttons.setMembersMargin(5);
                     buttons.setLayoutMargin(5);
 
-                    final IButton saveButtonPC = new EnhancedIButton(MSG.common_button_save());
+                    final IButton saveButtonPC = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
 
-                    final IButton resetButtonPC = new EnhancedIButton(MSG.common_button_reset());
+                    final IButton resetButtonPC = new EnhancedIButton(MSG.common_button_reset(), ButtonColor.RED);
 
                     Configuration config = plugin.getPluginConfiguration();
                     final ConfigurationEditor editorPC = new ConfigurationEditor(def, config);
@@ -277,10 +278,10 @@ public class ServerPluginDetailView extends EnhancedVLayout {
                     buttons.setMembersMargin(5);
                     buttons.setLayoutMargin(5);
 
-                    final IButton saveButtonSJ = new EnhancedIButton(MSG.common_button_save());
+                    final IButton saveButtonSJ = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
                     buttons.addMember(saveButtonSJ);
 
-                    final IButton resetButtonSJ = new EnhancedIButton(MSG.common_button_reset());
+                    final IButton resetButtonSJ = new EnhancedIButton(MSG.common_button_reset(), ButtonColor.RED);
                     buttons.addMember(resetButtonSJ);
 
                     Configuration config = plugin.getScheduledJobsConfiguration();

@@ -32,10 +32,10 @@ import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Option;
 import org.rhq.coregui.client.util.message.Message.Severity;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 public class TestMessageCenterView extends EnhancedVLayout {
 

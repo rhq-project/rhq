@@ -51,7 +51,6 @@ import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.coregui.client.menu.MenuBarView;
-import org.rhq.coregui.client.util.message.MessageBar;
 
 /**
  * @author Greg Hinkle

@@ -428,7 +428,7 @@ public class LoginView extends Canvas {
 
         window = new Window();
         window.setWidth(670);
-        window.setHeight(330);
+        window.setHeight(370);
         window.setTitle(MSG.view_login_registerUser());
 
         // forced focused, static size, can't close / dismiss

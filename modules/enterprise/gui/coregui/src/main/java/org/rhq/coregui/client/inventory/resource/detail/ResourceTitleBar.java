@@ -79,7 +79,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
     private static final String COLLAPSED_TOOLTIP = MSG.view_portlet_inventory_tooltip_expand();
     private static final String EXPANDED_TOOLTIP = MSG.view_portlet_inventory_tooltip_collapse();
     private static final String PLUGIN_ERRORS_ICON = "[SKIN]/Dialog/warn.png";
-    private static final String LOADING_ICON = "[SKIN]/loading.gif";
+    //private static final String LOADING_ICON = "[SKIN]/loading.gif";
 
     private Img expandCollapseArrow;
 
@@ -94,7 +94,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
     private EnhancedHLayout detailsForm;
     private OverviewForm detailsFormSummary;
     private Img pluginErrors;
-    private Img loading;
+  //  private Img loading;
     private final ResourceTreeView platformTree;
 
     private class AvailAndErrorRefresher implements AutoRefresh {
@@ -143,8 +143,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
             CountDownLatch latch = CountDownLatch.create(cnt, new Command() {
                 @Override
                 public void execute() {
-                    loading.setStyleDependentName("hidden", true);
-                    //loading.setVisible(false);
+                    CoreGUI.showBusy(false);
                     markForRedraw();
 
                     //the checks at the start of the refresh() method above ensure that there is at most
@@ -160,10 +159,9 @@ public class ResourceTitleBar extends EnhancedVLayout {
                 }
             });
 
-            // loading.setVisible(true);
-            loading.setStyleDependentName("hidden", false);
+            CoreGUI.showBusy(true);
 
-            loading.markForRedraw();
+            //loading.markForRedraw();
 
             if (refreshingAvail) {
                 refreshAvailability(latch);
@@ -388,18 +386,18 @@ public class ResourceTitleBar extends EnhancedVLayout {
             }
         });
 
-        loading = new Img(LOADING_ICON, 24, 24);
+        //loading = new Img(LOADING_ICON, 24, 24);
         // loading.setVisible(false);
-        loading.setAlign(Alignment.RIGHT);
-        loading.setStyleName("spinner");
-        loading.setStyleDependentName("hidden", true);
+        //loading.setAlign(Alignment.RIGHT);
+        //loading.setStyleName("spinner");
+        //loading.setStyleDependentName("hidden", true);
         //top information
         top.addMember(expandCollapseArrow);
         top.addMember(badge);
         top.addMember(title);
 
         top.addMember(pluginErrors);
-        top.addMember(loading);
+        //top.addMember(loading);
         top.addMember(availabilityImage);
         top.addMember(favoriteButton);
         top.setStyleName("resourceSummary");

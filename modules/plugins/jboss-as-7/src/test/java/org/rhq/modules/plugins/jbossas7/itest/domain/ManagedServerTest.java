@@ -21,6 +21,9 @@ package org.rhq.modules.plugins.jbossas7.itest.domain;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_TYPE;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.PLUGIN_NAME;
 import static org.testng.Assert.assertEquals;
 
 import org.testng.annotations.Test;
@@ -46,16 +49,14 @@ public class ManagedServerTest extends AbstractJBossAS7PluginTest {
         ResourceCategory.SERVER, null);
     private static final String RESOURCE_KEY = "master/server-one";
 
-    private Resource platform;
-    private Resource serverResource;
     private Resource managedServer;
 
     @Test(priority = 10)
     @RunDiscovery
     public void initialDiscoveryTest() throws Exception {
-        platform = validatePlatform();
-        serverResource = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
-            DomainServerComponentTest.RESOURCE_KEY);
+        Resource platform = validatePlatform();
+        Resource serverResource = waitForResourceByTypeAndKey(platform, platform, DOMAIN_RESOURCE_TYPE,
+            DOMAIN_RESOURCE_KEY);
         managedServer = waitForResourceByTypeAndKey(platform, serverResource, RESOURCE_TYPE, RESOURCE_KEY);
     }
 

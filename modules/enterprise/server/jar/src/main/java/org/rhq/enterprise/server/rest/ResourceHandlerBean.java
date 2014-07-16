@@ -236,7 +236,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
     public Response getResourcesByQuery(@ApiParam("Limit results to param in the resource name") @QueryParam("q") String q,
                                         @ApiParam("Limit to category (PLATFORM, SERVER, SERVICE") @QueryParam("category") String category,
                                         @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
-                                        @ApiParam("Page for paging, 0-based") @QueryParam("page") Integer page,
+                                        @ApiParam("Page for paging, 0-based") @QueryParam("page") @DefaultValue("0") Integer page,
                                         @ApiParam(value = "Limit to Inventory status of the resources", allowableValues = "ALL, NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED")
                                             @DefaultValue("COMMITTED") @QueryParam("status") String status,
                                         @Context HttpHeaders headers,

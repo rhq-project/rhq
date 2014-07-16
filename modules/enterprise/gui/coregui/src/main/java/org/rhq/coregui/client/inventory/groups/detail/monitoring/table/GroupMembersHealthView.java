@@ -26,9 +26,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.coregui.client.components.table.TableAction;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.coregui.client.inventory.groups.detail.inventory.MembersView;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * The content pane for the group Monitoring>Tables subtab.

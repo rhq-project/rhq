@@ -67,6 +67,7 @@ import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 
 public class BundleView extends EnhancedVLayout implements BookmarkableView {
@@ -217,7 +218,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
     private Canvas getActionCanvas() {
         VLayout layout = new EnhancedVLayout(10);
 
-        IButton deployButton = new EnhancedIButton(MSG.view_bundle_deploy());
+        IButton deployButton = new EnhancedIButton(MSG.view_bundle_deploy(), ButtonColor.BLUE);
         deployButton.setIcon(IconEnum.BUNDLE_DEPLOY.getIcon16x16Path());
         deployButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -246,7 +247,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         });
         layout.addMember(deployButton);
 
-        IButton deleteButton = new EnhancedIButton(MSG.common_button_delete());
+        IButton deleteButton = new EnhancedIButton(MSG.common_button_delete(), ButtonColor.RED);
         deleteButton.setIcon(IconEnum.BUNDLE_DELETE.getIcon16x16Path());
         deleteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {

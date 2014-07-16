@@ -875,7 +875,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 throw new TimeoutException("Read attribute operation timed out");
             }
 
-            if (res.isRolledBack()) { // this means we've connected, authenticated, but still failed
+            if (res.isRolledBack() && !res.getFailureDescription().startsWith("JBAS015135")) { // this means we've connected, authenticated, but still failed
                 throw new ResultFailedException("Failed to read attribute [" + name + "] of address ["
                     + getAddress().getPath() + "] - response: " + res);
             }

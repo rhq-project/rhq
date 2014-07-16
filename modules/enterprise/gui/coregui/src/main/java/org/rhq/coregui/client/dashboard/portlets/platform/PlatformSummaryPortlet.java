@@ -42,7 +42,6 @@ import org.rhq.coregui.client.components.ReportExporter;
 import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.IconField;
 import org.rhq.coregui.client.components.table.Table;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.dashboard.Portlet;
@@ -50,6 +49,7 @@ import org.rhq.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.coregui.client.dashboard.PortletWindow;
 import org.rhq.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.coregui.client.util.MeasurementConverterClient;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 
 public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> implements Portlet, HasViewName {

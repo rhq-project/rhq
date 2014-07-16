@@ -242,10 +242,10 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
         ResultSet columns;
         try {
             connection = this.resourceContext.getParentResourceComponent().getConnection();
+            connection.setCatalog(this.resourceContext.getParentResourceComponent().getDatabaseName());
             DatabaseMetaData databaseMetaData = connection.getMetaData();
             columns = databaseMetaData.getColumns("", getSchemaNameFromContext(resourceContext),
                 getTableNameFromContext(resourceContext), "");
-
             PropertyList columnList = new PropertyList("columns");
 
             while (columns.next()) {
@@ -275,6 +275,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
             PropertyList updatedColumns = updatedConfiguration.getList("columns");
 
             Connection connection = this.resourceContext.getParentResourceComponent().getConnection();
+            connection.setCatalog(this.resourceContext.getParentResourceComponent().getDatabaseName());
 
             DatabaseMetaData dmd = connection.getMetaData();
             ResultSet rs = dmd.getColumns("", "", getTableNameFromContext(resourceContext), "");
@@ -382,7 +383,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
         return null;
     }
 
-    private static class ColumnDefinition {
+    static class ColumnDefinition {
         String columnName;
         String columnType;
         Integer columnLength;
@@ -408,32 +409,35 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                 .getSimple("columnPrecision").getIntegerValue();
             columnDefault = (column.getSimple("columnDefault") == null) ? null : column.getSimple("columnDefault")
                 .getStringValue();
-
-            // TODO this is called collumnNullable in other places - that is meant here?
-            columnNullable = (column.getSimple("columnNotNull") == null) ? false : column.getSimple("columnNotNull")
+            columnNullable = (column.getSimple("columnNullable") == null) ? false : column.getSimple("columnNullable")
                 .getBooleanValue();
         }
 
         public String getColumnSql() {
             StringBuilder buf = new StringBuilder();
             buf.append(columnName).append(" ").append(columnType);
-            if (columnLength != null) {
-                buf.append("(" + columnLength + ")");
-            }
+            if(!isArrayColumnType(columnType)) {
+                if (columnLength != null) {
+                    buf.append("(").append(columnLength).append(")");
+                }
 
-            if (columnPrecision != null) {
-                buf.append("(" + columnPrecision + ")");
+                if (columnPrecision != null) {
+                    buf.append("(").append(columnPrecision).append(")");
+                }
             }
-
             if (columnDefault != null) {
-                buf.append(" DEFAULT " + columnDefault);
+                buf.append(" DEFAULT ").append(columnDefault);
             }
 
-            if (columnNullable) {
+            if (!columnNullable) {
                 buf.append(" NOT NULL");
             }
 
             return buf.toString();
+        }
+
+        private boolean isArrayColumnType(String columnType) {
+            return columnType != null && columnType.trim().endsWith("[]");
         }
     }
 

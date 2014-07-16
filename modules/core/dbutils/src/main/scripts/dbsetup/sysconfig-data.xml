@@ -156,7 +156,7 @@
       <!-- Flag that protects user without any assigned role to log in to web UI -->
       <data ID="65" PROPERTY_KEY="ENABLE_LOGIN_WITHOUT_ROLES" PROPERTY_VALUE="false" DEFAULT_PROPERTY_VALUE="false" />
 
-      <data ID="66" PROPERTY_KEY="METRICS_CACHE_ACTIVATION_TIME" DEFAULT_PROPERTY_VALUE="-1" FREAD_ONLY="FALSE"/>
+      <data ID="66" PROPERTY_KEY="METRICS_CACHE_ACTIVATION_TIME" PROPERTY_VALUE="-1" DEFAULT_PROPERTY_VALUE="-1" FREAD_ONLY="FALSE"/>
 
       <!-- If set to true, LDAP will automatically follow any referrals (set Context.REFERRAL to follow(if this is true) or ignore) -->
       <data ID="67" PROPERTY_KEY="CAM_LDAP_FOLLOW_REFERRALS" PROPERTY_VALUE="false" DEFAULT_PROPERTY_VALUE="false" FREAD_ONLY="FALSE"/>

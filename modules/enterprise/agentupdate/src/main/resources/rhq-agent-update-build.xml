@@ -216,7 +216,7 @@
             failonerror="true"/>
       <echo>Make sure the location where the new agent is going to be is empty</echo>
       <delete dir="${rhq.agent.update.update-agent-dir}" /> <!-- just trying to clear the way for the new agent -->
-      <echo>Put the new agent in its new location.</echo>
+      <echo>Put the new agent in its new location: [${new.location.for.old.agent}/${_update.tmp.dir.name}/rhq-agent] to [${rhq.agent.update.update-agent-dir}]</echo>
       <move file="${new.location.for.old.agent}/${_update.tmp.dir.name}/rhq-agent"
             tofile="${rhq.agent.update.update-agent-dir}"
             failonerror="true"/>

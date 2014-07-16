@@ -18,7 +18,9 @@
  */
 package org.rhq.coregui.client.util.rpc;
 
-import java.util.logging.Logger;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -27,11 +29,9 @@ import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader;
 import com.google.gwt.user.client.rpc.impl.RpcStatsContext;
 import com.google.gwt.user.client.rpc.impl.Serializer;
+
 import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.util.Log;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * A custom {@link RemoteServiceProxy} that injects additional management and monitoring functionality into the 

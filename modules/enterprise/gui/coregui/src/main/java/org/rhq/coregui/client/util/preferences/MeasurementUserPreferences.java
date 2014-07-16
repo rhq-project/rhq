@@ -22,14 +22,14 @@ package org.rhq.coregui.client.util.preferences;
 import java.util.Arrays;
 import java.util.List;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor.MetricRangePreferences;
 import org.rhq.coregui.client.util.MeasurementUtility;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
-
-import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
  * This wraps a UserPreferences object to obtain measurement specific preferences.

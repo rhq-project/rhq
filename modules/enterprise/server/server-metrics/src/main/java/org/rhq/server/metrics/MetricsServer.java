@@ -59,6 +59,7 @@ import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.CacheIndexEntryMapper;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
+import org.rhq.server.metrics.invalid.InvalidMetricsManager;
 
 /**
  * @author John Sanda
@@ -66,8 +67,6 @@ import org.rhq.server.metrics.domain.RawNumericMetric;
 public class MetricsServer {
 
     private final Log log = LogFactory.getLog(MetricsServer.class);
-
-    private static final double THRESHOLD = 0.00001d;
 
     private DateTimeService dateTimeService = new DateTimeService();
 
@@ -81,6 +80,8 @@ public class MetricsServer {
 
     private AtomicLong totalAggregationTime = new AtomicLong();
 
+    private InvalidMetricsManager invalidMetricsManager;
+    
     private int numAggregationWorkers = 4;
 
     private ListeningExecutorService aggregationWorkers;
@@ -157,6 +158,8 @@ public class MetricsServer {
         aggregationWorkers = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numAggregationWorkers,
             new StorageClientThreadFactory()));
         determineMostRecentRawDataSinceLastShutdown();
+
+        invalidMetricsManager = new InvalidMetricsManager(dateTimeService, dao);
     }
 
     /**
@@ -234,6 +237,7 @@ public class MetricsServer {
 
     public void shutdown() {
         aggregationWorkers.shutdown();
+        invalidMetricsManager.shutdown();
     }
 
     public RawNumericMetric findLatestValueForResource(int scheduleId) {
@@ -263,7 +267,7 @@ public class MetricsServer {
             Iterable<AggregateNumericMetric> metrics = null;
             if (dateTimeService.isIn1HourDataRange(begin)) {
                 metrics = dao.findOneHourMetrics(scheduleId, beginTime, endTime);
-                return createComposites(metrics, beginTime, endTime, numberOfBuckets);
+                return createComposites(metrics, beginTime, endTime, numberOfBuckets, MetricsTable.ONE_HOUR);
             } else if (dateTimeService.isIn6HourDataRange(begin)) {
                 metrics = dao.findSixHourMetrics(scheduleId, beginTime, endTime);
                 return createComposites(metrics, beginTime, endTime, numberOfBuckets, MetricsTable.SIX_HOUR);
@@ -299,7 +303,7 @@ public class MetricsServer {
         Iterable<AggregateNumericMetric> metrics = null;
         if (dateTimeService.isIn1HourDataRange(begin)) {
             metrics = dao.findOneHourMetrics(scheduleIds, beginTime, endTime);
-            return createComposites(metrics, beginTime, endTime, numberOfBuckets);
+            return createComposites(metrics, beginTime, endTime, numberOfBuckets, MetricsTable.ONE_HOUR);
         } else if (dateTimeService.isIn6HourDataRange(begin)) {
             metrics = dao.findSixHourMetrics(scheduleIds, beginTime, endTime);
             return createComposites(metrics, beginTime, endTime, numberOfBuckets, MetricsTable.SIX_HOUR);
@@ -427,36 +431,17 @@ public class MetricsServer {
     }
 
     private List<MeasurementDataNumericHighLowComposite> createComposites(Iterable<AggregateNumericMetric> metrics,
-        long beginTime, long endTime, int numberOfBuckets) {
-
-        Buckets buckets = new Buckets(beginTime, endTime, numberOfBuckets);
-        for (AggregateNumericMetric metric : metrics) {
-            buckets.insert(metric.getTimestamp(), metric.getAvg(), metric.getMin(), metric.getMax());
-        }
-
-        List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
-        for (int i = 0; i < buckets.getNumDataPoints(); ++i) {
-            Buckets.Bucket bucket = buckets.get(i);
-            data.add(new MeasurementDataNumericHighLowComposite(bucket.getStartTime(), bucket.getAvg(),
-                bucket.getMax(), bucket.getMin()));
-        }
-        return data;
-
-    }
-
-    private List<MeasurementDataNumericHighLowComposite> createComposites(Iterable<AggregateNumericMetric> metrics,
         long beginTime, long endTime, int numberOfBuckets, MetricsTable type) {
 
         Buckets buckets = new Buckets(beginTime, endTime, numberOfBuckets);
         for (AggregateNumericMetric metric : metrics) {
-            // see https://bugzilla.redhat.com/show_bug.cgi?id=1015706 for details
-            if (metric.getMax() < metric.getAvg() && Math.abs(metric.getMax() - metric.getAvg()) > THRESHOLD) {
-                log.warn(metric + " is invalid. The max value for an aggregate metric should not be larger than " +
-                    "its average. The max will be set to the average.");
-                metric.setMax(metric.getAvg());
-                updateMaxWithNewTTL(metric, type);
+            if (invalidMetricsManager.isInvalidMetric(metric)) {
+                log.warn("The " + type + " metric " + metric + " is invalid. It will be excluded from the results " +
+                    "sent to the client and we will attempt to recompute the metric.");
+                invalidMetricsManager.submit(type, metric);
+            } else {
+                buckets.insert(metric.getTimestamp(), metric.getAvg(), metric.getMin(), metric.getMax());
             }
-            buckets.insert(metric.getTimestamp(), metric.getAvg(), metric.getMin(), metric.getMax());
         }
 
         List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
@@ -466,7 +451,32 @@ public class MetricsServer {
                 bucket.getMax(), bucket.getMin()));
         }
         return data;
+
     }
+
+//    private List<MeasurementDataNumericHighLowComposite> createComposites(Iterable<AggregateNumericMetric> metrics,
+//        long beginTime, long endTime, int numberOfBuckets, MetricsTable type) {
+//
+//        Buckets buckets = new Buckets(beginTime, endTime, numberOfBuckets);
+//        for (AggregateNumericMetric metric : metrics) {
+//            // see https://bugzilla.redhat.com/show_bug.cgi?id=1015706 for details
+//            if (metric.getMax() < metric.getAvg() && Math.abs(metric.getMax() - metric.getAvg()) > THRESHOLD) {
+//                log.warn(metric + " is invalid. The max value for an aggregate metric should not be larger than " +
+//                    "its average. The max will be set to the average.");
+//                metric.setMax(metric.getAvg());
+//                updateMaxWithNewTTL(metric, type);
+//            }
+//            buckets.insert(metric.getTimestamp(), metric.getAvg(), metric.getMin(), metric.getMax());
+//        }
+//
+//        List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
+//        for (int i = 0; i < buckets.getNumDataPoints(); ++i) {
+//            Buckets.Bucket bucket = buckets.get(i);
+//            data.add(new MeasurementDataNumericHighLowComposite(bucket.getStartTime(), bucket.getAvg(),
+//                bucket.getMax(), bucket.getMin()));
+//        }
+//        return data;
+//    }
 
     private void updateMaxWithNewTTL(AggregateNumericMetric metric, MetricsTable type) {
         int newTTL;

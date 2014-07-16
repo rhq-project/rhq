@@ -19,8 +19,6 @@
 
 package org.rhq.coregui.client.inventory.groups.detail.operation.schedule;
 
-import static org.rhq.coregui.client.util.message.Message.Severity;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -63,6 +61,7 @@ import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * The details view of the Group Operations>Schedules subtab.

@@ -53,11 +53,11 @@ import org.rhq.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.coregui.client.components.table.IconField;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.coregui.client.inventory.groups.wizard.GroupCreateWizard;
 import org.rhq.coregui.client.inventory.resource.detail.inventory.ResourceResourceGroupsView;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 

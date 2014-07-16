@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,9 @@
  */
 package org.rhq.plugins.server;
 
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
+
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
@@ -34,7 +37,6 @@ import org.mc4j.ems.connection.support.metadata.JSR160ConnectionTypeDescriptor;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.JMXComponent;
@@ -53,6 +55,7 @@ import org.rhq.plugins.jmx.JMXComponent;
  * @author John Mazzitelli
  */
 public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, JMXComponent<T> {
+    private static final Log LOG = LogFactory.getLog(JBossAS7JMXComponent.class);
 
     public static final String PLUGIN_CONFIG_CLIENT_JAR_LOCATION = "clientJarLocation";
     public static final String PLUGIN_CONFIG_PORT = "port";
@@ -61,7 +64,6 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
     public static final String PLUGIN_CONFIG_PASSWORD = "password";
     public static final String DEFAULT_PLUGIN_CONFIG_PORT = "9999";
 
-    private Log log = LogFactory.getLog(JBossAS7JMXComponent.class);
     private ResourceContext<T> resourceContext;
     private EmsConnection connection;
 
@@ -93,14 +95,13 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
     }
 
     @Override
-    public void start(ResourceContext<T> context) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext<T> context) throws Exception {
         this.resourceContext = context;
         loadConnection();
     }
 
     @Override
     public void stop() {
-        return;
     }
 
     @Override
@@ -110,7 +111,7 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
         try {
             emsConnection = loadConnection();
         } catch (Exception e) {
-            log.error("Component attempting to access a connection that could not be loaded: " + e.getCause());
+            LOG.error("Component attempting to access a connection that could not be loaded: " + e.getCause());
         }
 
         return emsConnection;
@@ -127,28 +128,40 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
             String port = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PORT, DEFAULT_PLUGIN_CONFIG_PORT);
             String username = pluginConfig.getSimpleValue(PLUGIN_CONFIG_USERNAME, "rhqadmin");
             String password = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PASSWORD, "rhqadmin");
+            String clientJarDir = pluginConfig.getSimpleValue(PLUGIN_CONFIG_CLIENT_JAR_LOCATION);
 
             ConnectionSettings connectionSettings = new ConnectionSettings();
-            connectionSettings.initializeConnectionType(new JSR160ConnectionTypeDescriptor());
+            connectionSettings.setLibraryURI(clientJarDir);
+            connectionSettings.initializeConnectionType(new RhqServerConnectionTypeDescriptor("jboss-client.jar"));
             connectionSettings.setServerUrl("service:jmx:remoting-jmx://" + hostname + ":" + port);
             connectionSettings.setPrincipal(username);
             connectionSettings.setCredentials(password);
 
-            ConnectionFactory connectionFactory = new ConnectionFactory();
-            connectionFactory.discoverServerClasses(connectionSettings);
+            if (connectionSettings.getControlProperties() == null) {
+                connectionSettings.setControlProperties(new Properties());
+            }
+            connectionSettings.getControlProperties().setProperty(ConnectionFactory.COPY_JARS_TO_TEMP,
+                String.valueOf(TRUE));
+            connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR,
+                resourceContext.getTemporaryDirectory().getAbsolutePath());
 
             if (connectionSettings.getAdvancedProperties() == null) {
                 connectionSettings.setAdvancedProperties(new Properties());
             }
+            connectionSettings.getAdvancedProperties().setProperty(ConnectionFactory.USE_CONTEXT_CLASSLOADER,
+                String.valueOf(FALSE));
 
-            log.info("Loading AS7 connection [" + connectionSettings.getServerUrl() + "] with install path ["
+            ConnectionFactory connectionFactory = new ConnectionFactory();
+            connectionFactory.discoverServerClasses(connectionSettings);
+
+            LOG.info("Loading AS7 connection [" + connectionSettings.getServerUrl() + "] with install path ["
                 + connectionSettings.getLibraryURI() + "]...");
 
             ConnectionProvider connectionProvider = connectionFactory.getConnectionProvider(connectionSettings);
             this.connection = connectionProvider.connect();
 
-            if (log.isDebugEnabled()) {
-                log.debug("Successfully made connection to the AS7 instance for resource ["
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Successfully made connection to the AS7 instance for resource ["
                     + resourceContext.getResourceKey() + "]");
             }
 
@@ -160,8 +173,8 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
             // the connection is established. If we get to this point that an exception was thrown, close any
             // connection that was made and null it out so we can try to establish it again.
             if (connection != null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Connection created but an exception was thrown. Closing the connection.", e);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Connection created but an exception was thrown. Closing the connection.", e);
                 }
                 connection.close();
                 connection = null;
@@ -170,17 +183,35 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
             // Since the connection is attempted each time it's used, failure to connect could result in log
             // file spamming. Log it once for every 10 consecutive times it's encountered.
             if (consecutiveConnectionErrors % 10 == 0) {
-                log.warn("Could not establish connection to the JBoss AS instance ["
+                LOG.warn("Could not establish connection to the JBoss AS instance ["
                     + (consecutiveConnectionErrors + 1) + "] times for resource [" + resourceContext.getResourceKey()
                     + "]", e);
             }
             consecutiveConnectionErrors++;
 
-            if (log.isDebugEnabled()) {
-                log.debug("Can't connect to JBoss AS resource  [" + resourceContext.getResourceKey() + "]", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Can't connect to JBoss AS resource  [" + resourceContext.getResourceKey() + "]", e);
             }
 
             throw e;
         }
+    }
+
+    private static class RhqServerConnectionTypeDescriptor extends JSR160ConnectionTypeDescriptor {
+        private final String clientJarFilename;
+
+        RhqServerConnectionTypeDescriptor(String clientJarFilename) {
+            this.clientJarFilename = clientJarFilename;
+        }
+
+        @Override
+        public String[] getConnectionClasspathEntries() {
+            return new String[] { clientJarFilename };
+        }
+
+        @Override
+        public boolean isUseChildFirstClassLoader() {
+            return true;
+      }
     }
 }

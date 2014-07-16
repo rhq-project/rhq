@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,9 +16,12 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_TYPE;
 import static org.testng.Assert.assertEquals;
 
 import java.io.File;
@@ -36,7 +39,6 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
@@ -46,31 +48,22 @@ import org.rhq.test.arquillian.RunDiscovery;
  *
  * @author Ian Springer
  */
-@Test(groups = {"integration", "pc", "standalone"}, singleThreaded = true)
+@Test(groups = { "integration", "pc", "standalone" }, singleThreaded = true)
 public class StandaloneServerComponentTest extends AbstractServerComponentTest {
-
-    public static final ResourceType RESOURCE_TYPE =
-            new ResourceType("JBossAS7 Standalone Server", PLUGIN_NAME, ResourceCategory.SERVER, null);
-    // The key is the server host config file
-    // hostConfig: /tmp/jboss-as-6.0.0/standalone/configuration/standalone-full-ha.xml
-    public static final String RESOURCE_KEY = "hostConfig: "
-        + new File(JBOSS_HOME, "standalone" + File.separator + "configuration" + File.separator
-            + "standalone-full-ha.xml").getAbsolutePath();
 
     private static final String RELOAD_OPERATION_NAME = "reload";
     private static final String RESTART_OPERATION_NAME = "restart";
 
-    private Resource platform;
     private Resource standaloneServer;
 
     @Override
     protected ResourceType getServerResourceType() {
-        return RESOURCE_TYPE;
+        return STANDALONE_RESOURCE_TYPE;
     }
 
     @Override
     protected String getServerResourceKey() {
-        return RESOURCE_KEY;
+        return STANDALONE_RESOURCE_KEY;
     }
 
     @Override
@@ -91,9 +84,9 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     @Test(priority = -10000)
     @RunDiscovery(discoverServers = true, discoverServices = false)
     public void initialDiscoveryTest() throws Exception {
-
-        platform = validatePlatform();
-        standaloneServer = waitForResourceByTypeAndKey(platform, platform, RESOURCE_TYPE, RESOURCE_KEY);
+        Resource platform = validatePlatform();
+        standaloneServer = waitForResourceByTypeAndKey(platform, platform, STANDALONE_RESOURCE_TYPE,
+            STANDALONE_RESOURCE_KEY);
     }
 
     @Test(priority = 2)
@@ -131,6 +124,8 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         avail = getAvailability(getServerResource());
         assertEquals(avail, UP);
     }
+
+    @Override
     @Test(priority = 6, enabled = true)
     public void testExecuteCliOperations() throws Exception {
         super.testExecuteCliOperations();
@@ -170,17 +165,19 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     }
 
+    @Override
     protected String getExpectedStartScriptFileName() {
         return (File.separatorChar == '/') ? "standalone.sh" : "standalone.bat";
     }
 
+    @Override
     protected List<String> getExpectedStartScriptArgs() {
-        String [] args = new String[] {
-            "--server-config=standalone-full-ha.xml",
-            "-Djboss.bind.address.management=127.0.0.1",
-            "-Djboss.bind.address=127.0.0.1",
-            "-Djboss.bind.address.unsecure=127.0.0.1",
-            "-Djboss.socket.binding.port-offset=" + getPortOffset()
+        String [] args = new String[] { //
+            "--server-config=standalone-full-ha.xml", //
+            "-Djboss.bind.address.management=127.0.0.1", //
+            "-Djboss.bind.address=127.0.0.1", //
+            "-Djboss.bind.address.unsecure=127.0.0.1", //
+            "-Djboss.socket.binding.port-offset=" + getPortOffset() //
         };
         return Arrays.asList(args);
     }

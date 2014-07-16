@@ -30,9 +30,9 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableAction;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.MeasurementDataGWTServiceAsync;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * A view that displays a non-paginated table of {@link org.rhq.core.domain.measurement.MeasurementSchedule measurement

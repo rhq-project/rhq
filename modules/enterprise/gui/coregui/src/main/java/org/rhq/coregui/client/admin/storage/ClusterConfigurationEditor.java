@@ -21,8 +21,10 @@ package org.rhq.coregui.client.admin.storage;
 import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -50,6 +52,7 @@ import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.coregui.client.components.form.StringLengthValidator;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
@@ -225,6 +228,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_password_title())
             .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_password())
             .withValue(settings.getPasswordHash()).withReadOnlySetTo(readOnly).withValidators(passwordValidator1)
+            .withAttribute("autocomplete", "off")
             .build((FormItem) GWT.create(PasswordItem.class));
         items.addAll(passwordItems);
 
@@ -243,6 +247,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             .withValue(settings.getPasswordHash())
             .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_verify())
             .withReadOnlySetTo(readOnly).withValidators(passwordValidator1, passwordValidator2)
+            .withAttribute("autocomplete", "off")
             .build((FormItem) GWT.create(PasswordItem.class));
 
         items.addAll(passwordVerifyItems);
@@ -265,7 +270,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
     }
 
     private EnhancedToolStrip buildToolStrip() {
-        saveButton = new EnhancedIButton(MSG.common_button_save());
+        saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (clusterForm.validate() && deploymentForm.validate() && credentialsForm.validate()) {
@@ -313,11 +318,17 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         private String description;
         private Validator[] validators;
         private boolean readOnly;
+        private Map<String, Object> attributes = new HashMap<String, Object>();
 
         private static boolean oddRow = true;
 
         public static void resetOddRow() {
             oddRow = true;
+        }
+
+        public FormItemBuilder withAttribute(String name, Object value) {
+            attributes.put(name, value);
+            return this;
         }
 
         public FormItemBuilder withName(String name) {
@@ -386,6 +397,9 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             fields.add(descriptionItem);
 
             oddRow = !oddRow;
+            for (Map.Entry<String, Object> e : attributes.entrySet()) {
+                valueItem.setAttribute(e.getKey(), e.getValue());
+            }
             return fields;
         }
 

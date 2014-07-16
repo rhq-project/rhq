@@ -1,0 +1,10 @@
+
+cd /subsystem=ejb3
+
+:read-resource
+
+:write-attribute(name="default-singleton-bean-access-timeout", value= 7777)
+
+:read-resource
+
+

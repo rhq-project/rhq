@@ -19,6 +19,10 @@
 
 package org.rhq.modules.plugins.jbossas7.itest.nonpc;
 
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DC_HOST;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DC_HTTP_PORT;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.MANAGEMENT_PASSWORD;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.MANAGEMENT_USERNAME;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
@@ -66,8 +70,8 @@ public class ManagementConnectionPersistenceTest extends AbstractIntegrationTest
         ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
             .setHost(DC_HOST) //
             .setPort(DC_HTTP_PORT) //
-            .setUsername(DC_USER) //
-            .setPassword(DC_PASS) //
+            .setUsername(MANAGEMENT_USERNAME) //
+            .setPassword(MANAGEMENT_PASSWORD) //
             .setKeepAliveTimeout(Long.valueOf(-1)) //
             .createASConnectionParams();
         ASConnection asConnection = new ASConnection(asConnectionParams);
@@ -84,8 +88,8 @@ public class ManagementConnectionPersistenceTest extends AbstractIntegrationTest
         ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
             .setHost(DC_HOST) //
             .setPort(DC_HTTP_PORT) //
-            .setUsername(DC_USER) //
-            .setPassword(DC_PASS) //
+            .setUsername(MANAGEMENT_USERNAME) //
+            .setPassword(MANAGEMENT_PASSWORD) //
             .createASConnectionParams();
         ASConnection asConnection = new ASConnection(asConnectionParams);
         List<Future<Result>> results = doTest(asConnection);
@@ -101,8 +105,8 @@ public class ManagementConnectionPersistenceTest extends AbstractIntegrationTest
         ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
             .setHost(DC_HOST) //
             .setPort(DC_HTTP_PORT) //
-            .setUsername(DC_USER) //
-            .setPassword(DC_PASS) //
+            .setUsername(MANAGEMENT_USERNAME) //
+            .setPassword(MANAGEMENT_PASSWORD) //
             .setKeepAliveTimeout(Long.valueOf(1000 * 60 * 60)) //
             .createASConnectionParams();
         ASConnection asConnection = new ASConnection(asConnectionParams);

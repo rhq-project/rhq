@@ -31,10 +31,10 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * The content pane for the group Inventory>Members subtab.

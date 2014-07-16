@@ -22,6 +22,12 @@ package org.rhq.modules.plugins.jbossas7.itest.domain;
 import static org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.createAddModuleOptionTypeOperation;
 import static org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.loadModuleOptionType;
 import static org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.populateSecurityDomainModuleOptions;
+import static org.rhq.modules.plugins.jbossas7.test.util.ASConnectionFactory.getDomainControllerASConnection;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_TYPE;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.PLUGIN_NAME;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_TYPE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
@@ -62,7 +68,6 @@ import org.rhq.modules.plugins.jbossas7.ASConnection;
 import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.ModuleOptionType;
 import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.Value;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
-import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -459,8 +464,8 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
 
         InventoryManager im = pluginContainer.getInventoryManager();
         Resource platform = im.getPlatform();
-        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
+        Resource server = waitForResourceByTypeAndKey(platform, platform, STANDALONE_RESOURCE_TYPE,
+            STANDALONE_RESOURCE_KEY);
         Resource bindings = waitForResourceByTypeAndKey(platform, server, RESOURCE_TYPE, RESOURCE_KEY);
         return bindings;
     }
@@ -479,8 +484,8 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             if (platform != null)
                 System.out.println("*** Found        Platform [" + platform.getResourceKey() + "]");
             //host controller
-            Resource hostController = waitForResourceByTypeAndKey(platform, platform,
-                DomainServerComponentTest.RESOURCE_TYPE, DomainServerComponentTest.RESOURCE_KEY);
+            Resource hostController = waitForResourceByTypeAndKey(platform, platform, DOMAIN_RESOURCE_TYPE,
+                DOMAIN_RESOURCE_KEY);
             if (hostController != null)
                 System.out.println("*** Found Host Controller [" + hostController.getResourceKey() + "]");
 

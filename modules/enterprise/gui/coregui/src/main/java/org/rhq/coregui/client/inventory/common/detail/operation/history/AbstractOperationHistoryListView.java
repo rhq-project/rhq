@@ -19,8 +19,6 @@
 
 package org.rhq.coregui.client.inventory.common.detail.operation.history;
 
-import static org.rhq.coregui.client.components.table.Table.TableActionInfo.TableActionInfoBuilder;
-
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -50,14 +48,15 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.table.Table.TableActionInfo.TableActionInfoBuilder;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.operation.OperationHistoryDataSource;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Option;
 import org.rhq.coregui.client.util.message.Message.Severity;

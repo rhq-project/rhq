@@ -42,7 +42,7 @@ import org.rhq.plugins.byteman.BytemanAgentComponent;
 
 /**
  * Component that can trace JDBC calls via byte-code maniuplation.
- * 
+ *
  * @author John Mazzitelli
  */
 public class JdbcTracerComponent implements ResourceComponent<BytemanAgentComponent>, OperationFacet,
@@ -134,7 +134,7 @@ public class JdbcTracerComponent implements ResourceComponent<BytemanAgentCompon
      * If this resource has been "enabled" (see its plugin configuration), this will ensure that the script
      * is added to the remote Byteman agent; if it is not enabled, the script will be deleted from the
      * remote Byteman agent.
-     * 
+     *
      * @param refresh if <code>true</code>, this will ensure the byteman agent has up to date rules. This means
      *                that even if the remote byteman agent already has the script installed, this method will
      *                delete the script and immediately re-install the current one. This parameter is meaningless
@@ -159,7 +159,7 @@ public class JdbcTracerComponent implements ResourceComponent<BytemanAgentCompon
         // see if there are already jdbc trace rules installed in the byteman agent
         // note that we talk directly to the remote byteman agent to get the info; our parent resource might not have our script yet in its cache
         Submit client = bytemanAgentResource.getBytemanClient();
-        Map<String, String> allKnownScripts = client.getAllScripts();
+        Map<String, String> allKnownScripts = client.getAllRules();
         String existingRules = null;
         if (allKnownScripts != null) {
             existingRules = allKnownScripts.get(scriptAbsolutePath);
@@ -167,7 +167,7 @@ public class JdbcTracerComponent implements ResourceComponent<BytemanAgentCompon
 
         // add or remove the rules as appropriate
         if (isEnabled()) {
-            // if we are to refresh the script, remove the current script that is loaded (if one is loaded) 
+            // if we are to refresh the script, remove the current script that is loaded (if one is loaded)
             if (existingRules != null && refresh) {
                 Map<String, String> doomed = new HashMap<String, String>(1);
                 doomed.put(scriptAbsolutePath, existingRules);

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,9 @@ package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.rhq.core.domain.util.ResourceTypeUtility.getMeasurementDefinitions;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.PLUGIN_NAME;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_TYPE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -118,8 +121,8 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
     @RunDiscovery
     public void initialDiscoveryTest() throws Exception {
         platform = validatePlatform();
-        serverResource = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
+        serverResource = waitForResourceByTypeAndKey(platform, platform, STANDALONE_RESOURCE_TYPE,
+            STANDALONE_RESOURCE_KEY);
     }
 
     @Test(priority = 11)
@@ -145,8 +148,7 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
             + response.getErrorMessage();
 
         Resource deployment = waitForResourceByTypeAndKey(platform, serverResource, new ResourceType("Deployment",
-            PLUGIN_NAME, ResourceCategory.SERVICE, null),
-            "deployment=" + TestDeployments.DEPLOYMENT_1.getResourceKey());
+            PLUGIN_NAME, ResourceCategory.SERVICE, null), "deployment=" + TestDeployments.DEPLOYMENT_1.getResourceKey());
         // these tests may depend on the deployment children to be in inventory, make sure they are
         waitForAsyncDiscoveryToStabilize(deployment, 5000L, 10);
     }
@@ -348,6 +350,7 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
             webRuntimeResource.getResourceType(), new MeasurementDefinitionFilter() {
                 private final Set<DataType> acceptableDataTypes = EnumSet.of(DataType.MEASUREMENT, DataType.TRAIT);
 
+                @Override
                 public boolean accept(MeasurementDefinition measurementDefinition) {
                     return acceptableDataTypes.contains(measurementDefinition.getDataType());
                 }

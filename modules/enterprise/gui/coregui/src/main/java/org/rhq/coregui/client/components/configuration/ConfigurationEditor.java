@@ -130,6 +130,7 @@ import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
@@ -827,7 +828,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
             buttonBar.setPadding(5);
             buttonBar.setMembersMargin(15);
 
-            final IButton newButton = new EnhancedIButton(MSG.common_button_new());
+            final IButton newButton = new EnhancedIButton(MSG.common_button_new(), ButtonColor.BLUE);
             newButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
             newButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -872,8 +873,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
             selectItem.setValueMap(propertyDefinitionMap.getMap().keySet()
                 .toArray(new String[propertyDefinitionMap.getMap().size()]));
 
-            final EnhancedIButton okButton = new EnhancedIButton();
-            okButton.setTitle(MSG.common_button_ok());
+            final EnhancedIButton okButton = new EnhancedIButton(MSG.common_button_ok(), ButtonColor.BLUE);
             okButton.setDisabled(true);
             okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -1079,7 +1079,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
         if (!propertyReadOnly) {
-            IButton addRowButton = new IButton();
+            IButton addRowButton = new EnhancedIButton();
+            addRowButton.setWidth("40px");
             addRowButton.setIcon(Window.getImgURL(ImageManager.getAddIcon()));
             addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -1301,7 +1302,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
                         form.setItems(simpleField, spacer);
                         vLayout.addMember(form);
 
-                        final IButton okButton = new EnhancedIButton(MSG.common_button_ok());
+                        final IButton okButton = new EnhancedIButton(MSG.common_button_ok(), ButtonColor.BLUE);
                         okButton.disable();
                         okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                             public void onClick(ClickEvent clickEvent) {
@@ -1432,6 +1433,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
                     break;
                 case PASSWORD:
                     valueItem = new PasswordItem();
+                    valueItem.setAttribute("autocomplete", "off");
                     break;
                 case BOOLEAN:
                     RadioGroupItem radioGroupItem = new RadioGroupItem();

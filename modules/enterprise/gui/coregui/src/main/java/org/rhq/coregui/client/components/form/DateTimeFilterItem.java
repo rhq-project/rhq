@@ -21,15 +21,7 @@ package org.rhq.coregui.client.components.form;
 
 import java.util.Date;
 
-import com.google.gwt.user.datepicker.client.CalendarUtil;
-import com.smartgwt.client.util.DateUtil;
-import com.smartgwt.client.widgets.form.fields.DateItem;
 import com.smartgwt.client.widgets.form.fields.DateTimeItem;
-
-import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
-import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;
-import static com.smartgwt.client.types.RelativeDateRangePosition.END;
-import static com.smartgwt.client.types.RelativeDateRangePosition.START;
 
 /**
  * DateTimeItem used for filtering. This component adds the ability to returns

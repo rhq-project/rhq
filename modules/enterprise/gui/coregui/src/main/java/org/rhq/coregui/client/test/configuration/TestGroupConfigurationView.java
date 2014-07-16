@@ -37,10 +37,10 @@ import org.rhq.coregui.client.components.configuration.GroupConfigurationEditor;
 import org.rhq.coregui.client.components.configuration.GroupMemberConfiguration;
 import org.rhq.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.coregui.client.components.configuration.PropertyValueChangeListener;
-import org.rhq.coregui.client.util.message.Message;
-import org.rhq.coregui.client.util.message.MessageCenter;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.MessageCenter;
 
 /**
  * @author Ian Springer

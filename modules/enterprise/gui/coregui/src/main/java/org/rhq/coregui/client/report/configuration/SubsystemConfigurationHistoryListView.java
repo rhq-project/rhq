@@ -4,8 +4,8 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.coregui.client.components.ReportExporter;
 import org.rhq.coregui.client.components.table.TableAction;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 public class SubsystemConfigurationHistoryListView extends ResourceConfigurationHistoryListView {
 

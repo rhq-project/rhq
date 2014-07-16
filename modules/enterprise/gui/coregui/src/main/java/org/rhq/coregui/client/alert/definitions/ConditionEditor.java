@@ -69,7 +69,9 @@ import org.rhq.coregui.client.components.form.NumberWithUnitsValidator;
 import org.rhq.coregui.client.components.form.SortedSelectItem;
 import org.rhq.coregui.client.components.form.TimeUnit;
 import org.rhq.coregui.client.util.MeasurementConverterClient;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.measurement.MeasurementParser;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
@@ -325,7 +327,7 @@ public class ConditionEditor extends EnhancedVLayout {
     }
 
     private ToolStrip buildToolStrip() {
-        IButton ok = new IButton(MSG.common_button_ok());
+        IButton ok = new EnhancedIButton(MSG.common_button_ok(), ButtonColor.BLUE);
         ok.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 if (form.validate(false)) {
@@ -336,7 +338,7 @@ public class ConditionEditor extends EnhancedVLayout {
             }
         });
 
-        IButton cancel = new IButton(MSG.common_button_cancel());
+        IButton cancel = new EnhancedIButton(MSG.common_button_cancel());
         cancel.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 closeFunction.run();

@@ -27,23 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.rhq.core.domain.search.SearchSubsystem;
-import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.InitializableView;
-import org.rhq.coregui.client.RefreshableView;
-import org.rhq.coregui.client.components.TitleBar;
-import org.rhq.coregui.client.components.form.DateFilterItem;
-import org.rhq.coregui.client.components.form.EnhancedSearchBarItem;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
-import org.rhq.coregui.client.util.CriteriaUtility;
-import org.rhq.coregui.client.util.RPCDataSource;
-import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
-import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
-import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.coregui.client.util.message.Message;
-
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
@@ -88,6 +71,23 @@ import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
+
+import org.rhq.core.domain.search.SearchSubsystem;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.InitializableView;
+import org.rhq.coregui.client.RefreshableView;
+import org.rhq.coregui.client.components.TitleBar;
+import org.rhq.coregui.client.components.form.DateFilterItem;
+import org.rhq.coregui.client.components.form.EnhancedSearchBarItem;
+import org.rhq.coregui.client.util.CriteriaUtility;
+import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
@@ -656,6 +656,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 }
 
                 IMenuButton menuButton = new IMenuButton(tableAction.getTitle());
+                menuButton.setID("menuButton" + id + tableAction.getTitle());
                 menuButton.setTooltip(tableAction.getTooltip());
                 menuButton.setMenu(menu);
                 menuButton.setDisabled(true);
@@ -1339,10 +1340,6 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         private TableActionInfo(String title, String tooltip, String confirmMessage, Map<String, Object> valueMap,
             TableAction action) {
             this(title, tooltip, confirmMessage,valueMap, action, ButtonColor.GRAY);
-        }
-        
-        public enum ButtonColor {
-            RED, BLUE, GRAY
         }
         
         private TableActionInfo(String title, String tooltip, String confirmMessage, Map<String, Object> valueMap,

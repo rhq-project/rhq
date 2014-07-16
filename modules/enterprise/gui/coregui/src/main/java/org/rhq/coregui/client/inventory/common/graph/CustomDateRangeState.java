@@ -26,8 +26,6 @@ import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
-import com.google.gwt.user.client.Timer;
-
 /**
  * This object provides determination of the 'Custom' date range
  * of the ButtonBarDateTimeRangeEditor without having

@@ -32,7 +32,6 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.FormLayoutType;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.types.TitleOrientation;
@@ -44,10 +43,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
-import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.DateTimeItem;
-import com.smartgwt.client.widgets.form.fields.IntegerItem;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -65,9 +61,7 @@ import org.rhq.coregui.client.admin.AgentPluginTableView.AgentPluginDataSource;
 import org.rhq.coregui.client.components.form.DurationItem;
 import org.rhq.coregui.client.components.form.RadioGroupWithComponentsItem;
 import org.rhq.coregui.client.components.form.TimeUnit;
-import org.rhq.coregui.client.components.form.UnitType;
 import org.rhq.coregui.client.components.table.AuthorizedTableAction;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
@@ -76,6 +70,7 @@ import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -207,7 +202,7 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
             }
         });
 
-        IButton updateOnAgentsButton = new EnhancedIButton(MSG.view_admin_plugins_update_on_agents());
+        IButton updateOnAgentsButton = new EnhancedIButton(MSG.view_admin_plugins_update_on_agents(), ButtonColor.BLUE);
         updateOnAgentsButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent clickEvent) {

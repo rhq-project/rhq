@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.itest.nonpc;
+
+import static org.rhq.modules.plugins.jbossas7.test.util.ASConnectionFactory.getDomainControllerASConnection;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.PLUGIN_NAME;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -36,13 +40,13 @@ import org.rhq.modules.plugins.jbossas7.json.Remove;
 public class ServerGroupTest extends AbstractIntegrationTest {
 
     public void createServerGroupViaApi() throws Exception {
-        ASConnection connection = getASConnection();
+        ASConnection connection = getDomainControllerASConnection();
         HostControllerComponent hcc = new HostControllerComponent();
         hcc.setConnection(connection);
 
         Configuration rc = new Configuration();
-        rc.put(new PropertySimple("profile","default"));
-        rc.put(new PropertySimple("socket-binding-group","standard-sockets"));
+        rc.put(new PropertySimple("profile", "default"));
+        rc.put(new PropertySimple("socket-binding-group", "standard-sockets"));
         ResourceType rt = new ResourceType("ServerGroup", PLUGIN_NAME, ResourceCategory.SERVICE, null);
 
         String serverGroupName = "_test-sg";
@@ -51,7 +55,8 @@ public class ServerGroupTest extends AbstractIntegrationTest {
             report = hcc.createResource(report);
 
             assert report != null : "Report was null.";
-            assert report.getStatus() == CreateResourceStatus.SUCCESS : "Create was a failure: " + report.getErrorMessage();
+            assert report.getStatus() == CreateResourceStatus.SUCCESS : "Create was a failure: "
+                + report.getErrorMessage();
         } finally {
             Remove r = new Remove("server-group", serverGroupName);
             connection.execute(r);
@@ -59,15 +64,14 @@ public class ServerGroupTest extends AbstractIntegrationTest {
     }
 
     public void badCreateServerGroupViaApi() throws Exception {
-        ASConnection connection = getASConnection();
+        ASConnection connection = getDomainControllerASConnection();
         HostControllerComponent hcc = new HostControllerComponent();
         hcc.setConnection(connection);
 
         Configuration rc = new Configuration();
-        rc.put(new PropertySimple("profile","luzibumpf")); // Does not exist op should fail
-        rc.put(new PropertySimple("socket-binding-group","standard-sockets"));
-        ResourceType rt = new ResourceType("ServerGroup", PLUGIN_NAME,
-                ResourceCategory.SERVICE, null);
+        rc.put(new PropertySimple("profile", "luzibumpf")); // Does not exist op should fail
+        rc.put(new PropertySimple("socket-binding-group", "standard-sockets"));
+        ResourceType rt = new ResourceType("ServerGroup", PLUGIN_NAME, ResourceCategory.SERVICE, null);
 
         String serverGroupName = "_test-sg";
         try {

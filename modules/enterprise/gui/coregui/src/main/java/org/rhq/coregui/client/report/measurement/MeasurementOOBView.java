@@ -30,9 +30,9 @@ import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.components.ReportExporter;
 import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.Table;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * @author Greg Hinkle

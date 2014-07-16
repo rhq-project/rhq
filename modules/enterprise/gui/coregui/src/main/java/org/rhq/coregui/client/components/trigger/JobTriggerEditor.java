@@ -48,8 +48,8 @@ import org.rhq.coregui.client.components.form.DurationItem;
 import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.coregui.client.components.form.TimeUnit;
 import org.rhq.coregui.client.components.form.UnitType;
-import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * A SmartGWT widget that provides the ability to create a new {@link JobTrigger job trigger}, or view or edit an

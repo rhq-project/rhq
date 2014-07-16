@@ -19,6 +19,9 @@
 
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_TYPE;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,15 +37,13 @@ import org.rhq.test.arquillian.RunDiscovery;
  */
 @Test(groups = { "integration", "pc", "standalone" }, singleThreaded = true)
 public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest {
-    private Resource platform;
     private Resource server;
 
     @Test(priority = 10, groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
     public void initialDiscoveryTest() throws Exception {
-        platform = validatePlatform();
-        server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
+        Resource platform = validatePlatform();
+        server = waitForResourceByTypeAndKey(platform, platform, STANDALONE_RESOURCE_TYPE, STANDALONE_RESOURCE_KEY);
         waitForAsyncDiscoveryToStabilize(server);
     }
 

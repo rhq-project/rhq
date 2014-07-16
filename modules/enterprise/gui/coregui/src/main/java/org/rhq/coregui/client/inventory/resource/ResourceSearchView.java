@@ -72,13 +72,13 @@ import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.coregui.client.report.DriftComplianceReportResourceSearchView;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.TableUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 

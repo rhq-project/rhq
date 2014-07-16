@@ -40,7 +40,6 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentContext;
@@ -58,14 +57,14 @@ import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * Component that represents the remote Byteman agent listening for requests.
- * 
+ *
  * A note about adding boot/system classpath jars and the content this component supports related to that feature.
  * There are operations this component supports to add jars to the byteman classpath. Those operations tell the
  * byteman agent to add jars, but those jars must already exist and be accessible for the byteman agent to do so.
  * This component will not manage the jars added via the operations. If, however, a user pushes jar content
  * from the RHQ server to this plugin via the content facet, those jars will be managed by this component as they
  * are added to the byteman agent.
- * 
+ *
  * @author John Mazzitelli
  */
 public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComponent>, MeasurementFacet,
@@ -87,7 +86,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
      * Start the management component. This will immediately attempt to add previously
      * deployed classpath jars, if it is found that the remote Byteman agent no longer
      * has those jars in its classpath.
-     * 
+     *
      * @see ResourceComponent#start(ResourceContext)
      */
     public void start(ResourceContext<BytemanAgentComponent> context) {
@@ -113,7 +112,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
     /**
      * Called when the resource component will no longer manage the remote Byteman agent.
      * This method will clean up the resource component.
-     * 
+     *
      * @see ResourceComponent#stop()
      */
     public void stop() {
@@ -124,12 +123,12 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
 
     /**
      * Determines if the Byteman agent is up by asking it for the current list of all scripts and their rules.
-     * 
+     *
      * @see AvailabilityFacet#getAvailability()
      */
     public AvailabilityType getAvailability() {
         try {
-            this.allKnownScripts = getBytemanClient().getAllScripts();
+            this.allKnownScripts = getBytemanClient().getAllRules();
             return AvailabilityType.UP;
         } catch (Exception e) {
             this.allKnownScripts = null;
@@ -159,37 +158,37 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                 } else if (name.equals("totalNumberOfScripts")) {
                     int total = 0;
                     if (allScripts == null) {
-                        allScripts = client.getAllScripts();
+                        allScripts = client.getAllRules();
                     }
                     if (allScripts != null) {
                         total += allScripts.size();
                     }
-                    report.addData(new MeasurementDataNumeric(request, Double.valueOf((double) total)));
+                    report.addData(new MeasurementDataNumeric(request, Double.valueOf(total)));
                 } else if (name.equals("totalNumberOfRules")) {
                     int total = 0;
                     if (allScripts == null) {
-                        allScripts = client.getAllScripts();
+                        allScripts = client.getAllRules();
                     }
                     if (allScripts != null) {
                         for (String script : allScripts.values()) {
                             total += client.splitAllRulesFromScript(script).size();
                         }
                     }
-                    report.addData(new MeasurementDataNumeric(request, Double.valueOf((double) total)));
+                    report.addData(new MeasurementDataNumeric(request, Double.valueOf(total)));
                 } else if (name.equals("totalNumberOfBootJars")) {
                     int total = 0;
                     List<String> loadedJars = client.getLoadedBootClassloaderJars();
                     if (loadedJars != null) {
                         total = loadedJars.size();
                     }
-                    report.addData(new MeasurementDataNumeric(request, Double.valueOf((double) total)));
+                    report.addData(new MeasurementDataNumeric(request, Double.valueOf(total)));
                 } else if (name.equals("totalNumberOfSystemJars")) {
                     int total = 0;
                     List<String> loadedJars = client.getLoadedSystemClassloaderJars();
                     if (loadedJars != null) {
                         total = loadedJars.size();
                     }
-                    report.addData(new MeasurementDataNumeric(request, Double.valueOf((double) total)));
+                    report.addData(new MeasurementDataNumeric(request, Double.valueOf(total)));
                 } else {
                     throw new Exception("cannot collect unknown metric");
                 }
@@ -271,7 +270,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                 if (ruleName == null || ruleName.length() == 0) {
                     throw new Exception("Did not specify the name of the rule to get");
                 }
-                Map<String, String> allScripts = client.getAllScripts();
+                Map<String, String> allScripts = client.getAllRules();
                 for (String script : allScripts.values()) {
                     List<String> rules = client.splitAllRulesFromScript(script);
                     for (String rule : rules) {
@@ -292,7 +291,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                 return result;
             } else if ("addJarsToSystemClasspath".equals(name)) {
                 //
-                // addJarsToSystemClasspath == adds a jar to the remote byteman agent's system classpath 
+                // addJarsToSystemClasspath == adds a jar to the remote byteman agent's system classpath
                 String jarPaths = configuration.getSimpleValue("jarPathnames", null);
                 if (jarPaths == null || jarPaths.length() == 0) {
                     throw new Exception("Did not specify any jars to add");
@@ -307,7 +306,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                 return result;
             } else if ("addJarsToBootClasspath".equals(name)) {
                 //
-                // addJarsToBootClasspath == adds a jar to the remote byteman agent's boot classpath 
+                // addJarsToBootClasspath == adds a jar to the remote byteman agent's boot classpath
                 String jarPaths = configuration.getSimpleValue("jarPathnames", null);
                 if (jarPaths == null || jarPaths.length() == 0) {
                     throw new Exception("Did not specify any jars to add");
@@ -322,7 +321,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                 return result;
             } else if ("getAddedClasspathJars".equals(name)) {
                 //
-                // getAddedClasspathJars == gets all jars that were added to the byteman agent's boot and system classpaths 
+                // getAddedClasspathJars == gets all jars that were added to the byteman agent's boot and system classpaths
                 Configuration resultConfig = result.getComplexResults();
                 List<String> jars;
 
@@ -430,7 +429,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
         }
 
         if ((null != manifestVersion) && (null != sha256)) {
-            // this protects against the occasional differing binaries with poor manifest maintenance  
+            // this protects against the occasional differing binaries with poor manifest maintenance
             version = manifestVersion + " [sha256=" + sha256 + "]";
         } else if (null != sha256) {
             version = "[sha256=" + sha256 + "]";
@@ -617,7 +616,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
 
     /**
      * Returns a client that can be used to talk to the remote Byteman agent.
-     * 
+     *
      * @return client object
      */
     public Submit getBytemanClient() {
@@ -639,7 +638,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
      * Use this if you do not need the most up-to-date list, which helps avoid making unnecessary
      * calls to the remote Byteman agent. If you need the most up-to-date data, call the agent
      * using {@link #getBytemanClient() the client}.
-     * 
+     *
      * @return the last known set of scripts that were loaded in the remote Byteman agent. <code>null</code>
      *         if a problem occurred attempting to get the scripts
      */
@@ -647,7 +646,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
         // if we already have a non-null value, use it as-is; otherwise, try to get it now
         if (this.allKnownScripts == null) {
             try {
-                this.allKnownScripts = getBytemanClient().getAllScripts();
+                this.allKnownScripts = getBytemanClient().getAllRules();
             } catch (Exception ignore) {
             }
         }
@@ -660,7 +659,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
      * Only if that isn't set will the details general "name" be used as the file name.
      * If the "file name" (or "name") is not absolute, it will be assumed to be in one
      * of the subdirectories under this component's data directory, based on the package type name.
-     * 
+     *
      * @param packageDetails details describing the file
      * @return the file that corresponds to the details object - this file may or may not exist;
      *         existence is not a requirement for this method to return a valid File object
@@ -715,7 +714,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
      * Returns the component's data directory that is used to persist managed content.
      * <code>suffix</code> is the last part of the file path, essentially providing a specific
      * location for different kinds of content for the component.
-     *  
+     *
      * @param suffix identifies a specific location under a general data directory for this component.
      * @return data directory that can be used to persist data for this component
      */
@@ -731,7 +730,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
     /**
      * Goes through all jars that were deployed via RHQ and ensures they are still deployed, adding
      * them if need be.
-     * 
+     *
      * @throws Exception
      */
     protected void addDeployedClasspathJars() throws Exception {

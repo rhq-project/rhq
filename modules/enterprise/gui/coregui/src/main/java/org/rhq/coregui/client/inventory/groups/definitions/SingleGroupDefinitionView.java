@@ -92,6 +92,7 @@ import org.rhq.coregui.client.inventory.groups.definitions.GroupDefinitionExpres
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -154,7 +155,7 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
         final DynaGroupChildrenView dynaGroupChildrenView = new DynaGroupChildrenView(groupDefinitionId);
 
         // button setup
-        IButton saveButton = new EnhancedIButton(MSG.common_button_save());
+        IButton saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (form.validate()) {

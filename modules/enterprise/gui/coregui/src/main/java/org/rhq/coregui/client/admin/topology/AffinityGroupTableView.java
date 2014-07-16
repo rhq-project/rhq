@@ -55,12 +55,12 @@ import org.rhq.coregui.client.admin.AdministrationView;
 import org.rhq.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * Shows the table of all affinity groups.
@@ -224,7 +224,7 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
                 AffinityGroupTableView.this.refreshTableInfo();
             }
         });
-        final IButton create = new EnhancedIButton(MSG.view_adminTopology_affinityGroups_createNew());
+        final IButton create = new EnhancedIButton(MSG.view_adminTopology_affinityGroups_createNew(), ButtonColor.BLUE);
         create.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 createNewGroup(modalWindow, form);

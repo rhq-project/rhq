@@ -682,7 +682,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         HostConfiguration hostConfig = getHostConfig();
         String realm = pluginConfig.getSimpleValue("realm", "ManagementRealm");
-        File propertiesFile = hostConfig.getSecurityPropertyFile(baseDir, getMode(), realm);
+        File propertiesFile = hostConfig.getSecurityPropertyFile(serverPluginConfig, realm);
         if (!propertiesFile.canWrite()) {
             result.setErrorMessage("Management users properties file [" + propertiesFile + "] is not writable.");
             return result;

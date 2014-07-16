@@ -19,6 +19,9 @@
 
 package org.rhq.coregui.client.inventory.resource.detail.monitoring.table;
 
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.METRIC_DEF_ID;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.RESOURCE_ID;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -73,8 +76,6 @@ import org.rhq.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph
 import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.message.Message;
-
-import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.*;
 
 /**
  * Views a resource's metrics in a tabular view with sparkline graph and optional detailed d3 graph.

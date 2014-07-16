@@ -159,6 +159,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         urlUserNameItem.setColSpan(1);
         urlUserNameItem.setAlign(Alignment.LEFT);
         urlPasswordItem = new PasswordItem("password", URL_OPTION_PASSWORD);
+        urlPasswordItem.setAttribute("autocomplete", "off");
         urlPasswordItem.setTooltip(URL_OPTION_TOOLTIP);
         urlPasswordItem.setRequired(false);
         urlPasswordItem.setShowTitle(true);

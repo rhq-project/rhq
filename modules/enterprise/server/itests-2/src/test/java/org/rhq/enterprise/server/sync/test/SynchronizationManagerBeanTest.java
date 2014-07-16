@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
@@ -60,6 +59,8 @@ import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
@@ -121,13 +122,13 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
     private static final String METRIC_NAME = "SynchronizationManagerBeanTest";
 
     private static class TestData {
-        public Properties systemSettings;
+        public SystemSettings systemSettings;
         public ResourceType fakeType;
         public Resource fakePlatform;
         public TestServerPluginService testServerPluginService;
     }
 
-    //this can't be mocked out because the config sync machinery has to be able to 
+    //this can't be mocked out because the config sync machinery has to be able to
     //instantiate this class
     public static class ImportConfigurationCheckingSynchronizer implements Synchronizer<NoSingleEntity, String> {
 
@@ -309,7 +310,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         //make sure the system manager is in sync w/ the db we just changed in dbsetup
         systemManager.loadSystemConfigurationCache();
 
-        testData.systemSettings = systemManager.getSystemConfiguration(freshUser());
+        testData.systemSettings = systemManager.getUnmaskedSystemSettings(false);
 
         if (createExport) {
             export = synchronizationManager.exportAllSubsystems(freshUser());
@@ -320,7 +321,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         try {
             getTransactionManager().begin();
             try {
-                LookupUtil.getSystemManager().setSystemConfiguration(freshUser(), testData.systemSettings, true);
+                LookupUtil.getSystemManager().setAnySystemSettings(testData.systemSettings, true, true);
 
                 EntityManager em = getEntityManager();
 
@@ -370,7 +371,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
             MeasurementDefinitionManagerLocal measurementDefinitionManager = LookupUtil
                 .getMeasurementDefinitionManager();
 
-            Properties beforeSystemSettings = systemManager.getSystemConfiguration(freshUser());
+            SystemSettings beforeSystemSettings = systemManager.getUnmaskedSystemSettings(false);
             MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
             criteria.setPageControl(PageControl.getUnlimitedInstance());
             criteria.fetchResourceType(true);
@@ -383,7 +384,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
             //this is to work around BZ 735810
             systemManager.loadSystemConfigurationCache();
 
-            Properties afterSystemSettings = systemManager.getSystemConfiguration(freshUser());
+            SystemSettings afterSystemSettings = systemManager.getUnmaskedSystemSettings(false);
             List<MeasurementDefinition> afterMeasurementDefinitions = measurementDefinitionManager
                 .findMeasurementDefinitionsByCriteria(freshUser(), criteria);
 
@@ -419,9 +420,9 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
 
             //now check that everything got imported according to the changed configuration
             SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-            Properties settings = systemManager.getSystemConfiguration(freshUser());
+            SystemSettings settings = systemManager.getUnmaskedSystemSettings(false);
 
-            assertEquals(settings.getProperty("CAM_BASE_URL"), "http://testing.domain:7080");
+            assertEquals(settings.get(SystemSetting.BASE_URL), "http://testing.domain:7080");
 
             MeasurementDefinitionManagerLocal measurementDefinitionManager = LookupUtil
                 .getMeasurementDefinitionManager();
@@ -467,9 +468,9 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         try {
             //let's read the original values from the database, so that we know what to compare against
             SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-            Properties settings = systemManager.getSystemConfiguration(freshUser());
+            SystemSettings settings = systemManager.getUnmaskedSystemSettings(false);
 
-            String originalBaseUrl = settings.getProperty("CAM_BASE_URL");
+            String originalBaseUrl = settings.get(SystemSetting.BASE_URL);
 
             MeasurementDefinitionManagerLocal measurementDefinitionManager = LookupUtil
                 .getMeasurementDefinitionManager();
@@ -506,9 +507,9 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
             }
 
             //now check that we import using the manually create configurations, not the inlined ones
-            settings = systemManager.getSystemConfiguration(freshUser());
+            settings = systemManager.getUnmaskedSystemSettings(false);
 
-            assertEquals(settings.getProperty("CAM_BASE_URL"), originalBaseUrl);
+            assertEquals(settings.get(SystemSetting.BASE_URL), originalBaseUrl);
 
             measurementDefinitionManager = LookupUtil.getMeasurementDefinitionManager();
             distroNameDef = measurementDefinitionManager.findMeasurementDefinitionsByCriteria(freshUser(), crit).get(0);

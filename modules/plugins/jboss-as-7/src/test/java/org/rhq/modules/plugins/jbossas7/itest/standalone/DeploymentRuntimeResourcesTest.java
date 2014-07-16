@@ -23,6 +23,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.rhq.modules.plugins.jbossas7.itest.standalone.DeploymentTest.getMeasurementScheduleRequests;
 import static org.rhq.modules.plugins.jbossas7.itest.standalone.DeploymentTest.getMissingMeasurements;
 import static org.rhq.modules.plugins.jbossas7.itest.standalone.DeploymentTest.getTestDeploymentPackageDetails;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.PLUGIN_NAME;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_TYPE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
@@ -159,8 +162,8 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
     @RunDiscovery
     public void testDeploy() throws Exception {
         Resource platform = validatePlatform();
-        Resource standaloneServer = waitForResourceByTypeAndKey(platform, platform,
-            StandaloneServerComponentTest.RESOURCE_TYPE, StandaloneServerComponentTest.RESOURCE_KEY);
+        Resource standaloneServer = waitForResourceByTypeAndKey(platform, platform, STANDALONE_RESOURCE_TYPE,
+            STANDALONE_RESOURCE_KEY);
 
         //assertFalse(standaloneResources == null || standaloneResources.size() != 1,
         //    "Exactly 1 AS7 standalone server resource should be present.");

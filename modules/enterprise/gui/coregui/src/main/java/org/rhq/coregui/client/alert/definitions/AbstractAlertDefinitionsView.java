@@ -37,8 +37,8 @@ import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
-import org.rhq.coregui.client.components.table.Table.TableActionInfo.ButtonColor;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * Superclass to the different alert definition views. This should be subclassed

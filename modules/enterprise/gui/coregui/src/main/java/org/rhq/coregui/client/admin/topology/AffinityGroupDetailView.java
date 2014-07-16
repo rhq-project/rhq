@@ -39,9 +39,11 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ViewPath;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.Log;
-import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * Shows details of a affinity group.
@@ -171,9 +173,8 @@ public class AffinityGroupDetailView extends EnhancedVLayout implements Bookmark
         footer.setWidth100();
         footer.setMembersMargin(15);
 
-        IButton saveButton = new IButton();
+        IButton saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
         saveButton.setOverflow(Overflow.VISIBLE);
-        saveButton.setTitle(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 affinityGroup.setName(nameItem.getValueAsString());

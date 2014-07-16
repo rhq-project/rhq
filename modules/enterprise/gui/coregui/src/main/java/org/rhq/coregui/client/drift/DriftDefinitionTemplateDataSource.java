@@ -35,10 +35,10 @@ import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
-import org.rhq.core.domain.drift.DriftDefinition;
-import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;

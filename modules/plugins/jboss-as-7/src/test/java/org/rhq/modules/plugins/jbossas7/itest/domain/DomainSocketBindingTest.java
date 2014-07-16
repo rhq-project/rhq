@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,11 +13,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.modules.plugins.jbossas7.itest.domain;
+
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_TYPE;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.PLUGIN_NAME;
 
 import java.util.Iterator;
 
@@ -36,7 +40,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
-import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
 /**
@@ -44,24 +47,23 @@ import org.rhq.test.arquillian.RunDiscovery;
  * This could actually also run for domain mode
  * @author Heiko W. Rupp
  */
-@Test(groups = {"integration", "pc", "domain"}, singleThreaded = true)
+@Test(groups = { "integration", "pc", "domain" }, singleThreaded = true)
 public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
 
-    public static final ResourceType RESOURCE_TYPE = new ResourceType("SocketBindingGroup", PLUGIN_NAME, ResourceCategory.SERVICE, null);
+    public static final ResourceType RESOURCE_TYPE = new ResourceType("SocketBindingGroup", PLUGIN_NAME,
+        ResourceCategory.SERVICE, null);
     private static final String RESOURCE_KEY = "socket-binding-group=standard-sockets";
     private static final String PORT_EXPR = "port:expr";
     private static final String MULTICAST_PORT_EXPR = "multicast-port:expr";
 
-    private Resource platform;
-    private Resource serverResource;
     private Resource bindings;
 
     @Test(priority = 10)
     @RunDiscovery
     public void initialDiscoveryTest() throws Exception {
-        platform = validatePlatform();
-        serverResource = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
+        Resource platform = validatePlatform();
+        Resource serverResource = waitForResourceByTypeAndKey(platform, platform, DOMAIN_RESOURCE_TYPE,
+            DOMAIN_RESOURCE_KEY);
         bindings = waitForResourceByTypeAndKey(platform, serverResource, RESOURCE_TYPE, RESOURCE_KEY);
     }
 
@@ -80,25 +82,27 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
 
         // Now add a binding
         PropertyMap map = new PropertyMap("binding");
-        PropertySimple ps = new PropertySimple("name","bla");
+        PropertySimple ps = new PropertySimple("name", "bla");
         map.put(ps);
-        ps = new PropertySimple(PORT_EXPR,12345);
+        ps = new PropertySimple(PORT_EXPR, 12345);
         map.put(ps);
-        ps = new PropertySimple("fixed-port",false);
+        ps = new PropertySimple("fixed-port", false);
         map.put(ps);
-        ps = new PropertySimple(MULTICAST_PORT_EXPR,"${foo.bar.baz:12346}");
+        ps = new PropertySimple(MULTICAST_PORT_EXPR, "${foo.bar.baz:12346}");
         map.put(ps);
         pl.add(map);
 
-        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(1,configuration,getResource().getId());
-        ConfigurationUpdateResponse response = pluginContainer.getConfigurationManager().executeUpdateResourceConfigurationImmediately(request);
-        assert response!=null;
-        assert response.getConfigurationUpdateId() == 1 : "Expected update id 1, but got " + response.getConfigurationUpdateId();
-        assert response.getErrorMessage()==null: "Config add resulted in this error: " + response.getErrorMessage();
+        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(1, configuration, getResource().getId());
+        ConfigurationUpdateResponse response = pluginContainer.getConfigurationManager()
+            .executeUpdateResourceConfigurationImmediately(request);
+        assert response != null;
+        assert response.getConfigurationUpdateId() == 1 : "Expected update id 1, but got "
+            + response.getConfigurationUpdateId();
+        assert response.getErrorMessage() == null : "Config add resulted in this error: " + response.getErrorMessage();
 
         configuration = loadConfig();
         pl = (PropertyList) configuration.get("*");
-  //      assert pl.getList().size() == count+1 : "Got only " + pl.getList().size() + " items, expected "+ (count+1);
+        //      assert pl.getList().size() == count+1 : "Got only " + pl.getList().size() + " items, expected "+ (count+1);
     }
 
     @Test(priority = 1011)
@@ -106,26 +110,27 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
 
         Configuration configuration = loadConfig();
         PropertyMap map = new PropertyMap("binding");
-        PropertySimple ps = new PropertySimple("name","bla2");
+        PropertySimple ps = new PropertySimple("name", "bla2");
         map.put(ps);
-        ps = new PropertySimple(PORT_EXPR,12355);
+        ps = new PropertySimple(PORT_EXPR, 12355);
         map.put(ps);
-        ps = new PropertySimple("fixed-port",false);
+        ps = new PropertySimple("fixed-port", false);
         map.put(ps);
-        ps = new PropertySimple(MULTICAST_PORT_EXPR,"${foo.bar.baz:12356}");
+        ps = new PropertySimple(MULTICAST_PORT_EXPR, "${foo.bar.baz:12356}");
         map.put(ps);
         PropertyList pl = (PropertyList) configuration.get("*");
         pl.add(map);
 
-        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(2,configuration,getResource().getId());
-        ConfigurationUpdateResponse response = pluginContainer.getConfigurationManager().executeUpdateResourceConfigurationImmediately(request);
-        assert response!=null;
-        assert response.getErrorMessage()==null: "Config add resulted in this error: " + response.getErrorMessage();
+        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(2, configuration, getResource().getId());
+        ConfigurationUpdateResponse response = pluginContainer.getConfigurationManager()
+            .executeUpdateResourceConfigurationImmediately(request);
+        assert response != null;
+        assert response.getErrorMessage() == null : "Config add resulted in this error: " + response.getErrorMessage();
 
         configuration = loadConfig();
-        map=null;
+        map = null;
         pl = (PropertyList) configuration.get("*");
-        for (Property prop: pl.getList()) {
+        for (Property prop : pl.getList()) {
             PropertyMap pm = (PropertyMap) prop;
             PropertySimple ps2 = pm.getSimple("name");
             if (!ps2.getStringValue().equals("bla2"))
@@ -134,12 +139,13 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
             map = pm;
         }
         assert map != null : "Did not find 'bla2' in the returned config";
-        map.put(new PropertySimple(PORT_EXPR,22355));
-        map.put(new PropertySimple("fixed-port",true));
-        request = new ConfigurationUpdateRequest(3,configuration,getResource().getId());
+        map.put(new PropertySimple(PORT_EXPR, 22355));
+        map.put(new PropertySimple("fixed-port", true));
+        request = new ConfigurationUpdateRequest(3, configuration, getResource().getId());
         response = pluginContainer.getConfigurationManager().executeUpdateResourceConfigurationImmediately(request);
-        assert response!=null;
-        assert response.getErrorMessage()==null: "Config update resulted in this error: " + response.getErrorMessage();
+        assert response != null;
+        assert response.getErrorMessage() == null : "Config update resulted in this error: "
+            + response.getErrorMessage();
 
     }
 
@@ -148,47 +154,50 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
 
         Configuration configuration = loadConfig();
         PropertyMap map = new PropertyMap("binding");
-        PropertySimple ps = new PropertySimple("name","bla3");
+        PropertySimple ps = new PropertySimple("name", "bla3");
         map.put(ps);
-        ps = new PropertySimple(PORT_EXPR,12365);
+        ps = new PropertySimple(PORT_EXPR, 12365);
         map.put(ps);
-        ps = new PropertySimple("fixed-port",false);
+        ps = new PropertySimple("fixed-port", false);
         map.put(ps);
-        ps = new PropertySimple(MULTICAST_PORT_EXPR,"${foo.bar.baz:12366}");
+        ps = new PropertySimple(MULTICAST_PORT_EXPR, "${foo.bar.baz:12366}");
         map.put(ps);
         PropertyList pl = (PropertyList) configuration.get("*");
         int count = pl.getList().size();
         pl.add(map);
 
-        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(4,configuration,getResource().getId());
-        ConfigurationUpdateResponse response = pluginContainer.getConfigurationManager().executeUpdateResourceConfigurationImmediately(request);
-        assert response!=null;
-        assert response.getErrorMessage()==null: "Config add resulted in this error: " + response.getErrorMessage();
+        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(4, configuration, getResource().getId());
+        ConfigurationUpdateResponse response = pluginContainer.getConfigurationManager()
+            .executeUpdateResourceConfigurationImmediately(request);
+        assert response != null;
+        assert response.getErrorMessage() == null : "Config add resulted in this error: " + response.getErrorMessage();
 
         configuration = loadConfig();
         pl = (PropertyList) configuration.get("*");
-        assert pl.getList().size() == count+1;
+        assert pl.getList().size() == count + 1;
 
         Iterator<Property> iter = pl.getList().iterator();
         while (iter.hasNext()) {
             Property prop = iter.next();
             PropertyMap pm = (PropertyMap) prop;
-            if (pm.getSimpleValue("name","xxx").equals("bla3")) {
+            if (pm.getSimpleValue("name", "xxx").equals("bla3")) {
                 iter.remove();
                 break;
             }
         }
         assert pl.getList().size() == count;
 
-        request = new ConfigurationUpdateRequest(5,configuration,getResource().getId());
+        request = new ConfigurationUpdateRequest(5, configuration, getResource().getId());
         response = pluginContainer.getConfigurationManager().executeUpdateResourceConfigurationImmediately(request);
-        assert response!=null;
-        assert response.getErrorMessage()==null: "Property removal resulted in this error: " + response.getErrorMessage();
+        assert response != null;
+        assert response.getErrorMessage() == null : "Property removal resulted in this error: "
+            + response.getErrorMessage();
     }
 
     @NotNull
     private Configuration loadConfig() throws PluginContainerException {
-        Configuration config = pluginContainer.getConfigurationManager().loadResourceConfiguration(getResource().getId());
+        Configuration config = pluginContainer.getConfigurationManager().loadResourceConfiguration(
+            getResource().getId());
         assert config != null;
         assert !config.getProperties().isEmpty();
         return config;

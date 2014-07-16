@@ -30,6 +30,7 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -47,6 +48,7 @@ import org.quartz.Trigger;
 
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.JobTrigger;
@@ -95,6 +97,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
+import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -1267,6 +1270,57 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         deleteOperationHistory_helper(doomedHistory.getId());
 
         return;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public int purgeOperationHistory(Date purgeBeforeTime) {
+        int totalPurged = 0;
+        int batchPurged = 0;
+        final int groupLimit = 1;
+        final int resourceLimit = 50;
+        long startTime = System.currentTimeMillis();
+
+        // first, purge group operations (one at a time, it could be a large group)
+        do {
+            batchPurged = operationManager.purgeOperationHistoryInNewTransaction(purgeBeforeTime, true, groupLimit);
+            totalPurged += batchPurged;
+
+        } while (batchPurged > 0);
+
+        // then, purge resource operations, we'll do 50 at a time since it is still pretty involved
+        do {
+            batchPurged = operationManager.purgeOperationHistoryInNewTransaction(purgeBeforeTime, false, resourceLimit);
+            totalPurged += batchPurged;
+
+        } while (batchPurged > 0);
+
+        MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
+        MeasurementMonitor.getMBean().setPurgedEvents(totalPurged);
+
+        return totalPurged;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public int purgeOperationHistoryInNewTransaction(Date purgeBeforeTime, boolean isGroupPurge, int limit) {
+
+        String entity = isGroupPurge ? "GroupOperationHistory" : "ResourceOperationHistory";
+        String limitClause = DatabaseTypeFactory.getDefaultDatabaseType().getLimitClause(limit);
+        String query = "SELECT h.id FROM " + entity + " h WHERE h.createdTime < :purgeBeforeTime";
+        Query q = entityManager.createQuery(query);
+        q.setParameter("purgeBeforeTime", purgeBeforeTime.getTime());
+        q.setMaxResults(limit);
+
+        List rs = q.getResultList();
+        for (Object r : rs) {
+            int id = DatabaseTypeFactory.getDefaultDatabaseType().getInteger(r);
+            if (isGroupPurge) {
+                deleteOperationHistory(subjectManager.getOverlord(), id, true);
+            } else {
+                deleteOperationHistory_helper(id);
+            }
+        }
+
+        return rs.size();
     }
 
     @SuppressWarnings("unchecked")

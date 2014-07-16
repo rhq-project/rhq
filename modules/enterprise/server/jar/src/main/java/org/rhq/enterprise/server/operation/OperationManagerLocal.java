@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.operation;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.ejb.Local;
@@ -41,7 +42,6 @@ import org.rhq.core.domain.operation.composite.GroupOperationLastCompletedCompos
 import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.ScheduleException;
@@ -538,4 +538,29 @@ public interface OperationManagerLocal extends OperationManagerRemote {
      */
     List<OperationDefinition> findSupportedResourceOperations(Subject subject, int resourceId, boolean eagerLoaded);
 
+    /**
+     * Purge all operation history created before the specified time.  Note that all ResourceOperationHIstory for
+     * an eligible GroupOperationHistory will be removed regardless of whether the resource-level history was
+     * created before the specified time.
+     * <p/>
+     * In-Progress operation history is still purged, on the assumption that it is obsolete and possibly in a bad
+     * state.
+     *
+     * @param purgeBeforeTime
+     * @return the number of purged history records. GroupOperationHistory counts as 1 regardless of the number of
+     * associated ResourceOperationHistory records.
+     */
+    int purgeOperationHistory(Date purgeBeforeTime);
+
+    /**
+     * This does the work of {@link #purgeOperationHistory(Date)}, targeting group or resource history, and
+     * limits transaction size by applying a limit to the number of history records purged.  The records purged
+     * are not done in any order, any history meeting the <b>purgeBeforeTime</b> constraint is eligible.
+     *
+     * @param purgeBeforeTime
+     * @param isGroupPurge
+     * @param limit
+     * @return
+     */
+    int purgeOperationHistoryInNewTransaction(Date purgeBeforeTime, boolean isGroupPurge, int limit);
 }

@@ -161,6 +161,10 @@
       <!-- If set to true, LDAP will automatically follow any referrals (set Context.REFERRAL to follow(if this is true) or ignore) -->
       <data ID="67" PROPERTY_KEY="CAM_LDAP_FOLLOW_REFERRALS" PROPERTY_VALUE="false" DEFAULT_PROPERTY_VALUE="false" FREAD_ONLY="FALSE"/>
 
+      <!-- do not purge operation history by default (0 indicates no purge) -->
+      <data ID="68" PROPERTY_KEY="OPERATION_HISTORY_PURGE" PROPERTY_VALUE="0"
+              DEFAULT_PROPERTY_VALUE="0" FREAD_ONLY="FALSE"/>
+
     </table>
 
 </dbsetup>

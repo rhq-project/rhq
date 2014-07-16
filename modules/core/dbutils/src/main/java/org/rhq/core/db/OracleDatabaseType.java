@@ -94,7 +94,7 @@ public abstract class OracleDatabaseType extends DatabaseType {
      */
     @Override
     public String getString(String varchar, int maxLength) {
-        if ( null == varchar ) {
+        if (null == varchar) {
             return null;
         }
 
@@ -255,4 +255,16 @@ public abstract class OracleDatabaseType extends DatabaseType {
             closeStatement(selectPS);
         }
     }
+
+    /* (non-Javadoc)
+     * @see org.rhq.core.db.DatabaseType#getLimitClause(int)
+     *
+     * Oracle processes ORDER BY after the limit, so in general the limit clause is in a sub-query when
+     * ordering is required.  See http://www.oracle.com/technetwork/issue-archive/2006/06-sep/o56asktom-086197.html.
+     */
+    @Override
+    public String getLimitClause(int limit) {
+        return " ROWNUM <= " + limit + " ";
+    }
+
 }

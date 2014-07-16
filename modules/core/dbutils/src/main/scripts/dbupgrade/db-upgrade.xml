@@ -2403,6 +2403,17 @@
               </schema-directSQL>
             </schemaSpec>
 
+<!-- RHQ 4.12.0 uses DB Schema 2.152 -->
+
+            <schemaSpec version="2.153">
+              <schema-directSQL ignoreError="true">
+                <statement desc="Add new operation history purge setting. Inotially set to 0 meaning no purge">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                  VALUES (68, 'OPERATION_HISTORY_PURGE', '0', '0')
+                </statement>
+              </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

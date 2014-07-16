@@ -692,4 +692,16 @@ public abstract class DatabaseType {
     public boolean supportsSelfReferringCascade() {
         return true;
     }
+
+    /**
+     * Return vendor-specific row limit clause to be appended to a native SQL SELECT statement.  This does not support
+     * OFFSET and therefore is not useful for paging, only for limiting the result set in a native way. For predictable
+     * results it is usually desirable to use an ORDER BY in conjunction with limit.
+     *
+     * @param limit
+     * @return the limit clause
+     */
+    public String getLimitClause(int limit) {
+        return " LIMIT " + limit + " ";
+    }
 }

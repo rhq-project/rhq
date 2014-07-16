@@ -224,8 +224,10 @@ public enum SystemSetting {
      * This is a bit magical, because the system itself updates it if any other property gets updated even though
      * this setting itself is readonly.
      */
-    LAST_SYSTEM_CONFIG_UPDATE_TIME("LAST_SYSCONFIG_UPDATE_TIME", PropertySimpleType.LONG, true, false, false)
+    LAST_SYSTEM_CONFIG_UPDATE_TIME("LAST_SYSCONFIG_UPDATE_TIME", PropertySimpleType.LONG, true, false, false),
 
+    /** How long do we keep operation history data */
+    OPERATION_HISTORY_PURGE_PERIOD("OPERATION_HISTORY_PURGE", PropertySimpleType.LONG, false, true, true)
     ;
 
     private final String internalName;

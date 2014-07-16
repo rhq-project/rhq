@@ -25,6 +25,7 @@
       </activation>
       <modules>
         <module>xml-schemas</module>
+        <module>storage-maintenance</module>
         <module>server-metrics</module>
         <module>data-migration</module>
         <module>jar</module>

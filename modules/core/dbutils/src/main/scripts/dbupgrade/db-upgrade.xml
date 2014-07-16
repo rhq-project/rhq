@@ -2415,7 +2415,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.154">
-                <schema-DirectSQL>
+                <schema-directSQL>
                     <!-- This will let Quartz actually fire the trigger and carry out the job and clean it up afterwards
                          I think that is a better alternative to a complex DB update that would remove the trigger and
                          the job manually from the DB.
@@ -2425,7 +2425,7 @@
                         UPDATE rhq_qrtz_job_details SET job_class_name='org.quartz.jobs.NoOpJob'
                         WHERE job_class_name='org.rhq.enterprise.server.scheduler.jobs.AlertAvailabilityDurationJob'
                     </statement>
-                </schema-DirectSQL>
+                </schema-directSQL>
             </schemaSpec>
         </dbupgrade>
     </target>

@@ -95,7 +95,7 @@ public class ResourceTreeView extends EnhancedVLayout {
 
     private TreeGrid treeGrid;
     private String selectedNodeId;
-    private Label loadingLabel;
+//    private Label loadingLabel;
 
     private Resource rootResource;
 
@@ -116,20 +116,12 @@ public class ResourceTreeView extends EnhancedVLayout {
 
     @Override
     public void onInit() {
-        // manually handle a loading... message at initial load and also subsequent fetches
-        loadingLabel = new Label(MSG.common_msg_loading());
-        loadingLabel.setIcon(ImageManager.getLoadingIcon());
-        loadingLabel.setHeight(20);
-        loadingLabel.hide();
-        addMember(loadingLabel);
+
     }
 
     private void buildTree() {
         treeGrid = new CustomResourceTreeGrid();
 
-        //treeGrid.setOpenerImage("resources/dir.png");
-        //treeGrid.setOpenerIconSize(16);
-        //treeGrid.setIconSize(24);
         // don't auto-fetch data, the initial fetch is requested manually using initial lineage information
         treeGrid.setAutoFetchData(false);
 
@@ -181,17 +173,17 @@ public class ResourceTreeView extends EnhancedVLayout {
                         disable();
 
                         try {
-                            loadingLabel.show();
+                            CoreGUI.showBusy(true);
                             getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
                                 public void onSuccess(ResourceGroup result) {
-                                    loadingLabel.hide();
+                                    CoreGUI.showBusy(false);;
                                     renderAutoGroup(result);
                                     // Make sure to re-enable ourselves.
                                     enable();
                                 }
 
                                 public void onFailure(Throwable caught) {
-                                    loadingLabel.hide();
+                                    CoreGUI.showBusy(false);
                                     // Make sure to re-enable ourselves.
                                     enable();
                                     CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(),
@@ -199,7 +191,7 @@ public class ResourceTreeView extends EnhancedVLayout {
                                 }
                             });
                         } catch (RuntimeException re) {
-                            loadingLabel.hide();
+                            CoreGUI.showBusy(false);
                             // Make sure to re-enable ourselves.
                             enable();
                             CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(), re);
@@ -290,11 +282,11 @@ public class ResourceTreeView extends EnhancedVLayout {
         criteria.addFilterResourceTypeId(agNode.getResourceType().getId());
         criteria.addFilterAutoGroupParentResourceId(agNode.getParentResource().getId());
         criteria.addFilterVisible(false);
-        loadingLabel.show();
+        CoreGUI.showBusy(true);;
         resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
 
             public void onFailure(Throwable caught) {
-                loadingLabel.hide();
+                CoreGUI.showBusy(false);;
                 callback.onFailure(new RuntimeException(MSG.view_tree_common_loadFailed_node(), caught));
             }
 
@@ -310,13 +302,13 @@ public class ResourceTreeView extends EnhancedVLayout {
                     resourceGroupService.createPrivateResourceGroup(backingGroup, childIds,
                         new AsyncCallback<ResourceGroup>() {
                             public void onFailure(Throwable caught) {
-                                loadingLabel.hide();
+                                CoreGUI.showBusy(false);;
                                 callback.onFailure(new RuntimeException(MSG.view_tree_common_loadFailed_create(),
                                     caught));
                             }
 
                             public void onSuccess(ResourceGroup result) {
-                                loadingLabel.hide();
+                                CoreGUI.showBusy(false);;
                                 // store a map entry from backingGroupId to AGTreeNode so we can easily
                                 // get back to this node given the id of the backing group (from the viewpath)
                                 autoGroupNodeMap.put(result.getId(), agNode);
@@ -342,13 +334,13 @@ public class ResourceTreeView extends EnhancedVLayout {
                     resourceGroupService.setAssignedResources(backingGroup.getId(), childIds, false,
                         new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
-                                loadingLabel.hide();
+                                CoreGUI.showBusy(false);;
                                 callback.onFailure(new RuntimeException(MSG.view_tree_common_loadFailed_update(),
                                     caught));
                             }
 
                             public void onSuccess(Void result) {
-                                loadingLabel.hide();
+                                CoreGUI.showBusy(false);;
                                 callback.onSuccess(backingGroup);
                             }
                         });
@@ -725,6 +717,7 @@ public class ResourceTreeView extends EnhancedVLayout {
         }
 
         contextMenuRefresh(treeGrid, resourceNode, true);
+
     }
 
     /**
@@ -829,12 +822,12 @@ public class ResourceTreeView extends EnhancedVLayout {
         final ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
         // This is an expensive call, but loads all nodes that are visible in the tree given a selected resource
-        loadingLabel.show();
+        CoreGUI.showBusy(true);;
         resourceService.getResourceLineageAndSiblings(selectedResourceId,
             new AsyncCallback<List<ResourceLineageComposite>>() {
 
                 public void onFailure(Throwable caught) {
-                    loadingLabel.hide();
+                    CoreGUI.showBusy(false);;
                     boolean resourceDoesNotExist = caught.getMessage().contains("ResourceNotFoundException");
                     // If a Resource with the specified id does not exist, don't emit an error, since
                     // ResourceDetailView.loadSelectedItem() will take care of emitting one.
@@ -871,8 +864,7 @@ public class ResourceTreeView extends EnhancedVLayout {
                         setRootResource(root);
 
                         // seed datasource with initial resource list and which ancestor resources are locked
-                        ResourceTreeDatasource dataSource = new ResourceTreeDatasource(lineage, lockedData, treeGrid,
-                            loadingLabel);
+                        ResourceTreeDatasource dataSource = new ResourceTreeDatasource(lineage, lockedData, treeGrid);
                         treeGrid.setDataSource(dataSource);
 
                         addMember(treeGrid);
@@ -882,7 +874,7 @@ public class ResourceTreeView extends EnhancedVLayout {
                             public void execute(DSResponse response, Object rawData, DSRequest request) {
                                 Log.info("Done fetching data for tree.");
 
-                                loadingLabel.hide();
+                                CoreGUI.showBusy(false);;
 
                                 if (updateSelection) {
                                     updateSelection();
@@ -913,7 +905,7 @@ public class ResourceTreeView extends EnhancedVLayout {
                                     treeGrid.getTree().linkNodes(
                                         ResourceTreeDatasource.buildNodes(lineage, lockedData, treeGrid));
 
-                                    loadingLabel.hide();
+                                    CoreGUI.showBusy(false);;
 
                                     if (updateSelection) {
                                         TreeNode selectedNode = treeGrid.getTree().findById(selectedNodeId);
@@ -956,11 +948,11 @@ public class ResourceTreeView extends EnhancedVLayout {
             criteria.addFilterId(selectedAutoGroupId);
             criteria.addFilterVisible(false);
             criteria.fetchResourceType(true);
-            loadingLabel.show();
+            CoreGUI.showBusy(true);;
             resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
 
                 public void onFailure(Throwable caught) {
-                    loadingLabel.hide();
+                    CoreGUI.showBusy(false);;
                     CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_node(), caught);
                 }
 
@@ -973,7 +965,7 @@ public class ResourceTreeView extends EnhancedVLayout {
                     loadTree(backingGroup.getAutoGroupParentResource().getId(), false, new AsyncCallback<Void>() {
 
                         public void onFailure(Throwable caught) {
-                            loadingLabel.hide();
+                            CoreGUI.showBusy(false);;
                             CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_children(), caught);
                         }
 
@@ -985,7 +977,7 @@ public class ResourceTreeView extends EnhancedVLayout {
                             autoGroupNodeMap.put(backingGroup.getId(), agNode);
                             updateSelection();
 
-                            loadingLabel.hide();
+                            CoreGUI.showBusy(false);;
                         }
                     });
                 }

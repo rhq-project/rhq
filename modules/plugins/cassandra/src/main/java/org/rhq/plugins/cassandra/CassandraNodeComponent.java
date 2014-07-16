@@ -67,6 +67,8 @@ import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.plugins.cassandra.util.KeyspaceService;
+import org.rhq.plugins.cassandra.util.TakeSnapshotOperation;
 import org.rhq.plugins.jmx.JMXServerComponent;
 
 /**
@@ -157,6 +159,8 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             return restartNode();
         } else if (name.equals("updateSeedsList")) {
             return updateSeedsList(parameters);
+        } else if (name.equals("takeSnapshot")) {
+            return new TakeSnapshotOperation(new KeyspaceService(getEmsConnection()), parameters).invoke();
         }
 
         return null;

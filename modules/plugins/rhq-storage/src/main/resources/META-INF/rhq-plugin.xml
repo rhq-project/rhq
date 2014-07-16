@@ -161,6 +161,31 @@
       </parameters>
     </operation>
 
+    <operation name="takeSnapshot"
+               description="Takes a snapshot of all keyspaces. A snapshot first flushes all in-memory writes to disk and then creates a hard
+               link of each SSTable file for the keyspace. Note that a column family can have multiple
+               SSTables on disk. By default snapshots are stored in the &lt;cassandra_data_dir&gt;/&lt;keyspace_name&gt;/&lt;column_family_name&gt;/snapshots
+               directory. On Linux/UNIX systems cassandra_data_dir defaults to /var/lib/cassandra/data">
+      <parameters>
+        <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name" description="Snapshot name. If left empty current system time in milliseconds will be used as the snapshot name."/>
+        <c:simple-property name="retentionStrategy" required="true" type="string" default="Keep All" description="Retention Strategy defines what happens to snapshots after being created. Default is Keep All - nothing is cleaned up, Deletion Strategy is ignored. Keep Last N - newest N snaphosts remain, the rest of snapshots is cleaned up based on Deletion Strategy, N has to be specified using 'count' property. Delete Older Than N days - delete snapshots older than N days, rest of snapshots is cleaned up based on Deletion Strategy, N has to be specified using 'count' property">
+          <c:property-options>
+            <c:option value="Keep All"/>
+            <c:option value="Keep Last N"/>
+            <c:option value="Delete Older Than N days"/>
+          </c:property-options>
+        </c:simple-property>
+        <c:simple-property name="count" required="false" type="integer" description="Additional parameter to Retention Strategy, stands for N" />
+        <c:simple-property name="deletionStrategy" required="true" type="string" default="Delete" description="Deletion Strategy defines what happens to snapshots that don't match Retention Strategy. Default is Delete - snapshots will be deleted. Move - snapshots are moved to location specified by 'location' property.">
+          <c:property-options>
+            <c:option value="Delete"/>
+            <c:option value="Move"/>
+          </c:property-options>
+        </c:simple-property>
+        <c:simple-property name="location" required="false" type="string" description="Additional parameter to Deletion Strategy, specifies location to move snaphosts to, snads for L" />
+      </parameters>
+    </operation>
+
     <operation name="updateConfiguration" description="Updates the node configuration. Will require a separate server restart for the settings to take effect.">
       <parameters>
         <c:simple-property name="jmxPort" type="integer" required="false" description="JMX port JVM option."/>

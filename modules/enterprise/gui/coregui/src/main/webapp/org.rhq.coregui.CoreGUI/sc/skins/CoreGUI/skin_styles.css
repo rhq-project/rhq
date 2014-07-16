@@ -707,7 +707,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 }
 
 .treeMenuSelected {
-    background-color: #fff1a8;
+    background-color: #d4edfa;
     border-top: 1px solid #ffeb90;
     border-bottom: 1px solid #ffeb90;
 }
@@ -1336,7 +1336,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 .dateChooserWeekendButtonSelected,
 .dateChooserWeekendButtonSelectedOver,
 .dateChooserWeekendButtonSelectedDown {
-    background-color: #fff1a8;
+    background-color: #d4edfa;
 }
 
 .dateChooserNavButton,
@@ -1400,8 +1400,8 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 .dateChooserWeekendSelected,
 .dateChooserWeekendSelectedDisabled,
 .dateChooserWeekendDisabled {
-    border: 2px solid #fff1a8;
-    background-color: #fff1a8;
+    border: 2px solid #d4edfa;
+    background-color: #d4edfa;
 }
 
 .dateChooserWeekdayOver,
@@ -1630,7 +1630,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 .specialColOver,
 .recordSummaryCellOver,
 .recordSummaryCellOverDark {
-    background-color: #fff1a8;
+    background-color: #d4edfa;
 }
 
 .tallCellOver,

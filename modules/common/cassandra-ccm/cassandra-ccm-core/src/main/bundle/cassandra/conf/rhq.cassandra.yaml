@@ -1,4 +1,4 @@
-# Cassandra storage config YAML
+# Cassandra storage config YAML 
 
 # NOTE:
 #   See http://wiki.apache.org/cassandra/StorageConfiguration for
@@ -53,10 +53,9 @@ hinted_handoff_throttle_in_kb: 1024
 # cross-dc handoff tends to be slower
 max_hints_delivery_threads: 2
 
-# The following setting populates the page cache on memtable flush and compaction
-# WARNING: Enable this setting only when the whole node's data fits in memory.
-# Defaults to: false
-# populate_io_cache_on_flush: false
+# Maximum throttle in KBs per second, total. This will be
+# reduced proportionally to the number of nodes in the cluster.
+batchlog_replay_throttle_in_kb: 1024
 
 # Authentication backend, implementing IAuthenticator; used to identify users
 # Out of the box, Cassandra provides org.apache.cassandra.auth.{AllowAllAuthenticator,
@@ -64,8 +63,8 @@ max_hints_delivery_threads: 2
 #
 # - AllowAllAuthenticator performs no checks - set it to disable authentication.
 # - PasswordAuthenticator relies on username/password pairs to authenticate
-# users. It keeps usernames and hashed passwords in system_auth.credentials table.
-# Please increase system_auth keyspace replication factor if you use this authenticator.
+#   users. It keeps usernames and hashed passwords in system_auth.credentials table.
+#   Please increase system_auth keyspace replication factor if you use this authenticator.
 authenticator: ${rhq.storage.authenticator}
 
 # Authorization backend, implementing IAuthorizer; used to limit access/provide permissions
@@ -74,7 +73,7 @@ authenticator: ${rhq.storage.authenticator}
 #
 # - AllowAllAuthorizer allows any action to any user - set it to disable authorization.
 # - CassandraAuthorizer stores permissions in system_auth.permissions table. Please
-# increase system_auth keyspace replication factor if you use this authorizer.
+#   increase system_auth keyspace replication factor if you use this authorizer.
 authorizer: ${rhq.storage.authorizer}
 
 # Validity period for permissions cache (fetching permissions can be an
@@ -99,7 +98,7 @@ permissions_validity_in_ms: 600000
 # - OrderPreservingPartitioner is an obsolete form of BOP, that stores
 # - keys in a less-efficient format and only works with keys that are
 #   UTF8-encoded Strings.
-# - CollatingOPP colates according to EN,US rules rather than lexical byte
+# - CollatingOPP collates according to EN,US rules rather than lexical byte
 #   ordering.  Use this as an example if you need custom collation.
 #
 # See http://wiki.apache.org/cassandra/Operations for more on
@@ -139,7 +138,7 @@ disk_failure_policy: stop
 key_cache_size_in_mb:
 
 # Duration in seconds after which Cassandra should
-# safe the keys cache. Caches are saved to saved_caches_directory as
+# save the key cache. Caches are saved to saved_caches_directory as
 # specified in this configuration file.
 #
 # Saved caches greatly improve cold-start speeds, and is relatively cheap in
@@ -206,13 +205,17 @@ saved_caches_directory: ${rhq.storage.saved-caches}
 #
 # the other option is "periodic" where writes may be acked immediately
 # and the CommitLog is simply synced every commitlog_sync_period_in_ms
-# milliseconds.
+# milliseconds.  By default this allows 1024*(CPU cores) pending
+# entries on the commitlog queue.  If you are writing very large blobs,
+# you should reduce that; 16*cores works reasonably well for 1MB blobs.
+# It should be at least as large as the concurrent_writes setting.
 commitlog_sync: periodic
 commitlog_sync_period_in_ms: 10000
+# commitlog_periodic_queue_size:
 
 # The size of the individual commitlog file segments.  A commitlog
 # segment may be archived, deleted, or recycled once all the data
-# in it (potentally from each columnfamily in the system) has been 
+# in it (potentially from each columnfamily in the system) has been
 # flushed to sstables.  
 #
 # The default size is 32, which is almost always fine, but if you are
@@ -316,7 +319,7 @@ ssl_storage_port: 7101
 # Address to bind to and tell other Cassandra nodes to connect to. You
 # _must_ change this if you want multiple nodes to be able to
 # communicate!
-#
+# 
 # Leaving it blank leaves it up to InetAddress.getLocalHost(). This
 # will always do the Right Thing _if_ the node is properly configured
 # (hostname, name resolution, etc), and the Right Thing is to use the
@@ -334,18 +337,16 @@ listen_address: ${rhq.storage.listen.address}
 internode_authenticator: org.rhq.cassandra.auth.RhqInternodeAuthenticator
 
 # Whether to start the native transport server.
-# Currently, only the thrift server is started by default because the native
-# transport is considered beta.
 # Please note that the address on which the native transport is bound is the
 # same as the rpc_address. The port however is different and specified below.
 start_native_transport: true
 # port for the CQL native transport to listen for clients on
 native_transport_port: ${rhq.storage.cql-port}
-# NOTE: native_transport_min_threads is now deprecated and ignored (but kept
-# in the 1.2.x series for compatibility sake).
 # The minimum and maximum threads for handling requests when the native
 # transport is used. They are similar to rpc_min_threads and rpc_max_threads,
 # though the defaults differ slightly.
+# NOTE: native_transport_min_threads is now deprecated and ignored (but kept
+# in the 1.2.x series for compatibility sake).
 # native_transport_min_threads: 16
 # native_transport_max_threads: 128
 
@@ -354,19 +355,18 @@ start_rpc: ${rhq.storage.start_rpc}
 
 # The address to bind the Thrift RPC service and native transport
 # server -- clients connect here.
-# 
+#
 # Leaving this blank has the same effect it does for ListenAddress,
 # (i.e. it will be based on the configured hostname of the node).
 #
 # Note that unlike ListenAddress above, it is allowed to specify 0.0.0.0
-# here if you want to listen on all interfaces but is not best practice
-# as it is known to confuse the node auto-discovery features of some
-# client drivers.
+# here if you want to listen on all interfaces, but that will break clients 
+# that rely on node auto-discovery.
 rpc_address: ${rpc.address}
 # port for Thrift to listen for clients on
-rpc_port: ${rhq.storage.rpc_port}
+rpc_port: 9160
 
-# enable or disable keepalive on rpc connections
+# enable or disable keepalive on rpc/native connections
 rpc_keepalive: true
 
 # Cassandra provides three out-of-the-box options for the RPC Server:
@@ -405,7 +405,7 @@ rpc_server_type: sync
 # rpc_send_buff_size_in_bytes:
 # rpc_recv_buff_size_in_bytes:
 
-# uncomment to set socket buffer size for internode communication
+# Uncomment to set socket buffer size for internode communication
 # Note that when setting this, the buffer size is limited by net.core.wmem_max
 # and when not setting it it is defined by net.ipv4.tcp_wmem
 # See:
@@ -437,6 +437,11 @@ snapshot_before_compaction: false
 # should be used to provide data safety. If you set this flag to false, you will
 # lose data on truncation or drop.
 auto_snapshot: true
+
+# Log a debug message if more than this many tombstones are scanned
+# in a single-partition query.  Set the threshold on SliceQueryFilter
+# to debug to enable.
+tombstone_debug_threshold: 10000
 
 # Add column indexes to a row after its contents reach this size.
 # Increase if your column values are large, or if you have a very large
@@ -499,9 +504,8 @@ range_request_timeout_in_ms: 20000
 # How long the coordinator should wait for writes to complete
 write_request_timeout_in_ms: 20000
 # How long the coordinator should wait for truncates to complete
-# (This can be much longer, because we need to flush all CFs
-# to make sure we can clear out anythink in the commitlog that could
-# cause truncated data to reappear.)
+# (This can be much longer, because unless auto_snapshot is disabled
+# we need to flush first so we can snapshot before removing the data.)
 truncate_request_timeout_in_ms: 60000
 # The default timeout for other, miscellaneous operations
 request_timeout_in_ms: 20000
@@ -516,7 +520,7 @@ cross_node_timeout: false
 
 # Enable socket timeout for streaming operation.
 # When a timeout occurs during streaming, streaming is retried from the start
-# of the current file. This *can* involve re-streaming an important amount of
+# of the current file. This _can_ involve re-streaming an important amount of
 # data, so you should avoid setting the value too low.
 # Default value is 0, which never timeout streams.
 # streaming_socket_timeout_in_ms: 0
@@ -627,7 +631,7 @@ request_scheduler: org.apache.cassandra.scheduler.NoScheduler
 #      Keyspace1: 1
 #      Keyspace2: 5
 
-# request_scheduler_id -- An identifer based on which to perform
+# request_scheduler_id -- An identifier based on which to perform
 # the request scheduling. Currently the only valid option is keyspace.
 # request_scheduler_id: keyspace
 
@@ -647,6 +651,7 @@ index_interval: 128
 # Default settings are TLS v1, RSA 1024-bit keys (it is imperative that
 # users generate their own keys) TLS_RSA_WITH_AES_128_CBC_SHA as the cipher
 # suite for authentication, key exchange and encryption of the actual data transfers.
+# Use the DHE/ECDHE ciphers if running in FIPS 140 compliant mode.
 # NOTE: No custom encryption options are enabled at the moment
 # The available internode options are : all, none, dc, rack
 #
@@ -667,7 +672,7 @@ server_encryption_options:
     # protocol: TLS
     # algorithm: SunX509
     # store_type: JKS
-    # cipher_suites: [TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_256_CBC_SHA]
+    # cipher_suites: [TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_256_CBC_SHA,TLS_DHE_RSA_WITH_AES_128_CBC_SHA,TLS_DHE_RSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA]
     # require_client_auth: false
 
 # enable or disable client/server encryption.
@@ -683,7 +688,7 @@ client_encryption_options:
     # protocol: TLS
     # algorithm: SunX509
     # store_type: JKS
-    # cipher_suites: [TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_256_CBC_SHA]
+    # cipher_suites: [TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_256_CBC_SHA,TLS_DHE_RSA_WITH_AES_128_CBC_SHA,TLS_DHE_RSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA]
 
 # internode_compression controls whether traffic between nodes is
 # compressed.

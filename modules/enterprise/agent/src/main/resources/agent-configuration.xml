@@ -59,7 +59,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                file conforms to.  This is the schema for the rhq.agent
                preferences.
                -->
-               <entry key="rhq.agent.configuration-schema-version" value="8" />
+               <entry key="rhq.agent.configuration-schema-version" value="9" />
 
                <!--
                _______________________________________________________________
@@ -1103,26 +1103,26 @@ commands named "config", "setconfig" and "setup" and the command line options
                <entry key="rhq.communications.connector.security.keystore.file"          value="conf/keystore.dat" />
                <entry key="rhq.communications.connector.security.keystore.algorithm"     value="SunX509" />
                <entry key="rhq.communications.connector.security.keystore.type"          value="JKS" />
-               <entry key="rhq.communications.connector.security.keystore.password"      value="rhqpwd" />
-               <entry key="rhq.communications.connector.security.keystore.key-password"  value="rhqpwd" />
+               <entry key="rhq.communications.connector.security.keystore.password"      value="RESTRICTED::-1f23f06413afcaad" />
+               <entry key="rhq.communications.connector.security.keystore.key-password"  value="RESTRICTED::-1f23f06413afcaad" />
                <entry key="rhq.communications.connector.security.keystore.alias"         value="rhq" />
                <entry key="rhq.communications.connector.security.truststore.file"        value="conf/truststore.dat" />
                <entry key="rhq.communications.connector.security.truststore.algorithm"   value="SunX509" />
                <entry key="rhq.communications.connector.security.truststore.type"        value="JKS" />
-               <entry key="rhq.communications.connector.security.truststore.password"    value="" />
+               <entry key="rhq.communications.connector.security.truststore.password"    value="RESTRICTED::-207a6df87216de44" />
                <entry key="rhq.communications.connector.security.client-auth-mode"       value="none" />
 
                <entry key="rhq.agent.client.security.secure-socket-protocol"   value="TLS" />
                <entry key="rhq.agent.client.security.keystore.file"            value="conf/keystore.dat" />
                <entry key="rhq.agent.client.security.keystore.algorithm"       value="SunX509" />
                <entry key="rhq.agent.client.security.keystore.type"            value="JKS" />
-               <entry key="rhq.agent.client.security.keystore.password"        value="rhqpwd" />
-               <entry key="rhq.agent.client.security.keystore.key-password"    value="rhqpwd" />
+               <entry key="rhq.agent.client.security.keystore.password"        value="RESTRICTED::-1f23f06413afcaad" />
+               <entry key="rhq.agent.client.security.keystore.key-password"    value="RESTRICTED::-1f23f06413afcaad" />
                <entry key="rhq.agent.client.security.keystore.alias"           value="rhq" />
                <entry key="rhq.agent.client.security.truststore.file"          value="conf/truststore.dat" />
                <entry key="rhq.agent.client.security.truststore.algorithm"     value="SunX509" />
                <entry key="rhq.agent.client.security.truststore.type"          value="JKS" />
-               <entry key="rhq.agent.client.security.truststore.password"      value="" />
+               <entry key="rhq.agent.client.security.truststore.password"      value="RESTRICTED::-207a6df87216de44" />
                <entry key="rhq.agent.client.security.server-auth-mode-enabled" value="false" />
                -->
 

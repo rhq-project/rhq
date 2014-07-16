@@ -30,10 +30,12 @@ import java.util.prefs.Preferences;
 import mazz.i18n.Logger;
 
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.communications.ServiceContainerConfiguration;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderConfiguration;
+import org.rhq.enterprise.communications.command.client.PersistentFifo;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 
 /**
@@ -97,7 +99,7 @@ public class AgentConfiguration {
             throw new IllegalArgumentException(LOG.getMsgString(AgentI18NResourceKeys.PREFS_MUST_NOT_BE_NULL));
         }
 
-        m_preferences = prefs;
+        m_preferences = new ObfuscatedPreferences(prefs, AgentConfigurationConstants.class);
     }
 
     /**

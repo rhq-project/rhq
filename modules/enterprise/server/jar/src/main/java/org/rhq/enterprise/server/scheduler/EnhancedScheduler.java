@@ -156,10 +156,10 @@ public interface EnhancedScheduler extends Scheduler {
         String cronString) throws SchedulerException;
 
     /**
-     * Schedules the job with the given triggger.  If the trigger is null then the durable job is simply created,
+     * Schedules the job with the given trigger.  If the trigger is null then the durable job is simply created,
      * if necessary, and will await future triggers.
      *
-     * <p>This is a convienence method for adding a trigger to a job.  There is no job-level {@link JobDataMap} but
+     * <p>This is a convenience method for adding a trigger to a job.  There is no job-level {@link JobDataMap} but
      * each trigger may contain a trigger-specific {@link JobDataMap}.</p>
      *
      * <p>This method delegates to {@link #addJob(org.quartz.JobDetail, boolean)} where the <code>
@@ -177,7 +177,7 @@ public interface EnhancedScheduler extends Scheduler {
      *                            true</code>, when the scheduler is shutdown, the job's schedule is lost
      * @see    SchedulerServiceMBean#scheduleJob(org.quartz.JobDetail, org.quartz.Trigger)
      */
-    void scheduleTriggeredJob(Class<? extends Job> jobClass, boolean isVolatile, Trigger trigger)
+    void scheduleTriggeredJob(Class<? extends Job> jobClass, String group, boolean isVolatile, Trigger trigger)
         throws SchedulerException;
 
 }

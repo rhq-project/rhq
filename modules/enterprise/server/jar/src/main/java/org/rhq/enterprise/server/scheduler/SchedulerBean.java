@@ -452,10 +452,10 @@ public class SchedulerBean implements SchedulerLocal {
     }
 
     @Override
-    public void scheduleTriggeredJob(Class<? extends Job> jobClass, boolean isVolatile, Trigger trigger)
+    public void scheduleTriggeredJob(Class<? extends Job> jobClass, String group, boolean isVolatile, Trigger trigger)
         throws SchedulerException {
 
-        new EnhancedSchedulerImpl(getSchedulerService()).scheduleTriggeredJob(jobClass, isVolatile, trigger);
+        new EnhancedSchedulerImpl(getSchedulerService()).scheduleTriggeredJob(jobClass, group, isVolatile, trigger);
         return;
     }
 }

@@ -500,26 +500,30 @@ public class EnhancedSchedulerImpl implements EnhancedScheduler {
     }
 
     @Override
-    public void scheduleTriggeredJob(Class<? extends Job> jobClass, boolean isVolatile, Trigger trigger)
+    public void scheduleTriggeredJob(Class<? extends Job> jobClass, String group, boolean isVolatile, Trigger trigger)
         throws SchedulerException {
 
         String name = jobClass.getName();
-        String groupName = name;
 
         // See if the job exists, if not, add it.
-        JobDetail existingJob = getExistingJob(name, groupName, false);
-        if (null == existingJob) {
-            JobDetail job = new JobDetail(name, groupName, jobClass, isVolatile, true, false);
-            this.scheduler.addJob(job, false);
-        }
+        JobDetail existingJob = getExistingJob(name, group, false);
+//        if (null == existingJob) {
+//            JobDetail job = new JobDetail(name, group, jobClass, isVolatile, true, false);
+//            this.scheduler.addJob(job, false);
+//        }
+//
+//        if (null != trigger) {
+//            if (null == existingJob) {
+//                existingJob = getExistingJob(name, group, false);
+//            }
+//            this.scheduler.scheduleJob(existingJob, trigger);
+//        }
 
-        if (null != trigger) {
-            if (null == existingJob) {
-                existingJob = getExistingJob(name, groupName, false);
-            }
-            this.scheduler.scheduleJob(existingJob, trigger);
+        if (existingJob == null) {
+            JobDetail job = new JobDetail(name, group, jobClass, isVolatile, true, false);
+            scheduler.scheduleJob(job, trigger);
+        } else {
+            scheduler.scheduleJob(existingJob, trigger);
         }
-
-        return;
     }
 }

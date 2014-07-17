@@ -86,6 +86,7 @@ import org.rhq.enterprise.server.scheduler.jobs.DynaGroupAutoRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
+import org.rhq.enterprise.server.scheduler.jobs.StorageClusterMaintenanceJob;
 import org.rhq.enterprise.server.scheduler.jobs.StorageClusterReadRepairJob;
 import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -730,6 +731,14 @@ public class StartupBean implements StartupLocal {
             schedulerBean.scheduleSimpleCronJob(StorageClusterReadRepairJob.class, true, true, cronString);
         } catch (Exception e) {
             log.error("Cannot create storage cluster read repair job", e);
+        }
+
+        // storage cluster maintenance job
+        try {
+            schedulerBean.scheduleTriggeredJob(StorageClusterMaintenanceJob.class,
+                StorageClusterMaintenanceJob.GROUP_NAME, false, StorageClusterMaintenanceJob.getTrigger());
+        } catch (SchedulerException e) {
+            log.error("Cannot create storage cluster maintenance job", e);
         }
     }
 

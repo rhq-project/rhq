@@ -604,7 +604,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
     @Override
     public void runRepair(Subject subject, List<StorageNode> clusterNodes) {
-        log.info("Starting anti-entropy repair on storage cluster");
+        log.info("Starting anti-entropy repair on storage cluster: " + clusterNodes);
 
         for (StorageNode node : clusterNodes) {
             node.setErrorMessage(null);

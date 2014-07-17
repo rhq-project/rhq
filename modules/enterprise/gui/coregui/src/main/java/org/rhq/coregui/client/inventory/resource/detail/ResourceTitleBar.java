@@ -289,7 +289,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
             }
         });
 
-        badge = new Img(ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE), 24, 24);
+        badge = new Img(ImageManager.getResourceTypeIcon(ResourceCategory.SERVICE), 24,24);
         badge.setLayoutAlign(VerticalAlignment.CENTER);
 
         TagEditorView tagEditorView = new TagEditorView(resource.getTags(), !resourceComposite.getResourcePermission()
@@ -478,7 +478,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
             this.availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(resource
                 .getCurrentAvailability().getAvailabilityType()));
 
-            badge.setSrc(ImageManager.getResourceLargeIcon(this.resource.getResourceType().getCategory()));
+            badge.setSrc(ImageManager.getResourceTypeIcon(this.resource.getResourceType().getCategory()));
 
             markForRedraw();
         }

@@ -2371,7 +2371,6 @@
               <schema-dropTable table="RHQ_RESOURCE_SUBCAT"/>
             </schemaSpec>
 
-<<<<<<< HEAD
             <schemaSpec version="2.150">
               <schema-directSQL>
                 <statement targetDBVendor="postgresql" desc="Adding metrics cache table activation time">

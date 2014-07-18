@@ -19,6 +19,12 @@ hr {
     height: 1px;
 }
 
+/*bz1116784*/
+input[name="fileUploadItem"] {
+    height: 27px !important;
+    width: 450px !important;
+}
+
 :focus {
     outline: 0px !important; /* removing the dotted outline globally */
 }

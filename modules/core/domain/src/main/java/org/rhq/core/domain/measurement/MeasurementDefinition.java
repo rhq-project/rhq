@@ -54,7 +54,7 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.util.StringUtil;
+import org.rhq.core.domain.util.StringUtils;
 
 //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 @Entity
@@ -231,8 +231,8 @@ public class MeasurementDefinition implements Serializable {
     @PrePersist
     @PreUpdate
     private void validate() {
-        displayName = StringUtil.trim(displayName, 100);
-        description = StringUtil.trim(description, 500);
+        displayName = StringUtils.trim(displayName, 100);
+        description = StringUtils.trim(description, 500);
     }
 
     /**

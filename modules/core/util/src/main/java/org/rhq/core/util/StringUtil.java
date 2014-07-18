@@ -543,6 +543,21 @@ public class StringUtil {
         return result;
     }
 
+    /**
+     * Ensure string does not exceed maxSize. First trims and then truncates as needed.
+     * @param s
+     * @param maxSize
+     * @return s if null or not altered, otherwise a copy that has been trimmed and/or truncated.
+     */
+    public static String trim(String s, int maxLength) {
+        if (null == s) {
+            return null;
+        }
+
+        s = s.trim();
+        return (s.length() > maxLength) ? s.substring(0, maxLength) : s;
+    }
+
     public static String truncate(String s, int truncLength, boolean removeWhiteSpace) {
         String temp = ((s.length() > truncLength) ? (s.substring(0, truncLength) + "...") : s);
         if (removeWhiteSpace) {

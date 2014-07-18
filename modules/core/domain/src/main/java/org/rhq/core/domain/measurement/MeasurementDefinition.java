@@ -40,6 +40,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Version;
@@ -52,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.util.StringUtil;
 
 //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 @Entity
@@ -223,6 +226,13 @@ public class MeasurementDefinition implements Serializable {
     /* no-arg constructor required by EJB spec - not for use by subclasses */
     protected MeasurementDefinition() {
         /* for JPA use only */
+    }
+
+    @PrePersist
+    @PreUpdate
+    private void validate() {
+        displayName = StringUtil.trim(displayName, 100);
+        description = StringUtil.trim(description, 500);
     }
 
     /**

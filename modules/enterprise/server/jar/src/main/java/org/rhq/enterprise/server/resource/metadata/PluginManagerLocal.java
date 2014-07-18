@@ -107,10 +107,6 @@ public interface PluginManagerLocal extends PluginManagerRemote {
     void registerPlugin(Plugin plugin, PluginDescriptor metadata, File pluginFile, boolean forceUpdate)
         throws Exception;
 
-    /** Exists only to for transactional boundary reasons. Not for general consumption. */
-    boolean registerPluginTypes(String newPluginName, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
-        boolean forceUpdate) throws Exception;
-
     /** Exists only for transactional boundary reasons. Not for general consumption. */
     boolean installPluginJar(Plugin newPlugin, PluginDescriptor pluginDescriptor, File pluginFile) throws Exception;
 

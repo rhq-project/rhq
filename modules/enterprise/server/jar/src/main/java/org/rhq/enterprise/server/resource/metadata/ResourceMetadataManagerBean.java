@@ -40,6 +40,8 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -122,6 +124,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     @EJB
     private PluginConfigurationMetadataManagerLocal pluginConfigMetadataMgr;
 
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void updateTypes(Set<ResourceType> resourceTypes) throws Exception {
         // Only process the type if it is a non-runs-inside type (i.e. not a child of some other type X at this same
         // level in the type hierarchy). runs-inside types which we skip here will get processed at the next level down
@@ -158,7 +161,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         Set<ResourceType> legitimateChildren = new HashSet<ResourceType>();
         for (ResourceType resourceType : nonRunsInsideResourceTypes) {
             long startTime = System.currentTimeMillis();
-            resourceType = resourceMetadataManager.updateType(resourceType);
+            resourceType = resourceMetadataManager.updateTypeInNewTransaction(resourceType);
             long endTime = System.currentTimeMillis();
             log.debug("Updated resource type [" + toConciseString(resourceType) + "] in " + (endTime - startTime)
                 + " ms");
@@ -309,8 +312,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
+    @TransactionTimeout(1800)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ResourceType updateType(ResourceType resourceType) {
+    public ResourceType updateTypeInNewTransaction(ResourceType resourceType) {
 
         // see if there is already an existing type that we need to update
         log.info("Updating resource type [" + toConciseString(resourceType) + "]...");
@@ -340,6 +344,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return resourceType;
     }
 
+    /**
+     * This impl needs to take into consideration that a large resource population may already exist for the type.
+     */
     private void mergeExistingType(ResourceType resourceType, ResourceType existingType) {
         log.debug("Merging type [" + resourceType + "] + into existing type [" + existingType + "]...");
 
@@ -503,7 +510,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // all child types as well as plugin and resource configs and their delegate types and
         // metric and operation definitions and their dependent types,
         // but first do some validity checking.
-
 
         // Ensure that the new type has any built-in metrics (like Availability Type)
         MeasurementMetadataManagerBean.getMetricDefinitions(resourceType);

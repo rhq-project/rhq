@@ -507,23 +507,11 @@ public class EnhancedSchedulerImpl implements EnhancedScheduler {
 
         // See if the job exists, if not, add it.
         JobDetail existingJob = getExistingJob(name, group, false);
-//        if (null == existingJob) {
-//            JobDetail job = new JobDetail(name, group, jobClass, isVolatile, true, false);
-//            this.scheduler.addJob(job, false);
-//        }
-//
-//        if (null != trigger) {
-//            if (null == existingJob) {
-//                existingJob = getExistingJob(name, group, false);
-//            }
-//            this.scheduler.scheduleJob(existingJob, trigger);
-//        }
-
         if (existingJob == null) {
             JobDetail job = new JobDetail(name, group, jobClass, isVolatile, true, false);
             scheduler.scheduleJob(job, trigger);
         } else {
-            scheduler.scheduleJob(existingJob, trigger);
+            scheduleJob(trigger);
         }
     }
 }

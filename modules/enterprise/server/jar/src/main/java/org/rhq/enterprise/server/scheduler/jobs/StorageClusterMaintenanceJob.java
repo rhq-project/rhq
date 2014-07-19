@@ -11,6 +11,7 @@ import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.storage.StorageClusterMaintenanceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -57,7 +58,8 @@ public class StorageClusterMaintenanceJob extends AbstractStatefulJob {
     public void executeJobCode(JobExecutionContext context) throws JobExecutionException {
         try {
             log.info("Running cluster maintenance");
-
+            StorageClusterMaintenanceManagerLocal maintenanceManager = LookupUtil.getStorageClusterMaintenanceManager();
+            maintenanceManager.addTask();
         } catch (Exception e) {
             log.error("There was an unexpected error while performing cluster maintenance", e);
         } finally {
@@ -73,4 +75,5 @@ public class StorageClusterMaintenanceJob extends AbstractStatefulJob {
             }
         }
     }
+
 }

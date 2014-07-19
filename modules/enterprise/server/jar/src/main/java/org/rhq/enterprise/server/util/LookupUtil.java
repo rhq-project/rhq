@@ -187,6 +187,8 @@ import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.search.SavedSearchManagerBean;
 import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
 import org.rhq.enterprise.server.storage.StorageClientManager;
+import org.rhq.enterprise.server.storage.StorageClusterMaintenanceManagerBean;
+import org.rhq.enterprise.server.storage.StorageClusterMaintenanceManagerLocal;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerBean;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
 import org.rhq.enterprise.server.storage.StorageNodeOperationsHandlerBean;
@@ -501,6 +503,10 @@ public final class LookupUtil {
 
     public static StorageNodeOperationsHandlerLocal getStorageNodeOperationsHandler() {
         return lookupLocal(StorageNodeOperationsHandlerBean.class);
+    }
+
+    public static StorageClusterMaintenanceManagerLocal getStorageClusterMaintenanceManager() {
+        return lookupLocal(StorageClusterMaintenanceManagerBean.class);
     }
     
     public static StorageClusterSettingsManagerLocal getStorageClusterSettingsManagerLocal() {

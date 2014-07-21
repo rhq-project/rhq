@@ -2427,6 +2427,63 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+
+            <schemaSpec version="2.155">
+                <schema-directSQL>
+                    <statement desc="Create new RHQ_STORAGE_MAINT_JOB table">
+                        CREATE TABLE RHQ_STORAGE_MAINT_JOB (ID INTEGER PRIMARY KEY)
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_JOB" column="ID" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_JOB" column="NAME" columnType="VARCHAR2" precision="1000" />
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_JOB" column="NAME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_JOB" column="TYPE" columnType="VARCHAR2" precision="1000" />
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_JOB" column="TYPE" nullable="FALSE" />
+
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_JOB" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_JOB" column="CTIME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_JOB" column="MTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_JOB" column="MTIME" nullable="FALSE" />
+
+
+                <schema-directSQL>
+                    <statement desc="Create new RHQ_STORAGE_MAINT_STEP table">
+                        CREATE TABLE RHQ_STORAGE_MAINT_STEP (ID INTEGER PRIMARY KEY)
+                    </statement>
+                </schema-directSQL>
+
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_STEP" column="ID" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="NAME" columnType="VARCHAR2" precision="1000" />
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_STEP" column="NAME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="TYPE" columnType="VARCHAR2" precision="1000" />
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_STEP" column="TYPE" nullable="FALSE" />
+
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_STEP" column="CTIME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="MTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_STEP" column="MTIME" nullable="FALSE" />
+
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="NODE_ADDRESS" columnType="VARCHAR2" precision="1000" />
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_STEP" column="NODE_ADDRESS" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="STEP" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_STEP" column="STEP" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="TIMEOUT" columnType="LONG" />
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_STEP" column="TIMEOUT" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="ARGS" columnType="VARCHAR2" precision="4000" />
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="ON_FAILURE" columnType="VARCHAR2" precision="1000" />
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="SEQUENTIAL" columnType="BOOLEAN" />
+                <schema-alterColumn table="RHQ_STORAGE_MAINT_STEP" column="SEQUENTIAL" nullable="FALSE" />
+
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="STORAGE_MAINT_JOB_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_STORAGE_MAINT_STEP foreign key to RHQ_STORAGE_MAINT_JOB">
+                        ALTER TABLE RHQ_STORAGE_NODE
+                        ADD CONSTRAINT STORAGE_MAINT_JOB_ID_FK
+                        FOREIGN KEY (STORAGE_MAINT_JOB_ID)
+                        REFERENCES RHQ_STORAGE_MAINT_JOB (ID)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

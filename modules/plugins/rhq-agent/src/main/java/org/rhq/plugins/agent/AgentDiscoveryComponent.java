@@ -38,6 +38,7 @@ import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
@@ -53,11 +54,11 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
  * @author John Mazzitelli
  */
 public class AgentDiscoveryComponent implements ResourceDiscoveryComponent, ResourceUpgradeFacet {
-    
+
     private static final String RESOURCE_NAME = "RHQ Agent";
-    
+
     private final Log log = LogFactory.getLog(AgentDiscoveryComponent.class);
-    
+
     /**
      * Simply returns the agent resource.
      *
@@ -69,10 +70,10 @@ public class AgentDiscoveryComponent implements ResourceDiscoveryComponent, Reso
         HashSet<DiscoveredResourceDetails> set = new HashSet<DiscoveredResourceDetails>();
 
         try {
-            AgentManagementMBean mbean = getAgentManagementMBean();            
-            
+            AgentManagementMBean mbean = getAgentManagementMBean();
+
             String name = RESOURCE_NAME;
-            String key = getResourceKey(mbean);
+            String key = getResourceKey(context.getParentResourceContext(), mbean);
             String version = mbean.getVersion();
             String description = "RHQ Management Agent";
 
@@ -97,18 +98,18 @@ public class AgentDiscoveryComponent implements ResourceDiscoveryComponent, Reso
 
     public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
         AgentManagementMBean mbean = getAgentManagementMBean();
-        
-        String oldResourceKey = inventoriedResource.getResourceKey();        
-        String newResourceKey = getResourceKey(mbean);
-        
+
+        String oldResourceKey = inventoriedResource.getResourceKey();
+        String newResourceKey = getResourceKey(inventoriedResource.getParentResourceContext(), mbean);
+
         ResourceUpgradeReport ret = null;
-        
+
         if (!oldResourceKey.equals(newResourceKey)) {
             ret = new ResourceUpgradeReport();
-            ret.setNewResourceKey(newResourceKey);            
+            ret.setNewResourceKey(newResourceKey);
             return ret;
-        }   
-        
+        }
+
         /* if we ever allow resource name upgrades on the server, we can uncomment
          * this but I'm leaving it out for now so that we don't litter the upgrade
          * report with data that will never get used. No need to increase the traffic
@@ -119,24 +120,35 @@ public class AgentDiscoveryComponent implements ResourceDiscoveryComponent, Reso
             if (ret == null) {
                 ret = new ResourceUpgradeReport();
             }
-            
+
             ret.setNewName(RESOURCE_NAME);
         }
         */
-        
+
         return ret;
     }
-    
-    private static String getResourceKey(AgentManagementMBean mbean) {
+
+    private static String getResourceKey(ResourceContext parentResourceContext, AgentManagementMBean mbean) {
         String agentName = mbean.getAgentConfiguration().getProperty(AgentConfigurationConstants.NAME);
-        
-        //DO NOT CHANGE THIS EVER UNLESS YOU UPDATE THE upgrade() METHOD TO HANDLE THE
-        //CHANGES OF THE RESOURCE KEY FORMAT!!!
-        //This doesn't use the RESOURCE_NAME constant on purpose so that a change of that constant
+        String platformResourceKey = parentResourceContext.getResourceKey();
+
+        // DO NOT CHANGE THIS EVER UNLESS YOU UPDATE THE upgrade() METHOD TO HANDLE THE
+        // CHANGES OF THE RESOURCE KEY FORMAT!!!
+
+        // This doesn't use the RESOURCE_NAME constant on purpose so that a change of that constant
         //doesn't modify the resource key format.
-        return agentName + " RHQ Agent";
+
+        // BZ 1118091: To enable good autoclustering of RHQ Agent resources across platforms the agent resource keys
+        // must be the same.  In general each platform has at most one imported 'RHQ Agent' child resource and
+        // it is named the same as the platform (Actually the platform's resource key). In this case do not incorporate
+        // the agent name into the resource key.  In that way we can have a generic static reskey for the agents, across
+        // platforms, while still maintaining unique agent names across all agents (an RHQ requirement).  In the rare case
+        // that a platform has multiple agents deployed (typically a perftest scenario, but sometimes a production
+        // scenario) at most one agent will get assigned the static key, which is fine, because reskeys remain
+        // predictable.
+        return (agentName.equals(platformResourceKey)) ? "RHQ Agent" : agentName + " RHQ Agent";
     }
-    
+
     private void initLogEventSourcesConfigProp(AgentManagementMBean agent, Configuration pluginConfiguration) {
         File logsDir = new File(agent.getAgentHomeDirectory(), "logs");
 
@@ -209,7 +221,7 @@ public class AgentDiscoveryComponent implements ResourceDiscoveryComponent, Reso
         try {
             AgentManagementMBean mbean;
 
-            mbean = (AgentManagementMBean) MBeanServerInvocationHandler
+            mbean = MBeanServerInvocationHandler
                 .newProxyInstance(getAgentManagementMBeanServer(), AgentManagement.singletonObjectName,
                     AgentManagementMBean.class, false);
 

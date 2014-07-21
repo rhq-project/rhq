@@ -339,6 +339,8 @@ public class AlertCondition implements Serializable {
         + "                 ) " //
         + "     ) " //
         + "  ) ";
+    
+    public static final String ADHOC_SEPARATOR = "@@@";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_CONDITION_ID_SEQ")

@@ -25,5 +25,11 @@
     <method>ResourceTypeBundleConfiguration$BundleDestinationBaseDirectory(java.lang.String, java.lang.String, java.lang.String, java.lang.String)</method>
     <justification>This is not supposed to be called publicly.</justification>
   </difference>
-</differences>
 
+  <difference>
+    <className>org/rhq/core/domain/alert/AlertConditionLog</className>
+    <differenceType>6003</differenceType> <!-- Value of compile-time constant has changed -->
+    <field>MAX_LOG_LENGTH</field>
+    <justification>Increasing the length of db column and this constant depends on it.</justification>
+  </difference>
+</differences>

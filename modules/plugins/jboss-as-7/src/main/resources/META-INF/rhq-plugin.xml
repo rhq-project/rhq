@@ -2666,7 +2666,7 @@
 
       <service name="Connector (Managed Server)"
                discovery="SubsystemDiscovery"
-               class="WebConnectorComponent">
+               class="BaseComponent">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="connector"/>
@@ -2692,7 +2692,7 @@
           <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
           <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
           <c:simple-property name="executor" required="false" type="string" readOnly="true" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
-          <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="true" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used and the number of cpu cores (512*cores for HTTP, 32*cores for AJP)."/>
+          <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="true" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
           <c:simple-property name="max-post-size" required="false" type="integer" readOnly="true" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
           <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="true" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
@@ -5630,7 +5630,7 @@
 
       <service name="Connector (Profile)"
                discovery="SubsystemDiscovery"
-               class="WebConnectorComponent"
+               class="BaseComponent"
                createDeletePolicy="both">
 
         <plugin-configuration>
@@ -5651,7 +5651,7 @@
           <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
           <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
           <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
-          <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used and the number of cpu cores (512*cores for HTTP, 32*cores for AJP)."/>
+          <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
           <c:simple-property name="max-post-size" required="false" type="integer" readOnly="false" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
           <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="false" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
@@ -7666,7 +7666,7 @@
 
     <service name="Connector"
              discovery="SubsystemDiscovery"
-             class="WebConnectorComponent"
+             class="BaseComponent"
              createDeletePolicy="both">
 
       <plugin-configuration>
@@ -7695,7 +7695,7 @@
         <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
         <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
         <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
-        <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used and the number of cpu cores (512*cores for HTTP, 32*cores for AJP)."/>
+        <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
         <c:simple-property name="max-post-size" required="false" type="integer" readOnly="false" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
         <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="false" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>

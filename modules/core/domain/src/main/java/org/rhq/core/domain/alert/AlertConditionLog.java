@@ -123,7 +123,8 @@ public class AlertConditionLog implements Serializable {
 
     public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT_CONDITION_LOG";
 
-    public static final int MAX_LOG_LENGTH = 250;
+    // this is an implementation detail and could be private
+    public static final int MAX_LOG_LENGTH = 4000;
 
     private static final long serialVersionUID = 1L;
 

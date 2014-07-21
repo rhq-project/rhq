@@ -316,8 +316,21 @@ class AgentConditionCache extends AbstractConditionCache {
                 if (eventDetails == null) {
                     cacheElement = new EventCacheElement(alertConditionOperator, eventSeverity, alertConditionId);
                 } else {
-                    cacheElement = new EventCacheElement(alertConditionOperator, eventDetails, eventSeverity,
-                        alertConditionId);
+                    String regexEventDetails = "", regexSourceLocation = "";
+                    if (eventDetails.contains(AlertCondition.ADHOC_SEPARATOR)) {
+                        String[] regexes = eventDetails.split(AlertCondition.ADHOC_SEPARATOR);
+                        if (regexes.length > 0) {
+                            regexEventDetails = regexes[0];
+                            if (regexes.length > 1) {
+                                regexSourceLocation = regexes[1];
+                            }
+                        }
+                    } else {
+                        regexEventDetails = eventDetails; // let's keep backward compatibility here, because there may be REST
+                        // clients using the old approach
+                    }
+                    cacheElement = new EventCacheElement(alertConditionOperator, eventDetails, regexEventDetails,
+                        regexSourceLocation, eventSeverity, alertConditionId);
                 }
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create EventCacheElement with parameters: "
@@ -528,7 +541,7 @@ class AgentConditionCache extends AbstractConditionCache {
                 i.remove();
                 int matched = stats.matched;
                 processCacheElements(cacheElements, event.getSeverity(), event.getTimestamp(), stats,
-                    event.getDetail(), "sourceLocation=" + source.getLocation());
+                    "sourceLocation=" + source.getLocation(), event.getDetail());
                 if (matched < stats.matched) {
                     break;
                 }

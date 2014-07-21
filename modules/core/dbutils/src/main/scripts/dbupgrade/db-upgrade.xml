@@ -2427,6 +2427,10 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+            <schemaSpec version="2.155">
+              <!-- BZ 1070257 + 911432 -->
+              <schema-alterColumn table="RHQ_ALERT_CONDITION_LOG" column="VALUE" columnType="VARCHAR2" precision="4000" />
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

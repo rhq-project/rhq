@@ -71,9 +71,9 @@ import org.rhq.coregui.client.PopupWindow;
 import org.rhq.coregui.client.components.form.SortedSelectItem;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -796,6 +796,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
                 break;
             case PASSWORD:
                 editorItem = new PasswordItem();
+                editorItem.setAttribute("autocomplete", "off");
                 break;
             case BOOLEAN:
                 // TODO: we want RadioGroupItem, but smartgwt seems to have a bug and it won't render this when

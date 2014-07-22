@@ -25,12 +25,15 @@ package org.rhq.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
@@ -39,6 +42,7 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
+import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -196,8 +200,14 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     @Override
     protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean purgeInternals,
         final AsyncCallback<AlertDefinition> resultReceiver) {
-        if (alertDefinition.getId() == 0) {
-            GWTServiceLookup.getAlertDefinitionService().createAlertDefinition(alertDefinition,
+        AlertDefinition newAlertDefinition = new AlertDefinition(alertDefinition);
+        newAlertDefinition.setId(alertDefinition.getId());
+        newAlertDefinition.setResource(null); // this was causing the serialization issues in GWT 2.5.0 (bz1058318)
+        // the 3 lines above can go away after update to >= GWT 2.6.0 rc3
+
+        if (newAlertDefinition.getId() == 0) {
+            Log.info("calling createAlertDefinition()");
+            GWTServiceLookup.getAlertDefinitionService().createAlertDefinition(newAlertDefinition,
                 Integer.valueOf(resource.getId()), new AsyncCallback<AlertDefinition>() {
                     @Override
                     public void onSuccess(AlertDefinition result) {
@@ -214,6 +224,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     }
                 });
         } else {
+            Log.info("calling updateAlertDefinition()");
             GWTServiceLookup.getAlertDefinitionService().updateAlertDefinition(alertDefinition.getId(),
                 alertDefinition, purgeInternals, new AsyncCallback<AlertDefinition>() {
                     @Override

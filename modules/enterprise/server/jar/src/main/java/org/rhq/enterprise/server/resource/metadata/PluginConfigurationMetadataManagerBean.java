@@ -1,5 +1,8 @@
 package org.rhq.enterprise.server.resource.metadata;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -10,7 +13,6 @@ import javax.persistence.PersistenceContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -19,14 +21,13 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationDefinitionUpdateReport;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.util.CriteriaQuery;
-import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
+import org.rhq.enterprise.server.util.BatchIterator;
 
 @Stateless
 public class PluginConfigurationMetadataManagerBean implements PluginConfigurationMetadataManagerLocal {
@@ -40,13 +41,15 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
     private ConfigurationMetadataManagerLocal configurationMetadataMgr;
 
     @EJB
+    private PluginConfigurationMetadataManagerLocal pluginConfigurationMetadataMgr;
+
+    @EJB
     private SubjectManagerLocal subjectMgr;
 
     @EJB
     private ResourceManagerLocal resourceMgr;
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updatePluginConfigurationDefinition(ResourceType existingType, ResourceType newType) {
         if (log.isDebugEnabled()) {
             log.debug("Updating plugin configuration definition for " + existingType);
@@ -63,8 +66,8 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
                 }
                 entityMgr.persist(newType.getPluginConfigurationDefinition());
                 existingType.setPluginConfigurationDefinition(newType.getPluginConfigurationDefinition());
-            } else // update the configuration
-            {
+
+            } else { // update the configuration
                 if (log.isDebugEnabled()) {
                     log.debug("Updating plugin configuration definition for " + existingType);
                 }
@@ -74,23 +77,13 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
 
                 if (updateReport.getNewPropertyDefinitions().size() > 0
                     || updateReport.getUpdatedPropertyDefinitions().size() > 0) {
-                    final Subject overlord = subjectMgr.getOverlord();
-                    ResourceCriteria criteria = new ResourceCriteria();
-                    criteria.addFilterResourceTypeId(existingType.getId());
 
-                    //Use CriteriaQuery to automatically chunk/page through criteria query results
-                    CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
-                        @Override
-                        public PageList<Resource> execute(ResourceCriteria criteria) {
-                            return resourceMgr.findResourcesByCriteria(overlord, criteria);
-                        }
-                    };
-
-                    CriteriaQuery<Resource, ResourceCriteria> resources = new CriteriaQuery<Resource, ResourceCriteria>(
-                        criteria, queryExecutor);
-
-                    for (Resource resource : resources) {
-                        updateResourcePluginConfiguration(resource, updateReport);
+                    // don't pull/update every resource entity in at this point, do it in batches
+                    List<Integer> resourceIds = resourceMgr.findIdsByTypeIds(Arrays.asList(existingType.getId()));
+                    BatchIterator<Integer> batchIterator = new BatchIterator<Integer>(resourceIds, 200);
+                    while (batchIterator.hasMoreBatches()) {
+                        pluginConfigurationMetadataMgr.updateResourcePluginConfigurationsInNewTransaction(
+                            batchIterator.getNextBatch(), updateReport);
                     }
                 }
             }
@@ -106,41 +99,57 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
         }
     }
 
-    private void updateResourcePluginConfiguration(Resource resource, ConfigurationDefinitionUpdateReport updateReport) {
-        Configuration pluginConfiguration = resource.getPluginConfiguration();
-        boolean modified = false;
-        @SuppressWarnings("unused")
-        int numberOfProperties = pluginConfiguration.getProperties().size();
-        ConfigurationTemplate template = updateReport.getConfigurationDefinition().getDefaultTemplate();
-        Configuration templateConfiguration = template.getConfiguration();
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void updateResourcePluginConfigurationsInNewTransaction(List<Integer> resourceIds,
+        ConfigurationDefinitionUpdateReport updateReport) {
 
-        for (PropertyDefinition propertyDef : updateReport.getNewPropertyDefinitions()) {
-            if (propertyDef.isRequired()) {
-                Property templateProperty = templateConfiguration.get(propertyDef.getName());
-                if (templateProperty == null) {
-                    throw new IllegalArgumentException("The property [" + propertyDef.getName()
-                        + "] marked as required in the configuration definition of ["
-                        + propertyDef.getConfigurationDefinition().getName() + "] has no attribute 'default'");
-                } else {
-                    pluginConfiguration.put(templateProperty.deepCopy(false));
-                    modified = true;
-                }
-            }
-        }
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterIds(resourceIds.toArray(new Integer[resourceIds.size()]));
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
+        List<Resource> resources = resourceMgr.findResourcesByCriteria(subjectMgr.getOverlord(), criteria);
 
-        for (PropertyDefinition propertyDef : updateReport.getUpdatedPropertyDefinitions()) {
-            if (propertyDef.isRequired()) {
-                String propertyValue = pluginConfiguration.getSimpleValue(propertyDef.getName(), null);
-                if (propertyValue == null) {
+        for (Resource resource : resources) {
+            boolean modified = false;
+            ConfigurationTemplate template = updateReport.getConfigurationDefinition().getDefaultTemplate();
+            Configuration templateConfiguration = template.getConfiguration();
+
+            for (PropertyDefinition propertyDef : updateReport.getNewPropertyDefinitions()) {
+                if (propertyDef.isRequired()) {
                     Property templateProperty = templateConfiguration.get(propertyDef.getName());
-                    pluginConfiguration.put(templateProperty.deepCopy(false));
-                    modified = true;
+                    if (templateProperty == null) {
+                        throw new IllegalArgumentException("The property [" + propertyDef.getName()
+                            + "] marked as required in the configuration definition of ["
+                            + propertyDef.getConfigurationDefinition().getName() + "] has no attribute 'default'");
+                    } else {
+                        // we only pull the configuration when an update is needed. The getProperties call
+                        // just ensures the lazy load happens.
+                        Configuration pluginConfiguration = resource.getPluginConfiguration();
+                        int numberOfProperties = pluginConfiguration.getProperties().size();
+                        pluginConfiguration.put(templateProperty.deepCopy(false));
+                        modified = true;
+                    }
                 }
             }
-        }
 
-        if (modified) {
-            resource.setAgentSynchronizationNeeded();
+            for (PropertyDefinition propertyDef : updateReport.getUpdatedPropertyDefinitions()) {
+                if (propertyDef.isRequired()) {
+                    // we only pull the configuration when an update is needed. The getProperties call
+                    // just ensures the lazy load happens.
+                    Configuration pluginConfiguration = resource.getPluginConfiguration();
+                    int numberOfProperties = pluginConfiguration.getProperties().size();
+                    String propertyValue = pluginConfiguration.getSimpleValue(propertyDef.getName(), null);
+                    if (propertyValue == null) {
+                        Property templateProperty = templateConfiguration.get(propertyDef.getName());
+                        pluginConfiguration.put(templateProperty.deepCopy(false));
+                        modified = true;
+                    }
+                }
+            }
+
+            if (modified) {
+                resource.setAgentSynchronizationNeeded();
+            }
         }
     }
 }

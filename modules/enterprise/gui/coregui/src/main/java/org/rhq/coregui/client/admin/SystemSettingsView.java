@@ -53,8 +53,8 @@ import org.rhq.coregui.client.components.configuration.PropertyValueChangeListen
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -125,6 +125,9 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
                 prop = config.getSimple(SystemSetting.DRIFT_FILE_PURGE_PERIOD.getInternalName());
+                prop.setStringValue(convertMillisToDays(prop.getStringValue()));
+
+                prop = config.getSimple(SystemSetting.OPERATION_HISTORY_PURGE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
                 prop = config.getSimple(SystemSetting.BASE_LINE_FREQUENCY.getInternalName());
@@ -204,6 +207,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                     || SystemSetting.RT_DATA_PURGE_PERIOD.getInternalName().equals(simple.getName())
                     || SystemSetting.EVENT_PURGE_PERIOD.getInternalName().equals(simple.getName())
                     || SystemSetting.DRIFT_FILE_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemSetting.OPERATION_HISTORY_PURGE_PERIOD.getInternalName().equals(simple.getName())
                     || SystemSetting.BASE_LINE_FREQUENCY.getInternalName().equals(simple.getName())
                     || SystemSetting.BASE_LINE_DATASET.getInternalName().equals(simple.getName())) {
                     value = convertDaysToMillis(value);
@@ -450,6 +454,14 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 pd.setDefaultValue("31");
                 break;
 
+            case OPERATION_HISTORY_PURGE_PERIOD:
+                pd.setDescription(MSG.view_admin_systemSettings_OperationHistoryPurge_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_OperationHistoryPurge_name());
+                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(0), null));
+                pd.setDefaultValue("0");
+                break;
+
             case DATA_REINDEX_NIGHTLY:
                 pd.setDescription(MSG.view_admin_systemSettings_DataReindex_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_DataReindex_name());
@@ -559,14 +571,14 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
 
             case LDAP_BIND_DN:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPBindDN_desc());
-                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPBindDN_name());
+                pd.setDisplayName(MSG.common_title_username());
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("");
                 break;
 
             case LDAP_BIND_PW:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPBindPW_desc());
-                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPBindPW_name());
+                pd.setDisplayName(MSG.common_title_password());
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("");
                 break;
@@ -627,7 +639,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 break;
 
             }
-            
+
 
         }
 

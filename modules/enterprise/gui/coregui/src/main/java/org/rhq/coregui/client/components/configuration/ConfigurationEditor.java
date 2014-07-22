@@ -1433,6 +1433,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
                     break;
                 case PASSWORD:
                     valueItem = new PasswordItem();
+                    valueItem.setAttribute("autocomplete", "off");
                     break;
                 case BOOLEAN:
                     RadioGroupItem radioGroupItem = new RadioGroupItem();

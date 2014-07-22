@@ -23,6 +23,7 @@ Ant Script that provides ways to package the Agent.
    <property name="log4j.version" value="1.2.16"/>
    <property name="trove.version" value="3.0.3"/>
    <property name="so.exts" value="*.so.*"/>
+   <property name="picketbox.version" value="4.0.19.SP7"/>
 
    <!--
    =======================================================================
@@ -65,6 +66,7 @@ Ant Script that provides ways to package the Agent.
          <include name="org/rhq/rhq-common-drift/${project.version}/rhq-common-drift-${project.version}.jar"/>
          <include name="commons-io/commons-io/1.4/commons-io-1.4.jar"/>
          <include name="net/sf/trove4j/trove4j/${trove.version}/trove4j-${trove.version}.jar"/>
+         <include name="org/picketbox/picketbox/${picketbox.version}/picketbox-${picketbox.version}.jar" />
       </fileset>
 
    </path>

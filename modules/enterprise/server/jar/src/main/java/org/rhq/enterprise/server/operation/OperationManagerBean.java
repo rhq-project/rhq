@@ -30,6 +30,7 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -47,6 +48,7 @@ import org.quartz.Trigger;
 
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.JobTrigger;
@@ -95,6 +97,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
+import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -984,7 +987,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         // The history item may have been created already, so find it in the database and
         // set the new state from our input
-        if (history.getId() != 0) {
+        boolean isNewHistory = (0 == history.getId());
+        if (!isNewHistory) {
             OperationHistory existingHistoryItem = entityManager.find(OperationHistory.class, history.getId());
             if (null == existingHistoryItem) {
                 throw new IllegalArgumentException(
@@ -1029,8 +1033,24 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         if (history.getParameters() != null) {
             history.getParameters().getId(); // eagerly reload the parameters
         }
-        storageNodeOperationsHandler.handleOperationUpdateIfNecessary(history);
+
+        // we can even alert on In-Progress (an operation just being scheduled) so we need to check the
+        // condition manager
         notifyAlertConditionCacheManager("updateOperationHistory", history);
+
+        // if this is not the initial create (i.e schedule-time of the operation) it means the
+        // operation status has likely been updated.  Notify the storage node to see if it needs
+        // to do anything in response to a storage node operation completion.  Don't pass an
+        // attached entity to an Asynchronous SLSB method that runs in its own transaction. That
+        // can cause locking with the current transaction.  Note we can't pass in just the id, because
+        // the updates to the history are not yet committed and the async method needs to see the updated
+        // history.
+        if (!isNewHistory) {
+            entityManager.flush();
+            entityManager.detach(history);
+            storageNodeOperationsHandler.handleOperationUpdateIfNecessary(history);
+        }
+
         return history;
     }
 
@@ -1267,6 +1287,57 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         deleteOperationHistory_helper(doomedHistory.getId());
 
         return;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public int purgeOperationHistory(Date purgeBeforeTime) {
+        int totalPurged = 0;
+        int batchPurged = 0;
+        final int groupLimit = 1;
+        final int resourceLimit = 50;
+        long startTime = System.currentTimeMillis();
+
+        // first, purge group operations (one at a time, it could be a large group)
+        do {
+            batchPurged = operationManager.purgeOperationHistoryInNewTransaction(purgeBeforeTime, true, groupLimit);
+            totalPurged += batchPurged;
+
+        } while (batchPurged > 0);
+
+        // then, purge resource operations, we'll do 50 at a time since it is still pretty involved
+        do {
+            batchPurged = operationManager.purgeOperationHistoryInNewTransaction(purgeBeforeTime, false, resourceLimit);
+            totalPurged += batchPurged;
+
+        } while (batchPurged > 0);
+
+        MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
+        MeasurementMonitor.getMBean().setPurgedEvents(totalPurged);
+
+        return totalPurged;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public int purgeOperationHistoryInNewTransaction(Date purgeBeforeTime, boolean isGroupPurge, int limit) {
+
+        String entity = isGroupPurge ? "GroupOperationHistory" : "ResourceOperationHistory";
+        String limitClause = DatabaseTypeFactory.getDefaultDatabaseType().getLimitClause(limit);
+        String query = "SELECT h.id FROM " + entity + " h WHERE h.createdTime < :purgeBeforeTime";
+        Query q = entityManager.createQuery(query);
+        q.setParameter("purgeBeforeTime", purgeBeforeTime.getTime());
+        q.setMaxResults(limit);
+
+        List rs = q.getResultList();
+        for (Object r : rs) {
+            int id = DatabaseTypeFactory.getDefaultDatabaseType().getInteger(r);
+            if (isGroupPurge) {
+                deleteOperationHistory(subjectManager.getOverlord(), id, true);
+            } else {
+                deleteOperationHistory_helper(id);
+            }
+        }
+
+        return rs.size();
     }
 
     @SuppressWarnings("unchecked")

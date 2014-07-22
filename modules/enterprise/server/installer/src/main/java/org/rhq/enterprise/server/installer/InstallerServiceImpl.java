@@ -325,6 +325,9 @@ public class InstallerServiceImpl implements InstallerService {
         try {
             mcc = createModelControllerClient();
 
+            // create the obfuscation vault
+            ServerInstallUtil.createObfuscationVault(mcc, serverProperties);
+
             // ensure the server info is up to date and stored in the DB
             ServerInstallUtil.setSocketBindings(mcc, serverProperties);
 
@@ -336,6 +339,7 @@ public class InstallerServiceImpl implements InstallerService {
 
             // Set up the logging subsystem
             ServerInstallUtil.configureLogging(mcc, serverProperties);
+
 
             ServerInstallUtil.createUserSecurityDomain(mcc);
             ServerInstallUtil.createRestSecurityDomain(mcc);

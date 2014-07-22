@@ -208,6 +208,13 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     @Override
     protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean resetMatching,
         final AsyncCallback<AlertDefinition> resultReceiver) {
+        AlertDefinition newAlertDefinition = new AlertDefinition(alertDefinition);
+        newAlertDefinition.setId(alertDefinition.getId());
+        ResourceType fakeResourceType = new ResourceType();
+        fakeResourceType.setId(resourceType.getId());
+        newAlertDefinition.setResourceType(fakeResourceType); // this was causing the serialization issues in GWT 2.5.0 (bz1058318)
+        // the 3 lines above can go away after update to >= GWT 2.6.0 rc3
+        
         if (alertDefinition.getId() == 0) {
             GWTServiceLookup.getAlertTemplateService().createAlertTemplate(alertDefinition,
                 Integer.valueOf(this.resourceType.getId()), new AsyncCallback<Integer>() {

@@ -34,6 +34,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StreamTokenizer;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -62,6 +64,14 @@ import java.util.prefs.Preferences;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.xml.stream.XMLEventFactory;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLEventWriter;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.DTD;
+import javax.xml.stream.events.XMLEvent;
 
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
@@ -1313,7 +1323,7 @@ public class AgentMain {
             Properties replacements = new Properties();
             replacements.putAll(System.getProperties());
             replacements.put("rhq.agent.preferences-node", m_agentPreferencesNodeName);
-            String new_config = StringPropertyReplacer.replaceProperties(raw_config_file.toString(), replacements);
+            String new_config = addMissingDoctypeDeclaration(StringPropertyReplacer.replaceProperties(raw_config_file.toString(), replacements));
 
             ByteArrayInputStream new_config_input_stream = new ByteArrayInputStream(new_config.getBytes());
             Preferences.importPreferences(new_config_input_stream);
@@ -1357,6 +1367,59 @@ public class AgentMain {
         m_configuration = agent_configuration;
 
         return m_configuration;
+    }
+
+    /**
+     * If the configuration file is missing DOCTYPE declaration (older agents), add missing DOCTYPE to allow
+     * importing agent configuration.
+     *
+     * @param input XML with or without DOCTYPE declaration
+     * @return XML with DOCTYPE declaration, or original XML in case of errors
+     */
+    private String addMissingDoctypeDeclaration(String input) {
+        XMLEventReader eventReader = null;
+        XMLEventWriter eventWriter = null;
+        String output = null;
+        StringWriter writer = new StringWriter();
+
+        try {
+            StringReader reader = new StringReader(input);
+            XMLInputFactory inputFactory = XMLInputFactory.newFactory();
+            XMLOutputFactory outputFactory = XMLOutputFactory.newFactory();
+            XMLEventFactory eventFactory = XMLEventFactory.newFactory();
+            eventReader = inputFactory.createXMLEventReader(reader);
+            eventWriter = outputFactory.createXMLEventWriter(writer);
+
+            boolean dtdWritten = false;
+
+            while(eventReader.hasNext()) {
+                XMLEvent xmlEvent = eventReader.nextEvent();
+                switch(xmlEvent.getEventType()) {
+                    case XMLEvent.DTD:
+                        dtdWritten = true;
+                        eventWriter.add(xmlEvent);
+                        break;
+                    case XMLEvent.START_ELEMENT:
+                        if(!dtdWritten) {
+                            DTD dtd = eventFactory.createDTD("DOCTYPE preferences SYSTEM \"http://java.sun.com/dtd/preferences.dtd\"");
+                            eventWriter.add(dtd);
+                            dtdWritten = true;
+                        }
+                        eventWriter.add(xmlEvent);
+                        break;
+                    default:
+                        eventWriter.add(xmlEvent);
+                        break;
+                }
+            }
+            eventReader.close();
+            eventWriter.close();
+            output = writer.toString();
+        } catch (XMLStreamException e) {
+            // Return input XML, we couldn't process it correctly
+            output = input;
+        }
+        return output;
     }
 
     /**

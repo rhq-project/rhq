@@ -21,6 +21,8 @@ package org.rhq.coregui.server.gwt;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -38,6 +40,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
 
     private AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
     private AlertNotificationManagerLocal alertNotifManager = LookupUtil.getAlertNotificationManager();
+    private static Log log = LogFactory.getLog(AlertDefinitionGWTServiceImpl.class);
 
     @Override
     public PageList<AlertDefinition> findAlertDefinitionsByCriteria(AlertDefinitionCriteria criteria)
@@ -68,7 +71,8 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
         try {
             AlertDefinition result = alertDefManager.createAlertDefinitionInNewTransaction(getSessionSubject(),
                 alertDefinition, resourceId, true);
-            return SerialUtility.prepare(result, "createAlertDefinition");
+            AlertDefinition preparedResult = SerialUtility.prepare(result, "createAlertDefinition");
+            return preparedResult;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

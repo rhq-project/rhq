@@ -151,6 +151,14 @@ public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
             null), new String[] { "collection-usage-threshold-count", "collection-usage-threshold", "collection-usage",
             "collection-usage-threshold-exceeded", "collection-usage:committed", "collection-usage:init",
             "collection-usage:max", "collection-usage:used", "usage-threshold-count", "usage-threshold-exceeded" });
+
+        //the max-connections will be 'undefined' if no specific value is set. This is AS's way of saying the value
+        //is connector specific
+        excludedMetricNamesByType.put(new ResourceType("Connector (Managed Server)", PLUGIN_NAME, ResourceCategory.SERVICE, null),
+            new String[] {"_expr:max-connections"});
+        excludedMetricNamesByType.put(new ResourceType("Connector", PLUGIN_NAME, ResourceCategory.SERVICE, null),
+            new String[] {"_expr:max-connections"});
+
         assertAllNumericMetricsAndTraitsHaveNonNullValues(excludedMetricNamesByType);
     }
 

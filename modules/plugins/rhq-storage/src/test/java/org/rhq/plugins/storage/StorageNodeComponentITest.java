@@ -154,7 +154,7 @@ public class StorageNodeComponentITest {
 
         String jvmOpts = properties.getProperty("JVM_OPTS");
         jvmOpts = jvmOpts.substring(0, jvmOpts.lastIndexOf("\""));
-        jvmOpts = jvmOpts + " -Dcassandra.ring_delay_ms=100\"";
+        jvmOpts = jvmOpts + " -Dcassandra.ring_delay_ms=2000\"";
         properties.setProperty("JVM_OPTS", jvmOpts);
 
         propertiesUpdater.update(properties);

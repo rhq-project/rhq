@@ -19,6 +19,12 @@ hr {
     height: 1px;
 }
 
+/*bz1116784*/
+input[name="fileUploadItem"] {
+    height: 27px !important;
+    width: 450px !important;
+}
+
 :focus {
     outline: 0px !important; /* removing the dotted outline globally */
 }
@@ -85,12 +91,22 @@ a, a:link, a:visited {
     overflow: visible !important;
 }
 
+.searchBar input {
+  background: url("/coregui/images/search/glass.png") no-repeat scroll right center rgba(0, 0, 0, 0);
+}
+
+.tableRowCount {
+  height:30px;
+  font-size:11px;
+}
+
 .tableFilter {
     background-color: #f6f6f6;
     border-width: 1px 1px 0 1px;
     border-style: solid;
     border-color: #d1d1d1;
-    width: 100% !important;
+    min-height:24px;
+    padding:5px;
 }
 
 .splitbar table {
@@ -108,15 +124,16 @@ a, a:link, a:visited {
     visibility: hidden;
 }
 
-.subtabbar * {
+/*.subtabbar * {
     font-size: 12px;
-}
+}*/
 
 .subtabbar {
     border-bottom: 1px solid rgb(201, 201, 201);
     padding: 5px 0 0 21px;
-    margin-bottom: 10px;
+    margin-bottom: 20px !important;
 }
+
 
 /* PatternFly Overrides */
 /* login page */
@@ -373,20 +390,7 @@ General
     border-bottom: 1px solid #C9C9C9;
 }
 
-.subtabbar * {
-    /*  font-size:12px; */
-}
 
-.subtabbar {
-    border-bottom: 1px solid rgb(201, 201, 201);
-    padding: 5px 0 0 21px;
-    margin-bottom: 20px;
-}
-
-/*a:link {
-    color:#0060BF;
-    text-decoration:underline;
-}*/
 
 .pageBackground {
     font-size: 11px;
@@ -709,7 +713,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 }
 
 .treeMenuSelected {
-    background-color: #fff1a8;
+    background-color: #d4edfa;
     border-top: 1px solid #ffeb90;
     border-bottom: 1px solid #ffeb90;
 }
@@ -904,7 +908,10 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
     color: #222;
 }
 
+.SubTabButtonDown,
+.SubTabButtonSelectedDisabled,
 .SubTabButtonSelected,
+.SubTabButtonDisabled,
 .SubTabButton {
     font-size: 12px;
     border-style: solid;
@@ -914,6 +921,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
     padding: 3px 0px 5px 0px;
 }
 
+.SubTabButtonDown,
 .SubTabButtonSelected {
     color: #0099d3;
     border-color: #0099d3;
@@ -987,6 +995,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 }
 
 .EvenRow,
+.EvenRowDisabled,
 .EvenRowFocused {
     background-color: #f0f0f0;
 }
@@ -1115,28 +1124,17 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
     box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 6px #CE8483;
 }
 
-/* selectItem */
-.selectItemTextFocused {
-    color: black;
-    -moz-outline-offset: -1;
-    border: 1px solid #5678ac;
-}
+
 
 .textItemFocused,
 .selectItemTextFocused {
-    border-color: #66afe9;
+    border-color: #66afe9 !important;
     outline: 0;
     -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, 0.6);
     box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, 0.6);
 }
 
-/*
-.configurationEditorHeaderCell .staticTextItem {
-    font-size: 16px;
-    color: #000;
-    font-weight: bold;
-}
-*/
+
 .selectItemText,
 .selectItemTextError,
 .selectItemTextFocused,
@@ -1153,7 +1151,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
     line-height: 1.66666667;
     border-radius: 1px;
 
-    background-color: #eeeeee;
+    background-color: #fff;
     background-image: -webkit-linear-gradient(top, #fafafa 0%, #ededed 100%);
     background-image: linear-gradient(to bottom, #fafafa 0%, #ededed 100%);
     background-repeat: repeat-x;
@@ -1181,29 +1179,37 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
     background-clip: padding-box;
 }
 
+.pickListCellSelectedOver,
+.pickListCellSelectedOverDark,
+.pickListCellOver,
+.pickListCellOverDark,
 .pickListCell,
 .pickListCellDark,
 .tallPickListCell,
 .tallPickListCellDark,
 .pickListCellSelected,
+.pickListCellSelectedDark,
+.tallPickListCellSelected,
 .tallPickListCellSelectedDark {
     border-color: transparent;
     border-style: solid;
     border-width: 1px 0;
     overflow: visible;
+    cursor:pointer;
 }
 
+/*
 .pickListCellSelected,
 .pickListCellSelectedDark,
 .tallPickListCellSelected,
 .tallPickListCellSelectedDark {
-    border-color: #b3d3e7;
+   border-color: #b3d3e7;
     background-color: #dfedfa;
 }
 
 .pickListCellDisabled,
 .tallPickListCellDisabled {
-}
+}*/
 
 /* checkbox and radioButton */
 .labelAnchor,
@@ -1337,7 +1343,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 .dateChooserWeekendButtonSelected,
 .dateChooserWeekendButtonSelectedOver,
 .dateChooserWeekendButtonSelectedDown {
-    background-color: #fff1a8;
+    background-color: #d4edfa;
 }
 
 .dateChooserNavButton,
@@ -1401,8 +1407,8 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 .dateChooserWeekendSelected,
 .dateChooserWeekendSelectedDisabled,
 .dateChooserWeekendDisabled {
-    border: 2px solid #fff1a8;
-    background-color: #fff1a8;
+    border: 2px solid #d4edfa;
+    background-color: #d4edfa;
 }
 
 .dateChooserWeekdayOver,
@@ -1631,7 +1637,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 .specialColOver,
 .recordSummaryCellOver,
 .recordSummaryCellOverDark {
-    background-color: #fff1a8;
+    background-color: #d4edfa;
 }
 
 .tallCellOver,
@@ -1743,6 +1749,10 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
     background-color: #f7f7f7;
 }
 
+.pickListCellSelectedOverDark,
+.pickListCellSelectedOver,
+.pickListCellDarkOver,
+.pickListCellOver,
 .treeCellOver,
 .treeCellOverDark,
 .treeTallCellOver,
@@ -1806,10 +1816,10 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 .sortNumeral {
     font-size: 7px;
 }
-
+/*
 .toolStrip {
     margin-bottom: 5px !important;
-}
+}*/
 
 /*============================================================
   Tools

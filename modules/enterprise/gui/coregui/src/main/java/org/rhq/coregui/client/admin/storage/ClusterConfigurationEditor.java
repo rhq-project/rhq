@@ -21,8 +21,10 @@ package org.rhq.coregui.client.admin.storage;
 import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -177,8 +179,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         clusterForm.setFields(items.toArray(new FormItem[items.size()]));
 
         deploymentForm = buildForm("<div align='left' class='storageConfig'><div>"
-            + MSG.view_adminTopology_storageNodes_clusterSettings_deployments()
-            + "</div><div>"
+            + MSG.view_adminTopology_storageNodes_clusterSettings_deployments() + "</div><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_deployments_desc() + "</div>");
         FormItemBuilder.resetOddRow();
         items = buildHeaderItems();
@@ -201,8 +202,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         deploymentForm.setFields(items.toArray(new FormItem[items.size()]));
 
         credentialsForm = buildForm("<div align='left' class='storageConfig'><div>"
-            + MSG.view_adminTopology_storageNodes_clusterSettings_credentials()
-            + "</div><div>"
+            + MSG.view_adminTopology_storageNodes_clusterSettings_credentials() + "</div><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_credentials_desc() + "</div>");
         FormItemBuilder.resetOddRow();
         items = buildHeaderItems();
@@ -210,8 +210,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         // username field
         StringLengthValidator usernameValidator = new StringLengthValidator(4, 100, false);
         builder = new FormItemBuilder();
-        List<FormItem> usernameItems = builder.withName(FIELD_USERNAME)
-            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_username_title())
+        List<FormItem> usernameItems = builder.withName(FIELD_USERNAME).withTitle(MSG.common_title_username())
             .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_username())
             .withValue(settings.getUsername()).withReadOnlySetTo(true).withValidators(usernameValidator).build();
         items.addAll(usernameItems);
@@ -222,11 +221,10 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         // due to SmartGWT bug that changes focus after each input (https://code.google.com/p/smartgwt/issues/detail?id=309)
         passwordValidator1.setValidateOnChange(false);
         builder = new FormItemBuilder();
-        List<FormItem> passwordItems = builder.withName(FIELD_PASSWORD)
-            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_password_title())
+        List<FormItem> passwordItems = builder.withName(FIELD_PASSWORD).withTitle(MSG.common_title_password())
             .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_password())
             .withValue(settings.getPasswordHash()).withReadOnlySetTo(readOnly).withValidators(passwordValidator1)
-            .build((FormItem) GWT.create(PasswordItem.class));
+            .withAttribute("autocomplete", "off").build((FormItem) GWT.create(PasswordItem.class));
         items.addAll(passwordItems);
 
         // password_verify field
@@ -244,7 +242,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             .withValue(settings.getPasswordHash())
             .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_verify())
             .withReadOnlySetTo(readOnly).withValidators(passwordValidator1, passwordValidator2)
-            .build((FormItem) GWT.create(PasswordItem.class));
+            .withAttribute("autocomplete", "off").build((FormItem) GWT.create(PasswordItem.class));
 
         items.addAll(passwordVerifyItems);
         credentialsForm.setFields(items.toArray(new FormItem[items.size()]));
@@ -314,11 +312,17 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         private String description;
         private Validator[] validators;
         private boolean readOnly;
+        private Map<String, Object> attributes = new HashMap<String, Object>();
 
         private static boolean oddRow = true;
 
         public static void resetOddRow() {
             oddRow = true;
+        }
+
+        public FormItemBuilder withAttribute(String name, Object value) {
+            attributes.put(name, value);
+            return this;
         }
 
         public FormItemBuilder withName(String name) {
@@ -387,6 +391,9 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             fields.add(descriptionItem);
 
             oddRow = !oddRow;
+            for (Map.Entry<String, Object> e : attributes.entrySet()) {
+                valueItem.setAttribute(e.getKey(), e.getValue());
+            }
             return fields;
         }
 

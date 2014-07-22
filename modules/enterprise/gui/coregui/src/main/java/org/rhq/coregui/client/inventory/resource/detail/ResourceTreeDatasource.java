@@ -70,12 +70,10 @@ public class ResourceTreeDatasource extends DataSource {
     // the encompassing grid. It's unfortunate to have the DS know about the encompassing TreeGrid
     // but we have a situation in which a new AG node needs to be able to access its parent TreeNode by ID.
     private TreeGrid treeGrid;
-    private Label loadingLabel;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
-    public ResourceTreeDatasource(List<Resource> initialData, List<Resource> lockedData, TreeGrid treeGrid,
-        Label loadingLabel) {
+    public ResourceTreeDatasource(List<Resource> initialData, List<Resource> lockedData, TreeGrid treeGrid) {
         this.setClientOnly(false);
         this.setDataProtocol(DSProtocol.CLIENTCUSTOM);
         this.setDataFormat(DSDataFormat.CUSTOM);
@@ -83,7 +81,6 @@ public class ResourceTreeDatasource extends DataSource {
         this.initialData = initialData;
         this.lockedData = (null != lockedData) ? lockedData : new ArrayList<Resource>();
         this.treeGrid = treeGrid;
-        this.loadingLabel = loadingLabel;
 
         DataSourceField idDataField = new DataSourceTextField("id", MSG.common_title_id());
         idDataField.setPrimaryKey(true);
@@ -133,7 +130,7 @@ public class ResourceTreeDatasource extends DataSource {
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         //final long start = System.currentTimeMillis();
 
-        loadingLabel.show();
+        CoreGUI.showBusy(true);
 
         final String parentResourceId = request.getCriteria().getAttribute("parentId");
         //com.allen_sauer.gwt.log.client.Log.info("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
@@ -152,7 +149,7 @@ public class ResourceTreeDatasource extends DataSource {
                 processResponse(requestId, response);
             }
 
-            loadingLabel.hide();
+            CoreGUI.showBusy(false);
 
         } else {
             Log.debug(request.getCriteria().toString());
@@ -173,7 +170,7 @@ public class ResourceTreeDatasource extends DataSource {
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(requestId, response);
 
-                    loadingLabel.hide();
+                    CoreGUI.showBusy(false);
                 }
 
                 public void onSuccess(List<Resource> result) {
@@ -195,7 +192,7 @@ public class ResourceTreeDatasource extends DataSource {
                     response.setData(treeNodes);
                     processResponse(requestId, response);
 
-                    loadingLabel.hide();
+                    CoreGUI.showBusy(false);
                 }
             });
     }

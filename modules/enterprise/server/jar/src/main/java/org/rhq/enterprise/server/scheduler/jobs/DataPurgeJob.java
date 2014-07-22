@@ -25,11 +25,9 @@ import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.SimpleTrigger;
-import org.quartz.StatefulJob;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.RHQConstants;
@@ -44,6 +42,7 @@ import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
+import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -129,6 +128,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
         purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
         purgeOrphanedDriftFiles(LookupUtil.getDriftManager(), systemConfig);
+        purgeOperationHistoryData(LookupUtil.getOperationManager(), systemConfig);
     }
 
     private void purgeMeasurementTraitData(MeasurementDataManagerLocal measurementDataManager, Properties systemConfig) {
@@ -153,6 +153,33 @@ public class DataPurgeJob extends AbstractStatefulJob {
         } finally {
             long duration = System.currentTimeMillis() - timeStart;
             LOG.info("Traits data purged [" + traitsPurged + "] - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void purgeOperationHistoryData(OperationManagerLocal operationManager, Properties systemConfig) {
+        long timeStart = System.currentTimeMillis();
+        int purgeCount = 0;
+
+        try {
+            String purgeThresholdStr = systemConfig.getProperty(RHQConstants.OperationHistoryPurge, "0");
+            long purgeThreshold = Long.parseLong(purgeThresholdStr);
+            if (purgeThreshold <= 0) {
+                LOG.info("Operation History threshold set to 0, skipping purge of operation history data.");
+                return;
+            }
+
+            LOG.info("Operation History data purge starting at " + new Date(timeStart));
+            long threshold = timeStart - purgeThreshold;
+
+            Date purgeBeforeTime = new Date(threshold);
+            LOG.info("Purging operation history older than " + purgeBeforeTime);
+            purgeCount = operationManager.purgeOperationHistory(purgeBeforeTime);
+
+        } catch (Exception e) {
+            LOG.error("Failed to purge operation history data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Operation history data purged [" + purgeCount + "] - completed in [" + duration + "]ms");
         }
     }
 

@@ -99,6 +99,7 @@ public enum IconEnum {
     ARROW_WHITE("search/menu_arrow.png"),
     ARROW_GRAY("search/menu_arrow_down.png"),
     TRASH("search/trash.png"),
+    QUERY("search/glass.png"),
 
     /////////////////////////////
     //  Administration Tab

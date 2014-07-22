@@ -362,9 +362,27 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         coreGUI.rootCanvas.renderView(currentViewPath);
     }
 
+    public static native void showBusy(boolean on) /*-{
+      if ($wnd.loadQ == undefined) {
+        $wnd.loadQ = [];
+      }
+      if (on) {
+        $wnd.loadQ.push(on);
+        $wnd.Pace.restart();
+      } else {
+        $wnd.loadQ.shift();
+        if ($wnd.loadQ.length < 1) {
+          $wnd.Pace.stop();
+        }
+      }
+    }-*/;
+
+
     public static void refresh() {
+        showBusy(true);
         currentViewPath = new ViewPath(currentView, true);
         coreGUI.rootCanvas.renderView(currentViewPath);
+        showBusy(false);
     }
 
     public Canvas createContent(String viewName) {
@@ -575,7 +593,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
                     // Set the new content and redraw
                     this.currentViewId = topLevelViewId;
-                    
+
                     // Using GWT Code Splitting feature to decrease the size of generated JS code using lazy
                     // fetching. Each view built in createContent method has its Java Script code in a separate
                     // file.
@@ -601,7 +619,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                 }
             }
         }
-        
+
         private void render(ViewPath viewPath) {
             if (this.currentCanvas instanceof InitializableView) {
                 final InitializableView initializableView = (InitializableView) this.currentCanvas;

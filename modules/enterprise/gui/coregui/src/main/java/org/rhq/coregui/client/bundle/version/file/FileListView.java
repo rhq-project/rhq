@@ -34,6 +34,7 @@ import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.table.Table;
@@ -100,6 +101,7 @@ public class FileListView extends EnhancedVLayout {
         BundleFileCriteria criteria = new BundleFileCriteria();
         criteria.addFilterBundleVersionId(bundleVersionId);
         criteria.fetchPackageVersion(true);
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
 
         GWTServiceLookup.getBundleService().findBundleFilesByCriteria(criteria,
             new AsyncCallback<PageList<BundleFile>>() {

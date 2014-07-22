@@ -33,8 +33,6 @@ import org.quartz.ObjectAlreadyExistsException;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 
-import org.jboss.ejb3.annotation.TransactionTimeout;
-
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
@@ -45,9 +43,9 @@ import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.PluginCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.plugin.CannedGroupAddition;
 import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.domain.plugin.CannedGroupAddition;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -61,15 +59,15 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.core.plugin.PluginAdditionsReader;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
-import org.rhq.enterprise.server.core.plugin.PluginAdditionsReader;
-import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.QuartzUtil;
 
@@ -490,7 +488,7 @@ public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemot
         long startTime = System.currentTimeMillis();
 
         boolean newOrUpdated = pluginMgr.installPluginJar(plugin, pluginDescriptor, pluginFile);
-        boolean typesUpdated = pluginMgr.registerPluginTypes(plugin.getName(), pluginDescriptor, newOrUpdated,
+        boolean typesUpdated = registerPluginTypes(plugin.getName(), pluginDescriptor, newOrUpdated,
             forceUpdate);
 
         if (typesUpdated) {
@@ -507,7 +505,7 @@ public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemot
                     PluginDescriptor extPluginDescriptor = entry.getValue();
                     log.debug("Plugin [" + extPluginName
                         + "] will be re-registered because it embeds types from plugin [" + plugin.getName() + "]");
-                    pluginMgr.registerPluginTypes(extPluginName, extPluginDescriptor, false, true);
+                    registerPluginTypes(extPluginName, extPluginDescriptor, false, true);
                     resourceMetadataManager.removeObsoleteTypes(subjectMgr.getOverlord(), extPluginName,
                         metadataManager);
                 }
@@ -564,9 +562,9 @@ public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemot
         return newOrUpdated;
     }
 
-    @Override
-    @TransactionTimeout(1800)
-    public boolean registerPluginTypes(String newPluginName, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
+    // Should not be in a Tx here, we need to update each type in its own Tx so that no Tx is too large.  Updating
+    // a type can be intensive at scale.
+    private boolean registerPluginTypes(String newPluginName, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
         boolean forceUpdate) throws Exception {
         boolean typesUpdated = false;
 
@@ -682,7 +680,7 @@ public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemot
         q.setParameter("serverId", serverId);
 
         @SuppressWarnings("unchecked")
-        List<Plugin> plugins = (List<Plugin>) q.getResultList();
+        List<Plugin> plugins = q.getResultList();
 
         Server server = entityManager.find(Server.class, serverId);
 

@@ -84,13 +84,13 @@ public class ServerPluginConfiguration {
         if ("jboss.home.dir".equals(pathName)) {
             return getHomeDir();
         }
-        if ("jboss.server.base.dir".equals(pathName)) {
+        if ("jboss.server.base.dir".equals(pathName) || "jboss.domain.base.dir".equals(pathName)) {
             return getBaseDir();
         }
         if ("jboss.server.config.dir".equals(pathName) || "jboss.domain.config.dir".equals(pathName)) {
             return getConfigDir();
         }
-        if ("jboss.server.log.dir".equals(pathName)) {
+        if ("jboss.server.log.dir".equals(pathName) || "jboss.domain.log.dir".equals(pathName)) {
             return getLogDir();
         }
         return null;

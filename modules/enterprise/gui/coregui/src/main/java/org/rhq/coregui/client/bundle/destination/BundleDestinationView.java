@@ -188,7 +188,7 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
     private Canvas getActionLayout() {
         EnhancedVLayout actionLayout = new EnhancedVLayout(10);
         IButton deployButton = new EnhancedIButton(MSG.view_bundle_deploy(), ButtonColor.BLUE);
-        deployButton.setIcon(IconEnum.BUNDLE_DEPLOY.getIcon16x16Path());
+        //deployButton.setIcon(IconEnum.BUNDLE_DEPLOY.getIcon16x16Path());
         deployButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 new BundleDeployWizard(destination).startWizard();
@@ -197,7 +197,7 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         actionLayout.addMember(deployButton);
 
         IButton revertButton = new EnhancedIButton(MSG.view_bundle_revert(), ButtonColor.RED);
-        revertButton.setIcon(IconEnum.BUNDLE_REVERT.getIcon16x16Path());
+        //revertButton.setIcon(IconEnum.BUNDLE_REVERT.getIcon16x16Path());
         revertButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 SC.ask(MSG.view_bundle_dest_revertConfirm(), new BooleanCallback() {
@@ -212,7 +212,7 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         actionLayout.addMember(revertButton);
 
         IButton purgeButton = new EnhancedIButton(MSG.view_bundle_purge(), ButtonColor.RED);
-        purgeButton.setIcon(IconEnum.BUNDLE_DESTINATION_PURGE.getIcon16x16Path());
+        //purgeButton.setIcon(IconEnum.BUNDLE_DESTINATION_PURGE.getIcon16x16Path());
         purgeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 SC.ask(MSG.view_bundle_dest_purgeConfirm(), new BooleanCallback() {
@@ -245,7 +245,7 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         actionLayout.addMember(purgeButton);
 
         IButton deleteButton = new EnhancedIButton(MSG.common_button_delete(), ButtonColor.RED);
-        deleteButton.setIcon(IconEnum.BUNDLE_DESTINATION_DELETE.getIcon16x16Path());
+        //deleteButton.setIcon(IconEnum.BUNDLE_DESTINATION_DELETE.getIcon16x16Path());
         deleteButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {

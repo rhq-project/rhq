@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * 
+ *
  */
 public class StringUtils {
     private static final Set<String> LOWERCASE_WORDS = new HashSet<String>();
@@ -157,6 +157,21 @@ public class StringUtils {
     public static String useForwardSlash(String path) {
 
         return (null != path) ? path.replace('\\', '/') : null;
+    }
+
+    /**
+     * Ensure string does not exceed maxSize. First trims and then truncates as needed.
+     * @param s
+     * @param maxSize
+     * @return s if null or not altered, otherwise a copy that has been trimmed and/or truncated.
+     */
+    public static String trim(String s, int maxLength) {
+        if (null == s) {
+            return null;
+        }
+
+        s = s.trim();
+        return (s.length() > maxLength) ? s.substring(0, maxLength) : s;
     }
 
 }

@@ -24,8 +24,13 @@ import java.util.List;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.form.fields.events.FocusHandler;
+import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
+import com.smartgwt.client.widgets.form.fields.events.FocusEvent;
+import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
 import com.smartgwt.client.core.Rectangle;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -61,7 +66,7 @@ import org.rhq.coregui.client.util.message.Message;
  */
 public class EnhancedSearchBar extends EnhancedToolStrip {
     private static final Messages MSG = CoreGUI.getMessages();
-    private static final int SEARCH_WIDTH = 500;
+    private static final int SEARCH_WIDTH = 300;
     private static final int SAVED_SEARCH_WIDTH = 150;
     private static final int PICKLIST_HEIGHT = 500;
     private SearchSubsystem searchSubsystem;
@@ -116,7 +121,7 @@ public class EnhancedSearchBar extends EnhancedToolStrip {
         setOverflow(Overflow.VISIBLE);
         setAutoHeight();
         setWidth100();
-
+        setAlign(Alignment.LEFT);
         favoritesSearchStrategy = new FavoritesSearchStrategy(this);
         basicSearchStrategy = new BasicSearchStrategy(this);
         // now we can fill our enumMap
@@ -130,9 +135,11 @@ public class EnhancedSearchBar extends EnhancedToolStrip {
         configurePickListGrid();
 
         DynamicForm searchTextForm = new DynamicForm();
-        searchTextForm.setWidth100();
-
+        searchTextForm.setStyleName("searchBar");
+        searchTextForm.setAutoWidth();
+        searchTextForm.setNumCols(1);
         searchTextItem = new TextItem("search", MSG.common_button_search());
+        searchTextItem.setShowTitle(false);
         searchTextItem.setWidth(SEARCH_WIDTH);
         searchTextItem.setBrowserSpellCheck(false);
 
@@ -161,14 +168,11 @@ public class EnhancedSearchBar extends EnhancedToolStrip {
                         searchTextItem.focusInItem();
                         lastSearchTerm = currentSearchTerm;
                     } else {
-                        if (pickListGrid.isVisible()) {
-                            pickListGrid.hide();
-                        }
+                      hideList();
                     }
                 } else if (keyUpEvent.getKeyName().equals("Escape")) {
-                    if (pickListGrid.isVisible()) {
-                        pickListGrid.hide();
-                    }
+                    searchTextItem.setValue(lastSearchTerm);
+                    hideList();
                 } else {
                     if (null == searchDelayTimer) {
                         searchDelayTimer = new Timer() {
@@ -188,34 +192,53 @@ public class EnhancedSearchBar extends EnhancedToolStrip {
             }
         });
 
+        pickListGrid.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+          @Override
+          public void onClick( com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+              pickListGrid.focus();
+          }
+        });
+
         searchTextItem.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             @Override
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
-                Log.debug("onClick search Mode: " + searchMode);
-                if (!pickListGrid.isDrawn() || pickListGrid.isVisible()) {
-                    populateInitialSearch();
+                if (pickListGrid.isVisible()) {
+                  hideList();
+                } else {
+                  showList();
                 }
             }
         });
+
+        searchTextItem.addFocusHandler( new FocusHandler() {
+            @Override
+            public void onFocus(FocusEvent event) {
+              showList();
+            }
+        });
+
+
+        searchTextItem.addBlurHandler( new BlurHandler() {
+          @Override
+          public void onBlur(BlurEvent event) {
+            Timer t = new Timer() {
+              public void run() {
+                if (!pickListGrid.containsFocus()) {
+                  hideList();
+                }
+              }
+            };
+            t.schedule(500);
+          }
+        });
+
 
         searchTextForm.setFields(searchTextItem);
         addMember(searchTextForm);
+        searchTextItem.setTooltip(MSG.view_searchBar_buttonTooltip());
+        searchTextItem.setHint("Search");
 
-        searchTextButton = new ToolStripButton();
-        searchTextButton.setIcon(IconEnum.ARROW_GRAY.getIcon16x16Path());
-        searchTextButton.setTooltip(MSG.view_searchBar_buttonTooltip());
-        searchTextButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                if (pickListGrid.isVisible()) {
-                    pickListGrid.hide();
-                    searchTextItem.focusInItem();
-                } else {
-                    populateInitialSearch();
-                }
-            }
-        });
-        addButton(searchTextButton);
+        searchTextItem.setShowHintInField(true);
 
         saveSearchButton = new ToolStripButton();
         saveSearchButton.setIcon(IconEnum.STAR_OFF.getIcon16x16Path());
@@ -229,15 +252,15 @@ public class EnhancedSearchBar extends EnhancedToolStrip {
         addButton(saveSearchButton);
 
         DynamicForm saveSearchTextForm = new DynamicForm();
-        saveSearchTextForm.setWidth100();
+        saveSearchTextForm.setAutoWidth();
 
         saveSearchTextItem = new TextItem("savedSearchName");
         saveSearchTextItem.setShowTitle(false);
         saveSearchTextItem.setWidth(SAVED_SEARCH_WIDTH);
 
         saveSearchTextForm.setFields(saveSearchTextItem);
-        addMember(saveSearchTextForm);
 
+        addMember(saveSearchTextForm);
         saveSearchTextItem.hide();
 
         saveSearchTextItem.addKeyUpHandler(new KeyUpHandler() {
@@ -298,6 +321,20 @@ public class EnhancedSearchBar extends EnhancedToolStrip {
         }
     }
 
+    private synchronized void showList() {
+      if (!pickListGrid.isDrawn() || pickListGrid.isVisible()) {
+          populateInitialSearch();
+      } else if (!pickListGrid.isVisible()) {
+        populateInitialSearch();
+      }
+    }
+
+    private synchronized void hideList() {
+      if (pickListGrid.isVisible()) {
+          pickListGrid.hide();
+      }
+    }
+
     public SearchMode getSearchMode() {
         return searchMode;
     }
@@ -320,6 +357,7 @@ public class EnhancedSearchBar extends EnhancedToolStrip {
         pickListGrid.setWidth(searchTextRect.getWidth());
         pickListGrid.setTop(searchTextRect.getTop() + searchTextRect.getHeight());
         pickListGrid.setHeight(PICKLIST_HEIGHT);
+        pickListGrid.setWidth(PICKLIST_HEIGHT);
         pickListGrid.redraw();
     }
 

@@ -44,10 +44,15 @@ public interface ResourceMetadataManagerLocal {
     /** Exists only to for transactional boundary reasons. Not for general consumption. */
     void completeRemoveResourceType(Subject subject, ResourceType existingType);
 
+    /** Does not allow calling from within a Tx. Updates each type in its own Tx */
     void updateTypes(Set<ResourceType> resourceTypes) throws Exception;
 
-    /** Exists only to for transactional boundary reasons. Not for general consumption. */
-    ResourceType updateType(ResourceType resourceType) throws Exception;
+    /**
+     * Exists only to for transactional boundary reasons. Not for general consumption.
+     * <p/>
+     * Has a 30 minute Tx timeout to allow for large updates.
+     */
+    ResourceType updateTypeInNewTransaction(ResourceType resourceType) throws Exception;
 
     /** TODO: do we want to create a driftMetadataManager SLSB and put this in there */
     void updateDriftMetadata(ResourceType existingType, ResourceType resourceType);

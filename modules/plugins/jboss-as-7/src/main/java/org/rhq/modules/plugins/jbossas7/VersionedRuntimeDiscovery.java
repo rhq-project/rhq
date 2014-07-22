@@ -86,7 +86,7 @@ public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscove
         String configPath = config.getSimpleValue("path", "");
         boolean isType = (configPath == null || configPath.isEmpty() || configPath.contains("="));
 
-        for (DiscoveredResourceDetails detail : details) {
+        for (DiscoveredResourceDetails detail : updatedDetails) {
             BaseComponent parentComponent = context.getParentResourceComponent();
             String parentPath = (null != parentComponent.getPath()) ? parentComponent.getPath() : "";
             detail.setResourceVersion((parentPath.isEmpty()) ? null : context.getParentResourceContext().getVersion());

@@ -57,10 +57,18 @@ public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
         // Some memory pools do not expose those statistics (by default), so in case they
         // are not exposed, it is normal that the server returns 'undefined' for the value
         // Note that those
-        excludedMetricNamesByType.put(new ResourceType("Memory Pool Resource",PLUGIN_NAME, ResourceCategory.SERVICE,null),
-                new String[] {"collection-usage-threshold-count","collection-usage-threshold","collection-usage",
-                        "collection-usage-threshold-exceeded","collection-usage:committed","collection-usage:init",
-                        "collection-usage:max","collection-usage:used","usage-threshold-count","usage-threshold-exceeded"});
+        excludedMetricNamesByType.put(new ResourceType("Memory Pool Resource", PLUGIN_NAME, ResourceCategory.SERVICE,
+            null), new String[] { "collection-usage-threshold-count", "collection-usage-threshold", "collection-usage",
+            "collection-usage-threshold-exceeded", "collection-usage:committed", "collection-usage:init",
+            "collection-usage:max", "collection-usage:used", "usage-threshold-count", "usage-threshold-exceeded" });
+
+        //the max-connections will be 'undefined' if no specific value is set. This is AS's way of saying the value
+        //is connector specific
+        excludedMetricNamesByType.put(new ResourceType("Connector (Managed Server)", PLUGIN_NAME, ResourceCategory.SERVICE, null),
+            new String[] {"_expr:max-connections"});
+        excludedMetricNamesByType.put(new ResourceType("Connector", PLUGIN_NAME, ResourceCategory.SERVICE, null),
+            new String[] {"_expr:max-connections"});
+
         assertAllNumericMetricsAndTraitsHaveNonNullValues(excludedMetricNamesByType);
     }
 

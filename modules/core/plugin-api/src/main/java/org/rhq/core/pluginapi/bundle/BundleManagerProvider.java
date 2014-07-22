@@ -37,14 +37,14 @@ import org.rhq.core.domain.resource.Resource;
 public interface BundleManagerProvider {
     /**
      * Bundle plugins call back into this manager to add progressive auditing of a deployment.
-     * 
+     *
      * @param deployment The resource deployment tracking this bundle deployment
      * @param action The audit action, a short summary easily displayed (e.g "File Download")
      * @param info Info about the action target, easily displayed (e.g. "myfile.zip")
      * @param category A useful categorization of the audit, defaults to null
      * @param status Optional, defaults to SUCCESS
      * @param message Optional, verbose message being audited, failure message, etc
-     * @param attachment Optional, verbose data, such as full file text  
+     * @param attachment Optional, verbose data, such as full file text
      * @throws Exception
      */
     void auditDeployment(BundleResourceDeployment deployment, String action, String info,
@@ -53,7 +53,7 @@ public interface BundleManagerProvider {
 
     /**
      * Bundle plugins call back into this manager to obtain the bundle files that belong to a given bundle version.
-     * 
+     *
      * @param bundleVersion a bundle version
      *
      * @return the bundle files that are associated with the given bundle
@@ -64,7 +64,7 @@ public interface BundleManagerProvider {
 
     /**
      * Bundle plugins call back into this manager to obtain the bundle file content for the given package.
-     * 
+     *
      * @param packageVersion the package whose bits are to be downloaded
      * @param outputStream where the package bits will get written to
      *
@@ -78,8 +78,10 @@ public interface BundleManagerProvider {
      * Requests participation of the bundle target resource component in the bundle deployment.
      *
      * @param bundleTarget bundle target resource
-     * @param handoverRequest handover parameters and context 
+     * @param handoverRequest handover parameters and context
      * @return a report object indicating success or failure
+     *
+     * @since 4.12
      */
     BundleHandoverResponse handoverContent(Resource bundleTarget, BundleHandoverRequest handoverRequest);
 }

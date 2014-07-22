@@ -211,6 +211,11 @@ public interface SystemInfo {
      */
     FileSystemInfo getFileSystem(String path);
 
+    /**
+     * @param path
+     * @return The Directory Usage for the provided path
+     * @since 4.10
+     */
     DirUsage getDirectoryUsage(String path);
 
     /**

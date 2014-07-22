@@ -26,23 +26,47 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * All criteria, regardless of the backend storage that will be queried with this criteria, needs
  * to support certain base functionality (like paging).  This base interface provides that common API.
- * 
+ *
  * @author John Sanda
  */
 public interface BaseCriteria {
 
+    /**
+     * @param sortId
+     * @since 4.7
+     */
     void addSortId(PageOrdering sortId);
 
+    /**
+     * @return
+     * @since 4.7
+     */
     List<String> getOrderingFieldNames();
 
+    /**
+     * @return
+     */
     PageControl getPageControlOverrides();
 
+    /**
+     * @param pageControl
+     */
     void setPageControl(PageControl pageControl);
 
+    /**
+     * @param strict
+     */
     void setStrict(boolean strict);
 
+    /**
+     * @return
+     */
     public boolean isStrict();
 
+    /**
+     * @param pageNumber
+     * @param pageSize
+     */
     public void setPaging(int pageNumber, int pageSize) ;
 
 }

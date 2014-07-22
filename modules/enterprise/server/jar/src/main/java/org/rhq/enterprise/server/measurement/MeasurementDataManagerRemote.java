@@ -29,10 +29,7 @@ import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -179,6 +176,7 @@ public interface MeasurementDataManagerRemote {
      * @return MeasurementAggregate aggregate data
      *
      * @throws MeasurementException if aggregate cannot be found
+     * @since 4.12
      */
     MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime, long endTime);
 

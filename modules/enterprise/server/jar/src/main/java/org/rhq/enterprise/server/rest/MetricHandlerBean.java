@@ -357,7 +357,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         @ApiError(code = 406, reason = "Schedule Ids are not numeric")
     })
     public Response getMetricDataMulti(
-        @ApiParam("A comma separated list of schedule ids") @QueryParam("sid") String schedules,
+        @ApiParam(value = "A comma separated list of schedule ids",required = true) @QueryParam("sid") String schedules,
         @ApiParam("Start time in ms since epoch. Default is now -8h") @QueryParam("startTime") long startTime,
         @ApiParam("End time in ms since epoch. Default is now") @QueryParam("endTime") long endTime,
         @ApiParam("Number of buckets") @QueryParam("dataPoints") @DefaultValue( "60") int dataPoints,

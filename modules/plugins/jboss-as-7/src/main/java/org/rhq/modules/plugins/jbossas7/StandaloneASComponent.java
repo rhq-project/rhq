@@ -23,15 +23,12 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.EXECUTION;
 import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.INVALID_ACTION;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -47,15 +44,6 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.content.PackageDetailsKey;
-import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
-import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
-import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -63,8 +51,6 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.bundle.BundleHandoverRequest;
 import org.rhq.core.pluginapi.bundle.BundleHandoverResponse;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.content.ContentFacet;
-import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
@@ -86,7 +72,6 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
-import org.rhq.modules.plugins.jbossas7.util.PatchDetails;
 
 /**
  * Component class for standalone AS7 servers.
@@ -94,7 +79,7 @@ import org.rhq.modules.plugins.jbossas7.util.PatchDetails;
  * @author Heiko W. Rupp
  */
 public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T> implements
-    MeasurementFacet, OperationFacet, SupportFacet, ContentFacet {
+    MeasurementFacet, OperationFacet, SupportFacet {
 
     private static final Log LOG = LogFactory.getLog(StandaloneASComponent.class);
 
@@ -463,168 +448,6 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         throw new Exception("Cannot obtain report, resource is not UP");
     }
 
-    public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
-        return null;
-    }
-
-    @Override
-    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages,
-        ContentServices contentServices) {
-
-        DeployPackagesResponse response = new DeployPackagesResponse();
-        boolean someFailed = false;
-
-        for (ResourcePackageDetails pkg : packages) {
-            if (PATCH_PACKAGE_TYPE_NAME.equals(pkg.getKey().getPackageTypeName())) {
-                DeployIndividualPackageResponse resp = deployPatch(pkg, contentServices);
-                response.addPackageResponse(resp);
-                someFailed = someFailed || resp.getResult() != ContentResponseResult.SUCCESS;
-            }
-        }
-
-        response.setOverallRequestResult(someFailed ? ContentResponseResult.FAILURE : ContentResponseResult.SUCCESS);
-
-        return response;
-    }
-
-    @Override
-    public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
-        RemovePackagesResponse response = new RemovePackagesResponse();
-        boolean someFailed = false;
-        for(ResourcePackageDetails pkg : packages) {
-            RemoveIndividualPackageResponse r = rollbackPatch(pkg);
-            response.addPackageResponse(r);
-            someFailed = someFailed || r.getResult() != ContentResponseResult.SUCCESS;
-        }
-
-        response
-            .setOverallRequestResult(someFailed ? ContentResponseResult.FAILURE : ContentResponseResult.SUCCESS);
-
-        return response;
-    }
-
-    @Override
-    public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
-        if (!PATCH_PACKAGE_TYPE_NAME.equals(type.getName())) {
-            return Collections.emptySet();
-        }
-
-        CliExecutor runner = CliExecutor
-            .onServer(pluginConfiguration, getMode(), context.getSystemInformation()).disconnected(true);
-
-        ProcessExecutionResults infoResults = runner.executeCliCommand("patch info");
-        if (infoResults.getError() != null || infoResults.getExitCode() == null || infoResults.getExitCode() != 0) {
-            if (getLog().isDebugEnabled()) {
-                if (infoResults.getError() == null) {
-                    getLog().debug(
-                        "Failed to obtain the patch info while discovering patches on " +
-                            context.getResourceDetails() + ". Exit code: " + infoResults.getExitCode() + ", output:\n" +
-                            infoResults.getCapturedOutput()
-                    );
-                } else {
-                    getLog().debug("Failed to obtain the patch info while discovering patches on " +
-                        context.getResourceDetails(), infoResults.getError());
-                }
-            } else if (infoResults.getError() != null) {
-                getLog().info("Failed to obtain the patch info while discovering patches on " +
-                    context.getResourceDetails() + ": " + infoResults.getError().getMessage());
-            }
-            return Collections.emptySet();
-        }
-
-        ProcessExecutionResults historyResults = runner.executeCliCommand("patch history");
-        if (historyResults.getError() != null || historyResults.getExitCode() == null || historyResults.getExitCode() != 0) {
-            if (getLog().isDebugEnabled()) {
-                if (historyResults.getError() == null) {
-                    getLog().debug(
-                        "Failed to obtain the patch history while discovering patches on " +
-                            context.getResourceDetails() + ". Exit code: " + historyResults.getExitCode() + ", output:\n" +
-                            historyResults.getCapturedOutput()
-                    );
-                } else {
-                    getLog().debug("Failed to obtain the patch history while discovering patches on " +
-                        context.getResourceDetails(), historyResults.getError());
-                }
-            } else if (historyResults.getError() != null) {
-                getLog().info("Failed to obtain the patch history while discovering patches on " +
-                    context.getResourceDetails() + ": " + historyResults.getError().getMessage());
-            }
-            return Collections.emptySet();
-        }
-
-        return getInstalledPatches(infoResults.getCapturedOutput(), historyResults.getCapturedOutput());
-    }
-
-    private Set<ResourcePackageDetails> getInstalledPatches(String patchInfoResults, String patchHistoryResults) {
-        List<PatchDetails> patchDetails = PatchDetails.fromInfo(patchInfoResults, patchHistoryResults);
-
-        HashSet<ResourcePackageDetails> ret = new HashSet<ResourcePackageDetails>();
-
-        for (PatchDetails p : patchDetails) {
-            ResourcePackageDetails details = new ResourcePackageDetails(
-                new PackageDetailsKey(p.getId(), "NA", PATCH_PACKAGE_TYPE_NAME, "noarch"));
-
-            details.setInstallationTimestamp(p.getAppliedAt().getTime());
-            details.setShortDescription("Type: " + p.getType().toString());
-            details.setFileName(p.getId());
-
-            ret.add(details);
-        }
-
-        return ret;
-    }
-
-    @Override
-    public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-        //we cannot retrieve the bits really, so just return a dummy empty input stream
-        return new InputStream() {
-            @Override
-            public int read() throws IOException {
-                return -1;
-            }
-        };
-    }
-
-    private DeployIndividualPackageResponse deployPatch(ResourcePackageDetails pkg, ContentServices contentServices) {
-        DeployIndividualPackageResponse response = new DeployIndividualPackageResponse(pkg.getKey());
-
-        File patchFile;
-        try {
-            patchFile = File.createTempFile("rhq-jbossas-7-", ".patch");
-        } catch (IOException e) {
-            response.setErrorMessage("Could not create a temporary file to download the patch to. " + e.getMessage());
-            response.setResult(ContentResponseResult.FAILURE);
-            return response;
-        }
-
-        OutputStream out;
-        try {
-            out = new BufferedOutputStream(new FileOutputStream(patchFile));
-        } catch (FileNotFoundException e) {
-            response.setErrorMessage("Could not open the temporary file to download the patch to. " + e.getMessage());
-            response.setResult(ContentResponseResult.FAILURE);
-            return response;
-        }
-
-        try {
-            contentServices.downloadPackageBits(context.getContentContext(), pkg.getKey(), out, true);
-        } finally {
-            StreamUtil.safeClose(out);
-        }
-
-        String errorMessage = deployPatch(patchFile, Collections.<String, String>emptyMap());
-
-        if (errorMessage != null) {
-            response.setErrorMessage(errorMessage);
-            response.setResult(ContentResponseResult.FAILURE);
-            return response;
-        }
-
-        response.setResult(ContentResponseResult.SUCCESS);
-
-        return response;
-    }
-
     private BundleHandoverResponse deployPatch(BundleHandoverRequest request) {
         //download the file to a temp location
         File patchFile;
@@ -704,20 +527,6 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         }
 
         return null;
-    }
-
-    private RemoveIndividualPackageResponse rollbackPatch(ResourcePackageDetails pkg) {
-        String errorMessage = rollbackPatch(pkg.getName(), null);
-
-        RemoveIndividualPackageResponse response = new RemoveIndividualPackageResponse(pkg.getKey());
-        if (errorMessage != null) {
-            response.setErrorMessage(errorMessage);
-            response.setResult(ContentResponseResult.FAILURE);
-        } else {
-            response.setResult(ContentResponseResult.SUCCESS);
-        }
-
-        return response;
     }
 
     private String rollbackPatch(String patchId, Configuration params) {

@@ -390,9 +390,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         thirdPartyDeps.add("org.liquibase:liquibase-core");
         thirdPartyDeps.add("org.powermock:powermock-api-mockito");
         thirdPartyDeps.add("org.rhq.helpers:perftest-support:" + projectVersion);
-        //        thirdPartyDeps.add("org.rhq:rhq-core-client-api:jar:tests:" + projectVersion);
-        thirdPartyDeps.add("org.rhq:rhq-core-client-api:jar:tests:" + rhqCoreClientApiVersion);
-        thirdPartyDeps.add("org.rhq:rhq-platform-plugin:jar:tests:" + rhqPlatformPluginVersion);
+        thirdPartyDeps.add("org.rhq:rhq-core-client-api:jar:" + rhqCoreClientApiVersion);
+        thirdPartyDeps.add("org.rhq:rhq-platform-plugin:jar:" + rhqPlatformPluginVersion);
 
         thirdPartyDeps.add("org.rhq:test-utils:" + projectVersion);
 

@@ -43,7 +43,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -91,8 +90,6 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
     private static final String JAVA_OPTS_ADDITIONAL_PROP = "javaOptsAdditional";
 
     private static final Address ENVIRONMENT_ADDRESS = new Address("core-service=server-environment");
-
-    private static final String PATCH_PACKAGE_TYPE_NAME = "wflyPatch";
 
     @Override
     public void start(ResourceContext<T> resourceContext) throws Exception {
@@ -202,21 +199,6 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
             return installManagementUser(parameters, pluginConfiguration);
         } else if (name.equals("executeCommands") || name.equals("executeScript")) {
             return runCliCommand(parameters);
-        } else if (name.equals("rollbackPatch")) {
-            String errorMessage = rollbackPatch(parameters.getSimpleValue("patch-id"), parameters);
-
-            if (errorMessage != null) {
-                throw new Exception(errorMessage);
-            } else {
-                PropertySimple restart = parameters.getSimple("restartImmediately");
-
-                //noinspection ConstantConditions
-                if (restart.getBooleanValue()) {
-                    return restartServer(parameters);
-                } else {
-                    return new OperationResult("Success");
-                }
-            }
         }
 
         // reload, shutdown go to the remote server
@@ -527,50 +509,5 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         }
 
         return null;
-    }
-
-    private String rollbackPatch(String patchId, Configuration params) {
-        StringBuilder command = new StringBuilder("patch rollback --patch-id=");
-        command.append(patchId);
-
-        if (params == null) {
-            command.append(" --reset-configuration=false");
-        } else {
-            appendParameter(command, params, "reset-configuration");
-            appendParameter(command, params, "override-all");
-            appendParameter(command, params, "override-modules");
-            appendParameter(command, params, "override");
-            appendParameter(command, params, "preserve");
-        }
-
-        ProcessExecutionResults results = createRunner().disconnected(true).executeCliCommand(command.toString());
-
-        if (results.getError() != null || results.getExitCode() == null || results.getExitCode() != 0) {
-            //looks like stuff failed...
-            if (results.getError() != null) {
-                return "Rolling back the patch " + patchId + " failed with error message: " +
-                    results.getError().getMessage();
-            } else if (results.getExitCode() == null) {
-                return "Rolling back the patch " + patchId +
-                    " timed out. Captured output of the rollback command: " + results.getCapturedOutput();
-            } else {
-                return "Rolling back the patch exited with an error code " + results.getExitCode() +
-                    ". Captured output of the rollback command: " + results.getCapturedOutput();
-            }
-        }
-
-        return null;
-    }
-
-    private CliExecutor createRunner() {
-        return CliExecutor
-            .onServer(pluginConfiguration, getMode(), context.getSystemInformation());
-    }
-
-    private void appendParameter(StringBuilder command, Configuration configuration, String parameterName) {
-        PropertySimple prop = configuration.getSimple(parameterName);
-        if (prop != null && prop.getStringValue() != null) {
-            command.append(" --").append(parameterName).append("=").append(prop.getStringValue());
-        }
     }
 }

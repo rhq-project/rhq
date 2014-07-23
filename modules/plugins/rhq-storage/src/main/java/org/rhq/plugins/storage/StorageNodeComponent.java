@@ -373,11 +373,9 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     }
 
     private void createSnapshots(Set<String> addressesToAdd, String snapshotPrefix) {
-        EmsConnection emsConnection = getEmsConnection();
-        KeyspaceService keyspaceService = new KeyspaceService(emsConnection);
-        keyspaceService.takeSnapshot(SYSTEM_KEYSPACE, snapshotPrefix + System.currentTimeMillis());
-        keyspaceService.takeSnapshot(SYSTEM_AUTH_KEYSPACE, snapshotPrefix + System.currentTimeMillis());
-        keyspaceService.takeSnapshot(RHQ_KEYSPACE, snapshotPrefix + System.currentTimeMillis());
+        KeyspaceService keyspaceService = new KeyspaceService(getEmsConnection());
+        keyspaceService.takeSnapshot(new String[] { SYSTEM_KEYSPACE, SYSTEM_AUTH_KEYSPACE, RHQ_KEYSPACE },
+            snapshotPrefix + System.currentTimeMillis());
     }
 
     private void reloadInternodeAuthConfig() {

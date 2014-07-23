@@ -25,8 +25,13 @@
 
 package org.rhq.plugins.cassandra.util;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 /**
@@ -97,10 +102,48 @@ public class KeyspaceService {
     }
 
     public void takeSnapshot(String keyspace, String snapshotName) {
+        takeSnapshot(new String[]{keyspace}, snapshotName);
+    }
+
+    public void takeSnapshot(String[] keySpaces, String snapshotName) {
         EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
         EmsOperation operation = emsBean.getOperation(SNAPSHOT_OPERATION, String.class, String[].class);
+        operation.invoke(snapshotName, keySpaces);
+    }
 
-        operation.invoke(snapshotName, new String[] {keyspace});
+    public String[] getKeySpaceDataFileLocations() {
+        EmsBean emsBean = loadBean(KeyspaceService.STORAGE_SERVICE_BEAN);
+        EmsAttribute attribute = emsBean.getAttribute("AllDataFileLocations");
+        return (String[]) attribute.getValue();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Object> getKeyspaces() {
+        List<Object> value = null;
+
+        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
+        if (emsBean != null) {
+            EmsAttribute attribute = emsBean.getAttribute("Keyspaces");
+            if (attribute != null) {
+                value = (List<Object>) attribute.refresh();
+            }
+        }
+        if (value == null) {
+            value = new ArrayList<Object>();
+        }
+
+        return value;
+    }
+
+    public List<String> getColumnFamilyDirs() {
+        List<EmsBean> beans = emsConnection.queryBeans("org.apache.cassandra.db:type=ColumnFamilies,*");
+        List<String> dirs = new ArrayList<String>(beans.size());
+        for (EmsBean bean : beans) {
+            String keySpace = bean.getBeanName().getKeyProperty("keyspace");
+            String colFamily = bean.getBeanName().getKeyProperty("columnfamily");
+            dirs.add(keySpace + File.separator + colFamily);
+        }
+        return dirs;
     }
 
     private EmsBean loadBean(String objectName) {

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,6 +34,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.modules.plugins.jbossas7.ASConnection;
+import org.rhq.modules.plugins.jbossas7.ASConnectionParams;
+import org.rhq.modules.plugins.jbossas7.ASConnectionParamsBuilder;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -61,7 +63,14 @@ public class ManagementConnectionPersistenceTest extends AbstractIntegrationTest
 
     @Test(timeOut = 60 * 1000)
     public void testWithDisabledConnectionPersistence() throws Exception {
-        final ASConnection asConnection = new ASConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS, Long.valueOf(-1));
+        ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
+            .setHost(DC_HOST) //
+            .setPort(DC_HTTP_PORT) //
+            .setUsername(DC_USER) //
+            .setPassword(DC_PASS) //
+            .setKeepAliveTimeout(Long.valueOf(-1)) //
+            .createASConnectionParams();
+        ASConnection asConnection = new ASConnection(asConnectionParams);
         List<Future<Result>> results = doTest(asConnection);
         checkResults(results, true);
         // Wait a bit
@@ -72,7 +81,13 @@ public class ManagementConnectionPersistenceTest extends AbstractIntegrationTest
 
     @Test(timeOut = 60 * 1000)
     public void testWithDefaultConnectionPersistence() throws Exception {
-        final ASConnection asConnection = new ASConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS);
+        ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
+            .setHost(DC_HOST) //
+            .setPort(DC_HTTP_PORT) //
+            .setUsername(DC_USER) //
+            .setPassword(DC_PASS) //
+            .createASConnectionParams();
+        ASConnection asConnection = new ASConnection(asConnectionParams);
         List<Future<Result>> results = doTest(asConnection);
         checkResults(results, true);
         // Wait for EAP to close persistent connections server side
@@ -83,8 +98,14 @@ public class ManagementConnectionPersistenceTest extends AbstractIntegrationTest
 
     @Test(timeOut = 60 * 1000)
     public void shouldFailForTooLongKeepAliveDuration() throws Exception {
-        final ASConnection asConnection = new ASConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS,
-            Long.valueOf(1000 * 60 * 60));
+        ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
+            .setHost(DC_HOST) //
+            .setPort(DC_HTTP_PORT) //
+            .setUsername(DC_USER) //
+            .setPassword(DC_PASS) //
+            .setKeepAliveTimeout(Long.valueOf(1000 * 60 * 60)) //
+            .createASConnectionParams();
+        ASConnection asConnection = new ASConnection(asConnectionParams);
         List<Future<Result>> results = doTest(asConnection);
         checkResults(results, true);
         // Wait for EAP to close persistent connections server side

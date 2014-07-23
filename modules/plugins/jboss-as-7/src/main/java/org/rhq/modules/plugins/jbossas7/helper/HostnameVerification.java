@@ -20,31 +20,26 @@
 package org.rhq.modules.plugins.jbossas7.helper;
 
 /**
- * @author Heiko Rupp
- */
-public class HostPort {
+* @author Thomas Segismont
+*/
+public enum HostnameVerification {
+    STRICT("strict"), BROWSER_COMPATIBLE("browserCompatible"), SKIP("skip");
 
-    public String host;
-    public int port;
-    public boolean isSecure = false;
-    public boolean isLocal = true;
-    public boolean withOffset = false;
+    public final String name;
 
-    public HostPort() {
-        host = "localhost";
-        port = HostConfiguration.DEFAULT_MGMT_PORT;
-        isLocal = true;
+    HostnameVerification(String name) {
+        this.name = name;
     }
 
-    public HostPort(boolean local) {
-        this();
-        isLocal = local;
+    public static HostnameVerification findByName(String name) {
+        if (name == null) {
+            throw new IllegalArgumentException("name is null");
+        }
+        for (HostnameVerification hostnameVerification : values()) {
+            if (hostnameVerification.name.equals(name)) {
+                return hostnameVerification;
+            }
+        }
+        throw new IllegalArgumentException("No constant with name: " + name);
     }
-
-    @Override
-    public String toString() {
-        return "HostPort[" + "host='" + host + '\'' + ", port=" + port + ", isSecure=" + isSecure + ", isLocal="
-            + isLocal + ", withOffset=" + withOffset + ']';
-    }
-
 }

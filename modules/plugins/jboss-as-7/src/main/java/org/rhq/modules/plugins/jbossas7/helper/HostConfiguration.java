@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.helper;
 
 import static org.rhq.core.util.StringUtil.EMPTY_STRING;
@@ -37,6 +38,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.modules.plugins.jbossas7.AS7CommandLine;
@@ -85,68 +87,109 @@ public class HostConfiguration {
     /**
      * Try to obtain the management IP and port from the already parsed host.xml or standalone.xml
      *
-     *
      * @param commandLine Command line arguments of the process to
      *
      * @return an Object containing host and port
      */
     public HostPort getManagementHostPort(AS7CommandLine commandLine, AS7Mode mode) {
+        // There are three ways to configure the http(s) management endpoint
+        //
+        // 1. Standalone servers favored style (socket-binding style)
+        // The socket-binding node attribute is *either* 'https' *or* 'http'
+        //     <management>
+        //         <management-interfaces>
+        //             <http-interface security-realm="ManagementRealm">
+        //                 <socket-binding https="management-https"/>
+        //             </http-interface>
+        //         </management-interfaces>
+        //     </management>
+        //
+        // 2. Host controllers style, unfavored standalone servers style (socket style)
+        //     <management>
+        //         <management-interfaces>
+        //             <http-interface security-realm="ManagementRealm">
+        //                 <socket interface="management" port="9990" secure-port="9443"/>
+        //             </http-interface>
+        //         </management-interfaces>
+        //     </management>
+        //
+        //
+        // 3. Very old and deprecated style (early as7 style)
+        //     <management>
+        //         <management-interfaces>
+        //             <http-interface security-realm="ManagementRealm" interface="management" port="9990" secure-port="9443"/>
+        //         </management-interfaces>
+        //     </management>
+
         String portString;
         String interfaceExpression;
-
         String socketBindingName;
-
-        socketBindingName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket-binding/@http");
-        String socketInterface = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket/@interface");
         String portOffsetRaw = null;
+        boolean isSecure = false;
 
-        if (!socketInterface.isEmpty()) {
+        if (findMatchingElements("//management/management-interfaces/http-interface/socket-binding").getLength() != 0) {
+            // This is case 1
+            socketBindingName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket-binding/@https");
+            if (!socketBindingName.isEmpty()) {
+                isSecure = true;
+            } else {
+                socketBindingName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket-binding/@http");
+            }
+            portString = obtainXmlPropertyViaXPath("/server/socket-binding-group/socket-binding[@name='"
+                + socketBindingName + "']/@port");
+            String interfaceName = obtainXmlPropertyViaXPath("/server/socket-binding-group/socket-binding[@name='"
+                + socketBindingName + "']/@interface");
+            String xpathExpression = "/server/socket-binding-group/@port-offset";
+            portOffsetRaw = obtainXmlPropertyViaXPath(xpathExpression);
+
+            interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
+                + "']/inet-address/@value");
+            if (interfaceExpression.isEmpty()) {
+                interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
+                    + "']/loopback-address/@value");
+            }
+        } else if (findMatchingElements("//management/management-interfaces/http-interface/socket").getLength() != 0) {
+            // This is case 2
+            String socketInterface = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket/@interface");
             interfaceExpression = obtainXmlPropertyViaXPath("//interfaces/interface[@name='" + socketInterface
                 + "']/inet-address/@value");
             if (interfaceExpression.isEmpty()) {
                 interfaceExpression = obtainXmlPropertyViaXPath("//interfaces/interface[@name='" + socketInterface
-                                + "']/loopback-address/@value");
+                    + "']/loopback-address/@value");
             }
-            portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket/@port");
-        } else if (socketBindingName.isEmpty()) {
-            // old AS7.0, early 7.1 style
-            portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@port");
+            portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket/@secure-port");
+            if (!portString.isEmpty()) {
+                isSecure = true;
+            } else {
+                portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket/@port");
+            }
+        } else {
+            // This is case 3
+            portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@secure-port");
+            if (!portString.isEmpty()) {
+                isSecure = true;
+            } else {
+                portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@port");
+            }
             String interfaceName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@interface");
             interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
                 + "']/inet-address/@value");
             if (interfaceExpression.isEmpty()) {
                 interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
-                                + "']/loopback-address/@value");
-            }
-        } else {
-            // later AS7.1 and EAP6 standalone.xml
-            portString = obtainXmlPropertyViaXPath("/server/socket-binding-group/socket-binding[@name='"
-                + socketBindingName + "']/@port");
-            String interfaceName = obtainXmlPropertyViaXPath("/server/socket-binding-group/socket-binding[@name='"
-                + socketBindingName + "']/@interface");
-            String socketBindingGroupName = "standard-sockets";
-            // /server/socket-binding-group[@name='standard-sockets']/@port-offset
-            String xpathExpression =
-                    "/server/socket-binding-group[@name='" + socketBindingGroupName + "']/@port-offset";
-            portOffsetRaw = obtainXmlPropertyViaXPath(xpathExpression);
-
-            // TODO the next may also be expressed differently
-            interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
-                    + "']/inet-address/@value");
-            if (interfaceExpression.isEmpty()) {
-                interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
-                                + "']/loopback-address/@value");
+                    + "']/loopback-address/@value");
             }
         }
-        HostPort hp = new HostPort();
 
-        if (!interfaceExpression.isEmpty())
+        HostPort hp = new HostPort();
+        hp.isSecure = isSecure;
+
+        if (!interfaceExpression.isEmpty()) {
             hp.host = replaceDollarExpression(interfaceExpression, commandLine, "localhost");
-        else
+        } else {
             hp.host = "localhost"; // Fallback
+        }
 
         hp.port = 0;
-
         if (portString != null && !portString.isEmpty()) {
             String tmp = replaceDollarExpression(portString, commandLine, String.valueOf(DEFAULT_MGMT_PORT));
             hp.port = Integer.valueOf(tmp);
@@ -157,12 +200,8 @@ public class HostConfiguration {
             Integer portOffset = Integer.valueOf(portOffsetString);
             hp.port += portOffset;
             hp.withOffset = true;
-        }
-
-        // TODO (ips): We shouldn't need the below code if the above code that reads the port offset from the config
-        //             file is working correctly.
-        if (!hp.withOffset && (mode == AS7Mode.STANDALONE)) {
-            // Only standalone applies the port offset to the management ports.
+        } else if (mode == AS7Mode.STANDALONE) {
+            // On standalone servers, offset may also be set with a system property
             String value = commandLine.getSystemProperties().get(SOCKET_BINDING_PORT_OFFSET_SYSPROP);
             if (value != null) {
                 int offset = Integer.valueOf(value);
@@ -171,6 +210,15 @@ public class HostConfiguration {
         }
 
         return hp;
+    }
+
+    private NodeList findMatchingElements(String expression) {
+        try {
+            XPathExpression xPathExpression = xpathFactory.newXPath().compile(expression);
+            return (NodeList) xPathExpression.evaluate(document, XPathConstants.NODESET);
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

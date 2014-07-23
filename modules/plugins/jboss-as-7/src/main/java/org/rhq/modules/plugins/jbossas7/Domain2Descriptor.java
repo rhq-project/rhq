@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.ArrayList;
@@ -110,7 +111,13 @@ public class Domain2Descriptor {
         }
 
         //create connection
-        ASConnection conn = new ASConnection("localhost", 9990, user, pass);
+        ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
+            .setHost("localhost") //
+            .setPort(9990) //
+            .setUsername(user) //
+            .setPassword(pass)//
+            .createASConnectionParams();
+        ASConnection conn = new ASConnection(asConnectionParams);
 
         Address address = new Address(path);
 

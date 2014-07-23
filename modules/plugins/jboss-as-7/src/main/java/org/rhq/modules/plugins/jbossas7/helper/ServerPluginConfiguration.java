@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,9 +20,12 @@
 package org.rhq.modules.plugins.jbossas7.helper;
 
 import java.io.File;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.modules.plugins.jbossas7.JBossProductType;
 
 /**
@@ -36,6 +39,7 @@ public class ServerPluginConfiguration {
     public abstract class Property {
         public static final String HOSTNAME = "hostname";
         public static final String PORT = "port";
+        public static final String SECURE = "secure";
         public static final String USER = "user";
         public static final String PASSWORD = "password";
         public static final String MANAGEMENT_CONNECTION_TIMEOUT = "managementConnectionTimeout";
@@ -46,9 +50,19 @@ public class ServerPluginConfiguration {
         public static final String PRODUCT_TYPE = "productType";
         public static final String HOST_CONFIG_FILE = "hostConfigFile";
         public static final String AVAIL_CHECK_PERIOD_CONFIG_PROP = "availabilityCheckPeriod";
+        public static final String TRUST_STRATEGY = "trustStrategy";
+        public static final String HOSTNAME_VERIFICATION = "hostnameVerification";
+        public static final String TRUSTSTORE_TYPE = "truststoreType";
+        public static final String TRUSTSTORE = "truststore";
+        public static final String TRUSTSTORE_PASSWORD = "truststorePassword";
+        public static final String CLIENTCERT_AUTHENTICATION = "clientcertAuthentication";
+        public static final String KEYSTORE_TYPE = "keystoreType";
+        public static final String KEYSTORE = "keystore";
+        public static final String KEYSTORE_PASSWORD = "keystorePassword";
+        public static final String KEY_PASSWORD = "keyPassword";
     }
 
-    private Configuration pluginConfig;
+    private final Configuration pluginConfig;
 
     public ServerPluginConfiguration(Configuration pluginConfig) {
         this.pluginConfig = pluginConfig;
@@ -69,6 +83,15 @@ public class ServerPluginConfiguration {
 
     public void setPort(int port) {
         this.pluginConfig.setSimpleValue(Property.PORT, String.valueOf(port));
+    }
+
+    public boolean isSecure() {
+        String stringValue = this.pluginConfig.getSimpleValue(Property.SECURE);
+        return stringValue != null && Boolean.parseBoolean(stringValue);
+    }
+
+    public void setSecure(boolean secure) {
+        this.pluginConfig.setSimpleValue(Property.SECURE, String.valueOf(secure));
     }
 
     public String getUser() {
@@ -156,4 +179,90 @@ public class ServerPluginConfiguration {
                 availabilityCheckPeriod == null ? null : availabilityCheckPeriod.toString());
     }
 
+    public TrustStrategy getTrustStrategy() {
+        return TrustStrategy.findByName(pluginConfig.getSimpleValue(Property.TRUST_STRATEGY));
+    }
+
+    public HostnameVerification getHostnameVerification() {
+        return HostnameVerification.findByName(pluginConfig.getSimpleValue(Property.HOSTNAME_VERIFICATION));
+    }
+
+    public String getTruststoreType() {
+        return this.pluginConfig.getSimpleValue(Property.TRUSTSTORE_TYPE);
+    }
+
+    public String getTruststore() {
+        return this.pluginConfig.getSimpleValue(Property.TRUSTSTORE);
+    }
+
+    public String getTruststorePassword() {
+        return this.pluginConfig.getSimpleValue(Property.TRUSTSTORE_PASSWORD);
+    }
+
+    public boolean isClientcertAuthentication() {
+        String stringValue = this.pluginConfig.getSimpleValue(Property.CLIENTCERT_AUTHENTICATION);
+        return stringValue != null && Boolean.parseBoolean(stringValue);
+    }
+
+    public String getKeystoreType() {
+        return this.pluginConfig.getSimpleValue(Property.KEYSTORE_TYPE);
+    }
+
+    public String getKeystore() {
+        return this.pluginConfig.getSimpleValue(Property.KEYSTORE);
+    }
+
+    public String getKeystorePassword() {
+        return this.pluginConfig.getSimpleValue(Property.KEYSTORE_PASSWORD);
+    }
+
+    public String getKeyPassword() {
+        return this.pluginConfig.getSimpleValue(Property.KEY_PASSWORD);
+    }
+
+    /**
+     * Checks server resource connection settings
+     *
+     * @throws InvalidPluginConfigurationException if settings are incorrect
+     */
+    public void validate() {
+        if (isSecure()) {
+            String truststore = getTruststore();
+            if (truststore != null) {
+                if (!new File(truststore).isFile()) {
+                    throw new InvalidPluginConfigurationException("Truststore file does not exist");
+                }
+                String truststoreType = getTruststoreType();
+                if (truststoreType == null) {
+                    throw new InvalidPluginConfigurationException(
+                        "Truststore type is required when using a custom truststore file");
+                }
+                try {
+                    KeyStore.getInstance(truststoreType);
+                } catch (KeyStoreException e) {
+                    throw new InvalidPluginConfigurationException("Truststore type not supported: " + e.getMessage(), e);
+                }
+            }
+            if (isClientcertAuthentication()) {
+                String keystore = getKeystore();
+                if (keystore == null) {
+                    throw new InvalidPluginConfigurationException(
+                        "Keystore is required when using client certificate authentication");
+                }
+                if (!new File(keystore).isFile()) {
+                    throw new InvalidPluginConfigurationException("Keystore file does not exist");
+                }
+                String keystoreType = getKeystoreType();
+                if (keystoreType == null) {
+                    throw new InvalidPluginConfigurationException(
+                        "Keystore type is required when using a custom keystore file");
+                }
+                try {
+                    KeyStore.getInstance(keystoreType);
+                } catch (KeyStoreException e) {
+                    throw new InvalidPluginConfigurationException("Keystore type not supported: " + e.getMessage(), e);
+                }
+            }
+        }
+    }
 }

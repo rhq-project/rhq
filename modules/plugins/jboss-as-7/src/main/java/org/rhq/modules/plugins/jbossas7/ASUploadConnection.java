@@ -19,6 +19,9 @@
 
 package org.rhq.modules.plugins.jbossas7;
 
+import static org.rhq.modules.plugins.jbossas7.ASConnection.HTTPS_SCHEME;
+import static org.rhq.modules.plugins.jbossas7.ASConnection.HTTP_SCHEME;
+
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.File;
@@ -26,6 +29,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,7 +40,9 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -46,7 +53,6 @@ import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import org.rhq.core.util.StringUtil;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 
 /**
@@ -69,124 +75,135 @@ import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
  * @author Thomas Segismont
  */
 public class ASUploadConnection {
-
     private static final Log LOG = LogFactory.getLog(ASUploadConnection.class);
 
     private static final int SOCKET_CONNECTION_TIMEOUT = 30 * 1000; // 30sec
-
     private static final int SOCKET_READ_TIMEOUT = 60 * 1000; // 60sec
-
     private static final String TRIGGER_AUTH_URI = ASConnection.MANAGEMENT_URI;
-
     private static final String UPLOAD_URI = ASConnection.MANAGEMENT_URI + "/add-content";
-
-    private static final int FILE_POST_MAX_LOGGABLE_RESPONSE_LENGTH = 1024 * 2; // 2k max 
-
+    private static final int FILE_POST_MAX_LOGGABLE_RESPONSE_LENGTH = 1024 * 2; // 2k max
     private static final String EMPTY_JSON_TREE = "{}";
-
     private static final String JSON_NODE_FAILURE_DESCRIPTION = "failure-description";
-
     private static final String JSON_NODE_FAILURE_DESCRIPTION_VALUE_DEFAULT = "FailureDescription: -input was null-";
-
     private static final String JSON_NODE_OUTCOME = "outcome";
-
     private static final String JSON_NODE_OUTCOME_VALUE_FAILED = "failed";
-
     private static final String SYSTEM_LINE_SEPARATOR = System.getProperty("line.separator");
 
-    private String scheme = ASConnection.HTTP_SCHEME;
-
-    private String host;
-
-    private int port;
-
-    private UsernamePasswordCredentials credentials;
-
-    private String fileName;
-
-    private int timeout;
-
+    private final ASConnectionParams asConnectionParams;
+    private final int timeout;
+    private final URI triggerAuthUri;
+    private final URI uploadUri;
+    private final UsernamePasswordCredentials credentials;
+    private String filename;
     private File cacheFile;
-
     private BufferedOutputStream cacheOutputStream;
 
     /**
      * @deprecated as of 4.6. This class is not reusable so there is no reason not to provide the filename to the 
-     * constructor. Use {@link #ASUploadConnection(String, int, String, String, String)}  instead.
+     * constructor. Use {@link #ASUploadConnection(ASConnectionParams, String)}  instead.
      */
     @Deprecated
     public ASUploadConnection(String host, int port, String user, String password) {
-        this(host, port, user, password, null);
+        this(new ASConnectionParamsBuilder() //
+            .setHost(host) //
+            .setPort(port) //
+            .setUsername(user) //
+            .setPassword(password) //
+            .createASConnectionParams(), null);
     }
 
     /**
-     * Creates a new {@link ASUploadConnection} for a remote http management interface.
-     * 
-     * If null user or password is given, this instance will not be able to reply to an authentication challenge.
-     * 
-     * It's the responsibility of the caller to make sure either {@link #finishUpload()} or {@link #cancelUpload()}
-     * will be called to free resources this class helds.
-     * 
-     * @param host - hostname of the remote http management interface
-     * @param port - port of the remote http management interface
-     * @param user - username to logon with to the remote http management interface.
-     * @param password - password to logon with to the remote http management interface
-     * @param fileName - fileName of the content (to provide in multipart post request)
+     * @deprecated as of RHQ 4.10. Use {@link #ASUploadConnection(ASConnectionParams, String)} instead.
      */
+    @Deprecated
     public ASUploadConnection(String host, int port, String user, String password, String fileName) {
-        if (host == null) {
-            throw new IllegalArgumentException("Management host cannot be null.");
-        }
-        if (port <= 0 || port > 65535) {
-            throw new IllegalArgumentException("Invalid port: " + port);
-        }
-        if (StringUtil.isBlank(fileName)) {
-            throw new IllegalArgumentException("Filename cannot be blank");
-        }
-        this.host = host;
-        this.port = port;
-        if (user != null && password != null) {
-            credentials = new UsernamePasswordCredentials(user, password);
-        }
-        this.fileName = fileName;
-        this.timeout = SOCKET_READ_TIMEOUT;
+        this(new ASConnectionParamsBuilder() //
+            .setHost(host) //
+            .setPort(port) //
+            .setUsername(user) //
+            .setPassword(password) //
+            .createASConnectionParams(), fileName);
     }
 
     /**
      * @deprecated as of 4.6. This class is not reusable so there is no reason not to provide the filename to the 
-     * constructor. Use {@link #ASUploadConnection(ASConnection, String) instead.
+     * constructor. Use {@link #ASUploadConnection(ASConnection, String)} instead.
      */
     @Deprecated
     public ASUploadConnection(ASConnection asConnection) {
-        this(asConnection.getHost(), asConnection.getPort(), asConnection.getUser(), asConnection.getPassword(), null);
+        this(asConnection.getAsConnectionParams(), null);
     }
 
     /**
-     * Creates a new {@link ASUploadConnection} from an existing {@link ASConnection}.
-     * 
-     * This constructor has the same requirements as {@link #ASUploadConnection(String, int, String, String, String)} 
-     * which it uses internally.
-     *
-     * @param asConnection - existing {@link ASConnection} instance
-     * @param fileName - fileName of the content (to provide in multipart post request)
+     * @param asConnection the object which will provide the {@link ASConnectionParams}
+     * @param fileName
+     * @see #ASUploadConnection(ASConnectionParams, String)
      */
     public ASUploadConnection(ASConnection asConnection, String fileName) {
-        this(asConnection.getHost(), asConnection.getPort(), asConnection.getUser(), asConnection.getPassword(),
-            fileName);
+        this(asConnection.getAsConnectionParams(), fileName);
     }
 
     /**
-     * This factory method simplifies creation of a new {@link ASUploadConnection} instance given the caller has
-     * access to the {@link ServerPluginConfiguration}. 
-     * 
-     * @param pluginConfig - the {@link ServerPluginConfiguration}
-     * @param fileName - fileName of the content (to provide in multipart post request)
-     * @return
+     * Creates a new {@link ASUploadConnection} for a remote http management interface.
+     *
+     * It's the responsibility of the caller to make sure either {@link #finishUpload()} or {@link #cancelUpload()}
+     * will be called to free resources this class helds.
+     *
+     * @param params
      */
+    public ASUploadConnection(ASConnectionParams params, String filename) {
+        asConnectionParams = params;
+        if (asConnectionParams.getHost() == null) {
+            throw new IllegalArgumentException("Management host cannot be null.");
+        }
+        if (asConnectionParams.getPort() <= 0 || asConnectionParams.getPort() > 65535) {
+            throw new IllegalArgumentException("Invalid port: " + asConnectionParams.getPort());
+        }
+        this.filename = filename;
+        timeout = SOCKET_READ_TIMEOUT;
+        triggerAuthUri = buildTriggerAuthUri();
+        uploadUri = buildUploadUri();
+        if (asConnectionParams.getUsername() != null && asConnectionParams.getPassword() != null) {
+            credentials = new UsernamePasswordCredentials(asConnectionParams.getUsername(),
+                asConnectionParams.getPassword());
+        } else {
+            credentials = null;
+        }
+    }
+
+    private URI buildTriggerAuthUri() {
+        try {
+            return new URIBuilder() //
+                .setScheme(asConnectionParams.isSecure() ? HTTPS_SCHEME : HTTP_SCHEME) //
+                .setHost(asConnectionParams.getHost()) //
+                .setPort(asConnectionParams.getPort()) //
+                .setPath(TRIGGER_AUTH_URI) //
+                .build();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("Could not build auth trigger URI: " + e.getMessage(), e);
+        }
+    }
+
+    private URI buildUploadUri() {
+        try {
+            return new URIBuilder() //
+                .setScheme(asConnectionParams.isSecure() ? HTTPS_SCHEME : HTTP_SCHEME) //
+                .setHost(asConnectionParams.getHost()) //
+                .setPort(asConnectionParams.getPort()) //
+                .setPath(UPLOAD_URI) //
+                .build();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("Could not build upload URI: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * @deprecated as of RHQ 4.10. Use {@link #ASUploadConnection(ASConnectionParams, String)} instead.
+     */
+    @Deprecated
     public static ASUploadConnection newInstanceForServerPluginConfiguration(ServerPluginConfiguration pluginConfig,
         String fileName) {
-        return new ASUploadConnection(pluginConfig.getHostname(), pluginConfig.getPort(), pluginConfig.getUser(),
-            pluginConfig.getPassword(), fileName);
+        return new ASUploadConnection(ASConnectionParams.createFrom(pluginConfig), fileName);
     }
 
     /**
@@ -196,7 +213,7 @@ public class ASUploadConnection {
      */
     @Deprecated
     public OutputStream getOutputStream(String fileName) {
-        this.fileName = fileName;
+        filename = fileName;
         return getOutputStream();
     }
 
@@ -212,7 +229,7 @@ public class ASUploadConnection {
             cacheOutputStream = new BufferedOutputStream(new FileOutputStream(cacheFile));
             return cacheOutputStream;
         } catch (IOException e) {
-            LOG.error("Could not create outputstream for " + fileName, e);
+            LOG.error("Could not create outputstream for " + filename, e);
         }
         return null;
     }
@@ -234,57 +251,58 @@ public class ASUploadConnection {
      * @return a {@link JsonNode} instance read from the upload response body or null if something went wrong.
      */
     public JsonNode finishUpload() {
-
-        if (fileName == null) {
+        if (filename == null) {
             // At this point the fileName should have been set whether at instanciation or in #getOutputStream(String)
             throw new IllegalStateException("Upload fileName is null");
         }
 
         closeQuietly(cacheOutputStream);
 
-        // We will first send a simple get request in order to trigger authentication challenge.
-        // This allows to send the potentially big file only once to the server
-        // The typical resulting http exchange would be:
-        //
-        // GET without auth <- 401 (start auth challenge : the server will name the realm and the scheme)
-        // GET with auth <- 200
-        // POST big file
-        //
-        // Note this only works because we use SimpleHttpConnectionManager which maintains
-        // only one HttpConnection
-        //
-        // A better way to avoid uploading a big file multiple times would be to use header Expect: Continue
-        // Unfortunately AS7 responds 100 Continue even if the authentication headers are not yet present
-
-        ClientConnectionManager httpConnectionManager = new BasicClientConnectionManager();
+        SchemeRegistry schemeRegistry = new SchemeRegistryBuilder(asConnectionParams).buildSchemeRegistry();
+        ClientConnectionManager httpConnectionManager = new BasicClientConnectionManager(schemeRegistry);
         DefaultHttpClient httpClient = new DefaultHttpClient(httpConnectionManager);
         HttpParams httpParams = httpClient.getParams();
         HttpConnectionParams.setConnectionTimeout(httpParams, SOCKET_CONNECTION_TIMEOUT);
         HttpConnectionParams.setSoTimeout(httpParams, timeout);
-        if (credentials != null) {
-            httpClient.getCredentialsProvider().setCredentials(new AuthScope(host, port), credentials);
+
+        if (credentials != null && !asConnectionParams.isClientcertAuthentication()) {
+            httpClient.getCredentialsProvider().setCredentials(
+                new AuthScope(asConnectionParams.getHost(), asConnectionParams.getPort()), credentials);
+
+            // If credentials were provided, we will first send a GET request to trigger the authentication challenge
+            // This allows to send the potentially big file only once to the server
+            // The typical resulting http exchange would be:
+            //
+            // GET without auth <- 401 (start auth challenge : the server will name the realm and the scheme)
+            // GET with auth <- 200
+            // POST big file
+            //
+            // Note this only works because we use SimpleHttpConnectionManager which maintains only one HttpConnection
+            //
+            // A better way to avoid uploading a big file twice would be to use the header "Expect: Continue"
+            // Unfortunately AS7 replies "100 Continue" even if authentication headers are not present yet
+            //
+            // There is no need to trigger digest authentication when client certification authentication is used
+
+            HttpGet triggerAuthRequest = new HttpGet(triggerAuthUri);
+            try {
+                // Send GET request in order to trigger authentication
+                // We don't check response code because we're not already uploading the file
+                httpClient.execute(triggerAuthRequest);
+            } catch (Exception ignore) {
+                // We don't stop trying upload if triggerAuthRequest raises exception
+                // See comment above
+            } finally {
+                triggerAuthRequest.abort();
+            }
         }
 
-        String triggerAuthUrl = scheme + "://" + host + ":" + port + TRIGGER_AUTH_URI;
-        HttpGet triggerAuthRequest = new HttpGet(triggerAuthUrl);
-        try {
-            // Send GET request in order to trigger authentication
-            // We don't check response code because we're not already uploading the file
-            httpClient.execute(triggerAuthRequest);
-        } catch (Exception ignore) {
-            // We don't stop trying upload if triggerAuthRequest raises exception
-            // See comment above
-        } finally {
-            triggerAuthRequest.abort();
-        }
-
-        String uploadURL = scheme + "://" + host + ":" + port + UPLOAD_URI;
-        HttpPost uploadRequest = new HttpPost(uploadURL);
+        HttpPost uploadRequest = new HttpPost(uploadUri);
         try {
 
             // Now upload file with multipart POST request
             MultipartEntity multipartEntity = new MultipartEntity();
-            multipartEntity.addPart(fileName, new FileBody(cacheFile));
+            multipartEntity.addPart(filename, new FileBody(cacheFile));
             uploadRequest.setEntity(multipartEntity);
             HttpResponse uploadResponse = httpClient.execute(uploadRequest);
             if (uploadResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
@@ -356,12 +374,6 @@ public class ASUploadConnection {
         return false;
     }
 
-    private boolean credentialsProvided() {
-        // If null user or password is given to the constructor
-        // no credentials instance is created
-        return credentials != null;
-    }
-
     private void logUploadDoesNotEndWithHttpOkStatus(HttpResponse uploadResponse) {
         StringBuilder logMessageBuilder = new StringBuilder("File upload failed: ").append(ASConnection
             .statusAsString(uploadResponse.getStatusLine()));
@@ -397,7 +409,9 @@ public class ASUploadConnection {
     /**
      * Get the currently active upload timeout
      * @return timeout in seconds
+     * @deprecated there is no reason to expose this attribute
      */
+    @Deprecated
     public int getTimeout() {
         return timeout;
     }
@@ -405,9 +419,9 @@ public class ASUploadConnection {
     /**
      * Set upload timeout in seconds.
      * @param timeout upload timeout in seconds
+     * @deprecated there is no reason to expose this attribute
      */
+    @Deprecated
     public void setTimeout(int timeout) {
-        this.timeout = timeout;
     }
-
 }

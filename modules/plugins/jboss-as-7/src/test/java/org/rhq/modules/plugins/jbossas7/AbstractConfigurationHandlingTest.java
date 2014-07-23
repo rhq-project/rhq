@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -167,7 +167,12 @@ public abstract class AbstractConfigurationHandlingTest {
         JsonNode content;
 
         public FakeConnection() {
-            super("localhost", 1234, "fake", "fake");
+            super(new ASConnectionParamsBuilder() //
+                .setHost("localhost") //
+                .setPort(1234) //
+                .setUsername("fake") //
+                .setPassword("fake") //
+                .createASConnectionParams());
         }
 
         public void setContent(JsonNode content) {

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.itest.nonpc;
 
 import java.io.File;
@@ -48,6 +49,8 @@ import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.modules.plugins.jbossas7.ASConnection;
+import org.rhq.modules.plugins.jbossas7.ASConnectionParams;
+import org.rhq.modules.plugins.jbossas7.ASConnectionParamsBuilder;
 import org.rhq.modules.plugins.jbossas7.ASUploadConnection;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -72,7 +75,13 @@ public abstract class AbstractIntegrationTest {
 
     String uploadToAs(String deploymentPath) throws IOException {
         String fileName = new File(deploymentPath).getName();
-        ASUploadConnection conn = new ASUploadConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS, fileName);
+        ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
+            .setHost(DC_HOST) //
+            .setPort(DC_HTTP_PORT) //
+            .setUsername(DC_USER) //
+            .setPassword(DC_PASS) //
+            .createASConnectionParams();
+        ASUploadConnection conn = new ASUploadConnection(asConnectionParams, fileName);
         OutputStream os = conn.getOutputStream();
 
         //        URL url = getClass().getClassLoader().getResource(".");
@@ -107,8 +116,13 @@ public abstract class AbstractIntegrationTest {
     }
 
     ASConnection getASConnection() {
-        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS);
-        return connection;
+        ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
+            .setHost(DC_HOST) //
+            .setPort(DC_HTTP_PORT) //
+            .setUsername(DC_USER) //
+            .setPassword(DC_PASS) //
+            .createASConnectionParams();
+        return new ASConnection(asConnectionParams);
     }
 
     Operation addDeployment(String deploymentName, String bytes_value) {

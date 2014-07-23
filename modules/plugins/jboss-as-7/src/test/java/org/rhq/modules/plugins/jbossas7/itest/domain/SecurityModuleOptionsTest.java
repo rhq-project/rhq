@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
 import static org.testng.Assert.assertEquals;
@@ -54,6 +55,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.modules.plugins.jbossas7.ASConnection;
+import org.rhq.modules.plugins.jbossas7.ASConnectionParams;
+import org.rhq.modules.plugins.jbossas7.ASConnectionParamsBuilder;
 import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent;
 import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.Value;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
@@ -92,8 +95,13 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
     protected static String DC_PASS = AbstractJBossAS7PluginTest.MANAGEMENT_PASSWORD;
 
     ASConnection getASConnection() {
-        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS);
-        return connection;
+        ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
+            .setHost(DC_HOST) //
+            .setPort(DC_HTTP_PORT) //
+            .setUsername(DC_USER) //
+            .setPassword(DC_PASS) //
+            .createASConnectionParams();
+        return new ASConnection(asConnectionParams);
     }
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType(SECURITY_RESOURCE_TYPE, PLUGIN_NAME,

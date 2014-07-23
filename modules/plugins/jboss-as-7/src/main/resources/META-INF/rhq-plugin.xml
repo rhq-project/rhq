@@ -112,6 +112,90 @@
         </c:simple-property>
 '>
 
+    <!ENTITY managementInterfaceSecureConnectionSettings '
+    <c:group name="secureConnectionSettings">
+      <c:simple-property name="trustStrategy" default="standard">
+        <c:description>
+          Defines the trust strategy to use when reading the server certificate:
+          &lt;ul&gt;
+            &lt;li&gt;Standard: standard verification using a truststore&lt;/li&gt;
+            &lt;li&gt;Trust Self-signed: trust self-signed certificates (certification chain size equals to 1)&lt;/li&gt;
+            &lt;li&gt;Trust Any: trust any server certificate&lt;/li&gt;
+          &lt;/ul&gt;
+        </c:description>
+        <c:property-options>
+          <c:option value="standard" name="Standard"/>
+          <c:option value="trustSelfsigned" name="Trust Self-signed"/>
+          <c:option value="trustAny" name="Trust Any"/>
+        </c:property-options>
+      </c:simple-property>
+      <c:simple-property name="hostnameVerification" default="strict">
+        <c:description>
+          Defines the hostname verification logic:
+          &lt;ul&gt;
+            &lt;li&gt;Strict: The hostname must match either the first CN, or any of the
+              &lt;a href="http://en.wikipedia.org/wiki/Subject_Alternative_Name"&gt;Subject Alternatives&lt;/a&gt;.
+              A wildcard can occur in the CN, and in any of the Subject Alternatives.&lt;/li&gt;
+            &lt;li&gt;Browser-compatible: same as &lt;em&gt;Strict&lt;/em&gt;, except that it allows nested subdomains
+              validation with wildcards.&lt;/li&gt;
+            &lt;li&gt;Skip: no hostname verification&lt;/li&gt;
+          &lt;/ul&gt;
+        </c:description>
+        <c:property-options>
+          <c:option value="strict" name="Strict"/>
+          <c:option value="browserCompatible" name="Browser-compatible"/>
+          <c:option value="skip" name="Skip"/>
+        </c:property-options>
+      </c:simple-property>
+      <c:simple-property name="truststore" required="false">
+        <c:description>
+          Path to a truststore file. If undefined, the JVM default truststore is used.
+        </c:description>
+      </c:simple-property>
+      <c:simple-property name="truststoreType" required="false" default="jks">
+        <c:description>
+          Truststore file format (required when the &lt;em&gt;Truststore&lt;/em&gt; property is set).
+          All certified JVMs support &lt;em&gt;jks&lt;/em&gt; (Java KeyStore) or &lt;em&gt;pkcs12&lt;/em&gt; formats.
+        </c:description>
+        <c:property-options allowCustomValue="true">
+          <c:option value="jks"/>
+          <c:option value="pkcs12"/>
+        </c:property-options>
+      </c:simple-property>
+      <c:simple-property name="truststorePassword" required="false" type="password">
+        <c:description>
+          Password protecting the truststore file.
+        </c:description>
+      </c:simple-property>
+      <c:simple-property name="clientcertAuthentication" default="false" type="boolean" displayName="Client Certificate Authentication"/>
+      <c:simple-property name="keystore" required="false">
+        <c:description>
+          Path to a keystore file. Required when &lt;em&gt;Client Certificate Authentication&lt;/em&gt; is on.
+        </c:description>
+      </c:simple-property>
+      <c:simple-property name="keystoreType" required="false" default="jks">
+        <c:description>
+          Keystore file format (required when the &lt;em&gt;Keystore&lt;/em&gt; property is set).
+          All certified JVMs support &lt;em&gt;jks&lt;/em&gt; (Java KeyStore) or &lt;em&gt;pkcs12&lt;/em&gt; formats.
+        </c:description>
+        <c:property-options allowCustomValue="true">
+          <c:option value="jks"/>
+          <c:option value="pkcs12"/>
+        </c:property-options>
+      </c:simple-property>
+      <c:simple-property name="keystorePassword" required="false" type="password">
+        <c:description>
+          Password protecting the keystore file.
+        </c:description>
+      </c:simple-property>
+      <c:simple-property name="keyPassword" required="false" type="password">
+        <c:description>
+          Password protecting the secret key in the keystore file.
+        </c:description>
+      </c:simple-property>
+    </c:group>
+'>
+
     <!ENTITY serverKindMetrics '
         <metric property="_skm:release-codename" dataType="trait"  displayName="Server Code Name"/>
         <metric property="_skm:release-version" dataType="trait"  displayName="Server Version"/>
@@ -944,6 +1028,7 @@
     <plugin-configuration>
       <c:simple-property name="hostname" default="localhost" required="true" description="Host name of the domain API"/>
       <c:simple-property name="port" default="9990" type="integer" required="true" description="Port of the domain API"/>
+      <c:simple-property name="secure" default="false" type="boolean" description="Encrypted transport indicator"/>
       <c:simple-property name="user" type="string" description="Management user for a secured Host controller" required="false"/>
       <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
       <c:simple-property name="managementConnectionTimeout" type="long" description="Maximum time in milliseconds to keep alive an idle management connection. Zero and negative values will disable connection persistence. Defaults to 5000 ms." required="false" default="5000"/>
@@ -956,6 +1041,7 @@
 
       &startScriptPluginConfigGroup;
       &logSources;
+      &managementInterfaceSecureConnectionSettings;
 
       <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
         &availabilityCheckPeriod;
@@ -1267,6 +1353,7 @@
     <plugin-configuration>
       <c:simple-property name="hostname" default="localhost" required="true"/>
       <c:simple-property name="port" default="9990" type="integer" required="true"/>
+      <c:simple-property name="secure" default="false" type="boolean" description="Encrypted transport indicator"/>
       <c:simple-property name="user" type="string" description="Management user for a secured AS" required="false"/>
       <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
       <c:simple-property name="managementConnectionTimeout" type="long" description="Maximum time in milliseconds to keep alive an idle management connection. Zero and negative values will disable connection persistence. Defaults to 5000 ms." required="false" default="5000"/>
@@ -1278,6 +1365,7 @@
 
       &startScriptPluginConfigGroup;
       &logSources;
+      &managementInterfaceSecureConnectionSettings;
 
       <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
         &availabilityCheckPeriod;

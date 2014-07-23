@@ -20,31 +20,26 @@
 package org.rhq.modules.plugins.jbossas7.helper;
 
 /**
- * @author Heiko Rupp
- */
-public class HostPort {
+* @author Thomas Segismont
+*/
+public enum TrustStrategy {
+    STANDARD("standard"), TRUST_SELFSIGNED("trustSelfsigned"), TRUST_ANY("trustAny");
 
-    public String host;
-    public int port;
-    public boolean isSecure = false;
-    public boolean isLocal = true;
-    public boolean withOffset = false;
+    public final String name;
 
-    public HostPort() {
-        host = "localhost";
-        port = HostConfiguration.DEFAULT_MGMT_PORT;
-        isLocal = true;
+    TrustStrategy(String name) {
+        this.name = name;
     }
 
-    public HostPort(boolean local) {
-        this();
-        isLocal = local;
+    public static TrustStrategy findByName(String name) {
+        if (name == null) {
+            throw new IllegalArgumentException("name is null");
+        }
+        for (TrustStrategy strategy : values()) {
+            if (strategy.name.equals(name)) {
+                return strategy;
+            }
+        }
+        throw new IllegalArgumentException("No constant with name: " + name);
     }
-
-    @Override
-    public String toString() {
-        return "HostPort[" + "host='" + host + '\'' + ", port=" + port + ", isSecure=" + isSecure + ", isLocal="
-            + isLocal + ", withOffset=" + withOffset + ']';
-    }
-
 }

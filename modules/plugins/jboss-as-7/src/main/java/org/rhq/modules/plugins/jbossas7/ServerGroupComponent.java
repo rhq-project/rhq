@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -93,8 +93,8 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
 
             String packageName = details.getName();
 
-            ASUploadConnection uploadConnection = ASUploadConnection.newInstanceForServerPluginConfiguration(
-                getServerComponent().getServerPluginConfiguration(), packageName);
+            ASUploadConnection uploadConnection = new ASUploadConnection(getServerComponent().getASConnection(),
+                packageName);
             OutputStream out = uploadConnection.getOutputStream();
             if (out == null) {
                 response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),

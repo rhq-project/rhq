@@ -459,8 +459,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         ContentServices contentServices = cctx.getContentServices();
         String resourceTypeName = report.getResourceType().getName();
 
-        ASUploadConnection uploadConnection = ASUploadConnection.newInstanceForServerPluginConfiguration(
-            getServerComponent().getServerPluginConfiguration(), details.getKey().getName());
+        ASUploadConnection uploadConnection = new ASUploadConnection(getServerComponent().getASConnection(), details
+            .getKey().getName());
 
         OutputStream out = uploadConnection.getOutputStream();
         if (out == null) {

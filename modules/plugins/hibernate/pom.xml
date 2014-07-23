@@ -6,7 +6,7 @@
       <groupId>org.rhq</groupId>
       <!--  Bypass the jopr-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
       <artifactId>rhq-plugins-parent</artifactId>
-      <version>4.13.0-SNAPSHOT</version>
+      <version>4.12.0.JON330DR01</version>
    </parent>
 
    <groupId>org.jboss.on</groupId>

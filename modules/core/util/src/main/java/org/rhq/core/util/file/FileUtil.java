@@ -437,6 +437,26 @@ public class FileUtil {
     }
 
     /**
+     * Ensure that the path uses only forward slash.
+     * @param path
+     * @return backward-slashed path, or null if path is null
+     */
+    public static String useBackwardSlash(String path) {
+
+        return (null != path) ? path.replace('/', '\\') : null;
+    }
+
+    /**
+     * Ensure that the path uses only the proper file separator for the OS.
+     * @param path
+     * @return appropriate forward- or back-slashed path, or null if path is null
+     */
+    public static String useNativeSlash(String path) {
+
+        return ('/' == File.separatorChar) ? useForwardSlash(path) : useBackwardSlash(path);
+    }
+
+    /**
      * Return just the filename portion (the portion right of the last path separator string)
      * @param path
      * @param separator

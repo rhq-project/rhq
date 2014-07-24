@@ -48,6 +48,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
+import org.rhq.enterprise.server.util.BatchIterator;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 import org.rhq.enterprise.server.util.SessionTestHelper;
@@ -93,16 +94,29 @@ public class GroupAlertDefinitionManagerBeanTest extends AbstractEJB3Test {
      */
     public void testBug738799() {
         List<Integer> childDefIds = getChildrenAlertDefinitionIds(testData.getGroupAlertDefinitionId());
+
         assertEquals(testData.getResources().size(), childDefIds.size());
+
         int modified = alertDefinitionManager.removeAlertDefinitions(testData.getSubject(),
             new int[] { testData.getGroupAlertDefinitionId() });
+
         assertEquals(modified, 1);
-        assertEquals(0, getChildrenAlertDefinitionIds(testData.getGroupAlertDefinitionId()).size());
-        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
-        criteria.addFilterIds(childDefIds.toArray(new Integer[childDefIds.size()]));
-        List<AlertDefinition> remainingChildDefs = alertDefinitionManager.findAlertDefinitionsByCriteria(
-            testData.getSubject(), criteria);
-        assertEquals(0, remainingChildDefs.size());
+
+        childDefIds = getChildrenAlertDefinitionIds(testData.getGroupAlertDefinitionId());
+
+        assertEquals(0, childDefIds.size());
+
+        BatchIterator<Integer> childDefIdsBatchIterator = new BatchIterator<Integer>(childDefIds);
+        for (List<Integer> childDefIdsBatch : childDefIdsBatchIterator) {
+
+            AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+            criteria.addFilterIds(childDefIdsBatch.toArray(new Integer[childDefIdsBatch.size()]));
+            List<AlertDefinition> remainingChildDefs = alertDefinitionManager.findAlertDefinitionsByCriteria(
+                testData.getSubject(), criteria);
+
+            assertEquals(0, remainingChildDefs.size());
+
+        }
     }
 
     @Override

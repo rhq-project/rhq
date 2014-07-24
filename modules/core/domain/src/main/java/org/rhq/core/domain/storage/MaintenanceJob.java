@@ -90,32 +90,36 @@ public class MaintenanceJob implements Serializable {
         return id;
     }
 
-    public void setId(int id) {
+    public MaintenanceJob setId(int id) {
         this.id = id;
+        return this;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public MaintenanceJob setName(String name) {
         this.name = name;
+        return this;
     }
 
     public int getType() {
         return type;
     }
 
-    public void setType(int type) {
+    public MaintenanceJob setType(int type) {
         this.type = type;
+        return this;
     }
 
     public List<MaintenanceStep> getMaintenanceSteps() {
         return steps;
     }
 
-    public void setAgents(List<MaintenanceStep> steps) {
+    public MaintenanceJob setSteps(List<MaintenanceStep> steps) {
         this.steps = steps;
+        return this;
     }
 
     public int getMaintenanceStepCount() {
@@ -130,8 +134,9 @@ public class MaintenanceJob implements Serializable {
         return mtime;
     }
 
-    public void setMtime(long mtime) {
+    public MaintenanceJob setMtime(long mtime) {
         this.mtime = mtime;
+        return this;
     }
 
     @Override

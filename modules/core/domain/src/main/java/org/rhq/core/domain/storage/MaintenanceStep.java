@@ -26,6 +26,8 @@ import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -77,7 +79,8 @@ public class MaintenanceStep implements Serializable {
     //TODO: have to change to full Enum once the types settle to
     //      a finite few
     @Column(name = "TYPE", nullable = false)
-    private String type;
+    @Enumerated(EnumType.STRING)
+    private Type type;
 
     // the time this maintenance workflow was created
     @Column(name = "CTIME", nullable = false)
@@ -109,48 +112,54 @@ public class MaintenanceStep implements Serializable {
         return id;
     }
 
-    public void setId(int id) {
+    public MaintenanceStep setId(int id) {
         this.id = id;
+        return this;
     }
 
     public MaintenanceJob getMaintenanceJob() {
         return maintenanceJob;
     }
 
-    public void setMaintenanceJob(MaintenanceJob maintenanceJob) {
+    public MaintenanceStep setMaintenanceJob(MaintenanceJob maintenanceJob) {
         this.maintenanceJob = maintenanceJob;
+        return this;
     }
 
     public int getStep() {
         return step;
     }
 
-    public void setStep(int step) {
+    public MaintenanceStep setStep(int step) {
         this.step = step;
+        return this;
     }
 
     public String getNodeAddress() {
         return nodeAddress;
     }
 
-    public void setNodeAddress(String nodeAddress) {
+    public MaintenanceStep setNodeAddress(String nodeAddress) {
         this.nodeAddress = nodeAddress;
+        return this;
     }
 
     public String getOperationName() {
         return name;
     }
 
-    public void setName(String name) {
+    public MaintenanceStep setName(String name) {
         this.name = name;
+        return this;
     }
 
-    public String getType() {
+    public Type getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public MaintenanceStep setType(Type type) {
         this.type = type;
+        return this;
     }
 
     public long getCtime() {
@@ -161,40 +170,45 @@ public class MaintenanceStep implements Serializable {
         return mtime;
     }
 
-    public void setMtime(long mtime) {
+    public MaintenanceStep setMtime(long mtime) {
         this.mtime = mtime;
+        return this;
     }
 
     public boolean isSequential() {
         return sequential;
     }
 
-    public void setSequential(boolean sequential) {
+    public MaintenanceStep setSequential(boolean sequential) {
         this.sequential = sequential;
+        return this;
     }
 
     public long getTimeout() {
         return timeout;
     }
 
-    public void setTimeout(long timeout) {
+    public MaintenanceStep setTimeout(long timeout) {
         this.timeout = timeout;
+        return this;
     }
 
     public String getArgs() {
         return args;
     }
 
-    public void setArgs(String args) {
+    public MaintenanceStep setArgs(String args) {
         this.args = args;
+        return this;
     }
 
     public String getOnFailure() {
         return onFailure;
     }
 
-    public void setOnFailure(String onFailure) {
+    public MaintenanceStep setOnFailure(String onFailure) {
         this.onFailure = onFailure;
+        return this;
     }
 
     @Override
@@ -236,5 +250,12 @@ public class MaintenanceStep implements Serializable {
         }
 
         return true;
+    }
+
+    public enum Type {
+        ResourceUpdate,
+        EntityUpdate,
+        ResourceOperation,
+        ServerUpdate
     }
 }

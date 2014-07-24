@@ -343,7 +343,7 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             return BundleHandoverResponse.success();
         }
 
-        Operation addDeploymentStep = new Operation("add", "deployment", runtimeName);
+        Operation addDeploymentStep = new Operation("add", "deployment", filename);
         List<Object> addDeploymentContentProperty = new ArrayList<Object>(1);
         Map<String, Object> contentValues = new HashMap<String, Object>();
         contentValues.put("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));

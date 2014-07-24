@@ -87,7 +87,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
@@ -104,6 +103,7 @@ import org.rhq.enterprise.server.rest.domain.MetricDefinitionAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
 import org.rhq.enterprise.server.rest.domain.StringValue;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 
@@ -1132,6 +1132,17 @@ public class MetricHandlerBean  extends AbstractRestBean  {
                     xmlOutput(i.next(), pw);
                 }
                 pw.println("</collection>");
+            } else {
+                //default
+                pw.print("[");
+                if (i.hasNext()) {
+                    jsonOutput(i.next(), pw);
+                }
+                while (i.hasNext()) {
+                    pw.print(",\n");
+                    jsonOutput(i.next(), pw);
+                }
+                pw.println("]");
             }
             pw.flush();
             pw.close();
@@ -1150,6 +1161,28 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         long endTime;
         MediaType mediaType;
 
+        private void jsonOutput(PrintWriter pw, Iterable<RawNumericMetric> resultSet) {
+            boolean needsComma = false;
+            pw.println("[");
+            for (RawNumericMetric metric : resultSet) {
+                if (needsComma) {
+                    pw.print(",\n");
+                }
+                needsComma = true;
+                pw.print("{");
+                pw.print("\"scheduleId\":");
+                pw.print(scheduleId);
+                pw.print(", ");
+                pw.print("\"timeStamp\":");
+                pw.print(metric.getTimestamp());
+                pw.print(", ");
+                pw.print("\"value\":");
+                pw.print(metric.getValue());
+                pw.print("}");
+            }
+            pw.println("]");
+        }
+
         @Override
         public void write(OutputStream outputStream) throws IOException, WebApplicationException {
             MetricsDAO metricsDAO = sessionManager.getMetricsDAO();
@@ -1158,25 +1191,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             PrintWriter pw = new PrintWriter(outputStream);
 
             if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
-                boolean needsComma = false;
-                pw.println("[");
-                for (RawNumericMetric metric : resultSet) {
-                    if (needsComma) {
-                        pw.print(",\n");
-                    }
-                    needsComma = true;
-                    pw.print("{");
-                    pw.print("\"scheduleId\":");
-                    pw.print(scheduleId);
-                    pw.print(", ");
-                    pw.print("\"timeStamp\":");
-                    pw.print(metric.getTimestamp());
-                    pw.print(", ");
-                    pw.print("\"value\":");
-                    pw.print(metric.getValue());
-                    pw.print("}");
-                }
-                pw.println("]");
+                jsonOutput(pw, resultSet);
             } else if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
                 pw.println("<collection>");
                 for (RawNumericMetric metric : resultSet) {
@@ -1212,6 +1227,8 @@ public class MetricHandlerBean  extends AbstractRestBean  {
                 }
                 pw.println("</table>");
 
+            } else {
+                jsonOutput(pw, resultSet);
             }
             pw.flush();
             pw.close();

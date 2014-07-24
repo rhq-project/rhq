@@ -227,7 +227,66 @@ public enum SystemSetting {
     LAST_SYSTEM_CONFIG_UPDATE_TIME("LAST_SYSCONFIG_UPDATE_TIME", PropertySimpleType.LONG, true, false, false),
 
     /** How long do we keep operation history data */
-    OPERATION_HISTORY_PURGE_PERIOD("OPERATION_HISTORY_PURGE", PropertySimpleType.LONG, false, true, true)
+    OPERATION_HISTORY_PURGE_PERIOD("OPERATION_HISTORY_PURGE", PropertySimpleType.LONG, false, true, true),
+
+    /**
+     * Enable/Disable snapshots management for storage cluster
+     * 
+     * The STORAGE_* settings are all read-only and private and deal with shared, cluster-wide settings
+     * among storage nodes. They are read-only and private because they should only be updated through
+     * the storage subsystem. The username and password should not be updated at all.
+     */
+    STORAGE_REGULAR_SNAPSHOTS("STORAGE_REGULAR_SNAPSHOTS", PropertySimpleType.BOOLEAN, true, true, false),
+
+    /**
+     * Cron Expression schedule for creating regular snapshots
+     * 
+     * The STORAGE_* settings are all read-only and private and deal with shared, cluster-wide settings
+     * among storage nodes. They are read-only and private because they should only be updated through
+     * the storage subsystem. The username and password should not be updated at all.
+     */
+    STORAGE_REGULAR_SNAPSHOTS_SCHEDULE("STORAGE_REGULAR_SNAPSHOTS_SCHEDULE", PropertySimpleType.STRING, true, true,
+        false),
+
+    /**
+     * Retention strategy for creating regular snapshots
+     * 
+     * The STORAGE_* settings are all read-only and private and deal with shared, cluster-wide settings
+     * among storage nodes. They are read-only and private because they should only be updated through
+     * the storage subsystem. The username and password should not be updated at all.
+     */
+    STORAGE_REGULAR_SNAPSHOTS_RETENTION("STORAGE_REGULAR_SNAPSHOTS_RETENTION", PropertySimpleType.STRING, true, true,
+        false),
+
+    /**
+     *  Count parameter for retention strategy for creating regular snapshots
+     * 
+     * The STORAGE_* settings are all read-only and private and deal with shared, cluster-wide settings
+     * among storage nodes. They are read-only and private because they should only be updated through
+     * the storage subsystem. The username and password should not be updated at all.
+     */
+    STORAGE_REGULAR_SNAPSHOTS_RETENTION_COUNT("STORAGE_REGULAR_SNAPSHOTS_RETENTION_COUNT", PropertySimpleType.INTEGER,
+        true, true, false),
+
+    /**
+     * Deletion strategy for creating regular snapshots
+     * 
+     * The STORAGE_* settings are all read-only and private and deal with shared, cluster-wide settings
+     * among storage nodes. They are read-only and private because they should only be updated through
+     * the storage subsystem. The username and password should not be updated at all.
+     */
+    STORAGE_REGULAR_SNAPSHOTS_DELETION("STORAGE_REGULAR_SNAPSHOTS_DELETION", PropertySimpleType.STRING, true, false,
+        false),
+
+    /**
+     * Location parameter for deletion strategy  for creating regular snapshots
+     * 
+     * The STORAGE_* settings are all read-only and private and deal with shared, cluster-wide settings
+     * among storage nodes. They are read-only and private because they should only be updated through
+     * the storage subsystem. The username and password should not be updated at all.
+     */
+    STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION("STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION",
+        PropertySimpleType.STRING, true, true, false)
     ;
 
     private final String internalName;

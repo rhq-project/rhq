@@ -68,7 +68,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
     private static final String TAKE_SNAPSHOT_OPERATION_NAME = "takeSnapshot";
     private static final String[] MAINTENANCE_OPERATIONS = new String[] { "readRepair", "addNodeMaintenance",
         "removeNodeMaintenance", "announce", "unannounce", "prepareForBootstrap", "prepareForUpgrade",
-        "updateSeedsList", "updateConfiguration" };
+        "updateSeedsList", "updateConfiguration", "takeSnapshot" };
 
     static private final List<InjectedTemplate> injectedTemplates;
     static private final InjectedTemplate storageNodeHighHeapTemplate;

@@ -112,4 +112,9 @@ public interface StorageNodeManagerLocal extends StorageNodeManagerRemote {
      * Done in new trans to ensure ensuing logic sees the reset and avoids locking.
      */
     void resetInNewTransaction();
+
+    void scheduleSnapshotManagementOperationsForStorageNode(Subject subject, StorageNode node,
+        StorageClusterSettings settings);
+
+    void scheduleSnapshotManagement(Subject subject, StorageClusterSettings clusterSettings);
 }

@@ -155,13 +155,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @EJB
     private ResourceManagerLocal resourceManager;
-    
+
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
-    
+
     @EJB
     private RepoManagerLocal repoManager;
-    
+
 
     // ContentManagerLocal Implementation  --------------------------------------------
 
@@ -582,6 +582,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 history.setStatus(InstalledPackageHistoryStatus.INSTALLED);
             } else {
                 history.setStatus(InstalledPackageHistoryStatus.FAILED);
+                history.setErrorMessage(response.getOverallRequestErrorMessage());
             }
 
             entityManager.persist(history);
@@ -1152,10 +1153,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             q.setParameter("typeId", resourceTypeId);
         }
         q.setParameter("name", packageTypeName);
-        
+
         @SuppressWarnings("unchecked")
-        List<PackageType> results = (List<PackageType>) q.getResultList();
-        
+        List<PackageType> results = q.getResultList();
+
         if (results.size() == 0) {
             return null;
         } else if (results.size() == 1) {
@@ -1166,14 +1167,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             throw new IllegalStateException(message);
         }
     }
-    
+
     public PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(Subject subject,
         Integer resourceTypeId, String packageTypeName) {
-        
+
         PackageType type = findPackageType(subject, resourceTypeId, packageTypeName);
-        
+
         PackageVersionFormatDescription format = null;
-        
+
         try {
             PackageTypeBehavior behavior = ContentManagerHelper.getPackageTypeBehavior(packageTypeName);
             if (behavior != null) {
@@ -1183,10 +1184,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             //well, this shouldn't happen but is not crucial in this case
             LOG.info("Failed to obtain the behavior of package type '" + packageTypeName + "'.", e);
         }
-        
+
         return new PackageTypeAndVersionFormatComposite(type, format);
     }
-    
+
     @SuppressWarnings("unchecked")
     public void checkForTimedOutRequests(Subject subject) {
         if (!authorizationManager.isOverlord(subject)) {
@@ -1309,7 +1310,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             PackageTypeBehavior behavior = ContentManagerHelper.getPackageTypeBehavior(packageTypeId);
             ValidatablePackageDetailsKey key = new ValidatablePackageDetailsKey(packageName, version, packageType.getName(), architecture.getName());
             behavior.validateDetails(key, subject);
-            
+
             packageName = key.getName();
             version = key.getVersion();
             if (!architecture.getName().equals(key.getArchitectureName())) {
@@ -1323,7 +1324,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             LOG.error("Failed to get the package type plugin container. This is a bug.", e);
             throw new IllegalStateException("Failed to get the package type plugin container.", e);
         }
-        
+
         // If the package doesn't exist, create that here
         Query packageQuery = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
         packageQuery.setParameter("name", packageName);
@@ -1343,7 +1344,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // Create a package version and add it to the package
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
-        
+
         newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
 
         Map<String, String> contentDetails = new HashMap<String, String>();
@@ -1354,7 +1355,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         newPackageVersion.setFileSize(Long.valueOf(contentDetails.get(UPLOAD_FILE_SIZE)).longValue());
         newPackageVersion.setSHA256(contentDetails.get(UPLOAD_SHA256));
         newPackageVersion.setDisplayVersion(displayVersion);
-        
+
         existingPackage.addVersion(newPackageVersion);
 
         return newPackageVersion;
@@ -1404,7 +1405,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             q.setParameter("packageTypeName", pv.getGeneralPackage().getPackageType().getName());
             q.setParameter("architectureName", pv.getArchitecture().getName());
             q.setParameter("version", pv.getVersion());
-            
+
             ResourceType rt = pv.getGeneralPackage().getPackageType().getResourceType();
             q.setParameter("resourceType", rt);
 
@@ -1427,7 +1428,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             }
         } else {
             // the persisted object is unattached right now,
-            // we want it attached so the caller always has an attached entity returned to it 
+            // we want it attached so the caller always has an attached entity returned to it
             persisted = entityManager.find(PackageVersion.class, persisted.getId());
             persisted.getGeneralPackage().getId();
             persisted.getArchitecture().getId();
@@ -1486,7 +1487,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             }
         } else {
             // the persisted object is unattached right now,
-            // we want it attached so the caller always has an attached entity returned to it 
+            // we want it attached so the caller always has an attached entity returned to it
             persisted = entityManager.find(Package.class, persisted.getId());
             persisted.getPackageType().getId();
         }
@@ -1594,7 +1595,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     public PageList<Package> findPackagesByCriteria(Subject subject, PackageCriteria criteria) {
-        
+
         if (criteria.getFilterRepoId() != null) {
             if (!authorizationManager.canViewRepo(subject, criteria.getFilterRepoId())) {
                 throw new PermissionException("Subject [" + subject.getName() + "] cannot view the repo with id " + criteria.getFilterRepoId());
@@ -1602,34 +1603,34 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         } else if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
             throw new PermissionException("Only repository managers can search for packages across all repos.");
         }
-        
+
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        
+
         CriteriaQueryRunner<Package> runner = new CriteriaQueryRunner<Package>(criteria, generator, entityManager);
-        
+
         return runner.execute();
     }
-    
+
     public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(Subject subject,
         PackageCriteria criteria) {
         if (criteria.getFilterRepoId() == null) {
             throw new IllegalArgumentException("The criteria query has to have a filter for a specific repo.");
         }
-        
+
         criteria.fetchVersions(true);
         PageList<Package> packages = findPackagesByCriteria(subject, criteria);
 
         PageList<PackageAndLatestVersionComposite> ret = new PageList<PackageAndLatestVersionComposite>(
             packages.getTotalSize(), packages.getPageControl());
-                
+
         for(Package p : packages) {
             PackageVersion latest = repoManager.getLatestPackageVersion(subject, p.getId(), criteria.getFilterRepoId());
             ret.add(new PackageAndLatestVersionComposite(p, latest));
         }
-        
+
         return ret;
     }
-    
+
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {
         InstalledPackage result = null;
 
@@ -1639,7 +1640,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         if (!ResourceCreationDataType.CONTENT.equals(type.getCreationDataType())) {
             return null;
         }
-        
+
         InstalledPackageCriteria criteria = new InstalledPackageCriteria();
         criteria.addFilterResourceId(resourceId);
         PageList<InstalledPackage> ips = findInstalledPackagesByCriteria(subject, criteria);
@@ -1677,7 +1678,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Map<String, String> packageUploadDetails, Integer repoId) {
 
         PackageVersion packageVersion = null;
-        
+
         //default version to 1.0 if is null, not provided for any reason.
         if ((version == null) || (version.trim().length() == 0)) {
             version = "1.0";
@@ -1686,13 +1687,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Architecture architecture = entityManager.find(Architecture.class, architectureId);
         PackageType packageType = entityManager.find(PackageType.class, packageTypeId);
 
-        // See if package version already exists for the resource package        
+        // See if package version already exists for the resource package
         Query packageVersionQuery = null;
 
         if (packageType.getResourceType() != null) {
             packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
             packageVersionQuery.setParameter("resourceTypeId", packageType.getResourceType().getId());
-            
+
         } else {
             packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
             packageVersionQuery.setParameter("resourceType", null);
@@ -1700,7 +1701,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
         packageVersionQuery.setParameter("packageName", packageName);
-        
+
         packageVersionQuery.setParameter("packageTypeName", packageType.getName());
 
         packageVersionQuery.setParameter("architectureName", architecture.getName());
@@ -1715,17 +1716,17 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         try {
             PackageTypeBehavior behavior = ContentManagerHelper.getPackageTypeBehavior(packageTypeId);
-            
+
             if (behavior != null) {
                 String packageTypeName = packageType.getName();
                 String archName = architecture.getName();
                 ValidatablePackageDetailsKey key = new ValidatablePackageDetailsKey(packageName, version, packageTypeName, archName);
                 behavior.validateDetails(key, subject);
-                
+
                 //update the details from the validation results
                 packageName = key.getName();
                 version = key.getVersion();
-                
+
                 if (!architecture.getName().equals(key.getArchitectureName())) {
                     Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_BY_NAME);
                     q.setParameter("name", key.getArchitectureName());
@@ -1738,7 +1739,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             LOG.error("Failed to get the package type plugin container. This is a bug.", e);
             throw new IllegalStateException("Failed to get the package type plugin container.", e);
         }
-        
+
 
         Package existingPackage = null;
 
@@ -1781,12 +1782,12 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         entityManager.merge(packageVersion);
-        
+
         if (repoId != null) {
             int[] packageVersionIds = new int[] { packageVersion.getId() };
             repoManager.addPackageVersionsToRepo(subject, repoId, packageVersionIds);
         }
-        
+
         entityManager.flush();
 
         return packageVersion;
@@ -1797,17 +1798,17 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         if (packageType.getResourceType() != null) {
             throw new IllegalArgumentException("Server-side package types can't be associated with a resource type.");
         }
-        
+
         entityManager.persist(packageType);
-        
+
         return packageType;
     }
-    
+
     /** Pulls in package bits from the stream. Currently inefficient.
      *
      * @param packageBitStream
      * @param packageVersionId
-     * @param contentDetails 
+     * @param contentDetails
      * @return PackageBits ref populated.
      */
     private PackageBits loadPackageBits(InputStream packageBitStream, int packageVersionId, String packageName,
@@ -1843,7 +1844,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PackageBits bits = null;
         PackageBitsBlob blob = null;
 
-        // The blob cannot be updated, so we'll need to create a whole new row. 
+        // The blob cannot be updated, so we'll need to create a whole new row.
         if (null != existingBits) {
             blob = entityManager.find(PackageBitsBlob.class, existingBits.getId());
             entityManager.remove(blob);
@@ -1896,7 +1897,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      * on a Lob unless the entity class is instrumented. We can't usethat approach because it introduces
      * hibernate imports into the domain class, and that violates our restriction of exposing hibernate
      * classes to the Agent and Remote clients.
-     * 
+     *
      * @return
      */
     private PackageBits initializePackageBits(PackageBits bits) {
@@ -2029,9 +2030,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         entityManager.flush();
     }
 
-    /** Functions same as StreamUtil.copy(), but calculates SHA hash and file size and write it to 
-     *  the Map<String,String> passed in.  
-     * 
+    /** Functions same as StreamUtil.copy(), but calculates SHA hash and file size and write it to
+     *  the Map<String,String> passed in.
+     *
      * @param input
      * @param output
      * @param closeStreams
@@ -2088,7 +2089,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     /** For Testing only<br><br>
-     * 
+     *
      * Writes the contents of a the Blob out to the stream passed in.
      *
      * @param stream non null stream where contents to be written to.

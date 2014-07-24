@@ -528,11 +528,6 @@
                      description="The compiler classpath to use"
                      required="false" />
                   <c:simple-property
-                     name="configFile"
-                     type="string"
-                     readOnly="true"
-                     description="The location of the context.xml resource or file Note: Does not exist in Tomcat 7 (return type changed to URL)" />
-                  <c:simple-property
                      name="crossContext"
                      type="boolean"
                      description="Set to true if you want calls within this application to ServletContext.getContext() to successfully return a request dispatcher for other web applications running on this virtual host. Set to false (the default) in security conscious environments, to make getContext() always return null." />

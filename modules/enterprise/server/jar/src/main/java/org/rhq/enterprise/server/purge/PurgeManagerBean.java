@@ -26,8 +26,8 @@ import javax.ejb.TransactionManagementType;
 import javax.sql.DataSource;
 import javax.transaction.UserTransaction;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
@@ -44,7 +44,7 @@ import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 @Stateless
 @TransactionManagement(TransactionManagementType.BEAN)
 public class PurgeManagerBean implements PurgeManagerLocal {
-    private static final Logger LOG = LoggerFactory.getLogger(PurgeManagerBean.class);
+    private static final Log LOG = LogFactory.getLog(PurgeManagerBean.class);
 
     @Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;

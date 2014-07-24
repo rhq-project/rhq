@@ -31,8 +31,8 @@ import javax.sql.DataSource;
 import javax.transaction.Status;
 import javax.transaction.UserTransaction;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -49,7 +49,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
  * @author Thomas Segismont
  */
 abstract class PurgeTemplate<KEY> {
-    private static final Logger LOG = LoggerFactory.getLogger(PurgeTemplate.class);
+    private static final Log LOG = LogFactory.getLog(PurgeTemplate.class);
 
     private static final String BATCH_SIZE_SYSTEM_PROPERTY = "org.rhq.enterprise.server.purge.PurgeTemplate.BATCH_SIZE";
     private static final int BATCH_SIZE = Integer.getInteger(BATCH_SIZE_SYSTEM_PROPERTY, 3000);

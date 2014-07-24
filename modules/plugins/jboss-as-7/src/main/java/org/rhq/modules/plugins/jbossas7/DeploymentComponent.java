@@ -210,7 +210,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             Result result = redeployer.redeployOnServer();
             if (result.isRolledBack()) {
                 response.setOverallRequestResult(ContentResponseResult.FAILURE);
-                response.setOverallRequestErrorMessage(result.getFailureDescription());
+                response.setOverallRequestErrorMessage("Rolled Back: " + result.getFailureDescription());
             } else {
                 response.setOverallRequestResult(ContentResponseResult.SUCCESS);
                 //we just deployed a different file on the AS7 server, so let's refresh ourselves
@@ -222,11 +222,18 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
         } catch (Exception e) {
             response.setOverallRequestResult(ContentResponseResult.FAILURE);
+            response.setOverallRequestErrorMessage(e.getMessage());
         }
 
+        ContentResponseResult result = response.getOverallRequestResult();
         getLog().info(
-            "Result of deployment of " + resourceType.getName() + " Resource with key [" + detail.getKey() + "]: "
-                + response);
+            "Result of deployment of "
+                + resourceType.getName()
+                + " Resource with key ["
+                + detail.getKey()
+                + "]: "
+                + ((ContentResponseResult.SUCCESS == result) ? result.name() : (result.name() + ": " + response
+                    .getOverallRequestErrorMessage())));
 
         return response;
     }

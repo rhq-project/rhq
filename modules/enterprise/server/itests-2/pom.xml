@@ -556,7 +556,7 @@
             <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
             <clean.db>${clean.db}</clean.db>
             <log4j.configDebug>false</log4j.configDebug>
-            <project.version>${project.version}</project.version>
+            <rhq.version>${rhq.pom.version}</rhq.version>
             <rhq.skip.oracle>${skip.oracle}</rhq.skip.oracle>
             <rhq.ojdbc.version>${ojdbc6.version}</rhq.ojdbc.version>
             <rhq-platform-plugin.version>${rhq-platform-plugin.version}</rhq-platform-plugin.version>

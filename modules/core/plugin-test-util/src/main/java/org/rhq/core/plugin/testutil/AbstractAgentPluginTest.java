@@ -111,7 +111,15 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     @Deployment(name = "platform", order = 1)
     protected static RhqAgentPluginArchive getPlatformPlugin() throws Exception {
         MavenResolverSystem mavenDependencyResolver = Maven.resolver();
-        String platformPluginArtifact = "org.rhq:rhq-platform-plugin:jar:" + getPlatformPluginVersion();
+        //check for system property specifiers before going to classpath
+        String rhqPlatformPluginVersion = System.getProperty("rhq-platform-plugin.version");
+        //complete maven gav construction.
+        String platformPluginArtifact = "org.rhq:rhq-platform-plugin:jar:";
+        if ((rhqPlatformPluginVersion == null) || rhqPlatformPluginVersion.trim().isEmpty()) {
+            platformPluginArtifact += getRhqVersion();//got to classpath and MavenArtifactProperties
+        } else {
+            platformPluginArtifact += rhqPlatformPluginVersion;
+        }
 
         return mavenDependencyResolver.offline().loadPomFromFile("pom.xml").resolve(platformPluginArtifact)
             .withoutTransitivity().asSingle(RhqAgentPluginArchive.class);
@@ -436,17 +444,12 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     private static String getRhqVersion() {
         MavenArtifactProperties rhqPluginContainerPom = null;
         try {
-            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-parent");
-        } catch (MavenArtifactNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        return rhqPluginContainerPom.getVersion();
-    }
-
-    private static String getPlatformPluginVersion() {
-        MavenArtifactProperties rhqPluginContainerPom = null;
-        try {
-            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-platform-plugin");
+            //check for system property specifiers before going to classpath
+            String rhqVersion = System.getProperty("rhq.version");
+            if ((rhqVersion != null) && !(rhqVersion.trim().isEmpty())) {
+                return rhqVersion;
+            }
+            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-core-plugin-container");
         } catch (MavenArtifactNotFoundException e) {
             throw new RuntimeException(e);
         }

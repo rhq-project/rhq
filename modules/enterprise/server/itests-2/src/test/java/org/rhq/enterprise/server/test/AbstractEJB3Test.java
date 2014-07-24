@@ -334,7 +334,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("org/rhq/enterprise/server/plugins/ant/recipe-no-manageRootDir.xml");
 
         // create test ear by starting with rhq.ear and thinning it
-        String projectVersion = System.getProperty("project.version");
+        String projectVersion = System.getProperty("rhq.version");
         String rhqCoreClientApiVersion = System.getProperty("rhq-core-client-api.version");
         if ((rhqCoreClientApiVersion == null) || rhqCoreClientApiVersion.trim().isEmpty()) {
             rhqCoreClientApiVersion = projectVersion;

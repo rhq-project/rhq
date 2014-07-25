@@ -1170,8 +1170,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Dashboard> dashboards = null;
 
-    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
-    @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
+    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.ALL }, orphanRemoval = true)
     private Set<DriftDefinition> driftDefinitions = null;
 
     @Transient
@@ -1961,7 +1960,18 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void setDriftDefinitions(Set<DriftDefinition> driftDefinitions) {
-        this.driftDefinitions = driftDefinitions;
+        if (this.driftDefinitions == driftDefinitions) {
+            return;
+        }
+        // Don't replace the possible Hibernate proxy when orphanRemoval=true. It can cause
+        // "collection with cascade=all-delete-orphan was no longer referenced" exceptions.
+        this.driftDefinitions = getDriftDefinitions();
+        this.driftDefinitions.clear();
+        if (null != driftDefinitions) {
+            for (DriftDefinition dd : driftDefinitions) {
+                addDriftDefinition(dd);
+            }
+        }
     }
 
     public void addDriftDefinition(DriftDefinition driftDefinition) {

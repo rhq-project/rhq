@@ -60,9 +60,9 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
 
     // use the prop name as the map key
     @MapKey(name = "name")
-    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance 
-    @Cascade({ CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
-    @OneToMany(mappedBy = "parentMap", fetch = FetchType.EAGER)
+    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance
+    @Cascade({ CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
+    @OneToMany(mappedBy = "parentMap", fetch = FetchType.EAGER, orphanRemoval = true)
     private Map<String, Property> map = new LinkedHashMap<String, Property>();
 
     /**
@@ -80,7 +80,8 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
      *
      * @param name the name of the map itself
      */
-    public PropertyMap(@NotNull String name) {
+    public PropertyMap(@NotNull
+    String name) {
         setName(name);
     }
 
@@ -92,7 +93,8 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
      * @param name               the name of the map itself
      * @param startingProperties a set of properties to be immediately added to this map
      */
-    public PropertyMap(@NotNull String name, Property... startingProperties) {
+    public PropertyMap(@NotNull
+    String name, Property... startingProperties) {
         this(name);
         for (Property property : startingProperties) {
             put(property);
@@ -118,17 +120,21 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
     }
 
     /**
-     * Sets the map of child properties directly to the given <code>map</code> reference. This means the actual <code>
-     * map</code> object is stored internally in this object. Changes made to <code>map</code> will be reflected back
-     * into this object.
+     * This clears the current internal map replaces it with all of the provided map entries.
      *
-     * <p><b>Warning:</b> Caution should be used when setting this object's internal map. Please see
-     * {@link PropertyMap the javadoc for this class} for more information.</p>
-     *
-     * @param map the new map used internally by this object
+     * @param map the map providing the new mappings
      */
     public void setMap(Map<String, Property> map) {
-        this.map = map;
+        if (this.map == map) {
+            return;
+        }
+        // Don't replace the possible Hibernate proxy when orphanRemoval=true. It can cause
+        // "collection with cascade=all-delete-orphan was no longer referenced" exceptions.
+        this.map = getMap();
+        this.map.clear();
+        if (null != map) {
+            this.map.putAll(map);
+        }
     }
 
     /**
@@ -137,7 +143,8 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
      *
      * @param property the property to add to this map.
      */
-    public void put(@NotNull Property property) {
+    public void put(@NotNull
+    Property property) {
         getMap().put(property.getName(), property);
         property.setParentMap(this);
     }

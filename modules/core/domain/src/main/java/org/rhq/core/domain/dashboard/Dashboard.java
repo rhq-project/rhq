@@ -104,9 +104,8 @@ public class Dashboard implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private ResourceGroup group;
 
-    @OneToMany(mappedBy = "dashboard", fetch = FetchType.EAGER)
-    @Cascade( { org.hibernate.annotations.CascadeType.PERSIST, org.hibernate.annotations.CascadeType.MERGE,
-        org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
+    @OneToMany(mappedBy = "dashboard", fetch = FetchType.EAGER, orphanRemoval = true)
+    @Cascade({ org.hibernate.annotations.CascadeType.PERSIST, org.hibernate.annotations.CascadeType.MERGE })
     private Set<DashboardPortlet> portlets = new HashSet<DashboardPortlet>();
 
     public static final String CFG_COLUMNS = "columns";
@@ -251,10 +250,10 @@ public class Dashboard implements Serializable {
         return true;
     }
 
-    /** 
+    /**
      * This can be used to safely add a portlet without knowing the current portlet positioning on the
      * Dashboard. It adds the portlet to the bottom of column with the least portlets.
-     * 
+     *
      * @param storedPortlet  MODIFIED with assigned column, index
      */
     public void addPortlet(DashboardPortlet storedPortlet) {
@@ -279,7 +278,7 @@ public class Dashboard implements Serializable {
 
     /**
      * Call this only if you are sure the column and index are valid, not already used and not leaving gaps.
-     * 
+     *
      * @param storedPortlet MODIFIED with assigned column, index
      * @param column
      * @param index

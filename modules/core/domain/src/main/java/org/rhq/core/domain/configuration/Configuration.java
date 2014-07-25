@@ -390,8 +390,8 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     // use the prop name as the map key
     @MapKey(name = "name")
     // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance
-    @Cascade({ CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
-    @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
+    @Cascade({ CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
+    @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER, orphanRemoval = true)
     @XmlTransient
     private Map<String, Property> properties = new LinkedHashMap<String, Property>(1);
 
@@ -771,6 +771,8 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             return;
         }
 
+        // Don't replace the possible Hibernate proxy when orphanRemoval=true. It can cause
+        // "collection with cascade=all-delete-orphan was no longer referenced" exceptions.
         this.properties.clear();
         for (Property p : properties) {
             this.put(p);
@@ -866,6 +868,10 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         }
     }
 
+    /**
+     * Warning: This should probably not be performed on an attached entity, it could replace a
+     * Hibernate proxy, which can lead to issues (especially when orphanRemoval=true)
+     */
     public void resize() {
         Map<String,Property> tmp =new LinkedHashMap<String, Property>(this.properties.size());
         tmp.putAll(this.properties);

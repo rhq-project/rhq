@@ -97,8 +97,7 @@ public class ConfigurationDefinition implements Serializable {
     // plugin descriptor, iterating on the map (LinkedHashMap) will give us the same ordering. So, unless
     // propDef.order is set and used for ordering by the accessing code, we'll default to the descriptor order.
     @OrderBy
-    @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
-    @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private Map<String, PropertyDefinition> propertyDefinitions = new LinkedHashMap<String, PropertyDefinition>();
 
     // use the configTemplate name as the map key
@@ -117,7 +116,8 @@ public class ConfigurationDefinition implements Serializable {
         // JPA use only
     }
 
-    public ConfigurationDefinition(@NotNull String name, String description) {
+    public ConfigurationDefinition(@NotNull
+    String name, String description) {
         this.name = name.intern();
         this.description = description;
     }
@@ -135,9 +135,10 @@ public class ConfigurationDefinition implements Serializable {
         return name;
     }
 
-    public void setName(@NotNull String name) {
+    public void setName(@NotNull
+    String name) {
         // Need to protect due to possible deserialization from Coregui.
-        if (name!=null) {
+        if (name != null) {
             this.name = name.intern();
         } else {
             this.name = null;
@@ -187,7 +188,16 @@ public class ConfigurationDefinition implements Serializable {
     }
 
     public void setPropertyDefinitions(Map<String, PropertyDefinition> propertyDefinitions) {
-        this.propertyDefinitions = propertyDefinitions;
+        if (this.propertyDefinitions == propertyDefinitions) {
+            return;
+        }
+        // Don't replace the possible Hibernate proxy when orphanRemoval=true. It can cause
+        // "collection with cascade=all-delete-orphan was no longer referenced" exceptions.
+        this.propertyDefinitions = getPropertyDefinitions();
+        this.propertyDefinitions.clear();
+        if (null != propertyDefinitions) {
+            this.propertyDefinitions.putAll(propertyDefinitions);
+        }
     }
 
     public void put(PropertyDefinition propertyDefinition) {
@@ -332,7 +342,8 @@ public class ConfigurationDefinition implements Serializable {
      * @return <code>ConfigurationTemplate</code> with the specified name; <code>null</code> if no template by that name
      *         exists.
      */
-    public ConfigurationTemplate getTemplate(@NotNull String name) {
+    public ConfigurationTemplate getTemplate(@NotNull
+    String name) {
         return getTemplates().get(name);
     }
 

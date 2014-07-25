@@ -2,8 +2,6 @@ package org.rhq.enterprise.server.resource.metadata;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -27,7 +25,6 @@ public class ResourceConfigurationMetadataManagerBean implements ResourceConfigu
     private ConfigurationMetadataManagerLocal configurationMetadataMgr;
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateResourceConfigurationDefinition(ResourceType existingType, ResourceType newType) {
         log.debug("Updating resource configuration definition for " + existingType);
 

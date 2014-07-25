@@ -161,7 +161,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         Set<ResourceType> legitimateChildren = new HashSet<ResourceType>();
         for (ResourceType resourceType : nonRunsInsideResourceTypes) {
             long startTime = System.currentTimeMillis();
-            resourceType = resourceMetadataManager.updateTypeInNewTransaction(resourceType);
+            resourceType = resourceMetadataManager.updateTypeInNewTx(resourceType);
             long endTime = System.currentTimeMillis();
             log.debug("Updated resource type [" + toConciseString(resourceType) + "] in " + (endTime - startTime)
                 + " ms");
@@ -314,7 +314,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @TransactionTimeout(1800)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ResourceType updateTypeInNewTransaction(ResourceType resourceType) {
+    public ResourceType updateTypeInNewTx(ResourceType resourceType) {
 
         // see if there is already an existing type that we need to update
         log.info("Updating resource type [" + toConciseString(resourceType) + "]...");

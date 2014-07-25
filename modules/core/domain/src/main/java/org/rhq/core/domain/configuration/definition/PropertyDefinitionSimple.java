@@ -40,7 +40,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.IndexColumn;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,16 +67,14 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     @Column(name = "ALLOW_CUSTOM_ENUM_VALUE")
     private boolean allowCustomEnumeratedValue = false;
 
-    @Cascade( { org.hibernate.annotations.CascadeType.ALL, org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
-    @OneToMany(mappedBy = "propertyDefinitionSimple", cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "propertyDefinitionSimple", cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, orphanRemoval = true)
     private Set<Constraint> constraints = null;
 
     /**
      * The <options> within <property-options> for a <simple-property>
      */
-    @Cascade( { org.hibernate.annotations.CascadeType.ALL, org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
     @IndexColumn(name = "order_index")
-    @OneToMany(mappedBy = "propertyDefinitionSimple", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "propertyDefinitionSimple", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PropertyDefinitionEnumeration> enumeratedValues = null;
 
     /**
@@ -98,12 +95,12 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     @Enumerated(EnumType.ORDINAL)
     private MeasurementUnits units;
 
-    @Cascade( { org.hibernate.annotations.CascadeType.ALL, org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
-    @OneToMany(mappedBy = "propertyDefinition", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "propertyDefinition", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     List<PropertyOptionsSource> optionsSource = null;
 
-    public PropertyDefinitionSimple(@NotNull String name, String description, boolean required,
-        @NotNull PropertySimpleType type) {
+    public PropertyDefinitionSimple(@NotNull
+    String name, String description, boolean required, @NotNull
+    PropertySimpleType type) {
         super(name, description, required);
         this.type = type;
     }
@@ -127,20 +124,26 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
      */
     @NotNull
     public Set<Constraint> getConstraints() {
-        if (this.constraints==null) {
+        if (this.constraints == null) {
             return Collections.EMPTY_SET;
         }
         return this.constraints;
     }
 
     public void setConstraints(Set<Constraint> constraints) {
-        if (constraints==null || constraints.isEmpty()) {
-            this.constraints=null;
+        // Don't replace the possible Hibernate proxy when orphanRemoval=true. It can cause
+        // "collection with cascade=all-delete-orphan was no longer referenced" exceptions.
+        if (constraints == null || constraints.isEmpty()) {
+            if (null != this.constraints) {
+                this.constraints.clear();
+            }
             return;
         }
-        if (this.constraints==null) {
+
+        if (this.constraints == null) {
             this.constraints = new HashSet<Constraint>(constraints.size());
         }
+
         for (Constraint constraint : constraints) {
             getConstraints().add(constraint);
             constraint.setPropertyDefinitionSimple(this);
@@ -148,7 +151,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     }
 
     public void addConstraints(Constraint... constraintsToAdd) {
-        if (this.constraints==null) {
+        if (this.constraints == null) {
             this.constraints = new HashSet<Constraint>(constraintsToAdd.length);
         }
         for (Constraint constraint : constraintsToAdd) {
@@ -163,7 +166,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
      */
     @NotNull
     public List<PropertyDefinitionEnumeration> getEnumeratedValues() {
-        if (this.enumeratedValues==null) {
+        if (this.enumeratedValues == null) {
             return new ArrayList<PropertyDefinitionEnumeration>(1);
         }
         return this.enumeratedValues;
@@ -176,7 +179,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     }
 
     public void addEnumeratedValues(PropertyDefinitionEnumeration... enumerations) {
-        if (this.enumeratedValues==null) {
+        if (this.enumeratedValues == null) {
             this.enumeratedValues = new ArrayList<PropertyDefinitionEnumeration>(1);
         }
         for (PropertyDefinitionEnumeration enumeration : enumerations) {
@@ -187,11 +190,10 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     }
 
     public void removeEnumeratedValues(PropertyDefinitionEnumeration... enumerations) {
+        // Don't replace the possible Hibernate proxy when orphanRemoval=true. It can cause
+        // "collection with cascade=all-delete-orphan was no longer referenced" exceptions.
         for (PropertyDefinitionEnumeration enumeration : enumerations) {
             getEnumeratedValues().remove(enumeration);
-        }
-        if (this.enumeratedValues.isEmpty()) {
-            this.enumeratedValues=null;
         }
         ensureOrdering();
     }
@@ -266,17 +268,17 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     }
 
     public PropertyOptionsSource getOptionsSource() {
-        if (optionsSource==null || optionsSource.isEmpty())
+        if (optionsSource == null || optionsSource.isEmpty())
             return null;
         return optionsSource.get(0);
     }
 
     public void setOptionsSource(PropertyOptionsSource source) {
-        if (this.optionsSource==null) {
+        if (this.optionsSource == null) {
             optionsSource = new ArrayList<PropertyOptionsSource>(1);
         }
         this.optionsSource.clear();
-        if (source==null)
+        if (source == null)
             return;
         source.propertyDefinition = this;
         this.optionsSource.add(source);

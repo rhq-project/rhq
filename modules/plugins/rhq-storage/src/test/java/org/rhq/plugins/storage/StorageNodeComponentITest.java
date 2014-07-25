@@ -325,7 +325,7 @@ public class StorageNodeComponentITest {
         OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
 
         final int keepN = 1;
-        final String snapshotName = "not-moved";
+        final String snapshotName = "notmoved";
         File moveLocation = new File(basedir,"snaphosts-moved");
 
         Configuration params = Configuration.builder().addSimple("retentionStrategy", "Keep Last N")
@@ -365,7 +365,7 @@ public class StorageNodeComponentITest {
 
         // mark snaphosts left by takeSnapshotsKeepLastNAndMove test as 2 days old
         for (File parent : getSnaphostDirs()) {
-            File snapshot = new File(parent, "not-moved");
+            File snapshot = new File(parent, "notmoved");
             snapshot.setLastModified(System.currentTimeMillis() - (2 * 86400L * 1000L));
         }
 
@@ -394,7 +394,7 @@ public class StorageNodeComponentITest {
         assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The takeSnapshot operation failed.");
         // 2 snapshots left 1 created, but 1 (not-moved) moved
         assertSnaphotCount(getSnaphostDirs(), 2);
-        assertSnaphotsContain(getMovedSnapshotDirs(moveLocation), "not-moved");
+        assertSnaphotsContain(getMovedSnapshotDirs(moveLocation), "notmoved");
 
 
     }
@@ -416,14 +416,14 @@ public class StorageNodeComponentITest {
     private void assertSnaphotCount(List<File> snapshotDirs, int count) {
         for (File snapDir : snapshotDirs) {
             int size = snapDir.listFiles(createDirFilter(null)).length;
-            assertEquals(size, count);
+            assertEquals(size, count, "Dirs found : " + Arrays.toString(snapDir.list()));
         }
     }
 
     private void assertSnaphotsContain(List<File> snapshotDirs, final String snapshotName) {
         for (File snapDir : snapshotDirs) {
             int size = snapDir.listFiles(createDirFilter(snapshotName)).length;
-            assertEquals(size, 1);
+            assertEquals(size, 1, "Dirs found : " + Arrays.toString(snapDir.list()));
         }
     }
 

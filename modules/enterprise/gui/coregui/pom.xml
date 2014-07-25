@@ -21,6 +21,7 @@
         <!-- dependency versions -->
     <gwt.version>2.5.0</gwt.version>
     <smartgwt.version>3.0</smartgwt.version>
+    <smartgwt-skins.version>3.0</smartgwt-skins.version>
 
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
               in your settings.xml -->
@@ -139,7 +140,7 @@
 <dependency>
   <groupId>com.smartgwt</groupId>
   <artifactId>smartgwt-skins</artifactId>
-  <version>${smartgwt.version}</version>
+  <version>${smartgwt-skins.version}</version>
   <scope>provided</scope>
 </dependency>
 

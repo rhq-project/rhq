@@ -90,7 +90,7 @@ public class EventCompositeDetailsView extends EnhancedVLayout implements Bookma
         id.setValue(composite.getEventId());
 
         StaticTextItem severity = new StaticTextItem("severity", MSG.view_inventory_eventHistory_severity());
-        String severityValue = Canvas.imgHTML(ImageManager.getEventSeverityBadge(composite.getSeverity()));
+        String severityValue = Canvas.imgHTML(ImageManager.getEventSeverityBadge(composite.getSeverity()), 24, 24);
         switch (composite.getSeverity()) {
         case DEBUG:
             severityValue += MSG.common_severity_debug();

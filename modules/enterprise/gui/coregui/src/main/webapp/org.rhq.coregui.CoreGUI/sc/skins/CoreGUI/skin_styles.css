@@ -433,7 +433,6 @@ Button (also used as MenuButton base style)
 .buttonSelectedOver,
 .buttonSelectedDisabled {
     margin: 0px;
-    font-weight : 600;
     text-align: center;
     vertical-align: middle;
     cursor: pointer;

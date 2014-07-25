@@ -98,7 +98,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
         severityField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String icon = ImageManager.getEventSeverityBadge(EventSeverity.valueOf(o.toString()));
-                return Canvas.imgHTML(icon);
+                return Canvas.imgHTML(icon, 24, 24);
             }
         });
         severityField.setShowHover(true);

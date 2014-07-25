@@ -247,7 +247,8 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUP_COMPOSITE_ADMIN, query = "" //
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "    FROM Resource res JOIN res.currentAvailability a JOIN res.resourceType rt "
-        + "   WHERE res.id = :id " + "GROUP BY res.parentResource, rt"),
+        + "   WHERE res.id = :id "
+        + "GROUP BY res.parentResource, rt"),
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUPS_COMPOSITE_ADMIN, query = "" //
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "    FROM Resource res JOIN res.currentAvailability a JOIN res.resourceType rt "
@@ -1455,7 +1456,8 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public void addChildResource(Resource childResource) {
         childResource.setParentResource(this);
-        if (null == this.childResources || this.childResources.equals(Collections.emptySet())) {
+        if (null == this.childResources
+            || (!customChildResourcesCollection && this.childResources.equals(Collections.emptySet()))) {
             this.childResources = new HashSet<Resource>(1);
         }
         this.childResources.add(childResource);
@@ -1463,9 +1465,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public void addChildResourceWithoutAncestry(Resource childResource) {
         childResource.setParentResourceWithoutAncestry(this);
-        if (null == this.childResources || childResources.equals(Collections.emptySet())) {
-            this.childResources = new HashSet<Resource>(1);
-        }
+        addChildResource(childResource);
         this.childResources.add(childResource);
     }
 
@@ -1478,7 +1478,12 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void setChildResources(Set<Resource> children) {
-        this.childResources = children;
+        if (customChildResourcesCollection) {
+            this.childResources.clear();
+            this.childResources.addAll(children);
+        } else {
+            this.childResources = children;
+        }
     }
 
     public Resource getParentResource() {

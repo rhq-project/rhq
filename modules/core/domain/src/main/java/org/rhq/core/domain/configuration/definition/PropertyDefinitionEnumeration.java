@@ -77,14 +77,6 @@ public class PropertyDefinitionEnumeration implements Serializable {
         this.value = value;
     }
 
-    //    @PrePersist
-    //    @PreUpdate
-    //    public void updateOrder() {
-    //        if (this.orderIndex < 0) {
-    //            this.orderIndex = this.propertyDefinitionSimple.getEnumeratedValues().indexOf(this);
-    //        }
-    //    }
-
     public PropertyDefinitionSimple getPropertyDefinitionSimple() {
         return propertyDefinitionSimple;
     }

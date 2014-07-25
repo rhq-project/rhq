@@ -278,6 +278,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                     }
                 }
             }
+
             entityManager.flush();
         } catch (Throwable t) {
             t.printStackTrace();
@@ -340,7 +341,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         if (existingProperty instanceof PropertyDefinitionMap) {
             if (newProperty instanceof PropertyDefinitionMap) {
 
-                // alter existingPropDefs to reflect newPropDefs                
+                // alter existingPropDefs to reflect newPropDefs
                 Map<String, PropertyDefinition> existingPropDefs = ((PropertyDefinitionMap) existingProperty)
                     .getMap();
 
@@ -432,7 +433,6 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
                 // handle <constraint> [0..*]
 
-                //                entityManager.flush();
                 Set<Constraint> exCon = existingPDS.getConstraints();
                 if (exCon.size() > 0) {
                     for (Constraint con : exCon) {
@@ -474,7 +474,6 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
         entityManager.remove(existingProperty);
         entityManager.merge(configDef);
-        //        entityManager.flush();
     }
 
     /**
@@ -518,7 +517,6 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         }
 
         entityManager.merge(exList);
-        //        entityManager.flush();
     }
 
     /**

@@ -52,7 +52,7 @@ public interface ResourceMetadataManagerLocal {
      * <p/>
      * Has a 30 minute Tx timeout to allow for large updates.
      */
-    ResourceType updateTypeInNewTransaction(ResourceType resourceType) throws Exception;
+    ResourceType updateTypeInNewTx(ResourceType resourceType) throws Exception;
 
     /** TODO: do we want to create a driftMetadataManager SLSB and put this in there */
     void updateDriftMetadata(ResourceType existingType, ResourceType resourceType);

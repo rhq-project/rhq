@@ -116,6 +116,7 @@ public class ConditionEditor extends EnhancedVLayout {
     private static final String OPERATION_RESULTS_ITEMNAME = "operationResults";
     private static final String EVENT_SEVERITY_ITEMNAME = "eventSeverity";
     private static final String EVENT_REGEX_ITEMNAME = "eventRegex";
+    private static final String EVENT_SOURCE_PATH_REGEX_ITEMNAME = "eventSourcePathRegex";
     private static final String DRIFT_DEFNAME_REGEX_ITEMNAME = "driftDefNameRegex";
     private static final String DRIFT_PATHNAME_REGEX_ITEMNAME = "driftPathNameRegex";
     private static final String RANGE_METRIC_ITEMNAME = "rangeMetric";
@@ -500,7 +501,10 @@ public class ConditionEditor extends EnhancedVLayout {
                 newCondition.setName(form.getValueAsString(EVENT_SEVERITY_ITEMNAME));
                 newCondition.setComparator(null);
                 newCondition.setThreshold(null);
-                newCondition.setOption(form.getValueAsString(EVENT_REGEX_ITEMNAME));
+                Object regex1 = form.getValue(EVENT_REGEX_ITEMNAME);
+                Object regex2 = form.getValue(EVENT_SOURCE_PATH_REGEX_ITEMNAME);
+                newCondition.setOption((regex1 == null ? "" : regex1) + AlertCondition.ADHOC_SEPARATOR
+                    + (regex2 == null ? "" : regex2));
                 newCondition.setMeasurementDefinition(null);
                 break;
             }
@@ -1046,18 +1050,46 @@ public class ConditionEditor extends EnhancedVLayout {
         eventSeveritySelection.setWrapTitle(false);
         eventSeveritySelection.setShowIfCondition(ifFunc);
         formItems.add(eventSeveritySelection);
-
-        TextItem eventRegex = new TextItem(EVENT_REGEX_ITEMNAME,
-            MSG.view_alert_definition_condition_editor_common_regex());
-        eventRegex.setRequired(false);
-        eventRegex.setTooltip(MSG.view_alert_definition_condition_editor_event_regexTooltip());
-        eventRegex.setHoverWidth(200);
-        eventRegex.setWrapTitle(false);
-        eventRegex.setShowIfCondition(ifFunc);
+        
+        String eventRegexValue = "", eventSourcePathRegexValue = "";
         if (editMode) {
-            eventRegex.setDefaultValue(existingCondition.getOption());
+            if (existingCondition.getOption().contains(AlertCondition.ADHOC_SEPARATOR)) {
+                String[] regexes = existingCondition.getOption().split(AlertCondition.ADHOC_SEPARATOR);
+                if (regexes.length > 0) {
+                    eventRegexValue = regexes[0];
+                    if (regexes.length > 1) {
+                        eventSourcePathRegexValue = regexes[1];
+                    }
+                }
+            } else {
+                eventRegexValue = existingCondition.getOption(); // old approach -> probably working with db before rhq 4.13
+            }
         }
-        formItems.add(eventRegex);
+
+        TextItem eventDetailsRegex = new TextItem(EVENT_REGEX_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_common_regex());
+        eventDetailsRegex.setRequired(false);
+        eventDetailsRegex.setTooltip(MSG.view_alert_definition_condition_editor_event_regexTooltip());
+        eventDetailsRegex.setHoverWidth(200);
+        eventDetailsRegex.setWrapTitle(false);
+        eventDetailsRegex.setShowIfCondition(ifFunc);
+        if (editMode) {
+            eventDetailsRegex.setDefaultValue(eventRegexValue);
+        }
+        formItems.add(eventDetailsRegex);
+        
+        TextItem eventSourcePathRegex = new TextItem(EVENT_SOURCE_PATH_REGEX_ITEMNAME,
+            MSG.view_inventory_eventHistory_sourceLocation() + " "
+                + MSG.view_alert_definition_condition_editor_common_regex());
+        eventSourcePathRegex.setRequired(false);
+        eventSourcePathRegex.setTooltip(MSG.view_alert_definition_condition_editor_common_regex_tooltip());
+        eventSourcePathRegex.setHoverWidth(200);
+        eventSourcePathRegex.setWrapTitle(false);
+        eventSourcePathRegex.setShowIfCondition(ifFunc);
+        if (editMode) {
+            eventSourcePathRegex.setDefaultValue(eventSourcePathRegexValue);
+        }
+        formItems.add(eventSourcePathRegex);
 
         return formItems;
     }

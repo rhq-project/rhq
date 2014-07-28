@@ -78,7 +78,6 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
-import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.test.TestServerPluginService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -92,18 +91,17 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     @SuppressWarnings("unused")
     private int agentId;
     private int resourceTypeId;
-    private TestServerPluginService testServerPluginService;
 
     @Override
     protected void beforeMethod() throws Exception {
         try {
             //we need this because the drift plugins are referenced from the system settings that we use in our tests
-            testServerPluginService = new TestServerPluginService(getTempDir());
+            TestServerPluginService testServerPluginService = new TestServerPluginService(getTempDir());
             prepareCustomServerPluginService(testServerPluginService);
             testServerPluginService.startMasterPluginContainer();
 
             prepareScheduler();
-            TestServerCommunicationsService agentContainer = prepareForTestAgents();
+            prepareForTestAgents();
             newResource = createNewResource();
         } catch (Throwable t) {
             System.err.println("Cannot prepare test: " + t);
@@ -141,8 +139,8 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, newResource.getId());
             resourceManager.uninventoryResourceAsyncWork(overlord, newResource.getId());
 
-            assert deletedIds.size() == 1 : "didn't delete resource: " + deletedIds;
-            assert deletedIds.get(0).intValue() == newResource.getId() : "what was deleted? : " + deletedIds;
+            assertEquals("didn't delete resource: " + deletedIds, 1, deletedIds.size());
+            assertEquals("what was deleted? : " + deletedIds, newResource.getId(), deletedIds.get(0).intValue());
 
             // I don't have the resource anymore so I can't use makeSureDataIsPurged to test
             // this test method will at least ensure no exceptions occur in resource manager
@@ -185,7 +183,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         }
     }
 
-    private void addDataToBePurged() throws NotSupportedException, SystemException, Throwable {
+    private void addDataToBePurged() throws Throwable {
         // add a bunch of data that is to be purged
         getTransactionManager().begin();
 
@@ -195,8 +193,8 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 AlertDefinition ad = newResource.getAlertDefinitions().iterator().next();
                 for (long timestamp = 0L; timestamp < 200L; timestamp++) {
                     Alert newAlert = createNewAlert(ad, timestamp);
-                    assert newAlert.getCtime() == timestamp : "bad alert persisted:" + newAlert;
-                    assert newAlert.getId() > 0 : "alert not persisted:" + newAlert;
+                    assertEquals("bad alert persisted:" + newAlert, timestamp, newAlert.getCtime());
+                    assertTrue("alert not persisted:" + newAlert, newAlert.getId() > 0);
                     if (timestamp % 50L == 0) {
                         em.flush();
                         em.clear();
@@ -208,9 +206,9 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 // add availabilities
                 for (long timestamp = 0L; timestamp < 2000L; timestamp += 2L) {
                     Availability newAvail = createNewAvailability(newResource, timestamp, timestamp + 1L);
-                    assert newAvail.getStartTime() == timestamp : "bad avail persisted:" + newAvail;
-                    assert newAvail.getEndTime() == (timestamp + 1L) : "bad avail persisted:" + newAvail;
-                    assert newAvail.getId() > 0 : "avail not persisted:" + newAvail;
+                    assertEquals("bad avail persisted:" + newAvail, timestamp, newAvail.getStartTime().longValue());
+                    assertEquals("bad avail persisted:" + newAvail, timestamp + 1, newAvail.getEndTime().longValue());
+                    assertTrue("avail not persisted:" + newAvail, newAvail.getId() > 0);
                     if (timestamp % 50L == 0) {
                         em.flush();
                         em.clear();
@@ -250,19 +248,19 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
             // check alerts
             Set<AlertDefinition> alertDefinitions = res.getAlertDefinitions();
-            assert alertDefinitions.size() == 1 : "why are we missing our alert definitions?: " + alertDefinitions;
+            assertEquals("why are we missing our alert definitions?: " + alertDefinitions, 1, alertDefinitions.size());
             AlertDefinition ad = alertDefinitions.iterator().next();
-            assert ad.getAlerts().size() == 0 : "didn't purge alerts";
+            assertEquals("didn't purge alerts", 0, ad.getAlerts().size());
             Set<AlertConditionLog> clogs = ad.getConditions().iterator().next().getConditionLogs();
-            assert clogs.size() == 0 : "didn't purge condition logs: " + clogs.size();
+            assertEquals("didn't purge condition logs: " + clogs.size(), 0, clogs.size());
 
-            // check availabilities, remember, a new resource gets one initial avail record 
+            // check availabilities, remember, a new resource gets one initial avail record
             List<Availability> avails = res.getAvailability();
-            assert avails.size() == 1 : "didn't purge availabilities";
+            assertEquals("didn't purge availabilities", 1, avails.size());
 
             // check events
             EventSource es = res.getEventSources().iterator().next();
-            assert es.getEvents().size() == 0 : "didn't purge all events";
+            assertEquals("didn't purge all events", 0, es.getEvents().size());
 
             // check calltime data
             int calltimeScheduleId = 0;
@@ -272,10 +270,10 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                     break;
                 }
             }
-            assert calltimeScheduleId > 0 : "why don't we have a calltime schedule?";
+            assertTrue("why don't we have a calltime schedule?", calltimeScheduleId > 0);
             PageList<CallTimeDataComposite> calltimeData = LookupUtil.getCallTimeDataManager()
                 .findCallTimeDataForResource(overlord, calltimeScheduleId, 0, Long.MAX_VALUE, new PageControl());
-            assert calltimeData.getTotalSize() == 0 : "didn't purge all calltime data";
+            assertEquals("didn't purge all calltime data", 0, calltimeData.getTotalSize());
 
             // check trait data
             MeasurementSchedule traitSchedule = null;
@@ -285,11 +283,11 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                     break;
                 }
             }
-            assert traitSchedule != null : "why don't we have a trait schedule?";
+            assertNotNull("why don't we have a trait schedule?", traitSchedule);
 
             List<MeasurementDataTrait> persistedTraits = LookupUtil.getMeasurementDataManager().findTraits(overlord,
                 res.getId(), traitSchedule.getDefinition().getId());
-            assert persistedTraits.size() == 1 : "bad purge of trait data: " + persistedTraits.size();
+            assertEquals("bad purge of trait data: " + persistedTraits.size(), 1, persistedTraits.size());
 
         } finally {
             getTransactionManager().rollback();
@@ -303,16 +301,20 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         schedulerBean.scheduleSimpleCronJob(DataPurgeJob.class, true, false, "0 0 0 1 1 ? 2099");
 
         schedulerBean.addGlobalJobListener(new JobListener() {
+            @Override
             public String getName() {
                 return "DataPurgeJobTestListener";
             }
 
+            @Override
             public void jobExecutionVetoed(JobExecutionContext arg0) {
             }
 
+            @Override
             public void jobToBeExecuted(JobExecutionContext arg0) {
             }
 
+            @Override
             public void jobWasExecuted(JobExecutionContext c, JobExecutionException e) {
                 if (c.getJobDetail().getJobClass().getName().equals(DataPurgeJob.class.getName())) {
                     latch.countDown(); // the data purge job is finished! let our test continue
@@ -325,12 +327,11 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             DataPurgeJob.purgeNow();
 
             // wait for the job to finish - abort the test if it takes too long
-            assert latch.await(60, TimeUnit.SECONDS) : "Data purge job didn't complete in a timely fashion";
+            assertTrue("Data purge job didn't complete in a timely fashion", latch.await(60, TimeUnit.SECONDS));
         } finally {
             schedulerBean.deleteJob(DataPurgeJob.class.getName(), DataPurgeJob.class.getName());
         }
 
-        return;
     }
 
     private void createNewTraitData(Resource res, long timestamp, int count) {
@@ -341,7 +342,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 break;
             }
         }
-        assert traitSchedule != null : "why don't we have a trait schedule?";
+        assertNotNull("why don't we have a trait schedule?", traitSchedule);
 
         MeasurementDataManagerLocal mgr = LookupUtil.getMeasurementDataManager();
 
@@ -355,8 +356,8 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
         List<MeasurementDataTrait> persistedTraits = mgr.findTraits(LookupUtil.getSubjectManager().getOverlord(),
             res.getId(), traitSchedule.getDefinition().getId());
-        assert persistedTraits.size() == count : "did not persist trait data:" + persistedTraits.size() + ":"
-            + persistedTraits;
+        assertEquals("did not persist trait data:" + persistedTraits.size() + ":" + persistedTraits, count,
+            persistedTraits.size());
     }
 
     private void createNewCalltimeData(Resource res, long timestamp, int count) {
@@ -367,7 +368,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 break;
             }
         }
-        assert calltimeSchedule != null : "why don't we have a calltime schedule?";
+        assertNotNull("why don't we have a calltime schedule?", calltimeSchedule);
 
         MeasurementScheduleRequest msr = new MeasurementScheduleRequest(calltimeSchedule);
 
@@ -388,10 +389,10 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         PageList<CallTimeDataComposite> persistedData = mgr.findCallTimeDataForResource(LookupUtil.getSubjectManager()
             .getOverlord(), calltimeSchedule.getId(), timestamp - 1L, timestamp + count + 1L, new PageControl());
         // just a few sanity checks
-        assert persistedData.getTotalSize() == count : "did not persist all calltime data, only persisted: "
-            + persistedData.getTotalSize();
-        assert persistedData.get(0).getCount() == count : "did not persist all endpoint calltime data, only persisted: "
-            + persistedData.get(0).getCount();
+        assertEquals("did not persist all calltime data, only persisted: " + persistedData.getTotalSize(), count,
+            persistedData.getTotalSize());
+        assertEquals("did not persist all endpoint calltime data, only persisted: " + persistedData.get(0).getCount(),
+            count, persistedData.get(0).getCount());
     }
 
     private void createNewEvents(Resource res, long timestamp, int count) {
@@ -411,10 +412,8 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         PageList<EventComposite> persistedEvents = mgr.findEventComposites(overlord,
             EntityContext.forResource(res.getId()), timestamp - 1L, timestamp + count + 1L,
             new EventSeverity[] { EventSeverity.DEBUG }, null, null, new PageControl());
-        assert persistedEvents.getTotalSize() == count : "did not persist all events, only persisted: "
-            + persistedEvents.getTotalSize();
-
-        return;
+        assertEquals("did not persist all events, only persisted: " + persistedEvents.getTotalSize(), count,
+            persistedEvents.getTotalSize());
     }
 
     private Availability createNewAvailability(Resource res, long start, long end) {

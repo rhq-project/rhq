@@ -17,23 +17,21 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.enterprise.server.measurement;
+package org.rhq.enterprise.server.purge;
 
-import static java.util.Arrays.asList;
-import static org.joda.time.DateTime.now;
+import static java.lang.Math.random;
 import static org.rhq.core.domain.measurement.DataType.MEASUREMENT;
 import static org.rhq.core.domain.measurement.NumericType.DYNAMIC;
 import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
-import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.ejb.EJB;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 
-import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -47,41 +45,26 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.Overlord;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
-import org.rhq.server.metrics.domain.AggregateNumericMetric;
 
-/**
- * @author John Sanda
- */
-public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
+public class PurgeOOBTest extends AbstractEJB3Test {
 
     private final String RESOURCE_TYPE = getClass().getName() + "_TYPE";
-
     private final String PLUGIN = getClass().getName() + "_PLUGIN";
-
     private final String AGENT_NAME = getClass().getName() + "_AGENT";
-
     private final String DYNAMIC_DEF_NAME = getClass().getName() + "_DYNAMIC";
-
     private final String RESOURCE_KEY = getClass().getName() + "_RESOURCE_KEY";
-
     private final String RESOURCE_NAME = getClass().getName() + "_NAME";
-
     private final String RESOURCE_UUID = getClass().getSimpleName() + "_UUID";
 
     private ResourceType resourceType;
-
     private Agent agent;
-
     private Resource resource;
-
     private List<MeasurementDefinition> measurementDefs;
-
     private List<MeasurementSchedule> schedules;
 
     @Inject
@@ -92,13 +75,7 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
     private ResourceManagerLocal resourceManager;
 
     @EJB
-    private MeasurementOOBManagerLocal oobManager;
-
-    @EJB
-    private MeasurementBaselineManagerLocal baselineManager;
-
-    @EJB
-    private StorageClientManager storageClientManager;
+    private PurgeManagerLocal purgeManager;
 
     @Override
     protected void beforeMethod() throws Exception {
@@ -118,53 +95,97 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
         purgeDB();
     }
 
-    /**
-     * Verifies that OOBs are calculated when there are both upper and lower bound
-     * violations. It also verifies that no OOB is generated a schedule whose values stay
-     * in bounds.
-     */
     @Test
-    public void calculateOOBs() {
-        final MeasurementSchedule schedule1 = createSchedule();
-        final MeasurementSchedule schedule2 = createSchedule();
-        MeasurementSchedule schedule3 = createSchedule();
+    public void testRemoveOutdatedOOBs() throws Exception {
 
-        DateTime currentHour = now().hourOfDay().roundFloorCopy();
-        final DateTime lastHour = currentHour.minusHours(1);
+        long now = System.currentTimeMillis();
+        long anHourAgo = now - TimeUnit.HOURS.toMillis(1);
+        long halfAnHourAgo = now - TimeUnit.MINUTES.toMillis(30);
 
-        insertBaselines(asList( //
-            baseline(schedule1, 4.34, 3.9, 5.2), //
-            baseline(schedule2, 7.43, 7.38, 7.49), //
-            baseline(schedule3, 3.2, 2.95, 3.6) //
-        ));
+        for (int i = 0; i < 100; i++) {
+            MeasurementSchedule schedule = createSchedule();
+            insertBaseline(baseline(schedule, random(), random(), random()));
+            if (i % 2 == 0) {
+                moveBaselineBackInPast(schedule, anHourAgo);
+            }
+            insertOOB(oob(schedule, (int) (1000 * random()), now));
+        }
 
-        List<AggregateNumericMetric>  metrics = asList( //
-            new AggregateNumericMetric(schedule1.getId(), 3.8, 2.11, 4.6, lastHour.getMillis()), //
-            new AggregateNumericMetric(schedule2.getId(), 9.492, 9.481, 9.53, lastHour.getMillis()), //
-            new AggregateNumericMetric(schedule3.getId(), 3.15, 2.96, 3.59, lastHour.getMillis()) //
-        );
+        purgeManager.removeOutdatedOOBs(halfAnHourAgo);
 
-        oobManager.computeOOBsForLastHour(overlord, metrics);
+        for (int i = 0; i < 100; i++) {
+            MeasurementSchedule schedule = schedules.get(i);
+            long oobCount = countOOBsFor(schedule).longValue();
+            if (i % 2 == 0) {
+                assertEquals(1, oobCount);
+            } else {
+                assertEquals(0, oobCount);
+            }
+        }
+    }
 
-        executeInTransaction(new TransactionCallback() {
+    private void moveBaselineBackInPast(final MeasurementSchedule schedule, final long anHourAgo) {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
-            @SuppressWarnings("unchecked")
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
-                List<MeasurementOOB> oobs = em.createQuery("select oob from MeasurementOOB oob").getResultList();
-                List<TestMeasurementOOB> actual = new ArrayList<TestMeasurementOOB>();
-                for (MeasurementOOB oob : oobs) {
-                    actual.add(new TestMeasurementOOB(oob));
-                }
-
-                List<TestMeasurementOOB> expected = asList( //
-                    new TestMeasurementOOB(schedule1.getId(), lastHour.getMillis(), 138), //
-                    new TestMeasurementOOB(schedule2.getId(), lastHour.getMillis(), 1855) //
-                );
-
-                assertCollectionEqualsNoOrder(expected, actual, "The OOBs do not match");
+                String query = "update MeasurementBaseline set computeTime = :computeTime " //
+                    + "where scheduleId = :scheduleId";
+                getEntityManager().createQuery(query) //
+                    .setParameter("scheduleId", schedule.getId()) //
+                    .setParameter("computeTime", anHourAgo) //
+                    .executeUpdate();
             }
         });
+    }
+
+    private Long countOOBsFor(final MeasurementSchedule schedule) {
+        return executeInTransaction(new TransactionCallbackReturnable<Long>() {
+            @Override
+            public Long execute() throws Exception {
+                String query = "select count(oob) from MeasurementOOB oob " //
+                    + "where oob.id = :scheduleId";
+                return getEntityManager().createQuery(query, Long.class) //
+                    .setParameter("scheduleId", schedule.getId()) //
+                    .getSingleResult();
+            }
+        });
+    }
+
+    private void insertOOB(final MeasurementOOB oob) {
+        executeInTransaction(false, new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                EntityManager em = getEntityManager();
+                em.persist(oob);
+            }
+        });
+    }
+
+    private MeasurementOOB oob(MeasurementSchedule schedule, int factor, long timestamp) {
+        MeasurementOOB oob = new MeasurementOOB();
+        oob.setScheduleId(schedule.getId());
+        oob.setOobFactor(factor);
+        oob.setTimestamp(timestamp);
+        return oob;
+    }
+
+    private void insertBaseline(final MeasurementBaseline baseline) {
+        executeInTransaction(false, new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                EntityManager em = getEntityManager();
+                em.persist(baseline);
+            }
+        });
+    }
+
+    private MeasurementBaseline baseline(MeasurementSchedule schedule, double avg, double min, double max) {
+        MeasurementBaseline baseline = new MeasurementBaseline();
+        baseline.setSchedule(schedule);
+        baseline.setMean(avg);
+        baseline.setMax(max);
+        baseline.setMin(min);
+        return baseline;
     }
 
     private void createInventory() throws Exception {
@@ -219,8 +240,7 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
     private void deleteDynamicMeasurementDef() {
         if (!measurementDefs.isEmpty()) {
             em.createQuery("delete from MeasurementDefinition d where d in :defs")
-                .setParameter("defs", measurementDefs)
-                .executeUpdate();
+                .setParameter("defs", measurementDefs).executeUpdate();
         }
     }
 
@@ -265,36 +285,14 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
         });
     }
 
-    private void insertBaselines(final List<MeasurementBaseline> baselines) {
-        executeInTransaction(false, new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                EntityManager em = getEntityManager();
-                for (MeasurementBaseline baseline : baselines) {
-                    em.persist(baseline);
-                }
-            }
-        });
-    }
-
-    private MeasurementBaseline baseline(MeasurementSchedule schedule, double avg, double min, double max) {
-        MeasurementBaseline baseline = new MeasurementBaseline();
-        baseline.setSchedule(schedule);
-        baseline.setMean(avg);
-        baseline.setMax(max);
-        baseline.setMin(min);
-
-        return baseline;
-    }
-
     private MeasurementSchedule createSchedule() {
         return executeInTransaction(false, new TransactionCallbackReturnable<MeasurementSchedule>() {
             @Override
             public MeasurementSchedule execute() throws Exception {
                 EntityManager em = getEntityManager();
 
-                MeasurementDefinition definition = new MeasurementDefinition(resourceType, DYNAMIC_DEF_NAME +
-                    measurementDefs.size());
+                MeasurementDefinition definition = new MeasurementDefinition(resourceType, DYNAMIC_DEF_NAME
+                    + measurementDefs.size());
                 definition.setDefaultOn(true);
                 definition.setDataType(MEASUREMENT);
                 definition.setMeasurementType(DYNAMIC);
@@ -312,5 +310,4 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
             }
         });
     }
-
 }

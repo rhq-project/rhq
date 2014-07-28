@@ -501,11 +501,31 @@
       </operation>
 '>
 
+    <!ENTITY datasourcesConfiguration '
+      <resource-configuration>
+          <c:group name="attribute:installed-drivers" displayName="Installed JDBC drivers">
+              <c:list-property name="*4" displayName="Available drivers">
+                  <c:map-property name="*">
+                      <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="The symbolic name of this driver used to reference it in the register" />
+                      <c:simple-property name="deployment-name" required="false" type="string" readOnly="true" description="The name of the deployment unit from which the driver was loaded, if it was loaded from a deployment"/>
+                      <c:simple-property name="driver-module-name" required="false" type="string" readOnly="true" description="The name of the module from which the driver was loaded, if it was loaded from the module path"/>
+                      <c:simple-property name="module-slot" required="false" type="string" readOnly="true" description="The slot of the module from which the driver was loaded, if it was loaded from the module path"/>
+                      <c:simple-property name="driver-class-name" required="false" type="string" readOnly="true" description="The fully qualified class name of the driver&apos;s implementation of java.sql.Driver"/>
+                      <c:simple-property name="xa-data-source-class" required="false" type="string" readOnly="true" description="The fully qualified class name of the XA datasource implementation of javax.sql.XADataSource"/>
+                      <c:simple-property name="driver-major-version" required="false" type="integer" readOnly="true" description="The driver&apos;s major version number"/>
+                      <c:simple-property name="driver-minor-version" required="false" type="integer" readOnly="true" description="The driver&apos;s minor version number"/>
+                      <c:simple-property name="jdbc-compliant" required="false" type="boolean" readOnly="true" description="Whether or not the driver is JDBC compliant"/>
+                  </c:map-property>
+              </c:list-property>
+          </c:group>
+      </resource-configuration>
+      '>
+
     <!ENTITY datasourceReadWriteConfiguration '
       <resource-configuration>
         <c:simple-property name="connection-url" required="true" type="string" readOnly="false" description="The JDBC driver connection URL"/>
         <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="false">
-          <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
+          <c:option-source target="configuration" expressionScope="baseResource" expression="*4/installed-drivers=driver-name:type=&apos;Datasources&apos;"/>
         </c:simple-property>
         <c:simple-property name="driver-class" required="false" type="string" readOnly="false" description="The fully qualified name of the JDBC driver class"/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="false" description="Specifies the JNDI name for the datasource"/>
@@ -590,7 +610,7 @@
       <resource-configuration>
         <c:simple-property name="connection-url" required="true" type="string" readOnly="true" description="The JDBC driver connection URL"/>
         <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="true">
-          <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
+          <c:option-source target="configuration" expressionScope="baseResource" expression="*4/installed-drivers=driver-name:type=&apos;Datasources&apos;"/>
         </c:simple-property>
         <c:simple-property name="driver-class" required="false" type="string" readOnly="true" description="The fully qualified name of the JDBC driver class"/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
@@ -667,8 +687,8 @@
       <resource-configuration>
         <c:simple-property name="xa-datasource-class" required="true" type="string" readOnly="true" description="The fully qualified name of the javax.sql.XADataSource implementation"/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
-        <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit">
-          <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
+        <c:simple-property name="driver-name" required="true" type="string" readOnly="false" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit">
+          <c:option-source target="configuration" expressionScope="baseResource" expression="*4/installed-drivers=driver-name:type=&apos;Datasources&apos;"/>
         </c:simple-property>
         <c:simple-property name="user-name" required="false" type="string" readOnly="true" description="Specify the username used when creating a new connection."/>
         <c:simple-property name="password" required="false" type="string" readOnly="true" description="Specify the password used when creating a new connection."/>
@@ -779,7 +799,7 @@
         <c:simple-property name="xa-datasource-class" required="true" type="string" readOnly="true" description="The fully qualified name of the javax.sql.XADataSource implementation"/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
         <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit">
-          <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
+          <c:option-source target="configuration" expressionScope="baseResource" expression="*4/installed-drivers=driver-name:type=&apos;Datasources&apos;"/>
         </c:simple-property>
         <c:simple-property name="user-name" required="false" type="string" readOnly="true" description="Specify the username used when creating a new connection."/>
         <c:simple-property name="password" required="false" type="string" readOnly="true" description="Specify the password used when creating a new connection."/>
@@ -7879,6 +7899,8 @@
       <c:simple-property name="path" readOnly="true" default="subsystem=datasources"/>
     </plugin-configuration>
 
+    &datasourcesConfiguration;
+
     <!-- not needed for hot-deployed drivers - only for module ones, but I am not sure we want to support that
             <operation name="addDriver" displayName="Add a JDBC driver">
                 <parameters>
@@ -7947,6 +7969,8 @@
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=datasources"/>
     </plugin-configuration>
+
+    &datasourcesConfiguration;
 
     <service name="DataSource (Profile)"
              discovery="SubsystemDiscovery"
@@ -8032,40 +8056,6 @@
     </service>
 
   </service>
-
-  <!-- TO BE ADDED to Datasource at a later time
-          <service name="JdbcDriver"
-                   discovery="SubsystemDiscovery"
-                   class="DatasourceComponent"
-                   singleton="true">
-
-              <plugin-configuration>
-                  <c:simple-property name="path" readOnly="true" default="jdbc-driver"/>
-              </plugin-configuration>
-
-
-              <resource-configuration>
-                  <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="The symbolic name of this driver used to reference it in the register"/>
-                  <c:simple-property name="deployment-name" required="false" type="string" readOnly="true" description="The name of the deployment unit from which the driver was loaded, if it was loaded from a deployment"/>
-                  <c:simple-property name="driver-module-name" required="false" type="string" readOnly="true" description="The name of the module from which the driver was loaded, if it was loaded from the module path"/>
-                  <c:simple-property name="module-slot" required="false" type="string" readOnly="true" description="The slot of the module from which the driver was loaded, if it was loaded from the module path"/>
-                  <c:simple-property name="driver-class-name" required="false" type="string" readOnly="true" description="The fully qualified class name of the driver's implementation of java.sql.Driver"/>
-                  <c:simple-property name="xa-data-source-class" required="false" type="string" readOnly="true" description="The fully qualified class name of the XA datasource implementation of javax.sql.XADataSource"/>
-                  <c:simple-property name="driver-major-version" required="false" type="integer" readOnly="true" description="The driver's major version number"/>
-                  <c:simple-property name="driver-minor-version" required="false" type="integer" readOnly="true" description="The driver's minor version number"/>
-                  <c:simple-property name="jdbc-compliant" required="false" type="boolean" readOnly="true" description="Whether or not the driver is JDBC compliant"/>
-  &lt;!&ndash;
-                  <c:template name="add" description="Add a jdbc driver"> &lt;!&ndash; See BZ 705713 TODO &ndash;&gt;
-                      <c:simple-property name="driver-name" required="true"/>
-                      <c:simple-property name="deployment-name" required="true">
-                          <c:option-source target="resource" expression="type=DomainDeployment"/> &lt;!&ndash; TODO filter ? &ndash;&gt;
-                      </c:simple-property>
-                      <c:simple-property name="driver-class-name" required="true"/>
-                  </c:template>
-  &ndash;&gt;
-              </resource-configuration>
-          </service>
-  -->
 
   <service name="JVM Definition (Host)"
            description="A JVM Definition on Host level, that can serve as templates for server groups and managed servers"

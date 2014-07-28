@@ -154,11 +154,11 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 }
             } catch (RuntimeException e) {
                 // Only barf a stack trace for runtime exceptions.
-                LOG.error("Discovery of a " + discoveryContext.getResourceType().getName()
-                        + " Resource failed for " + processScanResult.getProcessInfo() + ".", e);
+                LOG.error("Discovery of a " + discoveryContext.getResourceType().getName() + " Resource failed for "
+                    + processScanResult.getProcessInfo() + ".", e);
             } catch (Exception e) {
-                LOG.error("Discovery of a " + discoveryContext.getResourceType().getName()
-                        + " Resource failed for " + processScanResult.getProcessInfo() + " - cause: " + e);
+                LOG.error("Discovery of a " + discoveryContext.getResourceType().getName() + " Resource failed for "
+                    + processScanResult.getProcessInfo() + " - cause: " + e);
             }
         }
 
@@ -166,8 +166,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     }
 
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
-                                                             ProcessInfo process, AS7CommandLine commandLine)
-            throws Exception {
+        ProcessInfo process, AS7CommandLine commandLine) throws Exception {
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
         ServerPluginConfiguration serverPluginConfig = new ServerPluginConfiguration(pluginConfig);
 
@@ -243,7 +242,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         if (!homeDir.isAbsolute()) {
             if (processInfo.getExecutable() == null) {
                 throw new RuntimeException(HOME_DIR_SYSPROP + " for AS7 process " + processInfo
-                        + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
+                    + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
             }
             String cwd = processInfo.getExecutable().getCwd();
             homeDir = new File(cwd, home);
@@ -253,7 +252,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     }
 
     private void setStartScriptPluginConfigProps(ProcessInfo process, AS7CommandLine commandLine,
-                                                 Configuration pluginConfig, ProcessInfo agentProcess) {
+        Configuration pluginConfig, ProcessInfo agentProcess) {
         StartScriptConfiguration startScriptConfig = new StartScriptConfiguration(pluginConfig);
         ProcessInfo parentProcess = getPotentialStartScriptProcess(process);
 
@@ -269,7 +268,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 File startScriptAbsolute = new File(homeDir, startScript.getPath());
                 if (!startScriptAbsolute.exists()) {
                     LOG.warn("Failed to find start script file for AS7 server with command line [" + commandLine
-                            + "] - defaulting 'startScripFile' plugin config prop to [" + startScript + "].");
+                        + "] - defaulting 'startScripFile' plugin config prop to [" + startScript + "].");
                 }
             }
         }
@@ -278,12 +277,12 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         String startScriptPrefix = ServerStartScriptDiscoveryUtility.getStartScriptPrefix(process, agentProcess);
         startScriptConfig.setStartScriptPrefix(startScriptPrefix);
 
-        Map<String, String> startScriptEnv = ServerStartScriptDiscoveryUtility.getStartScriptEnv(process, parentProcess,
-                START_SCRIPT_ENV_VAR_NAMES);
+        Map<String, String> startScriptEnv = ServerStartScriptDiscoveryUtility.getStartScriptEnv(process,
+            parentProcess, START_SCRIPT_ENV_VAR_NAMES);
         startScriptConfig.setStartScriptEnv(startScriptEnv);
 
         List<String> startScriptArgs = ServerStartScriptDiscoveryUtility.getStartScriptArgs(parentProcess,
-                commandLine.getAppServerArguments(), START_SCRIPT_OPTION_EXCLUDES);
+            commandLine.getAppServerArguments(), START_SCRIPT_OPTION_EXCLUDES);
         startScriptConfig.setStartScriptArgs(startScriptArgs);
     }
 
@@ -332,7 +331,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                     baseDir = new File(homeDir, baseDirString);
                     if (!baseDir.exists()) {
                         throw new RuntimeException(getBaseDirSystemPropertyName() + " for AS7 process " + process
-                                + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
+                            + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
                     }
                 } else {
                     String cwd = process.getExecutable().getCwd();
@@ -357,7 +356,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             if (!configDir.isAbsolute()) {
                 if (process.getExecutable() == null) {
                     throw new RuntimeException(getConfigDirSystemPropertyName() + " for AS7 process " + process
-                            + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
+                        + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
                 }
                 String cwd = process.getExecutable().getCwd();
                 configDir = new File(cwd, configDirString);
@@ -377,7 +376,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             if (!logDir.isAbsolute()) {
                 if (process.getExecutable() == null) {
                     throw new RuntimeException(getLogDirSystemPropertyName() + " for AS7 process " + process
-                            + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
+                        + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
                 }
                 String cwd = process.getExecutable().getCwd();
                 logDir = new File(cwd, logDirString);
@@ -448,8 +447,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
     // Manually add a (remote) AS7 instance.
     @Override
-    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-        ResourceDiscoveryContext context) throws InvalidPluginConfigurationException {
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig, ResourceDiscoveryContext context)
+        throws InvalidPluginConfigurationException {
         ServerPluginConfiguration serverPluginConfig = new ServerPluginConfiguration(pluginConfig);
 
         String hostname = serverPluginConfig.getHostname();
@@ -463,8 +462,9 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         ProductInfo productInfo = new ProductInfo(ASConnectionParams.createFrom(serverPluginConfig)).getFromRemote();
         JBossProductType productType = productInfo.getProductType();
 
-        if (productType==null) {
-            throw new InvalidPluginConfigurationException("Can not connect to [" + hostname + ":" + port + "] as user [" + user +"]. Did you provide the correct credentials?");
+        if (productType == null) {
+            throw new InvalidPluginConfigurationException("Can not connect to [" + hostname + ":" + port
+                + "] as user [" + user + "]. Did you provide the correct credentials?");
         }
 
         HostPort hostPort = new HostPort(false);
@@ -477,11 +477,11 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         String description = buildDefaultResourceDescription(hostPort, productType);
 
         pluginConfig.put(new PropertySimple("manuallyAdded", true));
-        pluginConfig.put(new PropertySimple("productType",productType.name()));
+        pluginConfig.put(new PropertySimple("productType", productType.name()));
         pluginConfig.setSimpleValue("expectedRuntimeProductName", productType.PRODUCT_NAME);
 
-        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), key, name,
-            version, description, pluginConfig, null);
+        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), key, name, version,
+            description, pluginConfig, null);
 
         return detail;
     }
@@ -553,7 +553,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         }
     }
 
-    private <T>T getServerAttribute(ASConnection connection, String attributeName) {
+    private <T> T getServerAttribute(ASConnection connection, String attributeName) {
         Operation op = new ReadAttribute(null, attributeName);
         Result res = connection.execute(op);
         if (!res.isSuccess()) {
@@ -579,7 +579,12 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         }
 
         if (!mgmUsersPropsFile.canRead()) {
-            LOG.warn("Management user properties at [" + mgmUsersPropsFile + "] is not readable.");
+            // BZ 1118061 Log only at debug because JBoss EAP's users, groups, and roles configuration files
+            // are read/write by owner only. Meaning that the jbossadmin user owns these files and the
+            // jbossonadmin user may not have permission to read these files.
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Management user properties at [" + mgmUsersPropsFile + "] is not readable.");
+            }
             return props;
         }
 
@@ -597,13 +602,13 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             props.load(inputStream);
         } catch (IOException e) {
             LOG.error("Failed to parse management users properties file at [" + mgmUsersPropsFile + "]: "
-                    + e.getMessage());
+                + e.getMessage());
         } finally {
             try {
                 inputStream.close();
             } catch (IOException e) {
                 LOG.error("Failed to close management users properties file at [" + mgmUsersPropsFile + "]: "
-                        + e.getMessage());
+                    + e.getMessage());
             }
         }
 
@@ -745,8 +750,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 if ((productName != null) && !productName.isEmpty())
                     productType = JBossProductType.getValueByProductName(productName);
                 else {
-                    Integer apiVersion = getServerAttribute(connection,"management-major-version");
-                    if (apiVersion==1) {
+                    Integer apiVersion = getServerAttribute(connection, "management-major-version");
+                    if (apiVersion == 1) {
                         productType = JBossProductType.AS;
                     } else {
                         // In the future also check for other versions of WildFly via the release-version

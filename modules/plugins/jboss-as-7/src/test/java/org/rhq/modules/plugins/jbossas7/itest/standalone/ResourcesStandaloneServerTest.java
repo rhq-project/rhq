@@ -89,6 +89,12 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
         ignoredResources.add("Memory Pool");
         ignoredResources.add("Periodic Rotating File Handler");
 
+        // Datasources need a complex workflow, cannot be tested like this
+        ignoredResources.add("DataSource (Standalone)");
+
+        // These should not be tested as datasource
+        ignoredResources.add("Datasources (Standalone)");
+
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
             StandaloneServerComponentTest.RESOURCE_KEY);

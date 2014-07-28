@@ -107,8 +107,8 @@ public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
 
         // Datasources need a complex workflow, cannot be tested like this
 
-        ignoredResources.add("DataSource (Profile)");
-        ignoredResources.add("DataSource (Managed)");
+        ignoredResources.add("Datasources (Profile)");
+        ignoredResources.add("Datasources (Managed)");
 
         // Cannot apply configuration blindly
 

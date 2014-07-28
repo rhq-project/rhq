@@ -26,18 +26,24 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
+import org.rhq.core.domain.cloud.StorageNode;
 
 /**
  * A Storage Maintenance Job
@@ -57,21 +63,33 @@ public class MaintenanceJob implements Serializable {
 
     public static final String QUERY_FIND_ALL = "MaintenanceJob.findAll";
 
+    public static enum Type {
+        DEPLOY,
+        UNDEPLOY,
+        CHANGE_ENDPOINT,
+        CHANGE_RHQ_DATA_DIR
+    }
+
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_STORAGE_MAINT_JOB_ID_SEQ")
     @Id
     private int id;
 
-    //TODO: might have to drop if type is enough
     @Column(name = "NAME", nullable = false)
     private String name;
 
-    //TODO: might have to change to Enum if the types settle to
-    //      a finite few
     @Column(name = "TYPE", nullable = false)
-    private int type;
+    private Type type;
 
-    @OneToMany(mappedBy = "maintenanceJob", fetch = FetchType.LAZY)
+    // I think that most jobs will have a node associated with them; however, there might
+    // be some, like anti-entropy repair, that would not have a particular node but rather
+    // the whole cluster. That is this relationship is nullable.
+    @ManyToOne
+    @JoinColumn(name = "STORAGE_NODE_ID", nullable = true)
+    private StorageNode storageNode;
+
+    @OneToMany(mappedBy = "maintenanceJob", fetch = FetchType.LAZY, cascade = {CascadeType.ALL})
+    @OrderBy("step")
     private List<MaintenanceStep> steps = new ArrayList<MaintenanceStep>();
 
     // the time this maintenance workflow was created
@@ -104,11 +122,11 @@ public class MaintenanceJob implements Serializable {
         return this;
     }
 
-    public int getType() {
+    public Type getType() {
         return type;
     }
 
-    public MaintenanceJob setType(int type) {
+    public MaintenanceJob setType(Type type) {
         this.type = type;
         return this;
     }
@@ -120,6 +138,14 @@ public class MaintenanceJob implements Serializable {
     public MaintenanceJob setSteps(List<MaintenanceStep> steps) {
         this.steps = steps;
         return this;
+    }
+
+    public StorageNode getStorageNode() {
+        return storageNode;
+    }
+
+    public void setStorageNode(StorageNode storageNode) {
+        this.storageNode = storageNode;
     }
 
     public int getMaintenanceStepCount() {
@@ -151,31 +177,29 @@ public class MaintenanceJob implements Serializable {
         this.mtime = this.ctime;
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((name == null) ? 0 : name.hashCode()) + type;
-        return result;
-    }
+    // TODO Determine the fields we should include in equals/hashCode
+    //
+    // I think that name and ctime will form a natural/surrogate key, but I am
+    // not 100% certain.
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-        if (obj == null || !(obj instanceof MaintenanceJob)) {
-            return false;
-        }
+        MaintenanceJob that = (MaintenanceJob) o;
 
-        final MaintenanceJob other = (MaintenanceJob) obj;
-
-
-        if (getId() != other.getId() || getCtime() != other.getCtime()) {
-            return false;
-        }
+        if (ctime != that.ctime) return false;
+        if (!name.equals(that.name)) return false;
 
         return true;
     }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + (int) (ctime ^ (ctime >>> 32));
+        return result;
+    }
+
 }

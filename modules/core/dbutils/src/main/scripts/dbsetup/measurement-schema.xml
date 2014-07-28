@@ -468,6 +468,7 @@
     <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER" />
     <column name="TYPE" required="true" size="1000" type="VARCHAR2" />
     <column name="NAME" required="true" size="1000" type="VARCHAR2" />
+    <column name="STORAGE_NODE_ID" type="INTEGER" references="RHQ_STORAGE_NODE" required="false"/>
     <column name="CTIME" required="true" type="LONG" />
     <column name="MTIME" required="true" type="LONG" />
   </table>
@@ -475,15 +476,10 @@
   <table name="RHQ_STORAGE_MAINT_STEP">
     <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER" />
     <column name="STORAGE_MAINT_JOB_ID" type="INTEGER" references="RHQ_STORAGE_MAINT_JOB" required="true"/>
-
-    <column name="ADDRESS" required="true" size="255" type="VARCHAR2" />
     <column name="STEP" required="true" type="INTEGER" />
-    <column name="TYPE" required="true" size="1000" type="VARCHAR2" />
     <column name="NAME" required="true" size="1000" type="VARCHAR2" />
-    <column name="TIMEOUT" required="true" type="LONG" />
-    <column name="ARGS" required="true" size="4000" type="VARCHAR2" />
-    <column name="ON_FAILURE" required="true" size="1000" type="VARCHAR2" />
-
+    <column name="STORAGE_NODE_ID" type="INTEGER" references="RHQ_STORAGE_NODE" required="false"/>
+    <column name="ARGS" required="false" size="4000" type="VARCHAR2" />
     <column name="CTIME" required="true" type="LONG" />
     <column name="MTIME" required="true" type="LONG" />
   </table>

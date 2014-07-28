@@ -59,7 +59,7 @@ public class StorageClusterMaintenanceJob extends AbstractStatefulJob {
         try {
             log.info("Running cluster maintenance");
             StorageClusterMaintenanceManagerLocal maintenanceManager = LookupUtil.getStorageClusterMaintenanceManager();
-            maintenanceManager.addTask();
+            maintenanceManager.scheduleMaintenance();
         } catch (Exception e) {
             log.error("There was an unexpected error while performing cluster maintenance", e);
         } finally {

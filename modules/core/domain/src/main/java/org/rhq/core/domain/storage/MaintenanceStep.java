@@ -39,12 +39,14 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.rhq.core.domain.cloud.StorageNode;
+
 /**
  * A Storage Maintenance Job
  *
  * @author Stefan Negrea
  */
-@Entity(name = "MaintenanceJob")
+@Entity(name = "MaintenanceStep")
 @NamedQueries( //
 {
  @NamedQuery(name = MaintenanceStep.QUERY_FIND_ALL, query = "SELECT s FROM MaintenanceStep s")
@@ -62,25 +64,21 @@ public class MaintenanceStep implements Serializable {
     @Id
     private int id;
 
-    @JoinColumn(name = "STORAGE_MAINT_JOB_ID", referencedColumnName = "ID", nullable = true)
+    @JoinColumn(name = "STORAGE_MAINT_JOB_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
     private MaintenanceJob maintenanceJob;
 
     @Column(name = "STEP", nullable = false)
     private int step;
 
-    @Column(name = "NODE_ADDRESS", nullable = false)
-    private String nodeAddress;
+    @ManyToOne
+    @JoinColumn(name = "STORAGE_NODE_ID", referencedColumnName = "ID", nullable = true)
+    private StorageNode storageNode;
 
-    //TODO: might have to drop if type is enough
+    // I think this should simply be the name of the class that executes the
+    // step. The server can then easily create the object to execute the step.
     @Column(name = "NAME", nullable = false)
     private String name;
-
-    //TODO: have to change to full Enum once the types settle to
-    //      a finite few
-    @Column(name = "TYPE", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Type type;
 
     // the time this maintenance workflow was created
     @Column(name = "CTIME", nullable = false)
@@ -90,19 +88,8 @@ public class MaintenanceStep implements Serializable {
     @Column(name = "MTIME", nullable = false)
     private long mtime;
 
-    // sequential operation
-    @Column(name = "SEQUENTIAL", nullable = false)
-    private boolean sequential;
-
-    // step timeout
-    @Column(name = "TIMEOUT", nullable = false)
-    private long timeout;
-
-    @Column(name = "ARGS", nullable = false)
+    @Column(name = "ARGS", nullable = true)
     private String args;
-
-    @Column(name = "ON_FAILURE", nullable = false)
-    private String onFailure;
 
     // required for JPA
     public MaintenanceStep() {
@@ -135,12 +122,12 @@ public class MaintenanceStep implements Serializable {
         return this;
     }
 
-    public String getNodeAddress() {
-        return nodeAddress;
+    public StorageNode getStorageNode() {
+        return storageNode;
     }
 
-    public MaintenanceStep setNodeAddress(String nodeAddress) {
-        this.nodeAddress = nodeAddress;
+    public MaintenanceStep setStorageNode(StorageNode storageNode) {
+        this.storageNode = storageNode;
         return this;
     }
 
@@ -150,15 +137,6 @@ public class MaintenanceStep implements Serializable {
 
     public MaintenanceStep setName(String name) {
         this.name = name;
-        return this;
-    }
-
-    public Type getType() {
-        return type;
-    }
-
-    public MaintenanceStep setType(Type type) {
-        this.type = type;
         return this;
     }
 
@@ -175,24 +153,6 @@ public class MaintenanceStep implements Serializable {
         return this;
     }
 
-    public boolean isSequential() {
-        return sequential;
-    }
-
-    public MaintenanceStep setSequential(boolean sequential) {
-        this.sequential = sequential;
-        return this;
-    }
-
-    public long getTimeout() {
-        return timeout;
-    }
-
-    public MaintenanceStep setTimeout(long timeout) {
-        this.timeout = timeout;
-        return this;
-    }
-
     public String getArgs() {
         return args;
     }
@@ -202,20 +162,11 @@ public class MaintenanceStep implements Serializable {
         return this;
     }
 
-    public String getOnFailure() {
-        return onFailure;
-    }
-
-    public MaintenanceStep setOnFailure(String onFailure) {
-        this.onFailure = onFailure;
-        return this;
-    }
-
-    @Override
-    public String toString() {
-        return "MaintenanceStep[id=" + id + ", name=" + name + ", Type=" + type
-            + ", ctime=" + ctime + "]";
-    }
+//    @Override
+//    public String toString() {
+//        return "MaintenanceStep[id=" + id + ", name=" + name + ", Type=" + type
+//            + ", ctime=" + ctime + "]";
+//    }
 
     @PrePersist
     void onPersist() {
@@ -223,14 +174,14 @@ public class MaintenanceStep implements Serializable {
         this.mtime = this.ctime;
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((name == null) ? 0 : name.hashCode()) + ((type == null) ? 0 : type.hashCode())
-            + step + ((nodeAddress == null) ? 0 : nodeAddress.hashCode());
-        return result;
-    }
+//    @Override
+//    public int hashCode() {
+//        final int prime = 31;
+//        int result = 1;
+//        result = prime * result + ((name == null) ? 0 : name.hashCode()) + ((type == null) ? 0 : type.hashCode())
+//            + step + ((nodeAddress == null) ? 0 : nodeAddress.hashCode());
+//        return result;
+//    }
 
     @Override
     public boolean equals(Object obj) {

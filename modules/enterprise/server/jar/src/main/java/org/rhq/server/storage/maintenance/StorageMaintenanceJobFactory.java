@@ -41,7 +41,7 @@ public class StorageMaintenanceJobFactory {
     public MaintenanceJob createJob(String operation, String[] existingStorageNodes, String[] affectedNodes, String args) {
         MaintenanceJob job = new MaintenanceJob();
 
-        job.setType(1);
+        job.setType(MaintenanceJob.Type.CHANGE_ENDPOINT);
         job.setName(operation);
 
         if (operation.equals("NodeChangeAddress")) {

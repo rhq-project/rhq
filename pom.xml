@@ -187,7 +187,7 @@
 
     <quartz.version>1.6.5</quartz.version>
 
-    <resteasy.version>2.3.8.Final</resteasy.version>
+    <resteasy.version>2.3.5.Final</resteasy.version>
     <richfaces.version>3.3.4.Final</richfaces.version>
 
     <shrinkwrap-resolver.version>2.0.0-alpha-7</shrinkwrap-resolver.version>

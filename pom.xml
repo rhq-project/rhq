@@ -123,51 +123,52 @@
     <getopt.version>1.0.13.redhat-4</getopt.version>
 
     <h2.version>1.2.139</h2.version>
-    <hibernate.version>4.2.13.Final</hibernate.version> <!-- -redhat-1 -->
-    <hibernate-annotations.version>4.0.1.Final</hibernate-annotations.version> <!-- -redhat-2 -->
-    <hibernate-jpa-2.0-api.version>1.0.1.Final</hibernate-jpa-2.0-api.version> <!-- -redhat-2 -->
+    <hibernate.version>4.2.14.Final</hibernate.version>
+    <hibernate-annotations.version>4.0.1.Final</hibernate-annotations.version>
+    <hibernate-jpa-2.0-api.version>1.0.1.Final</hibernate-jpa-2.0-api.version>
 
     <i18nlog.version>1.0.10</i18nlog.version>
-    <infinispan.version>5.2.10.Final</infinispan.version> <!-- -redhat-1 -->
+    <infinispan.version>5.2.10.Final</infinispan.version>
 
     <jackson.version>2.0.5</jackson.version>
     <jackson-core-asl.version>1.9.13</jackson-core-asl.version>
     <jackson-mapper-asl.version>1.9.13</jackson-mapper-asl.version>
     <jacoco.version>0.6.0.201210061924</jacoco.version>
     <jacoco-arquillian-extension.version>1.0.0.Alpha5</jacoco-arquillian-extension.version>
-    <javassist.version>3.18.1-GA</javassist.version> <!-- -redhat-1 -->
-    <javax.annotation.api.version>1.0.1.Final</javax.annotation.api.version> <!-- -redhat-2 -->
-    <javax.ejb.api.version>1.0.2.Final</javax.ejb.api.version> <!-- -redhat-2 -->
-    <javax.jms.api.version>1.0.1.Final</javax.jms.api.version> <!-- -redhat-2 -->
+    <javassist.version>3.18.1-GA</javassist.version>
+    <javax.annotation.api.version>1.0.1.Final</javax.annotation.api.version>
+    <javax.ejb.api.version>1.0.2.Final</javax.ejb.api.version>
+    <javax.jms.api.version>1.0.1.Final</javax.jms.api.version>
     <javax.mail.api.version>1.4.4</javax.mail.api.version>
-    <javax.servlet.api.version>1.0.2.Final</javax.servlet.api.version> <!-- -redhat-1 -->
-    <jaxb-api.version>1.0.4.Final</jaxb-api.version> <!-- -redhat-2 -->
+    <javax.servlet.api.version>1.0.2.Final</javax.servlet.api.version>
+    <jaxb-api.version>1.0.4.Final</jaxb-api.version>
     <jaxb-impl.version>2.2.4</jaxb-impl.version>
     <jboss-annotations.version>4.2.3.GA</jboss-annotations.version>
     <jboss-cache.version>1.4.1.SP9</jboss-cache.version>
-    <jboss-common-core.version>2.2.17.GA</jboss-common-core.version> <!-- -redhat-2 -->
+    <jboss-common-core.version>2.2.17.GA</jboss-common-core.version>
     <jboss-common.version>1.2.1.GA</jboss-common.version> <!-- note this is the old commons we used, not the newer commons-core -->
     <jboss-jmx.version>4.2.3.GA</jboss-jmx.version>
-    <jboss-dmr.version>1.2.0.Final</jboss-dmr.version> <!-- -redhat-1 -->
-    <jboss-ejb3-ext-api.version>2.1.0</jboss-ejb3-ext-api.version> <!-- .redhat-1 (NOTE: "." prefix) -->
-    <jboss-interceptors-api.version>1.0.1.Final</jboss-interceptors-api.version> <!-- -redhat-2 -->
+    <jboss-dmr.version>1.2.0.Final</jboss-dmr.version>
+    <jboss-ejb3-ext-api.version>2.1.0</jboss-ejb3-ext-api.version>
+    <jboss-interceptors-api.version>1.0.1.Final</jboss-interceptors-api.version>
     <jboss-jts.version>4.16.4.Final</jboss-jts.version>
     <jboss-logging.version>3.1.2.GA</jboss-logging.version>
-    <jboss-modules.version>1.3.3.Final</jboss-modules.version> <!-- -redhat-1 -->
-    <jboss-msc.version>1.1.5.Final</jboss-msc.version> <!-- -redhat-1 -->
+    <jboss-modules.version>1.3.3.Final</jboss-modules.version>
+    <jboss-msc.version>1.1.5.Final</jboss-msc.version>
     <jboss-remoting.version>2.5.4.SP5</jboss-remoting.version>
     <jboss-remotingjmx.version>1.0.2.Final</jboss-remotingjmx.version>
-    <jboss-transaction-api.version>1.0.1.Final</jboss-transaction-api.version> <!-- -redhat-2 -->
+    <jboss-transaction-api.version>1.0.1.Final</jboss-transaction-api.version>
     <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>
-    <jboss-staxmapper.version>1.1.0.Final</jboss-staxmapper.version> <!-- -redhat-2 -->
+    <jboss-staxmapper.version>1.1.0.Final</jboss-staxmapper.version>
     <jboss-system.version>4.2.3.GA</jboss-system.version>
     <jboss-vfs.version>3.1.0.Final</jboss-vfs.version>
     <jbosssx.version>4.2.3.GA</jbosssx.version>
+    <jgroups.version>3.2.13.Final</jgroups.version>
     <jbpm.version>3.1.1</jbpm.version>
     <jline.version>0.9.94</jline.version>
     <jna.version>3.2.5</jna.version>
-    <jsf-api.version>1.2_14</jsf-api.version> <!-- 1.2_15-b01-redhat-11 -->
-    <jsf-impl.version>1.2_14</jsf-impl.version> <!-- 1.2_15-b01-redhat-11 --> <!-- was "1.2_14" when on EAP 6.1 -->
+    <jsf-api.version>1.2_14</jsf-api.version>
+    <jsf-impl.version>1.2_14</jsf-impl.version>
     <jta.version>1.1</jta.version>
     <jtds.version>1.2.2</jtds.version>
     <junit.version>4.10</junit.version>
@@ -180,13 +181,13 @@
     <ojdbc6.version>12.1.0.1.0</ojdbc6.version>
     <opencsv.version>1.8</opencsv.version>
 
-    <picketbox.version>4.0.19.SP7</picketbox.version> <!-- -redhat-1 --> <!-- should be SP8 -->
+    <picketbox.version>4.0.19.SP7</picketbox.version>
     <postgresql.version>9.2-1002.jdbc4</postgresql.version>
     <powermock.version>1.4.12</powermock.version>
 
     <quartz.version>1.6.5</quartz.version>
 
-    <resteasy.version>2.3.5.Final</resteasy.version> <!-- 2.3.8.Final-redhat-3 -->
+    <resteasy.version>2.3.8.Final</resteasy.version>
     <richfaces.version>3.3.4.Final</richfaces.version>
 
     <shrinkwrap-resolver.version>2.0.0-alpha-7</shrinkwrap-resolver.version>
@@ -1059,6 +1060,14 @@
         <groupId>net.sf.trove4j</groupId>
         <artifactId>trove4j</artifactId>
         <version>3.0.3</version>
+     </dependency>
+
+     <!-- Try to use EAP versions when possible -->
+     <dependency>
+       <groupId>org.jgroups</groupId>
+       <artifactId>jgroups</artifactId>
+       <version>${jgroups.version}</version>
+       <scope>provided</scope>
      </dependency>
   </dependencies>
 

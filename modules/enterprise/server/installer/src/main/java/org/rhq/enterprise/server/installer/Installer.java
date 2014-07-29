@@ -28,6 +28,8 @@ import java.util.HashMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.crypto.CryptoUtil;
+
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.installer.InstallerService.AlreadyInstalledException;
 import org.rhq.enterprise.server.installer.InstallerService.AutoInstallDisabledException;
@@ -234,8 +236,13 @@ public class Installer {
                 Console console = System.console();
                 if (null != console) {
                     passwordToEncode = String.valueOf(console.readLine("%s", "Password: "));
-                    associatedProperty = String.valueOf(console.readLine("%s",
-                        "Property [rhq.server.database.password]: "));
+                    associatedProperty = "rhq.autoinstall.server.admin.password";
+                    if (!confirm(console, "Property " + associatedProperty)) {
+                        associatedProperty = "rhq.server.database.password";
+                        if (!confirm(console, "Property " + associatedProperty)) {
+                            associatedProperty = ask(console, "Property to encode: ");
+                        }
+                    }
                 } else {
                     LOG.error("NO CONSOLE!");
                 }
@@ -267,14 +274,17 @@ public class Installer {
 
         // if a password was asked to be encoded, that's all we do on the execution
         if (passwordToEncode != null) {
-            if (associatedProperty == null || associatedProperty.trim().isEmpty()) {
-                associatedProperty = "rhq.server.database.password";
+            String encodedPassword;
+            if ("rhq.autoinstall.server.admin.password".equals(associatedProperty)) {
+                encodedPassword = CryptoUtil.createPasswordHash("MD5", CryptoUtil.BASE64_ENCODING, null, null,
+                    passwordToEncode);
+            } else {
+                encodedPassword = new InstallerServiceImpl(installerConfig).obfuscatePassword(String
+                    .valueOf(passwordToEncode));
             }
 
-            String encodedPassword = new InstallerServiceImpl(installerConfig).obfuscatePassword(String
-                .valueOf(passwordToEncode));
-
-            if ("rhq.server.database.password".equals(associatedProperty.trim())) {
+            if ("rhq.server.database.password".equals(associatedProperty)
+                || "rhq.autoinstall.server.admin.password".equals(associatedProperty)) {
                 LOG.info("*** Encoded password for rhq-server.properties:");
                 LOG.info("***     " + associatedProperty + "=" + encodedPassword);
                 LOG.info("***     ");
@@ -319,5 +329,23 @@ public class Installer {
         }
 
         return new WhatToDo[] { WhatToDo.INSTALL };
+    }
+
+    private String ask(Console console, String prompt) {
+        String response = "";
+        do {
+            response = String.valueOf(console.readLine("%s", prompt).trim());
+        } while (response.isEmpty());
+
+        return response;
+    }
+
+    private boolean confirm(Console console, String option) {
+        String response = "";
+        do {
+            response = ask(console, option + " [y/n]: ").trim().toLowerCase();
+        } while (!(response.startsWith("y") || response.startsWith("n")));
+
+        return response.startsWith("y");
     }
 }

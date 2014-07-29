@@ -156,11 +156,8 @@ To run the default target, you must set one of the following properties to true:
          <replacefilter token="@@@LARGE_TABLESPACE_FOR_INDEX@@@" value="${server.tablespace.large-index}"/>
       </replace>
 
-      <md5 value="${server.admin.password}" property="server.admin.password.encrypted"/>
-
       <replace file="${dbsetup.combined.data}">
          <replacefilter token="@@@ADMINUSERNAME@@@"    value="${server.admin.username}"/>
-         <replacefilter token="@@@ADMINPASSWORD@@@"    value="${server.admin.password.encrypted}"/>
          <replacefilter token="@@@ADMINEMAIL@@@"       value="${server.admin.email}"/>
          <replacefilter token="@@@BASEURL@@@"          value="${server.webapp.baseurl}"/>
          <replacefilter token="@@@JAASPROVIDER@@@"     value="${server.jaas.provider}"/>

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<dbsetup name="auth-data.xml">
-
-    <table name="RHQ_PRINCIPAL">
-        <data id="2" PRINCIPAL="@@@ADMINUSERNAME@@@" PASSWORD="@@@ADMINPASSWORD@@@"/>
-    </table>
-
-</dbsetup>

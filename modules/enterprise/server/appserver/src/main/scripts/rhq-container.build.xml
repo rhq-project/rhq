@@ -3,10 +3,11 @@
 <project name="rhq-appserver-container" basedir=".">
 
     <!-- rhq-server.properties defaults -->
+
+    <!-- database -->
     <property name="default.rhq.server.database.hibernate-dialect"  value="org.hibernate.dialect.PostgreSQLDialect" />
     <property name="default.rhq.server.database.connection-url"     value="jdbc:postgresql://127.0.0.1:5432/rhq" />
     <property name="default.rhq.server.database.user-name"          value="rhqadmin" />
-    <property name="default.rhq.server.database.password"           value="rhqadmin" />
     <property name="default.rhq.server.database.password.encrypted" value="1eeb2f255e832171df8592078de921bc" />
     <property name="default.rhq.server.database.type-mapping"       value="PostgreSQL" />
 
@@ -14,28 +15,33 @@
     <property name="default.rhq.server.database.server-name"        value="127.0.0.1" />
     <property name="default.rhq.server.database.port"               value="5432" />
     <property name="default.rhq.server.database.db-name"            value="rhq" />
+
+    <!-- quartz scheduler -->
     <property name="default.rhq.server.quartz.driverDelegateClass"  value="org.quartz.impl.jdbcjobstore.PostgreSQLDelegate" />
     <property name="default.rhq.server.quartz.selectWithLockSQL"    value="SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE" />
     <property name="default.rhq.server.quartz.lockHandlerClass"     value="org.quartz.impl.jdbcjobstore.StdRowLockSemaphore" />
 
+    <!-- other -->
+    <property name="default.rhq.autoinstall.server.admin.password"  value=""/>
     <property name="default.rhq.server.drift.binary.content"        value="false"/>
 
+    <!-- storage -->
     <property name="default.rhq.storage.username"                   value=""/>
     <property name="default.rhq.storage.password"                   value=""/>
 
-	<property name="default.jboss.bind.address" value=""/>
+    <property name="default.jboss.bind.address"                     value=""/>
 
-    <property name="default.rhq.storage.commitlog"                 value=""/>
-    <property name="default.rhq.storage.data"                      value=""/>
-    <property name="default.rhq.storage.saved-caches"              value=""/>
-    <property name="default.rhq.storage.heap-size"                 value=""/>
-    <property name="default.rhq.storage.heap-new-size"             value=""/>
-    <property name="default.rhq.storage.hostname"                  value=""/>
-    <property name="default.rhq.storage.jmx-port"                  value=""/>
-    <property name="default.rhq.storage.seeds"                     value=""/>
-    <property name="default.rhq.storage.verify-data-dirs-empty"    value=""/>
-    <property name="default.rhq.storage.cql-port"                  value="9142"/>
-    <property name="default.rhq.storage.gossip-port"               value="7100"/>
+    <property name="default.rhq.storage.commitlog"                  value=""/>
+    <property name="default.rhq.storage.data"                       value=""/>
+    <property name="default.rhq.storage.saved-caches"               value=""/>
+    <property name="default.rhq.storage.heap-size"                  value=""/>
+    <property name="default.rhq.storage.heap-new-size"              value=""/>
+    <property name="default.rhq.storage.hostname"                   value=""/>
+    <property name="default.rhq.storage.jmx-port"                   value=""/>
+    <property name="default.rhq.storage.seeds"                      value=""/>
+    <property name="default.rhq.storage.verify-data-dirs-empty"     value=""/>
+    <property name="default.rhq.storage.cql-port"                   value="9142"/>
+    <property name="default.rhq.storage.gossip-port"                value="7100"/>
 
 	<target name="set-predeploy-prop">
         <condition property="predeploy" value="true">
@@ -60,10 +66,13 @@
         <property name="rhq.server.quartz.selectWithLockSQL"   value="${rhq.dev.quartz.selectWithLockSQL}" />
         <property name="rhq.server.quartz.lockHandlerClass"    value="${rhq.dev.quartz.lockHandlerClass}" />
         <property name="rhq.server.drift.store-binary-content" value="${default.rhq.server.drift.binary.content}"/>
+
         <!-- these are only set explicitly in dev envs, prod envs generate these at install time -->
         <property name="rhq.storage.username"                  value="rhqadmin"/>
         <property name="rhq.storage.password"                  value="1eeb2f255e832171df8592078de921bc"/>
-        <!-- this is only set explicitly in dev envs, prod envs must set these manually for security -->
+
+        <!-- these are only set explicitly in dev envs, prod envs must set these manually for security -->
+        <property name="rhq.autoinstall.server.admin.password" value="x1XwrxKuPvYUILiOnOZTLg==" />
         <property name="jboss.bind.address"                    value="0.0.0.0"/>
 
         <echo>*** Using dev settings in rhq-storage.properties...</echo>
@@ -96,7 +105,8 @@
         <!-- these are only set explicitly in dev envs, prod envs generate these at install time -->
         <property name="rhq.storage.username"                  value="${default.rhq.storage.username}"/>
         <property name="rhq.storage.password"                  value="${default.rhq.storage.password}"/>
-        <!-- this is only set by default in dev envs, prod envs must set these manually for security -->
+        <!-- these are only set by default in dev envs, prod envs must set these manually for security -->
+        <property name="rhq.autoinstall.server.admin.password" value="${default.rhq.autoinstall.server.admin.password}"/>
         <property name="jboss.bind.address"                    value="${default.jboss.bind.address}"/>
 
         <echo>*** Using default settings in rhq-storage.properties...</echo>
@@ -682,30 +692,36 @@ rhq.server.socket.binding.port.txn-status-manager=3713
 # ------------------
 # INSTALLATION ACTION REQUIRED! Review the default settings:
 #
-# These enable the installer when starting for the first time.
-# To do so, first ensure all values in this properties file are appropriately
-# set for your environment. Once you are sure all values are as you want them,
+# These enable the installer when starting for the first time. To do so,
+# first ensure all values in this properties file are appropriately set
+# for your environment. Once you are sure all values are as you want them,
 # set rhq.autoinstall.enabled=true and run the server then run the installer.
 #
-# rhq.autoinstall.enabled: must be true to trigger the automatic install.
-# rhq.autoinstall.database: allowed values: auto, overwrite, skip
-#                           "auto" will create a new schema if one does not
-#                           yet exist or, if a schema does exist, will simply
-#                           upgrade it as needed (which keeps existing data).
-#                           "overwrite" if you want to create an empty schema,
-#                           even if one already exists (loses existing data).
-#                           "skip" if you don't want to do any database
-#                           upgrade or creation. WARNING! You must ensure your
-#                           database schema already exists and is up to date.
-# rhq.autoinstall.public-endpoint-address: public IP/hostname that all agents
-#                                          will use to talk to this server.
-#                                          If not set, a value to use is
-#                                          determined at auto-install time.
+# rhq.autoinstall.enabled
+#    This must be true to trigger the automatic install.
+# rhq.autoinstall.database
+#    Allowed values: auto, overwrite, skip:
+#     auto     : create a new schema if one does not exist, otherwise
+#                upgrade the existing schema as needed (keep  existing data).
+#     overwrite: create a new schema even if one exists (lose existing data).
+#     skip     : leave existing database as is. WARNING! You must ensure your
+#                database schema already exists and is up to date.
+# rhq.autoinstall.public-endpoint-address
+#    The public IP/hostname that all agents will use to talk to this server.
+#    If not set, a value to use is determined at auto-install time.
+# rhq.autoinstall.server.admin.password
+#    The password for the built-in "rhqadmin" superuser. If not set the
+#    password will be prompted for by the "rhqctl install" command.
+#
+#    NOTE: rhq.autoinstall.server.admin.password is not to be set to the
+#          actual password but instead should be the encoded password value
+#          as generated by: rhq-encode-password.sh(.bat)
 #############################################################################
 
 rhq.autoinstall.enabled=true
 rhq.autoinstall.database=auto
 rhq.autoinstall.public-endpoint-address=
+rhq.autoinstall.server.admin.password=${rhq.autoinstall.server.admin.password}
 
 #############################################################################
 # Advanced Settings

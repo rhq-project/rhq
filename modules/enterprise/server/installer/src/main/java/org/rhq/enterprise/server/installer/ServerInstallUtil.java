@@ -946,6 +946,65 @@ public class ServerInstallUtil {
     }
 
     /**
+     * @param serverProperties the server properties
+     * @param dbpassword clear text password to connect to the database
+     * @throws Exception
+     */
+    public static void persistAdminPasswordIfNecessary(HashMap<String, String> serverProperties, String dbpassword)
+        throws Exception {
+        DatabaseType db = null;
+        Connection connection = null;
+        Statement queryStatement = null;
+        Statement insertStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+            String userName = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+            connection = getDatabaseConnection(dbUrl, userName, dbpassword);
+            db = DatabaseTypeFactory.getDatabaseType(connection);
+
+            if (!(db instanceof PostgresqlDatabaseType || db instanceof OracleDatabaseType)) {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
+            }
+
+            queryStatement = connection.createStatement();
+            resultSet = queryStatement.executeQuery("SELECT count(*) FROM rhq_principal WHERE id=2");
+            resultSet.next();
+
+            if (resultSet.getInt(1) == 0) {
+                connection.setAutoCommit(false);
+
+                try {
+                    LOG.info("Persisting admin password to database for property [rhq.autoinstall.server.admin.password]");
+
+                    insertStatement = connection.createStatement();
+                    insertStatement.executeUpdate("INSERT INTO rhq_principal VALUES (2, 'rhqadmin', '"
+                        + serverProperties.get(ServerProperties.PROP_AUTOINSTALL_ADMIN_PASSWORD) + "')");
+
+                    connection.commit();
+                } catch (SQLException e) {
+                    LOG.error(
+                        "Failed to persist admin password to database for property [rhq.autoinstall.server.admin.password]. Transaction will be rolled back.",
+                        e);
+                    connection.rollback();
+                    throw e;
+                }
+            } else {
+                LOG.info("Admin user password is already set, property [rhq.autoinstall.server.admin.password] will be ignored.");
+            }
+
+        } finally {
+            if (db != null) {
+                db.closeResultSet(resultSet);
+                db.closeStatement(queryStatement);
+                db.closeStatement(insertStatement);
+                db.closeConnection(connection);
+            }
+        }
+    }
+
+    /**
      * Persists the storage nodes to the database only if no storage node entities already exist. This method is used
      * to persist storage nodes created from the rhq.storage.nodes server configuration property. The only time those
      * seed nodes should be created is during an initial server installation. After the initial installation storage
@@ -1081,7 +1140,7 @@ public class ServerInstallUtil {
                 while (resultSet.next()) {
                     String address = resultSet.getString(1);
 
-                    if(address != null && !address.trim().isEmpty()){
+                    if (address != null && !address.trim().isEmpty()) {
                         if (addressList.length() != 0) {
                             addressList.append(',');
                         }
@@ -1651,7 +1710,7 @@ public class ServerInstallUtil {
                 }
             } else {
                 String attributeType = "restricted";
-                if(!restricted){
+                if (!restricted) {
                     attributeType = "open";
                 }
                 if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {

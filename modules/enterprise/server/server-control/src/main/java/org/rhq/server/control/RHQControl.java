@@ -37,6 +37,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.crypto.CryptoUtil;
+
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -162,7 +164,7 @@ public class RHQControl {
                     log.warn("An agent RPM installation was found in ["
                         + jonDir
                         + "]!!! You will not be able to successfully run this older agent anymore. You should consult the "
-                        +"install documentation about manually removing and/or merging the old and new agent.");
+                        + "install documentation about manually removing and/or merging the old and new agent.");
                     return true;
                 } else {
                     return false;
@@ -215,10 +217,12 @@ public class RHQControl {
                 PropertiesFileUpdate pfu = new PropertiesFileUpdate(serverPropertiesFile);
                 Properties props = pfu.loadExistingProperties();
 
-                promptForProperty(pfu, props, serverPropertiesFile.getName(), ServerProperties.PROP_JBOSS_BIND_ADDRESS,
-                    false);
+                promptForProperty(pfu, props, serverPropertiesFile.getName(),
+                    ServerProperties.PROP_AUTOINSTALL_ADMIN_PASSWORD, false, true);
                 promptForProperty(pfu, props, serverPropertiesFile.getName(), ServerProperties.PROP_DATABASE_PASSWORD,
-                    true);
+                    true, false);
+                promptForProperty(pfu, props, serverPropertiesFile.getName(), ServerProperties.PROP_JBOSS_BIND_ADDRESS,
+                    false, false);
 
             } catch (Throwable t) {
                 throw new RHQControlException("The rhq-server.properties file is not valid. Installation is canceled: "
@@ -254,7 +258,7 @@ public class RHQControl {
     }
 
     private void promptForProperty(PropertiesFileUpdate pfu, Properties props, String propertiesFileName,
-        String propertyName, boolean encode) throws Exception {
+        String propertyName, boolean obfuscate, boolean encode) throws Exception {
 
         String propertyValue = props.getProperty(propertyName);
         if (StringUtil.isBlank(propertyValue)) {
@@ -275,7 +279,7 @@ public class RHQControl {
                 propertyValue = "";
                 while (StringUtil.isBlank(propertyValue)) {
                     propertyValue = String.valueOf(console.readLine("%s", propertyName
-                        + ((encode ? " (enter as plain text): " : ": "))));
+                        + ((obfuscate ? " (enter as plain text): " : ": "))));
                 }
 
                 console.format("Is [" + propertyValue + "] correct?\n");
@@ -285,7 +289,10 @@ public class RHQControl {
                 }
             } while (response.startsWith("n"));
 
-            props.setProperty(propertyName, encode ? Obfuscator.encode(propertyValue) : propertyValue);
+            propertyValue = obfuscate ? Obfuscator.encode(propertyValue) : propertyValue;
+            propertyValue = encode ? CryptoUtil.createPasswordHash("MD5", CryptoUtil.BASE64_ENCODING, null, null,
+                propertyValue) : propertyValue;
+            props.setProperty(propertyName, propertyValue);
             pfu.update(props);
         }
     }

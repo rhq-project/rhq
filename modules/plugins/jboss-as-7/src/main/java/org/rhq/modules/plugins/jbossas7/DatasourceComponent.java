@@ -275,10 +275,13 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
             return;
         }
 
-        Boolean enabledAttributeConfigValue = config.getSimple(ENABLED_ATTRIBUTE).getBooleanValue();
-        if (enabledAttributeConfigValue == null) {
+        PropertySimple enabledAttributeSimpleConfigValue = config.getSimple(ENABLED_ATTRIBUTE);
+        Boolean enabledAttributeConfigValue = null;
+        if(enabledAttributeSimpleConfigValue == null) {
             // True if unset
             enabledAttributeConfigValue = TRUE;
+        } else {
+            enabledAttributeConfigValue = enabledAttributeSimpleConfigValue.getBooleanValue();
         }
 
         // Check if the datasource is currently enabled

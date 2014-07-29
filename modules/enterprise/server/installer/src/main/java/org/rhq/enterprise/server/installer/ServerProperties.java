@@ -60,6 +60,7 @@ public class ServerProperties {
     public static final String PROP_AUTOINSTALL_ENABLE = "rhq.autoinstall.enabled";
     public static final String PROP_AUTOINSTALL_DATABASE = "rhq.autoinstall.database";
     public static final String PROP_AUTOINSTALL_PUBLIC_ADDR = "rhq.autoinstall.public-endpoint-address";
+    public static final String PROP_AUTOINSTALL_ADMIN_PASSWORD = "rhq.autoinstall.server.admin.password";
 
     public static final String PROP_TOMCAT_SECURITY_CLIENT_AUTH_MOD = "rhq.server.tomcat.security.client-auth-mode";
     public static final String PROP_TOMCAT_SECURITY_SSL_PROTOCOL = "rhq.server.tomcat.security.secure-socket-protocol";
@@ -172,6 +173,7 @@ public class ServerProperties {
     static {
         STRING_PROPERTIES = new HashSet<String>();
         STRING_PROPERTIES.add(PROP_AUTOINSTALL_DATABASE);
+        STRING_PROPERTIES.add(PROP_AUTOINSTALL_ADMIN_PASSWORD);
         STRING_PROPERTIES.add(PROP_DATABASE_TYPE);
         STRING_PROPERTIES.add(PROP_DATABASE_CONNECTION_URL);
         STRING_PROPERTIES.add(PROP_DATABASE_PASSWORD);
@@ -187,7 +189,7 @@ public class ServerProperties {
         STRING_PROPERTIES.add(PROP_QUARTZ_SELECT_WITH_LOCK_SQL);
     }
 
-    // this list contains all the STRING properties that are to have obfuscated values
+    // this list contains all the STRING properties that are to have obfuscated/encoded values
     private static final Set<String> OBFUSCATED_PROPERTIES;
     static {
         OBFUSCATED_PROPERTIES = new HashSet<String>();

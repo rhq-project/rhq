@@ -354,10 +354,11 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         return subject;
     }
 
-    /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#login(String, String)
-     */
     public Subject login(String username, String password) throws LoginException {
+        return _login(username, password, false);
+    }
+    
+    private Subject _login(String username, String password, boolean dontCheckRoles) throws LoginException {
         if (password == null) {
             throw new LoginException("No password was given");
         }
@@ -374,16 +375,18 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 throw new LoginException("User account has been disabled.");
             }
 
-            // fetch the roles
-            int rolesNumber = subject.getRoles().size();
-            
-            if (rolesNumber == 0) {
-                if (systemManager.isLoginWithoutRolesEnabled()) {
-                    if (log.isInfoEnabled()) {
-                        log.info("Letting in user [" + subject.getName() + "]  without any assigned roles.");
+            if (!dontCheckRoles) {
+                // fetch the roles
+                int rolesNumber = subject.getRoles().size();
+                if (rolesNumber == 0) {
+                    if (systemManager.isLoginWithoutRolesEnabled()) {
+                        if (log.isInfoEnabled()) {
+                            log.info("Letting in user [" + subject.getName() + "]  without any assigned roles.");
+                        }
+                    } else {
+                        throw new LoginException("There are no preconfigured roles for user [" + subject.getName()
+                            + "]");
                     }
-                } else {
-                    throw new LoginException("There are no preconfigured roles for user [" + subject.getName() + "]");
                 }
             }
         } else {
@@ -506,7 +509,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                                 log.info(msg);
                             }
                             logout(subject.getSessionId().intValue());
-                            subject = login(ldapSubject.getName(), subjectPassword);
+                            subject = _login(ldapSubject.getName(), subjectPassword, true);
                             Integer sessionId = subject.getSessionId();
                             if (log.isDebugEnabled()) {
                                 log.debug("Logged in as [" + ldapSubject.getName() + "] with session id [" + sessionId
@@ -527,7 +530,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                             // one for this subject.. must be done before pulling the
                             // new subject in order to do it with his own credentials
                             logout(subject.getSessionId().intValue());
-                            subject = login(subject.getName(), subjectPassword);
+                            subject = _login(subject.getName(), subjectPassword, true);
 
                             prepopulateLdapFields(subject);
 
@@ -551,17 +554,25 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                                     log.info("Letting in user [" + subject.getName() + "]  without any assigned roles.");
                                 }
                             } else {
-                                throw new LoginException(
-                                    "You are authenticated for LDAP, but there are no preconfigured roles for you.");
+                                // there are no LDAP groups so don't even bother with assignRolesToLdapSubject and fail fast.
+                                throw new LoginException("Subject [" + subject.getName()
+                                    + "] is authenticated for LDAP, but there are no preconfigured roles for them.");
                             }
-                        } else if (log.isDebugEnabled()) {
-                            log.debug("Updating LDAP authorization data for user [" + subject.getName()
-                                + "] with LDAP groups " + groupNames + "...");
+                        } else {
+                            if (log.isDebugEnabled()) {
+                                log.debug("Updating LDAP authorization data for user [" + subject.getName()
+                                    + "] with LDAP groups " + groupNames + "...");
+                            }
                             ldapManager.assignRolesToLdapSubject(subject.getId(), groupNames);
+                            if (!systemManager.isLoginWithoutRolesEnabled() && subject.getRoles().isEmpty()) {
+                                throw new LoginException("Subject [" + subject.getName()
+                                    + "] is authenticated for LDAP, but there are no preconfigured roles for them.");
+                            }
                         }
                     }
                 } else {//ldap not configured. Somehow authenticated for LDAP without ldap being configured. Error. Bail
-                    throw new LoginException("You are authenticated for LDAP, but LDAP is not configured.");
+                    throw new LoginException("Subject[" + subject.getName()
+                        + "] is authenticated for LDAP, but LDAP is not configured.");
                 }
             }
         }

@@ -38,7 +38,7 @@ import org.rhq.core.util.stream.StreamUtil;
  * @author Thomas Segismont
  */
 class HandoverContentUploader {
-    private static final Log LOG = LogFactory.getLog(CliExecutor.class);
+    private static final Log LOG = LogFactory.getLog(HandoverContentUploader.class);
 
     private final BundleHandoverRequest request;
     private final ASConnection asConnection;

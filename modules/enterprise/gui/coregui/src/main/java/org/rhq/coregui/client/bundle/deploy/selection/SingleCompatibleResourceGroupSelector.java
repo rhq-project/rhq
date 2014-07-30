@@ -23,6 +23,7 @@
 package org.rhq.coregui.client.bundle.deploy.selection;
 
 import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.types.TextMatchStyle;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -31,12 +32,14 @@ import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.inventory.groups.ResourceGroupsDataSource;
 
-@Deprecated
-// could use SingleResourceGroupSelectorItem seeded with addFilterBundleTargetableOnly(true); 
 public class SingleCompatibleResourceGroupSelector extends ComboBoxItem {
 
-    public SingleCompatibleResourceGroupSelector(String name, String title) {
+    private String bundleType;
+
+    public SingleCompatibleResourceGroupSelector(String name, String title, String bundleType) {
         super(name, title);
+
+        this.bundleType = bundleType;
 
         ListGridField nameField = new ListGridField("name");
         ListGridField descriptionField = new ListGridField("description");
@@ -56,6 +59,12 @@ public class SingleCompatibleResourceGroupSelector extends ComboBoxItem {
     protected class CompatibleResourceGroupsDataSource extends ResourceGroupsDataSource {
 
         @Override
+        public void executeFetch(DSRequest request, DSResponse response, ResourceGroupCriteria criteria) {
+            //TODO implement
+            super.executeFetch(request, response, criteria);
+        }
+
+        @Override
         protected ResourceGroupCriteria getFetchCriteria(final DSRequest request) {
             // We don't want to use the superclass's getFetchCriteria because our selected value
             // is either a Integer (when a real group has been selected) or a String (when a partial search string is selected).
@@ -73,6 +82,11 @@ public class SingleCompatibleResourceGroupSelector extends ComboBoxItem {
 
             // we only want to show those groups that can have bundles deployed to them
             result.addFilterBundleTargetableOnly(true);
+
+            //further we only show groups that can be targeted by the bundle type
+            result.addFilterAcceptableTargetForBundleType(bundleType);
+            //workaround
+            result.setCaseSensitive(true);
             return result;
         }
     }

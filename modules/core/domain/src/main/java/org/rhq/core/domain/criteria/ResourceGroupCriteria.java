@@ -59,6 +59,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     private Boolean filterPrivate; /* if true, show only private groups for the calling user */
     private Boolean filterVisible = true; /* only show visible groups by default */
     private NonBindingOverrideFilter filterBundleTargetableOnly; // requires overrides - finds only those that have bundle config - that is, can be targeted for bundle deployment
+    private String filterAcceptableTargetForBundleType; //only show groups to which given bundle type can be deployed to
 
     private boolean fetchExplicitResources;
     private boolean fetchImplicitResources;
@@ -116,6 +117,20 @@ public class ResourceGroupCriteria extends TaggedCriteria {
         filterOverrides.put("groupDefinitionId", "groupDefinition.id = ?");
         filterOverrides.put("bundleTargetableOnly", "resourceType.bundleConfiguration IS NOT NULL");
 
+        // the double nesting is necessary so that we can capture the 2 conditions we're checking here using
+        // a single IN check against the resourceType.id. The expression is concatenated to the table alias
+        // during query generation and it might happen that the second part of the OR clause wouldn't correctly
+        // match against the right table if it weren't nested.
+        filterOverrides.put("acceptableTargetForBundleType", //
+            "resourceType.id IN (SELECT rt.id FROM ResourceType rt" + //
+            "                    WHERE rt.id IN (SELECT innerRt.id FROM ResourceType innerRt" + //
+            "                                    JOIN innerRt.explicitlyTargetingBundleTypes bt" + //
+            "                                    WHERE bt.name LIKE ?)" + //
+            "                          OR" + //
+            "                          rt.id IN (SELECT innerRt.id FROM ResourceType innerRt, BundleType bt" + //
+            "                                    WHERE bt.explicitlyTargetedResourceTypes IS EMPTY" + //
+            "                                    AND bt.name LIKE ?)" + //
+            "                    )");
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("pluginName", "resourceType.plugin");
     }
@@ -241,6 +256,20 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     public void addFilterBundleTargetableOnly(boolean filterBundleTargetableOnly) {
         this.filterBundleTargetableOnly = (filterBundleTargetableOnly ? NonBindingOverrideFilter.ON
             : NonBindingOverrideFilter.OFF);
+    }
+
+    /**
+     * Selects only groups that can be target of deployment of bundles of given bundle type.
+     * <p/>
+     * Note that due to a limitation in query generation, it is recommended to set the criteria
+     * to case sensitive ({@link #setCaseSensitive(boolean)}) when using this filter, otherwise
+     * some results might be missed.
+     *
+     * @param bundleType the bundle type the groups should be deployable to.
+     * @since 4.13
+     */
+    public void addFilterAcceptableTargetForBundleType(String bundleType) {
+        this.filterAcceptableTargetForBundleType = bundleType;
     }
 
     public void fetchExplicitResources(boolean fetchExplicitResources) {

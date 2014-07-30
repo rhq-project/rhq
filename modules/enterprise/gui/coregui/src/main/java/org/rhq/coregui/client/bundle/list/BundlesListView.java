@@ -219,7 +219,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
                                         Severity.Error));
                                 return;
                             }
-                            new BundleDeployWizard(result.get(0).getId()).startWizard();
+                            new BundleDeployWizard(result.get(0)).startWizard();
                             // we can refresh the table buttons immediately since the wizard is a dialog, the
                             // user can't access enabled buttons anyway.
                             BundlesListView.this.refreshTableInfo();

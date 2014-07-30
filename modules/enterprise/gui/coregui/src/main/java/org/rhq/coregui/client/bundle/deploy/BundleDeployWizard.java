@@ -23,6 +23,7 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleDestination;
@@ -39,10 +40,13 @@ import org.rhq.coregui.client.gwt.GWTServiceLookup;
  */
 public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
+    private Bundle bundle;
+
     // Deployment of specified bundle
-    public BundleDeployWizard(int bundleId) {
+    public BundleDeployWizard(Bundle bundle) {
         this.setInitialDeployment(true);
-        this.setBundleId(bundleId);
+        this.setBundleId(bundle.getId());
+        this.bundle = bundle;
 
         List<WizardStep> steps = init();
         steps.add(new GetDestinationStep(this));
@@ -67,6 +71,10 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         steps.add(new GetDeploymentConfigStep(this));
         steps.add(new GetDeploymentInfoStep(this));
         steps.add(new DeployStep(this));
+    }
+
+    public Bundle getBundle() {
+        return bundle;
     }
 
     private List<WizardStep> init() {

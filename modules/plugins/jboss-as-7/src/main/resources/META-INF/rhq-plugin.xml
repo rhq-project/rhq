@@ -1686,6 +1686,7 @@
         <value-name>temp-dir</value-name>
       </destination-base-dir>
       <destination-definition name="Patches">
+        <accepts bundle-type="Wildfly Patch"/>
         <description>Use this location to apply patches to the server</description>
         <connection>STANDALONE</connection>
         <referenced-configuration>
@@ -13704,7 +13705,11 @@
           <parent-resource-type name="Mac OS X" plugin="Platforms"/>
       </runs-inside>
 
-      <bundle type="Wildfly Patch" />
+      <bundle type="Wildfly Patch">
+          <targets>
+              <resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+          </targets>
+      </bundle>
   </service>
 
   <help >

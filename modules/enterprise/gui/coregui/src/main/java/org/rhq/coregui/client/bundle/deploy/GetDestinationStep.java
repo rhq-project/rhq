@@ -151,7 +151,9 @@ public class GetDestinationStep extends AbstractWizardStep {
                 }
             });
 
-            this.selector = new SingleCompatibleResourceGroupSelector("group", MSG.common_title_resource_group());
+            this.selector = new SingleCompatibleResourceGroupSelector("group", MSG.common_title_resource_group(),
+                wizard.getBundle().getBundleType().getName());
+
             this.selector.setWidth(300);
             this.selector.setRequired(true);
             Validator validator = new IsIntegerValidator();
@@ -272,7 +274,9 @@ public class GetDestinationStep extends AbstractWizardStep {
                         LinkedHashMap<String, String> menuItems = null;
                         if (result != null) {
                             Set<BundleDestinationSpecification> destSpecs;
-                            destSpecs = result.getBundleDestinationSpecifications();
+                            destSpecs = result.getAcceptableBundleDestinationSpecifications(
+                                wizard.getBundle().getBundleType().getName());
+
                             if (destSpecs != null && destSpecs.size() > 0) {
                                 String defaultSelectedItem = null;
                                 menuItems = new LinkedHashMap<String, String>(destSpecs.size());

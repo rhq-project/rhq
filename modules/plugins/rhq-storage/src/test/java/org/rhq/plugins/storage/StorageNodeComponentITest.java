@@ -93,6 +93,10 @@ public class StorageNodeComponentITest {
     private InetAddress node1Address;
     private InetAddress node2Address;
 
+    private final static int TAKE_SNAPSHOTS = 5;
+    private final static String TAKE_SNAPSHOTS_DELETE_NAME = TAKE_SNAPSHOTS + 1 + "";
+    private final static String TAKE_SNAPSHOTS_MOVE_NAME = TAKE_SNAPSHOTS + 2 + "";
+
     @BeforeSuite
     public void deployStorageNodeAndPluginContainer() throws Exception {
         basedir = new File("target", "rhq-storage");
@@ -280,17 +284,15 @@ public class StorageNodeComponentITest {
         long timeout = 1000 * 60;
         OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
         Configuration params = new Configuration();
-        // take 5 snapshots without any parameters
-        int opCount = 5;
-        for (int i = 0; i < opCount; i++) {
-            params = new Configuration();
+        for (int i = 0; i < TAKE_SNAPSHOTS; i++) {
+            params = Configuration.builder().addSimple("snapshotName", "" + i).build();
+
             OperationServicesResult result = operationsService.invokeOperation(operationContext, "takeSnapshot",
                 params, timeout);
             assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The takeSnapshot operation try "
                 + i + " failed.");
         }
-        assertSnaphotCount(getSnaphostDirs(), opCount);
-        assertSnaphotCount(getSnaphostDirs(), opCount);
+        assertSnaphotCount(getSnaphostDirs(), TAKE_SNAPSHOTS);
     }
 
     @Test(dependsOnMethods = "takeSnaphots", priority = 1)
@@ -302,18 +304,17 @@ public class StorageNodeComponentITest {
         OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
 
         final int keepN = 3;
-        String snapshotName = "survived";
 
         Configuration params = Configuration.builder().addSimple("retentionStrategy", "Keep Last N")
             .addSimple("count", keepN)
-            .addSimple("snapshotName", snapshotName)
+.addSimple("snapshotName", TAKE_SNAPSHOTS_DELETE_NAME)
             .build();
         OperationServicesResult result = operationsService.invokeOperation(operationContext, "takeSnapshot", params,
             timeout);
         assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The takeSnapshot operation failed.");
 
         assertSnaphotCount(getSnaphostDirs(), keepN);
-        assertSnaphotsContain(getSnaphostDirs(), snapshotName);
+        assertSnaphotsContain(getSnaphostDirs(), TAKE_SNAPSHOTS_DELETE_NAME);
     }
 
     @Test(dependsOnMethods = "takeSnaphots", priority = 2)
@@ -325,12 +326,12 @@ public class StorageNodeComponentITest {
         OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
 
         final int keepN = 1;
-        final String snapshotName = "notmoved";
-        File moveLocation = new File(basedir,"snaphosts-moved");
+
+        File moveLocation = new File(basedir, TAKE_SNAPSHOTS_MOVE_NAME);
 
         Configuration params = Configuration.builder().addSimple("retentionStrategy", "Keep Last N")
             .addSimple("count", keepN)
-            .addSimple("snapshotName", snapshotName)
+.addSimple("snapshotName", TAKE_SNAPSHOTS_MOVE_NAME)
             .addSimple("deletionStrategy", "Move")
             .addSimple("location", moveLocation.getAbsolutePath())
             .build();
@@ -339,7 +340,7 @@ public class StorageNodeComponentITest {
         assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The takeSnapshot operation failed.");
 
         assertSnaphotCount(getSnaphostDirs(), keepN);
-        assertSnaphotsContain(getSnaphostDirs(), snapshotName);
+        assertSnaphotsContain(getSnaphostDirs(), TAKE_SNAPSHOTS_MOVE_NAME);
 
         // assert moved snaphots
         // takeSnapshotsKeepLastNAndDelete test left 3 snaphosts, new one was generated so 3 had to be moved
@@ -347,12 +348,12 @@ public class StorageNodeComponentITest {
 
         // snaphost that has not been moved must not be in moved location
         for (File snapDir : getMovedSnapshotDirs(moveLocation)) {
-            int size = snapDir.listFiles(createDirFilter(snapshotName)).length;
+            int size = snapDir.listFiles(createDirFilter(TAKE_SNAPSHOTS_MOVE_NAME)).length;
             assertEquals(size, 0);
         }
 
         // but we must be able to find snapshot created by takeSnapshotsKeepLastNAndDelete test
-        assertSnaphotsContain(getMovedSnapshotDirs(moveLocation), "survived");
+        assertSnaphotsContain(getMovedSnapshotDirs(moveLocation), TAKE_SNAPSHOTS_DELETE_NAME);
     }
 
     @Test(dependsOnMethods = "takeSnapshotsKeepLastNAndMove", priority = 3)
@@ -365,7 +366,7 @@ public class StorageNodeComponentITest {
 
         // mark snaphosts left by takeSnapshotsKeepLastNAndMove test as 2 days old
         for (File parent : getSnaphostDirs()) {
-            File snapshot = new File(parent, "notmoved");
+            File snapshot = new File(parent, TAKE_SNAPSHOTS_MOVE_NAME);
             snapshot.setLastModified(System.currentTimeMillis() - (2 * 86400L * 1000L));
         }
 
@@ -392,11 +393,9 @@ public class StorageNodeComponentITest {
         result = operationsService.invokeOperation(operationContext, "takeSnapshot", params,
             timeout);
         assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The takeSnapshot operation failed.");
-        // 2 snapshots left 1 created, but 1 (not-moved) moved
+        // 2 snapshots left 1 created, but 1 moved
         assertSnaphotCount(getSnaphostDirs(), 2);
-        assertSnaphotsContain(getMovedSnapshotDirs(moveLocation), "notmoved");
-
-
+        assertSnaphotsContain(getMovedSnapshotDirs(moveLocation), TAKE_SNAPSHOTS_MOVE_NAME);
     }
 
     private List<File> getMovedSnapshotDirs(File parent) {

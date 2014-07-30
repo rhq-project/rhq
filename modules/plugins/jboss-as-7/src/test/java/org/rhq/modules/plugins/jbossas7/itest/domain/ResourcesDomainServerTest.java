@@ -84,6 +84,10 @@ public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
         ignoredResources.add("DataSource (Profile)");
         ignoredResources.add("DataSource (Managed)");
 
+        // These should not be tested as datasource
+        ignoredResources.add("Datasources (Profile)");
+        ignoredResources.add("Datasources (Managed)");
+
         if (System.getProperty("as7.version").equals("6.1.0.Alpha")) {
             // HornetQ resource is broken on 6.1.0.Alpha. Operation fails with:
             // JBAS011673: The clustered attribute is deprecated.

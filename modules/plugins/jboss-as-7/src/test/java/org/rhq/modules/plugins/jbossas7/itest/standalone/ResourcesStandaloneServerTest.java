@@ -94,8 +94,6 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest {
 
         // These should not be tested as datasource
         ignoredResources.add("Datasources (Standalone)");
-        ignoredResources.add("Datasources (Profile)");
-        ignoredResources.add("Datasources (Managed)");
 
         if (System.getProperty("as7.version").equals("6.1.0.Alpha")) {
             // HornetQ resource is broken on 6.1.0.Alpha. Operation fails with:

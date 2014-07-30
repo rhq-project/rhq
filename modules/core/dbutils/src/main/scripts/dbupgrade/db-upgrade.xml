@@ -2499,6 +2499,18 @@
                 </statement>
               </schema-directSQL>
             </schemaSpec>
+
+            <schemaSpec version="2.157">
+                <schema-directSQL>
+                    <statement desc="Create RHQ_BUNDLE_TYPE_TARGET_MAP mapping table">
+                        CREATE TABLE rhq_bundle_type_target_map (
+                            bundle_type_id INT NOT NULL REFERENCES rhq_bundle_type,
+                            resource_type_id INT NOT NULL REFERENCES rhq_resource_type,
+                            CONSTRAINT rhq_bundle_type_target_map_pk PRIMARY KEY (bundle_type_id, resource_type_id)
+                        )
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

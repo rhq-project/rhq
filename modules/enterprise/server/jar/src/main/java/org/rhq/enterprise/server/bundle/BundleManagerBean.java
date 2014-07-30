@@ -146,8 +146,8 @@ import org.rhq.enterprise.server.util.QuartzUtil;
 public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemote {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private final String AUDIT_ACTION_DEPLOYMENT = "Deployment";
-    private final String AUDIT_ACTION_DEPLOYMENT_REQUESTED = "Deployment Requested";
+    private static final String AUDIT_ACTION_DEPLOYMENT = "Deployment";
+    private static final String AUDIT_ACTION_DEPLOYMENT_REQUESTED = "Deployment Requested";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -377,6 +377,38 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         ResourceGroup group = entityManager.find(ResourceGroup.class, groups.get(0).getId());
 
         checkDeployBundleAuthz(subject, bundle.getId(), groupId);
+
+        // check that the resource group is compatible with the bundle type
+        Set<ResourceType> targetedResourceTypes = bundle.getBundleType().getExplicitlyTargetedResourceTypes();
+
+        if (!targetedResourceTypes.isEmpty() && !targetedResourceTypes.contains(group.getResourceType())) {
+            // the bundle type defines that it explicitly targets certain resource types but the current group
+            // is not of that resource type.
+            throw new IllegalArgumentException(
+                "Bundle of type [" + bundle.getBundleType().getName() + "] is incompatible with resource type " +
+                    group.getResourceType());
+        }
+
+        // check that the destination specification is compatible with the bundle type
+        String bundleType = bundle.getBundleType().getName();
+        ResourceType rt = group.getResourceType();
+        ResourceTypeBundleConfiguration bundleConfig = rt.getResourceTypeBundleConfiguration();
+        boolean found = false;
+        for (ResourceTypeBundleConfiguration.BundleDestinationSpecification spec : bundleConfig
+            .getAcceptableBundleDestinationSpecifications(bundleType)) {
+
+            if (destinationSpecification.equals(spec.getName())) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            throw new IllegalArgumentException(
+                "Destination specification '" + destinationSpecification + "' from resource type '" + rt.getName() +
+                    "' (plugin '" + rt.getPlugin() + "') is not compatible with bundle type '" + bundleType + "'.");
+
+        }
 
         BundleDestination dest = new BundleDestination(bundle, name, group, destinationSpecification, deployDir);
         dest.setDescription(description);

@@ -15,31 +15,33 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 /**
+ * YAML configuration editor, not thread safe.
+ *
  * @author John Sanda
  */
 public class ConfigEditor {
 
-    private File configFile;
+    private final File configFile;
 
-    private File backupFile;
+    private final File backupFile;
 
-    private Yaml yaml;
+    private final Yaml yaml;
 
     private Map config;
 
     public ConfigEditor(File cassandraYamlFile)  {
         configFile = cassandraYamlFile;
+        backupFile = new File(configFile.getParent(), "." + configFile.getName() + ".bak");
+        DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        yaml = new Yaml(options);
     }
 
     public void load() {
         FileInputStream inputStream = null;
         try {
-            DumperOptions options = new DumperOptions();
-            options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-            yaml = new Yaml(options);
             inputStream = new FileInputStream(configFile);
             config = (Map) yaml.load(inputStream);
-            createBackup();
         } catch (FileNotFoundException e) {
             throw new ConfigEditorException("Failed to load " + configFile, e);
         } finally {
@@ -53,12 +55,11 @@ public class ConfigEditor {
     }
 
     public void save() {
+        createBackup();
         try {
             yaml.dump(config, new FileWriter(configFile));
             backupFile.delete();
-            yaml = null;
             config = null;
-            backupFile = null;
         } catch (Exception e) {
             throw new ConfigEditorException("Failed to save changes to " + configFile, e);
         }
@@ -66,20 +67,17 @@ public class ConfigEditor {
 
     public void restore() {
         try {
-            this.copyFile(backupFile, configFile);
+            copyFile(backupFile, configFile);
             backupFile.delete();
-            yaml = null;
             config = null;
-            backupFile = null;
         } catch (IOException e) {
             throw new ConfigEditorException("Failed to restore " + configFile + " from " + backupFile, e);
         }
     }
 
     private void createBackup() {
-        backupFile = new File(configFile.getParent(), "." + configFile.getName() + ".bak");
         try {
-            this.copyFile(configFile, backupFile);
+            copyFile(configFile, backupFile);
         } catch (IOException e) {
             throw new ConfigEditorException("Failed to create " + backupFile, e);
         }

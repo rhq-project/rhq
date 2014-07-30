@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/wfly-patch-parser/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/pattern-generator/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/cassandra-installer/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alertdef-rhq/src/main/java"/>

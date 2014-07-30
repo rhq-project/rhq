@@ -240,7 +240,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
                                 new Message(MSG.view_bundle_list_error2(bundle.getName()), Message.Severity.Error));
                             return;
                         }
-                        new BundleDeployWizard(result.get(0).getId()).startWizard();
+                        new BundleDeployWizard(result.get(0)).startWizard();
                     }
                 });
             }

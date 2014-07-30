@@ -23,6 +23,8 @@
 package org.rhq.core.domain.bundle;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -31,6 +33,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
@@ -74,6 +78,13 @@ public class BundleType implements Serializable {
     @XmlTransient
     private ResourceType resourceType;
 
+    @ManyToMany()
+    @JoinTable(name = "RHQ_BUNDLE_TYPE_TARGET_MAP",
+        joinColumns = @JoinColumn(name = "BUNDLE_TYPE_ID", referencedColumnName = "ID"),
+        inverseJoinColumns = @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID")
+    )
+    private Set<ResourceType> explicitlyTargetedResourceTypes;
+
     public BundleType() {
         // for JPA use
     }
@@ -111,6 +122,39 @@ public class BundleType implements Serializable {
     public void setResourceType(ResourceType resourceType) {
         this.resourceType = resourceType;
         this.resourceType.setBundleType(this);
+    }
+
+    /**
+     * Returns the set of resource types that this bundle type explicitly supports deploying to.
+     * If this set is empty, any resource type is supported(this can still be limited on the resource type's
+     * destinations by the 'accepts' property).
+     * <p/>
+     * Note that while the returned set is modifiable, it is recommended to use the
+     * {@link #addTargetedResourceType(org.rhq.core.domain.resource.ResourceType)} and
+     * {@link #removeTargetedResourceType(org.rhq.core.domain.resource.ResourceType)} to modify to this set because it
+     * correctly updates the references on both this resource type and the bundle type being added.
+     *
+     * @return the set of bundle types explicitly targetting this resource type
+     */
+    public Set<ResourceType> getExplicitlyTargetedResourceTypes() {
+        if (explicitlyTargetedResourceTypes == null) {
+            explicitlyTargetedResourceTypes = new HashSet<ResourceType>();
+        }
+        return explicitlyTargetedResourceTypes;
+    }
+
+    protected void setExplicitlyTargetedResourceTypes(Set<ResourceType> targettedResourceTypes) {
+        this.explicitlyTargetedResourceTypes = targettedResourceTypes;
+    }
+
+    public void addTargetedResourceType(ResourceType resourceType) {
+        getExplicitlyTargetedResourceTypes().add(resourceType);
+        resourceType.getExplicitlyTargetingBundleTypes().add(this);
+    }
+
+    public void removeTargetedResourceType(ResourceType resourceType) {
+        getExplicitlyTargetedResourceTypes().remove(resourceType);
+        resourceType.getExplicitlyTargetingBundleTypes().remove(this);
     }
 
     @Override

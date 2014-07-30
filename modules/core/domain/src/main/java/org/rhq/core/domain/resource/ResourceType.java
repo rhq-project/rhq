@@ -417,6 +417,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private Configuration bundleConfiguration;
 
+    @ManyToMany(mappedBy = "explicitlyTargetedResourceTypes")
+    private Set<BundleType> explicitlyTargetingBundleTypes;
+
     @Transient
     private transient String helpText;
 
@@ -903,6 +906,29 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @Deprecated
     public void addChildSubCategory(ResourceSubCategory subCategory) {
+    }
+
+    /**
+     * Returns the set of bundle types that explicitly support deploying to this resource type.
+     * If this set is empty, any bundle type can attempt deploy to one of this resource type's
+     * destinations (this can be further limited on the destinations themselves by the 'accepts'
+     * property).
+     * <p/>
+     * Note that while the returned set is modifiable, resource type is not to owning side of this
+     * relationship and thus any updates to the relationship are best performed from the
+     * bundle type side.
+     *
+     * @return the set of bundle types explicitly targetting this resource type
+     */
+    public Set<BundleType> getExplicitlyTargetingBundleTypes() {
+        if (explicitlyTargetingBundleTypes == null) {
+            explicitlyTargetingBundleTypes = new HashSet<BundleType>();
+        }
+        return explicitlyTargetingBundleTypes;
+    }
+
+    protected void setExplicitlyTargetingBundleTypes(Set<BundleType> explicitlyTargetingBundleTypes) {
+        this.explicitlyTargetingBundleTypes = explicitlyTargetingBundleTypes;
     }
 
     // NOTE: It's vital that compareTo() is consistent with equals(), otherwise TreeSets containing ResourceTypes, or

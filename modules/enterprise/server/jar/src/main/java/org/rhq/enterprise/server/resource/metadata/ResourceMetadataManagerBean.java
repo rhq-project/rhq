@@ -513,6 +513,26 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // Ensure that the new type has any built-in metrics (like Availability Type)
         MeasurementMetadataManagerBean.getMetricDefinitions(resourceType);
 
+        //Ensure any explicitly targeted resource types of a bundle type are refreshed with their
+        //persisted counterparts (which should have been persisted before persisting the type
+        //due to the dependency graph ordering)
+        if (resourceType.getBundleType() != null &&
+            !resourceType.getBundleType().getExplicitlyTargetedResourceTypes().isEmpty()) {
+
+            Set<ResourceType> existingTypes = new HashSet<ResourceType>(
+                resourceType.getBundleType().getExplicitlyTargetedResourceTypes().size());
+
+            for (ResourceType targetedType : resourceType.getBundleType().getExplicitlyTargetedResourceTypes()) {
+                ResourceType existingType = resourceTypeManager.getResourceTypeByNameAndPlugin(targetedType.getName(),
+                    targetedType.getPlugin());
+
+                existingTypes.add(existingType);
+            }
+
+            resourceType.getBundleType().getExplicitlyTargetedResourceTypes().clear();
+            resourceType.getBundleType().getExplicitlyTargetedResourceTypes().addAll(existingTypes);
+        }
+
         entityManager.merge(resourceType);
     }
 

@@ -59,6 +59,7 @@ public class ResourceTypeCriteria extends Criteria {
     private Boolean filterIgnored = false; // by default, we don't want to fetch types the user requested to be ignored
     private Set<ResourceCategory> filterCategories; // needs overrides
     private Boolean filterParentResourceTypesEmpty; // needs overrides
+    private String filterTargetingBundleType;
 
     private boolean fetchChildResourceTypes;
     private boolean fetchParentResourceTypes;
@@ -74,6 +75,7 @@ public class ResourceTypeCriteria extends Criteria {
     private boolean fetchResources;
     private boolean fetchDriftDefinitionTemplates;
     private boolean fetchBundleConfiguration;
+    private boolean fetchExplicitlyTargetingBundleTypes;
 
     private PageOrdering sortName;
     private PageOrdering sortCategory;
@@ -93,6 +95,21 @@ public class ResourceTypeCriteria extends Criteria {
             + "        LEFT JOIN innerRt.parentResourceTypes innerParentRt" //
             + "        WHERE ( ? = true  AND innerRt.parentResourceTypes IS EMPTY ) " //
             + "           OR ( ? = false AND innerRt.parentResourceTypes IS NOT EMPTY ) )");
+
+        // the double nesting is necessary so that we can capture the 2 conditions we're checking here using
+        // a single IN check against the resourceType.id. The expression is concatenated to the table alias
+        // during query generation and it might happen that the second part of the OR clause wouldn't correctly
+        // match against the right table if it weren't nested.
+        filterOverrides.put("targetingBundleTypeId", //
+            "id IN (SELECT rt.id FROM ResourceType rt" + //
+            "       WHERE rt.id IN (SELECT innerRt.id FROM ResourceType innerRt" + //
+            "                       JOIN innerRt.explicitlyTargetingBundleTypes bt" + //
+            "                       WHERE bt.name LIKE ?)" + //
+            "             OR" + //
+            "             rt.id IN (SELECT innerRt.id FROM ResourceType innerRt, BundleType bt" + //
+            "                       WHERE bt.explicitlyTargetedResourceTypes IS EMPTY" + //
+            "                       AND bt.name LIKE ?)" + //
+            "      )");
 
         sortOverrides.put("pluginName", "plugin");
     }
@@ -168,6 +185,20 @@ public class ResourceTypeCriteria extends Criteria {
         this.filterParentResourceTypesEmpty = filterParentResourceTypesEmpty;
     }
 
+    /**
+     * Only include resource types that are can be target of deployment of given bundle type.
+     * <p/>
+     * Note that due to a limitation in query generation, it is recommended to set the criteria
+     * to case sensitive ({@link #setCaseSensitive(boolean)}) when using this filter, otherwise
+     * some results might be missed.
+     *
+     * @param bundleType the name of the bundle type that can target the returned resource types.
+     * @since 4.13
+     */
+    public void addFilterTargetingBundleType(String bundleType) {
+        this.filterTargetingBundleType = bundleType;
+    }
+
     public void fetchChildResourceTypes(boolean fetchChildResourceTypes) {
         this.fetchChildResourceTypes = fetchChildResourceTypes;
     }
@@ -222,6 +253,15 @@ public class ResourceTypeCriteria extends Criteria {
 
     public void fetchBundleConfiguration(boolean fetchBundleConfiguration) {
         this.fetchBundleConfiguration = fetchBundleConfiguration;
+    }
+
+    /**
+     * Whether to fetch the bundle types explicitly targeting the returned resource types.
+     *
+     * @since 4.13
+     */
+    public void fetchExplicitlyTargetingBundleTypes(boolean fetchExplicitlyTargetingBundleTypes) {
+        this.fetchExplicitlyTargetingBundleTypes = fetchExplicitlyTargetingBundleTypes;
     }
 
     public void addSortName(PageOrdering sortName) {

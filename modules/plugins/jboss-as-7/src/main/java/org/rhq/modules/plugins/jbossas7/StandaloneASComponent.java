@@ -432,41 +432,49 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
 
     private BundleHandoverResponse deployPatch(BundleHandoverRequest request) {
         //download the file to a temp location
-        File patchFile;
+        File patchFile = null;
         try {
-            patchFile = File.createTempFile("rhq-jboss-as-7-", ".patch");
-        } catch (IOException e) {
-            return BundleHandoverResponse
-                .failure(BundleHandoverResponse.FailureType.EXECUTION, "Failed to create a temp file to copy patch to.");
-        }
+            try {
+                patchFile = File.createTempFile("rhq-jboss-as-7-", ".patch");
+            } catch (IOException e) {
+                return BundleHandoverResponse
+                    .failure(BundleHandoverResponse.FailureType.EXECUTION,
+                        "Failed to create a temp file to copy patch to.");
+            }
 
-        try {
-            StreamUtil.copy(request.getContent(), new FileOutputStream(patchFile));
-        } catch (FileNotFoundException e) {
-            return BundleHandoverResponse.failure(EXECUTION, "Failed to copy patch to local storage.");
-        }
+            try {
+                StreamUtil.copy(request.getContent(), new FileOutputStream(patchFile));
+            } catch (FileNotFoundException e) {
+                return BundleHandoverResponse.failure(EXECUTION, "Failed to copy patch to local storage.");
+            }
 
-        Map<String, String> parameters = request.getParams();
+            Map<String, String> parameters = request.getParams();
 
-        //param validation
-        if (parameters != null) {
-            for (Map.Entry<String, String> e : parameters.entrySet()) {
-                String name = e.getKey();
-                String value = e.getValue();
+            //param validation
+            if (parameters != null) {
+                for (Map.Entry<String, String> e : parameters.entrySet()) {
+                    String name = e.getKey();
+                    String value = e.getValue();
 
-                if (!("override".equals(name) || "override-all".equals(name) || "preserve".equals(name) ||
-                    "override-modules".equals(name))) {
-                    return BundleHandoverResponse.failure(BundleHandoverResponse.FailureType.INVALID_PARAMETER,
-                        "'" + name +
-                            "' is not a supported parameter. Only 'override', 'override-all', 'preserve' and 'override-modules' are supported.");
+                    if (!("override".equals(name) || "override-all".equals(name) || "preserve".equals(name) ||
+                        "override-modules".equals(name))) {
+                        return BundleHandoverResponse.failure(BundleHandoverResponse.FailureType.INVALID_PARAMETER,
+                            "'" + name +
+                                "' is not a supported parameter. Only 'override', 'override-all', 'preserve' and 'override-modules' are supported.");
+                    }
                 }
             }
+
+            String errorMessage = deployPatch(patchFile, parameters);
+
+            return errorMessage == null ? BundleHandoverResponse.success() :
+                BundleHandoverResponse.failure(EXECUTION, errorMessage);
+        } finally {
+            if (patchFile != null) {
+                //noinspection ResultOfMethodCallIgnored
+                patchFile.delete();
+            }
         }
-
-        String errorMessage = deployPatch(patchFile, parameters);
-
-        return errorMessage == null ? BundleHandoverResponse.success() :
-            BundleHandoverResponse.failure(EXECUTION, errorMessage);
     }
 
     /**

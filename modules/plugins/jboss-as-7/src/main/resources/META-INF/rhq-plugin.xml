@@ -7976,8 +7976,6 @@
       <c:simple-property name="path" readOnly="true" default="subsystem=datasources"/>
     </plugin-configuration>
 
-    &datasourcesConfiguration;
-
     <service name="DataSource (Profile)"
              discovery="SubsystemDiscovery"
              class="DatasourceComponent"
@@ -8026,6 +8024,8 @@
       <c:simple-property name="path" readOnly="true" default="subsystem=datasources"/>
       <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
+
+    &datasourcesConfiguration;
 
     <service name="DataSource (Managed)"
              discovery="SubsystemDiscovery"

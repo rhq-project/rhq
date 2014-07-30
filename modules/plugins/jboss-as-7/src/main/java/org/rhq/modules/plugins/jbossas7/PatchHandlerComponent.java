@@ -83,7 +83,8 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
 
         BundleDeployResult result = new BundleDeployResult();
 
-        CliExecutor runner = onServer(request);
+        ServerControl control = onServer(request);
+
         ASConnection connection = new ASConnection(
             ASConnectionParams.createFrom(new ServerPluginConfiguration(request.getReferencedConfiguration())));
 
@@ -91,7 +92,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
         BundleManagerProvider bmp = request.getBundleManagerProvider();
         BundleResourceDeployment rd = request.getResourceDeployment();
 
-        StopResult stop = stopIfNeeded(connection, runner,
+        StopResult stop = stopIfNeeded(connection, control,
             request.getResourceDeployment().getBundleDeployment().getConfiguration(), bmp, rd);
 
         boolean startUp = stop.hasStopped;
@@ -127,7 +128,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
                 command.append(" --override-modules=").append(overrideModules);
             }
 
-            results = runner.executeCliCommand(command.toString());
+            results = control.cli().disconnected(true).executeCliCommand(command.toString());
 
             switch (handleExecutionResults(results, bmp, rd, true)) {
             case EXECUTION_ERROR:
@@ -143,7 +144,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
             }
         } finally {
             if (startUp) {
-                String errorMessage = startServer(connection, runner, bmp, rd);
+                String errorMessage = startServer(connection, control, bmp, rd);
                 if (errorMessage != null) {
                     result.setErrorMessage(errorMessage);
                 }
@@ -175,14 +176,14 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
             return result;
         }
 
-        CliExecutor runner = CliExecutor
+        ServerControl control = ServerControl
             .onServer(request.getReferencedConfiguration(), AS7Mode.valueOf(request.getDestinationTarget().getPath()),
-                context.getSystemInformation()).disconnected(true);
+                context.getSystemInformation());
 
         ASConnection connection = new ASConnection(
             ASConnectionParams.createFrom(new ServerPluginConfiguration(request.getReferencedConfiguration())));
 
-        String errorMessage = rollbackPatches(runner, request.getBundleManagerProvider(),
+        String errorMessage = rollbackPatches(control, request.getBundleManagerProvider(),
             request.getLiveResourceDeployment(), connection, pids);
 
         if (errorMessage != null) {
@@ -200,7 +201,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
 
         BundleDeployResult result = new BundleDeployResult();
 
-        ProcessExecutionResults results = onServer(request).executeCliCommand("patch history");
+        ProcessExecutionResults results = onServer(request).cli().disconnected(true).executeCliCommand("patch history");
         switch (handleExecutionResults(results, null, null, false)) {
         case EXECUTION_ERROR:
             result.setErrorMessage(
@@ -365,13 +366,13 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
         return message;
     }
 
-    private CliExecutor onServer(BundleDeployRequest request) {
-        return CliExecutor.onServer(request.getReferencedConfiguration(),
+    private ServerControl onServer(BundleDeployRequest request) {
+        return ServerControl.onServer(request.getReferencedConfiguration(),
             AS7Mode.valueOf(request.getDestinationTarget().getPath()),
-            context.getSystemInformation()).disconnected(true);
+            context.getSystemInformation());
     }
 
-    private String rollbackPatches(CliExecutor runner, BundleManagerProvider bmp, BundleResourceDeployment rd,
+    private String rollbackPatches(ServerControl control, BundleManagerProvider bmp, BundleResourceDeployment rd,
         ASConnection connection, String... pids) {
 
         ProcessExecutionResults results;
@@ -379,7 +380,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
         Configuration deploymentConfiguration = rd.getBundleDeployment().getConfiguration();
 
         //if the server is online, let's bring it down for the duration of the rollback.
-        StopResult stop = stopIfNeeded(connection, runner, deploymentConfiguration, bmp, rd);
+        StopResult stop = stopIfNeeded(connection, control, deploymentConfiguration, bmp, rd);
         boolean serverWasUp = stop.hasStopped;
 
         List<String> patchCommands = new ArrayList<String>();
@@ -389,10 +390,12 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
 
         String errorMessage = null;
 
+        ServerControl.Cli cli = control.cli().disconnected(true);
+
         try {
             int i = 0;
             for (String command : patchCommands) {
-                results = runner.executeCliCommand(command);
+                results = cli.executeCliCommand(command);
                 switch (handleExecutionResults(results, bmp, rd, true)) {
                 case EXECUTION_ERROR:
                     return fullErrorMessage("Error trying to run patch rollback: " +
@@ -409,7 +412,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
             }
         } finally {
             if (serverWasUp) {
-                errorMessage = startServer(connection, runner, bmp, rd);
+                errorMessage = startServer(connection, control, bmp, rd);
             }
         }
 
@@ -432,7 +435,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
         return false;
     }
 
-    private StopResult stopIfNeeded(ASConnection connection, CliExecutor runner,
+    private StopResult stopIfNeeded(ASConnection connection, ServerControl control,
         Configuration bundleDeploymentConfiguration, BundleManagerProvider bmp, BundleResourceDeployment resourceDeployment) {
 
         boolean doRestart = Boolean.valueOf(bundleDeploymentConfiguration.getSimpleValue("restart", "true"));
@@ -441,7 +444,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
             audit(bmp, resourceDeployment, "Stop", "Stop", null,
                 "The server is running. Stopping it before any operation on patches.");
 
-            ProcessExecutionResults results = runner.shutdownServer();
+            ProcessExecutionResults results = control.lifecycle().shutdownServer();
             switch (handleExecutionResults(results, bmp, resourceDeployment, true)) {
             case EXECUTION_ERROR:
                 return new StopResult(false, "Error trying to shutdown the server: " + results.getError().getMessage());
@@ -459,10 +462,10 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
         return new StopResult(false, null);
     }
 
-    private String startServer(ASConnection connection, CliExecutor runner, BundleManagerProvider bmp, BundleResourceDeployment resourceDeployment) {
+    private String startServer(ASConnection connection, ServerControl control, BundleManagerProvider bmp, BundleResourceDeployment resourceDeployment) {
         audit(bmp, resourceDeployment, "Start", "Start", null, "Starting the server back up.");
 
-        ProcessExecutionResults results = runner.startServer();
+        ProcessExecutionResults results = control.lifecycle().startServer();
 
         switch (handleExecutionResults(results, bmp, resourceDeployment, false)) {
         case EXECUTION_ERROR:

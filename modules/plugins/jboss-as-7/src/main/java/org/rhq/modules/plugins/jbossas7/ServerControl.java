@@ -42,9 +42,9 @@ import org.rhq.modules.plugins.jbossas7.util.PropertyReplacer;
  *
  * @since 4.12
  */
-final class CliExecutor {
+final class ServerControl {
 
-    private static final Log LOG = LogFactory.getLog(CliExecutor.class);
+    private static final Log LOG = LogFactory.getLog(ServerControl.class);
 
     private static final long MAX_PROCESS_WAIT_TIME = 3600000L;
 
@@ -54,11 +54,10 @@ final class CliExecutor {
     private final AS7Mode serverMode;
     private final SystemInfo systemInfo;
 
-    private boolean disconnected;
     private long waitTime;
     private boolean killOnTimeout;
 
-    private CliExecutor(Configuration pluginConfiguration, AS7Mode serverMode, SystemInfo systemInfo) {
+    private ServerControl(Configuration pluginConfiguration, AS7Mode serverMode, SystemInfo systemInfo) {
         this.serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
         this.pluginConfiguration = pluginConfiguration;
         this.serverMode = serverMode;
@@ -72,111 +71,38 @@ final class CliExecutor {
         }
     }
 
-    public static CliExecutor onServer(Configuration serverPluginConfig, AS7Mode serverMode,
+    public static ServerControl onServer(Configuration serverPluginConfig, AS7Mode serverMode,
         SystemInfo systemInfo) {
 
-        return new CliExecutor(serverPluginConfig, serverMode, systemInfo);
+        return new ServerControl(serverPluginConfig, serverMode, systemInfo);
     }
 
     /**
      * 0, the default, means waiting forever. Any positive number means waiting for given number of milliseconds
      * and timing out afterwards. Any negative value means timing out immediately.
      */
-    public CliExecutor waitingFor(long milliseconds) {
+    public ServerControl waitingFor(long milliseconds) {
         this.waitTime = milliseconds;
         return this;
     }
 
-    public CliExecutor killingOnTimeout(boolean kill) {
+    public ServerControl killingOnTimeout(boolean kill) {
         killOnTimeout = kill;
         return this;
     }
 
-    public CliExecutor disconnected(boolean disconnected) {
-        this.disconnected = disconnected;
-        return this;
+    /**
+     * @return lifecycle methods on the server.
+     */
+    public Lifecycle lifecycle() {
+        return new Lifecycle();
     }
 
     /**
-     * Runs (a series of) CLI commands against the server.
-     * The commands are separated by either a newline or a comma (or a mix thereof).
-     *
-     * @param commands the commands to execute in order
-     * @return the execution results
+     * @return cli interface.
      */
-    public ProcessExecutionResults executeCliCommand(String commands) {
-        String connect = disconnected ? null : "--connect";
-        commands = commands.replace('\n', ',');
-        String user = disconnected ? null : "--user=" + serverPluginConfig.getUser();
-        String password = disconnected ? null : "--password=" + serverPluginConfig.getPassword();
-        String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
-            + serverPluginConfig.getNativePort();
-
-        return execute(new File("bin", serverMode.getCliScriptFileName()), connect, commands, user, password,
-            controller);
-    }
-
-    /**
-     * Runs the provided script against the server.
-     *
-     * @param scriptFile the script file to run
-     * @return the execution results
-     */
-    public ProcessExecutionResults executeCliScript(File scriptFile) {
-        File homeDir = serverPluginConfig.getHomeDir();
-
-        File script = scriptFile;
-        if (!script.isAbsolute()) {
-            script = new File(homeDir, scriptFile.getPath());
-        }
-
-        String connect = disconnected ? null : "--connect";
-        String file = "--file=" + script.getAbsolutePath();
-        String user = disconnected ? null : "--user=" + serverPluginConfig.getUser();
-        String password = disconnected ? null : "--password=" + serverPluginConfig.getPassword();
-        String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
-            + serverPluginConfig.getNativePort();
-
-        return execute(new File("bin", serverMode.getCliScriptFileName()), connect, file, user, password, controller);
-    }
-
-    /**
-     * This command ignores the timeout set by the {@link #waitingFor(long)} method. It starts the process and returns
-     * immediately. Other means have to be used to determine if the server finished starting up.
-     */
-    public ProcessExecutionResults startServer() {
-        StartScriptConfiguration startScriptConfiguration = new StartScriptConfiguration(pluginConfiguration);
-        File startScriptFile = startScriptConfiguration.getStartScript();
-
-        if (startScriptFile == null) {
-            startScriptFile = new File("bin", serverMode.getStartScriptFileName());
-        }
-
-        List<String> startScriptArgsL = startScriptConfiguration.getStartScriptArgs();
-        String[] startScriptArgs = startScriptArgsL.toArray(new String[startScriptArgsL.size()]);
-
-        for (int i = 0; i < startScriptArgs.length; ++i) {
-            startScriptArgs[i] = PropertyReplacer.replacePropertyPatterns(startScriptArgs[i], pluginConfiguration);
-        }
-
-        long origWaitTime = waitTime;
-        try {
-            //we really don't want to wait for the server start, because, hopefully, it will keep on running ;)
-            waitTime = -1;
-            return execute(startScriptFile, startScriptArgs);
-        } finally {
-            waitTime = origWaitTime;
-        }
-    }
-
-    public ProcessExecutionResults shutdownServer() {
-        boolean origDisconnected = disconnected;
-        try {
-            disconnected = false;
-            return executeCliCommand("shutdown");
-        } finally {
-            disconnected = origDisconnected;
-        }
+    public Cli cli() {
+        return new Cli();
     }
 
     private ProcessExecutionResults execute(File executable, String... args) {
@@ -220,5 +146,92 @@ final class CliExecutor {
         }
 
         return systemInfo.executeProcess(processExecution);
+    }
+
+    final class Lifecycle {
+        /**
+         * This command ignores the timeout set by the {@link #waitingFor(long)} method. It starts the process and returns
+         * immediately. Other means have to be used to determine if the server finished starting up.
+         */
+        public ProcessExecutionResults startServer() {
+            StartScriptConfiguration startScriptConfiguration = new StartScriptConfiguration(pluginConfiguration);
+            File startScriptFile = startScriptConfiguration.getStartScript();
+
+            if (startScriptFile == null) {
+                startScriptFile = new File("bin", serverMode.getStartScriptFileName());
+            }
+
+            List<String> startScriptArgsL = startScriptConfiguration.getStartScriptArgs();
+            String[] startScriptArgs = startScriptArgsL.toArray(new String[startScriptArgsL.size()]);
+
+            for (int i = 0; i < startScriptArgs.length; ++i) {
+                startScriptArgs[i] = PropertyReplacer.replacePropertyPatterns(startScriptArgs[i], pluginConfiguration);
+            }
+
+            long origWaitTime = waitTime;
+            try {
+                //we really don't want to wait for the server start, because, hopefully, it will keep on running ;)
+                waitTime = -1;
+                return execute(startScriptFile, startScriptArgs);
+            } finally {
+                waitTime = origWaitTime;
+            }
+        }
+
+        public ProcessExecutionResults shutdownServer() {
+            return cli().disconnected(false).executeCliCommand("shutdown");
+        }
+    }
+
+    final class Cli {
+        private boolean disconnected;
+
+        public Cli disconnected(boolean disconnected) {
+            this.disconnected = disconnected;
+            return this;
+        }
+
+        /**
+         * Runs (a series of) CLI commands against the server.
+         * The commands are separated by either a newline or a comma (or a mix thereof).
+         *
+         * @param commands the commands to execute in order
+         * @return the execution results
+         */
+        public ProcessExecutionResults executeCliCommand(String commands) {
+            String connect = disconnected ? null : "--connect";
+            commands = commands.replace('\n', ',');
+            String user = disconnected ? null : "--user=" + serverPluginConfig.getUser();
+            String password = disconnected ? null : "--password=" + serverPluginConfig.getPassword();
+            String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
+                + serverPluginConfig.getNativePort();
+
+            return execute(new File("bin", serverMode.getCliScriptFileName()), connect, commands, user, password,
+                controller);
+        }
+
+        /**
+         * Runs the provided script against the server.
+         *
+         * @param scriptFile the script file to run
+         * @return the execution results
+         */
+        public ProcessExecutionResults executeCliScript(File scriptFile) {
+            File homeDir = serverPluginConfig.getHomeDir();
+
+            File script = scriptFile;
+            if (!script.isAbsolute()) {
+                script = new File(homeDir, scriptFile.getPath());
+            }
+
+            String connect = disconnected ? null : "--connect";
+            String file = "--file=" + script.getAbsolutePath();
+            String user = disconnected ? null : "--user=" + serverPluginConfig.getUser();
+            String password = disconnected ? null : "--password=" + serverPluginConfig.getPassword();
+            String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
+                + serverPluginConfig.getNativePort();
+
+            return execute(new File("bin", serverMode.getCliScriptFileName()), connect, file, user, password, controller);
+        }
     }
 }

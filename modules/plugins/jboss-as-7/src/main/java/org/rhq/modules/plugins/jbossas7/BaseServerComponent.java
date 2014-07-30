@@ -387,9 +387,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             return operationResult;
         }
 
-        ProcessExecutionResults results = CliExecutor
+        ProcessExecutionResults results = ServerControl
             .onServer(context.getPluginConfiguration(), getMode(), context.getSystemInformation())
-            .startServer();
+            .lifecycle().startServer();
         logExecutionResults(results);
 
         if (results.getError() != null) {
@@ -429,21 +429,21 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             result.setErrorMessage("waitTime parameter must be positive integer");
             return result;
         }
-        CliExecutor runner = CliExecutor.onServer(context.getPluginConfiguration(), getMode(),
+        ServerControl.Cli cli = ServerControl.onServer(context.getPluginConfiguration(), getMode(),
             context.getSystemInformation()).waitingFor(waitTime * 1000)
-            .killingOnTimeout(Boolean.parseBoolean(parameters.getSimpleValue("killOnTimeout", "false")));
+            .killingOnTimeout(Boolean.parseBoolean(parameters.getSimpleValue("killOnTimeout", "false"))).cli();
 
         ProcessExecutionResults results;
         String commands = parameters.getSimpleValue("commands");
         if (commands != null) {
-            results = runner.executeCliCommand(commands);
+            results = cli.executeCliCommand(commands);
         } else {
             File script = new File(parameters.getSimpleValue("file"));
             if (!script.isAbsolute()) {
                 script = new File(serverPluginConfig.getHomeDir(), script.getPath());
             }
 
-            results = runner.executeCliScript(script);
+            results = cli.executeCliScript(script);
         }
         logExecutionResults(results);
 
@@ -759,9 +759,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             scriptFile = File.createTempFile(handoverRequest.getFilename(), ".tmp", context.getTemporaryDirectory());
             FileUtil.writeFile(handoverRequest.getContent(), scriptFile);
 
-            ProcessExecutionResults results = CliExecutor.onServer(
+            ProcessExecutionResults results = ServerControl.onServer(
                 getServerPluginConfiguration().getPluginConfig(), getMode(), context.getSystemInformation())
-                .waitingFor(waitTime).killingOnTimeout(killOnTimeout).executeCliScript(scriptFile);
+                .waitingFor(waitTime).killingOnTimeout(killOnTimeout).cli().executeCliScript(scriptFile);
 
             Throwable error = results.getError();
             if (error != null) {

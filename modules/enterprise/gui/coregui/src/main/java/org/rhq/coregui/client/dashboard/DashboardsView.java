@@ -300,14 +300,8 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
         dashboard.addPortlet(summary, columnIndex, rowIndex++);
 
         DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 300);
-        if (isRHQ) {
-            news.getConfiguration().put(
-                new PropertySimple("address", "https://docs.jboss.org/author/display/RHQ/User+Documentation"));
-        } else {
-            news.getConfiguration().put(
-                new PropertySimple("address",
-                    "https://access.redhat.com/ext/software/JBoss_Operations_Network/portlet/"));
-        }
+        news.getConfiguration().put(new PropertySimple("address", "mashup.html"));
+
         dashboard.addPortlet(news, columnIndex, rowIndex++);
 
         // Right Column

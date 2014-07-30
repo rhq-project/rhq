@@ -176,20 +176,35 @@ public abstract class ZipUtil {
         try {
             InputStream zipContent = new BufferedInputStream(fis);
             try {
-                ZipInputStream zis = new ZipInputStream(zipContent);
-
-                ZipEntry e;
-                while ((e = zis.getNextEntry()) != null) {
-                    boolean keepGoing = visitor.visit(e, zis);
-                    if (!keepGoing) {
-                        break; // visitor told us to stop
-                    }
-                }
+                walkZip(zipContent, visitor, false);
             } finally {
                 zipContent.close();
             }
         } finally {
             fis.close();
+        }
+    }
+
+    /**
+     * Walks the provided zip file stream. Does NOT close it afterwards.
+     *
+     * @param zipFileStream the stream of zip file contents
+     * @param visitor the visitor to call on each zip entry
+     * @param readFully true if the whole zip file should be read from the stream even if visitor bailed out, false to
+     *                  quit reading as soon as the visitor bails out.
+     * @throws Exception
+     * @since 4.13
+     */
+    public static void walkZip(InputStream zipFileStream, ZipEntryVisitor visitor, boolean readFully) throws Exception {
+        ZipInputStream zis = new ZipInputStream(zipFileStream);
+
+        ZipEntry e;
+        boolean doVisit = true;
+        while ((e = zis.getNextEntry()) != null) {
+            doVisit = doVisit && visitor.visit(e, zis);
+            if (!readFully && !doVisit) {
+                break;
+            }
         }
     }
 

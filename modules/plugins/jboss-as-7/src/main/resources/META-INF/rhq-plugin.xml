@@ -1502,7 +1502,6 @@
 
     <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>
 
-
     <operation name="reload" description="Make the server re-load the (changed) configuration. To load a different startup config use 'restart'" displayName="Reload">
       <results>
         <c:simple-property name="operationResult"/>
@@ -1686,6 +1685,13 @@
         <value-context>measurementTrait</value-context>
         <value-name>temp-dir</value-name>
       </destination-base-dir>
+      <destination-definition name="Patches">
+        <description>Use this location to apply patches to the server</description>
+        <connection>STANDALONE</connection>
+        <referenced-configuration>
+          <all of="pluginConfiguration"/>
+        </referenced-configuration>
+      </destination-definition>
     </bundle-target>
 
     <help>
@@ -13681,6 +13687,26 @@
     </resource-configuration>
   </service>
 
+
+  <service name="Wildfly/JBoss EAP Patch Handler"
+           discovery="PatchHandlerDiscoveryComponent"
+           class="PatchHandlerComponent"
+           singleton="true"
+           description="Handles installation of patches of Wildfly or JBoss EAP application servers and their variants">
+
+      <runs-inside>
+          <parent-resource-type name="Windows"  plugin="Platforms"/>
+          <parent-resource-type name="Linux"    plugin="Platforms"/>
+          <parent-resource-type name="Solaris"  plugin="Platforms"/>
+          <parent-resource-type name="HP-UX"    plugin="Platforms"/>
+          <parent-resource-type name="AIX"      plugin="Platforms"/>
+          <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
+          <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+      </runs-inside>
+
+      <bundle type="Wildfly Patch" />
+  </service>
+
   <help >
     <![CDATA[
     <h3>Versioned Deployments (Since RHQ 4.12)</h3>
@@ -13760,6 +13786,26 @@
         <li>waitTime (in seconds): how long to wait for completion; defaults to an hour</li>
         <li>killOnTimeout (true/false): should the CLI process be killed if timeout is reached; defaults to false</li>
     </ul>
+    <br>
+    <strong>action = patch: installs a patch on the server</strong><br>
+    Optional parameters:<br>
+    <ul>
+        <li>override: The value is a comma-separated list of the miscellaneous
+                      items in the patch that can be overridden on the server
+                      whether the item reports a conflict or not.</li>
+        <li>preserve: The value is a comma-separated list of the miscellaneous
+                      items that must be preserved and not modified by
+                      applying or rolling back a patch.</li>
+        <li>override-all: The argument does not expect any value and is
+                          optional. The default is 'false'.
+                          It signifies to bypass any content verification on the
+                          miscellaneous items changed by the patch.</li>
+        <li>override-modules: The argument does not expect any value and is
+                              optional. The default is 'false'.
+                              It signifies to bypass any content verification on the
+                              modules and OSGi bundles affected by the patch.</li>
+    </ul>
+    <br>
     <p>Sample ANT bundle recipe</p>
     <pre>
     &lt;?xml version="1.0"?&gt;
@@ -13851,5 +13897,4 @@
 
     ]]>
   </help>
-
 </plugin>

@@ -230,17 +230,18 @@ public interface BundleManagerRemote {
      * @param bundleId the Bundle to be deployed to this Destination
      * @param name a name for this destination. not null or empty
      * @param description an optional longer description describing this destination
-     * @param destBaseDirName The name of the base directory location where the bundle will be deployed.
+     * @param destinationSpecification The name of the destination location where the bundle will be deployed.
      *                        <code>deployDir</code> is relative to the directory that this name refers to.
      *                        This name isn't the directory itself, it refers to the named location as
-     *                        defined in the agent plugin's descriptor for the resource's type
-     * @param deployDir the root dir for deployments to this destination
+     *                        defined in the agent plugin's descriptor for the resource's type.
+     * @param deployDir the root dir for deployments to this destination or null if the type of the bundle does not
+     *                  require it
      * @param groupId the target platforms for deployments to this destination
      * @return the persisted destination
      * @throws Exception
      */
     BundleDestination createBundleDestination(Subject subject, int bundleId, String name, String description,
-        String destBaseDirName, String deployDir, Integer groupId) throws Exception;
+        String destinationSpecification, String deployDir, Integer groupId) throws Exception;
 
     /**
      * Create a new bundle group. Bundles, if specified will be set as the initial bundles in the group.

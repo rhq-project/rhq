@@ -519,6 +519,12 @@
                                 </artifactItem>
 
 
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>rhq-serverplugin-wfly-patch-bundle</artifactId>
+                                    <version>${project.version}</version>
+                                </artifactItem>
+
                                 <!-- TODO:jdk6 - temporarily disabled because of jdk6 requirement
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>

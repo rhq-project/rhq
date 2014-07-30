@@ -93,6 +93,13 @@
       <version>${httpclient4.version}</version>
     </dependency>
 
+    <!-- For patch file parsing -->
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-wfly-patch-parser</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
     <!-- === Test Deps === -->
 
     <dependency>
@@ -169,6 +176,10 @@
                   <artifactId>httpmime</artifactId>
                 </artifactItem>
 
+                <artifactItem>
+                    <groupId>org.rhq</groupId>
+                    <artifactId>rhq-wfly-patch-parser</artifactId>
+                </artifactItem>
               </artifactItems>
               <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
             </configuration>

@@ -29,5 +29,6 @@
       <module>cassandra-schema</module>
       <module>cassandra-ccm</module>
       <module>cassandra-installer</module>
+      <module>wfly-patch-parser</module>
    </modules>
 </project>

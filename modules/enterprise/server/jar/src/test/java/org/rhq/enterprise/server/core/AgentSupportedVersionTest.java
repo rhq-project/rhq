@@ -24,11 +24,11 @@ public class AgentSupportedVersionTest {
 
     public void testLatestAgentVersionCheck() {
         AgentVersion agentVersionInfo = setLatestAgentVersionToCheck("1.0.GA", "1.0.GA");
-        assert true == agentManager.isAgentVersionSupported(agentVersionInfo);
+        assert true == agentManager.isAgentVersionSupported(agentVersionInfo).isSupported();
         agentVersionInfo = setLatestAgentVersionToCheck("1.0.GA", "1.0.RC1");
-        assert false == agentManager.isAgentVersionSupported(agentVersionInfo);
+        assert false == agentManager.isAgentVersionSupported(agentVersionInfo).isSupported();
         agentVersionInfo = setLatestAgentVersionToCheck("1.0.GA", "2.0.GA");
-        assert false == agentManager.isAgentVersionSupported(agentVersionInfo);
+        assert false == agentManager.isAgentVersionSupported(agentVersionInfo).isSupported();
     }
 
     public void testSupportedVersionsCheck() {
@@ -75,7 +75,7 @@ public class AgentSupportedVersionTest {
 
     private void check(String supportedVersions, String agentVersionToCheck, boolean expectedResult) {
         AgentVersion agentVersionInfo = setSupportedVersionsToCheck(supportedVersions, agentVersionToCheck);
-        assert expectedResult == agentManager.isAgentVersionSupported(agentVersionInfo) : "supportedVersions="
+        assert expectedResult == agentManager.isAgentVersionSupported(agentVersionInfo).isSupported() : "supportedVersions="
             + supportedVersions + "; agentVersionToCheck=" + agentVersionToCheck;
     }
 

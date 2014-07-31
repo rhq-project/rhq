@@ -185,8 +185,11 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Not sending another connect message since one was recently sent: [{0}]")
     String NOT_SENDING_DUP_CONNECT = "AgentMain.not-sending-dup-connect";
 
-    @I18NMessage("This version of the agent is not supported by the server - an agent update must be applied")
+    @I18NMessage("This version of the agent is not supported - an agent update will be applied. Cause: {0}")
     String AGENT_NOT_SUPPORTED = "AgentMain.agent-not-supported";
+
+    @I18NMessage("This agent has auto-update enabled and its version of [{0}] does not match the latest version [{1}] - this agent will be considered unsupported and an agent update will now be applied")
+    String AGENT_VERSION_DOES_NOT_MATCH_AUTO_UPDATE_NOW = "AgentMain.agent-version-no-match-update-now";
 
     @I18NMessage("The agent is not talking to its primary server [{0}:{1,number,#}] - it is talking to [{2}:{3,number,#}]")
     String NOT_TALKING_TO_PRIMARY_SERVER = "PrimaryServerSwitchoverThread.not-talking-to-primary";

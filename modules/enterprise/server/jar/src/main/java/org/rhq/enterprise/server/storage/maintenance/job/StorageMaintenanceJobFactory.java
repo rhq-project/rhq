@@ -23,7 +23,6 @@ import java.util.List;
 
 import org.rhq.core.domain.storage.MaintenanceJob;
 import org.rhq.core.domain.storage.MaintenanceStep;
-import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
 import org.rhq.enterprise.server.storage.maintenance.step.ShutdownStorageClient;
 import org.rhq.enterprise.server.storage.maintenance.step.StartStorageClient;
 import org.rhq.enterprise.server.storage.maintenance.step.UpdateStorageNodeEndpoints;
@@ -59,17 +58,29 @@ public class StorageMaintenanceJobFactory {
         if (existingNodes.length == 1) {
             int stepCount = 0;
 
-            MaintenanceStepRunner stepBuilder = new UpdateStorageNodeEntity();
-            steps.add(stepBuilder.build(job, stepCount++, existingNodes, affectedNodes[0]));
+            MaintenanceStep step = new MaintenanceStep();
+            step.setStep(stepCount++)
+                .setName(UpdateStorageNodeEntity.class.getSimpleName())
+                .setMaintenanceJob(job);
+            steps.add(step);
 
-            stepBuilder = new ShutdownStorageClient();
-            steps.add(stepBuilder.build(job, stepCount++, existingNodes, affectedNodes[0]));
+            step = new MaintenanceStep();
+            step.setStep(stepCount++)
+                .setName(ShutdownStorageClient.class.getSimpleName())
+                .setMaintenanceJob(job);
+            steps.add(step);
 
-            stepBuilder = new UpdateStorageNodeEndpoints();
-            steps.add(stepBuilder.build(job, stepCount++, existingNodes, affectedNodes[0]));
+            step = new MaintenanceStep();
+            step.setStep(stepCount++)
+                .setName(UpdateStorageNodeEndpoints.class.getSimpleName())
+                .setMaintenanceJob(job);
+            steps.add(step);
 
-            stepBuilder = new StartStorageClient();
-            steps.add(stepBuilder.build(job, stepCount++, existingNodes, affectedNodes[0]));
+            step = new MaintenanceStep();
+            step.setStep(stepCount++)
+                .setName(StartStorageClient.class.getSimpleName())
+                .setMaintenanceJob(job);
+            steps.add(step);
         }
 
         return steps;

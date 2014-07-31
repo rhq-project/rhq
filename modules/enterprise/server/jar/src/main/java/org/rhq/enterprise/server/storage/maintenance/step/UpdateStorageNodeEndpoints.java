@@ -28,7 +28,6 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.storage.MaintenanceJob;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -103,15 +102,4 @@ public class UpdateStorageNodeEndpoints implements MaintenanceStepRunner {
             throw new Exception();
         }
     }
-
-    @Override
-    public MaintenanceStep build(MaintenanceJob job, int stepNumber, String[] existingNodes, String affectedNode) {
-        MaintenanceStep step = new MaintenanceStep();
-        step.setStep(stepNumber)
-            .setName(UpdateStorageNodeEndpoints.class.getSimpleName())
-            .setMaintenanceJob(job);
-
-        return step;
-    }
-
 }

@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.storage.maintenance.step;
 
 import javax.ejb.EJB;
 
-import org.rhq.core.domain.storage.MaintenanceJob;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.storage.StorageClientManager;
 
@@ -36,16 +35,5 @@ public class StartStorageClient implements MaintenanceStepRunner {
     @Override
     public void execute(MaintenanceStep maintenanceStep) {
         storageClientManager.init();
-    }
-
-    @Override
-    public MaintenanceStep build(MaintenanceJob job, int stepNumber, String[] existingNodes, String affectedNode) {
-        MaintenanceStep step = new MaintenanceStep();
-
-        step.setStep(stepNumber)
-            .setName(StartStorageClient.class.getSimpleName())
-            .setMaintenanceJob(job);
-
-        return step;
     }
 }

@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.storage.maintenance.step;
 
-import org.rhq.core.domain.storage.MaintenanceJob;
 import org.rhq.core.domain.storage.MaintenanceStep;
 
 /**
@@ -28,6 +27,4 @@ import org.rhq.core.domain.storage.MaintenanceStep;
 public interface MaintenanceStepRunner {
 
     void execute(MaintenanceStep maintenanceStep) throws Exception;
-
-    MaintenanceStep build(MaintenanceJob job, int stepNumber, String[] existingNodes, String affectedNode);
 }

@@ -22,7 +22,6 @@ import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import org.rhq.core.domain.storage.MaintenanceJob;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -44,15 +43,6 @@ public class UpdateStorageNodeEntity implements MaintenanceStepRunner {
     private SubjectManagerLocal subjectManager;
 
     public UpdateStorageNodeEntity() {
-    }
-
-    public MaintenanceStep build(MaintenanceJob job, int stepNumber, String[] storageNodes, String affectedNode) {
-        MaintenanceStep step = new MaintenanceStep();
-        step.setStep(stepNumber)
-            .setName(UpdateStorageNodeEntity.class.getSimpleName())
-            .setMaintenanceJob(job);
-
-        return step;
     }
 
     @Override

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.server.storage.maintenance.step;
+package org.rhq.enterprise.server.storage.maintenance.step;
 
 import javax.ejb.EJB;
 
@@ -28,7 +28,7 @@ import org.rhq.enterprise.server.storage.StorageClientManager;
  * @author Stefan Negrea
  *
  */
-public class StartStorageClient implements MaintenanceStepFacade {
+public class StartStorageClient implements MaintenanceStepRunner {
 
     @EJB
     private StorageClientManager storageClientManager;

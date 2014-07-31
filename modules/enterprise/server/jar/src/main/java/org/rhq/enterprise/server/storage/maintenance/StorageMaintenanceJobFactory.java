@@ -16,18 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.server.storage.maintenance;
+package org.rhq.enterprise.server.storage.maintenance.step;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.core.domain.storage.MaintenanceJob;
 import org.rhq.core.domain.storage.MaintenanceStep;
-import org.rhq.server.storage.maintenance.step.MaintenanceStepFacade;
-import org.rhq.server.storage.maintenance.step.ShutdownStorageClient;
-import org.rhq.server.storage.maintenance.step.StartStorageClient;
-import org.rhq.server.storage.maintenance.step.UpdateStorageNodeEndpoints;
-import org.rhq.server.storage.maintenance.step.UpdateStorageNodeEntity;
+import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
+import org.rhq.enterprise.server.storage.maintenance.step.ShutdownStorageClient;
+import org.rhq.enterprise.server.storage.maintenance.step.StartStorageClient;
+import org.rhq.enterprise.server.storage.maintenance.step.UpdateStorageNodeEndpoints;
+import org.rhq.enterprise.server.storage.maintenance.step.UpdateStorageNodeEntity;
 
 /**
  * @author Stefan Negrea
@@ -59,7 +59,7 @@ public class StorageMaintenanceJobFactory {
         if (existingNodes.length == 1) {
             int stepCount = 0;
 
-            MaintenanceStepFacade stepBuilder = new UpdateStorageNodeEntity();
+            MaintenanceStepRunner stepBuilder = new UpdateStorageNodeEntity();
             steps.add(stepBuilder.build(job, stepCount++, existingNodes, affectedNodes[0]));
 
             stepBuilder = new ShutdownStorageClient();

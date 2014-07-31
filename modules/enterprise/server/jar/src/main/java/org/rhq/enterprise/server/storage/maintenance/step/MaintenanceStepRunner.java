@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.server.storage.maintenance.step;
+package org.rhq.enterprise.server.storage.maintenance.step;
 
 import org.rhq.core.domain.storage.MaintenanceJob;
 import org.rhq.core.domain.storage.MaintenanceStep;
@@ -25,7 +25,7 @@ import org.rhq.core.domain.storage.MaintenanceStep;
  * @author Stefan Negrea
  *
  */
-public interface MaintenanceStepFacade {
+public interface MaintenanceStepRunner {
 
     void execute(MaintenanceStep maintenanceStep) throws Exception;
 

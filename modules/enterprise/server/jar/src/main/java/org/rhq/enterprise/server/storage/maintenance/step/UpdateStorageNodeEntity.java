@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.server.storage.maintenance.step;
+package org.rhq.enterprise.server.storage.maintenance.step;
 
 import javax.ejb.EJB;
 import javax.persistence.EntityManager;
@@ -32,7 +32,7 @@ import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
  * @author Stefan Negrea
  *
  */
-public class UpdateStorageNodeEntity implements MaintenanceStepFacade {
+public class UpdateStorageNodeEntity implements MaintenanceStepRunner {
 
     @EJB
     StorageNodeManagerLocal storageNodeManagerBean;

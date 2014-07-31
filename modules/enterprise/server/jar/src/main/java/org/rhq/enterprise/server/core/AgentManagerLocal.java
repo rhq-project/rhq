@@ -356,4 +356,15 @@ public interface AgentManagerLocal extends AgentManagerRemote {
      * @return The updated request object.
      */
     public PingRequest handlePingRequest(PingRequest request);
+    
+    /**
+     * Fetches the agents based on provided criteria.
+     * 
+     * Subject needs MANAGE_SETTINGS and MANAGE_INVENTORY permissions.
+     * 
+     * @param subject caller
+     * @param criteria the criteria
+     * @return list of agents
+     */
+    PageList<Agent> findAgentsByCriteria(Subject subject, AgentCriteria criteria);
 }

@@ -647,6 +647,12 @@ public class AgentManagerBean implements AgentManagerLocal, AgentManagerRemote {
         try {
             Properties properties = getAgentUpdateVersionFileContent();
 
+            String latestAgentVersion = properties.getProperty(RHQ_AGENT_LATEST_VERSION);
+            String latestAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
+            if (latestAgentVersion == null) {
+                throw new NullPointerException("no agent version in file");
+            }
+
             String supportedAgentBuilds = properties.getProperty(RHQ_AGENT_SUPPORTED_BUILDS); // this is optional
             String latestAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
             if (latestAgentBuild == null) {
@@ -655,20 +661,19 @@ public class AgentManagerBean implements AgentManagerLocal, AgentManagerRemote {
 
             boolean isSupported;
 
+            //if no list of supportedBuilds provided then,    
             if (supportedAgentBuilds == null || supportedAgentBuilds.isEmpty()) {
-                // we weren't given a regex of supported versions, make a simple string equality test on latest agent version
-                ComparableVersion agent = new ComparableVersion(agentVersionInfo.getBuild());
-                ComparableVersion server = new ComparableVersion(latestAgentBuild);
+                ComparableVersion agent = new ComparableVersion(agentVersionInfo.getVersion());
+                ComparableVersion server = new ComparableVersion(latestAgentVersion);
                 isSupported = agent.equals(server);
             } else {
                 // we were given a regex of supported versions, check the agent version to see if it matches the regex
                 isSupported = agentVersionInfo.getBuild().matches(supportedAgentBuilds);
             }
-
             return new AgentVersionCheckResults(isSupported, new AgentVersion(latestAgentVersion, latestAgentBuild));
         } catch (Exception e) {
-            LOG.warn("Cannot determine if agent version [" + agentVersionInfo + "] is supported. Cause: " + e);
-            return new AgentVersionCheckResults(false, null); // assume we can't talk to it
+            log.warn("Cannot determine if agent version [" + agentVersionInfo + "] is supported. Cause: " + e);
+            return new AgentVersionCheckResults(false, new AgentVersion("", "")); // assume we can't talk to it
         }
     }
 

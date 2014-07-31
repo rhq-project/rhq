@@ -19,7 +19,10 @@
 package org.rhq.enterprise.server.core;
 
 import java.io.Serializable;
+<<<<<<< HEAD
 import java.util.Properties;
+=======
+>>>>>>> dafb691... BZ 1124614 - if an agent's auto-update is enabled, then always update itself if its version is not the same as the latest agent version of the agent distro in the server
 
 import org.rhq.core.clientapi.server.core.AgentVersion;
 
@@ -40,7 +43,11 @@ public class AgentVersionCheckResults implements Serializable {
 
     public AgentVersionCheckResults(boolean isSupported, AgentVersion latestAgentVersion) {
         this.isSupported = isSupported;
+<<<<<<< HEAD
         this.latestAgentVersion = (AgentVersion) ((latestAgentVersion != null) ? latestAgentVersion : new Properties());
+=======
+        this.latestAgentVersion = (AgentVersion) ((latestAgentVersion != null) ? latestAgentVersion : new AgentVersion("",""));
+>>>>>>> dafb691... BZ 1124614 - if an agent's auto-update is enabled, then always update itself if its version is not the same as the latest agent version of the agent distro in the server
 
     }
 

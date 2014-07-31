@@ -2260,9 +2260,9 @@ public class AgentMain {
                     AgentVersion latestVersion = results.getLatestAgentVersion();
                     if (latestVersion != null && latestVersion.getVersion() != null) {
                         AgentVersion ourVersion = getAgentVersion();
-                        if (!ourVersion.getVersion().equals(latestVersion.getVersion())) {
+                        if (!ourVersion.getBuild().equals(latestVersion.getBuild())) {
                             throw new AgentNotSupportedException(MSG.getMsg(
-                                AgentI18NResourceKeys.AGENT_VERSION_DOES_NOT_MATCH_AUTO_UPDATE_NOW, ourVersion,
+                                AgentI18NResourceKeys.AGENT_BUILD_DOES_NOT_MATCH_AUTO_UPDATE_NOW, ourVersion,
                                 latestVersion));
                         }
                     }

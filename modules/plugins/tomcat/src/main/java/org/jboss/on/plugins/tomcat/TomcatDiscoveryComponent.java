@@ -477,7 +477,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         boolean useJava = false;
 
         if (!versionScriptFile.exists()) {
-            LOG.debug("Version script file not found in expected location: " + versionScriptFile);
+            log.debug("Version script file not found in expected location: " + versionScriptFile);
             /* EWS doesn't have a version script but /etc/init.d (no systemd support for the moment) */
             versionScriptFileName = "/etc/init.d/tomcat";
             if (catalinaHome.endsWith("tomcat8")) {
@@ -491,16 +491,16 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
             }
             versionScriptFile = new File(versionScriptFileName);
             if (!versionScriptFile.exists()) {
-                LOG.debug("systemv script file not found in expected location: " + versionScriptFile);
+                log.debug("systemv script file not found in expected location: " + versionScriptFile);
                 /* rpm should be able to run and find the catalina.jar */
                 versionScriptFile = new File(catalinaHome + "/lib/catalina.jar");
                 if (!versionScriptFile.exists()) {
-                    LOG.warn("jar file not found in expected location: " + catalinaHome + "/lib/catalina.jar");
+                    log.warn("jar file not found in expected location: " + catalinaHome + "/lib/catalina.jar");
                     return UNKNOWN_VERSION;
                 }
                 versionScriptFile = new File("/usr/bin/java");
                 if (!versionScriptFile.exists()) {
-                    LOG.warn("java executable not found in expected location: /usr/bin/java");
+                    log.warn("java executable not found in expected location: /usr/bin/java");
                     return UNKNOWN_VERSION;
                 }
                 useJava = true;

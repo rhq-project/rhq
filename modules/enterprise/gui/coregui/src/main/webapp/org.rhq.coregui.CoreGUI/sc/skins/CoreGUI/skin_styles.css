@@ -31,15 +31,12 @@ input[name="fileUploadItem"] {
 }
 
 .scrollbar {
-    border-width: 1px;
-    border-style: solid;
-    border-color: transparent;
+    border: 1px solid #eaeaea;
     background-color: #fff;
 }
 
 .scrollbar:hover {
-    border-color: rgb(207, 207, 207);
-
+    border-color: #d4d4d4;
 }
 
 .graphDateTimeRangeLabel {
@@ -102,7 +99,7 @@ a, a:link, a:visited {
 }
 
 .tableFilter {
-    background-color: #f6f6f6;
+    background-color: #f0f0f0;
     border-width: 1px 1px 0 1px;
     border-style: solid;
     border-color: #d1d1d1;
@@ -150,12 +147,23 @@ a, a:link, a:visited {
 }
 
 #patternFlyLogin .rhqLabel {
-    bottom: 45%;
+
+}
+
+.login-pf .container {
+    position: relative !important;
+    top: 0px !important;
+    bottom: 0px !important;
+}
+
+#patternFlyLogin #patternFlyContainer {
+    bottom: 13%;
     position: absolute;
+    width: 100%;
 }
 
 #patternFlyLogin .caps {
-    background-image: url(img/caps.png);
+    background-image: url(../../../../img/caps.png);
     background-position: right center;
     background-repeat: no-repeat;
 }
@@ -164,7 +172,7 @@ a, a:link, a:visited {
     background-position: left bottom;
     background-repeat: no-repeat;
     padding-bottom: 1em;
-    background-image: url(img/feedback-error-arrow-down.png);
+    background-image: url(../../../../img/feedback-error-arrow-down.png);
     position: absolute;
     transition: opacity 0.33s ease-in-out;
     -moz-transition: opacity 0.33s ease-in-out;
@@ -183,7 +191,7 @@ a, a:link, a:visited {
 }
 
 #patternFlyLogin #errorFeedback p {
-    background-image: url(img/feedback-error-sign.png);
+    background-image: url(../../../../img/feedback-error-sign.png);
     padding: 0.90909090909091em 3.63636363636364em;
     border-color: #b91415;
     border-style: solid;
@@ -229,7 +237,7 @@ a, a:link, a:visited {
     background-image: none !important;
     background-color: rgba(255, 255, 255, .1) !important;
     border-bottom-color: rgba(255, 255, 255, .1);
-    color: #f6f6f6 !important;
+    color: #f0f0f0 !important;
 }
 
 .navbar-pf .navbar-primary > li {
@@ -238,7 +246,7 @@ a, a:link, a:visited {
 }
 
 .navbar-pf .navbar-utility > li > a {
-    color: #f6f6f6 !important;
+    color: #f0f0f0 !important;
     line-height: 1;
     text-shadow: none;
     margin: 0px 0 0;
@@ -247,7 +255,7 @@ a, a:link, a:visited {
 }
 
 .navbar-pf .navbar-primary > li > a {
-    color: #f6f6f6 !important;
+    color: #f0f0f0 !important;
     border-top: 1px solid #24323a;
 }
 
@@ -258,7 +266,7 @@ a, a:link, a:visited {
     border-left-color: #575f65;
     border-top-color: #575f65;
     border-bottom-color: #575f65;
-    color: #f6f6f6 !important;
+    color: #f0f0f0 !important;
     text-decoration: none !important;
 }
 
@@ -295,7 +303,7 @@ a, a:link, a:visited {
     background: transparent;
     border: none;
     border-top: 1px solid #24323a;
-    color: #f6f6f6 !important;
+    color: #f0f0f0 !important;
 }
 
 .active a.navbar-btn-item {
@@ -304,7 +312,7 @@ a, a:link, a:visited {
     border-top: 1px solid #575f65 !important;
     -webkit-box-shadow: none;
     box-shadow: none;
-    color: #f6f6f6 !important;
+    color: #f0f0f0 !important;
 }
 
 .open a.navbar-btn-item, .open a.navbar-btn-item:hover {
@@ -312,7 +320,7 @@ a, a:link, a:visited {
     background-color: rgba(255, 255, 255, .1) !important;
     border-bottom-color: rgba(255, 255, 255, .1) !important;
     border-top: 1px solid #575f65 !important;
-    color: #f6f6f6 !important;
+    color: #f0f0f0 !important;
 }
 
 .open a.nbi-link {
@@ -328,7 +336,7 @@ a.navbar-btn-item:hover, a.navbar-btn-item:focus {
     background-color: rgba(255, 255, 255, .15) !important;
     border-bottom-color: #F1F2F3;
     border-top-color: #575f65;
-    color: #f6f6f6 !important;
+    color: #f0f0f0 !important;
     text-decoration: none !important;
 }
 
@@ -342,11 +350,11 @@ a.navbar-btn-item:hover, a.navbar-btn-item:focus {
 }
 
 .navbar-btn-group > a {
-    color: #f6f6f6 !important;
+    color: #f0f0f0 !important;
 }
 
 .navbar-btn-item:visited {
-    color: #f6f6f6 !important;
+    color: #f0f0f0 !important;
     text-decoration: none !important;
 }
 
@@ -469,7 +477,6 @@ Button (also used as MenuButton base style)
     background: -ms-linear-gradient(top, #cccccc 0%, #ffffff 100%); /* IE10+ */
     background: linear-gradient(to bottom, #cccccc 0%, #ffffff 100%); /* W3C */
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#cccccc', endColorstr='#ffffff', GradientType=0); /* IE6-9 */
-
 }
 
 .buttonSelected,
@@ -581,14 +588,18 @@ div[eventproxy^="primary"] > table > tbody > tr > .button:active {
 .headerButtonSelectedDown,
 .headerButtonSelectedOver,
 .headerButtonSelectedDisabled {
-    background-color: #f6f6f6;
+    background-color: #f0f0f0;
     border-color: rgb(209, 209, 209);
     border-top-color: transparent;
     border-style: solid;
     padding: 2px 2px 2px 5px;
     font-weight: 600;
     border-width: 2px 1px 1px 0;
+}
 
+.headerButton,
+.headerButtonOver {
+    background-color: #f0f0f0 !important;
 }
 
 .headerButton img,
@@ -615,14 +626,14 @@ div[eventproxy^="primary"] > table > tbody > tr > .button:active {
     border-top: 1px solid white;
     border-right: 1px solid #808080;
     border-bottom: 1px solid #808080;
-    background: #d5d5d5;
-    background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0.1, rgb(84, 137, 202)), color-stop(0.55, rgb(108, 150, 202)), color-stop(0.77, rgb(132, 164, 202)));
-    background-image: -moz-linear-gradient(center bottom, rgb(84, 137, 202) 10%, rgb(108, 150, 202) 55%, rgb(132, 164, 202) 77%);
+    background: #63b3da;
+    color: #fff;
+    background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0.1, #0099d3), color-stop(0.55, #0099d3), color-stop(0.77, #63b3da));
+    background-image: -moz-linear-gradient(center bottom, #0099d3 10%, #0099d3 55%, #63b3da 77%);
 }
 
 .headerButtonDisabled {
     color: #666666;
-
     background: #C3C3C3;
 }
 
@@ -714,8 +725,8 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 
 .treeMenuSelected {
     background-color: #d4edfa;
-    border-top: 1px solid #ffeb90;
-    border-bottom: 1px solid #ffeb90;
+    border-top: 1px solid #dfedfa;
+    border-bottom: 1px solid #dfedfa;
 }
 
 .treeMenuSelectedOver {
@@ -735,8 +746,15 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
     background-color: #fff !important;
     border: 1px solid #ddd;
     border-radius: 1px;
-    -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, .05);
-    box-shadow: 0 1px 1px rgba(0, 0, 0, .05);
+    -webkit-box-shadow: 0 6px 12px rgba(0, 0, 0, 0.275);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.275);
+ 
+}
+
+div[eventproxy*="PortalColumn"] > .windowBackground,
+div[eventproxy*="PortalColumn"] > .dialogBackground {
+   -webkit-box-shadow: 0 0px 0px rgba(0, 0, 0, .15);
+    box-shadow: 0 0px 0px rgba(0, 0, 0, .15);
 }
 
 .windowBody,
@@ -753,7 +771,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 .dialogHeader,
 .dialogHeaderHilite {
     color: #4D5258;
-    background-color: #f5f5f5;
+    background-color: #f0f0f0;
     margin-right: -4px;
     margin-right: -4px;
     z-index: 9202034 !important;
@@ -806,11 +824,11 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 ============================================================*/
 
 .layoutDropLine {
-    background-color: #DDDDFF;
+    background-color: #aaa !important;
 }
 
 .layoutPlaceHolder {
-    border: 1px solid black;
+    border: 1px solid #aaa !important;
 }
 
 .splitbar {
@@ -1413,7 +1431,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 
 .dateChooserWeekdayOver,
 .dateChooserWeekendOver {
-    border: 2px solid #ffeb90;
+    border: 2px solid #dfedfa;
 }
 
 .dateChooserWeekdaySelected,
@@ -1426,9 +1444,9 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 .dateChooserWeekendDown,
 .dateChooserWeekendSelectedDown {
     font-weight: bold;
-    color: #4C4C4C;
-    border: 2px solid #ffdd2e;
-    background-color: #ffdd2e;
+    color: #fff;
+    border: 2px solid #0099d3;
+    background-color: #0099d3;
 }
 
 .dateChooserWeekdayDown,
@@ -1440,6 +1458,13 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 .dateChooserYearMenu,
 .dateChooserMonthMenu {
     background-color: #FFFFFF;
+}
+
+/* the border around the date widget was missing */
+div[eventproxy^="isc_DateChooser"] {
+    border: 1px solid #ddd;
+    -webkit-box-shadow: 0 3px 6px rgba(0, 0, 0, 0.175);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.175);
 }
 
 /*============================================================
@@ -1515,6 +1540,10 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
     background: none rgb(250, 250, 250);
     border: 1px solid rgb(208, 208, 208);
 
+}
+
+.listGrid > div > div[eventproxy*="Toolbar"] {
+    background: #fff !important;
 }
 
 .dragLine {
@@ -1650,14 +1679,15 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 .specialColSelected,
 .recordSummaryCellSelected,
 .recordSummaryCellSelectedDark {
-    background: #ffeb90;
+    background: #dfedfa;
 }
 
 .tallCellSelectedOver,
 .tallCellSelectedOverDark,
 .tallCellSelected,
 .tallCellSelectedDark {
-    background: none repeat scroll 0 0 #0099d3 !important;
+    background: none repeat scroll 0 0 #63b3da !important;
+    color: #111;
 }
 
 .metricsTableView .tallCellOverDark,
@@ -1766,7 +1796,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 
 .treeTallCellOver,
 .treeTallCellOverDark {
-    background-color: #ffeb90;
+    background-color: #dfedfa;
 }
 
 .treeCellSelected,
@@ -1833,6 +1863,7 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
 ============================================================*/
 .vScrollThumb {
     border: 1px solid #D9D9D9;
+    background: #fafafa;
 }
 
 .vScrollThumbOver {
@@ -1850,16 +1881,15 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
     -ms-border-radius: 2px;
     -khtml-border-radius: 2px;
     border-radius: 2px;
-
     -moz-box-shadow: inset 1px -1px 0 0 rgba(255, 255, 255, 0.2), inset 0 1px 0 1px #ededed;
     -webkit-box-shadow: rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.0470588) 0px 1px 2px 0px;
     box-shadow: 0px 1px 0 rgba(255, 255, 255, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
-
     margin-bottom: 1px;
 }
 
 .hScrollThumb {
-    border: 1px solid transparent;
+    border: 1px solid #D9D9D9;
+    background: #fafafa;
 }
 
 .hScrollThumbOver {
@@ -1877,13 +1907,11 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
     box-shadow: 0 1px 0 #f0f0f0, inset 0 1px 2px #f0f0f0;
     -webkit-box-shadow: 0 1px 0 #f0f0f0, inset 0 1px 2px #f0f0f0;
     -moz-box-shadow: 0 1px 0 #f0f0f0, inset 0 1px 2px #f0f0f0;
-
     -moz-border-radius: 2px;
     -webkit-border-radius: 2px;
     -o-border-radius: 2px;
     -ms-border-radius: 2px;
     border-radius: 2px;
-
 }
 
 /*============================================================

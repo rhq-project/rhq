@@ -108,7 +108,8 @@ public class UsersView extends TableSection<UsersDataSource> implements HasViewN
     private List<ListGridField> createFields() {
         List<ListGridField> fields = new ArrayList<ListGridField>();
 
-        ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 150);
+        ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME);
+        nameField.setWidth("*");
         fields.add(nameField);
 
         ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);

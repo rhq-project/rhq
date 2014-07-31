@@ -19,8 +19,8 @@
 package org.rhq.enterprise.server.storage.maintenance.step;
 
 import javax.ejb.EJB;
+import javax.ejb.Stateless;
 
-import org.rhq.core.domain.storage.MaintenanceJob;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.storage.StorageClientManager;
 
@@ -28,6 +28,7 @@ import org.rhq.enterprise.server.storage.StorageClientManager;
  * @author Stefan Negrea
  *
  */
+@Stateless
 public class ShutdownStorageClient implements MaintenanceStepRunner {
 
     @EJB
@@ -36,16 +37,5 @@ public class ShutdownStorageClient implements MaintenanceStepRunner {
     @Override
     public void execute(MaintenanceStep maintenanceStep) {
         storageClientManager.shutdown();
-    }
-
-    @Override
-    public MaintenanceStep build(MaintenanceJob job, int stepNumber, String[] existingNodes, String affectedNode) {
-        MaintenanceStep step = new MaintenanceStep();
-
-        step.setStep(stepNumber)
-            .setName(ShutdownStorageClient.class.getSimpleName())
-            .setMaintenanceJob(job);
-
-        return step;
     }
 }

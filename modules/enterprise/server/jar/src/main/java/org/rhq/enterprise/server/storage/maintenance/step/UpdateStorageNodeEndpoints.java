@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.storage.maintenance.step;
 
 import javax.ejb.EJB;
+import javax.ejb.Stateless;
 
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.common.JobTrigger;
@@ -39,6 +40,7 @@ import org.rhq.enterprise.server.operation.OperationManagerBean;
  * @author Stefan Negrea
  *
  */
+@Stateless
 public class UpdateStorageNodeEndpoints implements MaintenanceStepRunner {
 
     @EJB

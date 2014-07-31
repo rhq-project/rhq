@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.storage.maintenance.step;
 
 import javax.ejb.EJB;
+import javax.ejb.Stateless;
 
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.storage.StorageClientManager;
@@ -27,6 +28,7 @@ import org.rhq.enterprise.server.storage.StorageClientManager;
  * @author Stefan Negrea
  *
  */
+@Stateless
 public class StartStorageClient implements MaintenanceStepRunner {
 
     @EJB

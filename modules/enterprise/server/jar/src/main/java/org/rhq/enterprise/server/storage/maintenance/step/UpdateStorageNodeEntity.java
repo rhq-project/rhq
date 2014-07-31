@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.storage.maintenance.step;
 
 import javax.ejb.EJB;
+import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -31,6 +32,7 @@ import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
  * @author Stefan Negrea
  *
  */
+@Stateless
 public class UpdateStorageNodeEntity implements MaintenanceStepRunner {
 
     @EJB

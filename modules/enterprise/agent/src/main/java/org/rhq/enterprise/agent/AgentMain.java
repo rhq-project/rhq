@@ -1482,9 +1482,7 @@ public class AgentMain {
                             String address = server_config.getConnectorBindAddress();
                             int port = server_config.getConnectorBindPort();
                             String remote_endpoint = server_config.getConnectorRemoteEndpoint();
-                            String version = Version.getProductVersion();
-                            String build = Version.getBuildNumber();
-                            AgentVersion agentVersion = new AgentVersion(version, build);
+                            AgentVersion agentVersion = getAgentVersion();
                             String installId = System.getProperty(AgentRegistrationRequest.SYSPROP_INSTALL_ID);
                             String installLocation = getAgentHomeDirectory();
                             if (installLocation != null && installLocation.trim().length() == 0) {
@@ -2253,6 +2251,23 @@ public class AgentMain {
 
             try {
                 ConnectAgentResults results = (ConnectAgentResults) connectResponse.getResults();
+
+                // BZ 1124614 - if the agent is configured to auto-update itself, and it is not of the same version
+                // as the latest agent version as told to us by the server, then this agent should update now.
+                // Notice we will only check version string - we ignore build number to determine version equality
+                boolean agentUpdateEnabled = getConfiguration().isAgentUpdateEnabled();
+                if (agentUpdateEnabled) {
+                    AgentVersion latestVersion = results.getLatestAgentVersion();
+                    if (latestVersion != null && latestVersion.getVersion() != null) {
+                        AgentVersion ourVersion = getAgentVersion();
+                        if (!ourVersion.getVersion().equals(latestVersion.getVersion())) {
+                            throw new AgentNotSupportedException(MSG.getMsg(
+                                AgentI18NResourceKeys.AGENT_VERSION_DOES_NOT_MATCH_AUTO_UPDATE_NOW, ourVersion,
+                                latestVersion));
+                        }
+                    }
+                }
+
                 long serverTime = results.getServerTime();
                 serverClockNotification(serverTime);
 
@@ -2267,6 +2282,8 @@ public class AgentMain {
                         plugin_container.getInventoryManager().requestFullAvailabilityReport();
                     }
                 }
+            } catch (AgentNotSupportedException anse) {
+                throw anse; // bubble this up to the outer try-catch so we can update this agent now
             } catch (Throwable t) {
                 // should never happen, should always cast to non-null ConnectAgentResults
                 LOG.error(AgentI18NResourceKeys.TIME_UNKNOWN, ThrowableUtil.getAllMessages(t));
@@ -2291,11 +2308,24 @@ public class AgentMain {
         return;
     }
 
+    /**
+     * Returns this agent's version information.
+     *
+     * @return agent version POJO
+     */
+    private AgentVersion getAgentVersion() {
+        String version = Version.getProductVersion();
+        String build = Version.getBuildNumber();
+        AgentVersion agentVersion = new AgentVersion(version, build);
+        return agentVersion;
+    }
+
     private Command createConnectAgentCommand() throws Exception {
         AgentConfiguration config = getConfiguration();
         String agentName = config.getAgentName();
-        AgentVersion version = new AgentVersion(Version.getProductVersion(), Version.getBuildNumber());
-        ConnectAgentRequest request = new ConnectAgentRequest(agentName, version);
+        boolean agentUpdateEnabled = config.isAgentUpdateEnabled();
+        AgentVersion version = getAgentVersion();
+        ConnectAgentRequest request = new ConnectAgentRequest(agentName, version, agentUpdateEnabled);
 
         RemotePojoInvocationCommand connectCommand = new RemotePojoInvocationCommand();
         Method connectMethod = CoreServerService.class.getMethod("connectAgent", ConnectAgentRequest.class);

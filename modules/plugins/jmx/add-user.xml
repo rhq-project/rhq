@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<project name="add-user" default="main">
+
+  <target name="main">
+
+    <exec osfamily="unix" executable="bash" dir="${rhq.jmxplugin.as7.standalone.home}/bin">
+      <arg value="add-user.sh"/>
+      <arg value="--silent=true"/>
+      <arg value="rhqadmin"/>
+      <arg value="rhqadmin_1"/>
+    </exec>
+
+    <exec osfamily="unix" executable="bash" dir="${rhq.jmxplugin.wildfly8.standalone.home}/bin">
+      <arg value="add-user.sh"/>
+      <arg value="--silent=true"/>
+      <arg value="rhqadmin"/>
+      <arg value="rhqadmin_1"/>
+    </exec>
+
+    <exec osfamily="windows" executable="cmd" dir="${rhq.jmxplugin.as7.standalone.home}\bin">
+      <arg value="/C"/>
+      <arg value="start"/>
+      <arg value="add-user.bat"/>
+      <arg value="--silent=true"/>
+      <arg value="rhqadmin"/>
+      <arg value="rhqadmin_1"/>
+    </exec>
+
+    <exec osfamily="windows" executable="cmd" dir="${rhq.jmxplugin.wildfly8.standalone.home}\bin">
+      <arg value="/C"/>
+      <arg value="start"/>
+      <arg value="add-user.bat"/>
+      <arg value="--silent=true"/>
+      <arg value="rhqadmin"/>
+      <arg value="rhqadmin_1"/>
+    </exec>
+
+  </target>
+
+</project>

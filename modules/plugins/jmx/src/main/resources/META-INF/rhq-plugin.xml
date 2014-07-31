@@ -22,6 +22,9 @@
                <c:option value="org.mc4j.ems.connection.support.metadata.LocalVMTypeDescriptor" name="Local"/>
                <c:option value="org.mc4j.ems.connection.support.metadata.JBossConnectionTypeDescriptor" name="JBoss"/>
                <c:option value="org.mc4j.ems.connection.support.metadata.Tomcat55ConnectionTypeDescriptor" name="Tomcat"/>
+               <c:option value="org.rhq.plugins.jmx.connection.metadata.AS7ConnectionTypeDescriptor" name="JBoss AS7 and Red Hat JBoss EAP6.0"/>
+               <c:option value="org.rhq.plugins.jmx.connection.metadata.EAP61ConnectionTypeDescriptor" name="Red Hat JBoss EAP6.1 and above"/>
+               <c:option value="org.rhq.plugins.jmx.connection.metadata.Wildfly8ConnectionTypeDescriptor" name="Wildfly 8"/>
                <c:option value="org.mc4j.ems.connection.support.metadata.JDMKConnectionTypeDescriptor" name="JDMK"/>
                <c:option value="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor" name="Java SE 5"/>
                <c:option value="org.mc4j.ems.connection.support.metadata.JSR160ConnectionTypeDescriptor" name="JSR 160"/>
@@ -54,6 +57,36 @@
          <c:template name="JBoss AS" description="Connect to JBoss Application Server">
             <c:simple-property name="type" default="org.mc4j.ems.connection.support.metadata.JBossConnectionTypeDescriptor"/>
             <c:simple-property name="connectorAddress" default="jnp://127.0.0.1:1099"/>
+         </c:template>
+
+         <c:template name="JBoss AS7" description="Connect to a JBoss AS7 or Red Hat JBoss EAP6.0 Standalone Server">
+            <c:simple-property name="type" default="org.rhq.plugins.jmx.connection.metadata.AS7ConnectionTypeDescriptor"/>
+            <c:simple-property name="connectorAddress" default="service:jmx:remoting-jmx://localhost:9999"/>
+         </c:template>
+
+         <c:template name="Managed JBoss AS7" description="Connect to a JBoss AS7 or Red Hat JBoss EAP6.0 Managed Server (Domain Mode)">
+            <c:simple-property name="type" default="org.rhq.plugins.jmx.connection.metadata.AS7ConnectionTypeDescriptor"/>
+            <c:simple-property name="connectorAddress" default="service:jmx:remoting-jmx://localhost:4447"/>
+         </c:template>
+
+         <c:template name="Red Hat JBoss EAP61" description="Connect to a Red Hat JBoss EAP6.1 and above Standalone Server">
+            <c:simple-property name="type" default="org.rhq.plugins.jmx.connection.metadata.EAP61ConnectionTypeDescriptor"/>
+            <c:simple-property name="connectorAddress" default="service:jmx:remoting-jmx://localhost:9999"/>
+         </c:template>
+
+         <c:template name="Managed Red Hat JBoss EAP61" description="Connect to a Red Hat JBoss EAP6.1 and above Managed Server (Domain Mode)">
+            <c:simple-property name="type" default="org.rhq.plugins.jmx.connection.metadata.EAP61ConnectionTypeDescriptor"/>
+            <c:simple-property name="connectorAddress" default="service:jmx:remoting-jmx://localhost:4447"/>
+         </c:template>
+
+         <c:template name="Wildfly 8" description="Connect to a Wildlfy 8 Standalone Server">
+            <c:simple-property name="type" default="org.rhq.plugins.jmx.connection.metadata.Wildfly8ConnectionTypeDescriptor"/>
+            <c:simple-property name="connectorAddress" default="service:jmx:http-remoting-jmx://localhost:9990"/>
+         </c:template>
+
+         <c:template name="Managed Wildfly 8" description="Connect to a Wildlfy 8 Managed Server (Domain Mode)">
+            <c:simple-property name="type" default="org.rhq.plugins.jmx.connection.metadata.Wildfly8ConnectionTypeDescriptor"/>
+            <c:simple-property name="connectorAddress" default="service:jmx:http-remoting-jmx://localhost:8080"/>
          </c:template>
 
          <c:template name="Weblogic 9" description="Connect to the standard WebLogic 9 MBean Server">
@@ -152,9 +185,9 @@
                  description="Size of virtual memory used by this process"
                  units="bytes"/>
          <metric displayName="Open Files"
-                 category="utilization"        
+                 category="utilization"
                  property="OpenFileDescriptorCount"
-                 description="The number of files opened by this process. Note that this metric is not supported on Windows." />                 
+                 description="The number of files opened by this process. Note that this metric is not supported on Windows." />
       </service>
 
       <service name="Threading" discovery="MBeanResourceDiscoveryComponent" class="ThreadDataMeasurementComponent"

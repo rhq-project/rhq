@@ -20,7 +20,21 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.plugins.jmx.test;
+
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.rhq.core.domain.measurement.DataType.MEASUREMENT;
+import static org.rhq.core.util.StringUtil.isNotBlank;
+import static org.rhq.plugins.jmx.util.JvmResourceKey.Type.Explicit;
+import static org.rhq.plugins.jmx.util.JvmResourceKey.Type.JmxRemotingPort;
+import static org.rhq.test.AssertUtils.timedAssertion;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -30,16 +44,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -47,34 +60,27 @@ import java.util.zip.ZipOutputStream;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pc.PluginContainer;
-import org.rhq.core.pc.PluginContainerConfiguration;
-import org.rhq.core.pc.inventory.InventoryManager;
-import org.rhq.core.pc.plugin.FileSystemPluginFinder;
-import org.rhq.core.pc.plugin.PluginEnvironment;
-import org.rhq.core.pc.plugin.PluginManager;
-import org.rhq.core.pc.util.InventoryPrinter;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pc.util.ComponentUtil;
+import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 import org.rhq.plugins.jmx.util.JvmResourceKey;
+import org.rhq.test.AssertUtils;
 
 /**
  * Integration test for the JMX plugin.
@@ -82,65 +88,29 @@ import org.rhq.plugins.jmx.util.JvmResourceKey;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class JMXPluginTest {
+public class JMXPluginTest extends AbstractJMXPluginTest {
+    private static final Log LOG = LogFactory.getLog(JMXPluginTest.class);
 
     private static final int JMX_REMOTING_PORT1 = 9921;
     private static final int JMX_REMOTING_PORT2 = 9922;
-
-    private static final String PLUGIN_NAME = "JMX";
-    private static final String SERVER_TYPE_NAME = "JMX Server";
     private static final String EXPLICIT_RESOURCE_KEY1 = "foo1";
     private static final String EXPLICIT_RESOURCE_KEY2 = "foo2";
 
-    private List<Process> testServerJvms = new ArrayList<Process>();
-
-    private InventoryManager inventoryManager;
-
-    @BeforeSuite
-    public void start() {
+    static {
+        File customPluginFile = null;
         try {
-            // Start the test server JVMs.
-            this.testServerJvms.add(startTestServerJvm("-Dcom.sun.management.jmxremote.port=" + JMX_REMOTING_PORT1,
-                "-Dcom.sun.management.jmxremote.ssl=false", "-Dcom.sun.management.jmxremote.authenticate=false"));
-
-            // FIXME: Disabled until we find a fix for Sigar getProcCredName issue
-            //            this.testServerJvms.add(startTestServerJvm("-D" + JMXDiscoveryComponent.SYSPROP_RHQ_RESOURCE_KEY + "="
-            //                + EXPLICIT_RESOURCE_KEY1));
-
-            this.testServerJvms.add(startTestServerJvm("-Dcom.sun.management.jmxremote.port=" + JMX_REMOTING_PORT2,
-                "-Dcom.sun.management.jmxremote.ssl=false", "-Dcom.sun.management.jmxremote.authenticate=false", "-D"
-                    + JMXDiscoveryComponent.SYSPROP_RHQ_RESOURCE_KEY + "=" + EXPLICIT_RESOURCE_KEY2));
-
-            // Give them time to fully start.
-            Thread.sleep(3000);
-
-            File pluginDir = new File("target/itest/plugins");
-            deployCustomPlugin(pluginDir);
-            PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
-            pcConfig.setPluginFinder(new FileSystemPluginFinder(pluginDir));
-            pcConfig.setPluginDirectory(pluginDir);
-            pcConfig.setInsideAgent(false);
-
-            PluginContainer.getInstance().setConfiguration(pcConfig);
-            PluginContainer.getInstance().initialize();
-
-            Set<String> pluginNames = PluginContainer.getInstance().getPluginManager().getMetadataManager()
-                .getPluginNames();
-            System.out.println("PC started with plugins " + pluginNames + ".");
-
-            this.inventoryManager = PluginContainer.getInstance().getInventoryManager();
-        } catch (Throwable t) {
-            // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
-            // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
-            t.printStackTrace();
-            throw new RuntimeException(t);
+            customPluginFile = createCustomPluginFile();
+        } catch (Exception e) {
+            LOG.error("Could not create custom plugin file. Tests will fail", e);
         }
+        AbstractJMXPluginTest.ADDITIONAL_PLUGIN_FILES.add(customPluginFile);
     }
 
-    private void deployCustomPlugin(File targetDir) throws Exception{
+    private static File createCustomPluginFile() throws Exception {
 
         File plugin = new File("src/test/resources/custom-test-plugin.xml");
-        File targetFile = new File(targetDir,"custom-test-plugin.jar");
+        File targetFile = new File(System.getProperty("java.io.tmpdir"), "custom-test-plugin.jar");
+        targetFile.deleteOnExit();
 
         ZipOutputStream outputStream = new ZipOutputStream(new FileOutputStream(targetFile));
         ZipEntry metainf = new ZipEntry("META-INF");
@@ -152,19 +122,36 @@ public class JMXPluginTest {
         FileInputStream fis = new FileInputStream(plugin);
         int bufferSize = 1024;
         BufferedInputStream bufferedInputStream = new BufferedInputStream(fis, bufferSize);
-        int size = -1;
+        int size;
         byte data[] = new byte[bufferSize];
-        while(  (size = bufferedInputStream.read(data, 0, bufferSize)) != -1  )
-        {
+        while ((size = bufferedInputStream.read(data, 0, bufferSize)) != -1) {
             outputStream.write(data, 0, size);
         }
         bufferedInputStream.close();
         outputStream.closeEntry();
         outputStream.flush();
         outputStream.finish();
+
+        return targetFile;
     }
 
-    private Process startTestServerJvm(String... jvmArgs) throws IOException {
+    private List<Process> testServerJvms = new ArrayList<Process>();
+
+    @BeforeClass
+    public void startTestServers() throws Exception {
+        this.testServerJvms.add(startTestServerJvm("-Dcom.sun.management.jmxremote.port=" + JMX_REMOTING_PORT1,
+            "-Dcom.sun.management.jmxremote.ssl=false", "-Dcom.sun.management.jmxremote.authenticate=false"));
+
+        // FIXME: Disabled until we find a fix for Sigar getProcCredName issue
+        //            this.testServerJvms.add(startTestServerJvm("-D" + JMXDiscoveryComponent.SYSPROP_RHQ_RESOURCE_KEY + "="
+        //                + EXPLICIT_RESOURCE_KEY1));
+
+        this.testServerJvms.add(startTestServerJvm("-Dcom.sun.management.jmxremote.port=" + JMX_REMOTING_PORT2,
+            "-Dcom.sun.management.jmxremote.ssl=false", "-Dcom.sun.management.jmxremote.authenticate=false", "-D"
+                + JMXDiscoveryComponent.SYSPROP_RHQ_RESOURCE_KEY + "=" + EXPLICIT_RESOURCE_KEY2));
+    }
+
+    private static Process startTestServerJvm(String... jvmArgs) throws IOException {
         String javaHome = System.getProperty("java.home");
         String javaCmd = javaHome + "/bin/java";
 
@@ -187,252 +174,181 @@ public class JMXPluginTest {
         return process;
     }
 
-    @AfterSuite
-    public void stop() {
-        PluginContainer.getInstance().shutdown();
-
+    @AfterClass
+    public void stopTestServers() {
         for (Process process : this.testServerJvms) {
             process.destroy();
         }
     }
 
-    @Test
-    public void testPluginLoad() {
-        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
-        PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
-        assert (pluginEnvironment != null) : "Null environment, plugin not loaded";
-        assert (pluginEnvironment.getPluginName().equals(PLUGIN_NAME));
+    @Test(dependsOnMethods = "testPlatformFound")
+    public void testServerDiscovery() throws Exception {
+        timedAssertion(new AssertUtils.BooleanCondition() {
+            @Override
+            public boolean eval() {
+                InventoryReport report = getInventoryManager().executeServerScanImmediately();
+                LOG.info("Discovery took: " + (report.getEndTime() - report.getStartTime()) + " ms");
+
+                boolean foundExplicitKey1Server = findTestServerResource(Explicit, EXPLICIT_RESOURCE_KEY1) != null;
+                boolean foundExplicitKey2Server = findTestServerResource(Explicit, EXPLICIT_RESOURCE_KEY2) != null;
+                boolean foundJmxRemotingServer = findTestServerResource(JmxRemotingPort, JMX_REMOTING_PORT1) != null;
+
+                LOG.info("foundJmxRemotingServer = " + foundJmxRemotingServer);
+                LOG.info("foundExplicitKey1Server = " + foundExplicitKey1Server);
+                LOG.info("foundExplicitKey2Server = " + foundExplicitKey2Server);
+
+                // key1Server not started, see above
+                return /*foundExplicitKey1Server &&*/foundExplicitKey2Server && foundJmxRemotingServer;
+            }
+        }, "Could not find all JMX servers", 2, MINUTES, 10, SECONDS);
     }
 
-    @Test(dependsOnMethods = "testPluginLoad")
-    public void testServerDiscovery() throws Exception {
-        InventoryReport report = PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
-        assert report != null;
-        System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
+    private Resource findTestServerResource(JvmResourceKey.Type keyType, Object value) {
+        Resource platform = getInventoryManager().getPlatform();
 
-        Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
-
-        Set<Resource> jmxServers = getChildResourcesOfType(platform, new ResourceType(SERVER_TYPE_NAME, PLUGIN_NAME,
-            ResourceCategory.SERVER, null));
-        System.out.println("Found " + jmxServers.size() + " JMX Servers:");
-
-        boolean foundJmxRemotingServer = false;
-        boolean foundExplicitKey1Server = false;
-        boolean foundExplicitKey2Server = false;
+        Set<Resource> jmxServers = getChildResourcesOfType(platform, SERVER_TYPE);
         for (Resource jmxServer : jmxServers) {
-            System.out.println("  * " + jmxServer);
+
             JvmResourceKey key = JvmResourceKey.valueOf(jmxServer.getResourceKey());
-            switch (key.getType()) {
-            case Explicit:
-                if (key.getExplicitValue().equals(EXPLICIT_RESOURCE_KEY1)) {
-                    assert key.getMainClassName().equals(TestProgram.class.getName());
-                    foundExplicitKey1Server = true;
-                } else if (key.getExplicitValue().equals(EXPLICIT_RESOURCE_KEY2)) {
-                    assert key.getMainClassName().equals(TestProgram.class.getName());
-                    foundExplicitKey2Server = true;
+            boolean isTestProgram = TestProgram.class.getName().equals(key.getMainClassName());
+            if (isTestProgram && key.getType().equals(keyType)) {
+
+                switch (keyType) {
+                case Explicit:
+                    if (key.getExplicitValue().equals(value)) {
+                        return jmxServer;
+                    }
+                    break;
+                case JmxRemotingPort:
+                    if (key.getJmxRemotingPort().equals(value)) {
+                        return jmxServer;
+                    }
+                    break;
+                default:
                 }
-                break;
-            case JmxRemotingPort:
-                if (key.getMainClassName().equals(TestProgram.class.getName())
-                    && key.getJmxRemotingPort().equals(JMX_REMOTING_PORT1)) {
-                    assert key.getMainClassName().equals(TestProgram.class.getName());
-                    foundJmxRemotingServer = true;
-                }
-                break;
-            default:
-                throw new IllegalStateException("Unsupported key type: " + key.getType());
             }
         }
-        assert foundJmxRemotingServer : "JMX Remoting server not found.";
-        // FIXME: Disabled until we find a fix for Sigar getProcCredName issue
-        //assert foundExplicitKey1Server : "Explicit key server not found.";
-        assert foundExplicitKey2Server : "JMX Remoting + explicit key server not found.";
+        return null;
     }
 
     @Test(dependsOnMethods = "testServerDiscovery")
     public void testServiceDiscovery() throws Exception {
-        InventoryReport report = PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
-        assert report != null;
-        Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
+        timedAssertion(new AssertUtils.BooleanCondition() {
+            @Override
+            public boolean eval() {
+                InventoryReport report = getInventoryManager().executeServiceScanImmediately();
+                LOG.info("Discovery took: " + (report.getEndTime() - report.getStartTime()) + " ms");
 
-        assert platform != null;
+                Set<Resource> jmxServers = new HashSet<Resource>();
 
-        Set<Resource> jmxServers = getChildResourcesOfType(platform, new ResourceType(SERVER_TYPE_NAME, PLUGIN_NAME,
-            ResourceCategory.SERVER, null));
+                @SuppressWarnings("unused")
+                Resource explicitKey1Server = findTestServerResource(Explicit, EXPLICIT_RESOURCE_KEY1);
+                // key1Server not started, see above
+                // jmxServers.add(explicitKey1Server);
+                Resource explicitKey2Server = findTestServerResource(Explicit, EXPLICIT_RESOURCE_KEY2);
+                jmxServers.add(explicitKey2Server);
+                Resource jmxRemotingServer = findTestServerResource(JmxRemotingPort, JMX_REMOTING_PORT1);
+                jmxServers.add(jmxRemotingServer);
 
-        for (Resource jmxServer : jmxServers) {
-            Set<Resource> childResources = jmxServer.getChildResources();
-            // Each JMX Server should have exactly six singleton child Resources with the following types:
-            // Operating System, Threading, VM Class Loading System, VM Compilation System, VM Memory System, and
-            // java.util.logging.
-            assert childResources.size() == 7 : jmxServer + " does not have 7 child Resources but " + childResources.size()
-                + " - child Resources: " + childResources;
-        }
+                for (Resource jmxServer : jmxServers) {
+                    Set<Resource> childResources = jmxServer.getChildResources();
+                    // Each JMX Server should have exactly six singleton child Resources with the following types:
+                    // Operating System, Threading, VM Class Loading System, VM Compilation System, VM Memory System, and
+                    // java.util.logging.
+                    // And, the test servers we use also expose an additional custom MBean: rhq.test:name=TestTarget
+                    int childResourcesCount = childResources.size();
+                    LOG.info("childResourcesCount = " + childResourcesCount);
+                    if (childResourcesCount != 7) {
+                        return false;
+                    }
+                }
 
-        InventoryPrinter.outputInventory(new PrintWriter(System.out), false);
+                return true;
+            }
+        }, "Test servers do not have 7 child resources", 2, MINUTES, 10, SECONDS);
     }
 
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testMeasurement() throws Exception {
-        Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
-        for (Resource server : platform.getChildResources()) {
-            List<Resource> services = new ArrayList<Resource>(server.getChildResources());
-            Collections.sort(services);
-            for (Resource service : services) {
-                ResourceComponent serviceComponent = PluginContainer.getInstance().getInventoryManager()
-                    .getResourceComponent(service);
-                if (serviceComponent instanceof MeasurementFacet) {
-                    Set<MeasurementScheduleRequest> metricList = new HashSet<MeasurementScheduleRequest>();
-                    metricList.add(new MeasurementScheduleRequest(1, "FreePhysicalMemorySize", 1000, true,
-                        DataType.MEASUREMENT));
-                    if ("VM Memory System".equals(service.getResourceType().getName())) {
-                        metricList.add(new MeasurementScheduleRequest(2, "Calculated.HeapUsagePercentage", 1000, true,
-                            DataType.MEASUREMENT));
-                    }
-                    MeasurementReport report = new MeasurementReport();
-
-                    if (serviceComponent.getAvailability().equals(AvailabilityType.UP)) {
-                        ((MeasurementFacet) serviceComponent).getValues(report, metricList);
-                        for (MeasurementData value : report.getNumericData()) {
-                            System.out.println(value.getValue() + ":" + value.getName());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @Test(dependsOnMethods = "testServiceDiscovery")
-    public void testOperation() throws Exception {
-        Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
-        boolean found = false;
-        for (Resource server : platform.getChildResources()) {
-            List<Resource> services = new ArrayList<Resource>(server.getChildResources());
-            Collections.sort(services);
-            for (Resource service : services) {
-                if (service.getResourceType().getName().equals("Threading")) {
-                    ResourceComponent serviceComponent = PluginContainer.getInstance().getInventoryManager()
-                        .getResourceComponent(service);
-                    found = true;
-
-                    OperationResult result = ((OperationFacet) serviceComponent).invokeOperation("findMonitorDeadlockedThreads",
-                        new Configuration());
-                    System.out.println("Result of operation test was: " + result);
-                    if (result.getErrorMessage()!=null) {
-                        throw new RuntimeException("Operation was no success: " + result.toString());
-                    }
-                }
-            }
-        }
-        if (!found) {
-            throw new RuntimeException("Did not find the requested operation");
-        }
+        MeasurementFacet measurementFacet = getResourceComponentFacet("Operating System", MeasurementFacet.class);
+        Set<MeasurementScheduleRequest> metricList = new HashSet<MeasurementScheduleRequest>();
+        metricList.add(new MeasurementScheduleRequest(1, "CommittedVirtualMemorySize", 1000, true, MEASUREMENT));
+        MeasurementReport report = new MeasurementReport();
+        measurementFacet.getValues(report, metricList);
+        Map<String, Object> metricsData = getMetricsData(report);
+        assertTrue(getMetric(metricsData, "CommittedVirtualMemorySize") > 0);
     }
 
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testOperation1() throws Exception {
-        runOperation("Threading", "findMonitorDeadlockedThreads", new Configuration());
+        OperationResult operationResult = invokeOperation("Threading", "threadDump", new Configuration());
+        assertNotNull(operationResult);
+        Configuration complexResults = operationResult.getComplexResults();
+        assertNotNull(complexResults);
+        assertTrue(isNotBlank(complexResults.getSimpleValue("totalCount")));
     }
 
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testOperation2() throws Exception {
-        String result = runOperation("TestService_", "doSomething", new Configuration());
-        assert result == null; // Operation did not define a "<results>" block.
+        OperationResult operationResult = invokeOperation("TestService_", "doSomething", new Configuration());
+        assertNull(operationResult); // Operation did not define a "<results>" block.
     }
 
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testOperation3() throws Exception {
-        String result = runOperation("TestService_", "hello", new Configuration());
-        assert "Hello World".equals(result);
+        OperationResult operationResult = invokeOperation("TestService_", "hello", new Configuration());
+        assertNotNull(operationResult);
+        assertEquals(operationResult.getSimpleResult(), "Hello World");
     }
 
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testOperation4() throws Exception {
         Configuration parameters = new Configuration();
-        parameters.put(new PropertySimple("p1","Hello Test"));
-        String result = runOperation("TestService_", "echo", parameters);
-        assert "Hello Test".equals(result);
+        parameters.put(new PropertySimple("p1", "Hello Test"));
+        OperationResult operationResult = invokeOperation("TestService_", "echo", parameters);
+        assertNotNull(operationResult);
+        assertEquals(operationResult.getSimpleResult(), "Hello Test");
     }
 
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testOperation5() throws Exception {
         Configuration parameters = new Configuration();
-        parameters.put(new PropertySimple("p1","Hello"));
-        parameters.put(new PropertySimple("p2","Test"));
-        String result = runOperation("TestService_", "concat", parameters);
-        assert "HelloTest".equals(result);
+        parameters.put(new PropertySimple("p1", "Hello"));
+        parameters.put(new PropertySimple("p2", "Test"));
+        OperationResult operationResult = invokeOperation("TestService_", "concat", parameters);
+        assertNotNull(operationResult);
+        assertEquals(operationResult.getSimpleResult(), "HelloTest");
     }
 
+    private OperationResult invokeOperation(String typeName, String operationName, Configuration parameters)
+        throws Exception {
 
+        OperationFacet operationFacet = getResourceComponentFacet(typeName, OperationFacet.class);
+        OperationResult operationResult = operationFacet.invokeOperation(operationName, parameters);
 
-    private String runOperation(String typeName, String operationName, Configuration parameters) throws Exception {
-        Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
-        boolean found = false;
-        String outcome = null;
+        if (operationResult != null && operationResult.getErrorMessage() != null) {
+            fail("Operation (" + operationName + ") failed : " + operationResult.getErrorMessage());
+        }
+        return operationResult;
+    }
+
+    private <FACET> FACET getResourceComponentFacet(String typeName, Class<FACET> facetType) throws Exception {
+        Resource platform = getInventoryManager().getPlatform();
         for (Resource server : platform.getChildResources()) {
-            List<Resource> services = new ArrayList<Resource>(server.getChildResources());
-            Collections.sort(services);
-            for (Resource service : services) {
-                if (service.getResourceType().getName().equals(typeName)) {
-                    ResourceComponent serviceComponent = PluginContainer.getInstance().getInventoryManager()
-                        .getResourceComponent(service);
-                    found = true;
 
-                    OperationResult result = ((OperationFacet) serviceComponent).invokeOperation(operationName,
-                        parameters);
-                    System.out.println("Result of operation test was: " + result);
-                    if (result!=null) {
-                        // Operations are not required to return anything
-                        if (result.getErrorMessage() != null) {
-                            throw new RuntimeException("Operation was no success: " + result.toString());
-                        }
-                        outcome = result.getSimpleResult();
-                    }
+            List<Resource> resources = new ArrayList<Resource>(server.getChildResources());
+            for (Resource resource : resources) {
+
+                if (resource.getResourceType().getName().equals(typeName)) {
+
+                    return ComponentUtil.getComponent(resource.getId(), facetType, FacetLockType.WRITE,
+                        MINUTES.toMillis(1), true, true, true);
                 }
             }
         }
-        if (!found) {
-            throw new RuntimeException("Did not find the requested operation");
-        }
 
-        return outcome;
+        throw new AssertionError("Not found: " + "typeName = [" + typeName + "], facetType = [" + facetType + "]");
     }
-
-    /*
-     * @Test(dependsOnMethods = "testServiceDiscovery") public void testNonMeasurement()  throws Exception {   Resource
-     * platform = PluginContainer.getInstance().getInventoryManager().getPlatform();   for (Resource server :
-     * platform.getChildResources())   {      List<Resource> services = new
-     * ArrayList<Resource>(server.getChildResources());      Collections.sort(services);      for (Resource service :
-     * services)      {         ResourceComponent serviceComponent           =
-     * PluginContainer.getInstance().getInventoryManager().getResourceComponent(service);
-     *
-     *       ResourceType resourceType = service.getResourceType();
-     *
-     *       MeasurementAgentService measurementAgentService =
-     * PluginContainer.getInstance().getMeasurementAgentService();
-     *
-     *       Set<MeasurementDefinition> metricDefinitions = resourceType.getMetricDefinitions();
-     *
-     *       if (!metricDefinitions.isEmpty())         {            System.out.println(service.getName());
-     * Set<String> measurementNames = new HashSet<String>();            for (MeasurementDefinition md :
-     * metricDefinitions)            {               System.out.println(md.getName());
-     * measurementNames.add(md.getName());            }
-     *
-     *          // get the actual measurement data for those measurement names            int resourceId =
-     * service.getId();            String[] measurementNamesArray = measurementNames.toArray(new String[]{});
-     *
-     *          List<MeasurementData> summaryMeasurementDataList = new ArrayList<MeasurementData>(
-     * measurementAgentService.getRealTimeMeasurementValue(resourceId, measurementNamesArray));
-     *
-     *          if (serviceComponent.getAvailability().equals(AvailabilityType.UP))            {               for
-     * (MeasurementData value : summaryMeasurementDataList)               {
-     * System.out.println(value.getValue() + ":" + value.getName());               }            }
-     *
-     *          assert measurementNames.size() == summaryMeasurementDataList.size()              : "Number of
-     * measurements defined did not match number of results retrieved";         }      }
-     *
-     * } }
-     */
 
     private static Set<Resource> getChildResourcesOfType(Resource platform, ResourceType resourceType) {
         Set<Resource> childResources = platform.getChildResources();
@@ -454,13 +370,14 @@ public class JMXPluginTest {
             this.inputStream = inputStream;
         }
 
+        @Override
         public void run() {
             try {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    System.out.println("__" + line);
+                    LOG.info("__" + line);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -485,7 +402,7 @@ public class JMXPluginTest {
             // Deploy an MBean of our own to run additional tests with a custom-jmx-plugin
             try {
                 ObjectName mBeanName = new ObjectName("rhq.test:name=TestTarget");
-                mBeanServer.createMBean(TestTarget.class.getName(),mBeanName);
+                mBeanServer.createMBean(TestTarget.class.getName(), mBeanName);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -495,7 +412,9 @@ public class JMXPluginTest {
 
             System.out.println("Test server JVM with pid [" + pid + "] listening on port ["
                 + serverSocket.getLocalPort() + "]...");
+
             Runnable runnable = new Runnable() {
+                @Override
                 public void run() {
                     Socket socket;
                     try {
@@ -513,7 +432,9 @@ public class JMXPluginTest {
             tp.run();
         }
 
+        @Override
         public void run() {
+            //noinspection InfiniteLoopStatement
             while (true) {
                 System.out.println("Test program running for " + (System.currentTimeMillis() - started) + "ms");
                 try {

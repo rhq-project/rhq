@@ -17,8 +17,18 @@
 
    <properties>
       <rhq.internal>false</rhq.internal>
+      <rhq.jmxplugin.as7.artifact>org.jboss.as:jboss-as-dist:7.1.1.Final</rhq.jmxplugin.as7.artifact>
+      <rhq.jmxplugin.as7.standalone.portOffset>37897</rhq.jmxplugin.as7.standalone.portOffset>
+      <!-- IMPORTANT: The management port must be the port offset + 9999. -->
+      <rhq.jmxplugin.as7.standalone.management.port>47896</rhq.jmxplugin.as7.standalone.management.port>
+      <rhq.jmxplugin.as7.standalone.home>${project.build.directory}/jboss-as-run/jboss-as-7.1.1.Final</rhq.jmxplugin.as7.standalone.home>
+      <rhq.jmxplugin.wildfly8.artifact>org.wildfly:wildfly-dist:8.1.0.Final</rhq.jmxplugin.wildfly8.artifact>
+      <rhq.jmxplugin.wildfly8.standalone.portOffset>47897</rhq.jmxplugin.wildfly8.standalone.portOffset>
+      <!-- IMPORTANT: The management port must be the port offset + 9990. -->
+      <rhq.jmxplugin.wildfly8.standalone.management.port>57887</rhq.jmxplugin.wildfly8.standalone.management.port>
+      <rhq.jmxplugin.wildfly8.standalone.home>${project.build.directory}/wildfly-run/wildfly-8.1.0.Final</rhq.jmxplugin.wildfly8.standalone.home>
    </properties>
-  
+
   <dependencies>
 
       <dependency>
@@ -35,6 +45,14 @@
          <version>1.6.0</version>
          <scope>system</scope>
          <systemPath>${jdkToolsJar}</systemPath>
+      </dependency>
+
+      <!-- Test dependencies -->
+
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <scope>test</scope>
       </dependency>
 
    </dependencies>
@@ -76,7 +94,7 @@
                   <exists>${java.home}/../lib/tools.jar</exists>
               </file>
           </activation>
-          <properties>                          
+          <properties>
               <jdkToolsJar>${java.home}/../lib/tools.jar</jdkToolsJar>
           </properties>
       </profile>
@@ -88,7 +106,7 @@
                   <exists>${java.home}/../Classes/classes.jar</exists>
               </file>
           </activation>
-          <properties>                          
+          <properties>
               <jdkToolsJar>${java.home}/../Classes/classes.jar</jdkToolsJar>
           </properties>
       </profile>
@@ -110,6 +128,12 @@
            <artifactId>maven-surefire-plugin</artifactId>
            <configuration>
              <skip>true</skip>
+             <properties>
+               <property>
+                 <name>listener</name>
+                 <value>org.rhq.test.testng.StdoutReporter</value>
+               </property>
+             </properties>
            </configuration>
             <executions>
                <execution>
@@ -133,11 +157,90 @@
                            <name>project.version</name>
                            <value>${project.version}</value>
                         </property>
+                        <property>
+                          <name>rhq.jmxplugin.as7.standalone.management.port</name>
+                          <value>${rhq.jmxplugin.as7.standalone.management.port}</value>
+                        </property>
+                        <property>
+                          <name>rhq.jmxplugin.as7.standalone.home</name>
+                          <value>${rhq.jmxplugin.as7.standalone.home}</value>
+                        </property>
+                        <property>
+                          <name>rhq.jmxplugin.wildfly8.standalone.management.port</name>
+                          <value>${rhq.jmxplugin.wildfly8.standalone.management.port}</value>
+                        </property>
+                        <property>
+                          <name>rhq.jmxplugin.wildfly8.standalone.home</name>
+                          <value>${rhq.jmxplugin.wildfly8.standalone.home}</value>
+                        </property>
                      </systemProperties>
                   </configuration>
                </execution>
             </executions>
          </plugin>
+
+              <plugin>
+                <groupId>org.jboss.as.plugins</groupId>
+                <artifactId>jboss-as-maven-plugin</artifactId>
+                <version>7.5.Final</version>
+                <configuration>
+                  <artifact>${rhq.jmxplugin.as7.artifact}</artifact>
+                  <jvmArgs>
+                    -Xms64m -Xmx128m -XX:MaxPermSize=256m -Djava.net.preferIPv4Stack=true
+                    -Dorg.jboss.resolver.warning=true -Dsun.rmi.dgc.client.gcInterval=3600000
+                    -Dsun.rmi.dgc.server.gcInterval=3600000
+                    -Djboss.socket.binding.port-offset=${rhq.jmxplugin.as7.standalone.portOffset}
+                  </jvmArgs>
+                  <port>${rhq.jmxplugin.as7.standalone.management.port}</port>
+                </configuration>
+                <executions>
+                  <execution>
+                    <id>start-as7-pre-integration-test</id>
+                    <phase>pre-integration-test</phase>
+                    <goals>
+                      <goal>start</goal>
+                    </goals>
+                  </execution>
+                  <execution>
+                    <id>shutdown-as7-post-integration-test</id>
+                    <phase>post-integration-test</phase>
+                    <goals>
+                      <goal>shutdown</goal>
+                    </goals>
+                  </execution>
+                </executions>
+              </plugin>
+
+              <plugin>
+                <groupId>org.wildfly.plugins</groupId>
+                <artifactId>wildfly-maven-plugin</artifactId>
+                <version>1.0.2.Final</version>
+                <configuration>
+                  <artifact>${rhq.jmxplugin.wildfly8.artifact}</artifact>
+                  <jvmArgs>
+                    -Xms64m -Xmx128m -XX:MaxPermSize=256m -Djava.net.preferIPv4Stack=true
+                    -Dsun.rmi.dgc.client.gcInterval=3600000 -Dsun.rmi.dgc.server.gcInterval=3600000
+                    -Djboss.socket.binding.port-offset=${rhq.jmxplugin.wildfly8.standalone.portOffset}
+                  </jvmArgs>
+                  <port>${rhq.jmxplugin.wildfly8.standalone.management.port}</port>
+                </configuration>
+                <executions>
+                  <execution>
+                    <id>start-wfly8-pre-integration-test</id>
+                    <phase>pre-integration-test</phase>
+                    <goals>
+                      <goal>start</goal>
+                    </goals>
+                  </execution>
+                  <execution>
+                    <id>shutdown-wfly8-post-integration-test</id>
+                    <phase>post-integration-test</phase>
+                    <goals>
+                      <goal>shutdown</goal>
+                    </goals>
+                  </execution>
+                </executions>
+              </plugin>
 
          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
@@ -181,6 +284,18 @@
                   <goals>
                      <goal>run</goal>
                   </goals>
+               </execution>
+               <execution>
+                 <id>install-as7-mgmt-user-pre-integration-test</id>
+                 <phase>pre-integration-test</phase>
+                 <configuration>
+                   <tasks>
+                     <ant antfile="add-user.xml"/>
+                   </tasks>
+                 </configuration>
+                 <goals>
+                   <goal>run</goal>
+                 </goals>
                </execution>
             </executions>
          </plugin>

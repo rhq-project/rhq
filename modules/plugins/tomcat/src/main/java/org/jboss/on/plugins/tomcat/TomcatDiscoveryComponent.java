@@ -25,6 +25,7 @@ package org.jboss.on.plugins.tomcat;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -472,14 +473,55 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         String versionScriptFileName = catalinaHome + File.separator + "bin" + File.separator + "version."
             + (isNix ? "sh" : "bat");
         File versionScriptFile = new File(versionScriptFileName);
+        boolean useVersion = false;
+        boolean useJava = false;
 
         if (!versionScriptFile.exists()) {
-            LOG.warn("Version script file not found in expected location: " + versionScriptFile);
-            return UNKNOWN_VERSION;
+            LOG.debug("Version script file not found in expected location: " + versionScriptFile);
+            /* EWS doesn't have a version script but /etc/init.d (no systemd support for the moment) */
+            versionScriptFileName = "/etc/init.d/tomcat";
+            if (catalinaHome.endsWith("tomcat8")) {
+                versionScriptFileName = versionScriptFileName.concat("8");
+            }
+            if (catalinaHome.endsWith("tomcat7")) {
+                versionScriptFileName = versionScriptFileName.concat("7");
+            }
+            if (catalinaHome.endsWith("tomcat6")) {
+                versionScriptFileName = versionScriptFileName.concat("6");
+            }
+            versionScriptFile = new File(versionScriptFileName);
+            if (!versionScriptFile.exists()) {
+                LOG.debug("systemv script file not found in expected location: " + versionScriptFile);
+                /* rpm should be able to run and find the catalina.jar */
+                versionScriptFile = new File(catalinaHome + "/lib/catalina.jar");
+                if (!versionScriptFile.exists()) {
+                    LOG.warn("jar file not found in expected location: " + catalinaHome + "/lib/catalina.jar");
+                    return UNKNOWN_VERSION;
+                }
+                versionScriptFile = new File("/usr/bin/java");
+                if (!versionScriptFile.exists()) {
+                    LOG.warn("java executable not found in expected location: /usr/bin/java");
+                    return UNKNOWN_VERSION;
+                }
+                useJava = true;
+            }
+            useVersion = true;
         }
 
         ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(versionScriptFile);
-        TomcatServerOperationsDelegate.setProcessExecutionEnvironment(processExecution, catalinaHome, catalinaBase);
+        if (useVersion) {
+            List<String> args = new ArrayList<String>();
+            if (useJava) {
+                args.add("-classpath");
+                args.add(catalinaHome + "/lib/catalina.jar");
+                args.add("org.apache.catalina.util.ServerInfo");
+            } else {
+                args.add("version");
+            }
+            processExecution.setArguments(args);
+        } else {
+            TomcatServerOperationsDelegate.setProcessExecutionEnvironment(processExecution, catalinaHome, catalinaBase);
+        }
 
         long timeout = 10000L;
         processExecution.setCaptureOutput(true);

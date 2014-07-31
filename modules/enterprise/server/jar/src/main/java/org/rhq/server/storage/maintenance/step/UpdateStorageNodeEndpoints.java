@@ -30,7 +30,6 @@ import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.storage.MaintenanceJob;
 import org.rhq.core.domain.storage.MaintenanceStep;
-import org.rhq.core.domain.storage.MaintenanceStep.Type;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerBean;
@@ -55,7 +54,8 @@ public class UpdateStorageNodeEndpoints implements MaintenanceStepFacade {
     @Override
     public void execute(MaintenanceStep maintenanceStep) throws Exception {
 
-        StorageNode storageNode = storageNodeManager.findStorageNodeByAddress(maintenanceStep.getNodeAddress());
+        StorageNode storageNode = storageNodeManager.findStorageNodeByAddress(maintenanceStep.getStorageNode()
+            .getAddress());
         Resource storageNodeResource = storageNode.getResource();
         //scheduling the operation
         long operationStartTime = System.currentTimeMillis();
@@ -109,10 +109,6 @@ public class UpdateStorageNodeEndpoints implements MaintenanceStepFacade {
         MaintenanceStep step = new MaintenanceStep();
         step.setStep(stepNumber)
             .setName(UpdateStorageNodeEndpoints.class.getSimpleName())
-            .setNodeAddress(affectedNode)
-            .setType(Type.ResourceOperation)
-            .setSequential(true)
-            .setTimeout(1000)
             .setMaintenanceJob(job);
 
         return step;

@@ -22,7 +22,6 @@ import javax.ejb.EJB;
 
 import org.rhq.core.domain.storage.MaintenanceJob;
 import org.rhq.core.domain.storage.MaintenanceStep;
-import org.rhq.core.domain.storage.MaintenanceStep.Type;
 import org.rhq.enterprise.server.storage.StorageClientManager;
 
 /**
@@ -45,9 +44,6 @@ public class StartStorageClient implements MaintenanceStepFacade {
 
         step.setStep(stepNumber)
             .setName(StartStorageClient.class.getSimpleName())
-            .setType(Type.ServerUpdate)
-            .setSequential(true)
-            .setTimeout(1000)
             .setMaintenanceJob(job);
 
         return step;

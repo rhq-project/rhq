@@ -85,7 +85,7 @@ public class CoreServerServiceImpl implements CoreServerService {
         AgentNotSupportedException {
 
         // fail-fast if we can't even support this agent
-        if (!getAgentManager().isAgentVersionSupported(request.getAgentVersion())) {
+        if (!getAgentManager().isAgentVersionSupported(request.getAgentVersion()).isSupported()) {
             log.warn("Agent [" + request.getName() + "][" + request.getAddress() + ':' + request.getPort() + "]["
                 + request.getAgentVersion() + "] would like to register with this server but it is not supported");
             throw new AgentNotSupportedException("Agent [" + request.getName() + "] is an unsupported agent: "
@@ -308,7 +308,8 @@ public class CoreServerServiceImpl implements CoreServerService {
 
         log.info("Agent [" + agentName + "][" + agentVersion + "] would like to connect to this server");
 
-        if (!getAgentManager().isAgentVersionSupported(agentVersion)) {
+        AgentVersionCheckResults agentVersionCheckResults = getAgentManager().isAgentVersionSupported(agentVersion);
+        if (!agentVersionCheckResults.isSupported()) {
             log.warn("Agent [" + agentName + "][" + agentVersion
                 + "] would like to connect to this server but it is not supported");
             throw new AgentNotSupportedException("Agent [" + agentName + "] is an unsupported agent: " + agentVersion);
@@ -330,7 +331,8 @@ public class CoreServerServiceImpl implements CoreServerService {
             PartitionEventType.AGENT_CONNECT, agentName + " - " + server.getName());
 
         log.info("Agent [" + agentName + "] has connected to this server at " + new Date());
-        return new ConnectAgentResults(System.currentTimeMillis(), agent.isBackFilled());
+        return new ConnectAgentResults(System.currentTimeMillis(), agent.isBackFilled(),
+            agentVersionCheckResults.getLatestAgentVersion());
     }
 
     /**

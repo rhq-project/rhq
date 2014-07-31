@@ -482,12 +482,13 @@ public class AgentManagerBean implements AgentManagerLocal {
     }
 
     @ExcludeDefaultInterceptors
-    public boolean isAgentVersionSupported(AgentVersion agentVersionInfo) {
+    public AgentVersionCheckResults isAgentVersionSupported(AgentVersion agentVersionInfo) {
         try {
             Properties properties = getAgentUpdateVersionFileContent();
 
-            String supportedAgentVersion = properties.getProperty(RHQ_AGENT_LATEST_VERSION);
-            if (supportedAgentVersion == null) {
+            String latestAgentVersion = properties.getProperty(RHQ_AGENT_LATEST_VERSION);
+            String latestAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
+            if (latestAgentVersion == null) {
                 throw new NullPointerException("no agent version in file");
             }
 
@@ -495,27 +496,19 @@ public class AgentManagerBean implements AgentManagerLocal {
 
             boolean isSupported;
 
-            ComparableVersion agent = new ComparableVersion(agentVersionInfo.getVersion());
-            ComparableVersion server = new ComparableVersion(supportedAgentVersion);
-
-            //Non strict checking enabled.
-            if (Boolean.getBoolean("rhq.server.agent-update.nonstrict-version-check")) {
-                return agent.equals(server);
+            //if no list of supportedBuilds provided then,    
+            if (supportedAgentBuilds == null || supportedAgentBuilds.isEmpty()) {
+                ComparableVersion agent = new ComparableVersion(agentVersionInfo.getVersion());
+                ComparableVersion server = new ComparableVersion(latestAgentVersion);
+                isSupported = agent.equals(server);
             } else {
-
-                //if no list of supportedBuilds provided then,    
-                if (supportedAgentBuilds == null || supportedAgentBuilds.isEmpty()) {
-                    String supportedAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
-                    return agent.equals(server) && agentVersionInfo.getBuild().equals(supportedAgentBuild);
-                } else {
-                    // we were given a regex of supported versions, check the agent version to see if it matches the regex
-                    isSupported = agentVersionInfo.getBuild().matches(supportedAgentBuilds);
-                }
+                // we were given a regex of supported versions, check the agent version to see if it matches the regex
+                isSupported = agentVersionInfo.getBuild().matches(supportedAgentBuilds);
             }
-            return isSupported;
+            return new AgentVersionCheckResults(isSupported, new AgentVersion(latestAgentVersion, latestAgentBuild));
         } catch (Exception e) {
             log.warn("Cannot determine if agent version [" + agentVersionInfo + "] is supported. Cause: " + e);
-            return false; // assume we can't talk to it
+            return new AgentVersionCheckResults(false, new AgentVersion("", "")); // assume we can't talk to it
         }
     }
 

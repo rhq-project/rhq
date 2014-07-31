@@ -34,10 +34,12 @@ public class ConnectAgentRequest implements Serializable {
 
     private final String agentName;
     private final AgentVersion agentVersion;
+    private final boolean autoUpdateEnabled;
 
-    public ConnectAgentRequest(String agentName, AgentVersion agentVersion) {
+    public ConnectAgentRequest(String agentName, AgentVersion agentVersion, boolean autoUpdateEnabled) {
         this.agentName = agentName;
         this.agentVersion = agentVersion;
+        this.autoUpdateEnabled = autoUpdateEnabled;
     }
 
     /**
@@ -45,7 +47,7 @@ public class ConnectAgentRequest implements Serializable {
      * This is not necessarily the agent's hostname or IP address, it is
      * the string assigned to the agent that makes it unique among all other
      * agents in the system.
-     *  
+     *
      * @return agent name
      */
     public String getAgentName() {
@@ -54,11 +56,23 @@ public class ConnectAgentRequest implements Serializable {
 
     /**
      * The version information of the agent asking to be connected.
-     * 
+     *
      * @return agent version
      */
     public AgentVersion getAgentVersion() {
         return agentVersion;
+    }
+
+    /**
+     * Returns true if the connecting agent will attempt to auto-update itself if its
+     * {@link #getAgentVersion() version} is not supported. False will be returned
+     * if this agent will be "dead in the water" if it is not supported because it will
+     * not attempt to update itself to a newer version of the agent that is supported.
+     *
+     * @return auto update flag as set on the agent
+     */
+    public boolean isAutoUpdateEnabled() {
+        return autoUpdateEnabled;
     }
 
     @Override
@@ -68,6 +82,8 @@ public class ConnectAgentRequest implements Serializable {
         str.append(this.agentName);
         str.append("; version-info=[");
         str.append(this.agentVersion);
+        str.append("; auto-update-enabled=[");
+        str.append(this.autoUpdateEnabled);
         str.append("]");
         return str.toString();
     }

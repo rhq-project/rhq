@@ -25,11 +25,11 @@ public class AgentSupportedBuildTest {
     public void testLatestAgentBuildCheck() {
         AgentVersion agentVersionInfo = setLatestAgentVersionAndBuildToCheck("1.0.GA", "cafebabe0", "1.0.GA",
             "cafebabe0");
-        assert true == agentManager.isAgentVersionSupported(agentVersionInfo);
+        assert true == agentManager.isAgentVersionSupported(agentVersionInfo).isSupported();
         agentVersionInfo = setLatestAgentVersionAndBuildToCheck("1.0.GA", "cafebabe0", "1.0.RC1", "cafebabe1");
-        assert false == agentManager.isAgentVersionSupported(agentVersionInfo);
+        assert false == agentManager.isAgentVersionSupported(agentVersionInfo).isSupported();
         agentVersionInfo = setLatestAgentVersionAndBuildToCheck("1.0.GA", "nocafe", "2.0.GA", "cafebabe2");
-        assert false == agentManager.isAgentVersionSupported(agentVersionInfo);
+        assert false == agentManager.isAgentVersionSupported(agentVersionInfo).isSupported();
     }
 
     /** Test Regex options. When build strings are no longer used then 3.2.0.GA-redhat-N is most elegant test via regex.
@@ -91,11 +91,11 @@ public class AgentSupportedBuildTest {
     public void testLatestAgentBuildCheckRegex() {
         String regexOptions = "cafebabe0|3degf01|cafebabe9";
         AgentVersion agentVersionInfo = setSupportedBuildsToCheck(regexOptions, "1.0.GA", "cafebabe0");
-        assert true == agentManager.isAgentVersionSupported(agentVersionInfo);
+        assert true == agentManager.isAgentVersionSupported(agentVersionInfo).isSupported();
         agentVersionInfo = setSupportedBuildsToCheck(regexOptions, "1.0.RC1", "cafebabe1");
-        assert false == agentManager.isAgentVersionSupported(agentVersionInfo);
+        assert false == agentManager.isAgentVersionSupported(agentVersionInfo).isSupported();
         agentVersionInfo = setSupportedBuildsToCheck(regexOptions, "2.0.GA", "3deg");
-        assert false == agentManager.isAgentVersionSupported(agentVersionInfo);
+        assert false == agentManager.isAgentVersionSupported(agentVersionInfo).isSupported();
     }
 
     private void checkOK(String supportedBuilds, String agentBuildToCheck) {
@@ -109,7 +109,7 @@ public class AgentSupportedBuildTest {
     private void check(String supportedBuilds, String agentBuildToCheck, boolean expectedResult) {
         //Version string completely ignored in this case and only specific build identifier matters.
         AgentVersion agentVersionInfo = setSupportedBuildsToCheck(supportedBuilds, "", agentBuildToCheck);
-        assert expectedResult == agentManager.isAgentVersionSupported(agentVersionInfo) : "supportedBuilds="
+        assert expectedResult == agentManager.isAgentVersionSupported(agentVersionInfo).isSupported() : "supportedBuilds="
             + supportedBuilds + "; agentBuildToCheck=" + agentBuildToCheck;
     }
 

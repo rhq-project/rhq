@@ -251,9 +251,10 @@ public interface AgentManagerLocal {
      * 
      * @return <code>true</code> if this server can support an agent with the given version; if the server
      *         knows it cannot communicate successfully with an agent of that version, <code>false</code>
-     *         will be returned
+     *         will be in the POJO's isSupported attribute. The POJO also contains agent version information on the latest
+     *         known agent available.
      */
-    boolean isAgentVersionSupported(AgentVersion agentVersion);
+    AgentVersionCheckResults isAgentVersionSupported(AgentVersion agentVersion);
 
     /**
      * Returns the path on the server's file system where the agent update version file is found.

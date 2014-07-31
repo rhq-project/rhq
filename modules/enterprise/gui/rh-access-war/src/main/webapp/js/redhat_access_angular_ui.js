@@ -1,4 +1,4 @@
-/*! redhat_access_angular_ui - v0.0.0 - 2014-06-11
+/*! redhat_access_angular_ui - v0.0.0 - 2014-07-31
  * Copyright (c) 2014 ;
  * Licensed 
  */
@@ -3270,7 +3270,9 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
 (function (root, factory) {
     'use strict';
     if (typeof define === 'function' && define.amd) {
-        define('strata', ['jquery', 'jsUri', 'js-markdown-extra'], factory);
+        define('strata', ['jquery', 'jsUri'], function($, uri){
+            root.strata = factory($, uri);
+        });
     } else {
         root.strata = factory(root.$, root.Uri);
     }
@@ -3307,6 +3309,8 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
         listCaseAttachments,
         getSymptomsFromText,
         listGroups,
+        createGroup,
+        deleteGroup,
         fetchGroup,
         listProducts,
         fetchProduct,
@@ -3320,17 +3324,22 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
         fetchAccounts,
         fetchAccount,
         fetchURI,
+        fetchAccountUsers,
+        fetchEntitlements,
+        authHostname,
         fetchAccountUsers;
 
-    strata.version = "1.0.11";
+    strata.version = "1.0.27";
     redhatClientID = "stratajs-" + strata.version;
 
     if (window.portal && window.portal.host) {
         //if this is a chromed app this will work otherwise we default to prod
         portalHostname = new Uri(window.portal.host).host();
+        authHostname = portalHostname;
 
     } else {
         portalHostname = 'access.redhat.com';
+        authHostname = portalHostname;
     }
 
     strataHostname = new Uri('https://api.' + portalHostname);
@@ -3338,14 +3347,30 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
 
     strata.setRedhatClientID = function (id) {
         redhatClientID = id;
-        strataHostname = new Uri('https://api.' + portalHostname);
+        strataHostname = new Uri(strataHostname);
         strataHostname.addQueryParam(redhatClient, redhatClientID);
     };
 
     strata.setStrataHostname = function (hostname) {
         portalHostname = hostname;
+        strataHostname = new Uri(portalHostname);
+        strataHostname.addQueryParam(redhatClient, redhatClientID);
+    };
+
+    strata.setPortalHostname = function (hostname) {
+        portalHostname = hostname;
+        authHostname = hostname;
         strataHostname = new Uri('https://api.' + portalHostname);
         strataHostname.addQueryParam(redhatClient, redhatClientID);
+    };
+
+    strata.setAuthHostname = function (hostname) {
+        authHostname = hostname;
+        authAjaxParams = $.extend({
+            url: 'https://' + authHostname +
+                '/services/user/status?jsoncallback=?',
+            dataType: 'jsonp'
+        }, baseAjaxParams);
     };
 
     strata.getAuthInfo = function () {
@@ -3357,12 +3382,20 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
     authedUser.login = localStorage.getItem("rhUserName");
 
     strata.setCredentials = function (username, password, handleLogin) {
-        basicAuthToken = btoa(username + ":" + password);
-        localStorage.setItem("rhAuthToken", basicAuthToken);
-        localStorage.setItem("rhUserName", username);
-        authedUser.login = username;
-        strata.checkLogin(handleLogin);
+        if(isASCII(username + password)){
+            basicAuthToken = btoa(username + ":" + password);
+            localStorage.setItem("rhAuthToken", basicAuthToken);
+            localStorage.setItem("rhUserName", username);
+            authedUser.login = username;
+            strata.checkLogin(handleLogin);
+        } else{
+            handleLogin(false);
+        }
     };
+
+    function isASCII(str) {
+        return /^[\x00-\x7F]*$/.test(str);
+    }
 
     strata.clearCredentials = function () {
         strata.clearBasicAuth();
@@ -3378,7 +3411,7 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
 
     strata.clearCookieAuth = function () {
         $("body").append("<iframe id='rhLogoutFrame' name='rhLogoutFrame' style='display: none;'></iframe>");
-        window.open("https://" + portalHostname + "/logout", "rhLogoutFrame");
+        window.open("https://" + authHostname + "/logout", "rhLogoutFrame");
     };
 
 
@@ -3411,7 +3444,7 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
     };
 
     authAjaxParams = $.extend({
-        url: 'https://' + portalHostname +
+        url: 'https://' + authHostname +
             '/services/user/status?jsoncallback=?',
         dataType: 'jsonp'
     }, baseAjaxParams);
@@ -3545,6 +3578,11 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
             context: authedUser,
             success: function (response) {
                 this.name = response.first_name + ' ' + response.last_name;
+                this.is_internal = response.is_internal;
+                this.org_admin = response.org_admin;
+                this.has_chat = response.has_chat;
+                this.session_id = response.session_id;
+                this.can_add_attachments = response.can_add_attachments;
                 loginHandler(true, this);
             },
             error: function () {
@@ -3570,6 +3608,13 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
                         },
                         //We are all good
                         success: function (response) {
+                            this.sso_username = response.sso_username;
+                            this.name = response.first_name + ' ' + response.last_name;
+                            this.is_internal = response.is_internal;
+                            this.org_admin = response.org_admin;
+                            this.has_chat = response.has_chat;
+                            this.session_id = response.session_id;
+                            this.can_add_attachments = response.can_add_attachments;
                             loginHandler(true, this);
                         },
                         //We have an SSO Cookie but it's invalid
@@ -3661,7 +3706,7 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
 
         var searchSolutions = $.extend({}, baseAjaxParams, {
             url: strataHostname.clone().setPath('/rs/solutions')
-                .addQueryParam('keyword', keyword)
+                .addQueryParam('keyword', encodeURIComponent(keyword))
                 .addQueryParam('limit', limit),
             success: function (response) {
                 if (chain && response.solution !== undefined) {
@@ -3729,7 +3774,7 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
         if (chain === undefined) {chain = false; }
 
         var url = strataHostname.clone().setPath('/rs/articles');
-        url.addQueryParam('keyword', keyword);
+        url.addQueryParam('keyword', encodeURIComponent(keyword));
         url.addQueryParam('limit', limit);
 
         searchArticles = $.extend({}, baseAjaxParams, {
@@ -3788,6 +3833,35 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
             }
         });
         $.ajax(fetchCase);
+    };
+
+    //update case comment
+    strata.cases.comments.update = function (casenum, comment, commentId, onSuccess, onFailure) {
+        if (!$.isFunction(onSuccess)) { throw "onSuccess callback must be a function"; }
+        if (!$.isFunction(onFailure)) { throw "onFailure callback must be a function"; }
+        if (casenum === undefined) { onFailure("casenum must be defined"); }
+
+        var url;
+        if (isUrl(casenum)) {
+            url = new Uri(casenum + '/comments');
+            url.addQueryParam(redhatClient, redhatClientID);
+        } else {
+            url = strataHostname.clone().setPath('/rs/cases/' + casenum + '/comments/' + commentId);
+        }
+
+        fetchCaseComments = $.extend({}, baseAjaxParams, {
+            url: url,
+            type: 'PUT',
+            method: 'PUT',
+            data: JSON.stringify(comment),
+            statusCode: {
+                200: function(response) {
+                  onSuccess();
+                },
+                400: onFailure
+            }
+        });
+        $.ajax(fetchCaseComments);
     };
 
     //Retrieve case comments
@@ -3871,9 +3945,9 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
         fetchCases = $.extend({}, baseAjaxParams, {
             url: url,
             success: function (response) {
-                if (response.case !== undefined) {
-                    response.case.forEach(convertDates);
-                    onSuccess(response.case);
+                if (response['case'] !== undefined) {
+                    response['case'].forEach(convertDates);
+                    onSuccess(response['case']);
                 } else {
                     onSuccess([]);
                 }
@@ -3985,9 +4059,9 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
             type: 'POST',
             method: 'POST',
             success: function (response) {
-                if (response.case !== undefined) {
-                    response.case.forEach(convertDates);
-                    onSuccess(response.case);
+                if (response['case'] !== undefined) {
+                    response['case'].forEach(convertDates);
+                    onSuccess(response['case']);
                 } else {
                     onSuccess([]);
                 }
@@ -4042,13 +4116,18 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
             url = strataHostname.clone().setPath('/rs/cases/' + casenum);
         }
 
+        var successCallback = function() {
+          onSuccess();
+        };
+
         updateCase = $.extend({}, baseAjaxParams, {
             url: url,
             data: JSON.stringify(casedata),
             type: 'PUT',
             method: 'PUT',
             statusCode: {
-                202: onSuccess,
+                200: successCallback,
+                202: successCallback,
                 400: onFailure
             },
             success: function (response) {
@@ -4123,7 +4202,7 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
         $.ajax(createAttachment);
     };
 
-    strata.cases.attachments.delete = function (attachmentId, casenum, onSuccess, onFailure) {
+    strata.cases.attachments.remove = function (attachmentId, casenum, onSuccess, onFailure) {
         if (!$.isFunction(onSuccess)) { throw "onSuccess callback must be a function"; }
         if (!$.isFunction(onFailure)) { throw "onFailure callback must be a function"; }
         if (attachmentId === undefined) { onFailure("attachmentId must be defined"); }
@@ -4204,6 +4283,68 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
             }
         });
         $.ajax(listGroups);
+    };
+
+    //Create a group
+    strata.groups.create = function (groupName, onSuccess, onFailure) {
+        if (!$.isFunction(onSuccess)) { throw "onSuccess callback must be a function"; }
+        if (!$.isFunction(onFailure)) { throw "onFailure callback must be a function"; }
+        if (groupName === undefined) { onFailure("groupName must be defined"); }
+
+        var url = strataHostname.clone().setPath('/rs/groups');
+        url.addQueryParam(redhatClient, redhatClientID);
+
+        var throwError = function(xhr, response, status) {
+            onFailure("Error " + xhr.status + " " + xhr.statusText, xhr, response, status);
+        };
+
+        createGroup = $.extend({}, baseAjaxParams, {
+            url: url,
+            type: 'POST',
+            method: 'POST',
+            data: '{"name": "' + groupName + '"}',
+            success: onSuccess,
+            statusCode: {
+                201: function(response) {
+                    var locationHeader = response.getResponseHeader('Location');
+                    var groupNumber =
+                        locationHeader.slice(locationHeader.lastIndexOf('/') + 1);
+                    onSuccess(groupNumber);
+                },
+                400: throwError,
+                500: throwError
+            }
+        });
+        $.ajax(createGroup);
+    };
+
+    //Delete a group
+    strata.groups.remove = function (groupnum, onSuccess, onFailure) {
+        if (!$.isFunction(onSuccess)) { throw "onSuccess callback must be a function"; }
+        if (!$.isFunction(onFailure)) { throw "onFailure callback must be a function"; }
+        if (groupnum === undefined) { onFailure("groupnum must be defined"); }
+
+        var url = strataHostname.clone().setPath('/rs/groups/' + groupnum);
+        url.addQueryParam(redhatClient, redhatClientID);
+
+        var throwError = function(xhr, response, status) {
+            onFailure("Error " + xhr.status + " " + xhr.statusText, xhr, response, status);
+        };
+
+        deleteGroup = $.extend({}, baseAjaxParams, {
+            url: url,
+            type: 'DELETE',
+            method: 'DELETE',
+            success: onSuccess,
+            statusCode: {
+                200: function(response) {
+                    onSuccess();
+                },
+                400: throwError,
+                500: throwError
+            }
+        });
+        $.ajax(deleteGroup);
     };
 
     //Retrieve a group
@@ -4550,6 +4691,27 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
         $.ajax(fetchAccountUsers);
     };
 
+    strata.entitlements = {};
+    strata.entitlements.get = function (showAll, onSuccess, onFailure, ssoUserName) {
+        if (!$.isFunction(onSuccess)) { throw "onSuccess callback must be a function"; }
+        if (!$.isFunction(onFailure)) { throw "onFailure callback must be a function"; }
+
+        if (ssoUserName === undefined) {
+            var url = strataHostname.clone().setPath('/rs/entitlements?showAll=' + showAll.toString());
+        } else {
+            var url = strataHostname.clone().setPath('/rs/entitlements/contact/' + ssoUserName + '?showAll=' + showAll.toString());
+        }
+
+        fetchEntitlements = $.extend({}, baseAjaxParams, {
+            url: url,
+            success: onSuccess,
+            error: function (xhr, reponse, status) {
+                onFailure("Error " + xhr.status + " " + xhr.statusText, xhr, reponse, status);
+            }
+        });
+        $.ajax(fetchEntitlements);
+    };
+
     //Helper function to "diagnose" text, chains problems and solutions calls
     //This will call 'onSuccess' for each solution
     strata.diagnose = function (data, onSuccess, onFailure, limit) {
@@ -4575,7 +4737,8 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
 
         var searchStrata = $.extend({}, baseAjaxParams, {
             url: strataHostname.clone().setPath('/rs/search')
-                .addQueryParam('keyword', keyword)
+                .addQueryParam('keyword', encodeURIComponent(keyword))
+                .addQueryParam('contentType', 'article,solution')
                 .addQueryParam('limit', limit),
             success: function (response) {
                 if (chain && response.search_result !== undefined) {
@@ -13785,6 +13948,3668 @@ angular.module('ngTable').run(['$templateCache', function ($templateCache) {
     return app;
 }));
 angular.module("gettext",[]),angular.module("gettext").constant("gettext",function(a){return a}),angular.module("gettext").factory("gettextCatalog",["gettextPlurals","$http","$cacheFactory",function(a,b,c){var d,e=function(a){return d.debug&&d.currentLanguage!==d.baseLanguage?"[MISSING]: "+a:a};return d={debug:!1,strings:{},baseLanguage:"en",currentLanguage:"en",cache:c("strings"),setStrings:function(a,b){var c,d;this.strings[a]||(this.strings[a]={});for(c in b)d=b[c],this.strings[a][c]="string"==typeof d?[d]:d},getStringForm:function(a,b){var c=this.strings[this.currentLanguage]||{},d=c[a]||[];return d[b]},getString:function(a){return this.getStringForm(a,0)||e(a)},getPlural:function(b,c,d){var f=a(this.currentLanguage,b);return this.getStringForm(c,f)||e(1===b?c:d)},loadRemote:function(a){return b({method:"GET",url:a,cache:d.cache}).success(function(a){for(var b in a)d.setStrings(b,a[b])})}}}]),angular.module("gettext").directive("translate",["gettextCatalog","$interpolate","$parse","$compile",function(a,b,c,d){var e=function(){return String.prototype.trim?function(a){return"string"==typeof a?a.trim():a}:function(a){return"string"==typeof a?a.replace(/^\s*/,"").replace(/\s*$/,""):a}}();return{transclude:"element",priority:499,compile:function(f,g,h){return function(f,i){var j=function(a,b,c){if(!a)throw new Error("You should add a "+b+" attribute whenever you add a "+c+" attribute.")};if(j(!g.translatePlural||g.translateN,"translate-n","translate-plural"),j(!g.translateN||g.translatePlural,"translate-plural","translate-n"),g.ngIf)throw new Error("You should not combine translate with ng-if, this will lead to problems.");if(g.ngSwitchWhen)throw new Error("You should not combine translate with ng-switch-when, this will lead to problems.");var k=c(g.translateN),l=null;h(f,function(c){var h=e(c.html());return c.removeAttr("translate"),i.replaceWith(c),f.$watch(function(){var e,i=c.html();g.translatePlural?(f=l||(l=f.$new()),f.$count=k(f),e=a.getPlural(f.$count,h,g.translatePlural)):e=a.getString(h);var j=b(e)(f);return i!==j?(c.html(j),void 0!==g.translateCompile&&d(c.contents())(f),c):void 0})})}}}}]),angular.module("gettext").filter("translate",["gettextCatalog","$interpolate","$parse",function(a){return function(b){return a.getString(b)}}]),angular.module("gettext").factory("gettextPlurals",function(){return function(a,b){switch(a){case"ay":case"bo":case"cgg":case"dz":case"fa":case"id":case"ja":case"jbo":case"ka":case"kk":case"km":case"ko":case"ky":case"lo":case"ms":case"my":case"sah":case"su":case"th":case"tt":case"ug":case"vi":case"wo":case"zh":return 0;case"is":return b%10!=1||b%100==11?1:0;case"jv":return 0!=b?1:0;case"mk":return 1==b||b%10==1?0:1;case"ach":case"ak":case"am":case"arn":case"br":case"fil":case"fr":case"gun":case"ln":case"mfe":case"mg":case"mi":case"oc":case"pt_BR":case"tg":case"ti":case"tr":case"uz":case"wa":case"zh":return b>1?1:0;case"lv":return b%10==1&&b%100!=11?0:0!=b?1:2;case"lt":return b%10==1&&b%100!=11?0:b%10>=2&&(10>b%100||b%100>=20)?1:2;case"be":case"bs":case"hr":case"ru":case"sr":case"uk":return b%10==1&&b%100!=11?0:b%10>=2&&4>=b%10&&(10>b%100||b%100>=20)?1:2;case"mnk":return 0==b?0:1==b?1:2;case"ro":return 1==b?0:0==b||b%100>0&&20>b%100?1:2;case"pl":return 1==b?0:b%10>=2&&4>=b%10&&(10>b%100||b%100>=20)?1:2;case"cs":case"sk":return 1==b?0:b>=2&&4>=b?1:2;case"sl":return b%100==1?1:b%100==2?2:b%100==3||b%100==4?3:0;case"mt":return 1==b?0:0==b||b%100>1&&11>b%100?1:b%100>10&&20>b%100?2:3;case"gd":return 1==b||11==b?0:2==b||12==b?1:b>2&&20>b?2:3;case"cy":return 1==b?0:2==b?1:8!=b&&11!=b?2:3;case"kw":return 1==b?0:2==b?1:3==b?2:3;case"ga":return 1==b?0:2==b?1:7>b?2:11>b?3:4;case"ar":return 0==b?0:1==b?1:2==b?2:b%100>=3&&10>=b%100?3:b%100>=11?4:5;default:return 1!=b?1:0}}});
+/**
+ * Enhanced Select2 Dropmenus
+ *
+ * @AJAX Mode - When in this mode, your value will be an object (or array of objects) of the data used by Select2
+ *     This change is so that you do not have to do an additional query yourself on top of Select2's own query
+ * @params [options] {object} The configuration options passed to $.fn.select2(). Refer to the documentation
+ */
+angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelect2', ['uiSelect2Config', '$timeout', function (uiSelect2Config, $timeout) {
+  var options = {};
+  if (uiSelect2Config) {
+    angular.extend(options, uiSelect2Config);
+  }
+  return {
+    require: 'ngModel',
+    priority: 1,
+    compile: function (tElm, tAttrs) {
+      var watch,
+        repeatOption,
+        repeatAttr,
+        isSelect = tElm.is('select'),
+        isMultiple = angular.isDefined(tAttrs.multiple);
+
+      // Enable watching of the options dataset if in use
+      if (tElm.is('select')) {
+        repeatOption = tElm.find('option[ng-repeat], option[data-ng-repeat]');
+
+        if (repeatOption.length) {
+          repeatAttr = repeatOption.attr('ng-repeat') || repeatOption.attr('data-ng-repeat');
+          watch = jQuery.trim(repeatAttr.split('|')[0]).split(' ').pop();
+        }
+      }
+
+      return function (scope, elm, attrs, controller) {
+        // instance-specific options
+        var opts = angular.extend({}, options, scope.$eval(attrs.uiSelect2));
+
+        /*
+        Convert from Select2 view-model to Angular view-model.
+        */
+        var convertToAngularModel = function(select2_data) {
+          var model;
+          if (opts.simple_tags) {
+            model = [];
+            angular.forEach(select2_data, function(value, index) {
+              model.push(value.id);
+            });
+          } else {
+            model = select2_data;
+          }
+          return model;
+        };
+
+        /*
+        Convert from Angular view-model to Select2 view-model.
+        */
+        var convertToSelect2Model = function(angular_data) {
+          var model = [];
+          if (!angular_data) {
+            return model;
+          }
+
+          if (opts.simple_tags) {
+            model = [];
+            angular.forEach(
+              angular_data,
+              function(value, index) {
+                model.push({'id': value, 'text': value});
+              });
+          } else {
+            model = angular_data;
+          }
+          return model;
+        };
+
+        if (isSelect) {
+          // Use <select multiple> instead
+          delete opts.multiple;
+          delete opts.initSelection;
+        } else if (isMultiple) {
+          opts.multiple = true;
+        }
+
+        if (controller) {
+          // Watch the model for programmatic changes
+           scope.$watch(tAttrs.ngModel, function(current, old) {
+            if (!current) {
+              return;
+            }
+            if (current === old) {
+              return;
+            }
+            controller.$render();
+          }, true);
+          controller.$render = function () {
+            if (isSelect) {
+              elm.select2('val', controller.$viewValue);
+            } else {
+              if (opts.multiple) {
+                var viewValue = controller.$viewValue;
+                if (angular.isString(viewValue)) {
+                  viewValue = viewValue.split(',');
+                }
+                elm.select2(
+                  'data', convertToSelect2Model(viewValue));
+              } else {
+                if (angular.isObject(controller.$viewValue)) {
+                  elm.select2('data', controller.$viewValue);
+                } else if (!controller.$viewValue) {
+                  elm.select2('data', null);
+                } else {
+                  elm.select2('val', controller.$viewValue);
+                }
+              }
+            }
+          };
+
+          // Watch the options dataset for changes
+          if (watch) {
+            scope.$watch(watch, function (newVal, oldVal, scope) {
+              if (angular.equals(newVal, oldVal)) {
+                return;
+              }
+              // Delayed so that the options have time to be rendered
+              $timeout(function () {
+                elm.select2('val', controller.$viewValue);
+                // Refresh angular to remove the superfluous option
+                elm.trigger('change');
+                if(newVal && !oldVal && controller.$setPristine) {
+                  controller.$setPristine(true);
+                }
+              });
+            });
+          }
+
+          // Update valid and dirty statuses
+          controller.$parsers.push(function (value) {
+            var div = elm.prev();
+            div
+              .toggleClass('ng-invalid', !controller.$valid)
+              .toggleClass('ng-valid', controller.$valid)
+              .toggleClass('ng-invalid-required', !controller.$valid)
+              .toggleClass('ng-valid-required', controller.$valid)
+              .toggleClass('ng-dirty', controller.$dirty)
+              .toggleClass('ng-pristine', controller.$pristine);
+            return value;
+          });
+
+          if (!isSelect) {
+            // Set the view and model value and update the angular template manually for the ajax/multiple select2.
+            elm.bind("change", function (e) {
+              e.stopImmediatePropagation();
+              
+              if (scope.$$phase || scope.$root.$$phase) {
+                return;
+              }
+              scope.$apply(function () {
+                controller.$setViewValue(
+                  convertToAngularModel(elm.select2('data')));
+              });
+            });
+
+            if (opts.initSelection) {
+              var initSelection = opts.initSelection;
+              opts.initSelection = function (element, callback) {
+                initSelection(element, function (value) {
+                  controller.$setViewValue(convertToAngularModel(value));
+                  callback(value);
+                });
+              };
+            }
+          }
+        }
+
+        elm.bind("$destroy", function() {
+          elm.select2("destroy");
+        });
+
+        attrs.$observe('disabled', function (value) {
+          elm.select2('enable', !value);
+        });
+
+        attrs.$observe('readonly', function (value) {
+          elm.select2('readonly', !!value);
+        });
+
+        if (attrs.ngMultiple) {
+          scope.$watch(attrs.ngMultiple, function(newVal) {
+            attrs.$set('multiple', !!newVal);
+            elm.select2(opts);
+          });
+        }
+
+        // Initialize the plugin late so that the injected DOM does not disrupt the template compiler
+        $timeout(function () {
+          elm.select2(opts);
+
+          // Set initial value - I'm not sure about this but it seems to need to be there
+          elm.val(controller.$viewValue);
+          // important!
+          controller.$render();
+
+          // Not sure if I should just check for !isSelect OR if I should check for 'tags' key
+          if (!opts.initSelection && !isSelect) {
+            controller.$setViewValue(
+              convertToAngularModel(elm.select2('data'))
+            );
+          }
+        });
+      };
+    }
+  };
+}]);
+
+/*
+Copyright 2012 Igor Vaynberg
+
+Version: 3.4.8 Timestamp: Thu May  1 09:50:32 EDT 2014
+
+This software is licensed under the Apache License, Version 2.0 (the "Apache License") or the GNU
+General Public License version 2 (the "GPL License"). You may choose either license to govern your
+use of this software only upon the condition that you accept all of the terms of either the Apache
+License or the GPL License.
+
+You may obtain a copy of the Apache License and the GPL License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+    http://www.gnu.org/licenses/gpl-2.0.html
+
+Unless required by applicable law or agreed to in writing, software distributed under the
+Apache License or the GPL License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the Apache License and the GPL License for
+the specific language governing permissions and limitations under the Apache License and the GPL License.
+*/
+(function ($) {
+    if(typeof $.fn.each2 == "undefined") {
+        $.extend($.fn, {
+            /*
+            * 4-10 times faster .each replacement
+            * use it carefully, as it overrides jQuery context of element on each iteration
+            */
+            each2 : function (c) {
+                var j = $([0]), i = -1, l = this.length;
+                while (
+                    ++i < l
+                    && (j.context = j[0] = this[i])
+                    && c.call(j[0], i, j) !== false //"this"=DOM, i=index, j=jQuery object
+                );
+                return this;
+            }
+        });
+    }
+})(jQuery);
+
+(function ($, undefined) {
+    "use strict";
+    /*global document, window, jQuery, console */
+
+    if (window.Select2 !== undefined) {
+        return;
+    }
+
+    var KEY, AbstractSelect2, SingleSelect2, MultiSelect2, nextUid, sizer,
+        lastMousePosition={x:0,y:0}, $document, scrollBarDimensions,
+
+    KEY = {
+        TAB: 9,
+        ENTER: 13,
+        ESC: 27,
+        SPACE: 32,
+        LEFT: 37,
+        UP: 38,
+        RIGHT: 39,
+        DOWN: 40,
+        SHIFT: 16,
+        CTRL: 17,
+        ALT: 18,
+        PAGE_UP: 33,
+        PAGE_DOWN: 34,
+        HOME: 36,
+        END: 35,
+        BACKSPACE: 8,
+        DELETE: 46,
+        isArrow: function (k) {
+            k = k.which ? k.which : k;
+            switch (k) {
+            case KEY.LEFT:
+            case KEY.RIGHT:
+            case KEY.UP:
+            case KEY.DOWN:
+                return true;
+            }
+            return false;
+        },
+        isControl: function (e) {
+            var k = e.which;
+            switch (k) {
+            case KEY.SHIFT:
+            case KEY.CTRL:
+            case KEY.ALT:
+                return true;
+            }
+
+            if (e.metaKey) return true;
+
+            return false;
+        },
+        isFunctionKey: function (k) {
+            k = k.which ? k.which : k;
+            return k >= 112 && k <= 123;
+        }
+    },
+    MEASURE_SCROLLBAR_TEMPLATE = "<div class='select2-measure-scrollbar'></div>",
+
+    DIACRITICS = {"\u24B6":"A","\uFF21":"A","\u00C0":"A","\u00C1":"A","\u00C2":"A","\u1EA6":"A","\u1EA4":"A","\u1EAA":"A","\u1EA8":"A","\u00C3":"A","\u0100":"A","\u0102":"A","\u1EB0":"A","\u1EAE":"A","\u1EB4":"A","\u1EB2":"A","\u0226":"A","\u01E0":"A","\u00C4":"A","\u01DE":"A","\u1EA2":"A","\u00C5":"A","\u01FA":"A","\u01CD":"A","\u0200":"A","\u0202":"A","\u1EA0":"A","\u1EAC":"A","\u1EB6":"A","\u1E00":"A","\u0104":"A","\u023A":"A","\u2C6F":"A","\uA732":"AA","\u00C6":"AE","\u01FC":"AE","\u01E2":"AE","\uA734":"AO","\uA736":"AU","\uA738":"AV","\uA73A":"AV","\uA73C":"AY","\u24B7":"B","\uFF22":"B","\u1E02":"B","\u1E04":"B","\u1E06":"B","\u0243":"B","\u0182":"B","\u0181":"B","\u24B8":"C","\uFF23":"C","\u0106":"C","\u0108":"C","\u010A":"C","\u010C":"C","\u00C7":"C","\u1E08":"C","\u0187":"C","\u023B":"C","\uA73E":"C","\u24B9":"D","\uFF24":"D","\u1E0A":"D","\u010E":"D","\u1E0C":"D","\u1E10":"D","\u1E12":"D","\u1E0E":"D","\u0110":"D","\u018B":"D","\u018A":"D","\u0189":"D","\uA779":"D","\u01F1":"DZ","\u01C4":"DZ","\u01F2":"Dz","\u01C5":"Dz","\u24BA":"E","\uFF25":"E","\u00C8":"E","\u00C9":"E","\u00CA":"E","\u1EC0":"E","\u1EBE":"E","\u1EC4":"E","\u1EC2":"E","\u1EBC":"E","\u0112":"E","\u1E14":"E","\u1E16":"E","\u0114":"E","\u0116":"E","\u00CB":"E","\u1EBA":"E","\u011A":"E","\u0204":"E","\u0206":"E","\u1EB8":"E","\u1EC6":"E","\u0228":"E","\u1E1C":"E","\u0118":"E","\u1E18":"E","\u1E1A":"E","\u0190":"E","\u018E":"E","\u24BB":"F","\uFF26":"F","\u1E1E":"F","\u0191":"F","\uA77B":"F","\u24BC":"G","\uFF27":"G","\u01F4":"G","\u011C":"G","\u1E20":"G","\u011E":"G","\u0120":"G","\u01E6":"G","\u0122":"G","\u01E4":"G","\u0193":"G","\uA7A0":"G","\uA77D":"G","\uA77E":"G","\u24BD":"H","\uFF28":"H","\u0124":"H","\u1E22":"H","\u1E26":"H","\u021E":"H","\u1E24":"H","\u1E28":"H","\u1E2A":"H","\u0126":"H","\u2C67":"H","\u2C75":"H","\uA78D":"H","\u24BE":"I","\uFF29":"I","\u00CC":"I","\u00CD":"I","\u00CE":"I","\u0128":"I","\u012A":"I","\u012C":"I","\u0130":"I","\u00CF":"I","\u1E2E":"I","\u1EC8":"I","\u01CF":"I","\u0208":"I","\u020A":"I","\u1ECA":"I","\u012E":"I","\u1E2C":"I","\u0197":"I","\u24BF":"J","\uFF2A":"J","\u0134":"J","\u0248":"J","\u24C0":"K","\uFF2B":"K","\u1E30":"K","\u01E8":"K","\u1E32":"K","\u0136":"K","\u1E34":"K","\u0198":"K","\u2C69":"K","\uA740":"K","\uA742":"K","\uA744":"K","\uA7A2":"K","\u24C1":"L","\uFF2C":"L","\u013F":"L","\u0139":"L","\u013D":"L","\u1E36":"L","\u1E38":"L","\u013B":"L","\u1E3C":"L","\u1E3A":"L","\u0141":"L","\u023D":"L","\u2C62":"L","\u2C60":"L","\uA748":"L","\uA746":"L","\uA780":"L","\u01C7":"LJ","\u01C8":"Lj","\u24C2":"M","\uFF2D":"M","\u1E3E":"M","\u1E40":"M","\u1E42":"M","\u2C6E":"M","\u019C":"M","\u24C3":"N","\uFF2E":"N","\u01F8":"N","\u0143":"N","\u00D1":"N","\u1E44":"N","\u0147":"N","\u1E46":"N","\u0145":"N","\u1E4A":"N","\u1E48":"N","\u0220":"N","\u019D":"N","\uA790":"N","\uA7A4":"N","\u01CA":"NJ","\u01CB":"Nj","\u24C4":"O","\uFF2F":"O","\u00D2":"O","\u00D3":"O","\u00D4":"O","\u1ED2":"O","\u1ED0":"O","\u1ED6":"O","\u1ED4":"O","\u00D5":"O","\u1E4C":"O","\u022C":"O","\u1E4E":"O","\u014C":"O","\u1E50":"O","\u1E52":"O","\u014E":"O","\u022E":"O","\u0230":"O","\u00D6":"O","\u022A":"O","\u1ECE":"O","\u0150":"O","\u01D1":"O","\u020C":"O","\u020E":"O","\u01A0":"O","\u1EDC":"O","\u1EDA":"O","\u1EE0":"O","\u1EDE":"O","\u1EE2":"O","\u1ECC":"O","\u1ED8":"O","\u01EA":"O","\u01EC":"O","\u00D8":"O","\u01FE":"O","\u0186":"O","\u019F":"O","\uA74A":"O","\uA74C":"O","\u01A2":"OI","\uA74E":"OO","\u0222":"OU","\u24C5":"P","\uFF30":"P","\u1E54":"P","\u1E56":"P","\u01A4":"P","\u2C63":"P","\uA750":"P","\uA752":"P","\uA754":"P","\u24C6":"Q","\uFF31":"Q","\uA756":"Q","\uA758":"Q","\u024A":"Q","\u24C7":"R","\uFF32":"R","\u0154":"R","\u1E58":"R","\u0158":"R","\u0210":"R","\u0212":"R","\u1E5A":"R","\u1E5C":"R","\u0156":"R","\u1E5E":"R","\u024C":"R","\u2C64":"R","\uA75A":"R","\uA7A6":"R","\uA782":"R","\u24C8":"S","\uFF33":"S","\u1E9E":"S","\u015A":"S","\u1E64":"S","\u015C":"S","\u1E60":"S","\u0160":"S","\u1E66":"S","\u1E62":"S","\u1E68":"S","\u0218":"S","\u015E":"S","\u2C7E":"S","\uA7A8":"S","\uA784":"S","\u24C9":"T","\uFF34":"T","\u1E6A":"T","\u0164":"T","\u1E6C":"T","\u021A":"T","\u0162":"T","\u1E70":"T","\u1E6E":"T","\u0166":"T","\u01AC":"T","\u01AE":"T","\u023E":"T","\uA786":"T","\uA728":"TZ","\u24CA":"U","\uFF35":"U","\u00D9":"U","\u00DA":"U","\u00DB":"U","\u0168":"U","\u1E78":"U","\u016A":"U","\u1E7A":"U","\u016C":"U","\u00DC":"U","\u01DB":"U","\u01D7":"U","\u01D5":"U","\u01D9":"U","\u1EE6":"U","\u016E":"U","\u0170":"U","\u01D3":"U","\u0214":"U","\u0216":"U","\u01AF":"U","\u1EEA":"U","\u1EE8":"U","\u1EEE":"U","\u1EEC":"U","\u1EF0":"U","\u1EE4":"U","\u1E72":"U","\u0172":"U","\u1E76":"U","\u1E74":"U","\u0244":"U","\u24CB":"V","\uFF36":"V","\u1E7C":"V","\u1E7E":"V","\u01B2":"V","\uA75E":"V","\u0245":"V","\uA760":"VY","\u24CC":"W","\uFF37":"W","\u1E80":"W","\u1E82":"W","\u0174":"W","\u1E86":"W","\u1E84":"W","\u1E88":"W","\u2C72":"W","\u24CD":"X","\uFF38":"X","\u1E8A":"X","\u1E8C":"X","\u24CE":"Y","\uFF39":"Y","\u1EF2":"Y","\u00DD":"Y","\u0176":"Y","\u1EF8":"Y","\u0232":"Y","\u1E8E":"Y","\u0178":"Y","\u1EF6":"Y","\u1EF4":"Y","\u01B3":"Y","\u024E":"Y","\u1EFE":"Y","\u24CF":"Z","\uFF3A":"Z","\u0179":"Z","\u1E90":"Z","\u017B":"Z","\u017D":"Z","\u1E92":"Z","\u1E94":"Z","\u01B5":"Z","\u0224":"Z","\u2C7F":"Z","\u2C6B":"Z","\uA762":"Z","\u24D0":"a","\uFF41":"a","\u1E9A":"a","\u00E0":"a","\u00E1":"a","\u00E2":"a","\u1EA7":"a","\u1EA5":"a","\u1EAB":"a","\u1EA9":"a","\u00E3":"a","\u0101":"a","\u0103":"a","\u1EB1":"a","\u1EAF":"a","\u1EB5":"a","\u1EB3":"a","\u0227":"a","\u01E1":"a","\u00E4":"a","\u01DF":"a","\u1EA3":"a","\u00E5":"a","\u01FB":"a","\u01CE":"a","\u0201":"a","\u0203":"a","\u1EA1":"a","\u1EAD":"a","\u1EB7":"a","\u1E01":"a","\u0105":"a","\u2C65":"a","\u0250":"a","\uA733":"aa","\u00E6":"ae","\u01FD":"ae","\u01E3":"ae","\uA735":"ao","\uA737":"au","\uA739":"av","\uA73B":"av","\uA73D":"ay","\u24D1":"b","\uFF42":"b","\u1E03":"b","\u1E05":"b","\u1E07":"b","\u0180":"b","\u0183":"b","\u0253":"b","\u24D2":"c","\uFF43":"c","\u0107":"c","\u0109":"c","\u010B":"c","\u010D":"c","\u00E7":"c","\u1E09":"c","\u0188":"c","\u023C":"c","\uA73F":"c","\u2184":"c","\u24D3":"d","\uFF44":"d","\u1E0B":"d","\u010F":"d","\u1E0D":"d","\u1E11":"d","\u1E13":"d","\u1E0F":"d","\u0111":"d","\u018C":"d","\u0256":"d","\u0257":"d","\uA77A":"d","\u01F3":"dz","\u01C6":"dz","\u24D4":"e","\uFF45":"e","\u00E8":"e","\u00E9":"e","\u00EA":"e","\u1EC1":"e","\u1EBF":"e","\u1EC5":"e","\u1EC3":"e","\u1EBD":"e","\u0113":"e","\u1E15":"e","\u1E17":"e","\u0115":"e","\u0117":"e","\u00EB":"e","\u1EBB":"e","\u011B":"e","\u0205":"e","\u0207":"e","\u1EB9":"e","\u1EC7":"e","\u0229":"e","\u1E1D":"e","\u0119":"e","\u1E19":"e","\u1E1B":"e","\u0247":"e","\u025B":"e","\u01DD":"e","\u24D5":"f","\uFF46":"f","\u1E1F":"f","\u0192":"f","\uA77C":"f","\u24D6":"g","\uFF47":"g","\u01F5":"g","\u011D":"g","\u1E21":"g","\u011F":"g","\u0121":"g","\u01E7":"g","\u0123":"g","\u01E5":"g","\u0260":"g","\uA7A1":"g","\u1D79":"g","\uA77F":"g","\u24D7":"h","\uFF48":"h","\u0125":"h","\u1E23":"h","\u1E27":"h","\u021F":"h","\u1E25":"h","\u1E29":"h","\u1E2B":"h","\u1E96":"h","\u0127":"h","\u2C68":"h","\u2C76":"h","\u0265":"h","\u0195":"hv","\u24D8":"i","\uFF49":"i","\u00EC":"i","\u00ED":"i","\u00EE":"i","\u0129":"i","\u012B":"i","\u012D":"i","\u00EF":"i","\u1E2F":"i","\u1EC9":"i","\u01D0":"i","\u0209":"i","\u020B":"i","\u1ECB":"i","\u012F":"i","\u1E2D":"i","\u0268":"i","\u0131":"i","\u24D9":"j","\uFF4A":"j","\u0135":"j","\u01F0":"j","\u0249":"j","\u24DA":"k","\uFF4B":"k","\u1E31":"k","\u01E9":"k","\u1E33":"k","\u0137":"k","\u1E35":"k","\u0199":"k","\u2C6A":"k","\uA741":"k","\uA743":"k","\uA745":"k","\uA7A3":"k","\u24DB":"l","\uFF4C":"l","\u0140":"l","\u013A":"l","\u013E":"l","\u1E37":"l","\u1E39":"l","\u013C":"l","\u1E3D":"l","\u1E3B":"l","\u017F":"l","\u0142":"l","\u019A":"l","\u026B":"l","\u2C61":"l","\uA749":"l","\uA781":"l","\uA747":"l","\u01C9":"lj","\u24DC":"m","\uFF4D":"m","\u1E3F":"m","\u1E41":"m","\u1E43":"m","\u0271":"m","\u026F":"m","\u24DD":"n","\uFF4E":"n","\u01F9":"n","\u0144":"n","\u00F1":"n","\u1E45":"n","\u0148":"n","\u1E47":"n","\u0146":"n","\u1E4B":"n","\u1E49":"n","\u019E":"n","\u0272":"n","\u0149":"n","\uA791":"n","\uA7A5":"n","\u01CC":"nj","\u24DE":"o","\uFF4F":"o","\u00F2":"o","\u00F3":"o","\u00F4":"o","\u1ED3":"o","\u1ED1":"o","\u1ED7":"o","\u1ED5":"o","\u00F5":"o","\u1E4D":"o","\u022D":"o","\u1E4F":"o","\u014D":"o","\u1E51":"o","\u1E53":"o","\u014F":"o","\u022F":"o","\u0231":"o","\u00F6":"o","\u022B":"o","\u1ECF":"o","\u0151":"o","\u01D2":"o","\u020D":"o","\u020F":"o","\u01A1":"o","\u1EDD":"o","\u1EDB":"o","\u1EE1":"o","\u1EDF":"o","\u1EE3":"o","\u1ECD":"o","\u1ED9":"o","\u01EB":"o","\u01ED":"o","\u00F8":"o","\u01FF":"o","\u0254":"o","\uA74B":"o","\uA74D":"o","\u0275":"o","\u01A3":"oi","\u0223":"ou","\uA74F":"oo","\u24DF":"p","\uFF50":"p","\u1E55":"p","\u1E57":"p","\u01A5":"p","\u1D7D":"p","\uA751":"p","\uA753":"p","\uA755":"p","\u24E0":"q","\uFF51":"q","\u024B":"q","\uA757":"q","\uA759":"q","\u24E1":"r","\uFF52":"r","\u0155":"r","\u1E59":"r","\u0159":"r","\u0211":"r","\u0213":"r","\u1E5B":"r","\u1E5D":"r","\u0157":"r","\u1E5F":"r","\u024D":"r","\u027D":"r","\uA75B":"r","\uA7A7":"r","\uA783":"r","\u24E2":"s","\uFF53":"s","\u00DF":"s","\u015B":"s","\u1E65":"s","\u015D":"s","\u1E61":"s","\u0161":"s","\u1E67":"s","\u1E63":"s","\u1E69":"s","\u0219":"s","\u015F":"s","\u023F":"s","\uA7A9":"s","\uA785":"s","\u1E9B":"s","\u24E3":"t","\uFF54":"t","\u1E6B":"t","\u1E97":"t","\u0165":"t","\u1E6D":"t","\u021B":"t","\u0163":"t","\u1E71":"t","\u1E6F":"t","\u0167":"t","\u01AD":"t","\u0288":"t","\u2C66":"t","\uA787":"t","\uA729":"tz","\u24E4":"u","\uFF55":"u","\u00F9":"u","\u00FA":"u","\u00FB":"u","\u0169":"u","\u1E79":"u","\u016B":"u","\u1E7B":"u","\u016D":"u","\u00FC":"u","\u01DC":"u","\u01D8":"u","\u01D6":"u","\u01DA":"u","\u1EE7":"u","\u016F":"u","\u0171":"u","\u01D4":"u","\u0215":"u","\u0217":"u","\u01B0":"u","\u1EEB":"u","\u1EE9":"u","\u1EEF":"u","\u1EED":"u","\u1EF1":"u","\u1EE5":"u","\u1E73":"u","\u0173":"u","\u1E77":"u","\u1E75":"u","\u0289":"u","\u24E5":"v","\uFF56":"v","\u1E7D":"v","\u1E7F":"v","\u028B":"v","\uA75F":"v","\u028C":"v","\uA761":"vy","\u24E6":"w","\uFF57":"w","\u1E81":"w","\u1E83":"w","\u0175":"w","\u1E87":"w","\u1E85":"w","\u1E98":"w","\u1E89":"w","\u2C73":"w","\u24E7":"x","\uFF58":"x","\u1E8B":"x","\u1E8D":"x","\u24E8":"y","\uFF59":"y","\u1EF3":"y","\u00FD":"y","\u0177":"y","\u1EF9":"y","\u0233":"y","\u1E8F":"y","\u00FF":"y","\u1EF7":"y","\u1E99":"y","\u1EF5":"y","\u01B4":"y","\u024F":"y","\u1EFF":"y","\u24E9":"z","\uFF5A":"z","\u017A":"z","\u1E91":"z","\u017C":"z","\u017E":"z","\u1E93":"z","\u1E95":"z","\u01B6":"z","\u0225":"z","\u0240":"z","\u2C6C":"z","\uA763":"z"};
+
+    $document = $(document);
+
+    nextUid=(function() { var counter=1; return function() { return counter++; }; }());
+
+
+    function reinsertElement(element) {
+        var placeholder = $(document.createTextNode(''));
+
+        element.before(placeholder);
+        placeholder.before(element);
+        placeholder.remove();
+    }
+
+    function stripDiacritics(str) {
+        // Used 'uni range + named function' from http://jsperf.com/diacritics/18
+        function match(a) {
+            return DIACRITICS[a] || a;
+        }
+
+        return str.replace(/[^\u0000-\u007E]/g, match);
+    }
+
+    function indexOf(value, array) {
+        var i = 0, l = array.length;
+        for (; i < l; i = i + 1) {
+            if (equal(value, array[i])) return i;
+        }
+        return -1;
+    }
+
+    function measureScrollbar () {
+        var $template = $( MEASURE_SCROLLBAR_TEMPLATE );
+        $template.appendTo('body');
+
+        var dim = {
+            width: $template.width() - $template[0].clientWidth,
+            height: $template.height() - $template[0].clientHeight
+        };
+        $template.remove();
+
+        return dim;
+    }
+
+    /**
+     * Compares equality of a and b
+     * @param a
+     * @param b
+     */
+    function equal(a, b) {
+        if (a === b) return true;
+        if (a === undefined || b === undefined) return false;
+        if (a === null || b === null) return false;
+        // Check whether 'a' or 'b' is a string (primitive or object).
+        // The concatenation of an empty string (+'') converts its argument to a string's primitive.
+        if (a.constructor === String) return a+'' === b+''; // a+'' - in case 'a' is a String object
+        if (b.constructor === String) return b+'' === a+''; // b+'' - in case 'b' is a String object
+        return false;
+    }
+
+    /**
+     * Splits the string into an array of values, trimming each value. An empty array is returned for nulls or empty
+     * strings
+     * @param string
+     * @param separator
+     */
+    function splitVal(string, separator) {
+        var val, i, l;
+        if (string === null || string.length < 1) return [];
+        val = string.split(separator);
+        for (i = 0, l = val.length; i < l; i = i + 1) val[i] = $.trim(val[i]);
+        return val;
+    }
+
+    function getSideBorderPadding(element) {
+        return element.outerWidth(false) - element.width();
+    }
+
+    function installKeyUpChangeEvent(element) {
+        var key="keyup-change-value";
+        element.on("keydown", function () {
+            if ($.data(element, key) === undefined) {
+                $.data(element, key, element.val());
+            }
+        });
+        element.on("keyup", function () {
+            var val= $.data(element, key);
+            if (val !== undefined && element.val() !== val) {
+                $.removeData(element, key);
+                element.trigger("keyup-change");
+            }
+        });
+    }
+
+    $document.on("mousemove", function (e) {
+        lastMousePosition.x = e.pageX;
+        lastMousePosition.y = e.pageY;
+    });
+
+    /**
+     * filters mouse events so an event is fired only if the mouse moved.
+     *
+     * filters out mouse events that occur when mouse is stationary but
+     * the elements under the pointer are scrolled.
+     */
+    function installFilteredMouseMove(element) {
+        element.on("mousemove", function (e) {
+            var lastpos = lastMousePosition;
+            if (lastpos === undefined || lastpos.x !== e.pageX || lastpos.y !== e.pageY) {
+                $(e.target).trigger("mousemove-filtered", e);
+            }
+        });
+    }
+
+    /**
+     * Debounces a function. Returns a function that calls the original fn function only if no invocations have been made
+     * within the last quietMillis milliseconds.
+     *
+     * @param quietMillis number of milliseconds to wait before invoking fn
+     * @param fn function to be debounced
+     * @param ctx object to be used as this reference within fn
+     * @return debounced version of fn
+     */
+    function debounce(quietMillis, fn, ctx) {
+        ctx = ctx || undefined;
+        var timeout;
+        return function () {
+            var args = arguments;
+            window.clearTimeout(timeout);
+            timeout = window.setTimeout(function() {
+                fn.apply(ctx, args);
+            }, quietMillis);
+        };
+    }
+
+    function installDebouncedScroll(threshold, element) {
+        var notify = debounce(threshold, function (e) { element.trigger("scroll-debounced", e);});
+        element.on("scroll", function (e) {
+            if (indexOf(e.target, element.get()) >= 0) notify(e);
+        });
+    }
+
+    function focus($el) {
+        if ($el[0] === document.activeElement) return;
+
+        /* set the focus in a 0 timeout - that way the focus is set after the processing
+            of the current event has finished - which seems like the only reliable way
+            to set focus */
+        window.setTimeout(function() {
+            var el=$el[0], pos=$el.val().length, range;
+
+            $el.focus();
+
+            /* make sure el received focus so we do not error out when trying to manipulate the caret.
+                sometimes modals or others listeners may steal it after its set */
+            var isVisible = (el.offsetWidth > 0 || el.offsetHeight > 0);
+            if (isVisible && el === document.activeElement) {
+
+                /* after the focus is set move the caret to the end, necessary when we val()
+                    just before setting focus */
+                if(el.setSelectionRange)
+                {
+                    el.setSelectionRange(pos, pos);
+                }
+                else if (el.createTextRange) {
+                    range = el.createTextRange();
+                    range.collapse(false);
+                    range.select();
+                }
+            }
+        }, 0);
+    }
+
+    function getCursorInfo(el) {
+        el = $(el)[0];
+        var offset = 0;
+        var length = 0;
+        if ('selectionStart' in el) {
+            offset = el.selectionStart;
+            length = el.selectionEnd - offset;
+        } else if ('selection' in document) {
+            el.focus();
+            var sel = document.selection.createRange();
+            length = document.selection.createRange().text.length;
+            sel.moveStart('character', -el.value.length);
+            offset = sel.text.length - length;
+        }
+        return { offset: offset, length: length };
+    }
+
+    function killEvent(event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    function killEventImmediately(event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    }
+
+    function measureTextWidth(e) {
+        if (!sizer){
+            var style = e[0].currentStyle || window.getComputedStyle(e[0], null);
+            sizer = $(document.createElement("div")).css({
+                position: "absolute",
+                left: "-10000px",
+                top: "-10000px",
+                display: "none",
+                fontSize: style.fontSize,
+                fontFamily: style.fontFamily,
+                fontStyle: style.fontStyle,
+                fontWeight: style.fontWeight,
+                letterSpacing: style.letterSpacing,
+                textTransform: style.textTransform,
+                whiteSpace: "nowrap"
+            });
+            sizer.attr("class","select2-sizer");
+            $("body").append(sizer);
+        }
+        sizer.text(e.val());
+        return sizer.width();
+    }
+
+    function syncCssClasses(dest, src, adapter) {
+        var classes, replacements = [], adapted;
+
+        classes = dest.attr("class");
+        if (classes) {
+            classes = '' + classes; // for IE which returns object
+            $(classes.split(" ")).each2(function() {
+                if (this.indexOf("select2-") === 0) {
+                    replacements.push(this);
+                }
+            });
+        }
+        classes = src.attr("class");
+        if (classes) {
+            classes = '' + classes; // for IE which returns object
+            $(classes.split(" ")).each2(function() {
+                if (this.indexOf("select2-") !== 0) {
+                    adapted = adapter(this);
+                    if (adapted) {
+                        replacements.push(adapted);
+                    }
+                }
+            });
+        }
+        dest.attr("class", replacements.join(" "));
+    }
+
+
+    function markMatch(text, term, markup, escapeMarkup) {
+        var match=stripDiacritics(text.toUpperCase()).indexOf(stripDiacritics(term.toUpperCase())),
+            tl=term.length;
+
+        if (match<0) {
+            markup.push(escapeMarkup(text));
+            return;
+        }
+
+        markup.push(escapeMarkup(text.substring(0, match)));
+        markup.push("<span class='select2-match'>");
+        markup.push(escapeMarkup(text.substring(match, match + tl)));
+        markup.push("</span>");
+        markup.push(escapeMarkup(text.substring(match + tl, text.length)));
+    }
+
+    function defaultEscapeMarkup(markup) {
+        var replace_map = {
+            '\\': '&#92;',
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+            "/": '&#47;'
+        };
+
+        return String(markup).replace(/[&<>"'\/\\]/g, function (match) {
+            return replace_map[match];
+        });
+    }
+
+    /**
+     * Produces an ajax-based query function
+     *
+     * @param options object containing configuration parameters
+     * @param options.params parameter map for the transport ajax call, can contain such options as cache, jsonpCallback, etc. see $.ajax
+     * @param options.transport function that will be used to execute the ajax request. must be compatible with parameters supported by $.ajax
+     * @param options.url url for the data
+     * @param options.data a function(searchTerm, pageNumber, context) that should return an object containing query string parameters for the above url.
+     * @param options.dataType request data type: ajax, jsonp, other datatypes supported by jQuery's $.ajax function or the transport function if specified
+     * @param options.quietMillis (optional) milliseconds to wait before making the ajaxRequest, helps debounce the ajax function if invoked too often
+     * @param options.results a function(remoteData, pageNumber) that converts data returned form the remote request to the format expected by Select2.
+     *      The expected format is an object containing the following keys:
+     *      results array of objects that will be used as choices
+     *      more (optional) boolean indicating whether there are more results available
+     *      Example: {results:[{id:1, text:'Red'},{id:2, text:'Blue'}], more:true}
+     */
+    function ajax(options) {
+        var timeout, // current scheduled but not yet executed request
+            handler = null,
+            quietMillis = options.quietMillis || 100,
+            ajaxUrl = options.url,
+            self = this;
+
+        return function (query) {
+            window.clearTimeout(timeout);
+            timeout = window.setTimeout(function () {
+                var data = options.data, // ajax data function
+                    url = ajaxUrl, // ajax url string or function
+                    transport = options.transport || $.fn.select2.ajaxDefaults.transport,
+                    // deprecated - to be removed in 4.0  - use params instead
+                    deprecated = {
+                        type: options.type || 'GET', // set type of request (GET or POST)
+                        cache: options.cache || false,
+                        jsonpCallback: options.jsonpCallback||undefined,
+                        dataType: options.dataType||"json"
+                    },
+                    params = $.extend({}, $.fn.select2.ajaxDefaults.params, deprecated);
+
+                data = data ? data.call(self, query.term, query.page, query.context) : null;
+                url = (typeof url === 'function') ? url.call(self, query.term, query.page, query.context) : url;
+
+                if (handler && typeof handler.abort === "function") { handler.abort(); }
+
+                if (options.params) {
+                    if ($.isFunction(options.params)) {
+                        $.extend(params, options.params.call(self));
+                    } else {
+                        $.extend(params, options.params);
+                    }
+                }
+
+                $.extend(params, {
+                    url: url,
+                    dataType: options.dataType,
+                    data: data,
+                    success: function (data) {
+                        // TODO - replace query.page with query so users have access to term, page, etc.
+                        var results = options.results(data, query.page);
+                        query.callback(results);
+                    }
+                });
+                handler = transport.call(self, params);
+            }, quietMillis);
+        };
+    }
+
+    /**
+     * Produces a query function that works with a local array
+     *
+     * @param options object containing configuration parameters. The options parameter can either be an array or an
+     * object.
+     *
+     * If the array form is used it is assumed that it contains objects with 'id' and 'text' keys.
+     *
+     * If the object form is used it is assumed that it contains 'data' and 'text' keys. The 'data' key should contain
+     * an array of objects that will be used as choices. These objects must contain at least an 'id' key. The 'text'
+     * key can either be a String in which case it is expected that each element in the 'data' array has a key with the
+     * value of 'text' which will be used to match choices. Alternatively, text can be a function(item) that can extract
+     * the text.
+     */
+    function local(options) {
+        var data = options, // data elements
+            dataText,
+            tmp,
+            text = function (item) { return ""+item.text; }; // function used to retrieve the text portion of a data item that is matched against the search
+
+         if ($.isArray(data)) {
+            tmp = data;
+            data = { results: tmp };
+        }
+
+         if ($.isFunction(data) === false) {
+            tmp = data;
+            data = function() { return tmp; };
+        }
+
+        var dataItem = data();
+        if (dataItem.text) {
+            text = dataItem.text;
+            // if text is not a function we assume it to be a key name
+            if (!$.isFunction(text)) {
+                dataText = dataItem.text; // we need to store this in a separate variable because in the next step data gets reset and data.text is no longer available
+                text = function (item) { return item[dataText]; };
+            }
+        }
+
+        return function (query) {
+            var t = query.term, filtered = { results: [] }, process;
+            if (t === "") {
+                query.callback(data());
+                return;
+            }
+
+            process = function(datum, collection) {
+                var group, attr;
+                datum = datum[0];
+                if (datum.children) {
+                    group = {};
+                    for (attr in datum) {
+                        if (datum.hasOwnProperty(attr)) group[attr]=datum[attr];
+                    }
+                    group.children=[];
+                    $(datum.children).each2(function(i, childDatum) { process(childDatum, group.children); });
+                    if (group.children.length || query.matcher(t, text(group), datum)) {
+                        collection.push(group);
+                    }
+                } else {
+                    if (query.matcher(t, text(datum), datum)) {
+                        collection.push(datum);
+                    }
+                }
+            };
+
+            $(data().results).each2(function(i, datum) { process(datum, filtered.results); });
+            query.callback(filtered);
+        };
+    }
+
+    // TODO javadoc
+    function tags(data) {
+        var isFunc = $.isFunction(data);
+        return function (query) {
+            var t = query.term, filtered = {results: []};
+            var result = isFunc ? data(query) : data;
+            if ($.isArray(result)) {
+                $(result).each(function () {
+                    var isObject = this.text !== undefined,
+                        text = isObject ? this.text : this;
+                    if (t === "" || query.matcher(t, text)) {
+                        filtered.results.push(isObject ? this : {id: this, text: this});
+                    }
+                });
+                query.callback(filtered);
+            }
+        };
+    }
+
+    /**
+     * Checks if the formatter function should be used.
+     *
+     * Throws an error if it is not a function. Returns true if it should be used,
+     * false if no formatting should be performed.
+     *
+     * @param formatter
+     */
+    function checkFormatter(formatter, formatterName) {
+        if ($.isFunction(formatter)) return true;
+        if (!formatter) return false;
+        if (typeof(formatter) === 'string') return true;
+        throw new Error(formatterName +" must be a string, function, or falsy value");
+    }
+
+    function evaluate(val) {
+        if ($.isFunction(val)) {
+            var args = Array.prototype.slice.call(arguments, 1);
+            return val.apply(null, args);
+        }
+        return val;
+    }
+
+    function countResults(results) {
+        var count = 0;
+        $.each(results, function(i, item) {
+            if (item.children) {
+                count += countResults(item.children);
+            } else {
+                count++;
+            }
+        });
+        return count;
+    }
+
+    /**
+     * Default tokenizer. This function uses breaks the input on substring match of any string from the
+     * opts.tokenSeparators array and uses opts.createSearchChoice to create the choice object. Both of those
+     * two options have to be defined in order for the tokenizer to work.
+     *
+     * @param input text user has typed so far or pasted into the search field
+     * @param selection currently selected choices
+     * @param selectCallback function(choice) callback tho add the choice to selection
+     * @param opts select2's opts
+     * @return undefined/null to leave the current input unchanged, or a string to change the input to the returned value
+     */
+    function defaultTokenizer(input, selection, selectCallback, opts) {
+        var original = input, // store the original so we can compare and know if we need to tell the search to update its text
+            dupe = false, // check for whether a token we extracted represents a duplicate selected choice
+            token, // token
+            index, // position at which the separator was found
+            i, l, // looping variables
+            separator; // the matched separator
+
+        if (!opts.createSearchChoice || !opts.tokenSeparators || opts.tokenSeparators.length < 1) return undefined;
+
+        while (true) {
+            index = -1;
+
+            for (i = 0, l = opts.tokenSeparators.length; i < l; i++) {
+                separator = opts.tokenSeparators[i];
+                index = input.indexOf(separator);
+                if (index >= 0) break;
+            }
+
+            if (index < 0) break; // did not find any token separator in the input string, bail
+
+            token = input.substring(0, index);
+            input = input.substring(index + separator.length);
+
+            if (token.length > 0) {
+                token = opts.createSearchChoice.call(this, token, selection);
+                if (token !== undefined && token !== null && opts.id(token) !== undefined && opts.id(token) !== null) {
+                    dupe = false;
+                    for (i = 0, l = selection.length; i < l; i++) {
+                        if (equal(opts.id(token), opts.id(selection[i]))) {
+                            dupe = true; break;
+                        }
+                    }
+
+                    if (!dupe) selectCallback(token);
+                }
+            }
+        }
+
+        if (original!==input) return input;
+    }
+
+    function cleanupJQueryElements() {
+        var self = this;
+
+        Array.prototype.forEach.call(arguments, function (element) {
+            self[element].remove();
+            self[element] = null;
+        });
+    }
+
+    /**
+     * Creates a new class
+     *
+     * @param superClass
+     * @param methods
+     */
+    function clazz(SuperClass, methods) {
+        var constructor = function () {};
+        constructor.prototype = new SuperClass;
+        constructor.prototype.constructor = constructor;
+        constructor.prototype.parent = SuperClass.prototype;
+        constructor.prototype = $.extend(constructor.prototype, methods);
+        return constructor;
+    }
+
+    AbstractSelect2 = clazz(Object, {
+
+        // abstract
+        bind: function (func) {
+            var self = this;
+            return function () {
+                func.apply(self, arguments);
+            };
+        },
+
+        // abstract
+        init: function (opts) {
+            var results, search, resultsSelector = ".select2-results";
+
+            // prepare options
+            this.opts = opts = this.prepareOpts(opts);
+
+            this.id=opts.id;
+
+            // destroy if called on an existing component
+            if (opts.element.data("select2") !== undefined &&
+                opts.element.data("select2") !== null) {
+                opts.element.data("select2").destroy();
+            }
+
+            this.container = this.createContainer();
+
+            this.liveRegion = $("<span>", {
+                    role: "status",
+                    "aria-live": "polite"
+                })
+                .addClass("select2-hidden-accessible")
+                .appendTo(document.body);
+
+            this.containerId="s2id_"+(opts.element.attr("id") || "autogen"+nextUid());
+            this.containerEventName= this.containerId
+                .replace(/([.])/g, '_')
+                .replace(/([;&,\-\.\+\*\~':"\!\^#$%@\[\]\(\)=>\|])/g, '\\$1');
+            this.container.attr("id", this.containerId);
+
+            this.container.attr("title", opts.element.attr("title"));
+
+            this.body = $("body");
+
+            syncCssClasses(this.container, this.opts.element, this.opts.adaptContainerCssClass);
+
+            this.container.attr("style", opts.element.attr("style"));
+            this.container.css(evaluate(opts.containerCss));
+            this.container.addClass(evaluate(opts.containerCssClass));
+
+            this.elementTabIndex = this.opts.element.attr("tabindex");
+
+            // swap container for the element
+            this.opts.element
+                .data("select2", this)
+                .attr("tabindex", "-1")
+                .before(this.container)
+                .on("click.select2", killEvent); // do not leak click events
+
+            this.container.data("select2", this);
+
+            this.dropdown = this.container.find(".select2-drop");
+
+            syncCssClasses(this.dropdown, this.opts.element, this.opts.adaptDropdownCssClass);
+
+            this.dropdown.addClass(evaluate(opts.dropdownCssClass));
+            this.dropdown.data("select2", this);
+            this.dropdown.on("click", killEvent);
+
+            this.results = results = this.container.find(resultsSelector);
+            this.search = search = this.container.find("input.select2-input");
+
+            this.queryCount = 0;
+            this.resultsPage = 0;
+            this.context = null;
+
+            // initialize the container
+            this.initContainer();
+
+            this.container.on("click", killEvent);
+
+            installFilteredMouseMove(this.results);
+
+            this.dropdown.on("mousemove-filtered", resultsSelector, this.bind(this.highlightUnderEvent));
+            this.dropdown.on("touchstart touchmove touchend", resultsSelector, this.bind(function (event) {
+                this._touchEvent = true;
+                this.highlightUnderEvent(event);
+            }));
+            this.dropdown.on("touchmove", resultsSelector, this.bind(this.touchMoved));
+            this.dropdown.on("touchstart touchend", resultsSelector, this.bind(this.clearTouchMoved));
+
+            // Waiting for a click event on touch devices to select option and hide dropdown
+            // otherwise click will be triggered on an underlying element
+            this.dropdown.on('click', this.bind(function (event) {
+                if (this._touchEvent) {
+                    this._touchEvent = false;
+                    this.selectHighlighted();
+                }
+            }));
+
+            installDebouncedScroll(80, this.results);
+            this.dropdown.on("scroll-debounced", resultsSelector, this.bind(this.loadMoreIfNeeded));
+
+            // do not propagate change event from the search field out of the component
+            $(this.container).on("change", ".select2-input", function(e) {e.stopPropagation();});
+            $(this.dropdown).on("change", ".select2-input", function(e) {e.stopPropagation();});
+
+            // if jquery.mousewheel plugin is installed we can prevent out-of-bounds scrolling of results via mousewheel
+            if ($.fn.mousewheel) {
+                results.mousewheel(function (e, delta, deltaX, deltaY) {
+                    var top = results.scrollTop();
+                    if (deltaY > 0 && top - deltaY <= 0) {
+                        results.scrollTop(0);
+                        killEvent(e);
+                    } else if (deltaY < 0 && results.get(0).scrollHeight - results.scrollTop() + deltaY <= results.height()) {
+                        results.scrollTop(results.get(0).scrollHeight - results.height());
+                        killEvent(e);
+                    }
+                });
+            }
+
+            installKeyUpChangeEvent(search);
+            search.on("keyup-change input paste", this.bind(this.updateResults));
+            search.on("focus", function () { search.addClass("select2-focused"); });
+            search.on("blur", function () { search.removeClass("select2-focused");});
+
+            this.dropdown.on("mouseup", resultsSelector, this.bind(function (e) {
+                if ($(e.target).closest(".select2-result-selectable").length > 0) {
+                    this.highlightUnderEvent(e);
+                    this.selectHighlighted(e);
+                }
+            }));
+
+            // trap all mouse events from leaving the dropdown. sometimes there may be a modal that is listening
+            // for mouse events outside of itself so it can close itself. since the dropdown is now outside the select2's
+            // dom it will trigger the popup close, which is not what we want
+            // focusin can cause focus wars between modals and select2 since the dropdown is outside the modal.
+            this.dropdown.on("click mouseup mousedown touchstart touchend focusin", function (e) { e.stopPropagation(); });
+
+            this.nextSearchTerm = undefined;
+
+            if ($.isFunction(this.opts.initSelection)) {
+                // initialize selection based on the current value of the source element
+                this.initSelection();
+
+                // if the user has provided a function that can set selection based on the value of the source element
+                // we monitor the change event on the element and trigger it, allowing for two way synchronization
+                this.monitorSource();
+            }
+
+            if (opts.maximumInputLength !== null) {
+                this.search.attr("maxlength", opts.maximumInputLength);
+            }
+
+            var disabled = opts.element.prop("disabled");
+            if (disabled === undefined) disabled = false;
+            this.enable(!disabled);
+
+            var readonly = opts.element.prop("readonly");
+            if (readonly === undefined) readonly = false;
+            this.readonly(readonly);
+
+            // Calculate size of scrollbar
+            scrollBarDimensions = scrollBarDimensions || measureScrollbar();
+
+            this.autofocus = opts.element.prop("autofocus");
+            opts.element.prop("autofocus", false);
+            if (this.autofocus) this.focus();
+
+            this.search.attr("placeholder", opts.searchInputPlaceholder);
+        },
+
+        // abstract
+        destroy: function () {
+            var element=this.opts.element, select2 = element.data("select2");
+
+            this.close();
+
+            if (this.propertyObserver) {
+                this.propertyObserver.disconnect();
+                this.propertyObserver = null;
+            }
+
+            if (select2 !== undefined) {
+                select2.container.remove();
+                select2.liveRegion.remove();
+                select2.dropdown.remove();
+                element
+                    .removeClass("select2-offscreen")
+                    .removeData("select2")
+                    .off(".select2")
+                    .prop("autofocus", this.autofocus || false);
+                if (this.elementTabIndex) {
+                    element.attr({tabindex: this.elementTabIndex});
+                } else {
+                    element.removeAttr("tabindex");
+                }
+                element.show();
+            }
+
+            cleanupJQueryElements.call(this,
+                "container",
+                "liveRegion",
+                "dropdown",
+                "results",
+                "search"
+            );
+        },
+
+        // abstract
+        optionToData: function(element) {
+            if (element.is("option")) {
+                return {
+                    id:element.prop("value"),
+                    text:element.text(),
+                    element: element.get(),
+                    css: element.attr("class"),
+                    disabled: element.prop("disabled"),
+                    locked: equal(element.attr("locked"), "locked") || equal(element.data("locked"), true)
+                };
+            } else if (element.is("optgroup")) {
+                return {
+                    text:element.attr("label"),
+                    children:[],
+                    element: element.get(),
+                    css: element.attr("class")
+                };
+            }
+        },
+
+        // abstract
+        prepareOpts: function (opts) {
+            var element, select, idKey, ajaxUrl, self = this;
+
+            element = opts.element;
+
+            if (element.get(0).tagName.toLowerCase() === "select") {
+                this.select = select = opts.element;
+            }
+
+            if (select) {
+                // these options are not allowed when attached to a select because they are picked up off the element itself
+                $.each(["id", "multiple", "ajax", "query", "createSearchChoice", "initSelection", "data", "tags"], function () {
+                    if (this in opts) {
+                        throw new Error("Option '" + this + "' is not allowed for Select2 when attached to a <select> element.");
+                    }
+                });
+            }
+
+            opts = $.extend({}, {
+                populateResults: function(container, results, query) {
+                    var populate, id=this.opts.id, liveRegion=this.liveRegion;
+
+                    populate=function(results, container, depth) {
+
+                        var i, l, result, selectable, disabled, compound, node, label, innerContainer, formatted;
+
+                        results = opts.sortResults(results, container, query);
+
+                        for (i = 0, l = results.length; i < l; i = i + 1) {
+
+                            result=results[i];
+
+                            disabled = (result.disabled === true);
+                            selectable = (!disabled) && (id(result) !== undefined);
+
+                            compound=result.children && result.children.length > 0;
+
+                            node=$("<li></li>");
+                            node.addClass("select2-results-dept-"+depth);
+                            node.addClass("select2-result");
+                            node.addClass(selectable ? "select2-result-selectable" : "select2-result-unselectable");
+                            if (disabled) { node.addClass("select2-disabled"); }
+                            if (compound) { node.addClass("select2-result-with-children"); }
+                            node.addClass(self.opts.formatResultCssClass(result));
+                            node.attr("role", "presentation");
+
+                            label=$(document.createElement("div"));
+                            label.addClass("select2-result-label");
+                            label.attr("id", "select2-result-label-" + nextUid());
+                            label.attr("role", "option");
+
+                            formatted=opts.formatResult(result, label, query, self.opts.escapeMarkup);
+                            if (formatted!==undefined) {
+                                label.html(formatted);
+                                node.append(label);
+                            }
+
+
+                            if (compound) {
+
+                                innerContainer=$("<ul></ul>");
+                                innerContainer.addClass("select2-result-sub");
+                                populate(result.children, innerContainer, depth+1);
+                                node.append(innerContainer);
+                            }
+
+                            node.data("select2-data", result);
+                            container.append(node);
+                        }
+
+                        liveRegion.text(opts.formatMatches(results.length));
+                    };
+
+                    populate(results, container, 0);
+                }
+            }, $.fn.select2.defaults, opts);
+
+            if (typeof(opts.id) !== "function") {
+                idKey = opts.id;
+                opts.id = function (e) { return e[idKey]; };
+            }
+
+            if ($.isArray(opts.element.data("select2Tags"))) {
+                if ("tags" in opts) {
+                    throw "tags specified as both an attribute 'data-select2-tags' and in options of Select2 " + opts.element.attr("id");
+                }
+                opts.tags=opts.element.data("select2Tags");
+            }
+
+            if (select) {
+                opts.query = this.bind(function (query) {
+                    var data = { results: [], more: false },
+                        term = query.term,
+                        children, placeholderOption, process;
+
+                    process=function(element, collection) {
+                        var group;
+                        if (element.is("option")) {
+                            if (query.matcher(term, element.text(), element)) {
+                                collection.push(self.optionToData(element));
+                            }
+                        } else if (element.is("optgroup")) {
+                            group=self.optionToData(element);
+                            element.children().each2(function(i, elm) { process(elm, group.children); });
+                            if (group.children.length>0) {
+                                collection.push(group);
+                            }
+                        }
+                    };
+
+                    children=element.children();
+
+                    // ignore the placeholder option if there is one
+                    if (this.getPlaceholder() !== undefined && children.length > 0) {
+                        placeholderOption = this.getPlaceholderOption();
+                        if (placeholderOption) {
+                            children=children.not(placeholderOption);
+                        }
+                    }
+
+                    children.each2(function(i, elm) { process(elm, data.results); });
+
+                    query.callback(data);
+                });
+                // this is needed because inside val() we construct choices from options and there id is hardcoded
+                opts.id=function(e) { return e.id; };
+            } else {
+                if (!("query" in opts)) {
+
+                    if ("ajax" in opts) {
+                        ajaxUrl = opts.element.data("ajax-url");
+                        if (ajaxUrl && ajaxUrl.length > 0) {
+                            opts.ajax.url = ajaxUrl;
+                        }
+                        opts.query = ajax.call(opts.element, opts.ajax);
+                    } else if ("data" in opts) {
+                        opts.query = local(opts.data);
+                    } else if ("tags" in opts) {
+                        opts.query = tags(opts.tags);
+                        if (opts.createSearchChoice === undefined) {
+                            opts.createSearchChoice = function (term) { return {id: $.trim(term), text: $.trim(term)}; };
+                        }
+                        if (opts.initSelection === undefined) {
+                            opts.initSelection = function (element, callback) {
+                                var data = [];
+                                $(splitVal(element.val(), opts.separator)).each(function () {
+                                    var obj = { id: this, text: this },
+                                        tags = opts.tags;
+                                    if ($.isFunction(tags)) tags=tags();
+                                    $(tags).each(function() { if (equal(this.id, obj.id)) { obj = this; return false; } });
+                                    data.push(obj);
+                                });
+
+                                callback(data);
+                            };
+                        }
+                    }
+                }
+            }
+            if (typeof(opts.query) !== "function") {
+                throw "query function not defined for Select2 " + opts.element.attr("id");
+            }
+
+            if (opts.createSearchChoicePosition === 'top') {
+                opts.createSearchChoicePosition = function(list, item) { list.unshift(item); };
+            }
+            else if (opts.createSearchChoicePosition === 'bottom') {
+                opts.createSearchChoicePosition = function(list, item) { list.push(item); };
+            }
+            else if (typeof(opts.createSearchChoicePosition) !== "function")  {
+                throw "invalid createSearchChoicePosition option must be 'top', 'bottom' or a custom function";
+            }
+
+            return opts;
+        },
+
+        /**
+         * Monitor the original element for changes and update select2 accordingly
+         */
+        // abstract
+        monitorSource: function () {
+            var el = this.opts.element, sync, observer;
+
+            el.on("change.select2", this.bind(function (e) {
+                if (this.opts.element.data("select2-change-triggered") !== true) {
+                    this.initSelection();
+                }
+            }));
+
+            sync = this.bind(function () {
+
+                // sync enabled state
+                var disabled = el.prop("disabled");
+                if (disabled === undefined) disabled = false;
+                this.enable(!disabled);
+
+                var readonly = el.prop("readonly");
+                if (readonly === undefined) readonly = false;
+                this.readonly(readonly);
+
+                syncCssClasses(this.container, this.opts.element, this.opts.adaptContainerCssClass);
+                this.container.addClass(evaluate(this.opts.containerCssClass));
+
+                syncCssClasses(this.dropdown, this.opts.element, this.opts.adaptDropdownCssClass);
+                this.dropdown.addClass(evaluate(this.opts.dropdownCssClass));
+
+            });
+
+            // IE8-10 (IE9/10 won't fire propertyChange via attachEventListener)
+            if (el.length && el[0].attachEvent) {
+                el.each(function() {
+                    this.attachEvent("onpropertychange", sync);
+                });
+            }
+            
+            // safari, chrome, firefox, IE11
+            observer = window.MutationObserver || window.WebKitMutationObserver|| window.MozMutationObserver;
+            if (observer !== undefined) {
+                if (this.propertyObserver) { delete this.propertyObserver; this.propertyObserver = null; }
+                this.propertyObserver = new observer(function (mutations) {
+                    mutations.forEach(sync);
+                });
+                this.propertyObserver.observe(el.get(0), { attributes:true, subtree:false });
+            }
+        },
+
+        // abstract
+        triggerSelect: function(data) {
+            var evt = $.Event("select2-selecting", { val: this.id(data), object: data });
+            this.opts.element.trigger(evt);
+            return !evt.isDefaultPrevented();
+        },
+
+        /**
+         * Triggers the change event on the source element
+         */
+        // abstract
+        triggerChange: function (details) {
+
+            details = details || {};
+            details= $.extend({}, details, { type: "change", val: this.val() });
+            // prevents recursive triggering
+            this.opts.element.data("select2-change-triggered", true);
+            this.opts.element.trigger(details);
+            this.opts.element.data("select2-change-triggered", false);
+
+            // some validation frameworks ignore the change event and listen instead to keyup, click for selects
+            // so here we trigger the click event manually
+            this.opts.element.click();
+
+            // ValidationEngine ignores the change event and listens instead to blur
+            // so here we trigger the blur event manually if so desired
+            if (this.opts.blurOnChange)
+                this.opts.element.blur();
+        },
+
+        //abstract
+        isInterfaceEnabled: function()
+        {
+            return this.enabledInterface === true;
+        },
+
+        // abstract
+        enableInterface: function() {
+            var enabled = this._enabled && !this._readonly,
+                disabled = !enabled;
+
+            if (enabled === this.enabledInterface) return false;
+
+            this.container.toggleClass("select2-container-disabled", disabled);
+            this.close();
+            this.enabledInterface = enabled;
+
+            return true;
+        },
+
+        // abstract
+        enable: function(enabled) {
+            if (enabled === undefined) enabled = true;
+            if (this._enabled === enabled) return;
+            this._enabled = enabled;
+
+            this.opts.element.prop("disabled", !enabled);
+            this.enableInterface();
+        },
+
+        // abstract
+        disable: function() {
+            this.enable(false);
+        },
+
+        // abstract
+        readonly: function(enabled) {
+            if (enabled === undefined) enabled = false;
+            if (this._readonly === enabled) return;
+            this._readonly = enabled;
+
+            this.opts.element.prop("readonly", enabled);
+            this.enableInterface();
+        },
+
+        // abstract
+        opened: function () {
+            return this.container.hasClass("select2-dropdown-open");
+        },
+
+        // abstract
+        positionDropdown: function() {
+            var $dropdown = this.dropdown,
+                offset = this.container.offset(),
+                height = this.container.outerHeight(false),
+                width = this.container.outerWidth(false),
+                dropHeight = $dropdown.outerHeight(false),
+                $window = $(window),
+                windowWidth = $window.width(),
+                windowHeight = $window.height(),
+                viewPortRight = $window.scrollLeft() + windowWidth,
+                viewportBottom = $window.scrollTop() + windowHeight,
+                dropTop = offset.top + height,
+                dropLeft = offset.left,
+                enoughRoomBelow = dropTop + dropHeight <= viewportBottom,
+                enoughRoomAbove = (offset.top - dropHeight) >= $window.scrollTop(),
+                dropWidth = $dropdown.outerWidth(false),
+                enoughRoomOnRight = dropLeft + dropWidth <= viewPortRight,
+                aboveNow = $dropdown.hasClass("select2-drop-above"),
+                bodyOffset,
+                above,
+                changeDirection,
+                css,
+                resultsListNode;
+
+            // always prefer the current above/below alignment, unless there is not enough room
+            if (aboveNow) {
+                above = true;
+                if (!enoughRoomAbove && enoughRoomBelow) {
+                    changeDirection = true;
+                    above = false;
+                }
+            } else {
+                above = false;
+                if (!enoughRoomBelow && enoughRoomAbove) {
+                    changeDirection = true;
+                    above = true;
+                }
+            }
+
+            //if we are changing direction we need to get positions when dropdown is hidden;
+            if (changeDirection) {
+                $dropdown.hide();
+                offset = this.container.offset();
+                height = this.container.outerHeight(false);
+                width = this.container.outerWidth(false);
+                dropHeight = $dropdown.outerHeight(false);
+                viewPortRight = $window.scrollLeft() + windowWidth;
+                viewportBottom = $window.scrollTop() + windowHeight;
+                dropTop = offset.top + height;
+                dropLeft = offset.left;
+                dropWidth = $dropdown.outerWidth(false);
+                enoughRoomOnRight = dropLeft + dropWidth <= viewPortRight;
+                $dropdown.show();
+
+                // fix so the cursor does not move to the left within the search-textbox in IE
+                this.focusSearch();
+            }
+
+            if (this.opts.dropdownAutoWidth) {
+                resultsListNode = $('.select2-results', $dropdown)[0];
+                $dropdown.addClass('select2-drop-auto-width');
+                $dropdown.css('width', '');
+                // Add scrollbar width to dropdown if vertical scrollbar is present
+                dropWidth = $dropdown.outerWidth(false) + (resultsListNode.scrollHeight === resultsListNode.clientHeight ? 0 : scrollBarDimensions.width);
+                dropWidth > width ? width = dropWidth : dropWidth = width;
+                dropHeight = $dropdown.outerHeight(false);
+                enoughRoomOnRight = dropLeft + dropWidth <= viewPortRight;
+            }
+            else {
+                this.container.removeClass('select2-drop-auto-width');
+            }
+
+            //console.log("below/ droptop:", dropTop, "dropHeight", dropHeight, "sum", (dropTop+dropHeight)+" viewport bottom", viewportBottom, "enough?", enoughRoomBelow);
+            //console.log("above/ offset.top", offset.top, "dropHeight", dropHeight, "top", (offset.top-dropHeight), "scrollTop", this.body.scrollTop(), "enough?", enoughRoomAbove);
+
+            // fix positioning when body has an offset and is not position: static
+            if (this.body.css('position') !== 'static') {
+                bodyOffset = this.body.offset();
+                dropTop -= bodyOffset.top;
+                dropLeft -= bodyOffset.left;
+            }
+
+            if (!enoughRoomOnRight) {
+                dropLeft = offset.left + this.container.outerWidth(false) - dropWidth;
+            }
+
+            css =  {
+                left: dropLeft,
+                width: width
+            };
+
+            if (above) {
+                css.top = offset.top - dropHeight;
+                css.bottom = 'auto';
+                this.container.addClass("select2-drop-above");
+                $dropdown.addClass("select2-drop-above");
+            }
+            else {
+                css.top = dropTop;
+                css.bottom = 'auto';
+                this.container.removeClass("select2-drop-above");
+                $dropdown.removeClass("select2-drop-above");
+            }
+            css = $.extend(css, evaluate(this.opts.dropdownCss));
+
+            $dropdown.css(css);
+        },
+
+        // abstract
+        shouldOpen: function() {
+            var event;
+
+            if (this.opened()) return false;
+
+            if (this._enabled === false || this._readonly === true) return false;
+
+            event = $.Event("select2-opening");
+            this.opts.element.trigger(event);
+            return !event.isDefaultPrevented();
+        },
+
+        // abstract
+        clearDropdownAlignmentPreference: function() {
+            // clear the classes used to figure out the preference of where the dropdown should be opened
+            this.container.removeClass("select2-drop-above");
+            this.dropdown.removeClass("select2-drop-above");
+        },
+
+        /**
+         * Opens the dropdown
+         *
+         * @return {Boolean} whether or not dropdown was opened. This method will return false if, for example,
+         * the dropdown is already open, or if the 'open' event listener on the element called preventDefault().
+         */
+        // abstract
+        open: function () {
+
+            if (!this.shouldOpen()) return false;
+
+            this.opening();
+
+            return true;
+        },
+
+        /**
+         * Performs the opening of the dropdown
+         */
+        // abstract
+        opening: function() {
+            var cid = this.containerEventName,
+                scroll = "scroll." + cid,
+                resize = "resize."+cid,
+                orient = "orientationchange."+cid,
+                mask;
+
+            this.container.addClass("select2-dropdown-open").addClass("select2-container-active");
+
+            this.clearDropdownAlignmentPreference();
+
+            if(this.dropdown[0] !== this.body.children().last()[0]) {
+                this.dropdown.detach().appendTo(this.body);
+            }
+
+            // create the dropdown mask if doesn't already exist
+            mask = $("#select2-drop-mask");
+            if (mask.length == 0) {
+                mask = $(document.createElement("div"));
+                mask.attr("id","select2-drop-mask").attr("class","select2-drop-mask");
+                mask.hide();
+                mask.appendTo(this.body);
+                mask.on("mousedown touchstart click", function (e) {
+                    // Prevent IE from generating a click event on the body
+                    reinsertElement(mask);
+
+                    var dropdown = $("#select2-drop"), self;
+                    if (dropdown.length > 0) {
+                        self=dropdown.data("select2");
+                        if (self.opts.selectOnBlur) {
+                            self.selectHighlighted({noFocus: true});
+                        }
+                        self.close();
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                });
+            }
+
+            // ensure the mask is always right before the dropdown
+            if (this.dropdown.prev()[0] !== mask[0]) {
+                this.dropdown.before(mask);
+            }
+
+            // move the global id to the correct dropdown
+            $("#select2-drop").removeAttr("id");
+            this.dropdown.attr("id", "select2-drop");
+
+            // show the elements
+            mask.show();
+
+            this.positionDropdown();
+            this.dropdown.show();
+            this.positionDropdown();
+
+            this.dropdown.addClass("select2-drop-active");
+
+            // attach listeners to events that can change the position of the container and thus require
+            // the position of the dropdown to be updated as well so it does not come unglued from the container
+            var that = this;
+            this.container.parents().add(window).each(function () {
+                $(this).on(resize+" "+scroll+" "+orient, function (e) {
+                    if (that.opened()) that.positionDropdown();
+                });
+            });
+
+
+        },
+
+        // abstract
+        close: function () {
+            if (!this.opened()) return;
+
+            var cid = this.containerEventName,
+                scroll = "scroll." + cid,
+                resize = "resize."+cid,
+                orient = "orientationchange."+cid;
+
+            // unbind event listeners
+            this.container.parents().add(window).each(function () { $(this).off(scroll).off(resize).off(orient); });
+
+            this.clearDropdownAlignmentPreference();
+
+            $("#select2-drop-mask").hide();
+            this.dropdown.removeAttr("id"); // only the active dropdown has the select2-drop id
+            this.dropdown.hide();
+            this.container.removeClass("select2-dropdown-open").removeClass("select2-container-active");
+            this.results.empty();
+
+
+            this.clearSearch();
+            this.search.removeClass("select2-active");
+            this.opts.element.trigger($.Event("select2-close"));
+        },
+
+        /**
+         * Opens control, sets input value, and updates results.
+         */
+        // abstract
+        externalSearch: function (term) {
+            this.open();
+            this.search.val(term);
+            this.updateResults(false);
+        },
+
+        // abstract
+        clearSearch: function () {
+
+        },
+
+        //abstract
+        getMaximumSelectionSize: function() {
+            return evaluate(this.opts.maximumSelectionSize);
+        },
+
+        // abstract
+        ensureHighlightVisible: function () {
+            var results = this.results, children, index, child, hb, rb, y, more;
+
+            index = this.highlight();
+
+            if (index < 0) return;
+
+            if (index == 0) {
+
+                // if the first element is highlighted scroll all the way to the top,
+                // that way any unselectable headers above it will also be scrolled
+                // into view
+
+                results.scrollTop(0);
+                return;
+            }
+
+            children = this.findHighlightableChoices().find('.select2-result-label');
+
+            child = $(children[index]);
+
+            hb = child.offset().top + child.outerHeight(true);
+
+            // if this is the last child lets also make sure select2-more-results is visible
+            if (index === children.length - 1) {
+                more = results.find("li.select2-more-results");
+                if (more.length > 0) {
+                    hb = more.offset().top + more.outerHeight(true);
+                }
+            }
+
+            rb = results.offset().top + results.outerHeight(true);
+            if (hb > rb) {
+                results.scrollTop(results.scrollTop() + (hb - rb));
+            }
+            y = child.offset().top - results.offset().top;
+
+            // make sure the top of the element is visible
+            if (y < 0 && child.css('display') != 'none' ) {
+                results.scrollTop(results.scrollTop() + y); // y is negative
+            }
+        },
+
+        // abstract
+        findHighlightableChoices: function() {
+            return this.results.find(".select2-result-selectable:not(.select2-disabled):not(.select2-selected)");
+        },
+
+        // abstract
+        moveHighlight: function (delta) {
+            var choices = this.findHighlightableChoices(),
+                index = this.highlight();
+
+            while (index > -1 && index < choices.length) {
+                index += delta;
+                var choice = $(choices[index]);
+                if (choice.hasClass("select2-result-selectable") && !choice.hasClass("select2-disabled") && !choice.hasClass("select2-selected")) {
+                    this.highlight(index);
+                    break;
+                }
+            }
+        },
+
+        // abstract
+        highlight: function (index) {
+            var choices = this.findHighlightableChoices(),
+                choice,
+                data;
+
+            if (arguments.length === 0) {
+                return indexOf(choices.filter(".select2-highlighted")[0], choices.get());
+            }
+
+            if (index >= choices.length) index = choices.length - 1;
+            if (index < 0) index = 0;
+
+            this.removeHighlight();
+
+            choice = $(choices[index]);
+            choice.addClass("select2-highlighted");
+
+            // ensure assistive technology can determine the active choice
+            this.search.attr("aria-activedescendant", choice.find(".select2-result-label").attr("id"));
+
+            this.ensureHighlightVisible();
+
+            this.liveRegion.text(choice.text());
+
+            data = choice.data("select2-data");
+            if (data) {
+                this.opts.element.trigger({ type: "select2-highlight", val: this.id(data), choice: data });
+            }
+        },
+
+        removeHighlight: function() {
+            this.results.find(".select2-highlighted").removeClass("select2-highlighted");
+        },
+
+        touchMoved: function() {
+            this._touchMoved = true;
+        },
+
+        clearTouchMoved: function() {
+          this._touchMoved = false;
+        },
+
+        // abstract
+        countSelectableResults: function() {
+            return this.findHighlightableChoices().length;
+        },
+
+        // abstract
+        highlightUnderEvent: function (event) {
+            var el = $(event.target).closest(".select2-result-selectable");
+            if (el.length > 0 && !el.is(".select2-highlighted")) {
+                var choices = this.findHighlightableChoices();
+                this.highlight(choices.index(el));
+            } else if (el.length == 0) {
+                // if we are over an unselectable item remove all highlights
+                this.removeHighlight();
+            }
+        },
+
+        // abstract
+        loadMoreIfNeeded: function () {
+            var results = this.results,
+                more = results.find("li.select2-more-results"),
+                below, // pixels the element is below the scroll fold, below==0 is when the element is starting to be visible
+                page = this.resultsPage + 1,
+                self=this,
+                term=this.search.val(),
+                context=this.context;
+
+            if (more.length === 0) return;
+            below = more.offset().top - results.offset().top - results.height();
+
+            if (below <= this.opts.loadMorePadding) {
+                more.addClass("select2-active");
+                this.opts.query({
+                        element: this.opts.element,
+                        term: term,
+                        page: page,
+                        context: context,
+                        matcher: this.opts.matcher,
+                        callback: this.bind(function (data) {
+
+                    // ignore a response if the select2 has been closed before it was received
+                    if (!self.opened()) return;
+
+
+                    self.opts.populateResults.call(this, results, data.results, {term: term, page: page, context:context});
+                    self.postprocessResults(data, false, false);
+
+                    if (data.more===true) {
+                        more.detach().appendTo(results).text(evaluate(self.opts.formatLoadMore, page+1));
+                        window.setTimeout(function() { self.loadMoreIfNeeded(); }, 10);
+                    } else {
+                        more.remove();
+                    }
+                    self.positionDropdown();
+                    self.resultsPage = page;
+                    self.context = data.context;
+                    this.opts.element.trigger({ type: "select2-loaded", items: data });
+                })});
+            }
+        },
+
+        /**
+         * Default tokenizer function which does nothing
+         */
+        tokenize: function() {
+
+        },
+
+        /**
+         * @param initial whether or not this is the call to this method right after the dropdown has been opened
+         */
+        // abstract
+        updateResults: function (initial) {
+            var search = this.search,
+                results = this.results,
+                opts = this.opts,
+                data,
+                self = this,
+                input,
+                term = search.val(),
+                lastTerm = $.data(this.container, "select2-last-term"),
+                // sequence number used to drop out-of-order responses
+                queryNumber;
+
+            // prevent duplicate queries against the same term
+            if (initial !== true && lastTerm && equal(term, lastTerm)) return;
+
+            $.data(this.container, "select2-last-term", term);
+
+            // if the search is currently hidden we do not alter the results
+            if (initial !== true && (this.showSearchInput === false || !this.opened())) {
+                return;
+            }
+
+            function postRender() {
+                search.removeClass("select2-active");
+                self.positionDropdown();
+                if (results.find('.select2-no-results,.select2-selection-limit,.select2-searching').length) {
+                    self.liveRegion.text(results.text());
+                }
+                else {
+                    self.liveRegion.text(self.opts.formatMatches(results.find('.select2-result-selectable').length));
+                }
+            }
+
+            function render(html) {
+                results.html(html);
+                postRender();
+            }
+
+            queryNumber = ++this.queryCount;
+
+            var maxSelSize = this.getMaximumSelectionSize();
+            if (maxSelSize >=1) {
+                data = this.data();
+                if ($.isArray(data) && data.length >= maxSelSize && checkFormatter(opts.formatSelectionTooBig, "formatSelectionTooBig")) {
+                    render("<li class='select2-selection-limit'>" + evaluate(opts.formatSelectionTooBig, maxSelSize) + "</li>");
+                    return;
+                }
+            }
+
+            if (search.val().length < opts.minimumInputLength) {
+                if (checkFormatter(opts.formatInputTooShort, "formatInputTooShort")) {
+                    render("<li class='select2-no-results'>" + evaluate(opts.formatInputTooShort, search.val(), opts.minimumInputLength) + "</li>");
+                } else {
+                    render("");
+                }
+                if (initial && this.showSearch) this.showSearch(true);
+                return;
+            }
+
+            if (opts.maximumInputLength && search.val().length > opts.maximumInputLength) {
+                if (checkFormatter(opts.formatInputTooLong, "formatInputTooLong")) {
+                    render("<li class='select2-no-results'>" + evaluate(opts.formatInputTooLong, search.val(), opts.maximumInputLength) + "</li>");
+                } else {
+                    render("");
+                }
+                return;
+            }
+
+            if (opts.formatSearching && this.findHighlightableChoices().length === 0) {
+                render("<li class='select2-searching'>" + evaluate(opts.formatSearching) + "</li>");
+            }
+
+            search.addClass("select2-active");
+
+            this.removeHighlight();
+
+            // give the tokenizer a chance to pre-process the input
+            input = this.tokenize();
+            if (input != undefined && input != null) {
+                search.val(input);
+            }
+
+            this.resultsPage = 1;
+
+            opts.query({
+                element: opts.element,
+                    term: search.val(),
+                    page: this.resultsPage,
+                    context: null,
+                    matcher: opts.matcher,
+                    callback: this.bind(function (data) {
+                var def; // default choice
+
+                // ignore old responses
+                if (queryNumber != this.queryCount) {
+                  return;
+                }
+
+                // ignore a response if the select2 has been closed before it was received
+                if (!this.opened()) {
+                    this.search.removeClass("select2-active");
+                    return;
+                }
+
+                // save context, if any
+                this.context = (data.context===undefined) ? null : data.context;
+                // create a default choice and prepend it to the list
+                if (this.opts.createSearchChoice && search.val() !== "") {
+                    def = this.opts.createSearchChoice.call(self, search.val(), data.results);
+                    if (def !== undefined && def !== null && self.id(def) !== undefined && self.id(def) !== null) {
+                        if ($(data.results).filter(
+                            function () {
+                                return equal(self.id(this), self.id(def));
+                            }).length === 0) {
+                            this.opts.createSearchChoicePosition(data.results, def);
+                        }
+                    }
+                }
+
+                if (data.results.length === 0 && checkFormatter(opts.formatNoMatches, "formatNoMatches")) {
+                    render("<li class='select2-no-results'>" + evaluate(opts.formatNoMatches, search.val()) + "</li>");
+                    return;
+                }
+
+                results.empty();
+                self.opts.populateResults.call(this, results, data.results, {term: search.val(), page: this.resultsPage, context:null});
+
+                if (data.more === true && checkFormatter(opts.formatLoadMore, "formatLoadMore")) {
+                    results.append("<li class='select2-more-results'>" + self.opts.escapeMarkup(evaluate(opts.formatLoadMore, this.resultsPage)) + "</li>");
+                    window.setTimeout(function() { self.loadMoreIfNeeded(); }, 10);
+                }
+
+                this.postprocessResults(data, initial);
+
+                postRender();
+
+                this.opts.element.trigger({ type: "select2-loaded", items: data });
+            })});
+        },
+
+        // abstract
+        cancel: function () {
+            this.close();
+        },
+
+        // abstract
+        blur: function () {
+            // if selectOnBlur == true, select the currently highlighted option
+            if (this.opts.selectOnBlur)
+                this.selectHighlighted({noFocus: true});
+
+            this.close();
+            this.container.removeClass("select2-container-active");
+            // synonymous to .is(':focus'), which is available in jquery >= 1.6
+            if (this.search[0] === document.activeElement) { this.search.blur(); }
+            this.clearSearch();
+            this.selection.find(".select2-search-choice-focus").removeClass("select2-search-choice-focus");
+        },
+
+        // abstract
+        focusSearch: function () {
+            focus(this.search);
+        },
+
+        // abstract
+        selectHighlighted: function (options) {
+            if (this._touchMoved) {
+              this.clearTouchMoved();
+              return;
+            }
+            var index=this.highlight(),
+                highlighted=this.results.find(".select2-highlighted"),
+                data = highlighted.closest('.select2-result').data("select2-data");
+
+            if (data) {
+                this.highlight(index);
+                this.onSelect(data, options);
+            } else if (options && options.noFocus) {
+                this.close();
+            }
+        },
+
+        // abstract
+        getPlaceholder: function () {
+            var placeholderOption;
+            return this.opts.element.attr("placeholder") ||
+                this.opts.element.attr("data-placeholder") || // jquery 1.4 compat
+                this.opts.element.data("placeholder") ||
+                this.opts.placeholder ||
+                ((placeholderOption = this.getPlaceholderOption()) !== undefined ? placeholderOption.text() : undefined);
+        },
+
+        // abstract
+        getPlaceholderOption: function() {
+            if (this.select) {
+                var firstOption = this.select.children('option').first();
+                if (this.opts.placeholderOption !== undefined ) {
+                    //Determine the placeholder option based on the specified placeholderOption setting
+                    return (this.opts.placeholderOption === "first" && firstOption) ||
+                           (typeof this.opts.placeholderOption === "function" && this.opts.placeholderOption(this.select));
+                } else if ($.trim(firstOption.text()) === "" && firstOption.val() === "") {
+                    //No explicit placeholder option specified, use the first if it's blank
+                    return firstOption;
+                }
+            }
+        },
+
+        /**
+         * Get the desired width for the container element.  This is
+         * derived first from option `width` passed to select2, then
+         * the inline 'style' on the original element, and finally
+         * falls back to the jQuery calculated element width.
+         */
+        // abstract
+        initContainerWidth: function () {
+            function resolveContainerWidth() {
+                var style, attrs, matches, i, l, attr;
+
+                if (this.opts.width === "off") {
+                    return null;
+                } else if (this.opts.width === "element"){
+                    return this.opts.element.outerWidth(false) === 0 ? 'auto' : this.opts.element.outerWidth(false) + 'px';
+                } else if (this.opts.width === "copy" || this.opts.width === "resolve") {
+                    // check if there is inline style on the element that contains width
+                    style = this.opts.element.attr('style');
+                    if (style !== undefined) {
+                        attrs = style.split(';');
+                        for (i = 0, l = attrs.length; i < l; i = i + 1) {
+                            attr = attrs[i].replace(/\s/g, '');
+                            matches = attr.match(/^width:(([-+]?([0-9]*\.)?[0-9]+)(px|em|ex|%|in|cm|mm|pt|pc))/i);
+                            if (matches !== null && matches.length >= 1)
+                                return matches[1];
+                        }
+                    }
+
+                    if (this.opts.width === "resolve") {
+                        // next check if css('width') can resolve a width that is percent based, this is sometimes possible
+                        // when attached to input type=hidden or elements hidden via css
+                        style = this.opts.element.css('width');
+                        if (style.indexOf("%") > 0) return style;
+
+                        // finally, fallback on the calculated width of the element
+                        return (this.opts.element.outerWidth(false) === 0 ? 'auto' : this.opts.element.outerWidth(false) + 'px');
+                    }
+
+                    return null;
+                } else if ($.isFunction(this.opts.width)) {
+                    return this.opts.width();
+                } else {
+                    return this.opts.width;
+               }
+            };
+
+            var width = resolveContainerWidth.call(this);
+            if (width !== null) {
+                this.container.css("width", width);
+            }
+        }
+    });
+
+    SingleSelect2 = clazz(AbstractSelect2, {
+
+        // single
+
+        createContainer: function () {
+            var container = $(document.createElement("div")).attr({
+                "class": "select2-container"
+            }).html([
+                "<a href='javascript:void(0)' class='select2-choice' tabindex='-1'>",
+                "   <span class='select2-chosen'>&#160;</span><abbr class='select2-search-choice-close'></abbr>",
+                "   <span class='select2-arrow' role='presentation'><b role='presentation'></b></span>",
+                "</a>",
+                "<label for='' class='select2-offscreen'></label>",
+                "<input class='select2-focusser select2-offscreen' type='text' aria-haspopup='true' role='button' />",
+                "<div class='select2-drop select2-display-none'>",
+                "   <div class='select2-search'>",
+                "       <label for='' class='select2-offscreen'></label>",
+                "       <input type='text' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false' class='select2-input' role='combobox' aria-expanded='true'",
+                "       aria-autocomplete='list' />",
+                "   </div>",
+                "   <ul class='select2-results' role='listbox'>",
+                "   </ul>",
+                "</div>"].join(""));
+            return container;
+        },
+
+        // single
+        enableInterface: function() {
+            if (this.parent.enableInterface.apply(this, arguments)) {
+                this.focusser.prop("disabled", !this.isInterfaceEnabled());
+            }
+        },
+
+        // single
+        opening: function () {
+            var el, range, len;
+
+            if (this.opts.minimumResultsForSearch >= 0) {
+                this.showSearch(true);
+            }
+
+            this.parent.opening.apply(this, arguments);
+
+            if (this.showSearchInput !== false) {
+                // IE appends focusser.val() at the end of field :/ so we manually insert it at the beginning using a range
+                // all other browsers handle this just fine
+
+                this.search.val(this.focusser.val());
+            }
+            if (this.opts.shouldFocusInput(this)) {
+                this.search.focus();
+                // move the cursor to the end after focussing, otherwise it will be at the beginning and
+                // new text will appear *before* focusser.val()
+                el = this.search.get(0);
+                if (el.createTextRange) {
+                    range = el.createTextRange();
+                    range.collapse(false);
+                    range.select();
+                } else if (el.setSelectionRange) {
+                    len = this.search.val().length;
+                    el.setSelectionRange(len, len);
+                }
+            }
+
+            // initializes search's value with nextSearchTerm (if defined by user)
+            // ignore nextSearchTerm if the dropdown is opened by the user pressing a letter
+            if(this.search.val() === "") {
+                if(this.nextSearchTerm != undefined){
+                    this.search.val(this.nextSearchTerm);
+                    this.search.select();
+                }
+            }
+
+            this.focusser.prop("disabled", true).val("");
+            this.updateResults(true);
+            this.opts.element.trigger($.Event("select2-open"));
+        },
+
+        // single
+        close: function () {
+            if (!this.opened()) return;
+            this.parent.close.apply(this, arguments);
+
+            this.focusser.prop("disabled", false);
+
+            if (this.opts.shouldFocusInput(this)) {
+                this.focusser.focus();
+            }
+        },
+
+        // single
+        focus: function () {
+            if (this.opened()) {
+                this.close();
+            } else {
+                this.focusser.prop("disabled", false);
+                if (this.opts.shouldFocusInput(this)) {
+                    this.focusser.focus();
+                }
+            }
+        },
+
+        // single
+        isFocused: function () {
+            return this.container.hasClass("select2-container-active");
+        },
+
+        // single
+        cancel: function () {
+            this.parent.cancel.apply(this, arguments);
+            this.focusser.prop("disabled", false);
+
+            if (this.opts.shouldFocusInput(this)) {
+                this.focusser.focus();
+            }
+        },
+
+        // single
+        destroy: function() {
+            $("label[for='" + this.focusser.attr('id') + "']")
+                .attr('for', this.opts.element.attr("id"));
+            this.parent.destroy.apply(this, arguments);
+
+            cleanupJQueryElements.call(this,
+                "selection",
+                "focusser"
+            );
+        },
+
+        // single
+        initContainer: function () {
+
+            var selection,
+                container = this.container,
+                dropdown = this.dropdown,
+                idSuffix = nextUid(),
+                elementLabel;
+
+            if (this.opts.minimumResultsForSearch < 0) {
+                this.showSearch(false);
+            } else {
+                this.showSearch(true);
+            }
+
+            this.selection = selection = container.find(".select2-choice");
+
+            this.focusser = container.find(".select2-focusser");
+
+            // add aria associations
+            selection.find(".select2-chosen").attr("id", "select2-chosen-"+idSuffix);
+            this.focusser.attr("aria-labelledby", "select2-chosen-"+idSuffix);
+            this.results.attr("id", "select2-results-"+idSuffix);
+            this.search.attr("aria-owns", "select2-results-"+idSuffix);
+
+            // rewrite labels from original element to focusser
+            this.focusser.attr("id", "s2id_autogen"+idSuffix);
+
+            elementLabel = $("label[for='" + this.opts.element.attr("id") + "']");
+
+            this.focusser.prev()
+                .text(elementLabel.text())
+                .attr('for', this.focusser.attr('id'));
+
+            // Ensure the original element retains an accessible name
+            var originalTitle = this.opts.element.attr("title");
+            this.opts.element.attr("title", (originalTitle || elementLabel.text()));
+
+            this.focusser.attr("tabindex", this.elementTabIndex);
+
+            // write label for search field using the label from the focusser element
+            this.search.attr("id", this.focusser.attr('id') + '_search');
+
+            this.search.prev()
+                .text($("label[for='" + this.focusser.attr('id') + "']").text())
+                .attr('for', this.search.attr('id'));
+
+            this.search.on("keydown", this.bind(function (e) {
+                if (!this.isInterfaceEnabled()) return;
+
+                if (e.which === KEY.PAGE_UP || e.which === KEY.PAGE_DOWN) {
+                    // prevent the page from scrolling
+                    killEvent(e);
+                    return;
+                }
+
+                switch (e.which) {
+                    case KEY.UP:
+                    case KEY.DOWN:
+                        this.moveHighlight((e.which === KEY.UP) ? -1 : 1);
+                        killEvent(e);
+                        return;
+                    case KEY.ENTER:
+                        this.selectHighlighted();
+                        killEvent(e);
+                        return;
+                    case KEY.TAB:
+                        this.selectHighlighted({noFocus: true});
+                        return;
+                    case KEY.ESC:
+                        this.cancel(e);
+                        killEvent(e);
+                        return;
+                }
+            }));
+
+            this.search.on("blur", this.bind(function(e) {
+                // a workaround for chrome to keep the search field focussed when the scroll bar is used to scroll the dropdown.
+                // without this the search field loses focus which is annoying
+                if (document.activeElement === this.body.get(0)) {
+                    window.setTimeout(this.bind(function() {
+                        if (this.opened()) {
+                            this.search.focus();
+                        }
+                    }), 0);
+                }
+            }));
+
+            this.focusser.on("keydown", this.bind(function (e) {
+                if (!this.isInterfaceEnabled()) return;
+
+                if (e.which === KEY.TAB || KEY.isControl(e) || KEY.isFunctionKey(e) || e.which === KEY.ESC) {
+                    return;
+                }
+
+                if (this.opts.openOnEnter === false && e.which === KEY.ENTER) {
+                    killEvent(e);
+                    return;
+                }
+
+                if (e.which == KEY.DOWN || e.which == KEY.UP
+                    || (e.which == KEY.ENTER && this.opts.openOnEnter)) {
+
+                    if (e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) return;
+
+                    this.open();
+                    killEvent(e);
+                    return;
+                }
+
+                if (e.which == KEY.DELETE || e.which == KEY.BACKSPACE) {
+                    if (this.opts.allowClear) {
+                        this.clear();
+                    }
+                    killEvent(e);
+                    return;
+                }
+            }));
+
+
+            installKeyUpChangeEvent(this.focusser);
+            this.focusser.on("keyup-change input", this.bind(function(e) {
+                if (this.opts.minimumResultsForSearch >= 0) {
+                    e.stopPropagation();
+                    if (this.opened()) return;
+                    this.open();
+                }
+            }));
+
+            selection.on("mousedown touchstart", "abbr", this.bind(function (e) {
+                if (!this.isInterfaceEnabled()) return;
+                this.clear();
+                killEventImmediately(e);
+                this.close();
+                this.selection.focus();
+            }));
+
+            selection.on("mousedown touchstart", this.bind(function (e) {
+                // Prevent IE from generating a click event on the body
+                reinsertElement(selection);
+
+                if (!this.container.hasClass("select2-container-active")) {
+                    this.opts.element.trigger($.Event("select2-focus"));
+                }
+
+                if (this.opened()) {
+                    this.close();
+                } else if (this.isInterfaceEnabled()) {
+                    this.open();
+                }
+
+                killEvent(e);
+            }));
+
+            dropdown.on("mousedown touchstart", this.bind(function() {
+                if (this.opts.shouldFocusInput(this)) {
+                    this.search.focus();
+                }
+            }));
+
+            selection.on("focus", this.bind(function(e) {
+                killEvent(e);
+            }));
+
+            this.focusser.on("focus", this.bind(function(){
+                if (!this.container.hasClass("select2-container-active")) {
+                    this.opts.element.trigger($.Event("select2-focus"));
+                }
+                this.container.addClass("select2-container-active");
+            })).on("blur", this.bind(function() {
+                if (!this.opened()) {
+                    this.container.removeClass("select2-container-active");
+                    this.opts.element.trigger($.Event("select2-blur"));
+                }
+            }));
+            this.search.on("focus", this.bind(function(){
+                if (!this.container.hasClass("select2-container-active")) {
+                    this.opts.element.trigger($.Event("select2-focus"));
+                }
+                this.container.addClass("select2-container-active");
+            }));
+
+            this.initContainerWidth();
+            this.opts.element.addClass("select2-offscreen");
+            this.setPlaceholder();
+
+        },
+
+        // single
+        clear: function(triggerChange) {
+            var data=this.selection.data("select2-data");
+            if (data) { // guard against queued quick consecutive clicks
+                var evt = $.Event("select2-clearing");
+                this.opts.element.trigger(evt);
+                if (evt.isDefaultPrevented()) {
+                    return;
+                }
+                var placeholderOption = this.getPlaceholderOption();
+                this.opts.element.val(placeholderOption ? placeholderOption.val() : "");
+                this.selection.find(".select2-chosen").empty();
+                this.selection.removeData("select2-data");
+                this.setPlaceholder();
+
+                if (triggerChange !== false){
+                    this.opts.element.trigger({ type: "select2-removed", val: this.id(data), choice: data });
+                    this.triggerChange({removed:data});
+                }
+            }
+        },
+
+        /**
+         * Sets selection based on source element's value
+         */
+        // single
+        initSelection: function () {
+            var selected;
+            if (this.isPlaceholderOptionSelected()) {
+                this.updateSelection(null);
+                this.close();
+                this.setPlaceholder();
+            } else {
+                var self = this;
+                this.opts.initSelection.call(null, this.opts.element, function(selected){
+                    if (selected !== undefined && selected !== null) {
+                        self.updateSelection(selected);
+                        self.close();
+                        self.setPlaceholder();
+                        self.nextSearchTerm = self.opts.nextSearchTerm(selected, self.search.val());
+                    }
+                });
+            }
+        },
+
+        isPlaceholderOptionSelected: function() {
+            var placeholderOption;
+            if (this.getPlaceholder() === undefined) return false; // no placeholder specified so no option should be considered
+            return ((placeholderOption = this.getPlaceholderOption()) !== undefined && placeholderOption.prop("selected"))
+                || (this.opts.element.val() === "")
+                || (this.opts.element.val() === undefined)
+                || (this.opts.element.val() === null);
+        },
+
+        // single
+        prepareOpts: function () {
+            var opts = this.parent.prepareOpts.apply(this, arguments),
+                self=this;
+
+            if (opts.element.get(0).tagName.toLowerCase() === "select") {
+                // install the selection initializer
+                opts.initSelection = function (element, callback) {
+                    var selected = element.find("option").filter(function() { return this.selected && !this.disabled });
+                    // a single select box always has a value, no need to null check 'selected'
+                    callback(self.optionToData(selected));
+                };
+            } else if ("data" in opts) {
+                // install default initSelection when applied to hidden input and data is local
+                opts.initSelection = opts.initSelection || function (element, callback) {
+                    var id = element.val();
+                    //search in data by id, storing the actual matching item
+                    var match = null;
+                    opts.query({
+                        matcher: function(term, text, el){
+                            var is_match = equal(id, opts.id(el));
+                            if (is_match) {
+                                match = el;
+                            }
+                            return is_match;
+                        },
+                        callback: !$.isFunction(callback) ? $.noop : function() {
+                            callback(match);
+                        }
+                    });
+                };
+            }
+
+            return opts;
+        },
+
+        // single
+        getPlaceholder: function() {
+            // if a placeholder is specified on a single select without a valid placeholder option ignore it
+            if (this.select) {
+                if (this.getPlaceholderOption() === undefined) {
+                    return undefined;
+                }
+            }
+
+            return this.parent.getPlaceholder.apply(this, arguments);
+        },
+
+        // single
+        setPlaceholder: function () {
+            var placeholder = this.getPlaceholder();
+
+            if (this.isPlaceholderOptionSelected() && placeholder !== undefined) {
+
+                // check for a placeholder option if attached to a select
+                if (this.select && this.getPlaceholderOption() === undefined) return;
+
+                this.selection.find(".select2-chosen").html(this.opts.escapeMarkup(placeholder));
+
+                this.selection.addClass("select2-default");
+
+                this.container.removeClass("select2-allowclear");
+            }
+        },
+
+        // single
+        postprocessResults: function (data, initial, noHighlightUpdate) {
+            var selected = 0, self = this, showSearchInput = true;
+
+            // find the selected element in the result list
+
+            this.findHighlightableChoices().each2(function (i, elm) {
+                if (equal(self.id(elm.data("select2-data")), self.opts.element.val())) {
+                    selected = i;
+                    return false;
+                }
+            });
+
+            // and highlight it
+            if (noHighlightUpdate !== false) {
+                if (initial === true && selected >= 0) {
+                    this.highlight(selected);
+                } else {
+                    this.highlight(0);
+                }
+            }
+
+            // hide the search box if this is the first we got the results and there are enough of them for search
+
+            if (initial === true) {
+                var min = this.opts.minimumResultsForSearch;
+                if (min >= 0) {
+                    this.showSearch(countResults(data.results) >= min);
+                }
+            }
+        },
+
+        // single
+        showSearch: function(showSearchInput) {
+            if (this.showSearchInput === showSearchInput) return;
+
+            this.showSearchInput = showSearchInput;
+
+            this.dropdown.find(".select2-search").toggleClass("select2-search-hidden", !showSearchInput);
+            this.dropdown.find(".select2-search").toggleClass("select2-offscreen", !showSearchInput);
+            //add "select2-with-searchbox" to the container if search box is shown
+            $(this.dropdown, this.container).toggleClass("select2-with-searchbox", showSearchInput);
+        },
+
+        // single
+        onSelect: function (data, options) {
+
+            if (!this.triggerSelect(data)) { return; }
+
+            var old = this.opts.element.val(),
+                oldData = this.data();
+
+            this.opts.element.val(this.id(data));
+            this.updateSelection(data);
+
+            this.opts.element.trigger({ type: "select2-selected", val: this.id(data), choice: data });
+
+            this.nextSearchTerm = this.opts.nextSearchTerm(data, this.search.val());
+            this.close();
+
+            if ((!options || !options.noFocus) && this.opts.shouldFocusInput(this)) {
+                this.focusser.focus();
+            }
+
+            if (!equal(old, this.id(data))) {
+                this.triggerChange({ added: data, removed: oldData });
+            }
+        },
+
+        // single
+        updateSelection: function (data) {
+
+            var container=this.selection.find(".select2-chosen"), formatted, cssClass;
+
+            this.selection.data("select2-data", data);
+
+            container.empty();
+            if (data !== null) {
+                formatted=this.opts.formatSelection(data, container, this.opts.escapeMarkup);
+            }
+            if (formatted !== undefined) {
+                container.append(formatted);
+            }
+            cssClass=this.opts.formatSelectionCssClass(data, container);
+            if (cssClass !== undefined) {
+                container.addClass(cssClass);
+            }
+
+            this.selection.removeClass("select2-default");
+
+            if (this.opts.allowClear && this.getPlaceholder() !== undefined) {
+                this.container.addClass("select2-allowclear");
+            }
+        },
+
+        // single
+        val: function () {
+            var val,
+                triggerChange = false,
+                data = null,
+                self = this,
+                oldData = this.data();
+
+            if (arguments.length === 0) {
+                return this.opts.element.val();
+            }
+
+            val = arguments[0];
+
+            if (arguments.length > 1) {
+                triggerChange = arguments[1];
+            }
+
+            if (this.select) {
+                this.select
+                    .val(val)
+                    .find("option").filter(function() { return this.selected }).each2(function (i, elm) {
+                        data = self.optionToData(elm);
+                        return false;
+                    });
+                this.updateSelection(data);
+                this.setPlaceholder();
+                if (triggerChange) {
+                    this.triggerChange({added: data, removed:oldData});
+                }
+            } else {
+                // val is an id. !val is true for [undefined,null,'',0] - 0 is legal
+                if (!val && val !== 0) {
+                    this.clear(triggerChange);
+                    return;
+                }
+                if (this.opts.initSelection === undefined) {
+                    throw new Error("cannot call val() if initSelection() is not defined");
+                }
+                this.opts.element.val(val);
+                this.opts.initSelection(this.opts.element, function(data){
+                    self.opts.element.val(!data ? "" : self.id(data));
+                    self.updateSelection(data);
+                    self.setPlaceholder();
+                    if (triggerChange) {
+                        self.triggerChange({added: data, removed:oldData});
+                    }
+                });
+            }
+        },
+
+        // single
+        clearSearch: function () {
+            this.search.val("");
+            this.focusser.val("");
+        },
+
+        // single
+        data: function(value) {
+            var data,
+                triggerChange = false;
+
+            if (arguments.length === 0) {
+                data = this.selection.data("select2-data");
+                if (data == undefined) data = null;
+                return data;
+            } else {
+                if (arguments.length > 1) {
+                    triggerChange = arguments[1];
+                }
+                if (!value) {
+                    this.clear(triggerChange);
+                } else {
+                    data = this.data();
+                    this.opts.element.val(!value ? "" : this.id(value));
+                    this.updateSelection(value);
+                    if (triggerChange) {
+                        this.triggerChange({added: value, removed:data});
+                    }
+                }
+            }
+        }
+    });
+
+    MultiSelect2 = clazz(AbstractSelect2, {
+
+        // multi
+        createContainer: function () {
+            var container = $(document.createElement("div")).attr({
+                "class": "select2-container select2-container-multi"
+            }).html([
+                "<ul class='select2-choices'>",
+                "  <li class='select2-search-field'>",
+                "    <label for='' class='select2-offscreen'></label>",
+                "    <input type='text' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false' class='select2-input'>",
+                "  </li>",
+                "</ul>",
+                "<div class='select2-drop select2-drop-multi select2-display-none'>",
+                "   <ul class='select2-results'>",
+                "   </ul>",
+                "</div>"].join(""));
+            return container;
+        },
+
+        // multi
+        prepareOpts: function () {
+            var opts = this.parent.prepareOpts.apply(this, arguments),
+                self=this;
+
+            // TODO validate placeholder is a string if specified
+
+            if (opts.element.get(0).tagName.toLowerCase() === "select") {
+                // install the selection initializer
+                opts.initSelection = function (element, callback) {
+
+                    var data = [];
+
+                    element.find("option").filter(function() { return this.selected && !this.disabled }).each2(function (i, elm) {
+                        data.push(self.optionToData(elm));
+                    });
+                    callback(data);
+                };
+            } else if ("data" in opts) {
+                // install default initSelection when applied to hidden input and data is local
+                opts.initSelection = opts.initSelection || function (element, callback) {
+                    var ids = splitVal(element.val(), opts.separator);
+                    //search in data by array of ids, storing matching items in a list
+                    var matches = [];
+                    opts.query({
+                        matcher: function(term, text, el){
+                            var is_match = $.grep(ids, function(id) {
+                                return equal(id, opts.id(el));
+                            }).length;
+                            if (is_match) {
+                                matches.push(el);
+                            }
+                            return is_match;
+                        },
+                        callback: !$.isFunction(callback) ? $.noop : function() {
+                            // reorder matches based on the order they appear in the ids array because right now
+                            // they are in the order in which they appear in data array
+                            var ordered = [];
+                            for (var i = 0; i < ids.length; i++) {
+                                var id = ids[i];
+                                for (var j = 0; j < matches.length; j++) {
+                                    var match = matches[j];
+                                    if (equal(id, opts.id(match))) {
+                                        ordered.push(match);
+                                        matches.splice(j, 1);
+                                        break;
+                                    }
+                                }
+                            }
+                            callback(ordered);
+                        }
+                    });
+                };
+            }
+
+            return opts;
+        },
+
+        // multi
+        selectChoice: function (choice) {
+
+            var selected = this.container.find(".select2-search-choice-focus");
+            if (selected.length && choice && choice[0] == selected[0]) {
+
+            } else {
+                if (selected.length) {
+                    this.opts.element.trigger("choice-deselected", selected);
+                }
+                selected.removeClass("select2-search-choice-focus");
+                if (choice && choice.length) {
+                    this.close();
+                    choice.addClass("select2-search-choice-focus");
+                    this.opts.element.trigger("choice-selected", choice);
+                }
+            }
+        },
+
+        // multi
+        destroy: function() {
+            $("label[for='" + this.search.attr('id') + "']")
+                .attr('for', this.opts.element.attr("id"));
+            this.parent.destroy.apply(this, arguments);
+
+            cleanupJQueryElements.call(this,
+                "searchContainer",
+                "selection"
+            );
+        },
+
+        // multi
+        initContainer: function () {
+
+            var selector = ".select2-choices", selection;
+
+            this.searchContainer = this.container.find(".select2-search-field");
+            this.selection = selection = this.container.find(selector);
+
+            var _this = this;
+            this.selection.on("click", ".select2-search-choice:not(.select2-locked)", function (e) {
+                //killEvent(e);
+                _this.search[0].focus();
+                _this.selectChoice($(this));
+            });
+
+            // rewrite labels from original element to focusser
+            this.search.attr("id", "s2id_autogen"+nextUid());
+
+            this.search.prev()
+                .text($("label[for='" + this.opts.element.attr("id") + "']").text())
+                .attr('for', this.search.attr('id'));
+
+            this.search.on("input paste", this.bind(function() {
+                if (!this.isInterfaceEnabled()) return;
+                if (!this.opened()) {
+                    this.open();
+                }
+            }));
+
+            this.search.attr("tabindex", this.elementTabIndex);
+
+            this.keydowns = 0;
+            this.search.on("keydown", this.bind(function (e) {
+                if (!this.isInterfaceEnabled()) return;
+
+                ++this.keydowns;
+                var selected = selection.find(".select2-search-choice-focus");
+                var prev = selected.prev(".select2-search-choice:not(.select2-locked)");
+                var next = selected.next(".select2-search-choice:not(.select2-locked)");
+                var pos = getCursorInfo(this.search);
+
+                if (selected.length &&
+                    (e.which == KEY.LEFT || e.which == KEY.RIGHT || e.which == KEY.BACKSPACE || e.which == KEY.DELETE || e.which == KEY.ENTER)) {
+                    var selectedChoice = selected;
+                    if (e.which == KEY.LEFT && prev.length) {
+                        selectedChoice = prev;
+                    }
+                    else if (e.which == KEY.RIGHT) {
+                        selectedChoice = next.length ? next : null;
+                    }
+                    else if (e.which === KEY.BACKSPACE) {
+                        if (this.unselect(selected.first())) {
+                            this.search.width(10);
+                            selectedChoice = prev.length ? prev : next;
+                        }
+                    } else if (e.which == KEY.DELETE) {
+                        if (this.unselect(selected.first())) {
+                            this.search.width(10);
+                            selectedChoice = next.length ? next : null;
+                        }
+                    } else if (e.which == KEY.ENTER) {
+                        selectedChoice = null;
+                    }
+
+                    this.selectChoice(selectedChoice);
+                    killEvent(e);
+                    if (!selectedChoice || !selectedChoice.length) {
+                        this.open();
+                    }
+                    return;
+                } else if (((e.which === KEY.BACKSPACE && this.keydowns == 1)
+                    || e.which == KEY.LEFT) && (pos.offset == 0 && !pos.length)) {
+
+                    this.selectChoice(selection.find(".select2-search-choice:not(.select2-locked)").last());
+                    killEvent(e);
+                    return;
+                } else {
+                    this.selectChoice(null);
+                }
+
+                if (this.opened()) {
+                    switch (e.which) {
+                    case KEY.UP:
+                    case KEY.DOWN:
+                        this.moveHighlight((e.which === KEY.UP) ? -1 : 1);
+                        killEvent(e);
+                        return;
+                    case KEY.ENTER:
+                        this.selectHighlighted();
+                        killEvent(e);
+                        return;
+                    case KEY.TAB:
+                        this.selectHighlighted({noFocus:true});
+                        this.close();
+                        return;
+                    case KEY.ESC:
+                        this.cancel(e);
+                        killEvent(e);
+                        return;
+                    }
+                }
+
+                if (e.which === KEY.TAB || KEY.isControl(e) || KEY.isFunctionKey(e)
+                 || e.which === KEY.BACKSPACE || e.which === KEY.ESC) {
+                    return;
+                }
+
+                if (e.which === KEY.ENTER) {
+                    if (this.opts.openOnEnter === false) {
+                        return;
+                    } else if (e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) {
+                        return;
+                    }
+                }
+
+                this.open();
+
+                if (e.which === KEY.PAGE_UP || e.which === KEY.PAGE_DOWN) {
+                    // prevent the page from scrolling
+                    killEvent(e);
+                }
+
+                if (e.which === KEY.ENTER) {
+                    // prevent form from being submitted
+                    killEvent(e);
+                }
+
+            }));
+
+            this.search.on("keyup", this.bind(function (e) {
+                this.keydowns = 0;
+                this.resizeSearch();
+            })
+            );
+
+            this.search.on("blur", this.bind(function(e) {
+                this.container.removeClass("select2-container-active");
+                this.search.removeClass("select2-focused");
+                this.selectChoice(null);
+                if (!this.opened()) this.clearSearch();
+                e.stopImmediatePropagation();
+                this.opts.element.trigger($.Event("select2-blur"));
+            }));
+
+            this.container.on("click", selector, this.bind(function (e) {
+                if (!this.isInterfaceEnabled()) return;
+                if ($(e.target).closest(".select2-search-choice").length > 0) {
+                    // clicked inside a select2 search choice, do not open
+                    return;
+                }
+                this.selectChoice(null);
+                this.clearPlaceholder();
+                if (!this.container.hasClass("select2-container-active")) {
+                    this.opts.element.trigger($.Event("select2-focus"));
+                }
+                this.open();
+                this.focusSearch();
+                e.preventDefault();
+            }));
+
+            this.container.on("focus", selector, this.bind(function () {
+                if (!this.isInterfaceEnabled()) return;
+                if (!this.container.hasClass("select2-container-active")) {
+                    this.opts.element.trigger($.Event("select2-focus"));
+                }
+                this.container.addClass("select2-container-active");
+                this.dropdown.addClass("select2-drop-active");
+                this.clearPlaceholder();
+            }));
+
+            this.initContainerWidth();
+            this.opts.element.addClass("select2-offscreen");
+
+            // set the placeholder if necessary
+            this.clearSearch();
+        },
+
+        // multi
+        enableInterface: function() {
+            if (this.parent.enableInterface.apply(this, arguments)) {
+                this.search.prop("disabled", !this.isInterfaceEnabled());
+            }
+        },
+
+        // multi
+        initSelection: function () {
+            var data;
+            if (this.opts.element.val() === "" && this.opts.element.text() === "") {
+                this.updateSelection([]);
+                this.close();
+                // set the placeholder if necessary
+                this.clearSearch();
+            }
+            if (this.select || this.opts.element.val() !== "") {
+                var self = this;
+                this.opts.initSelection.call(null, this.opts.element, function(data){
+                    if (data !== undefined && data !== null) {
+                        self.updateSelection(data);
+                        self.close();
+                        // set the placeholder if necessary
+                        self.clearSearch();
+                    }
+                });
+            }
+        },
+
+        // multi
+        clearSearch: function () {
+            var placeholder = this.getPlaceholder(),
+                maxWidth = this.getMaxSearchWidth();
+
+            if (placeholder !== undefined  && this.getVal().length === 0 && this.search.hasClass("select2-focused") === false) {
+                this.search.val(placeholder).addClass("select2-default");
+                // stretch the search box to full width of the container so as much of the placeholder is visible as possible
+                // we could call this.resizeSearch(), but we do not because that requires a sizer and we do not want to create one so early because of a firefox bug, see #944
+                this.search.width(maxWidth > 0 ? maxWidth : this.container.css("width"));
+            } else {
+                this.search.val("").width(10);
+            }
+        },
+
+        // multi
+        clearPlaceholder: function () {
+            if (this.search.hasClass("select2-default")) {
+                this.search.val("").removeClass("select2-default");
+            }
+        },
+
+        // multi
+        opening: function () {
+            this.clearPlaceholder(); // should be done before super so placeholder is not used to search
+            this.resizeSearch();
+
+            this.parent.opening.apply(this, arguments);
+
+            this.focusSearch();
+
+            // initializes search's value with nextSearchTerm (if defined by user)
+            // ignore nextSearchTerm if the dropdown is opened by the user pressing a letter
+            if(this.search.val() === "") {
+                if(this.nextSearchTerm != undefined){
+                    this.search.val(this.nextSearchTerm);
+                    this.search.select();
+                }
+            }
+
+            this.updateResults(true);
+            if (this.opts.shouldFocusInput(this)) {
+                this.search.focus();
+            }
+            this.opts.element.trigger($.Event("select2-open"));
+        },
+
+        // multi
+        close: function () {
+            if (!this.opened()) return;
+            this.parent.close.apply(this, arguments);
+        },
+
+        // multi
+        focus: function () {
+            this.close();
+            this.search.focus();
+        },
+
+        // multi
+        isFocused: function () {
+            return this.search.hasClass("select2-focused");
+        },
+
+        // multi
+        updateSelection: function (data) {
+            var ids = [], filtered = [], self = this;
+
+            // filter out duplicates
+            $(data).each(function () {
+                if (indexOf(self.id(this), ids) < 0) {
+                    ids.push(self.id(this));
+                    filtered.push(this);
+                }
+            });
+            data = filtered;
+
+            this.selection.find(".select2-search-choice").remove();
+            $(data).each(function () {
+                self.addSelectedChoice(this);
+            });
+            self.postprocessResults();
+        },
+
+        // multi
+        tokenize: function() {
+            var input = this.search.val();
+            input = this.opts.tokenizer.call(this, input, this.data(), this.bind(this.onSelect), this.opts);
+            if (input != null && input != undefined) {
+                this.search.val(input);
+                if (input.length > 0) {
+                    this.open();
+                }
+            }
+
+        },
+
+        // multi
+        onSelect: function (data, options) {
+
+            if (!this.triggerSelect(data)) { return; }
+
+            this.addSelectedChoice(data);
+
+            this.opts.element.trigger({ type: "selected", val: this.id(data), choice: data });
+
+            // keep track of the search's value before it gets cleared
+            this.nextSearchTerm = this.opts.nextSearchTerm(data, this.search.val());
+
+            this.clearSearch();
+            this.updateResults();
+
+            if (this.select || !this.opts.closeOnSelect) this.postprocessResults(data, false, this.opts.closeOnSelect===true);
+
+            if (this.opts.closeOnSelect) {
+                this.close();
+                this.search.width(10);
+            } else {
+                if (this.countSelectableResults()>0) {
+                    this.search.width(10);
+                    this.resizeSearch();
+                    if (this.getMaximumSelectionSize() > 0 && this.val().length >= this.getMaximumSelectionSize()) {
+                        // if we reached max selection size repaint the results so choices
+                        // are replaced with the max selection reached message
+                        this.updateResults(true);
+                    } else {
+                        // initializes search's value with nextSearchTerm and update search result
+                        if(this.nextSearchTerm != undefined){
+                            this.search.val(this.nextSearchTerm);
+                            this.updateResults();
+                            this.search.select();
+                        }
+                    }
+                    this.positionDropdown();
+                } else {
+                    // if nothing left to select close
+                    this.close();
+                    this.search.width(10);
+                }
+            }
+
+            // since its not possible to select an element that has already been
+            // added we do not need to check if this is a new element before firing change
+            this.triggerChange({ added: data });
+
+            if (!options || !options.noFocus)
+                this.focusSearch();
+        },
+
+        // multi
+        cancel: function () {
+            this.close();
+            this.focusSearch();
+        },
+
+        addSelectedChoice: function (data) {
+            var enableChoice = !data.locked,
+                enabledItem = $(
+                    "<li class='select2-search-choice'>" +
+                    "    <div></div>" +
+                    "    <a href='#' class='select2-search-choice-close' tabindex='-1'></a>" +
+                    "</li>"),
+                disabledItem = $(
+                    "<li class='select2-search-choice select2-locked'>" +
+                    "<div></div>" +
+                    "</li>");
+            var choice = enableChoice ? enabledItem : disabledItem,
+                id = this.id(data),
+                val = this.getVal(),
+                formatted,
+                cssClass;
+
+            formatted=this.opts.formatSelection(data, choice.find("div"), this.opts.escapeMarkup);
+            if (formatted != undefined) {
+                choice.find("div").replaceWith("<div>"+formatted+"</div>");
+            }
+            cssClass=this.opts.formatSelectionCssClass(data, choice.find("div"));
+            if (cssClass != undefined) {
+                choice.addClass(cssClass);
+            }
+
+            if(enableChoice){
+              choice.find(".select2-search-choice-close")
+                  .on("mousedown", killEvent)
+                  .on("click dblclick", this.bind(function (e) {
+                  if (!this.isInterfaceEnabled()) return;
+
+                  this.unselect($(e.target));
+                  this.selection.find(".select2-search-choice-focus").removeClass("select2-search-choice-focus");
+                  killEvent(e);
+                  this.close();
+                  this.focusSearch();
+              })).on("focus", this.bind(function () {
+                  if (!this.isInterfaceEnabled()) return;
+                  this.container.addClass("select2-container-active");
+                  this.dropdown.addClass("select2-drop-active");
+              }));
+            }
+
+            choice.data("select2-data", data);
+            choice.insertBefore(this.searchContainer);
+
+            val.push(id);
+            this.setVal(val);
+        },
+
+        // multi
+        unselect: function (selected) {
+            var val = this.getVal(),
+                data,
+                index;
+            selected = selected.closest(".select2-search-choice");
+
+            if (selected.length === 0) {
+                throw "Invalid argument: " + selected + ". Must be .select2-search-choice";
+            }
+
+            data = selected.data("select2-data");
+
+            if (!data) {
+                // prevent a race condition when the 'x' is clicked really fast repeatedly the event can be queued
+                // and invoked on an element already removed
+                return;
+            }
+
+            var evt = $.Event("select2-removing");
+            evt.val = this.id(data);
+            evt.choice = data;
+            this.opts.element.trigger(evt);
+
+            if (evt.isDefaultPrevented()) {
+                return false;
+            }
+
+            while((index = indexOf(this.id(data), val)) >= 0) {
+                val.splice(index, 1);
+                this.setVal(val);
+                if (this.select) this.postprocessResults();
+            }
+
+            selected.remove();
+
+            this.opts.element.trigger({ type: "select2-removed", val: this.id(data), choice: data });
+            this.triggerChange({ removed: data });
+
+            return true;
+        },
+
+        // multi
+        postprocessResults: function (data, initial, noHighlightUpdate) {
+            var val = this.getVal(),
+                choices = this.results.find(".select2-result"),
+                compound = this.results.find(".select2-result-with-children"),
+                self = this;
+
+            choices.each2(function (i, choice) {
+                var id = self.id(choice.data("select2-data"));
+                if (indexOf(id, val) >= 0) {
+                    choice.addClass("select2-selected");
+                    // mark all children of the selected parent as selected
+                    choice.find(".select2-result-selectable").addClass("select2-selected");
+                }
+            });
+
+            compound.each2(function(i, choice) {
+                // hide an optgroup if it doesn't have any selectable children
+                if (!choice.is('.select2-result-selectable')
+                    && choice.find(".select2-result-selectable:not(.select2-selected)").length === 0) {
+                    choice.addClass("select2-selected");
+                }
+            });
+
+            if (this.highlight() == -1 && noHighlightUpdate !== false){
+                self.highlight(0);
+            }
+
+            //If all results are chosen render formatNoMatches
+            if(!this.opts.createSearchChoice && !choices.filter('.select2-result:not(.select2-selected)').length > 0){
+                if(!data || data && !data.more && this.results.find(".select2-no-results").length === 0) {
+                    if (checkFormatter(self.opts.formatNoMatches, "formatNoMatches")) {
+                        this.results.append("<li class='select2-no-results'>" + evaluate(self.opts.formatNoMatches, self.search.val()) + "</li>");
+                    }
+                }
+            }
+
+        },
+
+        // multi
+        getMaxSearchWidth: function() {
+            return this.selection.width() - getSideBorderPadding(this.search);
+        },
+
+        // multi
+        resizeSearch: function () {
+            var minimumWidth, left, maxWidth, containerLeft, searchWidth,
+                sideBorderPadding = getSideBorderPadding(this.search);
+
+            minimumWidth = measureTextWidth(this.search) + 10;
+
+            left = this.search.offset().left;
+
+            maxWidth = this.selection.width();
+            containerLeft = this.selection.offset().left;
+
+            searchWidth = maxWidth - (left - containerLeft) - sideBorderPadding;
+
+            if (searchWidth < minimumWidth) {
+                searchWidth = maxWidth - sideBorderPadding;
+            }
+
+            if (searchWidth < 40) {
+                searchWidth = maxWidth - sideBorderPadding;
+            }
+
+            if (searchWidth <= 0) {
+              searchWidth = minimumWidth;
+            }
+
+            this.search.width(Math.floor(searchWidth));
+        },
+
+        // multi
+        getVal: function () {
+            var val;
+            if (this.select) {
+                val = this.select.val();
+                return val === null ? [] : val;
+            } else {
+                val = this.opts.element.val();
+                return splitVal(val, this.opts.separator);
+            }
+        },
+
+        // multi
+        setVal: function (val) {
+            var unique;
+            if (this.select) {
+                this.select.val(val);
+            } else {
+                unique = [];
+                // filter out duplicates
+                $(val).each(function () {
+                    if (indexOf(this, unique) < 0) unique.push(this);
+                });
+                this.opts.element.val(unique.length === 0 ? "" : unique.join(this.opts.separator));
+            }
+        },
+
+        // multi
+        buildChangeDetails: function (old, current) {
+            var current = current.slice(0),
+                old = old.slice(0);
+
+            // remove intersection from each array
+            for (var i = 0; i < current.length; i++) {
+                for (var j = 0; j < old.length; j++) {
+                    if (equal(this.opts.id(current[i]), this.opts.id(old[j]))) {
+                        current.splice(i, 1);
+                        if(i>0){
+                        	i--;
+                        }
+                        old.splice(j, 1);
+                        j--;
+                    }
+                }
+            }
+
+            return {added: current, removed: old};
+        },
+
+
+        // multi
+        val: function (val, triggerChange) {
+            var oldData, self=this;
+
+            if (arguments.length === 0) {
+                return this.getVal();
+            }
+
+            oldData=this.data();
+            if (!oldData.length) oldData=[];
+
+            // val is an id. !val is true for [undefined,null,'',0] - 0 is legal
+            if (!val && val !== 0) {
+                this.opts.element.val("");
+                this.updateSelection([]);
+                this.clearSearch();
+                if (triggerChange) {
+                    this.triggerChange({added: this.data(), removed: oldData});
+                }
+                return;
+            }
+
+            // val is a list of ids
+            this.setVal(val);
+
+            if (this.select) {
+                this.opts.initSelection(this.select, this.bind(this.updateSelection));
+                if (triggerChange) {
+                    this.triggerChange(this.buildChangeDetails(oldData, this.data()));
+                }
+            } else {
+                if (this.opts.initSelection === undefined) {
+                    throw new Error("val() cannot be called if initSelection() is not defined");
+                }
+
+                this.opts.initSelection(this.opts.element, function(data){
+                    var ids=$.map(data, self.id);
+                    self.setVal(ids);
+                    self.updateSelection(data);
+                    self.clearSearch();
+                    if (triggerChange) {
+                        self.triggerChange(self.buildChangeDetails(oldData, self.data()));
+                    }
+                });
+            }
+            this.clearSearch();
+        },
+
+        // multi
+        onSortStart: function() {
+            if (this.select) {
+                throw new Error("Sorting of elements is not supported when attached to <select>. Attach to <input type='hidden'/> instead.");
+            }
+
+            // collapse search field into 0 width so its container can be collapsed as well
+            this.search.width(0);
+            // hide the container
+            this.searchContainer.hide();
+        },
+
+        // multi
+        onSortEnd:function() {
+
+            var val=[], self=this;
+
+            // show search and move it to the end of the list
+            this.searchContainer.show();
+            // make sure the search container is the last item in the list
+            this.searchContainer.appendTo(this.searchContainer.parent());
+            // since we collapsed the width in dragStarted, we resize it here
+            this.resizeSearch();
+
+            // update selection
+            this.selection.find(".select2-search-choice").each(function() {
+                val.push(self.opts.id($(this).data("select2-data")));
+            });
+            this.setVal(val);
+            this.triggerChange();
+        },
+
+        // multi
+        data: function(values, triggerChange) {
+            var self=this, ids, old;
+            if (arguments.length === 0) {
+                 return this.selection
+                     .children(".select2-search-choice")
+                     .map(function() { return $(this).data("select2-data"); })
+                     .get();
+            } else {
+                old = this.data();
+                if (!values) { values = []; }
+                ids = $.map(values, function(e) { return self.opts.id(e); });
+                this.setVal(ids);
+                this.updateSelection(values);
+                this.clearSearch();
+                if (triggerChange) {
+                    this.triggerChange(this.buildChangeDetails(old, this.data()));
+                }
+            }
+        }
+    });
+
+    $.fn.select2 = function () {
+
+        var args = Array.prototype.slice.call(arguments, 0),
+            opts,
+            select2,
+            method, value, multiple,
+            allowedMethods = ["val", "destroy", "opened", "open", "close", "focus", "isFocused", "container", "dropdown", "onSortStart", "onSortEnd", "enable", "disable", "readonly", "positionDropdown", "data", "search"],
+            valueMethods = ["opened", "isFocused", "container", "dropdown"],
+            propertyMethods = ["val", "data"],
+            methodsMap = { search: "externalSearch" };
+
+        this.each(function () {
+            if (args.length === 0 || typeof(args[0]) === "object") {
+                opts = args.length === 0 ? {} : $.extend({}, args[0]);
+                opts.element = $(this);
+
+                if (opts.element.get(0).tagName.toLowerCase() === "select") {
+                    multiple = opts.element.prop("multiple");
+                } else {
+                    multiple = opts.multiple || false;
+                    if ("tags" in opts) {opts.multiple = multiple = true;}
+                }
+
+                select2 = multiple ? new window.Select2["class"].multi() : new window.Select2["class"].single();
+                select2.init(opts);
+            } else if (typeof(args[0]) === "string") {
+
+                if (indexOf(args[0], allowedMethods) < 0) {
+                    throw "Unknown method: " + args[0];
+                }
+
+                value = undefined;
+                select2 = $(this).data("select2");
+                if (select2 === undefined) return;
+
+                method=args[0];
+
+                if (method === "container") {
+                    value = select2.container;
+                } else if (method === "dropdown") {
+                    value = select2.dropdown;
+                } else {
+                    if (methodsMap[method]) method = methodsMap[method];
+
+                    value = select2[method].apply(select2, args.slice(1));
+                }
+                if (indexOf(args[0], valueMethods) >= 0
+                    || (indexOf(args[0], propertyMethods) >= 0 && args.length == 1)) {
+                    return false; // abort the iteration, ready to return first matched value
+                }
+            } else {
+                throw "Invalid arguments to select2 plugin: " + args;
+            }
+        });
+        return (value === undefined) ? this : value;
+    };
+
+    // plugin defaults, accessible to users
+    $.fn.select2.defaults = {
+        width: "copy",
+        loadMorePadding: 0,
+        closeOnSelect: true,
+        openOnEnter: true,
+        containerCss: {},
+        dropdownCss: {},
+        containerCssClass: "",
+        dropdownCssClass: "",
+        formatResult: function(result, container, query, escapeMarkup) {
+            var markup=[];
+            markMatch(result.text, query.term, markup, escapeMarkup);
+            return markup.join("");
+        },
+        formatSelection: function (data, container, escapeMarkup) {
+            return data ? escapeMarkup(data.text) : undefined;
+        },
+        sortResults: function (results, container, query) {
+            return results;
+        },
+        formatResultCssClass: function(data) {return data.css;},
+        formatSelectionCssClass: function(data, container) {return undefined;},
+        formatMatches: function (matches) { return matches + " results are available, use up and down arrow keys to navigate."; },
+        formatNoMatches: function () { return "No matches found"; },
+        formatInputTooShort: function (input, min) { var n = min - input.length; return "Please enter " + n + " or more character" + (n == 1? "" : "s"); },
+        formatInputTooLong: function (input, max) { var n = input.length - max; return "Please delete " + n + " character" + (n == 1? "" : "s"); },
+        formatSelectionTooBig: function (limit) { return "You can only select " + limit + " item" + (limit == 1 ? "" : "s"); },
+        formatLoadMore: function (pageNumber) { return "Loading more results…"; },
+        formatSearching: function () { return "Searching…"; },
+        minimumResultsForSearch: 0,
+        minimumInputLength: 0,
+        maximumInputLength: null,
+        maximumSelectionSize: 0,
+        id: function (e) { return e == undefined ? null : e.id; },
+        matcher: function(term, text) {
+            return stripDiacritics(''+text).toUpperCase().indexOf(stripDiacritics(''+term).toUpperCase()) >= 0;
+        },
+        separator: ",",
+        tokenSeparators: [],
+        tokenizer: defaultTokenizer,
+        escapeMarkup: defaultEscapeMarkup,
+        blurOnChange: false,
+        selectOnBlur: false,
+        adaptContainerCssClass: function(c) { return c; },
+        adaptDropdownCssClass: function(c) { return null; },
+        nextSearchTerm: function(selectedObject, currentSearchTerm) { return undefined; },
+        searchInputPlaceholder: '',
+        createSearchChoicePosition: 'top',
+        shouldFocusInput: function (instance) {
+            // Attempt to detect touch devices
+            var supportsTouchEvents = (('ontouchstart' in window) ||
+                                       (navigator.msMaxTouchPoints > 0));
+
+            // Only devices which support touch events should be special cased
+            if (!supportsTouchEvents) {
+                return true;
+            }
+
+            // Never focus the input if search is disabled
+            if (instance.opts.minimumResultsForSearch < 0) {
+                return false;
+            }
+
+            return true;
+        }
+    };
+
+    $.fn.select2.ajaxDefaults = {
+        transport: $.ajax,
+        params: {
+            type: "GET",
+            cache: false,
+            dataType: "json"
+        }
+    };
+
+    // exports
+    window.Select2 = {
+        query: {
+            ajax: ajax,
+            local: local,
+            tags: tags
+        }, util: {
+            debounce: debounce,
+            markMatch: markMatch,
+            escapeMarkup: defaultEscapeMarkup,
+            stripDiacritics: stripDiacritics
+        }, "class": {
+            "abstract": AbstractSelect2,
+            "single": SingleSelect2,
+            "multi": MultiSelect2
+        }
+    };
+
+}(jQuery));
+
 angular.module('gettext').run(['gettextCatalog', function (gettextCatalog) {
 /* jshint -W100 */
 /* jshint +W100 */
@@ -13793,63 +17618,118 @@ angular.module('gettext').run(['gettextCatalog', function (gettextCatalog) {
 angular.module('RedhatAccess.cases', [
   'ui.router',
   'ui.bootstrap',
+  'ui.select2',
   'ngTable',
   'RedhatAccess.template',
   'RedhatAccess.security',
   'RedhatAccess.search',
   'RedhatAccess.ui-utils',
+  'RedhatAccess.common',
   'RedhatAccess.header'
 ])
-  .constant('STATUS', {
-    open: 'open',
-    closed: 'closed',
-    both: 'both'
-  })
-  .value('NEW_DEFAULTS', {
-    'product': '',
-    'version': ''
-  })
-  .config([
-    '$stateProvider',
-    function ($stateProvider) {
+.constant('CASE_EVENTS', {
+  received: 'case-received'
+})
+.constant('CHAT_SUPPORT', {
+  enableChat: false,
+  chatButtonToken: '573A0000000GmiP',
+  chatLiveAgentUrlPrefix: 'https://d.la8cs.salesforceliveagent.com/chat',
+  chatInitHashOne: '572A0000000GmiP',
+  chatInitHashTwo: '00DK000000W3mDA',
+  chatIframeHackUrlPrefix:'https://qa-rogsstest.cs9.force.com/chatHidden'
 
-      $stateProvider.state('compact', {
-        url: '/case/compact?sessionId',
-        templateUrl: 'cases/views/compact.html'
-      });
+//  chatButtonToken - '573A0000000GmiP'
+//  deploymentJS - 'https://c.la8cs.salesforceliveagent.com/content/g/js/31.0/deployment.js'
+// chatLiveAgentUrlPrefix - 'https://d.la8cs.salesforceliveagent.com/chat'
+// chatInitHashOne - '572A0000000GmiP'
+// chatInitHashTwo - '00DK000000W3mDA'
+// chatIframeHackUrlPrefix - 'https://qa-rogsstest.cs9.force.com/chatHidden'
 
-      $stateProvider.state('compact.edit', {
-        url: '/{id:[0-9]{1,8}}',
-        templateUrl: 'cases/views/compactEdit.html',
-        controller: 'CompactEdit'
-      });
+})
+.constant('ENTITLEMENTS', {
+  standard: 'STANDARD',
+  premium: 'PREMIUM',
+  defaults: 'DEFAULT'
+})
+.constant('STATUS', {
+  open: 'open',
+  closed: 'closed',
+  both: 'both'
+})
+.value('NEW_DEFAULTS', {
+  'product': '',
+  'version': ''
+})
+.value('GLOBAL_CASE_CONFIG', {
+  'showRecommendations': true,
+  'showAttachments': true
+})
+.value('NEW_CASE_CONFIG', {
+  'showRecommendations': true,
+  'showAttachments': true,
+  'showServerSideAttachments': true
+})
+.value('EDIT_CASE_CONFIG', {
+  'showDetails': true,
+  'showDescription': true,
+  'showBugzillas': true,
+  'showAttachments': true,
+  'showRecommendations': true,
+  'showComments': true,
+  'showServerSideAttachments': true,
+  'showEmailNotifications': true
+})
+.config([
+  '$stateProvider',
+  function ($stateProvider) {
 
-      $stateProvider.state('edit', {
-        url: '/case/{id:[0-9]{1,8}}',
-        templateUrl: 'cases/views/edit.html',
-        controller: 'Edit'
-      });
+    $stateProvider.state('compact', {
+      url: '/case/compact?sessionId',
+      templateUrl: 'cases/views/compact.html'
+    });
 
-      $stateProvider.state('new', {
-        url: '/case/new',
-        templateUrl: 'cases/views/new.html',
-        controller: 'New'
-      });
+    $stateProvider.state('compact.edit', {
+      url: '/{id:[0-9]{1,8}}',
+      templateUrl: 'cases/views/compactEdit.html',
+      controller: 'CompactEdit'
+    });
 
-      $stateProvider.state('list', {
-        url: '/case/list',
-        templateUrl: 'cases/views/list.html',
-        controller: 'List'
-      });
+    $stateProvider.state('edit', {
+      url: '/case/{id:[0-9]{1,8}}',
+      templateUrl: 'cases/views/edit.html',
+      controller: 'Edit'
+    });
 
-      $stateProvider.state('searchCases', {
-        url: '/case/search',
-        templateUrl: 'cases/views/search.html',
-        controller: 'Search'
-      });
-    }
-  ]);
+    $stateProvider.state('new', {
+      url: '/case/new',
+      templateUrl: 'cases/views/new.html',
+      controller: 'New'
+    });
 
+    $stateProvider.state('list', {
+      url: '/case/list',
+      templateUrl: 'cases/views/list.html',
+      controller: 'List'
+    });
+
+    $stateProvider.state('searchCases', {
+      url: '/case/search',
+      templateUrl: 'cases/views/search.html',
+      controller: 'Search'
+    });
+
+    $stateProvider.state('group', {
+      url: '/case/group',
+      controller: 'Group',
+      templateUrl: 'cases/views/group.html'
+    });
+  }
+]);
+
+'use strict';
+ /*global $ */
+
+angular.module('RedhatAccess.common', ['RedhatAccess.ui-utils']);
 'use strict';
  /*global $ */
 
@@ -13862,7 +17742,8 @@ angular.module('RedhatAccess.header', [])
     caseViewTitle: 'View/Modify Case',
     newCaseTitle: 'New Support Case',
     searchCaseTitle: 'Search Support Cases',
-    logViewerTitle: 'Log'
+    logViewerTitle: 'Log',
+    manageGroupsTitle: 'Manage Case Groups'
   })
   .controller('TitleViewCtrl', ['TITLE_VIEW_CONFIG', '$scope',
     function(TITLE_VIEW_CONFIG, $scope) {
@@ -13882,14 +17763,15 @@ angular.module('RedhatAccess.header', [])
             return TITLE_VIEW_CONFIG.logViewerTitle;
           case 'searchCase':
             return TITLE_VIEW_CONFIG.searchCaseTitle;
+          case 'manageGroups':
+            return TITLE_VIEW_CONFIG.manageGroupsTitle;
           default:
-            console.log('Invalid title key' + $scope.page);
             return '';
         }
       };
     }
   ])
-  .directive('rhaTitleTemplate',
+  .directive('rhaTitletemplate',
     function() {
       return {
         restrict: 'AE',
@@ -13900,8 +17782,8 @@ angular.module('RedhatAccess.header', [])
         controller: 'TitleViewCtrl'
       };
     })
-  .service('AlertService', ['$filter', 'AUTH_EVENTS', '$rootScope',
-    function($filter, AUTH_EVENTS, $rootScope) {
+  .service('AlertService', ['$filter', 'AUTH_EVENTS', '$rootScope', 'RHAUtils',
+    function($filter, AUTH_EVENTS, $rootScope, RHAUtils) {
       var ALERT_TYPES = {
         DANGER: 'danger',
         SUCCESS: 'success',
@@ -13964,14 +17846,16 @@ angular.module('RedhatAccess.header', [])
       };
 
       this.addStrataErrorMessage = function(error) {
-        var existingMessage =
-          $filter('filter')(this.alerts, {
-            type: ALERT_TYPES.DANGER,
-            message: error.message
-          });
+        if (RHAUtils.isNotEmpty(error)) {
+          var existingMessage =
+            $filter('filter')(this.alerts, {
+              type: ALERT_TYPES.DANGER,
+              message: error.message
+            });
 
-        if (existingMessage.length < 1) {
-          this.addDangerMessage(error.message);
+          if (existingMessage.length < 1) {
+            this.addDangerMessage(error.message);
+          }
         }
       };
 
@@ -13991,7 +17875,7 @@ angular.module('RedhatAccess.header', [])
     function() {
       return {
         templateUrl: 'common/views/alert.html',
-        restrict: 'E',
+        restrict: 'A',
         controller: 'AlertController'
       };
     })
@@ -14014,7 +17898,7 @@ angular.module('RedhatAccess.header', [])
     function() {
       return {
         templateUrl: 'common/views/header.html',
-        restrict: 'E',
+        restrict: 'A',
         scope: {
           page: '@'
         },
@@ -14070,10 +17954,27 @@ var app = angular.module('RedhatAccess.ui-utils', ['gettext']);
 //                 $scope.attachmentTree = tree;
 //             },
 //             function() {
-//                 console.log("Unable to get tree data");
 //             });
 //     }
 // ]);
+app.service('RHAUtils',
+  function() {
+    /**
+     * Generic function to decide if a simple object should be considered nothing
+     */
+    this.isEmpty = function(object) {
+      if (object === undefined || object === null || object === '' || object.length === 0 || object === {}) {
+        return true;
+      } else {
+        return false
+      }
+    }
+
+    this.isNotEmpty = function(object) {
+      return !this.isEmpty(object);
+    }
+  }
+);
 
 //Wrapper service for translations
 app.service('translate', ['gettextCatalog',
@@ -14084,21 +17985,22 @@ app.service('translate', ['gettextCatalog',
   }
 ]);
 
-app.directive('rhaChoiceTree', function () {
+app.directive('rhaChoicetree', function () {
   return {
-    template: '<ul><rha-choice ng-repeat="choice in tree"></rha-choice></ul>',
+    template: '<ul><div rha-choice ng-repeat="choice in tree"></div></ul>',
     replace: true,
     transclude: true,
-    restrict: 'E',
+    restrict: 'A',
     scope: {
-      tree: '=ngModel'
+      tree: '=ngModel',
+      rhaDisabled: '='
     }
   };
 });
 
 app.directive('rhaChoice', ["$compile", function ($compile) {
   return {
-    restrict: 'E',
+    restrict: 'A',
     templateUrl: 'common/views/treenode.html',
     link: function (scope, elm) {
       scope.choiceClicked = function (choice) {
@@ -14113,7 +18015,7 @@ app.directive('rhaChoice', ["$compile", function ($compile) {
         checkChildren(choice);
       };
       if (scope.choice.children.length > 0) {
-        var childChoice = $compile('<rha-choice-tree ng-show="!choice.collapsed" ng-model="choice.children"></rha-choice-tree>')(scope);
+        var childChoice = $compile('<div rha-choicetree ng-show="!choice.collapsed" ng-model="choice.children"></div>')(scope);
         elm.append(childChoice);
       }
     }
@@ -14125,17 +18027,20 @@ app.directive('rhaChoice', ["$compile", function ($compile) {
 app.factory('TreeViewSelectorData', ['$http', '$q', 'TreeViewSelectorUtils',
   function ($http, $q, TreeViewSelectorUtils) {
     var service = {
-      getTree: function (dataUrl) {
+      getTree: function (dataUrl, sessionId) {
         var defer = $q.defer();
+        var tmpUrl = dataUrl;
+        if(sessionId){
+          tmpUrl = tmpUrl + '?sessionId=' + encodeURIComponent(sessionId)
+        }
         $http({
           method: 'GET',
-          url: dataUrl
+          url: tmpUrl
         }).success(function (data, status, headers, config) {
           var tree = [];
           TreeViewSelectorUtils.parseTreeList(tree, data);
           defer.resolve(tree);
         }).error(function (data, status, headers, config) {
-          console.log('Unable to get supported attachments list');
           defer.reject({});
         });
         return defer.promise;
@@ -14250,7 +18155,6 @@ app.factory('TreeViewSelectorUtils',
       },
       getSelectedLeaves: function (tree) {
         if (tree === undefined) {
-          console.log('getSelectedLeaves: Invalid tree');
           return [];
         }
         var container = [];
@@ -14278,14 +18182,14 @@ app.directive('rhaResizable', [
         'resize',
         function () {
           scope.onResizeFunction();
-          scope.$apply();
+          //scope.$apply();
         }
       );
       angular.element($window).bind(
         'click',
         function () {
           scope.onResizeFunction();
-          scope.$apply();
+          //scope.$apply();
         }
       );
 
@@ -14311,6 +18215,7 @@ app.directive('rhaResizable', [
     };
   }
 ]);
+
 //var testURL = 'http://localhost:8080/LogCollector/';
 // angular module
 angular.module('RedhatAccess.logViewer',
@@ -14387,6 +18292,7 @@ angular.module('RedhatAccess.search', [
   'ui.bootstrap',
   'ngSanitize',
   'RedhatAccess.ui-utils',
+  'RedhatAccess.common',
   'RedhatAccess.header'
 ])
   .constant('RESOURCE_TYPES', {
@@ -14417,8 +18323,8 @@ angular.module('RedhatAccess.search', [
     }
   ])
   .controller('SearchController', ['$scope',
-    'SearchResultsService', 'SEARCH_CONFIG', 'securityService', 'AlertService',
-    function ($scope, SearchResultsService, SEARCH_CONFIG, securityService, AlertService) {
+    '$location', 'SearchResultsService', 'SEARCH_CONFIG', 'securityService', 'AlertService',
+    function ($scope, $location, SearchResultsService, SEARCH_CONFIG, securityService, AlertService) {
       $scope.results = SearchResultsService.results;
       $scope.selectedSolution = SearchResultsService.currentSelection;
       $scope.searchInProgress = SearchResultsService.searchInProgress;
@@ -14452,7 +18358,13 @@ angular.module('RedhatAccess.search', [
         SearchResultsService.diagnose(data, limit);
       };
 
-
+      $scope.triggerAnalytics = function($event) {
+        if(this.isopen && window.portal && $location.path() === '/case/new'){
+          chrometwo_require(['analytics/main'], function (analytics) {
+             analytics.trigger('OpenSupportCaseRecommendationClick', $event);
+          });
+        }
+      };
       $scope.$watch(function () {
           return SearchResultsService.currentSelection;
         },
@@ -14463,7 +18375,7 @@ angular.module('RedhatAccess.search', [
 
     }
   ])
-  .directive('rhaAccordionSearchResults', ['SEARCH_CONFIG',
+  .directive('rhaAccordionsearchresults', ['SEARCH_CONFIG',
     function (SEARCH_CONFIG) {
       return {
         restrict: 'AE',
@@ -14481,28 +18393,28 @@ angular.module('RedhatAccess.search', [
       };
     }
   ])
-  .directive('rhaListSearchResults', function () {
+  .directive('rhaListsearchresults', function () {
     return {
       restrict: 'AE',
       scope: false,
       templateUrl: 'search/views/list_search_results.html'
     };
   })
-  .directive('rhaSearchForm', function () {
+  .directive('rhaSearchform', function () {
     return {
       restrict: 'AE',
       scope: false,
       templateUrl: 'search/views/search_form.html'
     };
   })
-  .directive('rhaStandardSearch', function () {
+  .directive('rhaStandardsearch', function () {
     return {
       restrict: 'AE',
       scope: false,
       templateUrl: 'search/views/standard_search.html'
     };
   })
-  .directive('rhaResultDetailDisplay', ['RESOURCE_TYPES',
+  .directive('rhaResultdetaildisplay', ['RESOURCE_TYPES',
     function (RESOURCE_TYPES) {
       return {
         restrict: 'AE',
@@ -14615,10 +18527,8 @@ angular.module('RedhatAccess.search', [
             );
           },
           function (error) {
-            console.log(error);
             $rootScope.$apply(function () {
               service.searchInProgress.value = false;
-              console.log(error);
               AlertService.addDangerMessage(error);
             });
           },
@@ -14680,7 +18590,6 @@ angular.module('RedhatAccess.search', [
               service.searchInProgress.value = false;
               AlertService.addDangerMessage(error);
             });
-            console.log(error);
           },
           limit
         );
@@ -14754,16 +18663,18 @@ angular.module('RedhatAccess.search', [
 'use strict';
 /*global strata,$*/
 /*jshint unused:vars */
-angular.module('RedhatAccess.security', ['ui.bootstrap', 'RedhatAccess.template', 'ui.router'])
+/*jshint camelcase: false */
+angular.module('RedhatAccess.security', ['ui.bootstrap', 'RedhatAccess.template', 'ui.router', 'RedhatAccess.common', 'RedhatAccess.header'])
   .constant('AUTH_EVENTS', {
     loginSuccess: 'auth-login-success',
     loginFailed: 'auth-login-failed',
     logoutSuccess: 'auth-logout-success',
     sessionTimeout: 'auth-session-timeout',
     notAuthenticated: 'auth-not-authenticated',
-    notAuthorized: 'auth-not-authorized'
+    notAuthorized: 'auth-not-authorized',
+    sessionIdChanged: 'sid-changed'
   })
-  .directive('rhaLoginStatus', function () {
+  .directive('rhaLoginstatus', function () {
     return {
       restrict: 'AE',
       scope: false,
@@ -14774,9 +18685,9 @@ angular.module('RedhatAccess.security', ['ui.bootstrap', 'RedhatAccess.template'
     function ($scope, $rootScope, securityService, SECURITY_CONFIG) {
       $scope.securityService = securityService;
       if (SECURITY_CONFIG.autoCheckLogin) {
-        securityService.validateLogin(false); //change to false to force login
+        securityService.validateLogin(SECURITY_CONFIG.forceLogin);
       }
-      $scope.displayLoginStatus = function(){
+      $scope.displayLoginStatus = function () {
         return SECURITY_CONFIG.displayLoginStatus;
 
       };
@@ -14787,21 +18698,85 @@ angular.module('RedhatAccess.security', ['ui.bootstrap', 'RedhatAccess.template'
   })
   .value('SECURITY_CONFIG', {
     displayLoginStatus: true,
-    autoCheckLogin: true
+    autoCheckLogin: true,
+    loginURL: '',
+    logoutURL: '',
+    forceLogin: false,
+
   })
-  .service('securityService', ['$rootScope', '$modal', 'AUTH_EVENTS', '$q', 'LOGIN_VIEW_CONFIG',
-    function ($rootScope, $modal, AUTH_EVENTS, $q, LOGIN_VIEW_CONFIG) {
+  .service('securityService', [
+    '$rootScope',
+    '$modal',
+    'AUTH_EVENTS',
+    '$q',
+    'LOGIN_VIEW_CONFIG',
+    'SECURITY_CONFIG',
+    'strataService',
+    'AlertService',
+    'RHAUtils',
+    function (
+      $rootScope,
+      $modal,
+      AUTH_EVENTS,
+      $q,
+      LOGIN_VIEW_CONFIG,
+      SECURITY_CONFIG,
+      strataService,
+      AlertService,
+      RHAUtils) {
 
       this.loginStatus = {
         isLoggedIn: false,
         loggedInUser: '',
-        verifying: false
+        verifying: false,
+        isInternal: false,
+        orgAdmin: false,
+        hasChat: false,
+        sessionId: '',
+        canAddAttachments: false,
+        ssoName: ''
       };
 
-      this.setLoginStatus = function (isLoggedIn, userName, verifying) {
+      this.loginURL = SECURITY_CONFIG.loginURL;
+      this.logoutURL = SECURITY_CONFIG.logoutURL;
+
+      this.setLoginStatus = function (
+        isLoggedIn,
+        userName,
+        verifying,
+        isInternal,
+        orgAdmin,
+        hasChat,
+        sessionId,
+        canAddAttachments,
+        ssoName) {
         this.loginStatus.isLoggedIn = isLoggedIn;
         this.loginStatus.loggedInUser = userName;
         this.loginStatus.verifying = verifying;
+        this.loginStatus.isInternal = isInternal;
+        this.loginStatus.orgAdmin = orgAdmin;
+        this.loginStatus.hasChat = hasChat;
+        this.loginStatus.sessionId = sessionId;
+        this.loginStatus.canAddAttachments = canAddAttachments;
+        this.loginStatus.ssoName = ssoName;
+      };
+
+      this.clearLoginStatus = function () {
+        this.loginStatus.isLoggedIn = false;
+        this.loginStatus.loggedInUser = '';
+        this.loginStatus.verifying = false;
+        this.loginStatus.isInternal = false;
+        this.loginStatus.orgAdmin = false;
+        this.loginStatus.hasChat = false;
+        this.loginStatus.sessionId = '';
+        this.loginStatus.canAddAttachments = false;
+        this.loginStatus.account = {};
+        this.loginStatus.ssoName = '';
+
+      };
+
+      this.setAccount = function (accountJSON) {
+        this.loginStatus.account = accountJSON;
       };
 
       var modalDefaults = {
@@ -14821,6 +18796,26 @@ angular.module('RedhatAccess.security', ['ui.bootstrap', 'RedhatAccess.template'
 
       };
 
+
+
+      this.userAllowedToManageEmailNotifications = function (user) {
+        if ((RHAUtils.isNotEmpty(this.loginStatus.account) && RHAUtils.isNotEmpty(this.loginStatus.account)) &&
+          ((this.loginStatus.orgAdmin))) {
+          return true;
+        } else {
+          return false;
+        }
+      };
+
+      this.userAllowedToManageGroups = function (user) {
+        if ((RHAUtils.isNotEmpty(this.loginStatus.account) && RHAUtils.isNotEmpty(this.loginStatus.account)) &&
+          ((!this.loginStatus.account.has_group_acls || this.loginStatus.account.has_group_acls && this.loginStatus.orgAdmin))) {
+          return true;
+        } else {
+          return false;
+        }
+      };
+
       this.getBasicAuthToken = function () {
         var defer = $q.defer();
         var token = localStorage.getItem('rhAuthToken');
@@ -14833,27 +18828,67 @@ angular.module('RedhatAccess.security', ['ui.bootstrap', 'RedhatAccess.template'
               defer.resolve(localStorage.getItem('rhAuthToken'));
             },
             function (error) {
-              console.log('Unable to get user credentials');
               defer.resolve(error);
             });
           return defer.promise;
         }
       };
 
+      this.loggingIn = false;
+
       this.initLoginStatus = function () {
+        this.loggingIn = true;
+
         var defer = $q.defer();
         var that = this;
+        var wasLoggedIn = this.loginStatus.isLoggedIn;
+        var currentSid = this.loginStatus.sessionId;
         this.loginStatus.verifying = true;
         strata.checkLogin(
-          function (result, authedUser) {
+          angular.bind(this, function (result, authedUser) {
             if (result) {
-              that.setLoginStatus(true, authedUser.name, false);
-              defer.resolve(authedUser.name);
+              var sidChanged = (currentSid !== authedUser.session_id);
+              strataService.accounts.list().then(
+                angular.bind(this, function (accountNumber) {
+                  strataService.accounts.get(accountNumber).then(
+                    angular.bind(this, function (account) {
+                      that.setAccount(account);
+                      that.setLoginStatus(
+                        true,
+                        authedUser.name,
+                        false,
+                        authedUser.is_internal,
+                        authedUser.org_admin,
+                        authedUser.has_chat,
+                        authedUser.session_id,
+                        authedUser.can_add_attachments,
+                        authedUser.login);
+                      //console.log(that.loginStatus);
+                      //console.log(authedUser);
+                      this.loggingIn = false;
+                      //We don't want to resend the AUTH_EVENTS.loginSuccess if we are already logged in
+                      if (wasLoggedIn === false) {
+                        $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
+                      }
+                      if (sidChanged) {
+                        $rootScope.$broadcast(AUTH_EVENTS.sessionIdChanged);
+                      }
+                      defer.resolve(authedUser.name);
+                    })
+                  );
+                }),
+                angular.bind(this, function (error) {
+                  AlertService.addStrataErrorMessage(error);
+                  this.loggingIn = false;
+                  defer.resolve(authedUser.name);
+                })
+              );
             } else {
-              that.setLoginStatus(false, '', false);
+              this.loggingIn = false;
+              that.clearLoginStatus();
               defer.reject('');
             }
-          }
+          })
         );
         return defer.promise;
       };
@@ -14874,7 +18909,6 @@ angular.module('RedhatAccess.security', ['ui.bootstrap', 'RedhatAccess.template'
         } else {
           this.initLoginStatus().then(
             function (username) {
-              console.log('User name is ' + username);
               defer.resolve(username);
             },
             function (error) {
@@ -14896,19 +18930,17 @@ angular.module('RedhatAccess.security', ['ui.bootstrap', 'RedhatAccess.template'
         var result = this.showLogin(modalDefaults, modalOptions);
         result.then(
           function (authedUser) {
-            console.log('User logged in : ' + authedUser.name);
-            that.setLoginStatus(true, authedUser.name, false);
+            that.setLoginStatus(true, authedUser.name, false, authedUser.is_internal);
           },
           function (error) {
-            console.log('Unable to login user');
-            that.setLoginStatus(false, '', false);
+            that.clearLoginStatus();
           });
         return result; // pass on the promise
       };
 
       this.logout = function () {
         strata.clearCredentials();
-        this.setLoginStatus(false, '', false);
+        this.clearLoginStatus();
         $rootScope.$broadcast(AUTH_EVENTS.logoutSuccess);
       };
 
@@ -14917,6 +18949,7 @@ angular.module('RedhatAccess.security', ['ui.bootstrap', 'RedhatAccess.template'
       };
 
       this.showLogin = function (customModalDefaults, customModalOptions) {
+        var that = this;
         //Create temp objects to work with since we're in a singleton service
         var tempModalDefaults = {};
         var tempModalOptions = {};
@@ -14943,18 +18976,32 @@ angular.module('RedhatAccess.security', ['ui.bootstrap', 'RedhatAccess.template'
                 strata.setCredentials($scope.user.user, $scope.user.password,
                   function (passed, authedUser) {
                     if (passed) {
-                      $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
                       $scope.user.password = '';
                       $scope.authError = null;
                       try {
                         $modalInstance.close(authedUser);
                       } catch (err) {}
+                      that.setLoginStatus(
+                        true,
+                        authedUser.name,
+                        false,
+                        authedUser.is_internal,
+                        authedUser.org_admin,
+                        authedUser.has_chat,
+                        authedUser.session_id,
+                        authedUser.can_add_attachments,
+                        authedUser.login);
+                      $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
                     } else {
                       // alert("Login failed!");
                       $rootScope.$broadcast(AUTH_EVENTS.loginFailed);
-                      $scope.$apply(function () {
+                      if ($scope.$root.$$phase != '$apply' && $scope.$root.$$phase != '$digest') {
+                        $scope.$apply(function () {
+                          $scope.authError = 'Login Failed!';
+                        });
+                      } else {
                         $scope.authError = 'Login Failed!';
-                      });
+                      }
                     }
                   });
 
@@ -14971,6 +19018,628 @@ angular.module('RedhatAccess.security', ['ui.bootstrap', 'RedhatAccess.template'
 
     }
   ]);
+'use strict';
+/*global strata*/
+/*jshint camelcase: false */
+/*jshint unused:vars */
+
+angular.module('RedhatAccess.common')
+  .factory('strataService', ['$q', 'translate', 'RHAUtils',
+    function ($q, translate, RHAUtils) {
+
+      var errorHandler = function (message, xhr, response, status) {
+
+        var translatedMsg = message;
+
+        switch (status) {
+        case 'Unauthorized':
+          translatedMsg = translate('Unauthorized.');
+          break;
+        // case n:
+        //   code block
+        //   break;
+        }
+        this.reject({
+          message: translatedMsg,
+          xhr: xhr,
+          response: response,
+          status: status
+        });
+      };
+
+      return {
+        entitlements: {
+          //entitlements.get
+          get: function(showAll, ssoUserName) {
+            var deferred = $q.defer();
+
+            strata.entitlements.get(
+              showAll,
+              function (entitlements) {
+                deferred.resolve(entitlements);
+              },
+              angular.bind(deferred, errorHandler),
+              ssoUserName
+            );
+
+            return deferred.promise; 
+          }
+        },
+        problems: function (data, max) {
+          var deferred = $q.defer();
+
+          strata.problems(
+            data,
+            function (solutions) {
+              deferred.resolve(solutions);
+            },
+            angular.bind(deferred, errorHandler),
+            max
+          );
+
+          return deferred.promise;
+        },
+        solutions: {
+          //solutions.get
+          get: function (uri) {
+            var deferred = $q.defer();
+
+            strata.solutions.get(
+              uri,
+              function (solution) {
+                deferred.resolve(solution);
+              },
+              function () {
+                //workaround for 502 from strata
+                //If the deferred is rejected then the parent $q.all()
+                //based deferred will fail. Since we don't need every
+                //recommendation just send back undefined
+                //and the caller can ignore the missing solution details.
+                deferred.resolve();
+              }
+            );
+
+            return deferred.promise;
+          }
+        },
+        products: {
+          //products.list
+          list: function () {
+            var deferred = $q.defer();
+
+            strata.products.list(
+              function (response) {
+                deferred.resolve(response);
+              },
+              angular.bind(deferred, errorHandler)
+            );
+
+            return deferred.promise;
+          },
+          //products.versions
+          versions: function (productCode) {
+            var deferred = $q.defer();
+
+            strata.products.versions(
+              productCode,
+              function (response) {
+                deferred.resolve(response);
+              },
+              angular.bind(deferred, errorHandler)
+            );
+
+            return deferred.promise;
+          }
+        },
+        groups: {
+          //groups.list
+          list: function (ssoUserName) {
+            var deferred = $q.defer();
+
+            strata.groups.list(
+              function (response) {
+                deferred.resolve(response);
+              },
+              angular.bind(deferred, errorHandler),
+              ssoUserName
+            );
+
+            return deferred.promise;
+          },
+          //groups.remove
+          remove: function(groupNum) {
+            var deferred = $q.defer();
+
+            strata.groups.remove(
+              groupNum,
+              function (response) {
+                deferred.resolve(response);
+              },
+              angular.bind(deferred, errorHandler)
+            );
+
+            return deferred.promise;
+          },
+          //groups.create
+          create: function(groupName) {
+            var deferred = $q.defer();
+
+            strata.groups.create(
+              groupName,
+              function (response) {
+                deferred.resolve(response);
+              },
+              angular.bind(deferred, errorHandler)
+            );
+
+            return deferred.promise;
+          }
+        },
+        accounts: {
+          //accounts.get
+          get: function(accountNumber) {
+            var deferred = $q.defer();
+
+            strata.accounts.get(
+              accountNumber,
+              function(response) {
+                deferred.resolve(response);
+              },
+              angular.bind(deferred, errorHandler)
+            );
+
+            return deferred.promise;
+          },
+          //accounts.users
+          users: function(accountNumber, group) {
+            var deferred = $q.defer();
+
+            strata.accounts.users(
+              accountNumber,
+              function(response) {
+                deferred.resolve(response);
+              },
+              angular.bind(deferred, errorHandler),
+              group
+            );
+
+            return deferred.promise;
+          },
+          //accounts.list
+          list: function() {
+            var deferred = $q.defer();
+
+            strata.accounts.list(
+              function(response) {
+                deferred.resolve(response);
+              },
+              angular.bind(deferred, errorHandler)
+            );
+
+            return deferred.promise;
+          }
+        },
+        cases: {
+          //cases.csv
+          csv: function() {
+            var deferred = $q.defer();
+
+            strata.cases.csv(
+                function (response) {
+                  deferred.resolve(response);
+                },
+                angular.bind(deferred, errorHandler)
+            );
+
+            return deferred.promise;
+          },
+          attachments: {
+            //cases.attachments.list
+            list: function (id) {
+              var deferred = $q.defer();
+
+              strata.cases.attachments.list(
+                id,
+                function (response) {
+                  deferred.resolve(response);
+                },
+                angular.bind(deferred, errorHandler)
+              );
+
+              return deferred.promise;
+            },
+            //cases.attachments.post
+            post: function (attachment, caseNumber) {
+              var deferred = $q.defer();
+
+              strata.cases.attachments.post(
+                attachment,
+                caseNumber,
+                function (response, code, xhr) {
+                  deferred.resolve(xhr.getResponseHeader('Location'));
+                },
+                angular.bind(deferred, errorHandler)
+              );
+
+              return deferred.promise;
+            },
+            //cases.attachments.remove
+            remove: function (id, caseNumber) {
+
+              var deferred = $q.defer();
+
+              strata.cases.attachments.remove(
+                id,
+                caseNumber,
+                function (response) {
+                  deferred.resolve(response);
+                },
+                angular.bind(deferred, errorHandler)
+              );
+
+              return deferred.promise;
+            }
+          },
+          comments: {
+            //cases.comments.get
+            get: function (id) {
+              var deferred = $q.defer();
+
+              strata.cases.comments.get(
+                id,
+                function (response) {
+                  deferred.resolve(response);
+                },
+                angular.bind(deferred, errorHandler)
+              );
+
+              return deferred.promise;
+            },
+            //cases.comments.post
+            post: function (case_number, text, isDraft) {
+              var deferred = $q.defer();
+
+              strata.cases.comments.post(
+                case_number, 
+                {
+                  'text': text,
+                  'draft': isDraft === true ? 'true' : 'false'
+                },
+                function (response) {
+                  deferred.resolve(response);
+                },
+                angular.bind(deferred, errorHandler)
+              );
+
+              return deferred.promise;
+            },
+            //cases.comments.put
+            put: function(case_number, text, isDraft, comment_id) {
+              var deferred = $q.defer();
+
+              strata.cases.comments.update(
+                case_number,
+                {
+                  'text': text,
+                  'draft': isDraft === true ? 'true' : 'false',
+                  'caseNumber': case_number,
+                  'id': comment_id
+                },
+                comment_id,
+                function(response) {
+                  deferred.resolve(response);
+                },
+                angular.bind(deferred, errorHandler)
+              );
+
+              return deferred.promise;
+            }
+          },
+          notified_users: {
+            add: function(caseNumber, ssoUserName) {
+              var deferred = $q.defer();
+
+              strata.cases.notified_users.add(
+                caseNumber,
+                ssoUserName,
+                function (response) {
+                  deferred.resolve(response);
+                },
+                angular.bind(deferred, errorHandler)
+              );
+
+              return deferred.promise;
+            },
+            remove: function(caseNumber, ssoUserName) {
+              var deferred = $q.defer();
+
+              strata.cases.notified_users.remove(
+                caseNumber,
+                ssoUserName,
+                function (response) {
+                  deferred.resolve(response);
+                },
+                angular.bind(deferred, errorHandler)
+              );
+
+              return deferred.promise;
+            }
+          },
+          //cases.get
+          get: function (id) {
+            var deferred = $q.defer();
+
+            strata.cases.get(
+              id,
+              function (response) {
+                deferred.resolve(response);
+              },
+              angular.bind(deferred, errorHandler)
+            );
+
+            return deferred.promise;
+          },
+          //cases.filter
+          filter: function (params) {
+            var deferred = $q.defer();
+            if (RHAUtils.isEmpty(params)) {
+              params = {};
+            }
+            if (RHAUtils.isEmpty(params.count)) {
+              params.count = 50;
+            }
+
+            strata.cases.filter(
+              params,
+              function (allCases) {
+                deferred.resolve(allCases);
+              },
+              angular.bind(deferred, errorHandler)
+            );
+
+            return deferred.promise;
+          },
+          //cases.post
+          post: function (caseJSON) {
+            var deferred = $q.defer();
+
+            strata.cases.post(
+              caseJSON,
+              function (caseNumber) {
+                deferred.resolve(caseNumber);
+              },
+              angular.bind(deferred, errorHandler)
+            );
+
+            return deferred.promise;
+          },
+          //cases.put
+          put: function (case_number, caseJSON) {
+            var deferred = $q.defer();
+
+            strata.cases.put(
+              case_number,
+              caseJSON,
+              function (response) {
+                deferred.resolve(response);
+              },
+              angular.bind(deferred, errorHandler)
+            );
+
+            return deferred.promise;
+          }
+        },
+        values: {
+          cases: {
+            //values.cases.severity
+            severity: function () {
+              var deferred = $q.defer();
+
+              strata.values.cases.severity(
+                function (response) {
+                  deferred.resolve(response);
+                },
+                angular.bind(deferred, errorHandler)
+              );
+
+              return deferred.promise;
+            },
+            //values.cases.status
+            status: function () {
+              var deferred = $q.defer();
+
+              strata.values.cases.status(
+                function (response) {
+                  deferred.resolve(response);
+                },
+                angular.bind(deferred, errorHandler)
+              );
+
+              return deferred.promise;
+            },
+            //values.cases.types
+            types: function () {
+              var deferred = $q.defer();
+
+              strata.values.cases.types(
+                function (response) {
+                  deferred.resolve(response);
+                },
+                angular.bind(deferred, errorHandler)
+              );
+
+              return deferred.promise;
+            }
+          }
+        }
+      };
+    }
+  ]);
+
+'use strict';
+
+angular.module('RedhatAccess.cases')
+.controller('AccountSelect', [
+  '$scope',
+  'strataService',
+  'AlertService',
+  'CaseService',
+  'RHAUtils',
+  function ($scope, strataService, AlertService, CaseService, RHAUtils) {
+
+    $scope.CaseService = CaseService;
+
+    $scope.selectUserAccount = function() {
+      $scope.loadingAccountNumber = true;
+      strataService.accounts.list().then(
+        function(response) {
+          $scope.loadingAccountNumber = false;
+          CaseService.account.number = response;         
+          $scope.populateAccountSpecificFields();
+        },
+        function(error) {
+          $scope.loadingAccountNumber = false;
+          AlertService.addStrataErrorMessage(error);
+        });
+    };
+
+    $scope.alertInstance = null;
+    $scope.populateAccountSpecificFields = function() {
+      if (RHAUtils.isNotEmpty(CaseService.account.number)) {
+        strataService.accounts.get(CaseService.account.number).then(
+            function() {
+              if (RHAUtils.isNotEmpty($scope.alertInstance)) {
+                AlertService.removeAlert($scope.alertInstance);
+              }
+              CaseService.populateUsers();
+            },
+            function() {
+              if (RHAUtils.isNotEmpty($scope.alertInstance)) {
+                AlertService.removeAlert($scope.alertInstance);
+              }
+              $scope.alertInstance = AlertService.addWarningMessage('Account not found.');
+            }
+        );
+      }
+    };
+  }
+]);
+
+'use strict';
+/*global $ */
+
+
+angular.module('RedhatAccess.cases')
+.controller('AddCommentSection', [
+  '$scope',
+  'strataService',
+  'CaseService',
+  'AlertService',
+  '$timeout',
+  'RHAUtils',
+  function ($scope, strataService, CaseService, AlertService, $timeout, RHAUtils) {
+    $scope.CaseService = CaseService;
+
+    $scope.addingComment = false;
+    $scope.addComment = function() {
+      $scope.addingComment = true;
+
+      var onSuccess = function(response) {
+        if(RHAUtils.isNotEmpty($scope.saveDraftPromise)) {
+          $timeout.cancel($scope.saveDraftPromise);
+        }
+
+        CaseService.commentText = '';
+
+        //TODO: find better way than hard code
+        if(CaseService.kase.status.name === "Closed"){
+          CaseService.kase.status.name = "Waiting on Red Hat";
+        }
+
+        CaseService.populateComments(CaseService.kase.case_number).then(
+          function(comments) {
+            $scope.addingComment = false;
+            $scope.savingDraft = false;
+            $scope.draftSaved = false;
+            CaseService.draftComment = undefined;
+            CaseService.refreshComments();
+          }
+        );
+      };
+
+      var onError = function(error) {
+        AlertService.addStrataErrorMessage(error);
+        $scope.addingComment = false;
+      };
+
+      if(RHAUtils.isNotEmpty(CaseService.draftComment)) {
+        strataService.cases.comments.put(
+          CaseService.kase.case_number, 
+          CaseService.commentText, 
+          false, 
+          CaseService.draftComment.id)
+            .then(onSuccess, onError);
+      } else {
+        strataService.cases.comments.post(
+          CaseService.kase.case_number, 
+          CaseService.commentText)
+            .then(onSuccess, onError);
+      }
+    };
+
+    $scope.saveDraftPromise;
+    $scope.onNewCommentKeypress = function() {
+      if(RHAUtils.isNotEmpty(CaseService.commentText) && !$scope.addingComment) {
+        $timeout.cancel($scope.saveDraftPromise);
+        $scope.saveDraftPromise = $timeout(function() {
+          if (!$scope.addingComment) {
+            $scope.saveDraft();
+          }
+        },
+        5000);
+      }
+    };
+
+    $scope.saveDraft = function() {
+      $scope.savingDraft = true;
+
+      var onSuccess = function(commentId) {
+        $scope.savingDraft = false;
+        $scope.draftSaved = true;
+
+        CaseService.draftComment = {
+          "text": CaseService.commentText,
+          "id": RHAUtils.isNotEmpty(commentId) ? commentId : draftComment.id,
+          "draft": true,
+          "case_number": CaseService.kase.case_number
+        };
+      };
+
+      var onFailure = function(error) {
+        AlertService.addStrataErrorMessage(error);
+        $scope.savingDraft = false;
+      }
+
+      if (RHAUtils.isNotEmpty(CaseService.draftComment)) {
+        //draft update
+        strataService.cases.comments.put(
+          CaseService.kase.case_number, 
+          CaseService.commentText, 
+          true, 
+          CaseService.draftComment.id)
+            .then(onSuccess, onFailure);
+      } else {
+        //initial draft save
+        strataService.cases.comments.post(
+          CaseService.kase.case_number, 
+          CaseService.commentText, 
+          true)
+            .then(onSuccess, onFailure);
+      }
+    };
+  }
+]);
+
 'use strict';
 /*global $ */
 
@@ -15030,44 +19699,228 @@ angular.module('RedhatAccess.cases')
     'AttachmentsService',
     'CaseService',
     'TreeViewSelectorUtils',
+    'EDIT_CASE_CONFIG',
     function (
       $scope,
       AttachmentsService,
       CaseService,
-      TreeViewSelectorUtils) {
+      TreeViewSelectorUtils,
+      EDIT_CASE_CONFIG) {
 
+      $scope.rhaDisabled = !EDIT_CASE_CONFIG.showAttachments;
+      $scope.showServerSideAttachments = EDIT_CASE_CONFIG.showServerSideAttachments;
       $scope.AttachmentsService = AttachmentsService;
       $scope.CaseService = CaseService;
       $scope.TreeViewSelectorUtils = TreeViewSelectorUtils;
 
       $scope.doUpdate = function () {
         $scope.updatingAttachments = true;
-        AttachmentsService.updateAttachments(CaseService.
-        case .case_number).then(
+        AttachmentsService.updateAttachments(CaseService.kase.case_number).then(
           function () {
             $scope.updatingAttachments = false;
           },
           function (error) {
             $scope.updatingAttachments = false;
-            console.log('Error posting attachment : ' + error);
           });
       };
     }
   ]);
+
 'use strict';
 angular.module('RedhatAccess.cases')
-  .controller('BackEndAttachmentsCtrl', ['$scope', 'TreeViewSelectorData', 'AttachmentsService',
-    function ($scope, TreeViewSelectorData, AttachmentsService) {
+  .controller('BackEndAttachmentsCtrl', ['$scope', '$location', 'TreeViewSelectorData', 'AttachmentsService', 'NEW_CASE_CONFIG', 'EDIT_CASE_CONFIG',
+    function ($scope, $location, TreeViewSelectorData, AttachmentsService, NEW_CASE_CONFIG, EDIT_CASE_CONFIG) {
       $scope.name = 'Attachments';
       $scope.attachmentTree = [];
-      TreeViewSelectorData.getTree('attachments').then(
-        function (tree) {
-          $scope.attachmentTree = tree;
-          AttachmentsService.updateBackEndAttachments(tree);
-        },
+
+      var newCase = false;
+      var editCase = false;
+      
+      if($location.path().indexOf('new') > -1 ){
+        newCase = true;
+      } else{
+        editCase = true;
+      }
+      if (!$scope.rhaDisabled && newCase && NEW_CASE_CONFIG.showServerSideAttachments || !$scope.rhaDisabled && editCase && EDIT_CASE_CONFIG.showServerSideAttachments) {
+        var sessionId = $location.search().sessionId;
+        TreeViewSelectorData.getTree('attachments', sessionId).then(
+          function (tree) {
+            $scope.attachmentTree = tree;
+            AttachmentsService.updateBackEndAttachments(tree);
+          },
+          function () {
+          });
+      }
+    }
+  ]);
+
+'use strict';
+
+//Saleforce hack---
+//we have to monitor stuff on the window object
+//because the liveagent code generated by Salesforce is not
+//designed for angularjs.
+//We create fake buttons that we give to the salesforce api so we can track
+//chat availability without having to write a complete rest client.
+window.fakeOnlineButton = {
+  style: {
+    display: 'none'
+  }
+};
+
+window.fakeOfflineButton = {
+  style: {
+    display: 'none'
+  }
+};
+//
+
+angular.module('RedhatAccess.cases')
+  .controller('ChatButton', [
+    '$scope',
+    'CaseService',
+    'securityService',
+    'CHAT_SUPPORT',
+    'securityService',
+    'AUTH_EVENTS',
+    '$rootScope',
+    '$sce',
+    '$http',
+    '$interval',
+    function ($scope, CaseService, SecurityService, CHAT_SUPPORT, securityService, AUTH_EVENTS, $rootScope, $sce, $http, $interval) {
+
+
+      $scope.securityService = securityService;
+      if (window.chatInitialized === undefined) {
+        window.chatInitialized = false;
+      }
+
+
+      $scope.checkChatButtonStates = function () {
+        $scope.chatAvailable = window.fakeOnlineButton.style.display !== 'none';
+      };
+
+      $scope.timer = null;
+
+
+      $scope.chatHackUrl = $sce.trustAsResourceUrl(CHAT_SUPPORT.chatIframeHackUrlPrefix);
+
+      $scope.setChatIframeHackUrl = function () {
+        var url = CHAT_SUPPORT.chatIframeHackUrlPrefix + '?sessionId=' + securityService.loginStatus.sessionId + '&ssoName=' + securityService.loginStatus.ssoName;
+        $scope.chatHackUrl = $sce.trustAsResourceUrl(url);
+
+      };
+
+
+      $scope.enableChat = function () {
+        $scope.showChat = securityService.loginStatus.isLoggedIn && securityService.loginStatus.hasChat && CHAT_SUPPORT.enableChat;
+        return $scope.showChat;
+
+      };
+
+      $scope.showChat = false; // determines whether we should show buttons at all
+
+      $scope.chatAvailable = false; //Availability of chat as determined by live agent, toggles chat buttons
+
+      $scope.initializeChat = function () {
+        if (!$scope.enableChat() || window.chatInitialized === true) {
+          //function should only be called when chat is enabled, and only once per page load
+          return;
+        }
+        if (!window._laq) {
+          window._laq = [];
+        }
+        window._laq.push(
+          function () {
+            liveagent.showWhenOnline(
+              CHAT_SUPPORT.chatButtonToken,
+              window.fakeOnlineButton);
+
+            liveagent.showWhenOffline(
+              CHAT_SUPPORT.chatButtonToken,
+              window.fakeOfflineButton);
+          }
+        );
+        //var chatToken = securityService.loginStatus.sessionId;
+        var ssoName = securityService.loginStatus.ssoName;
+        var name = securityService.loginStatus.loggedInUser;
+        //var currentCaseNumber;
+        var accountNumber = securityService.loginStatus.account.number;
+
+        // if (currentCaseNumber) {
+        //   liveagent
+        //     .addCustomDetail('Case Number', currentCaseNumber)
+        //     .map('Case', 'CaseNumber', false, false, false)
+        //     .saveToTranscript('CaseNumber__c');
+        // }
+
+        // if (chatToken) {
+        //   liveagent
+        //     .addCustomDetail('Session ID', chatToken)
+        //     .map('Contact', 'SessionId__c', false, false, false);
+        // }
+
+        liveagent
+          .addCustomDetail('Contact Login', ssoName)
+          .map('Contact', 'SSO_Username__c', true, true, true)
+          .saveToTranscript('SSO_Username__c');
+        //liveagent
+        //  .addCustomDetail('Contact E-mail', email)
+        //  .map('Contact', 'Email', false, false, false);
+        liveagent
+          .addCustomDetail('Account Number', accountNumber)
+          .map('Account', 'AccountNumber', true, true, true);
+        liveagent.setName(name);
+        liveagent.addCustomDetail('Name', name);
+        liveagent.setChatWindowHeight('552');
+        //liveagent.enableLogging();
+
+        liveagent.init(
+          CHAT_SUPPORT.chatLiveAgentUrlPrefix,
+          CHAT_SUPPORT.chatInitHashOne,
+          CHAT_SUPPORT.chatInitHashTwo);
+        window.chatInitialized = true;
+      };
+
+      $scope.openChatWindow = function () {
+        liveagent.startChat(CHAT_SUPPORT.chatButtonToken);
+      };
+
+
+
+      $scope.init = function () {
+
+        if ($scope.enableChat()) {
+          $scope.setChatIframeHackUrl();
+          $scope.timer = $interval($scope.checkChatButtonStates, 5000);
+          $scope.initializeChat();
+
+        }
+      };
+
+      $scope.$on(
+        '$destroy',
         function () {
-          console.log('Unable to get tree data');
+          //we cancel timer each time scope is destroyed
+          //it will be restarted via init on state change to a page that has a chat buttom
+          $interval.cancel($scope.timer);
+        }
+      );
+
+      if (securityService.loginStatus.isLoggedIn) {
+        $scope.init();
+      } else {
+        $rootScope.$on(AUTH_EVENTS.loginSuccess, function () {
+          $scope.init();
         });
+      }
+
+      $rootScope.$on(AUTH_EVENTS.sessionIdChanged, function () {
+        if ($scope.enableChat()) {
+          $scope.setChatIframeHackUrl();
+        }
+      });
+
     }
   ]);
 'use strict';
@@ -15081,51 +19934,31 @@ angular.module('RedhatAccess.cases')
   'strataService',
   '$stateParams',
   'AlertService',
+  '$timeout',
+  '$modal',
+  'RHAUtils',
   function(
       $scope,
       CaseService,
       strataService,
       $stateParams,
-      AlertService) {
+      AlertService,
+      $timeout,
+      $modal,
+      RHAUtils) {
+    $scope.CaseService = CaseService;
 
-    strataService.cases.comments.get($stateParams.id).then(
-        function(commentsJSON) {
-          $scope.comments = commentsJSON;
-
-          if (commentsJSON != null) {
-            $scope.selectPage(1);
-          }
-        },
-        function(error) {
-          AlertService.addStrataErrorMessage(error);
-        }
-    );
-
-    $scope.newComment = '';
-    $scope.addingComment = false;
-
-    $scope.addComment = function() {
-      $scope.addingComment = true;
-
-      strataService.cases.comments.post(CaseService.case.case_number, $scope.newComment).then(
-          function(response) {
-            strataService.cases.comments.get(CaseService.case.case_number).then(
-                function(comments) {
-                  $scope.newComment = '';
-                  $scope.comments = comments;
-                  $scope.addingComment = false;
-                  $scope.selectPage(1);
-                  $scope.$apply();
-                },
-                function(error) {
-                  AlertService.addStrataErrorMessage(error);
-                });
-          },
-          function(error) {
-            AlertService.addStrataErrorMessage(error);
-            $scope.addingComment = false;
-          });
+    CaseService.refreshComments = function() {
+      $scope.selectPage(1);
     };
+
+    CaseService.populateComments($stateParams.id).then(
+      function(comments) {
+        if (RHAUtils.isNotEmpty(comments)) {
+          CaseService.refreshComments();
+        }
+      }
+    );
 
     $scope.itemsPerPage = 4;
     $scope.maxPagerSize = 3;
@@ -15133,15 +19966,22 @@ angular.module('RedhatAccess.cases')
     $scope.selectPage = function(pageNum) {
       var start = $scope.itemsPerPage * (pageNum - 1);
       var end = start + $scope.itemsPerPage;
-      end = end > $scope.comments.length ?
-          $scope.comments.length : end;
+      end = end > CaseService.comments.length ?
+          CaseService.comments.length : end;
 
       $scope.commentsOnScreen =
-          $scope.comments.slice(start, end);
+          CaseService.comments.slice(start, end);
     };
 
-    if ($scope.comments != null) {
-      $scope.selectPage(1);
+    $scope.requestManagementEscalation = function() {
+      $modal.open({
+        templateUrl: 'cases/views/requestManagementEscalationModal.html',
+        controller: 'RequestManagementEscalationModal'
+      });
+    };
+
+    if (RHAUtils.isNotEmpty(CaseService.comments)) {
+      CaseService.refreshComments();
     }
   }
 ]);
@@ -15149,101 +19989,94 @@ angular.module('RedhatAccess.cases')
 'use strict';
 
 angular.module('RedhatAccess.cases')
-.controller('CompactCaseList', [
-  '$scope',
-  '$stateParams',
-  'strataService',
-  'CaseService',
-  'CaseListService',
-  '$rootScope',
-  'AUTH_EVENTS',
-  'securityService',
-  'AlertService',
-  '$filter',
-  function(
+  .controller('CompactCaseList', [
+    '$scope',
+    '$stateParams',
+    'strataService',
+    'CaseService',
+    '$rootScope',
+    'AUTH_EVENTS',
+    'securityService',
+    'SearchCaseService',
+    'AlertService',
+    'SearchBoxService',
+    'RHAUtils',
+    '$filter',
+    function (
       $scope,
       $stateParams,
       strataService,
       CaseService,
-      CaseListService,
       $rootScope,
       AUTH_EVENTS,
       securityService,
+      SearchCaseService,
       AlertService,
+      SearchBoxService,
+      RHAUtils,
       $filter) {
 
-    $scope.securityService = securityService;
-    $scope.CaseService = CaseService;
-    $scope.CaseListService = CaseListService;
-    $scope.loadingCaseList = true;
-    $scope.selectedCaseIndex = -1;
+      $scope.securityService = securityService;
+      $scope.CaseService = CaseService;
+      $scope.selectedCaseIndex = -1;
+      $scope.SearchCaseService = SearchCaseService;
 
-    $scope.selectCase = function($index) {
-      if ($scope.selectedCaseIndex != $index) {
-        $scope.selectedCaseIndex = $index;
-        CaseService.clearCase();
-      }
-    };
+      $scope.selectCase = function ($index) {
+        if ($scope.selectedCaseIndex !== $index) {
+          $scope.selectedCaseIndex = $index;
+        }
+      };
 
-    $scope.domReady = false; //used to notify resizable directive that the page has loaded
-    $scope.filterCases = function() {
-      strataService.cases.filter().then(
-          function(cases) {
-            $scope.loadingCaseList = false;
-            CaseListService.defineCases(cases);
+      $scope.domReady = false; //used to notify resizable directive that the page has loaded
 
-            if ($stateParams.id != null && $scope.selectedCaseIndex == -1) {
-              var selectedCase =
+      SearchBoxService.doSearch =
+        CaseService.onSelectChanged =
+        CaseService.onOwnerSelectChanged =
+        CaseService.onGroupSelectChanged = function () {
+          SearchCaseService.doFilter().then(
+            function () {
+              if (RHAUtils.isNotEmpty($stateParams.id) && $scope.selectedCaseIndex === -1) {
+                var selectedCase =
                   $filter('filter')(
-                      CaseListService.cases,
-                      {'case_number': $stateParams.id});
-              $scope.selectedCaseIndex = CaseListService.cases.indexOf(selectedCase[0]);
+                    SearchCaseService.cases, {
+                      'case_number': $stateParams.id
+                    });
+                $scope.selectedCaseIndex = SearchCaseService.cases.indexOf(selectedCase[0]);
+              }
+
+              $scope.domReady = true;
             }
+          );
+      };
 
-            $scope.domReady = true;
-          },
-          function(error) {
-            AlertService.addStrataErrorMessage(error);
-          }
-      );
-    };
+      if (securityService.loginStatus.isLoggedIn) {
+        CaseService.populateGroups();
+        SearchBoxService.doSearch();
+      }
 
-    $rootScope.$on(AUTH_EVENTS.loginSuccess, function() {
-      CaseService.populateGroups();
-      $scope.filterCases();
-      AlertService.clearAlerts();
-    });
+      $rootScope.$on(AUTH_EVENTS.loginSuccess, function () {
+        CaseService.populateGroups();
+        SearchBoxService.doSearch();
+        AlertService.clearAlerts();
+      });
 
-    /**
-     * Passed to rha-list-filter as a callback after filtering
-     */
-    $scope.filterCallback = function() {
-      $scope.loadingCaseList = false;
-    };
-
-    $scope.onFilter = function() {
-      $scope.loadingCaseList = true;
-    };
-
-    CaseService.populateGroups();
-    $scope.filterCases();
-  }
-]);
-
+    }
+  ]);
 'use strict';
 
 angular.module('RedhatAccess.cases')
-.controller('CompactEdit', [
-  '$scope',
-  'strataService',
-  '$stateParams',
-  'CaseService',
-  'AttachmentsService',
-  '$rootScope',
-  'AUTH_EVENTS',
-  'securityService',
-  'AlertService',
-  function(
+  .controller('CompactEdit', [
+    '$scope',
+    'strataService',
+    '$stateParams',
+    'CaseService',
+    'AttachmentsService',
+    '$rootScope',
+    'AUTH_EVENTS',
+    'CASE_EVENTS',
+    'securityService',
+    'AlertService',
+    function (
       $scope,
       strataService,
       $stateParams,
@@ -15251,49 +20084,176 @@ angular.module('RedhatAccess.cases')
       AttachmentsService,
       $rootScope,
       AUTH_EVENTS,
+      CASE_EVENTS,
       securityService,
       AlertService) {
 
-    $scope.securityService = securityService;
+      $scope.securityService = securityService;
 
-    $scope.caseLoading = true;
-    $scope.domReady = false;
+      $scope.caseLoading = true;
+      $scope.domReady = false;
 
-    $scope.init = function() {
-      strataService.cases.get($stateParams.id).then(
-          function(caseJSON) {
+      $scope.init = function () {
+        strataService.cases.get($stateParams.id).then(
+          function (caseJSON) {
             CaseService.defineCase(caseJSON);
+            $rootScope.$broadcast(CASE_EVENTS.received);
             $scope.caseLoading = false;
 
-            if (caseJSON.product != null && caseJSON.product.name != null) {
+            if (caseJSON.product !== null && caseJSON.product.name !== null) {
               strataService.products.versions(caseJSON.product.name).then(
-                  function(versions) {
-                    CaseService.versions = versions;
-                  },
-                  function(error) {
-                    AlertService.addStrataErrorMessage(error);
-                  }
+                function (versions) {
+                  CaseService.versions = versions;
+                },
+                function (error) {
+                  AlertService.addStrataErrorMessage(error);
+                }
               );
             }
             $scope.domReady = true;
           }
-      );
+        );
 
-      strataService.cases.attachments.list($stateParams.id).then(
-          function(attachmentsJSON) {
+        strataService.cases.attachments.list($stateParams.id).then(
+          function (attachmentsJSON) {
             AttachmentsService.defineOriginalAttachments(attachmentsJSON);
           },
-          function(error) {
+          function (error) {
             AlertService.addStrataErrorMessage(error);
           }
-      );
-    };
-    $scope.init();
+        );
+      };
 
-    $rootScope.$on(AUTH_EVENTS.loginSuccess, function() {
-      $scope.init();
-      AlertService.clearAlerts();
-    });
+
+      if (securityService.loginStatus.isLoggedIn) {
+        $scope.init();
+      }
+      $rootScope.$on(AUTH_EVENTS.loginSuccess, function () {
+        $scope.init();
+        AlertService.clearAlerts();
+      });
+    }
+  ]);
+'use strict';
+/*global $ */
+
+angular.module('RedhatAccess.cases')
+.controller('CreateGroupButton', [
+  '$scope',
+  '$modal',
+  function ($scope, $modal) {
+    $scope.openCreateGroupDialog = function() {
+      $modal.open({
+        templateUrl: 'cases/views/createGroupModal.html',
+        controller: 'CreateGroupModal'
+      });
+    }
+  }
+]);
+
+'use strict';
+/*global $ */
+
+angular.module('RedhatAccess.cases')
+.controller('CreateGroupModal', [
+  '$scope',
+  '$modalInstance',
+  'strataService',
+  'AlertService',
+  'CaseService',
+  'GroupService',
+  function ($scope, $modalInstance, strataService, AlertService, CaseService, GroupService) {
+
+    $scope.createGroup = function() {
+      AlertService.addWarningMessage('Creating group ' + this.groupName + '...');
+      $modalInstance.close();
+
+      strataService.groups.create(this.groupName).then(
+        angular.bind(this, function(success) {
+          CaseService.groups.push({
+            name: this.groupName,
+            number: success
+          });
+
+          AlertService.clearAlerts();
+          AlertService.addSuccessMessage('Successfully created group ' + this.groupName);
+          GroupService.reloadTable();
+        }),
+        function(error) {
+          AlertService.clearAlerts();
+          AlertService.addStrataErrorMessage(error);
+        }
+      );
+
+    };
+
+    $scope.closeModal = function() {
+      $modalInstance.close();
+    };   
+
+    $scope.onGroupNameKeyPress = function($event) {
+      if ($event.keyCode === 13) {
+        angular.bind(this, $scope.createGroup)();
+      }
+    }
+  }
+]);
+
+'use strict';
+/*global $ */
+
+angular.module('RedhatAccess.cases')
+.controller('DeleteGroupButton', [
+  '$scope',
+  'strataService',
+  'AlertService',
+  'CaseService',
+  '$q',
+  '$filter',
+  'GroupService',
+  function ($scope, strataService, AlertService, CaseService, $q, $filter, GroupService) {
+
+    $scope.deleteGroups = function() {
+      var promises = [];
+      angular.forEach(CaseService.groups, function(group, index) {
+        if (group.selected) {
+          var promise = strataService.groups.remove(group.number);
+          promise.then(
+            function(success) {
+              var groups =
+                  $filter('filter')(
+                      CaseService.groups,
+                      function(g) {
+                        if (g.number !== group.number) {
+                          return true;
+                        } else {
+                          return false;
+                        }
+                      });
+              CaseService.groups = groups;
+              GroupService.reloadTable();
+              AlertService.addSuccessMessage('Successfully deleted group ' + group.name);
+            },
+            function(error) {
+              AlertService.addStrataErrorMessage(error);
+            }
+          );
+          promises.push(promise);
+        }
+      });
+
+      AlertService.addWarningMessage('Deleting groups...');
+      var parentPromise = $q.all(promises);
+      parentPromise.then(
+        function(success) {
+          AlertService.clearAlerts();
+          AlertService.addSuccessMessage('Successfully deleted groups.');
+        },
+        function(error) {
+          AlertService.addStrataErrorMessage(error);
+        }
+      );
+    }
   }
 ]);
 
@@ -15320,14 +20280,18 @@ angular.module('RedhatAccess.cases')
   'CaseService',
   '$rootScope',
   'AUTH_EVENTS',
+  'CASE_EVENTS',
   'AlertService',
+  'RHAUtils',
   function(
       $scope,
       strataService,
       CaseService,
       $rootScope,
       AUTH_EVENTS,
-      AlertService) {
+      CASE_EVENTS,
+      AlertService,
+      RHAUtils) {
 
     $scope.CaseService = CaseService;
 
@@ -15343,7 +20307,7 @@ angular.module('RedhatAccess.cases')
             }
         );
 
-        strataService.groups.list().then(
+        strataService.groups.list(CaseService.kase.contact_sso_username).then(
             function(response) {
               $scope.groups = response;
             },
@@ -15364,7 +20328,7 @@ angular.module('RedhatAccess.cases')
 
       strataService.values.cases.severity().then(
           function(response) {
-            $scope.severities = response;
+            CaseService.severities = response;
           },
           function(error) {
             AlertService.addStrataErrorMessage(error);
@@ -15380,44 +20344,54 @@ angular.module('RedhatAccess.cases')
           }
       );
     };
-    $scope.init();
 
     $scope.updatingDetails = false;
     $scope.updateCase = function() {
       $scope.updatingDetails = true;
 
       var caseJSON = {};
-      if (CaseService.case != null) {
-        if (CaseService.case.type != null) {
-          caseJSON.type = CaseService.case.type.name;
+      if (CaseService.kase != null) {
+        if (CaseService.kase.type != null) {
+          caseJSON.type = CaseService.kase.type.name;
         }
-        if (CaseService.case.severity != null) {
-          caseJSON.severity = CaseService.case.severity.name;
+        if (CaseService.kase.severity != null) {
+          caseJSON.severity = CaseService.kase.severity.name;
         }
-        if (CaseService.case.status != null) {
-          caseJSON.status = CaseService.case.status.name;
+        if (CaseService.kase.status != null) {
+          caseJSON.status = CaseService.kase.status.name;
         }
-        if (CaseService.case.alternate_id != null) {
-          caseJSON.alternate_id = CaseService.case.alternate_id;
+        if (CaseService.kase.alternate_id != null) {
+          caseJSON.alternateId = CaseService.kase.alternate_id;
         }
-        if (CaseService.case.product != null) {
-          caseJSON.product = CaseService.case.product.name;
+        if (CaseService.kase.product != null) {
+          caseJSON.product = CaseService.kase.product.name;
         }
-        if (CaseService.case.version != null) {
-          caseJSON.version = CaseService.case.version;
+        if (CaseService.kase.version != null) {
+          caseJSON.version = CaseService.kase.version;
         }
-        if (CaseService.case.summary != null) {
-          caseJSON.summary = CaseService.case.summary;
+        if (CaseService.kase.summary != null) {
+          caseJSON.summary = CaseService.kase.summary;
         }
-        if (CaseService.case.group != null) {
-          caseJSON.folderNumber = CaseService.case.group.number;
+        if (CaseService.kase.group != null) {
+          caseJSON.folderNumber = CaseService.kase.group.number;
+        }
+        if (RHAUtils.isNotEmpty(CaseService.kase.fts)) {
+          caseJSON.fts = CaseService.kase.fts;
+          if (!CaseService.kase.fts) {
+            caseJSON.contactInfo24X7 = '';
+          }
+        }
+        if (CaseService.kase.fts && RHAUtils.isNotEmpty(CaseService.kase.contact_info24_x7)) {
+          caseJSON.contactInfo24X7 = CaseService.kase.contact_info24_x7;
         }
 
-        strataService.cases.put(CaseService.case.case_number, caseJSON).then(
+        strataService.cases.put(CaseService.kase.case_number, caseJSON).then(
             function() {
               $scope.caseDetails.$setPristine();
               $scope.updatingDetails = false;
-              $scope.$apply();
+              if ($scope.$root.$$phase != '$apply' && $scope.$root.$$phase != '$digest') {
+                $scope.$apply();
+              }
             },
             function(error) {
               AlertService.addStrataErrorMessage(error);
@@ -15431,7 +20405,7 @@ angular.module('RedhatAccess.cases')
     $scope.getProductVersions = function() {
       CaseService.versions = [];
 
-      strataService.products.versions(CaseService.case.product.code).then(
+      strataService.products.versions(CaseService.kase.product.code).then(
           function(versions){
             CaseService.versions = versions;
           },
@@ -15441,7 +20415,7 @@ angular.module('RedhatAccess.cases')
       );
     };
 
-    $rootScope.$on(AUTH_EVENTS.loginSuccess, function() {
+    $rootScope.$on(CASE_EVENTS.received, function() {
       $scope.init();
       AlertService.clearAlerts();
     });
@@ -15449,22 +20423,25 @@ angular.module('RedhatAccess.cases')
 ]);
 
 'use strict';
- /*jshint camelcase: false */
+/*jshint camelcase: false */
 angular.module('RedhatAccess.cases')
-.controller('Edit', [
-  '$scope',
-  '$stateParams',
-  '$filter',
-  '$q',
-  'AttachmentsService',
-  'CaseService',
-  'strataService',
-  'RecommendationsService',
-  '$rootScope',
-  'AUTH_EVENTS',
-  'AlertService',
-  'securityService',
-  function(
+  .controller('Edit', [
+    '$scope',
+    '$stateParams',
+    '$filter',
+    '$q',
+    'AttachmentsService',
+    'CaseService',
+    'strataService',
+    'RecommendationsService',
+    '$rootScope',
+    'AUTH_EVENTS',
+    'AlertService',
+    'securityService',
+    'EDIT_CASE_CONFIG',
+    'RHAUtils',
+    'CASE_EVENTS',
+    function (
       $scope,
       $stateParams,
       $filter,
@@ -15476,86 +20453,190 @@ angular.module('RedhatAccess.cases')
       $rootScope,
       AUTH_EVENTS,
       AlertService,
-      securityService) {
+      securityService,
+      EDIT_CASE_CONFIG,
+      RHAUtils,
+      CASE_EVENTS) {
 
-    $scope.securityService = securityService;
-    $scope.AttachmentsService = AttachmentsService;
-    $scope.CaseService = CaseService;
-    CaseService.clearCase();
+      $scope.EDIT_CASE_CONFIG = EDIT_CASE_CONFIG;
+      $scope.securityService = securityService;
+      $scope.AttachmentsService = AttachmentsService;
+      $scope.CaseService = CaseService;
+      CaseService.clearCase();
 
-    $scope.init = function() {
-      $scope.caseLoading = true;
-      $scope.recommendationsLoading = true;
+      $scope.init = function () {
+        $scope.caseLoading = true;
+        $scope.recommendationsLoading = true;
 
-      strataService.cases.get($stateParams.id).then(
-          function(caseJSON) {
+        strataService.cases.get($stateParams.id).then(
+          function (caseJSON) {
             CaseService.defineCase(caseJSON);
+            $rootScope.$broadcast(CASE_EVENTS.received);
             $scope.caseLoading = false;
 
             if ('product' in caseJSON && 'name' in caseJSON.product && caseJSON.product.name) {
               strataService.products.versions(caseJSON.product.name).then(
-                  function(versions) {
-                    CaseService.versions = versions;
-                  },
-                  function(error) {
-                    AlertService.addStrataErrorMessage(error);
-                  }
+                function (versions) {
+                  CaseService.versions = versions;
+                },
+                function (error) {
+                  AlertService.addStrataErrorMessage(error);
+                }
               );
             }
 
             if (caseJSON.account_number !== undefined) {
               strataService.accounts.get(caseJSON.account_number).then(
-                  function(account) {
-                    CaseService.defineAccount(account);
-                  },
-                  function(error) {
-                    AlertService.addStrataErrorMessage(error);
-                  }
+                function (account) {
+                  CaseService.defineAccount(account);
+                },
+                function (error) {
+                  AlertService.addStrataErrorMessage(error);
+                }
               );
             }
 
-            RecommendationsService.populateRecommendations(12).then(
-                function() {
+            if (EDIT_CASE_CONFIG.showRecommendations) {
+              RecommendationsService.populatePinnedRecommendations().then(
+                function () {
                   $scope.recommendationsLoading = false;
                 },
-                function(error) {
+                function (error) {
                   AlertService.addStrataErrorMessage(error);
                 }
-            );
-          }
-      );
+              );
 
-      $scope.attachmentsLoading = true;
-      strataService.cases.attachments.list($stateParams.id).then(
-          function(attachmentsJSON) {
-            AttachmentsService.defineOriginalAttachments(attachmentsJSON);
-            $scope.attachmentsLoading = false;
-          },
-          function(error) {
-            AlertService.addStrataErrorMessage(error);
-          }
-      );
+              RecommendationsService.populateRecommendations(12).then(
+                function () {
+                  $scope.recommendationsLoading = false;
+                }
+              );
+            }
 
-      $scope.commentsLoading = true;
-      strataService.cases.comments.get($stateParams.id).then(
-          function(commentsJSON) {
-            $scope.comments = commentsJSON;
-            $scope.commentsLoading = false;
-          },
-          function(error) {
-            AlertService.addStrataErrorMessage(error);
+            if (EDIT_CASE_CONFIG.showEmailNotifications) {
+              CaseService.defineNotifiedUsers();
+            }
           }
-      );
-    };
-    $scope.init();
+        );
 
-    $rootScope.$on(AUTH_EVENTS.loginSuccess, function() {
-      $scope.init();
-      AlertService.clearAlerts();
-    });
+        if (EDIT_CASE_CONFIG.showAttachments) {
+          $scope.attachmentsLoading = true;
+          strataService.cases.attachments.list($stateParams.id).then(
+            function (attachmentsJSON) {
+              AttachmentsService.defineOriginalAttachments(attachmentsJSON);
+              $scope.attachmentsLoading = false;
+            },
+            function (error) {
+              AlertService.addStrataErrorMessage(error);
+            }
+          );
+        }
+
+        if (EDIT_CASE_CONFIG.showComments) {
+          $scope.commentsLoading = true;
+          strataService.cases.comments.get($stateParams.id).then(
+            function (commentsJSON) {
+              $scope.comments = commentsJSON;
+              $scope.commentsLoading = false;
+            },
+            function (error) {
+              AlertService.addStrataErrorMessage(error);
+            }
+          );
+        }
+      };
+
+      if (securityService.loginStatus.isLoggedIn) {
+        $scope.init();
+      }
+      $rootScope.$on(AUTH_EVENTS.loginSuccess, function () {
+        $scope.init();
+        AlertService.clearAlerts();
+      });
+    }
+  ]);
+'use strict';
+
+angular.module('RedhatAccess.cases')
+  .controller('EmailNotifySelect', [
+    '$scope',
+    '$rootScope',
+    'CaseService',
+    'securityService',
+    'AlertService',
+    'strataService',
+    '$filter',
+    'RHAUtils',
+    'EDIT_CASE_CONFIG',
+    'AUTH_EVENTS',
+    function ($scope, $rootScope, CaseService, securityService, AlertService, strataService, $filter, RHAUtils, EDIT_CASE_CONFIG, AUTH_EVENTS) {
+
+      $scope.securityService = securityService;
+      $scope.CaseService = CaseService;
+      $scope.showEmailNotifications = EDIT_CASE_CONFIG.showEmailNotifications;
+
+      $scope.updateNotifyUsers = function () {
+        if (!angular.equals(CaseService.updatedNotifiedUsers, CaseService.originalNotifiedUsers)) {
+
+          angular.forEach(CaseService.originalNotifiedUsers, function (origUser) {
+            var updatedUser = $filter('filter')(CaseService.updatedNotifiedUsers, origUser);
+
+            if (RHAUtils.isEmpty(updatedUser)) {
+              $scope.updatingList = true;
+              strataService.cases.notified_users.remove(CaseService.kase.case_number, origUser).then(
+                function () {
+                  $scope.updatingList = false;
+                  CaseService.originalNotifiedUsers = CaseService.updatedNotifiedUsers;
+                },
+                function (error) {
+                  $scope.updatingList = false;
+                  AlertService.addStrataErrorMessage(error);
+                });
+            }
+          });
+
+          angular.forEach(CaseService.updatedNotifiedUsers, function (updatedUser) {
+            var originalUser = $filter('filter')(CaseService.originalNotifiedUsers, updatedUser);
+
+            if (RHAUtils.isEmpty(originalUser)) {
+              $scope.updatingList = true;
+              strataService.cases.notified_users.add(CaseService.kase.case_number, updatedUser).then(
+                function () {
+                  CaseService.originalNotifiedUsers = CaseService.updatedNotifiedUsers;
+                  $scope.updatingList = false;
+                },
+                function (error) {
+                  $scope.updatingList = false;
+                  AlertService.addStrataErrorMessage(error);
+                });
+            }
+          });
+        }
+      };
+      if (securityService.loginStatus.isLoggedIn) {
+        CaseService.populateUsers();
+      }
+      $rootScope.$on(AUTH_EVENTS.loginSuccess, function () {
+        CaseService.populateUsers();
+      });
+    }
+  ]);
+'use strict';
+
+angular.module('RedhatAccess.cases')
+.controller('EntitlementSelect', [
+  '$scope',
+  'strataService',
+  'AlertService',
+  '$filter',
+  'RHAUtils',
+  'CaseService',
+  function ($scope, strataService, AlertService, $filter, RHAUtils, CaseService) {
+
+    $scope.CaseService = CaseService;
+    CaseService.populateEntitlements();
   }
 ]);
-
 
 'use strict';
  /*jshint camelcase: false */
@@ -15571,7 +20652,7 @@ angular.module('RedhatAccess.cases')
 
     $scope.exporting = false;
 
-    $scope.export = function() {
+    $scope.exports = function() {
       $scope.exporting = true;
       strataService.cases.csv().then(
         function(response) {
@@ -15586,8 +20667,113 @@ angular.module('RedhatAccess.cases')
 ]);
 
 'use strict';
+ /*jshint camelcase: false */
+angular.module('RedhatAccess.cases')
+.controller('Group', [
+  '$scope',
+  'securityService',
+  'SearchBoxService',
+  'GroupService',
+  function(
+      $scope,
+      securityService,
+      SearchBoxService,
+      GroupService) {
+
+    $scope.securityService = securityService;
+
+    SearchBoxService.onChange = SearchBoxService.doSearch = SearchBoxService.onKeyPress = function() {
+      GroupService.reloadTable();
+    };
+  }
+]);
+
+'use strict';
+/*global $ */
 
 angular.module('RedhatAccess.cases')
+.controller('GroupList', [
+  '$scope',
+  'strataService',
+  'AlertService',
+  'CaseService',
+  '$filter',
+  'ngTableParams',
+  'GroupService',
+  'SearchBoxService',
+  function ($scope, strataService, AlertService, CaseService, $filter, ngTableParams, GroupService, SearchBoxService) {
+
+    $scope.CaseService = CaseService;
+    $scope.GroupService = GroupService;
+    $scope.listEmpty = false;
+    $scope.groupsOnScreen = [];
+
+    var tableBuilt = false;
+    var buildTable = function() {
+      $scope.tableParams = new ngTableParams({
+        page: 1,
+        count: 10,
+        sorting: {
+          name: 'asc'
+        }
+      }, {
+        total: CaseService.groups.length,
+        getData: function($defer, params) {
+          var orderedData = $filter('filter')(CaseService.groups, SearchBoxService.searchTerm);
+
+          orderedData = params.sorting() ?
+              $filter('orderBy')(orderedData, params.orderBy()) : orderedData;
+          
+          orderedData.length < 1 ? $scope.listEmpty = true : $scope.listEmpty = false;
+
+          var pageData = orderedData.slice(
+              (params.page() - 1) * params.count(), params.page() * params.count());
+
+          $scope.tableParams.total(orderedData.length);
+          GroupService.groupsOnScreen = pageData;
+          $defer.resolve(pageData);
+        }
+      });
+
+      GroupService.reloadTable = function() {
+        $scope.tableParams.reload();
+      };
+      tableBuilt = true;
+    };
+
+    $scope.groupsLoading = true;
+    strataService.groups.list().then(
+      function(groups) {
+        CaseService.groups = groups;
+        buildTable();
+        $scope.groupsLoading = false;
+      },
+      function(error) {
+        AlertService.addStrataErrorMessage(error);
+      }
+    );
+
+    $scope.onMasterCheckboxClicked = function() {
+      for(var i = 0; i < GroupService.groupsOnScreen.length; i++) {
+        if (this.masterSelected) {
+          GroupService.groupsOnScreen[i].selected = true;
+        } else {
+          GroupService.groupsOnScreen[i].selected = false;
+        }
+      };
+    }
+
+    CaseService.clearCase();
+  }
+]);
+
+'use strict';
+
+angular.module('RedhatAccess.cases')
+.constant('CASE_GROUPS', {
+  manage: 'manage',
+  ungrouped: 'ungrouped'
+})
 .controller('GroupSelect', [
   '$scope',
   'securityService',
@@ -15595,125 +20781,126 @@ angular.module('RedhatAccess.cases')
   'CaseService',
   'strataService',
   'AlertService',
+  'CASE_GROUPS',
   function (
     $scope,
     securityService,
     SearchCaseService,
     CaseService,
     strataService,
-    AlertService) {
+    AlertService,
+    CASE_GROUPS) {
 
     $scope.securityService = securityService;
     $scope.SearchCaseService = SearchCaseService;
     $scope.CaseService = CaseService;
+    $scope.CASE_GROUPS = CASE_GROUPS;
 
-    $scope.groupsLoading = true;
-    strataService.groups.list().then(
-      function(groups) {
-        $scope.groupsLoading = false;
-        CaseService.groups = groups;
-      },
-      function(error) {
-        $scope.groupsLoading = false;
-        AlertService.addStrataErrorMessage(error);
-      })
+    CaseService.populateGroups();
   }
 ]);
 
 'use strict';
 /*jshint camelcase: false */
 angular.module('RedhatAccess.cases')
-.controller('List', [
-  '$scope',
-  '$filter',
-  'ngTableParams',
-  'STATUS',
-  'strataService',
-  'CaseListService',
-  'securityService',
-  'AlertService',
-  '$rootScope',
-  'AUTH_EVENTS',
-  function ($scope,
-            $filter,
-            ngTableParams,
-            STATUS,
-            strataService,
-            CaseListService,
-            securityService,
-            AlertService,
-            $rootScope,
-            AUTH_EVENTS) {
-    $scope.CaseListService = CaseListService;
-    $scope.securityService = securityService;
-    $scope.AlertService = AlertService;
-    AlertService.clearAlerts();
-
-    var buildTable = function() {
-      $scope.tableParams = new ngTableParams({
-        page: 1,
-        count: 10,
-        sorting: {
-          last_modified_date: 'desc'
-        }
-      }, {
-        total: CaseListService.cases.length,
-        getData: function($defer, params) {
-          var orderedData = params.sorting() ?
-              $filter('orderBy')(CaseListService.cases, params.orderBy()) : CaseListService.cases;
-
-          var pageData = orderedData.slice(
-              (params.page() - 1) * params.count(), params.page() * params.count());
-
-          $scope.tableParams.total(orderedData.length);
-          $defer.resolve(pageData);
-        }
-      });
-    };
-
-    $scope.loadCases = function() {
-      $scope.loadingCases = true;
-      strataService.cases.filter().then(
-          function(cases) {
-            CaseListService.defineCases(cases);
-            buildTable();
-            $scope.loadingCases = false;
-          },
-          function(error) {
-            AlertService.addStrataErrorMessage(error);
-          }
-      );
-    };
-    $scope.loadCases();
-
-    /**
-     * Callback after user login. Load the cases and clear alerts
-     */
-    $rootScope.$on(AUTH_EVENTS.loginSuccess, function() {
-      $scope.loadCases();
+  .controller('List', [
+    '$scope',
+    '$filter',
+    'ngTableParams',
+    'securityService',
+    'AlertService',
+    '$rootScope',
+    'SearchCaseService',
+    'CaseService',
+    'AUTH_EVENTS',
+    'SearchBoxService',
+    function ($scope,
+      $filter,
+      ngTableParams,
+      securityService,
+      AlertService,
+      $rootScope,
+      SearchCaseService,
+      CaseService,
+      AUTH_EVENTS,
+      SearchBoxService) {
+      $scope.SearchCaseService = SearchCaseService;
+      $scope.securityService = securityService;
+      $scope.AlertService = AlertService;
       AlertService.clearAlerts();
-    });
 
-    /**
-     * Callback from listFilter directive
-     */
-    $scope.preFilter = function() {
-      $scope.loadingCases = true;
-    };
+      var tableBuilt = false;
 
+      var buildTable = function () {
+        /*jshint newcap: false*/
+        $scope.tableParams = new ngTableParams({
+          page: 1,
+          count: 10,
+          sorting: {
+            last_modified_date: 'desc'
+          }
+        }, {
+          total: SearchCaseService.cases.length,
+          getData: function ($defer, params) {
+            if(!SearchCaseService.allCasesDownloaded && ((params.count() * params.page()) / SearchCaseService.total >= .8)){
+              SearchCaseService.doFilter().then(
+                function () {
+                  $scope.tableParams.reload();
+                  var orderedData = params.sorting() ?
+                    $filter('orderBy')(SearchCaseService.cases, params.orderBy()) : SearchCaseService.cases;
 
-    /**
-     * Callback from listFilter directive.
-     * Fired after filtering the case list via strata api call.
-     * Reload the table.
-     */
-    $scope.postFilter = function() {
-      $scope.tableParams.reload();
-      $scope.loadingCases = false;
-    };
-  }
-]);
+                  var pageData = orderedData.slice(
+                    (params.page() - 1) * params.count(), params.page() * params.count());
 
+                  $scope.tableParams.total(orderedData.length);
+                  $defer.resolve(pageData);
+                }
+              );
+            } else {
+              var orderedData = params.sorting() ?
+                $filter('orderBy')(SearchCaseService.cases, params.orderBy()) : SearchCaseService.cases;
+
+              var pageData = orderedData.slice(
+                (params.page() - 1) * params.count(), params.page() * params.count());
+
+              $scope.tableParams.total(orderedData.length);
+              $defer.resolve(pageData);
+            }
+          }
+        });
+
+        tableBuilt = true;
+      };
+
+      SearchBoxService.doSearch =
+        CaseService.onSelectChanged =
+        CaseService.onOwnerSelectChanged =
+        CaseService.onGroupSelectChanged = function () {
+          SearchCaseService.doFilter().then(
+            function () {
+              if (!tableBuilt) {
+                buildTable();
+              } else {
+                $scope.tableParams.reload();
+              }
+            }
+          );
+      };
+
+      /**
+       * Callback after user login. Load the cases and clear alerts
+       */
+
+      if (securityService.loginStatus.isLoggedIn) {
+        SearchCaseService.clear();
+        SearchBoxService.doSearch();
+      }
+      $rootScope.$on(AUTH_EVENTS.loginSuccess, function () {
+        SearchBoxService.doSearch();
+        AlertService.clearAlerts();
+      });
+    }
+  ]);
 'use strict';
 
 angular.module('RedhatAccess.cases')
@@ -15727,107 +20914,37 @@ angular.module('RedhatAccess.cases')
 ]);
 
 'use strict';
+
+angular.module('RedhatAccess.cases')
+.controller('ListBugzillas', [
+  '$scope',
+  'CaseService',
+  'securityService',
+  function (
+	  	$scope,
+	    CaseService,
+	    securityService) {
+
+  	$scope.CaseService = CaseService;
+  	$scope.securityService = securityService;
+  }
+    
+]);
+'use strict';
  /*jshint camelcase: false */
 angular.module('RedhatAccess.cases')
 .controller('ListFilter', [
   '$scope',
-  'strataService',
   'STATUS',
-  'CaseListService',
+  'CaseService',
   'securityService',
-  'AlertService',
-  '$rootScope',
-  'AUTH_EVENTS',
   function ($scope,
-            strataService,
             STATUS,
-            CaseListService,
-            securityService,
-            AlertService,
-            $rootScope,
-            AUTH_EVENTS) {
+            CaseService,
+            securityService) {
 
-    $scope.groups = [];
     $scope.securityService = securityService;
-
-    $scope.groupsLoading = true;
-    $scope.loadGroups = function() {
-      strataService.groups.list().then(
-          function(groups) {
-            $scope.groups = groups;
-            $scope.groupsLoading = false;
-          },
-          function(error) {
-            AlertService.addStrataErrorMessage(error);
-          }
-      );
-    };
-    $scope.loadGroups();
-
-    $rootScope.$on(AUTH_EVENTS.loginSuccess, function() {
-      $scope.loadGroups();
-      AlertService.clearAlerts();
-    });
-
-    $scope.statusFilter = STATUS.both;
-
-    var getIncludeClosed = function() {
-      if ($scope.statusFilter === STATUS.open) {
-        return false;
-      } else if ($scope.statusFilter === STATUS.closed) {
-        return true;
-      } else if ($scope.statusFilter === STATUS.both) {
-        return true;
-      }
-
-      return false;
-    };
-
-    $scope.onFilterKeyPress = function($event) {
-      if ($event.keyCode === 13) {
-        $scope.doFilter();
-      }
-    };
-
-    $scope.doFilter = function() {
-
-      if (angular.isFunction($scope.prefilter)) {
-        $scope.prefilter();
-      }
-
-      var params = {
-        include_closed: getIncludeClosed(),
-        count: 50
-      };
-
-      if ($scope.keyword != null) {
-        params.keyword = $scope.keyword;
-      }
-
-      if ($scope.group != null) {
-        params.group_numbers = {
-          group_number: [$scope.group.number]
-        };
-      }
-
-      if ($scope.statusFilter === STATUS.closed) {
-        params.status = STATUS.closed;
-      }
-
-      strataService.cases.filter(params).then(
-          function(filteredCases) {
-            if (filteredCases === undefined) {
-              CaseListService.defineCases([]);
-            } else {
-              CaseListService.defineCases(filteredCases);
-            }
-
-            if (angular.isFunction($scope.postfilter)) {
-              $scope.postfilter();
-            }
-          }
-      );
-    };
+    CaseService.status = STATUS.both;
   }
 ]);
 
@@ -15864,22 +20981,27 @@ angular.module('RedhatAccess.cases')
     '$rootScope',
     'AUTH_EVENTS',
     '$location',
+    'RHAUtils',
     'NEW_DEFAULTS',
+    'NEW_CASE_CONFIG',
     function ($scope,
-              $state,
-              $q,
-              SearchResultsService,
-              AttachmentsService,
-              strataService,
-              RecommendationsService,
-              CaseService,
-              AlertService,
-              securityService,
-              $rootScope,
-              AUTH_EVENTS,
-              $location,
-              NEW_DEFAULTS) {
+      $state,
+      $q,
+      SearchResultsService,
+      AttachmentsService,
+      strataService,
+      RecommendationsService,
+      CaseService,
+      AlertService,
+      securityService,
+      $rootScope,
+      AUTH_EVENTS,
+      $location,
+      RHAUtils,
+      NEW_DEFAULTS,
+      NEW_CASE_CONFIG) {
 
+      $scope.NEW_CASE_CONFIG = NEW_CASE_CONFIG;
       $scope.versions = [];
       $scope.versionDisabled = true;
       $scope.versionLoading = false;
@@ -15895,88 +21017,100 @@ angular.module('RedhatAccess.cases')
       $scope.RecommendationsService = RecommendationsService;
       $scope.securityService = securityService;
 
-      $scope.getRecommendations = function() {
-        SearchResultsService.searchInProgress.value = true;
-        RecommendationsService.populateRecommendations(5).then(
-            function() {
+      $scope.getRecommendations = function () {
+        if ($scope.NEW_CASE_CONFIG.showRecommendations) {
+          SearchResultsService.searchInProgress.value = true;
+          RecommendationsService.populateRecommendations(5).then(
+            function () {
               SearchResultsService.clear();
 
               RecommendationsService.recommendations.forEach(
-                  function(recommendation) {
-                    SearchResultsService.add(recommendation);
-                  }
-              )
+                function (recommendation) {
+                  SearchResultsService.add(recommendation);
+                }
+              );
               SearchResultsService.searchInProgress.value = false;
             },
-            function(error) {
+            function (error) {
               AlertService.addStrataErrorMessage(error);
             }
-        );
+          );
+        }
+      };
+
+      CaseService.onOwnerSelectChanged = function () {
+        if (CaseService.owner != null) {
+          CaseService.populateEntitlements(CaseService.owner);
+          CaseService.populateGroups(CaseService.owner);
+        }
+
+        CaseService.validateNewCasePage1();
       };
 
       /**
        * Populate the selects
        */
-      $scope.initSelects = function() {
+      $scope.initSelects = function () {
         $scope.productsLoading = true;
         strataService.products.list().then(
-            function(products) {
-              $scope.products = products;
-              $scope.productsLoading = false;
+          function (products) {
+            $scope.products = products;
+            $scope.productsLoading = false;
 
-              if (NEW_DEFAULTS.product != null && NEW_DEFAULTS.product != '') {
-                CaseService.case.product = {
-                  name: NEW_DEFAULTS.product,
-                  code: NEW_DEFAULTS.product
-                };
-                $scope.getRecommendations();
-                $scope.getProductVersions(CaseService.case.product);
-              }
-            },
-            function(error) {
-              AlertService.addStrataErrorMessage(error);
+            if (RHAUtils.isNotEmpty(NEW_DEFAULTS.product)) {
+              CaseService.kase.product = {
+              name: NEW_DEFAULTS.product,
+              code: NEW_DEFAULTS.product
+            };
+            $scope.getRecommendations();
+            $scope.getProductVersions(CaseService.kase.product);
             }
+          },
+          function (error) {
+            AlertService.addStrataErrorMessage(error);
+          }
         );
 
         $scope.severitiesLoading = true;
         strataService.values.cases.severity().then(
-            function(severities) {
-              $scope.severities = severities;
-              CaseService.case.severity = severities[severities.length - 1];
-              $scope.severitiesLoading = false;
-            },
-            function(error) {
-              AlertService.addStrataErrorMessage(error);
-            }
+          function (severities) {
+            CaseService.severities = severities;
+            CaseService.kase.severity = severities[severities.length - 1];
+          $scope.severitiesLoading = false;
+          },
+          function (error) {
+            AlertService.addStrataErrorMessage(error);
+          }
         );
 
         $scope.groupsLoading = true;
         strataService.groups.list().then(
-            function(groups) {
-              $scope.groups = groups;
-              for(var i = 0; i < groups.length; i++){
-                if(groups[i].is_default){
-                  CaseService.case.group = groups[i];
-                  break;
-                }
+          function (groups) {
+            /*jshint camelcase: false*/
+            CaseService.groups = groups;
+            for (var i = 0; i < groups.length; i++) {
+              if (groups[i].is_default) {
+                CaseService.kase.group = groups[i];
+              break;
               }
-              $scope.groupsLoading = false;
-            },
-            function(error) {
-              AlertService.addStrataErrorMessage(error);
             }
+            $scope.groupsLoading = false;
+          },
+          function (error) {
+            AlertService.addStrataErrorMessage(error);
+          }
         );
       };
-      
-      $scope.initDescription = function() {
+
+      $scope.initDescription = function () {
         var searchObject = $location.search();
 
-        var setDesc = function(desc) {
-          CaseService.case.description = desc;
-          $scope.getRecommendations();
-        }
+        var setDesc = function (desc) {
+          CaseService.kase.description = desc;
+        $scope.getRecommendations();
+        };
 
-        if (searchObject.data){
+        if (searchObject.data) {
           setDesc(searchObject.data);
         } else {
           //angular does not  handle params before hashbang
@@ -15985,39 +21119,24 @@ angular.module('RedhatAccess.cases')
           var parameters = queryParamsStr.split('&');
           for (var i = 0; i < parameters.length; i++) {
             var parameterName = parameters[i].split('=');
-            if (parameterName[0] == 'data') {
+            if (parameterName[0] === 'data') {
               setDesc(decodeURIComponent(parameterName[1]));
             }
           }
         }
       };
 
-      $scope.initSelects();
-      $scope.initDescription();
+      if (securityService.loginStatus.isLoggedIn) {
+        $scope.initSelects();
+        $scope.initDescription();
+      }
 
-      $rootScope.$on(AUTH_EVENTS.loginSuccess, function() {
+      $rootScope.$on(AUTH_EVENTS.loginSuccess, function () {
         $scope.initSelects();
         $scope.initDescription();
         AlertService.clearAlerts();
       });
 
-      /**
-       * Set $scope.incomplete to boolean based on state of form
-       */
-      $scope.validateForm = function () {
-        if (CaseService.case.product == null ||
-          CaseService.case.product == "" ||
-          CaseService.case.version == null ||
-          CaseService.case.version == "" ||
-          CaseService.case.summary == null ||
-          CaseService.case.summary == "" ||
-          CaseService.case.description == null ||
-          CaseService.case.description == "") {
-          $scope.incomplete = true;
-        } else {
-          $scope.incomplete = false;
-        }
-      };
 
       /**
        * Retrieve product's versions from strata
@@ -16025,26 +21144,26 @@ angular.module('RedhatAccess.cases')
        * @param product
        */
       $scope.getProductVersions = function (product) {
-        CaseService.case.version = "";
-        $scope.versionDisabled = true;
-        $scope.versionLoading = true;
+        CaseService.kase.version = '';
+      $scope.versionDisabled = true;
+      $scope.versionLoading = true;
 
-        strataService.products.versions(product.code).then(
-            function(response) {
-              $scope.versions = response;
-              $scope.validateForm();
-              $scope.versionDisabled = false;
-              $scope.versionLoading = false;
+      strataService.products.versions(product.code).then(
+        function (response) {
+          $scope.versions = response;
+          CaseService.validateNewCasePage1();
+          $scope.versionDisabled = false;
+          $scope.versionLoading = false;
 
-              if (NEW_DEFAULTS.version != null & NEW_DEFAULTS.version != '') {
-                CaseService.case.version = NEW_DEFAULTS.version;
-                $scope.getRecommendations();
-              }
-            },
-            function(error) {
-              AlertService.addStrataErrorMessage(error);
-            }
-        );
+          if (RHAUtils.isNotEmpty(NEW_DEFAULTS.version)) {
+            CaseService.kase.version = NEW_DEFAULTS.version;
+          $scope.getRecommendations();
+          }
+        },
+        function (error) {
+          AlertService.addStrataErrorMessage(error);
+        }
+      );
       };
 
       /**
@@ -16053,8 +21172,8 @@ angular.module('RedhatAccess.cases')
        * @param page
        */
       $scope.gotoPage = function (page) {
-        $scope.isPage1 = page == 1 ? true : false;
-        $scope.isPage2 = page == 2 ? true : false;
+        $scope.isPage1 = page === 1 ? true : false;
+        $scope.isPage2 = page === 2 ? true : false;
       };
 
       /**
@@ -16071,23 +21190,59 @@ angular.module('RedhatAccess.cases')
         $scope.gotoPage(1);
       };
 
+
       $scope.submittingCase = false;
       /**
        * Create the case with attachments
        */
-      $scope.doSubmit = function () {
+      $scope.doSubmit = function ($event) {
+        if(window.portal){
+          chrometwo_require(['analytics/main'], function (analytics) {
+             analytics.trigger('OpenSupportCaseSubmit', $event);
+          });
+        }
+
+        /*jshint camelcase: false */
         var caseJSON = {
-          'product': CaseService.case.product.code,
-          'version': CaseService.case.version,
-          'summary': CaseService.case.summary,
-          'description': CaseService.case.description,
-          'severity': CaseService.case.severity.name,
-          'folderNumber': CaseService.case.caseGroup == null ? '' : CaseService.case.caseGroup.number
+          'product': CaseService.kase.product.code,
+        'version':
+          CaseService.kase.version,
+        'summary':
+          CaseService.kase.summary,
+        'description':
+          CaseService.kase.description,
+        'severity':
+          CaseService.kase.severity.name,
         };
+
+        if (RHAUtils.isNotEmpty(CaseService.group)) {
+          caseJSON.folderNumber = CaseService.group;
+        }
+
+        if (RHAUtils.isNotEmpty(CaseService.entitlement)) {
+          caseJSON.entitlement = {};
+          caseJSON.entitlement.sla = CaseService.entitlement;
+        }
+
+        if (RHAUtils.isNotEmpty(CaseService.account)) {
+          caseJSON.accountNumber = CaseService.account.number;
+        }
+
+        if (CaseService.fts) {
+          caseJSON.fts = true;
+          if (CaseService.fts_contact) {
+            caseJSON.contactInfo24X7 = CaseService.fts_contact;
+          }
+        }
+
+        if (RHAUtils.isNotEmpty(CaseService.owner)) {
+          caseJSON.contactSsoUsername = CaseService.owner;
+        }
+
         $scope.submittingCase = true;
         AlertService.addWarningMessage('Creating case...');
 
-        var redirectToCase = function(caseNumber) {
+        var redirectToCase = function (caseNumber) {
           $state.go('edit', {
             id: caseNumber
           });
@@ -16096,71 +21251,58 @@ angular.module('RedhatAccess.cases')
         };
 
         strataService.cases.post(caseJSON).then(
-            function(caseNumber) {
-              AlertService.clearAlerts();
-              AlertService.addSuccessMessage('Successfully created case number ' + caseNumber);
-              if ((AttachmentsService.updatedAttachments.length > 0) || (AttachmentsService.hasBackEndSelections())) {
-                AttachmentsService.updateAttachments(caseNumber).then(
-                  function() {
-                    redirectToCase(caseNumber);      
-                  });
-              } else {
-                redirectToCase(caseNumber);
-              }
-            },
-            function(error) {
-              AlertService.addStrataErrorMessage(error);
+          function (caseNumber) {
+            AlertService.clearAlerts();
+            AlertService.addSuccessMessage('Successfully created case number ' + caseNumber);
+            if ((AttachmentsService.updatedAttachments.length > 0 || AttachmentsService.hasBackEndSelections()) &&
+              NEW_CASE_CONFIG.showAttachments) {
+
+              AttachmentsService.updateAttachments(caseNumber).then(
+                function () {
+                  redirectToCase(caseNumber);
+                });
+            } else {
+              redirectToCase(caseNumber);
             }
+          },
+          function (error) {
+            AlertService.addStrataErrorMessage(error);
+          }
         );
       };
 
       $scope.gotoPage(1);
     }
   ]);
-
 'use strict';
 
 angular.module('RedhatAccess.cases')
-.controller('OwnerSelect', [
-  '$scope',
-  'securityService',
-  'SearchCaseService',
-  'CaseService',
-  'strataService',
-  'AlertService',
-  function (
-    $scope,
-    securityService,
-    SearchCaseService,
-    CaseService,
-    strataService,
-    AlertService) {
+  .controller('OwnerSelect', [
+    '$scope',
+    '$rootScope',
+    'securityService',
+    'AUTH_EVENTS',
+    'SearchCaseService',
+    'CaseService',
+    function (
+      $scope,
+      $rootScope,
+      securityService,
+      AUTH_EVENTS,
+      SearchCaseService,
+      CaseService) {
 
-    $scope.securityService = securityService;
-    $scope.SearchCaseService = SearchCaseService;
-    $scope.CaseService = CaseService;
-
-    $scope.ownersLoading = true;
-
-    var getAccountNumber = function() {
-      return strataService.accounts.list().then(
-          function(accountNumber) {
-            return accountNumber;
-          });
-    };
-
-    var getUsers = function(accountNumber) {
-      return strataService.accounts.users(accountNumber).then(
-        function(users) {
-          $scope.ownersLoading = false;
-          CaseService.owners = users;
-        });
-    };
-
-    getAccountNumber().then(getUsers);
-  }
-]);
-
+      $scope.securityService = securityService;
+      $scope.SearchCaseService = SearchCaseService;
+      $scope.CaseService = CaseService;
+      if (securityService.loginStatus.isLoggedIn) {
+        CaseService.populateUsers();
+      }
+      $rootScope.$on(AUTH_EVENTS.loginSuccess, function () {
+        CaseService.populateUsers();
+      });
+    }
+  ]);
 'use strict';
 
 angular.module('RedhatAccess.cases')
@@ -16202,9 +21344,15 @@ angular.module('RedhatAccess.cases')
 .controller('RecommendationsSection', [
   'RecommendationsService',
   '$scope',
+  'strataService',
+  'CaseService',
+  'AlertService',
   function(
       RecommendationsService,
-      $scope) {
+      $scope,
+      strataService,
+      CaseService,
+      AlertService) {
 
     $scope.RecommendationsService = RecommendationsService;
 
@@ -16212,71 +21360,294 @@ angular.module('RedhatAccess.cases')
     $scope.maxRecommendationsSize = 10;
 
     $scope.selectRecommendationsPage = function(pageNum) {
-      var recommendations = RecommendationsService.recommendations;
-      var start = $scope.itemsPerPage * (pageNum - 1);
-      var end = start + $scope.itemsPerPage;
+      //filter out pinned recommendations
+      angular.forEach(RecommendationsService.pinnedRecommendations, 
+          function(pinnedRec) {
+            angular.forEach(RecommendationsService.recommendations,
+              function(rec, index) {
+                if (angular.equals(rec.id, pinnedRec.id)) {
+                  RecommendationsService.recommendations.splice(index, 1);
+                }
+              }
+            );
+          }
+      );
+
+      angular.forEach(RecommendationsService.handPickedRecommendations,
+          function(handPickedRec) {
+            angular.forEach(RecommendationsService.recommendations,
+              function(rec, index) {
+                if (angular.equals(rec.id, handPickedRec.id)) {
+                  RecommendationsService.recommendations.splice(index, 1);
+                }
+              }
+            );
+          }
+      );
+
+      var recommendations = RecommendationsService.pinnedRecommendations.concat(
+          RecommendationsService.recommendations);
+      recommendations = RecommendationsService.handPickedRecommendations.concat(
+          recommendations);
+      var start = $scope.recommendationsPerPage * (pageNum - 1);
+      var end = start + $scope.recommendationsPerPage;
       end = end > recommendations.length ? recommendations.length : end;
       $scope.recommendationsOnScreen = recommendations.slice(start, end);
     };
 
-    var selectPageOne = function() {
-      $scope.selectRecommendationsPage(1);
+    $scope.currentRecPin;
+    $scope.pinRecommendation = function(recommendation, $index, $event) {
+      $scope.currentRecPin = recommendation;
+      $scope.currentRecPin.pinning = true;
+      
+      var doPut = function(linked) {
+        var recJSON = {
+          recommendations: {
+            recommendation: [
+              {
+                linked: linked.toString(), 
+                resourceId: recommendation.id,
+                resourceType: 'Solution'
+              }
+            ]
+          }
+        };
+
+        strataService.cases.put(CaseService.kase.case_number, recJSON).then(
+            function(response) {
+              if (!$scope.currentRecPin.pinned) {
+                //not currently pinned, so add it to the pinned list
+                RecommendationsService.pinnedRecommendations.push($scope.currentRecPin);
+              } else {
+                //currently pinned, so remove from pinned list
+                angular.forEach(RecommendationsService.pinnedRecommendations,
+                  function(rec, index) {
+                    if (rec.id === $scope.currentRecPin.id) {
+                      RecommendationsService.pinnedRecommendations.splice(index, 1);
+                    }
+                  });
+
+                //add the de-pinned rec to the top of the list
+                //this allows the user to still view the rec, or re-pin it
+                RecommendationsService.recommendations.splice(0, 0, $scope.currentRecPin);
+              }
+
+              $scope.currentRecPin.pinning = false;
+              $scope.currentRecPin.pinned = !$scope.currentRecPin.pinned;
+              $scope.selectPageOne();
+            }, 
+            function(error) {
+              $scope.currentRecPin.pinning = false;
+              AlertService.addStrataErrorMessage(error);
+            }
+        );
+      }
+
+      recommendation.pinned ? doPut(false) : doPut(true);
     };
 
-    RecommendationsService.setPopulateCallback(selectPageOne);
+    $scope.selectPageOne = function() {
+      $scope.selectRecommendationsPage(1);
+      $scope.currentRecommendationPage = 1;
+    };
+
+    $scope.triggerAnalytics = function($event) {
+      if(window.portal){
+        chrometwo_require(['analytics/main'], function (analytics) {
+          analytics.trigger('OpenSupportCaseRecommendationClick', $event);
+        });
+      }
+    }
+
+    RecommendationsService.setPopulateCallback($scope.selectPageOne);
+  }
+]);
+
+'use strict';
+/*global $ */
+
+
+angular.module('RedhatAccess.cases')
+.controller('RequestManagementEscalationModal', [
+  '$scope',
+  '$modalInstance',
+  'AlertService',
+  'CaseService',
+  'strataService',
+  '$q',
+  '$stateParams',
+  function ($scope, $modalInstance, AlertService, CaseService, strataService, $q, $stateParams) {
+
+    $scope.CaseService = CaseService;
+    $scope.commentText = CaseService.commentText;
+
+    $scope.submittingRequest = false;
+    $scope.submitRequestClick = angular.bind($scope, function(commentText) {
+      $scope.submittingRequest = true;
+      var promises = [];
+
+      var fullComment = 'Request Management Escalation: ' + commentText;
+      var postComment;
+      if (CaseService.draftComment) {
+          postComment = strataService.cases.comments.put(CaseService.kase.case_number, fullComment, false, CaseService.draftComment.id);
+      } else {
+          postComment = strataService.cases.comments.post(CaseService.kase.case_number, fullComment, false);
+      }
+      postComment.then(
+        function(response) {
+        },
+        function(error) {
+          AlertService.addStrataErrorMessage(error);
+        }
+      );
+      promises.push(postComment);
+
+      var caseJSON = {
+        'escalated': true
+      };
+      var updateCase = strataService.cases.put(CaseService.kase.case_number, caseJSON);
+      updateCase.then(
+          function(response) {
+          },
+          function(error) {
+            AlertService.addStrataErrorMessage(error);
+          }
+      );
+      promises.push(updateCase);
+
+      var masterPromise = $q.all(promises);
+      masterPromise.then(
+          function(response) {
+            CaseService.populateComments($stateParams.id).then(
+              function(comments) {
+                CaseService.refreshComments();
+                $scope.closeModal();
+                $scope.submittingRequest = false;
+              }
+            );
+          },
+          function(error) {
+            AlertService.addStrataErrorMessage(error);
+          }
+      );
+      return masterPromise;
+    });
+
+    $scope.closeModal = function() {
+      $modalInstance.close();
+    };
   }
 ]);
 
 'use strict';
 
 angular.module('RedhatAccess.cases')
-.controller('Search', [
+  .controller('Search', [
+    '$scope',
+    '$rootScope',
+    'AUTH_EVENTS',
+    'securityService',
+    'SearchCaseService',
+    'CaseService',
+    'STATUS',
+    'SearchBoxService',
+    'AlertService',
+    function (
+      $scope,
+      $rootScope,
+      AUTH_EVENTS,
+      securityService,
+      SearchCaseService,
+      CaseService,
+      STATUS,
+      SearchBoxService,
+      AlertService) {
+
+      $scope.securityService = securityService;
+      $scope.SearchCaseService = SearchCaseService;
+      $scope.CaseService = CaseService;
+
+      $scope.itemsPerPage = 10;
+      $scope.maxPagerSize = 5;
+
+      $scope.selectPage = function (pageNum) {
+        if(!SearchCaseService.allCasesDownloaded && (($scope.itemsPerPage * pageNum) / SearchCaseService.total >= .8)){
+          SearchCaseService.doFilter().then(
+                function () {
+                  var start = $scope.itemsPerPage * (pageNum - 1);
+                  var end = start + $scope.itemsPerPage;
+                  end = end > SearchCaseService.cases.length ?
+                    SearchCaseService.cases.length : end;
+
+                  $scope.casesOnScreen =
+                    SearchCaseService.cases.slice(start, end);
+            }
+          );
+        } else {
+          var start = $scope.itemsPerPage * (pageNum - 1);
+          var end = start + $scope.itemsPerPage;
+          end = end > SearchCaseService.cases.length ?
+            SearchCaseService.cases.length : end;
+
+          $scope.casesOnScreen =
+            SearchCaseService.cases.slice(start, end);
+        }
+      };
+
+      SearchBoxService.doSearch =
+        CaseService.onSelectChanged =
+        CaseService.onOwnerSelectChanged =
+        CaseService.onGroupSelectChanged = function () {
+          SearchCaseService.doFilter().then(
+            function () {
+              $scope.selectPage(1);
+            }
+          );
+      };
+
+      if (securityService.loginStatus.isLoggedIn) {
+        CaseService.clearCase();
+        SearchCaseService.clear();
+        SearchBoxService.doSearch();
+      }
+
+      $rootScope.$on(AUTH_EVENTS.loginSuccess, function () {
+        SearchBoxService.doSearch();
+        AlertService.clearAlerts();
+      });
+
+
+
+      $rootScope.$on(AUTH_EVENTS.logoutSuccess, function () {
+        CaseService.clearCase();
+        SearchCaseService.clear();
+      });
+
+
+    }
+  ]);
+'use strict';
+
+angular.module('RedhatAccess.cases')
+.controller('SearchBox', [
   '$scope',
+  'SearchBoxService',
   'securityService',
-  'SearchCaseService',
-  'CaseService',
-  'STATUS',
   function (
     $scope,
-    securityService,
-    SearchCaseService,
-    CaseService,
-    STATUS) {
+    SearchBoxService,
+    securityService) {
 
     $scope.securityService = securityService;
-    $scope.SearchCaseService = SearchCaseService;
-    $scope.CaseService = CaseService;
+    $scope.SearchBoxService = SearchBoxService;
 
-    $scope.onSearchKeyPress = function($event) {
+    $scope.onFilterKeyPress = function($event) {
       if ($event.keyCode === 13) {
-        CaseService.onSelectChanged();
+        SearchBoxService.doSearch();
+      } else if (angular.isFunction(SearchBoxService.onKeyPress)){
+        SearchBoxService.onKeyPress();
       }
     };
-
-    $scope.itemsPerPage = 10;
-    $scope.maxPagerSize = 5;
-
-    $scope.selectPage = function(pageNum) {
-      var start = $scope.itemsPerPage * (pageNum - 1);
-      var end = start + $scope.itemsPerPage;
-      end = end > SearchCaseService.cases.length ?
-          SearchCaseService.cases.length : end;
-
-      $scope.casesOnScreen =
-          SearchCaseService.cases.slice(start, end);
-    };
-
-    CaseService.onSelectChanged = function() {
-      SearchCaseService.doFilter().then(
-          function() {
-            $scope.selectPage(1);      
-          }
-      );
-    };
-
-    CaseService.clearCase();
-    SearchCaseService.clear();
-    CaseService.onSelectChanged();
   }
 ]);
 
@@ -16382,10 +21753,32 @@ angular.module('RedhatAccess.cases')
 'use strict';
 
 angular.module('RedhatAccess.cases')
-.directive('rhaAttachLocalFile', function () {
+.directive('rhaAccountselect', function () {
+  return {
+    templateUrl: 'cases/views/accountSelect.html',
+    restrict: 'A',
+    controller: 'AccountSelect'
+  };
+});
+
+'use strict';
+
+angular.module('RedhatAccess.cases')
+.directive('rhaAddcommentsection', function () {
+  return {
+    templateUrl: 'cases/views/addCommentSection.html',
+    restrict: 'A',
+    controller: 'AddCommentSection'
+  };
+});
+
+'use strict';
+
+angular.module('RedhatAccess.cases')
+.directive('rhaAttachlocalfile', function () {
   return {
     templateUrl: 'cases/views/attachLocalFile.html',
-    restrict: 'EA',
+    restrict: 'A',
     controller: 'AttachLocalFile',
     scope: {
       disabled: '='
@@ -16397,10 +21790,10 @@ angular.module('RedhatAccess.cases')
 /*jshint unused:vars */
 
 angular.module('RedhatAccess.cases')
-.directive('rhaAttachProductLogs', function () {
+.directive('rhaAttachproductlogs', function () {
   return {
     templateUrl: 'cases/views/attachProductLogs.html',
-    restrict: 'EA',
+    restrict: 'A',
     link: function postLink(scope, element, attrs) {
     }
   };
@@ -16410,10 +21803,10 @@ angular.module('RedhatAccess.cases')
 /*jshint unused:vars */
 
 angular.module('RedhatAccess.cases')
-.directive('rhaCaseAttachments', function () {
+.directive('rhaCaseattachments', function () {
   return {
     templateUrl: 'cases/views/attachmentsSection.html',
-    restrict: 'EA',
+    restrict: 'A',
     controller: 'AttachmentsSection',
     scope: {
       loading: '='
@@ -16427,14 +21820,26 @@ angular.module('RedhatAccess.cases')
 /*jshint unused:vars */
 
 angular.module('RedhatAccess.cases')
-  .directive('rhaCaseComments', function() {
+	.directive('rhaChatbutton', function () {
+		return {
+			scope: {},
+			templateUrl: 'cases/views/chatButton.html',
+			restrict: 'A',
+			controller: 'ChatButton'
+		};
+	});
+'use strict';
+/*jshint unused:vars */
+
+angular.module('RedhatAccess.cases')
+  .directive('rhaCasecomments', function() {
     return {
       templateUrl: 'cases/views/commentsSection.html',
       controller: 'CommentsSection',
       scope: {
         loading: '='
       },
-      restrict: 'EA',
+      restrict: 'A',
       link: function postLink(scope, element, attrs) {}
     };
   });
@@ -16443,15 +21848,38 @@ angular.module('RedhatAccess.cases')
 /*jshint unused:vars */
 
 angular.module('RedhatAccess.cases')
-.directive('rhaCompactCaseList', function () {
+.directive('rhaCompactcaselist', function () {
   return {
     templateUrl: 'cases/views/compactCaseList.html',
     controller: 'CompactCaseList',
     scope: {
     },
-    restrict: 'EA',
+    restrict: 'A',
     link: function postLink(scope, element, attrs) {
     }
+  };
+});
+
+
+'use strict';
+/*jshint unused:vars */
+angular.module('RedhatAccess.cases')
+.directive('rhaCreategroupbutton', function () {
+  return {
+    templateUrl: 'cases/views/createGroupButton.html',
+    restrict: 'A',
+    controller: 'CreateGroupButton'
+  };
+});
+
+'use strict';
+/*jshint unused:vars */
+angular.module('RedhatAccess.cases')
+.directive('rhaDeletegroupbutton', function () {
+  return {
+    templateUrl: 'cases/views/deleteGroupButton.html',
+    restrict: 'A',
+    controller: 'DeleteGroupButton'
   };
 });
 
@@ -16459,10 +21887,10 @@ angular.module('RedhatAccess.cases')
 /*jshint unused:vars */
 
 angular.module('RedhatAccess.cases')
-  .directive('rhaCaseDescription', function() {
+  .directive('rhaCasedescription', function() {
     return {
       templateUrl: 'cases/views/descriptionSection.html',
-      restrict: 'EA',
+      restrict: 'A',
       scope: {
         loading: '='
       },
@@ -16475,7 +21903,7 @@ angular.module('RedhatAccess.cases')
 /*jshint unused:vars */
 
 angular.module('RedhatAccess.cases')
-.directive('rhaCaseDetails', function () {
+.directive('rhaCasedetails', function () {
   return {
     templateUrl: 'cases/views/detailsSection.html',
     controller: 'DetailsSection',
@@ -16483,7 +21911,7 @@ angular.module('RedhatAccess.cases')
       compact: '=',
       loading: '='
     },
-    restrict: 'EA',
+    restrict: 'A',
     link: function postLink(scope, element, attrs) {
     }
   };
@@ -16492,10 +21920,32 @@ angular.module('RedhatAccess.cases')
 'use strict';
 
 angular.module('RedhatAccess.cases')
-.directive('rhaExportCsvButton', function () {
+.directive('rhaEmailnotifyselect', function () {
+  return {
+    templateUrl: 'cases/views/emailNotifySelect.html',
+    restrict: 'A',
+    controller: 'EmailNotifySelect'
+  };
+});
+
+'use strict';
+
+angular.module('RedhatAccess.cases')
+.directive('rhaEntitlementselect', function () {
+  return {
+    templateUrl: 'cases/views/entitlementSelect.html',
+    restrict: 'A',
+    controller: 'EntitlementSelect'
+  };
+});
+
+'use strict';
+
+angular.module('RedhatAccess.cases')
+.directive('rhaExportcsvbutton', function () {
   return {
     templateUrl: 'cases/views/exportCSVButton.html',
-    restrict: 'E',
+    restrict: 'A',
     controller: 'ExportCSVButton'
   };
 });
@@ -16503,13 +21953,25 @@ angular.module('RedhatAccess.cases')
 'use strict';
 /*jshint unused:vars */
 angular.module('RedhatAccess.cases')
-.directive('rhaGroupSelect', function () {
+.directive('rhaGrouplist', function () {
+  return {
+    templateUrl: 'cases/views/groupList.html',
+    restrict: 'A',
+    controller: 'GroupList'
+  };
+});
+
+'use strict';
+/*jshint unused:vars */
+angular.module('RedhatAccess.cases')
+.directive('rhaGroupselect', function () {
   return {
     templateUrl: 'cases/views/groupSelect.html',
-    restrict: 'E',
+    restrict: 'A',
     controller: 'GroupSelect',
     scope: {
-      onchange: '&'
+      onchange: '&',
+      showsearchoptions: '='
     }
   };
 });
@@ -16517,10 +21979,10 @@ angular.module('RedhatAccess.cases')
 'use strict';
 
 angular.module('RedhatAccess.cases')
-.directive('rhaListAttachments', function () {
+.directive('rhaListattachments', function () {
   return {
     templateUrl: 'cases/views/listAttachments.html',
-    restrict: 'EA',
+    restrict: 'A',
     controller: 'ListAttachments',
     scope: {
       disabled: '='
@@ -16529,12 +21991,27 @@ angular.module('RedhatAccess.cases')
 });
 
 'use strict';
+
+angular.module('RedhatAccess.cases')
+.directive('rhaListbugzillas', function () {
+  return {
+    templateUrl: 'cases/views/listBugzillas.html',
+    restrict: 'A',
+    controller: 'ListBugzillas',
+    scope: {
+      loading: '='
+    },
+    link: function postLink(scope, element, attrs) {
+    }
+  };
+});
+'use strict';
 /*jshint unused:vars */
 angular.module('RedhatAccess.cases')
-.directive('rhaListFilter', function () {
+.directive('rhaListfilter', function () {
   return {
     templateUrl: 'cases/views/listFilter.html',
-    restrict: 'EA',
+    restrict: 'A',
     controller: 'ListFilter',
     scope: {
       prefilter: '=',
@@ -16548,10 +22025,10 @@ angular.module('RedhatAccess.cases')
 'use strict';
 
 angular.module('RedhatAccess.cases')
-  .directive('rhaListNewAttachments', function() {
+  .directive('rhaListnewattachments', function() {
     return {
       templateUrl: 'cases/views/listNewAttachments.html',
-      restrict: 'EA',
+      restrict: 'A',
       controller: 'ListNewAttachments'
     };
   });
@@ -16559,7 +22036,7 @@ angular.module('RedhatAccess.cases')
 /*jshint unused:vars */
 
 angular.module('RedhatAccess.cases')
-.directive('rhaOnChange', function () {
+.directive('rhaOnchange', function () {
   return {
     restrict: 'A',
     link: function (scope, element, attrs) {
@@ -16570,10 +22047,10 @@ angular.module('RedhatAccess.cases')
 'use strict';
 /*jshint unused:vars */
 angular.module('RedhatAccess.cases')
-.directive('rhaOwnerSelect', function () {
+.directive('rhaOwnerselect', function () {
   return {
     templateUrl: 'cases/views/ownerSelect.html',
-    restrict: 'E',
+    restrict: 'A',
     controller: 'OwnerSelect',
     scope: {
       onchange: '&'
@@ -16585,10 +22062,10 @@ angular.module('RedhatAccess.cases')
 /*jshint unused:vars */
 
 angular.module('RedhatAccess.cases')
-.directive('rhaPageHeader', function () {
+.directive('rhaPageheader', function () {
   return {
     templateUrl: 'cases/views/pageHeader.html',
-    restrict: 'EA',
+    restrict: 'A',
     scope: {
       title: '=title'
     },
@@ -16600,10 +22077,10 @@ angular.module('RedhatAccess.cases')
 'use strict';
 /*jshint unused:vars */
 angular.module('RedhatAccess.cases')
-.directive('rhaProductSelect', function () {
+.directive('rhaProductselect', function () {
   return {
     templateUrl: 'cases/views/productSelect.html',
-    restrict: 'E',
+    restrict: 'A',
     controller: 'ProductSelect',
     scope: {
       onchange: '&'
@@ -16615,10 +22092,10 @@ angular.module('RedhatAccess.cases')
 /*jshint unused:vars */
 
 angular.module('RedhatAccess.cases')
-.directive('rhaCaseRecommendations', function () {
+.directive('rhaCaserecommendations', function () {
   return {
     templateUrl: 'cases/views/recommendationsSection.html',
-    restrict: 'EA',
+    restrict: 'A',
     controller: 'RecommendationsSection',
     scope: {
       loading: '='
@@ -16629,12 +22106,27 @@ angular.module('RedhatAccess.cases')
 });
 
 'use strict';
+/*jshint unused:vars */
 
 angular.module('RedhatAccess.cases')
-.directive('rhaCaseSearchResult', function () {
+.directive('rhaSearchbox', function () {
+  return {
+    templateUrl: 'cases/views/searchBox.html',
+    restrict: 'A',
+    controller: 'SearchBox',
+    scope: {
+      placeholder: '='
+    }
+  };
+});
+
+'use strict';
+
+angular.module('RedhatAccess.cases')
+.directive('rhaCasesearchresult', function () {
   return {
     templateUrl: 'cases/views/searchResult.html',
-    restrict: 'E',
+    restrict: 'A',
     scope: {
       theCase: '=case'
     }
@@ -16645,10 +22137,10 @@ angular.module('RedhatAccess.cases')
 /*jshint unused:vars */
 
 angular.module('RedhatAccess.cases')
-.directive('rhaSelectLoadingIndicator', function () {
+.directive('rhaSelectloadingindicator', function () {
   return {
     templateUrl: 'cases/views/selectLoadingIndicator.html',
-    restrict: 'E',
+    restrict: 'A',
     transclude: true,
     scope: {
       loading: '=',
@@ -16660,10 +22152,10 @@ angular.module('RedhatAccess.cases')
 'use strict';
 /*jshint unused:vars */
 angular.module('RedhatAccess.cases')
-.directive('rhaSeveritySelect', function () {
+.directive('rhaSeverityselect', function () {
   return {
     templateUrl: 'cases/views/severitySelect.html',
-    restrict: 'E',
+    restrict: 'A',
     controller: 'SeveritySelect',
     scope: {
       onchange: '&'
@@ -16674,10 +22166,10 @@ angular.module('RedhatAccess.cases')
 'use strict';
 /*jshint unused:vars */
 angular.module('RedhatAccess.cases')
-.directive('rhaStatusSelect', function () {
+.directive('rhaStatusselect', function () {
   return {
     templateUrl: 'cases/views/statusSelect.html',
-    restrict: 'E',
+    restrict: 'A',
     controller: 'StatusSelect',
     scope: {
       onchange: '&'
@@ -16688,10 +22180,10 @@ angular.module('RedhatAccess.cases')
 'use strict';
 /*jshint unused:vars */
 angular.module('RedhatAccess.cases')
-.directive('rhaTypeSelect', function () {
+.directive('rhaTypeselect', function () {
   return {
     templateUrl: 'cases/views/typeSelect.html',
-    restrict: 'E',
+    restrict: 'A',
     controller: 'TypeSelect',
     scope: {
       onchange: '&'
@@ -16724,8 +22216,8 @@ angular.module('RedhatAccess.cases')
 
     if (text != null && text.length > maxTextLength) {
       shortText = text.substr(0, maxTextLength);
-      var lastSpace = shortText.lastIndexOf(' ');
-      shortText = shortText.substr(0, lastSpace);
+      // var lastSpace = shortText.lastIndexOf(' ');
+      // shortText = shortText.substr(0, lastSpace);
       shortText = shortText.concat('...');
     } else {
       shortText = text;
@@ -16779,8 +22271,7 @@ angular.module('RedhatAccess.cases')
           AlertService.addWarningMessage(
             translate('Deleting attachment:')+ ' ' + attachment.file_name + ' - ' + attachment.uuid);
 
-        strataService.cases.attachments.delete(attachment.uuid, CaseService.
-        case .case_number).then(
+        strataService.cases.attachments.remove(attachment.uuid, CaseService.kase.case_number).then(
           angular.bind(this, function () {
             AlertService.removeAlert(progressMessage);
             AlertService.addSuccessMessage(
@@ -16825,7 +22316,6 @@ angular.module('RedhatAccess.cases')
                   translate('Successfully uploaded attachment') + ' '+
                   jsonData.attachment + ' '+translate('to case') + ' ' + caseId);
               }).error(function (data, status, headers, config) {
-                console.log(data);
                 var error_msg = '';
                 switch (status) {
                 case 401:
@@ -16903,6 +22393,7 @@ angular.module('RedhatAccess.cases')
       };
     }
   ]);
+
 'use strict';
 
 angular.module('RedhatAccess.cases')
@@ -16921,26 +22412,41 @@ angular.module('RedhatAccess.cases')
 angular.module('RedhatAccess.cases')
   .service('CaseService', [
     'strataService',
-    function(strataService) {
+    'AlertService',
+    'ENTITLEMENTS',
+    'RHAUtils',
+    'securityService',
+    '$q',
+    '$filter',
+    function(strataService, AlertService, ENTITLEMENTS, RHAUtils, securityService, $q, $filter) {
       this.
-      case = {};
+      kase = {};
       this.versions = [];
       this.products = [];
       //this.statuses = [];
       this.severities = [];
       this.groups = [];
-      this.owners = [];
+      this.users = [];
+      this.comments = [];
+
+      this.originalNotifiedUsers = [];
+      this.updatedNotifiedUsers = [];
 
       this.account = {};
 
+      this.draftComment = '';
+      this.commentText = '';
       this.status = '';
       this.severity = '';
       this.type = '';
       this.group = '';
       this.owner = '';
       this.product = '';
+      this.bugzillaList = {};
 
-      this.onSelectChanged;
+      this.onSelectChanged = null;
+      this.onOwnerSelectChanged = null;
+      this.onGroupSelectChanged = null;
       /**
        * Add the necessary wrapper objects needed to properly display the data.
        *
@@ -16965,16 +22471,45 @@ angular.module('RedhatAccess.cases')
         };
 
         this.
-        case = rawCase;
+        kase = rawCase;
+
+        this.bugzillaList = rawCase.bugzillas;
+
       };
 
       this.defineAccount = function(account) {
         this.account = account;
       };
 
+      this.defineNotifiedUsers = function() {
+        /*jshint camelcase: false */
+        this.updatedNotifiedUsers.push(this.kase.contact_sso_username);
+
+        //hide the X button for the case owner
+        $('#rha-emailnotifyselect').on('change', angular.bind(this, function() {
+          $('rha-emailnotifyselect .select2-choices li:contains("' + this.kase.contact_sso_username + '") a').css('display', 'none');
+          $('rha-emailnotifyselect .select2-choices li:contains("' + this.kase.contact_sso_username + '")').css('padding-left', '5px');
+        }));
+
+        if (RHAUtils.isNotEmpty(this.kase.notified_users)) {
+
+          angular.forEach(this.kase.notified_users.link,
+            angular.bind(this, function(user) {
+              this.originalNotifiedUsers.push(user.sso_username);
+            })
+          );
+          this.updatedNotifiedUsers =
+            this.updatedNotifiedUsers.concat(this.originalNotifiedUsers);
+        }
+      };
+
+      this.getGroups = function() {
+        return this.groups;
+      };
+
       this.clearCase = function() {
         this.
-        case = {};
+        kase = {};
 
         this.versions = [];
         this.products = [];
@@ -16982,7 +22517,11 @@ angular.module('RedhatAccess.cases')
         this.severities = [];
         this.groups = [];
         this.account = {};
+        this.comments = [];
+        this.bugzillaList = {};
 
+        this.draftComment = undefined;
+        this.commentText = undefined;
         this.status = undefined;
         this.severity = undefined;
         this.type = undefined;
@@ -16991,15 +22530,158 @@ angular.module('RedhatAccess.cases')
         this.product = undefined;
       };
 
-      this.populateGroups = function() {
-        strataService.groups.list().then(
+      this.groupsLoading = false;
+
+      this.populateGroups = function(ssoUsername) {
+        this.groupsLoading = true;
+        strataService.groups.list(ssoUsername).then(
           angular.bind(this, function(groups) {
             this.groups = groups;
+            this.groupsLoading = false;
+          }),
+          angular.bind(this, function(error) {
+            this.groupsLoading = false;
+            AlertService.addStrataErrorMessage(error);
           })
         );
       };
+
+      this.usersLoading = false;
+
+      /**
+       *  Intended to be called only after user is logged in and has account details
+       *  See securityService.
+       */
+      this.populateUsers = angular.bind(this, function () {
+        var promise = null;
+
+        if (securityService.loginStatus.orgAdmin) {
+          this.usersLoading = true;
+
+          var accountNumber =
+            RHAUtils.isEmpty(this.account.number) ?
+              securityService.loginStatus.account.number : this.account.number;
+
+          promise = strataService.accounts.users(accountNumber);
+          promise.then(
+              angular.bind(this, function(users) {
+                this.usersLoading = false;
+                this.users = users;
+              }),
+              angular.bind(this, function(error) {
+                this.usersLoading = false;
+                this.users = [];
+                AlertService.addStrataErrorMessage(error);
+              })
+          );
+        } else {
+          var deferred = $q.defer();
+          promise = deferred.promise;
+          deferred.resolve();
+
+          this.users = [];
+        }
+
+        return promise;
+      });
+
+      this.refreshComments = null;
+
+      this.populateComments = function(caseNumber) {
+        var promise = strataService.cases.comments.get(caseNumber);
+
+        promise.then(
+            angular.bind(this, function(comments) {
+              //pull out the draft comment
+              angular.forEach(comments, angular.bind(this, function(comment, index) {
+                if (comment.draft === true) {
+                  this.draftComment = comment;
+                  this.commentText = comment.text;
+                  comments.slice(index, index + 1);
+                }
+              }));
+
+              this.comments = comments;
+            }),
+            function(error) {
+              AlertService.addStrataErrorMessage(error);
+            }
+        );
+
+        return promise;
+      };
+
+      this.entitlementsLoading = false;
+      this.populateEntitlements = function(ssoUserName) {
+        this.entitlementsLoading = true;
+        strataService.entitlements.get(false, ssoUserName).then(
+          angular.bind(this, function(entitlementsResponse) {
+            // if the user has any premium or standard level entitlement, then allow them
+            // to select it, regardless of the product.
+            // TODO: strata should respond with a filtered list given a product.
+            //       Adding the query param ?product=$PRODUCT does not work.
+            var premiumSupport = $filter('filter')(entitlementsResponse.entitlement, {'sla': ENTITLEMENTS.premium});
+            var standardSupport = $filter('filter')(entitlementsResponse.entitlement, {'sla': ENTITLEMENTS.standard});
+
+            var entitlements = [];
+            if (RHAUtils.isNotEmpty(premiumSupport)) {
+              entitlements.push(ENTITLEMENTS.premium);
+            }
+            if (RHAUtils.isNotEmpty(standardSupport)) {
+              entitlements.push(ENTITLEMENTS.standard);
+            }
+
+            if (entitlements.length === 0) {
+              entitlements.push(ENTITLEMENTS.defaults);
+            }
+
+            this.entitlements = entitlements;
+            this.entitlementsLoading = false;
+          }),
+          angular.bind(this, function(error) {
+            AlertService.addStrataErrorMessage(error);
+          })
+        );
+      };
+
+      this.showFts = function() {
+        if (RHAUtils.isNotEmpty(this.severities) && angular.equals(this.kase.severity, this.severities[0])) {
+          if (this.entitlement === ENTITLEMENTS.premium ||
+              (RHAUtils.isNotEmpty(this.kase.entitlement) &&
+               this.kase.entitlement.sla === ENTITLEMENTS.premium)) {
+            return true;
+          }
+        }
+        return false;
+      };
+
+      this.newCasePage1Incomplete = true;
+      this.validateNewCasePage1 = function () {
+        if (RHAUtils.isEmpty(this.kase.product) ||
+          RHAUtils.isEmpty(this.kase.version) ||
+          RHAUtils.isEmpty(this.kase.summary) ||
+          RHAUtils.isEmpty(this.kase.description) ||
+          (securityService.loginStatus.isInternal && RHAUtils.isEmpty(this.owner))) {
+          this.newCasePage1Incomplete = true;
+        } else {
+          this.newCasePage1Incomplete = false;
+        }
+      };
     }
   ]);
+
+'use strict';
+ /*jshint unused:vars */
+ /*jshint camelcase: false */
+angular.module('RedhatAccess.cases')
+.service('GroupService', [
+  'strataService',
+  function (strataService) {
+
+    this.reloadTable;
+    this.groupsOnScreen = [];
+  }
+]);
 
 'use strict';
  /*jshint unused:vars */
@@ -17012,6 +22694,8 @@ angular.module('RedhatAccess.cases')
   function (strataService, CaseService, $q) {
 
     this.recommendations = [];
+    this.pinnedRecommendations = [];
+    this.handPickedRecommendations = [];
     this.populateCallback = function() {};
 
     var currentData = {};
@@ -17019,10 +22703,10 @@ angular.module('RedhatAccess.cases')
 
     var setCurrentData = function () {
       currentData = {
-        product: CaseService.case.product,
-        version: CaseService.case.version,
-        summary: CaseService.case.summary,
-        description: CaseService.case.description
+        product: CaseService.kase.product,
+        version: CaseService.kase.version,
+        summary: CaseService.kase.summary,
+        description: CaseService.kase.description
       };
     };
     setCurrentData();
@@ -17035,6 +22719,52 @@ angular.module('RedhatAccess.cases')
       this.populateCallback = callback;
     };
 
+    this.populatePinnedRecommendations = function() {
+      var promises = [];
+
+      if (CaseService.kase.recommendations) {
+        //Push any pinned recommendations to the front of the array
+        if (CaseService.kase.recommendations.recommendation) {
+          var pinnedRecsPromises = [];
+          angular.forEach(CaseService.kase.recommendations.recommendation, 
+              angular.bind(this, function(rec) {
+                if (rec.pinned_at) {
+                  var promise =
+                    strataService.solutions.get(rec.solution_url).then(
+                      angular.bind(this, function(solution) {
+                        solution.pinned = true;
+                        this.pinnedRecommendations.push(solution);
+                      }),
+                      function(error) {
+                        AlertService.addStrataErrorMessage(error);
+                      }
+                    );
+                  promises.push(promise);
+                } else if (rec.linked){
+                  var promise = 
+                    strataService.solutions.get(rec.solution_url).then(
+                      angular.bind(this, function(solution) {
+                        //solution.pinned = true;
+                        solution.handPicked = true;
+                        this.handPickedRecommendations.push(solution);
+                      }),
+                      function(error) {
+                        AlertService.addStrataErrorMessage(error);
+                      }
+                    );
+                  promises.push(promise);
+                }
+              })
+          );
+        }
+      }
+
+      var masterPromise = $q.all(promises);
+      masterPromise.then(angular.bind(this, function() {this.populateCallback();}));
+      return masterPromise;
+    };
+
+    this.failureCount = 0;
     this.populateRecommendations = function (max) {
 
       var masterDeferred = $q.defer();
@@ -17042,13 +22772,14 @@ angular.module('RedhatAccess.cases')
       masterDeferred.promise.then(this.populateCallback);
 
       var newData = {
-        product: CaseService.case.product,
-        version: CaseService.case.version,
-        summary: CaseService.case.summary,
-        description: CaseService.case.description
+        product: CaseService.kase.product,
+        version: CaseService.kase.version,
+        summary: CaseService.kase.summary,
+        description: CaseService.kase.description
       };
 
-      if (!angular.equals(currentData, newData) && !this.loadingRecommendations) {
+      if ((!angular.equals(currentData, newData) && !this.loadingRecommendations) || 
+          (this.recommendations.length < 1 && this.failureCount < 10)) {
         this.loadingRecommendations = true;
         setCurrentData();
         var deferreds = [];
@@ -17079,6 +22810,11 @@ angular.module('RedhatAccess.cases')
                     masterDeferred.resolve();
                   })
               );
+            }),
+            angular.bind(this, function(error) {
+              masterDeferred.reject();
+              this.failureCount++;
+              this.populateRecommendations(12);
             })
         );
       } else {
@@ -17091,454 +22827,200 @@ angular.module('RedhatAccess.cases')
 ]);
 
 'use strict';
-
+ /*jshint unused:vars */
+ /*jshint camelcase: false */
 angular.module('RedhatAccess.cases')
-.service('SearchCaseService', [
-  'CaseService',
-  'strataService',
-  'AlertService',
-  'STATUS',
-  '$q',
-  function (
-    CaseService,
-    strataService,
-    AlertService,
-    STATUS,
-    $q) {
-
-    this.cases = [];
-    this.searching = false;
-    this.searchTerm = '';
-    
-    var getIncludeClosed = function() {
-      if (CaseService.status === STATUS.open) {
-        return false;
-      } else if (CaseService.status === STATUS.closed) {
-        return true;
-      } else if (CaseService.status === STATUS.both) {
-        return true;
-      }
-
-      return true;
-    };
-
-    this.clear = function() {
-      this.cases = [];
-      this.searchTerm = '';
-    };
-
-    this.oldParams = {};
-    this.doFilter = function() {
-      var params = {
-        include_closed: getIncludeClosed(),
-        count: 100
-      };
-
-      var isObjectNothing = function(object) {
-        if (object === '' || object === undefined || object === null) {
-          return true;
-        } else {
-          return false;
-        }
-      };
-
-      if (!isObjectNothing(this.searchTerm)) {
-        params.keyword = this.searchTerm;
-      }
-
-      if (!isObjectNothing(CaseService.group)) {
-        params.group_numbers = {
-          group_number: CaseService.group
-        };
-      }
-
-      if (CaseService.status === STATUS.closed) {
-        params.status = STATUS.closed;
-      }
-
-      if (!isObjectNothing(CaseService.product)) {
-        params.product = CaseService.product;
-      }
-
-      if (!isObjectNothing(CaseService.owner)) {
-        params.owner_ssoname =  CaseService.owner;
-      }
-      
-      if (!isObjectNothing(CaseService.type)) {
-        params.type = CaseService.type;
-      }
-
-      if (!isObjectNothing(CaseService.severity)) {
-        params.severity = CaseService.severity;
-      }
-
-      this.searching = true;
-
-      //TODO: hack to get around onchange() firing at page load for each select.
-      //Need to prevent initial onchange() event instead of handling here.
-      if (!angular.equals(params, this.oldParams)) {
-        this.oldParams = params;
-        return strataService.cases.filter(params).then(
-            angular.bind(this, function(cases) {
-              this.cases = cases;
-              this.searching = false;
-            }),
-            angular.bind(this, function(error) {
-              AlertService.addStrataErrorMessage(error);
-              this.searching = false;
-            })
-        );
-      } else {
-        var deferred = $q.defer();
-        deferred.resolve();
-        return deferred.promise;
-      }
-    };
-
-
+.service('SearchBoxService', [
+  function () {
+    this.doSearch;
+    this.searchTerm;
+    this.onKeyPress;
   }
 ]);
 
 'use strict';
-/*global strata*/
-/*jshint camelcase: false */
-/*jshint unused:vars */
 
 angular.module('RedhatAccess.cases')
-  .factory('strataService', ['$q', 'translate',
-    function ($q, translate) {
+  .service('SearchCaseService', [
+    'CaseService',
+    'strataService',
+    'AlertService',
+    'STATUS',
+    'CASE_GROUPS',
+    'AUTH_EVENTS',
+    '$q',
+    '$state',
+    '$rootScope',
+    'SearchBoxService',
+    'securityService',
+    function (
+      CaseService,
+      strataService,
+      AlertService,
+      STATUS,
+      CASE_GROUPS,
+      AUTH_EVENTS,
+      $q,
+      $state,
+      $rootScope,
+      SearchBoxService,
+      securityService) {
 
-      var errorHandler = function (message, xhr, response, status) {
+      this.cases = [];
+      this.searching = false;
+      this.prefilter;
+      this.postfilter;
+      this.start = 0;
+      this.count = 100;
+      this.total = 0;
+      this.allCasesDownloaded = false;
 
-        var translatedMsg = message;
-        console.log("Strata status is " + status)
-
-        switch (status) {
-        case 'Unauthorized':
-          translatedMsg = translate("Unauthorized.");
-          break;
-        // case n:
-        //   code block
-        //   break;
+      var getIncludeClosed = function () {
+        if (CaseService.status === STATUS.open) {
+          return false;
+        } else if (CaseService.status === STATUS.closed) {
+          return true;
+        } else if (CaseService.status === STATUS.both) {
+          return true;
         }
-        this.reject({
-          message: translatedMsg,
-          xhr: xhr,
-          response: response,
-          status: status
-        });
+
+        return true;
       };
 
-      return {
-        problems: function (data, max) {
-          var deferred = $q.defer();
+      this.clear = function () {
+        this.cases = [];
+        this.oldParams = {};
+        SearchBoxService.searchTerm = '';
+        this.start = 0;
+        this.total = 0;
+        this.allCasesDownloaded = false;
+      };
 
-          strata.problems(
-            data,
-            function (solutions) {
-              deferred.resolve(solutions);
-            },
-            angular.bind(deferred, errorHandler),
-            max
-          );
-
-          return deferred.promise;
-        },
-        solutions: {
-          get: function (uri) {
-            var deferred = $q.defer();
-
-            strata.solutions.get(
-              uri,
-              function (solution) {
-                deferred.resolve(solution);
-              },
-              function () {
-                //workaround for 502 from strata
-                //If the deferred is rejected then the parent $q.all()
-                //based deferred will fail. Since we don't need every
-                //recommendation just send back undefined
-                //and the caller can ignore the missing solution details.
-                deferred.resolve();
-              }
-            );
-
-            return deferred.promise;
-          }
-        },
-        products: {
-          list: function () {
-            var deferred = $q.defer();
-
-            strata.products.list(
-              function (response) {
-                deferred.resolve(response);
-              },
-              angular.bind(deferred, errorHandler)
-            );
-
-            return deferred.promise;
-          },
-          versions: function (productCode) {
-            var deferred = $q.defer();
-
-            strata.products.versions(
-              productCode,
-              function (response) {
-                deferred.resolve(response);
-              },
-              angular.bind(deferred, errorHandler)
-            );
-
-            return deferred.promise;
-          }
-        },
-        groups: {
-          list: function () {
-            var deferred = $q.defer();
-
-            strata.groups.list(
-              function (response) {
-                deferred.resolve(response);
-              },
-              angular.bind(deferred, errorHandler)
-            );
-
-            return deferred.promise;
-          }
-        },
-        accounts: {
-          get: function(accountNumber) {
-            var deferred = $q.defer();
-
-            strata.accounts.get(
-              accountNumber,
-              function(response) {
-                deferred.resolve(response);
-              },
-              angular.bind(deferred, errorHandler)
-            );
-
-            return deferred.promise;
-          },
-          users: function(accountNumber, group) {
-            var deferred = $q.defer();
-
-            strata.accounts.users(
-              accountNumber,
-              function(response) {
-                deferred.resolve(response);
-              },
-              angular.bind(deferred, errorHandler),
-              group
-            );
-
-            return deferred.promise;
-          },
-          list: function() {
-            var deferred = $q.defer();
-
-            strata.accounts.list(
-              function(response) {
-                deferred.resolve(response);
-              },
-              angular.bind(deferred, errorHandler)
-            );
-
-            return deferred.promise;
-          }
-        },
-        cases: {
-          csv: function() {
-            var deferred = $q.defer();
-
-            strata.cases.csv(
-                function (response) {
-                  deferred.resolve(response);
-                },
-                angular.bind(deferred, errorHandler)
-            );
-
-            return deferred.promise;
-          },
-          attachments: {
-            list: function (id) {
-              var deferred = $q.defer();
-
-              strata.cases.attachments.list(
-                id,
-                function (response) {
-                  deferred.resolve(response);
-                },
-                angular.bind(deferred, errorHandler)
-              );
-
-              return deferred.promise;
-            },
-            post: function (attachment, caseNumber) {
-              var deferred = $q.defer();
-
-              strata.cases.attachments.post(
-                attachment,
-                caseNumber,
-                function (response, code, xhr) {
-                  deferred.resolve(xhr.getResponseHeader('Location'));
-                },
-                angular.bind(deferred, errorHandler)
-              );
-
-              return deferred.promise;
-            },
-            delete: function (id, caseNumber) {
-
-              var deferred = $q.defer();
-
-              strata.cases.attachments.delete(
-                id,
-                caseNumber,
-                function (response) {
-                  deferred.resolve(response);
-                },
-                angular.bind(deferred, errorHandler)
-              );
-
-              return deferred.promise;
-            }
-          },
-          comments: {
-            get: function (id) {
-              var deferred = $q.defer();
-
-              strata.cases.comments.get(
-                id,
-                function (response) {
-                  deferred.resolve(response);
-                },
-                angular.bind(deferred, errorHandler)
-              );
-
-              return deferred.promise;
-            },
-            post: function (case_number, text) {
-              var deferred = $q.defer();
-
-              strata.cases.comments.post(
-                case_number, {
-                  'text': text
-                },
-                function (response) {
-                  deferred.resolve(response);
-                },
-                angular.bind(defferred, errorHandler)
-              );
-
-              return deferred.promise;
-            },
-          },
-          get: function (id) {
-            var deferred = $q.defer();
-
-            strata.cases.get(
-              id,
-              function (response) {
-                deferred.resolve(response);
-              },
-              angular.bind(deferred, errorHandler)
-            );
-
-            return deferred.promise;
-          },
-          filter: function (params) {
-            var deferred = $q.defer();
-            if (params == null) {
-              params = {};
-            }
-            if (params.count == null) {
-              params.count = 50;
-            }
-
-            strata.cases.filter(
-              params,
-              function (allCases) {
-                deferred.resolve(allCases);
-              },
-              angular.bind(deferred, errorHandler)
-            );
-
-            return deferred.promise;
-          },
-          post: function (caseJSON) {
-            var deferred = $q.defer();
-
-            strata.cases.post(
-              caseJSON,
-              function (caseNumber) {
-                deferred.resolve(caseNumber);
-              },
-              angular.bind(deferred, errorHandler)
-            );
-
-            return deferred.promise;
-          },
-          put: function (case_number, caseJSON) {
-            var deferred = $q.defer();
-
-            strata.cases.put(
-              case_number,
-              caseJSON,
-              function (response) {
-                deferred.resolve(response);
-              },
-              angular.bind(deferred, errorHandler)
-            );
-
-            return deferred.promise;
-          }
-        },
-        values: {
-          cases: {
-            severity: function () {
-              var deferred = $q.defer();
-
-              strata.values.cases.severity(
-                function (response) {
-                  deferred.resolve(response);
-                },
-                angular.bind(deferred, errorHandler)
-              );
-
-              return deferred.promise;
-            },
-            status: function () {
-              var deferred = $q.defer();
-
-              strata.values.cases.status(
-                function (response) {
-                  deferred.resolve(response);
-                },
-                angular.bind(deferred, errorHandler)
-              );
-
-              return deferred.promise;
-            },
-            types: function () {
-              var deferred = $q.defer();
-
-              strata.values.cases.types(
-                function (response) {
-                  deferred.resolve(response);
-                },
-                angular.bind(deferred, errorHandler)
-              );
-
-              return deferred.promise;
-            }
-          }
+      this.oldParams = {};
+      this.doFilter = function () {
+        if (angular.isFunction(this.prefilter)) {
+          this.prefilter();
         }
+
+        var params = {
+          include_closed: getIncludeClosed(),
+          count: this.count,
+        };
+        params.start = this.start;
+
+        var isObjectNothing = function (object) {
+          if (object === '' || object === undefined || object === null) {
+            return true;
+          } else {
+            return false;
+          }
+        };
+
+        if (!isObjectNothing(SearchBoxService.searchTerm)) {
+          params.keyword = SearchBoxService.searchTerm;
+        }
+
+        if (CaseService.group === CASE_GROUPS.manage) {
+          $state.go('group');
+        } else if (CaseService.group === CASE_GROUPS.ungrouped) {
+          params.only_ungrouped = true;
+        } else if (!isObjectNothing(CaseService.group)) {
+          params.group_numbers = {
+            group_number: [CaseService.group]
+          };
+        }
+
+        if (CaseService.status === STATUS.closed) {
+          params.status = STATUS.closed;
+        }
+
+        if (!isObjectNothing(CaseService.product)) {
+          params.product = CaseService.product;
+        }
+
+        if (!isObjectNothing(CaseService.owner)) {
+          params.owner_ssoname = CaseService.owner;
+        }
+
+        if (!isObjectNothing(CaseService.type)) {
+          params.type = CaseService.type;
+        }
+
+        if (!isObjectNothing(CaseService.severity)) {
+          params.severity = CaseService.severity;
+        }
+
+        this.searching = true;
+
+        //TODO: hack to get around onchange() firing at page load for each select.
+        //Need to prevent initial onchange() event instead of handling here.
+        var promises = [];
+        if (!angular.equals(params, this.oldParams)) {
+          this.oldParams = params;
+          var deferred = $q.defer();
+          var that = this;
+          var cases = null;
+          if (securityService.loginStatus.isLoggedIn) {
+            if (securityService.loginStatus.ssoName && securityService.loginStatus.isInternal) {
+              params.owner_ssoname = securityService.loginStatus.ssoName;
+            }
+            cases = strataService.cases.filter(params).then(
+              angular.bind(that, function (cases) {
+                  if(cases.length < that.count){
+                    that.allCasesDownloaded = true;
+                  }
+                  that.cases = that.cases.concat(cases);
+                  that.searching = false;
+                  that.start = that.start + that.count;
+                  that.total = that.total + that.count;
+
+                if (angular.isFunction(that.postFilter)) {
+                  that.postFilter();
+                }
+              }),
+              angular.bind(that, function (error) {
+                AlertService.addStrataErrorMessage(error);
+                that.searching = false;
+              })
+            );
+            deferred.resolve(cases);
+          } else {
+            $rootScope.$on(AUTH_EVENTS.loginSuccess, function () {
+              if (securityService.loginStatus.ssoName && securityService.loginStatus.isInternal) {
+                params.owner_ssoname = securityService.loginStatus.ssoName;
+              }
+              cases = strataService.cases.filter(params).then(
+                angular.bind(that, function (cases) {
+                  if(cases.length < that.count){
+                    that.allCasesDownloaded = true;
+                  }
+                  that.cases = that.cases.concat(cases);
+                  that.searching = false;
+                  that.start = that.start + that.count;
+                  that.total = that.total + that.count;
+
+                  if (angular.isFunction(that.postFilter)) {
+                    that.postFilter();
+                  }
+                }),
+                angular.bind(that, function (error) {
+                  AlertService.addStrataErrorMessage(error);
+                  that.searching = false;
+                })
+              );
+              deferred.resolve(cases);
+            });
+          }
+          promises.push(deferred.promise);
+        } else {
+          var deferred = $q.defer();
+          deferred.resolve();
+          promises.push(deferred.promise);
+        }
+        return $q.all(promises);
       };
     }
   ]);
-
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
@@ -17833,12 +23315,12 @@ angular.module('RedhatAccess.logViewer')
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
-.directive('fillDown', [
+.directive('rhaFilldown', [
 	'$window', 
 	'$timeout', 
 	function($window, $timeout) {
 		return {
-			restrict: 'EA',
+			restrict: 'A',
 			link: function postLink(scope, element, attrs) {
 				scope.onResizeFunction = function() {
 					var distanceToTop = element[0].getBoundingClientRect().top;
@@ -17874,10 +23356,10 @@ angular.module('RedhatAccess.logViewer')
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
-.directive('logTabs', function () {
+.directive('rhaLogtabs', function () {
   return {
     templateUrl: 'log_viewer/views/logTabs.html',
-    restrict: 'EA',
+    restrict: 'A',
     link: function postLink(scope, element, attrs) {
     }
   };
@@ -17885,10 +23367,10 @@ angular.module('RedhatAccess.logViewer')
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
-.directive('logsInstructionPane', function () {
+.directive('rhaLogsinstructionpane', function () {
   return {
     templateUrl: 'log_viewer/views/logsInstructionPane.html',
-    restrict: 'EA',
+    restrict: 'A',
     link: function postLink(scope, element, attrs) {
     }
   };
@@ -17896,10 +23378,10 @@ angular.module('RedhatAccess.logViewer')
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
-.directive('navSideBar', function () {
+.directive('rhaNavsidebar', function () {
   return {
     templateUrl: 'log_viewer/views/navSideBar.html',
-    restrict: 'EA',
+    restrict: 'A',
     link: function postLink(scope, element, attrs) {
     }
   };
@@ -17907,10 +23389,10 @@ angular.module('RedhatAccess.logViewer')
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
-.directive('recommendations', function () {
+.directive('rhaRecommendations', function () {
   return {
     templateUrl: 'log_viewer/views/recommendations.html',
-    restrict: 'EA',
+    restrict: 'A',
     link: function postLink(scope, element, attrs) {
     }
   };
@@ -17989,19 +23471,19 @@ angular.module('RedhatAccess.logViewer')
 		}
 	};
 });
-angular.module('RedhatAccess.template', ['common/views/alert.html', 'common/views/header.html', 'common/views/title.html', 'common/views/treenode.html', 'common/views/treeview-selector.html', 'security/login_form.html', 'security/login_status.html', 'search/views/accordion_search.html', 'search/views/accordion_search_results.html', 'search/views/list_search_results.html', 'search/views/resultDetail.html', 'search/views/search.html', 'search/views/search_form.html', 'search/views/standard_search.html', 'cases/views/attachLocalFile.html', 'cases/views/attachProductLogs.html', 'cases/views/attachmentsSection.html', 'cases/views/commentsSection.html', 'cases/views/compact.html', 'cases/views/compactCaseList.html', 'cases/views/compactEdit.html', 'cases/views/descriptionSection.html', 'cases/views/detailsSection.html', 'cases/views/edit.html', 'cases/views/exportCSVButton.html', 'cases/views/groupSelect.html', 'cases/views/list.html', 'cases/views/listAttachments.html', 'cases/views/listFilter.html', 'cases/views/listNewAttachments.html', 'cases/views/new.html', 'cases/views/ownerSelect.html', 'cases/views/productSelect.html', 'cases/views/recommendationsSection.html', 'cases/views/search.html', 'cases/views/searchResult.html', 'cases/views/selectLoadingIndicator.html', 'cases/views/severitySelect.html', 'cases/views/statusSelect.html', 'cases/views/typeSelect.html', 'log_viewer/views/logTabs.html', 'log_viewer/views/log_viewer.html', 'log_viewer/views/logsInstructionPane.html', 'log_viewer/views/navSideBar.html', 'log_viewer/views/recommendations.html']);
+angular.module('RedhatAccess.template', ['common/views/alert.html', 'common/views/header.html', 'common/views/title.html', 'common/views/treenode.html', 'common/views/treeview-selector.html', 'security/login_form.html', 'security/login_status.html', 'search/views/accordion_search.html', 'search/views/accordion_search_results.html', 'search/views/list_search_results.html', 'search/views/resultDetail.html', 'search/views/search.html', 'search/views/search_form.html', 'search/views/standard_search.html', 'cases/views/accountSelect.html', 'cases/views/addCommentSection.html', 'cases/views/attachLocalFile.html', 'cases/views/attachProductLogs.html', 'cases/views/attachmentsSection.html', 'cases/views/chatButton.html', 'cases/views/commentsSection.html', 'cases/views/compact.html', 'cases/views/compactCaseList.html', 'cases/views/compactEdit.html', 'cases/views/createGroupButton.html', 'cases/views/createGroupModal.html', 'cases/views/deleteGroupButton.html', 'cases/views/descriptionSection.html', 'cases/views/detailsSection.html', 'cases/views/edit.html', 'cases/views/emailNotifySelect.html', 'cases/views/entitlementSelect.html', 'cases/views/exportCSVButton.html', 'cases/views/group.html', 'cases/views/groupList.html', 'cases/views/groupSelect.html', 'cases/views/list.html', 'cases/views/listAttachments.html', 'cases/views/listBugzillas.html', 'cases/views/listFilter.html', 'cases/views/listNewAttachments.html', 'cases/views/new.html', 'cases/views/ownerSelect.html', 'cases/views/productSelect.html', 'cases/views/recommendationsSection.html', 'cases/views/requestManagementEscalationModal.html', 'cases/views/search.html', 'cases/views/searchBox.html', 'cases/views/searchResult.html', 'cases/views/selectLoadingIndicator.html', 'cases/views/severitySelect.html', 'cases/views/statusSelect.html', 'cases/views/typeSelect.html', 'log_viewer/views/logTabs.html', 'log_viewer/views/log_viewer.html', 'log_viewer/views/logsInstructionPane.html', 'log_viewer/views/navSideBar.html', 'log_viewer/views/recommendations.html']);
 
 angular.module("common/views/alert.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("common/views/alert.html",
     "<div class=\"container-fluid\">\n" +
     "    <div class=\"row\" style=\"padding-bottom: 5px;\">\n" +
     "        <div class=\"col-xs-12\">\n" +
-    "            <a style=\"float: right\" ng-show=\"AlertService.alerts.length > 1\" ng-href=\"\" ng-click=\"dismissAlerts()\" >Close messages</a>\n" +
+    "            <a style=\"float: right\" ng-show=\"AlertService.alerts.length > 1\" ng-href=\"\" ng-click=\"dismissAlerts()\">{{'Close messages'|translate}}</a>\n" +
     "        </div>\n" +
     "    </div>\n" +
     "    <div class=\"row\">\n" +
     "        <div class=\"col-xs-12\">\n" +
-    "            <alert ng-repeat='alert in AlertService.alerts' type='alert.type' close='closeAlert($index)'>{{alert.message}}</alert>\n" +
+    "            <div alert ng-repeat='alert in AlertService.alerts' type='alert.type' close='closeAlert($index)'>{{alert.message}}</div>\n" +
     "        </div>\n" +
     "    </div>\n" +
     "</div>\n" +
@@ -18013,18 +23495,18 @@ angular.module("common/views/header.html", []).run(["$templateCache", function($
     "<div class=\"rha-page-header\">\n" +
     "    <div class=\"row\">\n" +
     "        <div class=\"col-xs-12\">\n" +
-    "            <x-rha-title-template page=\"{{page}}\"/>\n" +
+    "            <div rha-titletemplate page=\"{{page}}\"/>\n" +
     "        </div>\n" +
     "    </div>\n" +
     "    <div class=\"row\">\n" +
     "        <div class=\"col-xs-12\">\n" +
-    "            <x-rha-login-status />\n" +
+    "            <div rha-loginstatus />\n" +
     "        </div>\n" +
     "    </div>\n" +
-    "    <div class=\"bottom-border\" />\n" +
+    "    <div class=\"rha-bottom-border\" />\n" +
     "    <div class=\"row\">\n" +
     "        <div class=\"col-xs-12\">\n" +
-    "            <x-rha-alert />\n" +
+    "            <div rha-alert />\n" +
     "        </div>\n" +
     "    </div>\n" +
     "</div>\n" +
@@ -18055,7 +23537,7 @@ angular.module("common/views/treenode.html", []).run(["$templateCache", function
 angular.module("common/views/treeview-selector.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("common/views/treeview-selector.html",
     "<div ng-controller=\"TreeViewSelectorCtrl\">\n" +
-    "	<div> Choose File(s) To Attach: </div>\n" +
+    "	<div> {{'Choose File(s) To Attach:'|translate}} </div>\n" +
     "  <rha-choice-tree ng-model=\"attachmentTree\"></rha-choice-tree>\n" +
     "  <pre>{{attachmentTree| json}}</pre>\n" +
     "</div>");
@@ -18111,11 +23593,21 @@ angular.module("security/login_form.html", []).run(["$templateCache", function($
 angular.module("security/login_status.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("security/login_status.html",
     "<div ng-controller = 'SecurityController' ng-show=\"displayLoginStatus()\">\n" +
-    "<span ng-show=\"securityService.loginStatus.isLoggedIn\" class=\"pull-right rha-logged-in\"> Logged into the Red Hat Customer Portal as {{securityService.loginStatus.loggedInUser}} &nbsp;|&nbsp;\n" +
-    "  <a href=\"\" ng-click=\"securityService.logout()\"> Log out</a>\n" +
+    "<span ng-show=\"securityService.loginStatus.isLoggedIn\" class=\"pull-right rha-logged-in\"> {{'Logged into the Red Hat Customer Portal as'|translate}} {{securityService.loginStatus.loggedInUser}} &nbsp;|&nbsp;\n" +
+    "    <span ng-if=\"securityService.logoutURL.length === 0\">\n" +
+    "        <a href=\"\" ng-click=\"securityService.logout()\"> Log out</a>\n" +
+    "    </span>\n" +
+    "    <span ng-if=\"securityService.logoutURL.length > 0\">\n" +
+    "        <a href=\"{{securityService.logoutURL}}\"> Log out</a>\n" +
+    "    </span>\n" +
     "</span>\n" +
-    "<span ng-show=\"!securityService.loginStatus.isLoggedIn\" class=\"pull-right rha-logged-out\"> Not Logged into the Red Hat Customer Portal&nbsp;|&nbsp;\n" +
-    "	<a href=\"\" ng-click=\"securityService.login()\"> Log In</a>\n" +
+    "<span ng-show=\"!securityService.loginStatus.isLoggedIn\" class=\"pull-right rha-logged-out\"> {{'Not Logged into the Red Hat Customer Portal'|translate}}&nbsp;|&nbsp;\n" +
+    "    <span ng-if=\"securityService.loginURL.length === 0\">\n" +
+    "        <a href=\"\" ng-click=\"securityService.login()\"> {{'Log In'|translate}}</a>\n" +
+    "    </span>\n" +
+    "    <span ng-if=\"securityService.loginURL.length > 0\">\n" +
+    "        <a href=\"{{securityService.loginURL}}\"> {{'Log In'|translate}}</a>\n" +
+    "    </span>\n" +
     "</span>\n" +
     "\n" +
     "</div>\n" +
@@ -18124,23 +23616,24 @@ angular.module("security/login_status.html", []).run(["$templateCache", function
 
 angular.module("search/views/accordion_search.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/views/accordion_search.html",
-    "<div class=\"container-fluid side-padding\">\n" +
-    "    <x-rha-header title=\"Search\"></x-rha-header>\n" +
-    "    <div class=\"row\" x-rha-search-form ng-controller='SearchController'></div>\n" +
+    "<div class=\"container-fluid rha-side-padding\">\n" +
+    "    <div rha-header title=\"Search\"></div>\n" +
+    "    <div class=\"row\" rha-searchform ng-controller='SearchController'></div>\n" +
     "    <div style=\"padding-top: 10px;\"></div>\n" +
     "    <div class='row'>\n" +
-    "    	<div class=\"container\" x-rha-accordion-search-results='' ng-controller='SearchController' />\n" +
+    "    	<div class=\"container\" rha-accordionsearchresults='' ng-controller='SearchController' />\n" +
     "    </div>\n" +
-    "</div>");
+    "</div>\n" +
+    "");
 }]);
 
 angular.module("search/views/accordion_search_results.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/views/accordion_search_results.html",
-    "<div class=\"row bottom-border\">\n" +
+    "<div class=\"row rha-bottom-border\">\n" +
     "    <div class=\"col-xs-6\">\n" +
     "        <div style=\"padding-bottom: 0\">\n" +
     "            <span>\n" +
-    "                <h4 style=\"padding-left: 10px; display: inline-block;\">Recommendations</h4>\n" +
+    "                <h4 style=\"padding-left: 10px; display: inline-block;\" translate=''>Recommendations</h4>\n" +
     "            </span>\n" +
     "            <span ng-show=\"searchInProgress.value\" class=\"rha-search-spinner\">\n" +
     "                &nbsp;\n" +
@@ -18148,22 +23641,23 @@ angular.module("search/views/accordion_search_results.html", []).run(["$template
     "        </div>\n" +
     "    </div>\n" +
     "    <div style=\"padding-bottom: 14px;\" class=\"col-xs-6\" ng-show=\"showOpenCaseBtn()\">\n" +
-    "        <a href={{getOpenCaseRef()}} class=\"btn btn-primary pull-right \">Open a New Support Case</a>\n" +
+    "        <a href={{getOpenCaseRef()}} class=\"btn btn-primary pull-right \">{{'Open a New Support Case'|translate}}</a>\n" +
     "    </div>\n" +
     "</div>\n" +
     "<div class=\"\">\n" +
     "    <!--div class=\"col-xs-12\" style=\"overflow: auto;\" rha-resizable rha-dom-ready=\"domReady\"-->\n" +
     "        <accordion>\n" +
-    "            <accordion-group is-open=\"isopen\" ng-repeat=\"result in results\">\n" +
+    "            <accordion-group is-open=\"isopen\" ng-click=\"triggerAnalytics($event)\" ng-repeat=\"result in results\">\n" +
     "                <accordion-heading>\n" +
     "                    <span class=\"pull-left glyphicon\" ng-class=\"{'glyphicon-chevron-down': isopen, 'glyphicon-chevron-right': !isopen}\"></span>\n" +
     "                    <span>&nbsp{{result.title}}</span>\n" +
     "                </accordion-heading>\n" +
-    "                <x-rha-result-detail-display result='result' />\n" +
+    "                <div rha-resultdetaildisplay result='result' />\n" +
     "            </accordion-group>\n" +
     "        </accordion>\n" +
     "    <!--/div-->\n" +
-    "</div>");
+    "</div>\n" +
+    "");
 }]);
 
 angular.module("search/views/list_search_results.html", []).run(["$templateCache", function($templateCache) {
@@ -18173,7 +23667,7 @@ angular.module("search/views/list_search_results.html", []).run(["$templateCache
     "        <!--pagination on-select-page=\"pageChanged(page)\" total-items=\"totalItems\" page=\"currentPage\" max-size=\"maxSize\"></pagination-->\n" +
     "\n" +
     "        <div class=\"panel-heading\">\n" +
-    "            <h4 class=\"panel-title\">\n" +
+    "            <h4 class=\"panel-title\" translate=''>\n" +
     "                Recommendations\n" +
     "            </h4>\n" +
     "        </div>\n" +
@@ -18182,12 +23676,12 @@ angular.module("search/views/list_search_results.html", []).run(["$templateCache
     "        </div>\n" +
     "    </div>\n" +
     "</div>\n" +
-    "<div class=\"col-sm-8\" style=\"overflow: auto;\" rha-resizable rha-dom-ready=\"domReady\">\n" +
+    "<div class=\"col-sm-8\" style=\"overflow: auto;\" rha-resizable rha-domready=\"domReady\">\n" +
     "    <div class=\"alert alert-info\" ng-show='selectedSolution.index === -1 && results.length > 0'>\n" +
-    "        To view a recommendation, click on it.\n" +
+    "        {{'To view a recommendation, click on it.'|translate}}\n" +
     "    </div>\n" +
     "    <div style \"overflow: vertical;\">\n" +
-    "        <x-rha-result-detail-display result='selectedSolution.data' />\n" +
+    "        <div rha-resultdetaildisplay result='selectedSolution.data' />\n" +
     "    </div>\n" +
     "</div>");
 }]);
@@ -18196,11 +23690,13 @@ angular.module("search/views/resultDetail.html", []).run(["$templateCache", func
   $templateCache.put("search/views/resultDetail.html",
     "<div class='panel' style='border:0' ng-model=\"result\" >\n" +
     "	<div ng-if=\"isSolution()\">\n" +
-    "		<h3>Environment</h3>\n" +
+    "		<h3 translate=''>Environment</h3>\n" +
     "		<div ng-bind-html='result.environment.html'></div>\n" +
     "		<h3>Issue</h3>\n" +
     "		<div ng-bind-html='result.issue.html'></div>\n" +
-    "		<h3 ng-if=\"getSolutionResolution() !== ''\" >Resolution</h3>\n" +
+    "		<div ng-if=\"getSolutionResolution() !== ''\">\n" +
+    "			<h3  translate=''>Resolution</h3>\n" +
+    "		</div>\n" +
     "		<div ng-bind-html='getSolutionResolution()'></div>\n" +
     "	</div>\n" +
     "	<div ng-if=\"isArticle()\">\n" +
@@ -18213,7 +23709,7 @@ angular.module("search/views/resultDetail.html", []).run(["$templateCache", func
 
 angular.module("search/views/search.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/views/search.html",
-    "<x-rha-standard-search/>\n" +
+    "<div rha-standardsearch/>\n" +
     "");
 }]);
 
@@ -18227,7 +23723,7 @@ angular.module("search/views/search_form.html", []).run(["$templateCache", funct
     "                <span class=\"input-group-btn\">\n" +
     "                    <button ng-disabled=\"(searchStr === undefined || searchStr.trim()==='' || searchInProgress.value === true)\" class=\"btn btn-default btn-primary\" type='submit' ng-click=\"search(searchStr)\">\n" +
     "                        <i class=\"glyphicon glyphicon-search \"></i>\n" +
-    "                        Search</button>\n" +
+    "                        {{'Search'|translate}}</button>\n" +
     "                </span>\n" +
     "\n" +
     "            </div>\n" +
@@ -18244,32 +23740,48 @@ angular.module("search/views/search_form.html", []).run(["$templateCache", funct
 
 angular.module("search/views/standard_search.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/views/standard_search.html",
-    "<div class=\"container-fluid side-padding\" ng-controller='SearchController'>\n" +
-    "    <x-rha-header page=\"search\"></x-rha-header>\n" +
-    "    <div class=\"row\" x-rha-search-form></div>\n" +
+    "<div class=\"container-fluid rha-side-padding\" ng-controller='SearchController'>\n" +
+    "    <div rha-header page=\"search\"></div>\n" +
+    "    <div class=\"row\" rha-searchform></div>\n" +
     "    <div style=\"padding-top: 10px;\"></div>\n" +
-    "    <div class='row' x-rha-list-search-results='' ng-controller='SearchController' />\n" +
-    "</div>");
+    "    <div class='row' rha-listsearchresults='' ng-controller='SearchController' />\n" +
+    "</div>\n" +
+    "");
+}]);
+
+angular.module("cases/views/accountSelect.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("cases/views/accountSelect.html",
+    "<div style=\"display: inline-block; padding-right: 10px;\"><input style=\"width: 100%\" ng-model=\"CaseService.account.number\" ng-blur=\"populateAccountSpecificFields()\" class=\"form-control\"/></div><div style=\"display: inline-block;\"><button ng-click=\"selectUserAccount()\" ng-hide=\"loadingAccountNumber\" translate=\"\" class=\"btn btn-secondary\">My Account</button><span ng-show=\"loadingAccountNumber\" class=\"rha-search-spinner\">&nbsp;</span></div>");
+}]);
+
+angular.module("cases/views/addCommentSection.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("cases/views/addCommentSection.html",
+    "<div style=\"margin-left: 60px; margin-right: 60px;\"><div style=\"margin-bottom: 10px;\" class=\"well\"><textarea ng-disabled=\"addingComment\" rows=\"5\" ng-model=\"CaseService.commentText\" style=\"max-width: 100%\" ng-keypress=\"onNewCommentKeypress()\" class=\"form-control\"></textarea><div style=\"padding-top: 10px;\"><span class=\"hidden\">{{'You have used 0% of the 32KB maximum description size.'|translate}}</span><span ng-show=\"savingDraft\" class=\"pull-right rha-bold\">{{'Saving draft...'|translate}}</span><span ng-show=\"draftSaved\" class=\"pull-right rha-bold\">{{'Draft saved'|translate}}</span></div></div><div style=\"float: right;\"><span ng-show=\"addingComment\" class=\"rha-search-spinner\"></span><button ng-hide=\"addingComment\" ng-disabled=\"false\" ng-click=\"addComment()\" style=\"float: right;\" translate=\"\" class=\"btn btn-primary\">Add Comment</button></div></div>");
 }]);
 
 angular.module("cases/views/attachLocalFile.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/attachLocalFile.html",
-    "<div class=\"container-fluid\"><div class=\"row create-field\"><div class=\"col-xs-6\"><button style=\"float: left;\" ng-click=\"getFile()\" ng-disabled=\"disabled\" class=\"btn\">Attach local file</button><div style=\"height: 0px; width:0px; overflow:hidden;\"><input id=\"fileUploader\" type=\"file\" value=\"upload\" rha-on-change=\"selectFile\" ng-model=\"file\" ng-disabled=\"disabled\"/></div></div><div class=\"col-xs-6\"><div style=\"float: left; word-wrap: break-word; width: 100%;\">{{fileName}}</div></div></div><div class=\"row create-field\"><div style=\"font-size: 80%;\" class=\"col-xs-12\"><span>File names must be less than 80 characters. Maximum file size for web-uploaded attachments is 250 MB. Please FTP larger files to dropbox.redhat.com.&nbsp;</span><span><a href=\"https://access.devgssci.devlab.phx1.redhat.com/knowledge/solutions/2112\">(More info)</a></span></div></div><div class=\"row create-field\"><div class=\"col-xs-12\"><input style=\"float: left;\" placeholder=\"File description\" ng-model=\"fileDescription\" ng-disabled=\"disabled\" class=\"form-control\"/></div></div><div class=\"row create-field\"><div class=\"col-xs-12\"><button ng-disabled=\"fileName == NO_FILE_CHOSEN || disabled\" style=\"float: right;\" ng-click=\"addFile(fileUploaderForm)\" class=\"btn\">Add</button></div></div></div>");
+    "<div class=\"container-fluid\"><div class=\"row rha-create-field\"><div class=\"col-xs-6\"><button style=\"float: left;\" ng-click=\"getFile()\" ng-disabled=\"disabled\" translate=\"\" class=\"btn\">Attach local file</button><div style=\"height: 0px; width:0px; overflow:hidden;\"><input id=\"fileUploader\" type=\"file\" value=\"upload\" rha-on-change=\"selectFile\" ng-model=\"file\" ng-disabled=\"disabled\"/></div></div><div class=\"col-xs-6\"><div style=\"float: left; word-wrap: break-word; width: 100%;\">{{fileName}}</div></div></div><div class=\"row rha-create-field\"><div style=\"font-size: 80%;\" class=\"col-xs-12\"><span>{{'File names must be less than 80 characters. Maximum file size for web-uploaded attachments is 250 MB. Please FTP larger files to dropbox.redhat.com.'|translate}}&nbsp;</span><span><a href=\"https://access.devgssci.devlab.phx1.redhat.com/knowledge/solutions/2112\">(More info)</a></span></div></div><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><input style=\"float: left;\" placeholder=\"File description\" ng-model=\"fileDescription\" ng-disabled=\"disabled\" class=\"form-control\"/></div></div><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><button ng-disabled=\"fileName == NO_FILE_CHOSEN || disabled\" style=\"float: right;\" ng-click=\"addFile(fileUploaderForm)\" translate=\"\" class=\"btn\">Add</button></div></div></div>");
 }]);
 
 angular.module("cases/views/attachProductLogs.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/attachProductLogs.html",
-    "<div class=\"container-fluid\"><div class=\"row create-field\"><div class=\"col-xs-12\"><div style=\"padding-bottom: 4px;\">Attach Foreman logs:</div><select multiple=\"multiple\" class=\"form-control\"><option>Log1</option><option>Log2</option><option>Log3</option><option>Log4</option><option>Log5</option><option>Log6</option></select></div></div><div class=\"row create-field\"><div class=\"col-xs-12\"><button ng-disabled=\"true\" style=\"float: right;\" class=\"btn\">Add</button></div></div></div>");
+    "<div class=\"container-fluid\"><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><div style=\"padding-bottom: 4px;\">{{'Attach Foreman logs:'|translate}}</div><select multiple=\"multiple\" class=\"form-control\"><option>Log1</option><option>Log2</option><option>Log3</option><option>Log4</option><option>Log5</option><option>Log6</option></select></div></div><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><button ng-disabled=\"true\" style=\"float: right;\" translate=\"\" class=\"btn\">Add</button></div></div></div>");
 }]);
 
 angular.module("cases/views/attachmentsSection.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/attachmentsSection.html",
-    "<h4 class=\"section-header\">Attachments</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid side-padding\"><div class=\"row side-padding\"><div class=\"col-xs-12 col-no-padding\"><rha-list-attachments></rha-list-attachments></div></div><div style=\"border-top: 1px solid #cccccc; padding-top: 10px; margin: 0;\" class=\"row\"></div><div ng-hide=\"AttachmentsService.updatedAttachments.length &lt;= 0 &amp;&amp; TreeViewSelectorUtils.getSelectedLeaves(AttachmentsService.backendAttachments).length &lt;= 0\"><div class=\"row side-padding\"><div class=\"col-xs-12 col-no-padding\"><rha-list-new-attachments></rha-list-new-attachments></div></div><div class=\"row side-padding\"><div style=\"padding-bottom: 14px;\" class=\"col-xs-12 col-no-padding\"><div style=\"float: right\"><span ng-show=\"updatingAttachments\" class=\"rha-search-spinner\"></span><button ng-hide=\"updatingAttachments\" ng-click=\"doUpdate()\" class=\"btn btn-primary\">Upload Attachments</button></div></div></div><div style=\"border-top: 1px solid #cccccc; padding-top: 10px; margin: 0;\" class=\"row\"></div></div><div class=\"row\"><div class=\"col-xs-12\"><rha-attach-local-file></rha-attach-local-file></div></div><div class=\"row\"><div class=\"col-xs-12\"><div class=\"server-attach-header\">Server File(s) To Attach:</div><rha-choice-tree ng-model=\"attachmentTree\" ng-controller=\"BackEndAttachmentsCtrl\"></rha-choice-tree></div></div></div>");
+    "<h4 translate=\"\" class=\"rha-section-header\">Attachments</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid rha-side-padding\"><div class=\"row rha-side-padding\"><div class=\"col-xs-12 rha-col-no-padding\"><div rha-listattachments=\"\"></div></div></div><div style=\"border-top: 1px solid #cccccc; padding-top: 10px; margin: 0;\" class=\"row\"></div><div ng-hide=\"AttachmentsService.updatedAttachments.length &lt;= 0 &amp;&amp; TreeViewSelectorUtils.getSelectedLeaves(AttachmentsService.backendAttachments).length &lt;= 0\"><div class=\"row rha-side-padding\"><div class=\"col-xs-12 rha-col-no-padding\"><div rha-listnewattachments=\"rha-listnewattachments\"></div></div></div><div class=\"row rha-side-padding\"><div style=\"padding-bottom: 14px;\" class=\"col-xs-12 rha-col-no-padding\"><div style=\"float: right\"><span ng-show=\"updatingAttachments\" class=\"rha-search-spinner\"></span><button ng-hide=\"updatingAttachments\" ng-click=\"doUpdate()\" translate=\"\" class=\"btn btn-primary\">Upload Attachments</button></div></div></div><div style=\"border-top: 1px solid #cccccc; padding-top: 10px; margin: 0;\" class=\"row\"></div></div><div class=\"row\"><div class=\"col-xs-12\"><div rha-attachlocalfile=\"\"></div></div></div><div ng-show=\"showServerSideAttachments\"><div class=\"row\"><div class=\"col-xs-12\"><div class=\"server-attach-header\">{{'Server File(s) To Attach:'|translate}}</div><div rha-choicetree=\"\" ng-model=\"attachmentTree\" ng-controller=\"BackEndAttachmentsCtrl\" rhaDisabled=\"rhaDisabled\"></div></div></div></div></div>");
+}]);
+
+angular.module("cases/views/chatButton.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("cases/views/chatButton.html",
+    "<div ng-show=\"showChat\"><iframe style=\"display: none;\" ng-src=\"{{chatHackUrl}}\"></iframe><button ng-show=\"chatAvailable\" ng-click=\"openChatWindow()\" translate=\"\" class=\"btn btn-primary\">Chat with support</button><button ng-show=\"!chatAvailable\" disabled=\"disabled\" translate=\"\" class=\"btn btn-secondary\">Chat offline</button></div>");
 }]);
 
 angular.module("cases/views/commentsSection.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/commentsSection.html",
-    "<h4 class=\"section-header\">Case Discussion</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid side-padding\"><div class=\"row create-field\"><div class=\"col-xs-12\"><textarea ng-disabled=\"addingComment\" rows=\"5\" ng-model=\"newComment\" style=\"max-width: 100%\" class=\"form-control\"></textarea></div></div><div style=\"margin-left: 0px; margin-right: 0px;\" class=\"row create-field\"><div class=\"col-xs-12 col-no-padding\"><div style=\"float: right;\"><span ng-show=\"addingComment\" class=\"rha-search-spinner\"></span><button ng-hide=\"addingComment\" ng-disabled=\"false\" ng-click=\"addComment()\" style=\"float: right;\" class=\"btn btn-primary\">Add Comment</button></div></div></div><div ng-hide=\"comments.length &lt;= 0 || comments === undefined\" style=\"border-top: 1px solid #dddddd;\"><div class=\"row\"><div class=\"col-xs-12\"><pagination style=\"float: right;\" boundary-links=\"true\" total-items=\"comments.length\" on-select-page=\"selectPage(page)\" items-per-page=\"itemsPerPage\" page=\"currentPage\" rotate=\"false\" max-size=\"maxPagerSize\" previous-text=\"&lt;\" next-text=\"&gt;\" first-text=\"&lt;&lt;\" last-text=\"&gt;&gt;\" class=\"pagination-sm\"></pagination></div></div><div ng-repeat=\"comment in commentsOnScreen\"><div style=\"padding-bottom: 10px;\" class=\"row\"><div class=\"col-md-2\"><div class=\"bold\">{{comment.created_by}}</div><div>{{comment.created_date | date:'mediumDate'}}</div><div>{{comment.created_date | date:'mediumTime'}}</div></div><div class=\"col-md-10\"><pre>{{comment.text}}</pre></div></div></div></div></div>");
+    "<h4 translate=\"\" class=\"rha-section-header\">Case Discussion</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid rha-side-padding\"><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><div rha-addcommentsection=\"\"></div></div></div><div style=\"border-top: 1px solid #cccccc; padding-top: 10px; padding-bottom: 10px;\" class=\"row\"><div class=\"col-xs-12\"><span style=\"display: inline-block; padding-right: 10px;\">{{'Would you like a Red Hat support manager to contact you regarding this case?'|translate}}</span><button style=\"display: inline-block\" ng-click=\"requestManagementEscalation()\" translate=\"\" class=\"btn btn-secondary\">Request Management Escalation</button></div></div><div ng-hide=\"CaseService.comments.length &lt;= 0 || CaseService.comments === undefined\" style=\"border-top: 1px solid #dddddd;\"><div style=\"padding-top: 10px; padding-bottom: 10px;\" class=\"row\"><div class=\"col-xs-12\"><pagination style=\"float: right;\" boundary-links=\"true\" total-items=\"CaseService.comments.length\" on-select-page=\"selectPage(page)\" items-per-page=\"itemsPerPage\" page=\"currentPage\" rotate=\"false\" max-size=\"maxPagerSize\" previous-text=\"&lt;\" next-text=\"&gt;\" first-text=\"&lt;&lt;\" last-text=\"&gt;&gt;\" class=\"pagination-sm\"></pagination></div></div><div ng-repeat=\"comment in commentsOnScreen\" ng-if=\"!comment.draft\"><div style=\"padding-bottom: 10px;\" class=\"row\"><div class=\"col-md-2\"><div class=\"rha-bold\">{{comment.created_by}}</div><div>{{comment.created_date | date:'mediumDate'}}</div><div>{{comment.created_date | date:'h:mm:ss a Z'}}</div></div><div class=\"col-md-10\"><pre style=\"word-break: normal;\">{{comment.text}}</pre></div></div></div></div></div>");
 }]);
 
 angular.module("cases/views/compact.html", []).run(["$templateCache", function($templateCache) {
@@ -18278,12 +23790,12 @@ angular.module("cases/views/compact.html", []).run(["$templateCache", function($
     "    <div class=\"container-fluid\">\n" +
     "        <div class=\"row\">\n" +
     "            <div class=\"col-xs-12\">\n" +
-    "                <x-rha-header page=\"caseList\"/>\n" +
+    "                <div rha-header page=\"caseList\"/>\n" +
     "            </div>\n" +
     "        </div>\n" +
     "        <div class=\"row\">\n" +
     "            <div class=\"col-xs-4\" style=\"height: 100%;\">\n" +
-    "                <x-rha-compact-case-list></x-rha-compact-case-list>\n" +
+    "                <div rha-compactcaselist></div>\n" +
     "            </div>\n" +
     "            <div class=\"col-xs-8\" style=\"padding: 0px; \">\n" +
     "                <!-- Jade can't create the ui-view attribute in the form\n" +
@@ -18298,87 +23810,137 @@ angular.module("cases/views/compact.html", []).run(["$templateCache", function($
 
 angular.module("cases/views/compactCaseList.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/compactCaseList.html",
-    "<div id=\"redhat-access-case\"><div id=\"redhat-access-compact-list\" class=\"container-fluid\"><div class=\"row\"><div class=\"col-xs-12 col-no-padding\"><rha-list-filter postfilter=\"filterCallback\" prefilter=\"onFilter\"></rha-list-filter></div></div><div class=\"row\"><div class=\"col-xs-12\"><div ng-show=\"CaseListService.cases.length == 0 &amp;&amp; !loadingCaseList\">No cases found with given filters.</div><span ng-show=\"loadingCaseList &amp;&amp; securityService.loginStatus.isLoggedIn\" class=\"rha-search-spinner\"></span></div></div><div ng-hide=\"CaseListService.cases.length ==0 || loadingCaseList\" style=\"border-top: 1px solid #dddddd;\" class=\"row\"><div style=\"overflow: auto;\" rha-resizable=\"rha-resizable\" rha-dom-ready=\"domReady\" class=\"col-xs-12 col-no-padding\"><div style=\"margin-bottom: 0px; overflow: auto;\"><ul style=\"margin-bottom: 0px;\" class=\"list-group\"><a ng-repeat=\"case in CaseListService.cases\" ui-sref=\".edit({id: &quot;{{case.case_number}}&quot;})\" ng-class=\"{&quot;active&quot;: $index == selectedCaseIndex}\" ng-click=\"selectCase($index)\" class=\"list-group-item\">{{case.case_number}} {{case.summary}}</a></ul></div></div></div></div></div>");
+    "<div id=\"redhat-access-case\"><div id=\"redhat-access-compact-list\" class=\"container-fluid\"><div class=\"row\"><div class=\"col-xs-12 rha-col-no-padding\"><div rha-listfilter=\"\"></div></div></div><div class=\"row\"><div class=\"col-xs-12\"><div ng-show=\"SearchCaseService.cases.length == 0 &amp;&amp; !SearchCaseService.searching &amp;&amp; securityService.loginStatus.isLoggedIn\">{{'No cases found with given filters.'|translate}}</div><span ng-show=\"SearchCaseService.searching &amp;&amp; securityService.loginStatus.isLoggedIn\" class=\"rha-search-spinner\"></span></div></div><div ng-hide=\"SearchCaseService.cases.length == 0 || SearchCaseService.searching\" style=\"border-top: 1px solid #dddddd;\" class=\"row\"><div style=\"overflow: auto;\" rha-resizable=\"rha-resizable\" rha-domready=\"domReady\" class=\"col-xs-12 rha-col-no-padding\"><div style=\"margin-bottom: 0px; overflow: auto;\"><ul style=\"margin-bottom: 0px;\" class=\"list-group\"><a ng-repeat=\"case in SearchCaseService.cases\" ui-sref=\".edit({id: &quot;{{case.case_number}}&quot;})\" ng-class=\"{&quot;active&quot;: $index == selectedCaseIndex}\" ng-click=\"selectCase($index)\" class=\"list-group-item\">{{case.case_number}} {{case.summary}}</a></ul></div></div></div></div></div>");
 }]);
 
 angular.module("cases/views/compactEdit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/compactEdit.html",
-    "<!DOCTYPE html><div id=\"redhat-access-case\"><div ng-show=\"caseLoading &amp;&amp; securityService.loginStatus.isLoggedIn\" class=\"container-fluid\"><div style=\"margin-right: 0px;\" class=\"row\"><div class=\"col-xs-12\"><span class=\"rha-search-spinner\"></span></div></div></div><div ng-hide=\"caseLoading\" rha-resizable rha-dom-ready=\"domReady\" style=\"overflow: auto; padding-left: 15px;border-top: 1px solid #dddddd; border-left: 1px solid #dddddd;\" class=\"container-fluid\"><div style=\"margin-right: 0px; padding-top: 10px;\" class=\"row\"><div class=\"col-xs-12\"><rha-case-details compact=\"true\"></rha-case-details></div></div><div style=\"margin-right: 0px;\" class=\"row\"><div class=\"col-xs-12\"><rha-case-description></rha-case-description></div></div><div style=\"margin-right: 0px;\" class=\"row\"><div class=\"col-xs-12\"><rha-case-attachments></rha-case-attachments></div></div><div style=\"margin-right: 0px;\" class=\"row\"><div class=\"col-xs-12\"><rha-case-comments></rha-case-comments></div></div></div></div>");
+    "<!DOCTYPE html><div id=\"redhat-access-case\"><div ng-show=\"caseLoading &amp;&amp; securityService.loginStatus.isLoggedIn\" class=\"container-fluid\"><div style=\"margin-right: 0px;\" class=\"row\"><div class=\"col-xs-12\"><span class=\"rha-search-spinner\"></span></div></div></div><div ng-hide=\"caseLoading\" rha-resizable rha-dom-ready=\"domReady\" style=\"overflow: auto; padding-left: 15px;border-top: 1px solid #dddddd; border-left: 1px solid #dddddd;\" class=\"container-fluid\"><div style=\"margin-right: 0px; padding-top: 10px;\" class=\"row\"><div class=\"col-xs-12\"><div rha-casedetails=\"\" compact=\"true\"></div></div></div><div style=\"margin-right: 0px;\" class=\"row\"><div class=\"col-xs-12\"><div rha-case-description=\"\"></div></div></div><div style=\"margin-right: 0px;\" class=\"row\"><div class=\"col-xs-12\"><div rha-case-attachments=\"\"></div></div></div><div style=\"margin-right: 0px;\" class=\"row\"><div class=\"col-xs-12\"><div rha-case-comments=\"\"></div></div></div></div></div>");
+}]);
+
+angular.module("cases/views/createGroupButton.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("cases/views/createGroupButton.html",
+    "<button ng-click=\"openCreateGroupDialog()\" translate=\"\" class=\"btn btn-primary\">Create New Case Group</button>");
+}]);
+
+angular.module("cases/views/createGroupModal.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("cases/views/createGroupModal.html",
+    "<div id=\"rha-create-group-modal\"><div class=\"modal-header\"><h3 translate=\"\">Create Case Group</h3></div><div style=\"padding: 20px;\" class=\"container-fluid\"><div style=\"padding-bottom: 20px;\" class=\"row\"><div class=\"col-sm-12\"><div style=\"display: table; width: 100%;\"><label style=\"display: table-cell\" translate=\"\">Case Group:</label><input ng-model=\"groupName\" style=\"display: table-cell; width: 100%;\" ng-keypress=\"onGroupNameKeyPress($event)\" class=\"form-control\"/></div></div></div><div class=\"row\"><div class=\"col-sm-12\"><button ng-click=\"createGroup()\" style=\"margin-left: 10px;\" translate=\"\" class=\"btn-primary btn pull-right\">Save</button><button ng-click=\"closeModal()\" translate=\"\" class=\"btn-secondary btn pull-right\">Cancel</button></div></div></div></div>");
+}]);
+
+angular.module("cases/views/deleteGroupButton.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("cases/views/deleteGroupButton.html",
+    "<button ng-click=\"deleteGroups()\" translate=\"\" class=\"btn btn-secondary\">Delete Group</button>");
 }]);
 
 angular.module("cases/views/descriptionSection.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/descriptionSection.html",
-    "<h4 class=\"section-header\">Description</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid side-padding\"><div class=\"row\"><div class=\"col-md-2\"><strong>{{CaseService.case.created_by}}</strong></div><div class=\"col-md-10\">{{CaseService.case.description}}</div></div></div>");
+    "<h4 translate=\"\" class=\"rha-section-header\">Description</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid rha-side-padding\"><div class=\"row\"><div class=\"col-md-2\"><strong>{{CaseService.kase.created_by}}</strong></div><div class=\"col-md-10\">{{CaseService.kase.description}}</div></div></div>");
 }]);
 
 angular.module("cases/views/detailsSection.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/detailsSection.html",
-    "<form name=\"caseDetails\"><div style=\"padding-bottom: 10px;\"><div><h3 style=\"margin-top: 0px;\">Case {{CaseService.case.case_number}}</h3></div><input style=\"width: 100%; display: inline-block;\" ng-model=\"CaseService.case.summary\" name=\"summary\" class=\"form-control\"/><span ng-show=\"caseDetails.summary.$dirty\" style=\"display: inline-block;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></div><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid side-padding\"><div id=\"rha-case-details\" class=\"row\"><h4 class=\"col-xs-12 section-header\">Details</h4><div class=\"container-fluid side-padding\"><div class=\"row\"><div class=\"col-md-4\"><table class=\"table details-table\"><tr ng-hide=\"compact\"><th class=\"details-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">Case Type:</div><span ng-show=\"caseDetails.type.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div><x-rha-select-loading-indicator loading=\"caseTypes === undefined\" type=\"bootstrap\"><select name=\"type\" style=\"width: 100%;\" ng-model=\"CaseService.case.type\" ng-options=\"c.name for c in caseTypes track by c.name\" class=\"form-control\"></select></x-rha-select-loading-indicator></div></td></tr><tr><th class=\"details-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">Severity:</div><span ng-show=\"caseDetails.severity.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div><x-rha-select-loading-indicator loading=\"severities === undefined\" type=\"bootstrap\"><select name=\"severity\" style=\"width: 100%;\" ng-model=\"CaseService.case.severity\" ng-options=\"s.name for s in severities track by s.name\" class=\"form-control\"></select></x-rha-select-loading-indicator></div></td></tr><tr><th class=\"details-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">Status:</div><span ng-show=\"caseDetails.status.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div><x-rha-select-loading-indicator loading=\"statuses === undefined\" type=\"bootstrap\"><select name=\"status\" style=\"width: 100%;\" ng-model=\"CaseService.case.status\" ng-options=\"s.name for s in statuses track by s.name\" class=\"form-control\"></select></x-rha-select-loading-indicator></div></td></tr><tr ng-hide=\"compact\"><th class=\"details-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">Alternate ID:</div><span ng-show=\"caseDetails.alternate_id.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><input style=\"width: 100%\" ng-model=\"CaseService.case.alternate_id\" name=\"alternate_id\" class=\"form-control\"/></td></tr></table></div><div class=\"col-md-4\"><table class=\"table details-table\"><tr><th><div style=\"vertical-align: 50%; display: inline-block;\">Product:</div><span ng-show=\"caseDetails.product.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div><x-rha-select-loading-indicator loading=\"products === undefined\" type=\"bootstrap\"><select name=\"product\" style=\"width: 100%;\" ng-model=\"CaseService.case.product\" ng-change=\"getProductVersions()\" ng-options=\"s.name for s in products track by s.name\" required=\"required\" class=\"form-control\"></select></x-rha-select-loading-indicator></div></td></tr><tr><th class=\"details-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">Product Version:</div><span ng-show=\"caseDetails.version.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div><x-rha-select-loading-indicator loading=\"CaseService.versions.length === 0\" type=\"bootstrap\"><select name=\"version\" style=\"width: 100%;\" ng-options=\"v for v in CaseService.versions track by v\" ng-model=\"CaseService.case.version\" required=\"required\" class=\"form-control\"></select></x-rha-select-loading-indicator></div></td></tr><tr ng-hide=\"compact\"><th class=\"details-table-header\">Support Level:</th><td>{{CaseService.case.entitlement.sla}}</td></tr><tr ng-hide=\"compact\"><th class=\"details-table-header\">Owner:</th><td>{{CaseService.case.contact_name}}</td></tr><tr ng-hide=\"compact\"><th class=\"details-table-header\">Red Hat Owner:</th><td>{{CaseService.case.owner}}</td></tr></table></div><div class=\"col-md-4\"><table class=\"table details-table\"><tr ng-hide=\"compact\"><th class=\"details-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">Group:</div><span ng-show=\"caseDetails.group.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div><x-rha-select-loading-indicator loading=\"groups === undefined\" type=\"bootstrap\"><select name=\"group\" style=\"width: 100%;\" ng-options=\"g.name for g in groups track by g.number\" ng-model=\"CaseService.case.group\" class=\"form-control\"></select></x-rha-select-loading-indicator></div></td></tr><tr ng-hide=\"compact\"><th class=\"details-table-header\">Opened:</th><td><div>{{CaseService.case.created_date | date:'medium'}}</div><div>{{CaseService.case.created_by}}</div></td></tr><tr ng-hide=\"compact\"><th class=\"details-table-header\">Last Updated:</th><td><div>{{CaseService.case.last_modified_date | date:'medium'}}</div><div>{{CaseService.case.last_modified_by}}</div></td></tr><tr ng-hide=\"compact\"><th class=\"details-table-header\">Account Number:</th><td>{{CaseService.case.account_number}}</td></tr><tr ng-hide=\"compact\"><th class=\"details-table-header\">Account Name:</th><td>{{CaseService.account.name}}</td></tr></table></div></div><div style=\"padding-top: 10px;\" class=\"row\"><div class=\"col-xs-12\"><div style=\"float: right;\"><button name=\"updateButton\" ng-disabled=\"!caseDetails.$dirty\" ng-hide=\"updatingDetails\" ng-click=\"updateCase()\" class=\"btn btn-primary\">Update Details</button><span ng-show=\"updatingDetails\" class=\"rha-search-spinner\"></span></div></div></div></div></div></div></form>");
+    "<form name=\"caseDetails\"><div style=\"display: table; width: 100%; padding-bottom: 20px;\"><div style=\"display: table-cell; width: 50%;\"><div><h3 style=\"margin-top: 0px;\">Case {{CaseService.kase.case_number}}</h3></div><input style=\"width: 100%; display: inline-block;\" ng-model=\"CaseService.kase.summary\" name=\"summary\" class=\"form-control\"/><span ng-show=\"caseDetails.summary.$dirty\" style=\"display: inline-block;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></div><div ng-show=\"showEmailNotifications\" style=\"display: table-cell; vertical-align: bottom; width: 50%;\"><div style=\"width: 75%\" class=\"pull-right\"><div rha-emailnotifyselect=\"\"></div></div></div></div><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid rha-side-padding\"><div id=\"rha-case-details\" class=\"row\"><div class=\"col-sm-12 rha-section-header\"><h4 translate=\"\">Details</h4></div><div class=\"container-fluid rha-side-padding\"><div class=\"row\"><div class=\"col-md-4\"><table class=\"table details-table\"><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'Case Type:'|translate}}</div><span ng-show=\"caseDetails.type.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"caseTypes === undefined\" type=\"bootstrap\"><select name=\"type\" style=\"width: 100%;\" ng-model=\"CaseService.kase.type\" ng-options=\"c.name for c in caseTypes track by c.name\" class=\"form-control\"></select></div></td></tr><tr><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'Severity:'|translate}}</div><span ng-show=\"caseDetails.severity.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"CaseService.severities === undefined\" type=\"bootstrap\"><select name=\"severity\" style=\"width: 100%;\" ng-model=\"CaseService.kase.severity\" ng-options=\"s.name for s in CaseService.severities track by s.name\" class=\"form-control\"></select></div></td></tr><tr ng-show=\"CaseService.showFts()\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'24x7 Support:'|translate}}</div></th><td><input ng-model=\"CaseService.kase.fts\" type=\"checkbox\"/></td></tr><tr ng-show=\"CaseService.showFts() &amp;&amp; CaseService.kase.fts\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'24x7 Contact:'|translate}}</div></th><td><input ng-model=\"CaseService.kase.contact_info24_x7\" class=\"form-control\"/></td></tr><tr><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'Status:'|translate}}</div><span ng-show=\"caseDetails.status.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"statuses === undefined\" type=\"bootstrap\"><select name=\"status\" style=\"width: 100%;\" ng-model=\"CaseService.kase.status\" ng-options=\"s.name for s in statuses track by s.name\" class=\"form-control\"></select></div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'Alternate ID:'|translate}}</div><span ng-show=\"caseDetails.alternate_id.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><input style=\"width: 100%\" ng-model=\"CaseService.kase.alternate_id\" name=\"alternate_id\" class=\"form-control\"/></td></tr></table></div><div class=\"col-md-4\"><table class=\"table details-table\"><tr><th><div style=\"vertical-align: 50%; display: inline-block;\">{{'Product:'|translate}}</div><span ng-show=\"caseDetails.product.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"products === undefined\" type=\"bootstrap\"><select name=\"product\" style=\"width: 100%;\" ng-model=\"CaseService.kase.product\" ng-change=\"getProductVersions()\" ng-options=\"s.name for s in products track by s.name\" required=\"required\" class=\"form-control\"></select></div></td></tr><tr><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'Product Version:'|translate}}</div><span ng-show=\"caseDetails.version.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"CaseService.versions.length === 0\" type=\"bootstrap\"><select name=\"version\" style=\"width: 100%;\" ng-options=\"v for v in CaseService.versions track by v\" ng-model=\"CaseService.kase.version\" required=\"required\" class=\"form-control\"></select></div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Support Level:'|translate}}</th><td>{{CaseService.kase.entitlement.sla}}</td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Owner:'|translate}}</th><td>{{CaseService.kase.contact_name}}</td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Red Hat Owner:'|translate}}</th><td>{{CaseService.kase.owner}}</td></tr></table></div><div class=\"col-md-4\"><table class=\"table details-table\"><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'Group:'|translate}}</div><span ng-show=\"caseDetails.group.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"groups === undefined\" type=\"bootstrap\"><select name=\"group\" style=\"width: 100%;\" ng-options=\"g.name for g in groups track by g.number\" ng-model=\"CaseService.kase.group\" class=\"form-control\"></select></div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Opened:'|translate}}</th><td><div>{{CaseService.kase.created_date | date:'MMM d, y h:mm:ss a Z'}}</div><div>{{CaseService.kase.created_by}}</div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Last Updated:'|translate}}</th><td><div>{{CaseService.kase.last_modified_date | date:'MMM d, y h:mm:ss a Z'}}</div><div>{{CaseService.kase.last_modified_by}}</div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Account Number:'|translate}}</th><td>{{CaseService.kase.account_number}}</td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Account Name:'|translate}}</th><td>{{CaseService.account.name}}</td></tr></table></div></div><div style=\"padding-top: 10px;\" class=\"row\"><div class=\"col-xs-12\"><div style=\"float: right;\"><button name=\"updateButton\" ng-disabled=\"!caseDetails.$dirty\" ng-hide=\"updatingDetails\" ng-click=\"updateCase()\" translate=\"\" class=\"btn btn-primary\">Update Details</button><span ng-show=\"updatingDetails\" class=\"rha-search-spinner\"></span></div></div></div></div></div></div></form>");
 }]);
 
 angular.module("cases/views/edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/edit.html",
-    "<!DOCTYPE html><div id=\"redhat-access-case\" class=\"container-offset\"><x-rha-header page=\"caseView\"></x-rha-header><div ng-show=\"securityService.loginStatus.isLoggedIn\" class=\"container-fluid side-padding\"><div class=\"row\"><div class=\"col-xs-12\"><rha-case-details compact=\"false\" loading=\"caseLoading\"></rha-case-details></div></div><div class=\"row\"><div class=\"col-xs-12\"><rha-case-description loading=\"caseLoading\"></rha-case-description></div></div><div class=\"row\"><div class=\"col-xs-12\"><rha-case-attachments loading=\"attachmentsLoading\"></rha-case-attachments></div></div><div class=\"row\"><div class=\"col-xs-12\"><rha-case-recommendations loading=\"recommendationsLoading\"></rha-case-recommendations></div></div><div class=\"row\"><div class=\"col-xs-12\"><rha-case-comments loading=\"commentsLoading\"></rha-case-comments></div></div></div></div>");
+    "<!DOCTYPE html><div id=\"redhat-access-case\" class=\"container-offset\"><div rha-header=\"\" page=\"caseView\"></div><div ng-show=\"securityService.loginStatus.isLoggedIn\" class=\"container-fluid rha-side-padding\"><div ng-show=\"securityService.loginStatus.isLoggedIn &amp;&amp; securityService.loginStatus.hasChat\" class=\"row\"><div class=\"pull-right\"><div rha-chatbutton=\"\"></div></div></div><div ng-show=\"EDIT_CASE_CONFIG.showDetails\" class=\"row\"><div class=\"col-xs-12\"><div rha-casedetails=\"\" compact=\"false\" loading=\"caseLoading\"></div></div></div><div ng-show=\"EDIT_CASE_CONFIG.showDescription\" class=\"row\"><div class=\"col-xs-12\"><div rha-casedescription=\"\" loading=\"caseLoading\"></div></div></div><div ng-show=\"EDIT_CASE_CONFIG.showBugzillas\" class=\"row\"><div class=\"col-xs-12\"><div rha-listbugzillas=\"\" loading=\"caseLoading\"></div></div></div><div ng-show=\"EDIT_CASE_CONFIG.showAttachments\" class=\"row\"><div class=\"col-xs-12\"><div rha-caseattachments=\"\" loading=\"attachmentsLoading\"></div></div></div><div ng-show=\"EDIT_CASE_CONFIG.showRecommendations\" class=\"row\"><div class=\"col-xs-12\"><div rha-caserecommendations=\"\" loading=\"recommendationsLoading\"></div></div></div><div ng-show=\"EDIT_CASE_CONFIG.showComments\" class=\"row\"><div class=\"col-xs-12\"><div rha-casecomments=\"\" loading=\"commentsLoading\"></div></div></div></div></div>");
+}]);
+
+angular.module("cases/views/emailNotifySelect.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("cases/views/emailNotifySelect.html",
+    "<h4 translate=\"\" class=\"rha-section-header\">Email Notification Recipients</h4><span ng-show=\"!securityService.loginStatus.isLoggedIn  || CaseService.usersLoading || securityService.loggingIn\" style=\"margin-left: 5px;\" class=\"rha-search-spinner\"></span><select ui-select2=\"ui-select2\" multiple=\"multiple\" ng-show=\"securityService.userAllowedToManageEmailNotifications() &amp;&amp; securityService.loginStatus.isLoggedIn &amp;&amp; !CaseService.usersLoading &amp;&amp; !securityService.loggingIn\" ng-disabled=\"updatingList\" ng-model=\"CaseService.updatedNotifiedUsers\" ng-change=\"updateNotifyUsers()\" id=\"rha-email-notify-select\" style=\"width: 100%\"><option ng-repeat=\"user in CaseService.users\">{{user.sso_username}}</option></select><div ng-if=\"!securityService.userAllowedToManageEmailNotifications() &amp;&amp; !securityService.loggingIn\"><div style=\"display: inline-block; width: 100%; padding: 6px;\" class=\"well\"><span ng-repeat=\"user in CaseService.updatedNotifiedUsers\" style=\"display: inline-block; word-wrap: break-word; padding: 4px; margin: 2px;\" class=\"well well-sm\">{{user}}</span></div></div>");
+}]);
+
+angular.module("cases/views/entitlementSelect.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("cases/views/entitlementSelect.html",
+    "<div rha-selectloadingindicator=\"\" loading=\"CaseService.entitlementsLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.entitlement\" ng-change=\"CaseService.onSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"entitlement in CaseService.entitlements\">{{entitlement}}</option></select></div>");
 }]);
 
 angular.module("cases/views/exportCSVButton.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/exportCSVButton.html",
-    "<button ng-click=\"export()\" ng-hide=\"exporting\" class=\"btn btn-secondary\">Export All as CSV</button><div ng-show=\"exporting\"><span class=\"rha-search-spinner\"></span><span>Exporting CSV...</span></div>");
+    "<button ng-click=\"exports()\" ng-hide=\"exporting\" translate=\"\" class=\"btn btn-secondary\">Export All as CSV</button><div ng-show=\"exporting\"><span class=\"rha-search-spinner\"></span><span>{{'Exporting CSV...'|translate}}</span></div>");
+}]);
+
+angular.module("cases/views/group.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("cases/views/group.html",
+    "<div id=\"redhat-access-case\" class=\"container-offset\"><div rha-header=\"\" page=\"manageGroups\"></div><div ng-show=\"securityService.loginStatus.isLoggedIn\" class=\"container-fluid rha-side-padding\"><div style=\"padding-bottom: 20px;\" class=\"row\"><div class=\"col-xs-6\"><div rha-searchbox=\"\" placeholder=\"&quot;Search Groups&quot;\"></div></div><div class=\"col-xs-6\"><div rha-creategroupbutton=\"\" class=\"pull-right\"></div><div rha-deletegroupbutton=\"\" style=\"padding-right: 20px;\" class=\"pull-right\"></div></div></div><div class=\"row\"><div class=\"col-xs-12\"><div rha-grouplist=\"\"></div></div></div></div></div>");
+}]);
+
+angular.module("cases/views/groupList.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("cases/views/groupList.html",
+    "<span ng-show=\"groupsLoading\" class=\"rha-search-spinner\"></span><div ng-show=\"!groupsLoading &amp;&amp; listEmpty\">{{'No groups found.'|translate}}</div><div ng-hide=\"groupsLoading || listEmpty\"><table ng-table=\"tableParams\" class=\"table table-bordered table-striped\"><thead style=\"text-align: center\"><th><input type=\"checkbox\" style=\"width: 25px;\" ng-model=\"masterSelected\" ng-change=\"onMasterCheckboxClicked()\"/></th><th ng-class=\"{&quot;sort-asc&quot;: table-params.isSortBy(&quot;name&quot;, &quot;asc&quot;), &quot;sort-desc&quot;: tableParams.isSortBy(&quot;name&quot;, &quot;desc&quot;)}\" ng-click=\"tableParams.sorting({&quot;name&quot;: tableParams.isSortBy(&quot;name&quot;, &quot;asc&quot;) ? &quot;desc&quot; : &quot;asc&quot;})\" class=\"sortable\"><div>{{'Name'|translate}}</div></th></thead><tbody><tr ng-repeat=\"group in GroupService.groupsOnScreen\"><td style=\"text-align: center; width: 25px;\"><input type=\"checkbox\" ng-model=\"group.selected\"/></td><td data-title=\"&quot;Group Name&quot;\" sortable=\"&quot;name&quot;\"><div>{{group.name}}</div></td></tr></tbody></table></div>");
 }]);
 
 angular.module("cases/views/groupSelect.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/groupSelect.html",
-    "<label>Group</label><x-rha-select-loading-indicator loading=\"groupsLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.group\" ng-change=\"CaseService.onSelectChanged()\" multiple=\"multiple\" style=\"width: 100%\"><option ng-repeat=\"group in CaseService.groups\" value=\"{{group.number}}\">{{group.name}}</option></select></x-rha-select-loading-indicator>");
+    "<div rha-selectloadingindicator=\"\" loading=\"CaseService.groupsLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.group\" ng-change=\"CaseService.onGroupSelectChanged()\" placeholder=\"Select a Group\" style=\"width: 100%\"><option value=\"\" ng-if=\"showsearchoptions\">All Groups</option><option value=\"{{CASE_GROUPS.ungrouped}}\" ng-if=\"showsearchoptions\">Ungrouped Cases</option><option disabled=\"disabled\" ng-hide=\"CaseService.groups.length &lt; 1\" ng-if=\"showsearchoptions\">────────────────────────────────────────</option><option ng-repeat=\"group in CaseService.groups\" value=\"{{group.number}}\">{{group.name}}</option><option ng-if=\"securityService.userAllowedToManageGroups() &amp;&amp; showsearchoptions\" disabled=\"disabled\">────────────────────────────────────────</option><option ng-if=\"securityService.userAllowedToManageGroups() &amp;&amp; showsearchoptions\" value=\"{{CASE_GROUPS.manage}}\">Manage Case Groups</option></select></div>");
 }]);
 
 angular.module("cases/views/list.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/list.html",
-    "<div id=\"redhat-access-case\" style=\"padding-bottom: 15px;\" class=\"container-offset\"><x-rha-header page=\"caseList\"></x-rha-header><div class=\"container-fluid side-padding\"><div class=\"row\"><div class=\"col-md-9\"><rha-list-filter prefilter=\"preFilter\" postfilter=\"postFilter\"></rha-list-filter></div><div class=\"col-md-3\"><button ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ui-sref=\"new\" class=\"btn btn-primary pull-right\">Open a New Support Case</button></div></div></div><div style=\"margin-left: 10px; margin-right: 10px;\" class=\"bottom-border\"></div><div class=\"container-fluid side-padding\"><div ng-show=\"loadingCases &amp;&amp; securityService.loginStatus.isLoggedIn\" class=\"row\"><div class=\"col-xs-12\"><span class=\"rha-search-spinner\"></span></div></div><div ng-show=\"CaseListService.cases.length == 0 &amp;&amp; !loadingCases\" class=\"row\"><div class=\"col-xs-12\"><div>No cases found with given filters.</div></div></div><div ng-hide=\"CaseListService.cases.length == 0 || loadingCases || !securityService.loginStatus.isLoggedIn\"><div class=\"row\"><div class=\"col-xs-12\"><table ng-table=\"tableParams\" style=\"text-align: left\" class=\"table table-bordered table-striped\"><tr ng-repeat=\"case in $data\"><td data-title=\"&quot;Case ID&quot;\" sortable=\"&quot;case_number&quot;\" style=\"width: 10%\"><a href=\"#/case/{{case.case_number}}\">{{case.case_number}}</a></td><td data-title=\"&quot;Summary&quot;\" sortable=\"&quot;summary&quot;\" style=\"width: 15%\">{{case.summary}}</td><td data-title=\"&quot;Product/Version&quot;\" sortable=\"&quot;product&quot;\">{{case.product}} / {{case.version}}</td><td data-title=\"&quot;Status&quot;\" sortable=\"&quot;status&quot;\">{{case.status}}</td><td data-title=\"&quot;Severity&quot;\" sortable=\"&quot;severity&quot;\">{{case.severity}}</td><td data-title=\"&quot;Owner&quot;\" sortable=\"&quot;owner&quot;\">{{case.owner}}</td><td data-title=\"&quot;Opened&quot;\" sortable=\"&quot;created_date&quot;\" style=\"width: 10%\">{{case.created_date | date:'longDate'}}</td><td data-title=\"&quot;Updated&quot;\" sortable=\"&quot;last_modified_date&quot;\" style=\"width: 10%\">{{case.last_modified_date | date:'longDate'}}</td></tr></table></div></div><div class=\"row\"><div class=\"col-xs-12\"><x-rha-export-csv-button></x-rha-export-csv-button></div></div></div></div></div>");
+    "<div id=\"redhat-access-case\" style=\"padding-bottom: 15px;\" class=\"container-offset\"><div rha-header=\"\" page=\"caseList\"></div><div class=\"container-fluid rha-side-padding\"><div class=\"row\"><div class=\"col-md-6\"><div rha-listfilter=\"\"></div></div><div class=\"col-md-3\"><div class=\"pull-right\"><div rha-chatbutton=\"\"></div></div></div><div class=\"col-md-3\"><button ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ui-sref=\"new\" translate=\"\" class=\"btn btn-primary pull-right\">Open a New Support Case</button></div></div></div><div style=\"margin-left: 10px; margin-right: 10px;\" class=\"rha-bottom-border\"></div><div class=\"container-fluid rha-side-padding\"><div ng-show=\"SearchCaseService.searching &amp;&amp; securityService.loginStatus.isLoggedIn\" class=\"row\"><div class=\"col-xs-12\"><span class=\"rha-search-spinner\"></span></div></div><div ng-show=\"SearchCaseService.cases.length == 0 &amp;&amp; !SearchCaseService.searching &amp;&amp; securityService.loginStatus.isLoggedIn\" class=\"row\"><div class=\"col-xs-12\"><div>{{'No cases found with given filters.'|translate}}</div></div></div><div ng-hide=\"SearchCaseService.cases.length == 0 || SearchCaseService.searching || !securityService.loginStatus.isLoggedIn\"><div class=\"row\"><div class=\"col-xs-12\"><table ng-table=\"tableParams\" style=\"text-align: left\" class=\"table table-bordered table-striped\"><tr ng-repeat=\"case in $data\"><td data-title=\"&quot;Case ID&quot;\" sortable=\"&quot;case_number&quot;\" style=\"width: 10%\"><a href=\"#/case/{{case.case_number}}\">{{case.case_number}}</a></td><td data-title=\"&quot;Summary&quot;\" sortable=\"&quot;summary&quot;\" style=\"width: 15%\">{{case.summary}}</td><td data-title=\"&quot;Product/Version&quot;\" sortable=\"&quot;product&quot;\">{{case.product}} / {{case.version}}</td><td data-title=\"&quot;Status&quot;\" sortable=\"&quot;status&quot;\">{{case.status}}</td><td data-title=\"&quot;Severity&quot;\" sortable=\"&quot;severity&quot;\">{{case.severity}}</td><td data-title=\"&quot;Owner&quot;\" sortable=\"&quot;owner&quot;\">{{case.contact_name}}</td><td data-title=\"&quot;Opened&quot;\" sortable=\"&quot;created_date&quot;\" style=\"width: 10%\">{{case.created_date | date:'longDate'}}</td><td data-title=\"&quot;Updated&quot;\" sortable=\"&quot;last_modified_date&quot;\" style=\"width: 10%\">{{case.last_modified_date | date:'longDate'}}</td></tr></table></div></div><div class=\"row\"><div class=\"col-xs-12\"><div rha-exportcsvbutton=\"\"></div></div></div></div></div></div>");
 }]);
 
 angular.module("cases/views/listAttachments.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/listAttachments.html",
-    "<div ng-show=\"AttachmentsService.originalAttachments.length == 0\" style=\"padding-bottom: 10px;\">No attachments added</div><div ng-show=\"AttachmentsService.originalAttachments.length &gt; 0\" class=\"panel panel-default\"><div class=\"panel-heading\">Attached Files</div><table class=\"table table-hover table-bordered\"><thead><th>Filename</th><th>Description</th><th>Size</th><th>Attached</th><th>Attached By</th><th>Delete</th></thead><tbody><tr ng-repeat=\"attachment in AttachmentsService.originalAttachments\"><td><a ng-hide=\"attachment.uri == null\" href=\"{{attachment.uri}}\">{{attachment.file_name}}</a><div ng-show=\"attachment.uri == null\">{{attachment.file_name}}</div></td><td>{{attachment.description}}</td><td>{{attachment.length | bytes}}</td><td>{{attachment.created_date | date:'medium'}}</td><td>{{attachment.created_by}}</td><td><div ng-show=\"disabled\">Delete</div><a ng-click=\"AttachmentsService.removeOriginalAttachment($index)\" ng-hide=\"disabled\">Delete</a></td></tr></tbody></table></div>");
+    "<div ng-show=\"AttachmentsService.originalAttachments.length == 0\" style=\"padding-bottom: 10px;\">{{'No attachments added'|translate}}</div><div ng-show=\"AttachmentsService.originalAttachments.length &gt; 0\" class=\"panel panel-default\"><div class=\"panel-heading\">{{'Attached Files'|translate}}</div><table class=\"table table-hover table-bordered\"><thead><th>{{'Filename'|translate}}</th><th>{{'Description'|translate}}</th><th>{{'Size'|translate}}</th><th>{{'Attached'|translate}}</th><th>{{'Attached By'|translate}}</th><th>{{'Delete'|translate}}</th></thead><tbody><tr ng-repeat=\"attachment in AttachmentsService.originalAttachments\"><td><a ng-hide=\"attachment.uri == null\" href=\"{{attachment.uri}}\">{{attachment.file_name}}</a><div ng-show=\"attachment.uri == null\">{{attachment.file_name}}</div></td><td>{{attachment.description}}</td><td>{{attachment.length | bytes}}</td><td>{{attachment.created_date | date:'medium'}}</td><td>{{attachment.created_by}}</td><td><div ng-show=\"disabled\">{{'Delete'|translate}}</div><a ng-click=\"AttachmentsService.removeOriginalAttachment($index)\" ng-hide=\"disabled\">{{'Delete'|translate}}</a></td></tr></tbody></table></div>");
+}]);
+
+angular.module("cases/views/listBugzillas.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("cases/views/listBugzillas.html",
+    "<div ng-show=\"securityService.loginStatus.isInternal\" class=\"redhat-access-bz\"><h4 style=\"padding-top: 20px;\" class=\"section-header\">{{'Bugzilla Tickets'|translate}}</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"CaseService.bugzillaList.bugzilla.length &gt; 0\" style=\"padding-bottom: 10px;\">{{'No linked bugzillas'|translate}}</div><div ng-show=\"CaseService.bugzillaList.bugzilla.length &gt; 0\" class=\"panel panel-default\"><table class=\"table table-hover table-bordered\"><thead><th>{{'Bugzilla Number'|translate}}</th><th>{{'Summary of Request'|translate}}</th></thead><tbody>  <tr ng-repeat=\"bugzilla in CaseService.bugzillaList.bugzilla\"><td><a href=\"{{bugzilla.resource_view_uri}}\" target=\"_blank\">{{bugzilla.bugzilla_number}}</a></td><td>{{bugzilla.summary}}</td></tr></tbody></table></div></div>");
 }]);
 
 angular.module("cases/views/listFilter.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/listFilter.html",
-    "<div class=\"container-fluid\"><div class=\"row\"><div style=\"padding-bottom: 14px;\" class=\"col-md-6\"><div class=\"input-group\"><input ng-disabled=\"!securityService.loginStatus.isLoggedIn\" placeholder=\"Search\" ng-model=\"keyword\" ng-keypress=\"onFilterKeyPress($event)\" class=\"form-control\"/><span class=\"input-group-btn\"><button ng-click=\"doFilter()\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" class=\"btn btn-default btn-primary\"><i class=\"glyphicon glyphicon-search\"></i> Search</button></span></div></div><div style=\"padding-bottom: 14px;\" class=\"col-md-3\"><div style=\"display:table\"><x-rha-select-loading-indicator loading=\"groupsLoading\" type=\"bootstrap\"><select id=\"rha-case-group-filter\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" style=\"display: table-cell;\" ng-model=\"group\" ng-change=\"doFilter()\" ng-options=\"g.name for g in groups track by g.number\" class=\"form-control\"><option value=\"\">All Groups</option></select></x-rha-select-loading-indicator><span style=\"display: table-cell; width: 1%; padding-left: 6px;\" popover=\"Filtering by case groups helps you find related cases.\" tabindex=\"0\" popover-append-to-body=\"true\" popover-trigger=\"mouseenter\" class=\"glyphicon glyphicon-question-sign\"></span></div></div><div style=\"padding-bottom: 14px;\" class=\"col-md-3\"><select ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"statusFilter\" ng-change=\"doFilter()\" class=\"form-control\"><option value=\"both\" selected=\"selected\">Open and Closed</option><option value=\"open\">Open</option><option value=\"closed\">Closed</option></select></div></div></div>");
+    "<div class=\"container-fluid\"><div class=\"row\"><div style=\"padding-bottom: 14px;\" class=\"col-md-6\"><div rha-searchbox=\"\" placeholder=\"Search\"></div></div><div style=\"padding-bottom: 14px;\" class=\"col-md-3\"><div style=\"display:table\"><div rha-groupselect=\"\" showsearchoptions=\"true\"></div><span style=\"display: table-cell; width: 1%; padding-left: 6px;\" popover=\"Filtering by case groups helps you find related cases.\" tabindex=\"0\" popover-append-to-body=\"true\" popover-trigger=\"mouseenter\" class=\"glyphicon glyphicon-question-sign\"></span></div></div><div style=\"padding-bottom: 14px;\" class=\"col-md-3\"><div rha-statusselect=\"\"></div></div></div></div>");
 }]);
 
 angular.module("cases/views/listNewAttachments.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/listNewAttachments.html",
-    "<div class=\"container-fluid\"><div class=\"row\"><div class=\"col-xs-12\"><div class=\"panel panel-default\"><div class=\"panel-heading\">Files to Attach</div><ul class=\"list-group\"><li ng-repeat=\"attachment in AttachmentsService.updatedAttachments\" ng-hide=\"AttachmentsService.updatedAttachments.length &lt;= 0\" class=\"list-group-item\">{{attachment.file_name}} ({{attachment.length | bytes}}) - {{attachment.description}}<button type=\"button\" style=\"float: right\" ng-click=\"removeLocalAttachment($index)\" class=\"close\">&times;</button></li><li ng-repeat=\"attachment in TreeViewSelectorUtils.getSelectedLeaves(AttachmentsService.backendAttachments)\" ng-hide=\"TreeViewSelectorUtils.getSelectedLeaves(AttachmentsService.backendAttachments).length &lt;= 0\" class=\"list-group-item\">{{attachment}}</li></ul></div></div></div></div>");
+    "<div class=\"container-fluid\"><div class=\"row\"><div class=\"col-xs-12\"><div class=\"panel panel-default\"><div class=\"panel-heading\">{{'Files to Attach'|translate}}</div><ul class=\"list-group\"><li ng-repeat=\"attachment in AttachmentsService.updatedAttachments\" ng-hide=\"AttachmentsService.updatedAttachments.length &lt;= 0\" class=\"list-group-item\">{{attachment.file_name}} ({{attachment.length | bytes}}) - {{attachment.description}}<button type=\"button\" style=\"float: right\" ng-click=\"removeLocalAttachment($index)\" class=\"close\">&times;</button></li><li ng-repeat=\"attachment in TreeViewSelectorUtils.getSelectedLeaves(AttachmentsService.backendAttachments)\" ng-hide=\"TreeViewSelectorUtils.getSelectedLeaves(AttachmentsService.backendAttachments).length &lt;= 0\" class=\"list-group-item\">{{attachment}}</li></ul></div></div></div></div>");
 }]);
 
 angular.module("cases/views/new.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/new.html",
-    "<div class=\"container-offset\"><div id=\"redhat-access-case\" class=\"container-fluid\"><x-rha-header page=\"newCase\"></x-rha-header><div class=\"row\"><div style=\"border-right: 1px solid; border-color: #cccccc;\" class=\"col-xs-6\"><div class=\"container-fluid side-padding\"><div ng-class=\"{&quot;hidden&quot;: isPage2}\" id=\"rha-case-wizard-page-1\" class=\"create-case-section\"><div class=\"row create-field\"><div class=\"col-md-4\"><div>Product:</div></div><div class=\"col-md-8\"><x-rha-select-loading-indicator loading=\"productsLoading\" type=\"bootstrap\"><select ng-disabled=\"!securityService.loginStatus.isLoggedIn || submittingCase\" style=\"width: 100%;\" ng-model=\"CaseService.case.product\" ng-change=\"getProductVersions(CaseService.case.product)\" ng-options=\"p.name for p in products track by p.code\" ng-blur=\"getRecommendations()\" class=\"form-control\"></select></x-rha-select-loading-indicator></div></div><div class=\"row create-field\"><div class=\"col-md-4\"><div>Product Version:</div></div><div class=\"col-md-8\"><div><x-rha-select-loading-indicator loading=\"versionLoading\" type=\"bootstrap\"><select style=\"width: 100%;\" ng-model=\"CaseService.case.version\" ng-options=\"v for v in versions\" ng-change=\"validateForm()\" ng-disabled=\"versionDisabled || !securityService.loginStatus.isLoggedIn || submittingCase\" ng-blur=\"getRecommendations()\" class=\"form-control\"></select></x-rha-select-loading-indicator></div></div></div><div class=\"row create-field\"><div class=\"col-md-4\"><div>Summary:</div></div><div class=\"col-md-8\"><input id=\"rha-case-summary\" style=\"width: 100%;\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-change=\"validateForm()\" ng-model=\"CaseService.case.summary\" ng-blur=\"getRecommendations()\" class=\"form-control\"/></div></div><div class=\"row create-field\"><div class=\"col-md-4\"><div>Description:</div></div><div class=\"col-md-8\"><textarea style=\"width: 100%; height: 200px; max-width: 100%;\" ng-model=\"CaseService.case.description\" ng-change=\"validateForm()\" ng-disabled=\"!securityService.loginStatus.isLoggedIn || submittingCase\" ng-blur=\"getRecommendations()\" class=\"form-control description-box\"></textarea></div></div><div class=\"row\"><div ng-class=\"{&quot;hidden&quot;: isPage2}\" class=\"col-xs-12\"><button style=\"float: right\" ng-click=\"doNext()\" ng-disabled=\"incomplete\" class=\"btn btn-primary\">Next</button></div></div></div><div ng-class=\"{&quot;hidden&quot;: isPage1}\" id=\"rha-case-wizard-page-1\" class=\"create-case-section\"><div class=\"bottom-border\"><div class=\"row\"><div class=\"col-xs-12\"><div style=\"margin-bottom: 10px;\" class=\"bold\">{{CaseService.case.product.name}} {{CaseService.case.version}}</div></div></div><div class=\"row\"><div class=\"col-xs-12\"><div style=\"font-size: 90%; margin-bottom: 4px;\" class=\"bold\">{{CaseService.case.summary}}</div></div></div><div class=\"row\"><div class=\"col-xs-12\"><div style=\"font-size: 85%\">{{CaseService.case.description}}</div></div></div></div><div class=\"row create-field\"><div class=\"col-md-4\">Severity:</div><div class=\"col-md-8\"><x-rha-loading-indicator loading=\"severitiesLoading\"><select style=\"width: 100%;\" ng-model=\"CaseService.case.severity\" ng-change=\"validatePage2()\" ng-disabled=\"submittingCase\" ng-options=\"s.name for s in severities track by s.name\" class=\"form-control\"></select></x-rha-loading-indicator></div></div><div class=\"row create-field\"><div class=\"col-md-4\">Case Group:</div><div class=\"col-md-8\"><x-rha-loading-indicator loading=\"groupsLoading\"><select style=\"width: 100%;\" ng-disabled=\"submittingCase\" ng-model=\"CaseService.case.group\" ng-change=\"validatePage2()\" ng-options=\"g.name for g in groups track by g.number\" class=\"form-control\"></select></x-rha-loading-indicator></div></div><div class=\"row create-field\"><div class=\"col-xs-12\"><div>Attachments:</div></div></div><div class=\"bottom-border\"><div style=\"overflow: auto\" class=\"row create-field\"><div class=\"col-xs-12\"><rha-list-new-attachments></rha-list-new-attachments></div></div><div ng-hide=\"submittingCase\" class=\"row create-field\"><div class=\"col-xs-12\"><rha-attach-local-file disabled=\"submittingCase\"></rha-attach-local-file></div></div><div ng-hide=\"submittingCase\" class=\"row create-field\"><div class=\"col-xs-12\"><div class=\"server-attach-header\">Server File(s) To Attach:<rha-choice-tree ng-model=\"attachmentTree\" ng-controller=\"BackEndAttachmentsCtrl\"></rha-choice-tree></div></div></div></div><div style=\"margin-top: 20px;\" class=\"row\"><div class=\"col-xs-6\"><button style=\"float: left\" ng-click=\"doPrevious()\" ng-disabled=\"submittingCase\" class=\"btn btn-primary\">Previous</button></div><div class=\"col-xs-6\"><button style=\"float: right\" ng-disabled=\"submittingCase\" ng-hide=\"submittingCase\" ng-click=\"doSubmit()\" class=\"btn btn-primary\">Submit</button><span ng-show=\"submittingCase\" style=\"float: right\" class=\"rha-search-spinner\"></span></div></div></div></div></div><div style=\"overflow: auto;\" rha-resizable=\"rha-resizable\" rha-dom-ready=\"domReady\" class=\"col-xs-6\"><div ng-controller=\"SearchController\" style=\"overflow: vertical;\"><x-rha-accordion-search-results></x-rha-accordion-search-results></div></div></div></div></div>");
+    "<div class=\"container-offset\"><div id=\"redhat-access-case\" class=\"container-fluid\"><div rha-header=\"\" page=\"newCase\"></div><div ng-show=\"securityService.loginStatus.isLoggedIn &amp;&amp; securityService.loginStatus.hasChat\" class=\"row\"><div class=\"pull-right\"><div rha-chatbutton=\"\" style=\"margin-right: 10px;\"></div></div></div><div ng-show=\"securityService.loginStatus.isLoggedIn &amp;&amp; securityService.loginStatus.hasChat\" class=\"rha-bottom-border\"></div><div class=\"row\"><div style=\"border-right: 1px solid; border-color: #cccccc;\" class=\"col-xs-6\"><div class=\"container-fluid rha-side-padding\"><div ng-class=\"{&quot;hidden&quot;: isPage2}\" id=\"rha-case-wizard-page-1\" class=\"rha-create-case-section\"><div ng-if=\"securityService.loginStatus.isInternal\"><div class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'Account:'|translate}}</div></div><div class=\"col-md-8\"><div rha-accountselect=\"\"></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'Owner:'|translate}}</div></div><div class=\"col-md-8\"><div rha-ownerselect=\"\"></div></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'Product:'|translate}}</div></div><div class=\"col-md-8\"><div rha-selectloadingindicator=\"\" loading=\"productsLoading\" type=\"bootstrap\"><select ng-disabled=\"!securityService.loginStatus.isLoggedIn || submittingCase\" style=\"width: 100%;\" ng-model=\"CaseService.kase.product\" ng-change=\"getProductVersions(CaseService.kase.product)\" ng-options=\"p.name for p in products track by p.code\" ng-blur=\"getRecommendations()\" class=\"form-control\"></select></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'Product Version:'|translate}}</div></div><div class=\"col-md-8\"><div><div rha-selectloadingindicator=\"\" loading=\"versionLoading\" type=\"bootstrap\"><select style=\"width: 100%;\" ng-model=\"CaseService.kase.version\" ng-options=\"v for v in versions\" ng-change=\"CaseService.validateNewCasePage1()\" ng-disabled=\"versionDisabled || !securityService.loginStatus.isLoggedIn || submittingCase\" ng-blur=\"getRecommendations()\" class=\"form-control\"></select></div></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'Summary:'|translate}}</div></div><div class=\"col-md-8\"><input id=\"rha-case-summary\" style=\"width: 100%;\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-change=\"CaseService.validateNewCasePage1()\" ng-model=\"CaseService.kase.summary\" ng-blur=\"getRecommendations()\" class=\"form-control\"/></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'Description:'|translate}}</div></div><div class=\"col-md-8\"><textarea style=\"width: 100%; height: 200px; max-width: 100%;\" ng-model=\"CaseService.kase.description\" ng-change=\"CaseService.validateNewCasePage1()\" ng-disabled=\"!securityService.loginStatus.isLoggedIn || submittingCase\" ng-blur=\"getRecommendations()\" class=\"form-control description-box\"></textarea></div></div><div class=\"row\"><div ng-class=\"{&quot;hidden&quot;: isPage2}\" class=\"col-xs-12\"><button style=\"float: right\" ng-click=\"doNext()\" ng-disabled=\"CaseService.newCasePage1Incomplete\" translate=\"\" class=\"btn btn-primary\">Next</button></div></div></div><div ng-class=\"{hidden: isPage1}\" id=\"rha-case-wizard-page-2\" class=\"rha-create-case-section\"><div class=\"rha-bottom-border\"><div class=\"row\"><div class=\"col-xs-12\"><div style=\"margin-bottom: 10px;\" class=\"rha-bold\">{{CaseService.kase.product.name}} {{CaseService.kase.version}}</div></div></div><div class=\"row\"><div class=\"col-xs-12\"><div style=\"font-size: 90%; margin-bottom: 4px;\" class=\"rha-bold\">{{CaseService.kase.summary}}</div></div></div><div class=\"row\"><div class=\"col-xs-12\"><div style=\"font-size: 85%\">{{CaseService.kase.description}}</div></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\">Support Level:</div><div ng-show=\"CaseService.entitlements.length &lt;= 1\" class=\"col-md-8\">{{CaseService.entitlements[0]}}</div><div ng-hide=\"CaseService.entitlements.length &lt;= 1\" class=\"col-md-8\"><div rha-entitlementselect=\"\"></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\">{{'Severity:'|translate}}</div><div class=\"col-md-8\"><div rha-loadingindicator=\"\" loading=\"severitiesLoading\"><select style=\"width: 100%;\" ng-model=\"CaseService.kase.severity\" ng-change=\"validatePage2()\" ng-disabled=\"submittingCase\" ng-options=\"s.name for s in CaseService.severities track by s.name\" class=\"form-control\"></select></div></div></div><div ng-show=\"CaseService.showFts()\" style=\"padding-left: 30px;\"><div class=\"row rha-create-field\"><div class=\"col-md-12\"><span>{{'24x7 Support:'|translate}}</span><input type=\"checkbox\" ng-model=\"CaseService.fts\" style=\"display: inline-block; padding-left: 10px;\"/></div></div><div ng-show=\"CaseService.fts\" class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'24x7 Contact:'|translate}}</div></div><div class=\"col-md-8\"><input ng-model=\"CaseService.fts_contact\" class=\"form-control\"/></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\">{{'Case Group:'|translate}}</div><div class=\"col-md-8\"><div rha-groupselect=\"\" showsearchoptions=\"false\"></div></div></div><div ng-show=\"NEW_CASE_CONFIG.showAttachments\"><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><div>{{'Attachments:'|translate}}</div></div></div><div class=\"rha-bottom-border\"><div style=\"overflow: auto\" class=\"row rha-create-field\"><div class=\"col-xs-12\"><div rha-listnewattachments=\"\"></div></div></div><div ng-hide=\"submittingCase\" class=\"row rha-create-field\"><div class=\"col-xs-12\"><div rha-attachlocalfile=\"\" disabled=\"submittingCase\"></div></div></div><div ng-hide=\"submittingCase\" class=\"row rha-create-field\"><div class=\"col-xs-12\"><div ng-show=\"NEW_CASE_CONFIG.showServerSideAttachments\"><div class=\"server-attach-header\">Server File(s) To Attach:<div rha-choicetree=\"\" ng-model=\"attachmentTree\" ng-controller=\"BackEndAttachmentsCtrl\"></div></div></div></div></div></div></div><div style=\"margin-top: 20px;\" class=\"row\"><div class=\"col-xs-6\"><button style=\"float: left\" ng-click=\"doPrevious()\" ng-disabled=\"submittingCase\" translate=\"\" class=\"btn btn-primary\">Previous</button></div><div class=\"col-xs-6\"><button style=\"float: right\" ng-disabled=\"submittingCase\" ng-hide=\"submittingCase\" ng-click=\"doSubmit($event)\" translate=\"\" class=\"btn btn-primary\">Submit</button><span ng-show=\"submittingCase\" style=\"float: right\" class=\"rha-search-spinner\"></span></div></div></div></div></div><div style=\"overflow: auto;\" rha-resizable=\"rha-resizable\" rha-domready=\"domReady\" ng-show=\"NEW_CASE_CONFIG.showRecommendations\" class=\"col-xs-6\"><div ng-controller=\"SearchController\" style=\"overflow: vertical;\"><div rha-accordionsearchresults=\"\"></div></div></div></div></div></div>");
 }]);
 
 angular.module("cases/views/ownerSelect.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/ownerSelect.html",
-    "<div id=\"rha-owner-select\"><label>Owner</label><x-rha-select-loading-indicator loading=\"ownersLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.owner\" ng-change=\"CaseService.onSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"owner in CaseService.owners\">{{owner.sso_username}}</option></select></x-rha-select-loading-indicator></div>");
+    "<div id=\"rha-owner-select\"><div rha-selectloadingindicator=\"\" loading=\"CaseService.usersLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.owner\" ng-change=\"CaseService.onOwnerSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"user in CaseService.users\">{{user.sso_username}}</option></select></div></div>");
 }]);
 
 angular.module("cases/views/productSelect.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/productSelect.html",
-    "<label>Product</label><x-rha-select-loading-indicator loading=\"productsLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.product\" ng-change=\"CaseService.onSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"product in CaseService.products\">{{product.name}}</option></select></x-rha-select-loading-indicator>");
+    "<div rha-selectloadingindicator=\"\" loading=\"productsLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.product\" ng-change=\"CaseService.onSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"product in CaseService.products\">{{product.name}}</option></select></div>");
 }]);
 
 angular.module("cases/views/recommendationsSection.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/recommendationsSection.html",
-    "<h4 class=\"section-header\">Recommendations</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid side-padding\"><div class=\"row\"><div ng-repeat=\"recommendation in recommendationsOnScreen\"><div class=\"col-xs-3\"><div class=\"bold\">{{recommendation.title}}</div><div style=\"padding: 8px 0;word-wrap:break-word;\">{{recommendation.resolution.text | recommendationsResolution}}</div><a href=\"{{recommendation.view_uri}}\" target=\"_blank\">View full article in new window</a></div></div></div><div class=\"row\"><div class=\"col-xs-12\"><pagination boundary-links=\"true\" total-items=\"RecommendationsService.recommendations.length\" on-select-page=\"selectRecommendationsPage(page)\" items-per-page=\"recommendationsPerPage\" page=\"currentRecommendationPage\" max-size=\"maxRecommendationsSize\" previous-text=\"&lt;\" next-text=\"&gt;\" first-text=\"&lt;&lt;\" last-text=\"&gt;&gt;\" class=\"pagination-sm\"></pagination></div></div></div>");
+    "<div id=\"rha-recommendation-section\"><div style=\"margin-bottom: 10px;\" class=\"rha-section-header\"><h4 style=\"display: inline; padding-right: 10px;\" translate=\"\">Recommendations</h4><span style=\"display: inline-block; height: 11px; width: 11px;\" ng-show=\"RecommendationsService.loadingRecommendations\" class=\"rha-search-spinner-sm\"></span></div><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid rha-side-padding\"><div class=\"row\"><div ng-repeat=\"recommendation in recommendationsOnScreen\"><div class=\"col-xs-3\"><div style=\"position: absolute; left: 0px;\"><span ng-class=\"{pinned: recommendation.pinned &amp;&amp; !recommendation.pinning, &quot;not-pinned&quot;: !recommendation.pinned &amp;&amp; !recommendation.pinning, &quot;rha-search-spinner-sm&quot;: recommendation.pinning}\" ng-click=\"pinRecommendation(recommendation, $index, $event)\" style=\"cursor: pointer;\">&nbsp;</span></div><div><div style=\"overflow: hidden;\" class=\"rha-bold\">{{recommendation.title}}</div><span ng-show=\"recommendation.handPicked\" ng-class=\"{&quot;hand-picked&quot;: recommendation.handPicked}\" translate=\"\">handpicked</span><div style=\"padding: 8px 0;word-wrap:break-word;\">{{recommendation.resolution.text | recommendationsResolution}}</div><a ng-click=\"triggerAnalytics($event)\" href=\"{{recommendation.view_uri}}\" target=\"_blank\">{{'View full article in new window'|translate}}</a></div></div></div></div><div style=\"padding-top: 10px;\" ng-hide=\"recommendationsOnScreen.length == 0\" class=\"row\"><div class=\"col-xs-12\"><pagination boundary-links=\"true\" total-items=\"RecommendationsService.recommendations.length\" on-select-page=\"selectRecommendationsPage(page)\" items-per-page=\"recommendationsPerPage\" page=\"currentRecommendationPage\" max-size=\"maxRecommendationsSize\" previous-text=\"&lt;\" next-text=\"&gt;\" first-text=\"&lt;&lt;\" last-text=\"&gt;&gt;\" class=\"pagination-sm\"></pagination></div></div></div></div>");
+}]);
+
+angular.module("cases/views/requestManagementEscalationModal.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("cases/views/requestManagementEscalationModal.html",
+    "<div class=\"modal-header\"><h3 translate=\"\">Request Management Escalation</h3></div><div style=\"padding: 20px;\" class=\"container-fluid\"><div class=\"row\"><div class=\"col-sm-12\"><span>{{'If you feel the issue has become more severe or the case should be a higher priority, please provide a detailed comment, and the case will be reviewed by a support manager.'|translate}}</span><a href=\"https://access.redhat.com/site/support/policy/mgt_escalation\">{{'Learn more'|translate}}</a></div></div><div style=\"padding-top: 10px;\" class=\"row\"><div class=\"col-sm-12\"><div>{{'Comment:'|translate}}</div><textarea style=\"width: 100%; max-width: 100%; height: 200px;\" ng-model=\"commentText\" ng-disabled=\"submittingRequest\"></textarea></div></div><div style=\"border-top: 1px; solid #cccccc; padding-top: 10px;\" class=\"row\"><div class=\"col-sm-12\"><div class=\"pull-right\"><button style=\"margin-left: 10px;\" ng-click=\"submitRequestClick(commentText)\" ng-disabled=\"submittingRequest\" class=\"btn-secondary btn\"><span>{{'Submit Request'|translate}}</span></button></div><button ng-click=\"closeModal()\" ng-disabled=\"submittingRequest\" class=\"btn-secondary btn pull-right\">Cancel</button><span ng-show=\"submittingRequest\" class=\"rha-search-spinner\"></span></div></div></div>");
 }]);
 
 angular.module("cases/views/search.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/search.html",
-    "<div id=\"rha-case-search\" class=\"container-offset\"><x-rha-header page=\"searchCase\"></x-rha-header><div class=\"container-fluid\"><div style=\"padding-bottom: 10px;\" class=\"row\"><div class=\"col-xs-6\"><div class=\"input-group\"><input ng-disabled=\"!securityService.loginStatus.isLoggedIn\" placeholder=\"Search\" ng-model=\"SearchCaseService.searchTerm\" ng-keypress=\"onSearchKeyPress($event)\" class=\"form-control\"/><span class=\"input-group-btn\"><button ng-click=\"CaseService.onSelectChanged()\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" class=\"btn btn-default btn-primary\"><i class=\"glyphicon glyphicon-search\"></i> Search</button></span></div></div><div class=\"col-xs-3\"><div class=\"pull-right\"><!--span(style='padding-right: 4px;') Want real-time help?--><!--button.btn.btn-primary(//ng-disabled='!securityService.loginStatus.isLoggedIn') Chat with Support--></div></div><div class=\"col-xs-3\"><button ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ui-sref=\"new\" class=\"btn btn-secondary pull-right\">Open a New Support Case</button></div></div><div class=\"bottom-border\"></div><div style=\"padding-bottom: 10px;\" class=\"row\"><div class=\"col-sm-2\"><x-rha-status-select></x-rha-status-select></div><div class=\"col-sm-2\"><x-rha-severity-select></x-rha-severity-select></div><div class=\"col-sm-2\"><x-rha-type-select></x-rha-type-select></div><div class=\"col-sm-2\"><x-rha-group-select></x-rha-group-select></div><div class=\"col-sm-2\"><x-rha-owner-select></x-rha-owner-select></div><div class=\"col-sm-2\"><x-rha-product-select></x-rha-product-select></div></div><div ng-show=\"SearchCaseService.searching\"><div style=\"padding-bottom: 4px;\" class=\"row\"><div class=\"col-xs-12\"><span class=\"rha-search-spinner\"></span><h3 style=\"display: inline-block; padding-left: 4px;\">Searching...</h3></div></div></div><div ng-show=\"SearchCaseService.cases.length === 0 &amp;&amp; !SearchCaseService.searching\"><div class=\"row\"><div class=\"col-xs-12\"><div>No cases found with given search criteria.</div></div></div></div><div ng-repeat=\"case in casesOnScreen\"><div class=\"row\"><div class=\"col-xs-12\"><x-rha-case-search-result case=\"case\"></x-rha-case-search-result></div></div></div><div ng-hide=\"SearchCaseService.cases.length === 0\" style=\"border-top: 1px solid #cccccc\"><div class=\"row\"><div class=\"col-xs-6 pull-right\"><pagination style=\"float: right; cursor: pointer;\" boundary-links=\"false\" total-items=\"SearchCaseService.cases.length\" on-select-page=\"selectPage(page)\" items-per-page=\"itemsPerPage\" page=\"currentPage\" max-size=\"maxPagerSize\" rotate=\"true\" class=\"pagination-sm\"></pagination></div><div style=\"padding-top: 20px;\" class=\"col-xs-6 pull-left\"><x-rha-export-csv-button></x-rha-export-csv-button></div></div></div></div></div>");
+    "<div id=\"rha-case-search\" class=\"container-offset\"><div rha-header=\"\" page=\"searchCase\"></div><div class=\"container-fluid\"><div style=\"padding-bottom: 10px;\" class=\"row\"><div class=\"col-xs-6\"><div rha-searchbox=\"\" placeholder=\"Search\"></div></div><div class=\"col-xs-3\"><button ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ui-sref=\"new\" translate=\"\" class=\"btn btn-secondary pull-right\">Open a New Support Case</button></div></div><div class=\"rha-bottom-border\"></div><div style=\"padding-bottom: 10px;\" class=\"row\"><div class=\"col-sm-2\"><label translate=\"\">Status</label><div rha-statusselect=\"\"></div></div><div class=\"col-sm-2\"><label translate=\"\">Severity</label><div rha-severityselect=\"\"></div></div><div class=\"col-sm-2\"><label translate=\"\">Type</label><div rha-typeselect=\"\"></div></div><div class=\"col-sm-2\"><label translate=\"\">Group</label><div rha-groupselect=\"\" show-search-options=\"true\"></div></div><div class=\"col-sm-2\"><label translate=\"\">Owner</label><div rha-ownerselect=\"\"></div></div><div class=\"col-sm-2\"><label translate=\"\">Product</label><div rha-productselect=\"\"></div></div></div><div ng-show=\"SearchCaseService.searching &amp;&amp; securityService.loginStatus.isLoggedIn\"><div style=\"padding-bottom: 4px;\" class=\"row\"><div class=\"col-xs-12\"><span class=\"rha-search-spinner\"></span><h3 style=\"display: inline-block; padding-left: 4px;\" translate=\"\">Searching...</h3></div></div></div><div ng-show=\"SearchCaseService.cases.length === 0 &amp;&amp; !SearchCaseService.searching &amp;&amp; securityService.loginStatus.isLoggedIn\"><div class=\"row\"><div class=\"col-xs-12\"><div>{{'No cases found with given search criteria.'|translate}}</div></div></div></div><div ng-repeat=\"case in casesOnScreen\"><div class=\"row\"><div class=\"col-xs-12\"><div rha-casesearchresult=\"\" case=\"case\"></div></div></div></div><div ng-hide=\"SearchCaseService.cases.length === 0\" style=\"border-top: 1px solid #cccccc\"><div class=\"row\"><div class=\"col-xs-6 pull-right\"><pagination style=\"float: right; cursor: pointer;\" boundary-links=\"false\" total-items=\"SearchCaseService.cases.length\" on-select-page=\"selectPage(page)\" items-per-page=\"itemsPerPage\" page=\"currentPage\" max-size=\"maxPagerSize\" rotate=\"true\" class=\"pagination-sm\"></pagination></div><div style=\"padding-top: 20px;\" class=\"col-xs-6 pull-left\"><div rha-exportcsvbutton=\"\"></div></div></div></div></div></div>");
+}]);
+
+angular.module("cases/views/searchBox.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("cases/views/searchBox.html",
+    "<div class=\"input-group\"><input ng-disabled=\"!securityService.loginStatus.isLoggedIn\" placeholder=\"{{placeholder}}\" ng-model=\"SearchBoxService.searchTerm\" ng-keypress=\"onFilterKeyPress($event)\" ng-change=\"SearchBoxService.onChange()\" class=\"form-control\"/><span class=\"input-group-btn\"><button ng-click=\"SearchBoxService.doSearch()\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" class=\"btn btn-default btn-primary\"><i class=\"glyphicon glyphicon-search\"></i> Search</button></span></div>");
 }]);
 
 angular.module("cases/views/searchResult.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/searchResult.html",
-    "<div id=\"rha-case-search-result\"><div ng-class=\"{hascomment: theCase.comments.comment !== undefined}\" style=\"padding-top: 10px; border-top: 1px solid #cccccc; display: table; width: 100%;\" class=\"hover\"><span style=\"display: table-cell; vertical-align: top; width: 20px;\" class=\"glyphicon glyphicon-briefcase\"></span><div style=\"display: table-cell; padding-right: 20px;\"><div class=\"container-fluid\"><div style=\"padding-bottom: 6px;\" class=\"row\"><div class=\"col-xs-12\"><div style=\"display: inline-block; font-weight: bold;\"><a ng-href=\"#/case/{{theCase.case_number}}\">{{theCase.case_number}} - {{theCase.summary}}</a></div></div></div><div style=\"padding-bottom: 10px;\" class=\"row\"><div class=\"col-xs-4\"><span style=\"padding-right: 4px;\" class=\"detail-name\">Updated:</span><span class=\"detail-value\">{{theCase.last_modified_date | date: 'medium'}}</span></div><div class=\"col-xs-4\"><span style=\"padding-right: 4px;\" class=\"detail-name\">Status:</span><span ng-class=\"{closed: theCase.status === &quot;Closed&quot;, redhat: theCase.status === &quot;Waiting on Red Hat&quot;, customer: theCase.status === &quot;Waiting on Customer&quot;}\" class=\"detail-value status\">{{theCase.status}}</span></div><div class=\"col-xs-4\"><span style=\"padding-right: 4px;\" class=\"detail-name\">Severity:</span><span class=\"detail-value\">{{theCase.severity}}</span></div></div><div ng-show=\"theCase.comments.comment !== undefined\" class=\"row\"><div class=\"col-xs-12\"><div class=\"well\">{{theCase.comments.comment[0].text}}</div><span class=\"comment-tip\"></span><div class=\"comment-user\"><span class=\"avatar\"></span><div class=\"commenter\">{{theCase.comments.comment[0].created_by}}</div><div class=\"comment-date\">{{theCase.comments.comment[0].created_date | date: 'medium'}}</div></div></div></div></div></div></div></div>");
+    "<div id=\"rha-case-search-result\"><div ng-class=\"{hascomment: theCase.comments.comment !== undefined}\" style=\"padding-top: 10px; border-top: 1px solid #cccccc; display: table; width: 100%;\" class=\"hover\"><span style=\"display: table-cell; vertical-align: top; width: 20px;\" class=\"glyphicon glyphicon-briefcase\"></span><div style=\"display: table-cell; padding-right: 20px;\"><div class=\"container-fluid\"><div style=\"padding-bottom: 6px;\" class=\"row\"><div class=\"col-xs-12\"><div style=\"display: inline-block; font-weight: bold;\"><a ng-href=\"#/case/{{theCase.case_number}}\">{{theCase.case_number}} - {{theCase.summary}}</a></div></div></div><div style=\"padding-bottom: 10px;\" class=\"row\"><div class=\"col-xs-4\"><span style=\"padding-right: 4px;\" class=\"detail-name\">{{'Updated:'|translate}}</span><span class=\"detail-value\">{{theCase.last_modified_date | date: 'medium'}}</span></div><div class=\"col-xs-4\"><span style=\"padding-right: 4px;\" class=\"detail-name\">{{'Status:'|translate}}</span><span ng-class=\"{closed: theCase.status === &quot;Closed&quot;, redhat: theCase.status === &quot;Waiting on Red Hat&quot;, customer: theCase.status === &quot;Waiting on Customer&quot;}\" class=\"detail-value status\">{{theCase.status}}</span></div><div class=\"col-xs-4\"><span style=\"padding-right: 4px;\" class=\"detail-name\">{{'Severity:'|translate}}</span><span class=\"detail-value\">{{theCase.severity}}</span></div></div><div ng-show=\"theCase.comments.comment !== undefined\" class=\"row\"><div class=\"col-xs-12\"><div class=\"well\">{{theCase.comments.comment[0].text}}</div><span class=\"comment-tip\"></span><div class=\"comment-user\"><span class=\"avatar\"></span><div class=\"commenter\">{{theCase.comments.comment[0].created_by}}</div><div class=\"comment-date\">{{theCase.comments.comment[0].created_date | date: 'medium'}}</div></div></div></div></div></div></div></div>");
 }]);
 
 angular.module("cases/views/selectLoadingIndicator.html", []).run(["$templateCache", function($templateCache) {
@@ -18388,28 +23950,28 @@ angular.module("cases/views/selectLoadingIndicator.html", []).run(["$templateCac
 
 angular.module("cases/views/severitySelect.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/severitySelect.html",
-    "<label>Severity</label><x-rha-select-loading-indicator loading=\"severitiesLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.severity\" ng-change=\"CaseService.onSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"severity in CaseService.severities\">{{severity.name}}</option></select></x-rha-select-loading-indicator>");
+    "<div rha-selectloadingindicator=\"\" loading=\"severitiesLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.severity\" ng-change=\"CaseService.onSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"severity in CaseService.severities\">{{severity.name}}</option></select></div>");
 }]);
 
 angular.module("cases/views/statusSelect.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/statusSelect.html",
-    "<label for=\"rha-case-search_status\">Status</label><div style=\"display: block\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.status\" ng-change=\"CaseService.onSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"status in statuses\" value=\"{{status.value}}\">{{status.name}}</option></select></div>");
+    "<div style=\"display: block\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.status\" ng-change=\"CaseService.onSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"status in statuses\" value=\"{{status.value}}\">{{status.name}}</option></select></div>");
 }]);
 
 angular.module("cases/views/typeSelect.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/typeSelect.html",
-    "<label>Type</label><x-rha-select-loading-indicator loading=\"typesLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.type\" ng-change=\"CaseService.onSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"type in CaseService.types\">{{type.name}}</option></select></x-rha-select-loading-indicator>");
+    "<div rha-selectloadingindicator=\"\" loading=\"typesLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.type\" ng-change=\"CaseService.onSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"type in CaseService.types\">{{type.name}}</option></select></div>");
 }]);
 
 angular.module("log_viewer/views/logTabs.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("log_viewer/views/logTabs.html",
-    "<tabset ng-show='tabs.length > 0'>\n" +
-    "    <tab active=\"tab.active\" ng-repeat=\"tab in tabs\">\n" +
-    "        <tab-heading>{{tab.shortTitle}}\n" +
+    "<div tabset ng-show='tabs.length > 0'>\n" +
+    "    <div tab active=\"tab.active\" ng-repeat=\"tab in tabs\">\n" +
+    "        <div tab-heading>{{tab.shortTitle}}\n" +
     "            <a ng-click=\"removeTab($index)\" href=''>\n" +
     "                <span class=\"glyphicon glyphicon-remove\"></span>\n" +
     "            </a>\n" +
-    "        </tab-heading>\n" +
+    "        </div>\n" +
     "        <div class=\"panel panel-default\">\n" +
     "            <div class=\"panel-heading\">\n" +
     "                <a popover=\"Click to refresh log file.\" popover-trigger=\"mouseenter\" popover-placement=\"right\" ng-click=\"refreshTab($index)\">\n" +
@@ -18417,7 +23979,7 @@ angular.module("log_viewer/views/logTabs.html", []).run(["$templateCache", funct
     "                </a>\n" +
     "                <h3 class=\"panel-title\" style=\"display: inline\">{{tab.longTitle}}</h3>\n" +
     "                <div class=\"pull-right\" id=\"overlay\" popover=\"Select text and click to perform Red Hat Diagnose\" popover-trigger=\"mouseenter\" popover-placement=\"left\">\n" +
-    "                    <button ng-disabled=\"isDisabled\" id=\"diagnoseButton\" type=\"button\" class=\"btn btn-sm btn-primary diagnoseButton\" ng-click=\"diagnoseText()\">Red Hat Diagnose</button>\n" +
+    "                    <button ng-disabled=\"isDisabled\" id=\"diagnoseButton\" type=\"button\" class=\"btn btn-sm btn-primary diagnoseButton\" ng-click=\"diagnoseText()\" translate='' >Red Hat Diagnose</button>\n" +
     "                </div>\n" +
     "                <a class=\"tabs-spinner\" ng-class=\"{ showMe: isLoading }\">\n" +
     "                    <span class=\"rha-search-spinner\"></span>\n" +
@@ -18426,29 +23988,29 @@ angular.module("log_viewer/views/logTabs.html", []).run(["$templateCache", funct
     "                <br>\n" +
     "                <br>\n" +
     "            </div>\n" +
-    "            <div class=\"panel-body\" fill-down ng-style=\"{ height: windowHeight }\">\n" +
+    "            <div class=\"panel-body\" rha-filldown ng-style=\"{ height: windowHeight }\">\n" +
     "\n" +
     "                <pre id=\"resizeable-file-view\" class=\"no-line-wrap\">{{tab.content}}</pre>\n" +
     "            </div>\n" +
     "        </div>\n" +
-    "    </tab>\n" +
-    "</tabset>");
+    "    </div>\n" +
+    "</div>");
 }]);
 
 angular.module("log_viewer/views/log_viewer.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("log_viewer/views/log_viewer.html",
     "<div id=\"log_view_main\" style=\"max-height: 500px;\">\n" +
     "    <div class=\"container-offset\">\n" +
-    "        <x-rha-header page=\"logViewer\"></x-rha-header>\n" +
+    "        <div rha-header page=\"logViewer\"></div>\n" +
     "    </div>\n" +
     "    <div class=\"row-fluid\" ng-controller=\"logViewerController\" ng-mouseup=\"enableDiagnoseButton()\">\n" +
-    "        <x-nav-side-bar></x-nav-side-bar>\n" +
+    "        <div rha-navsidebar></div>\n" +
     "        <div class=col-fluid>\n" +
-    "            <x-recommendations></x-recommendations>\n" +
+    "            <div rha-recommendations></div>\n" +
     "            <div class=\"col-fluid\">\n" +
     "                <div ng-controller=\"TabsDemoCtrl\" ng-class=\"{ showMe: solutionsToggle }\">\n" +
-    "                    <x-logs-instruction-pane></x-logs-instruction-pane>\n" +
-    "                    <x-log-tabs></x-log-tabs>\n" +
+    "                    <div rha-logsinstructionpane></div>\n" +
+    "                    <div rha-logtabs></div>\n" +
     "                </div>\n" +
     "            </div>\n" +
     "        </div>\n" +
@@ -18458,38 +24020,36 @@ angular.module("log_viewer/views/log_viewer.html", []).run(["$templateCache", fu
 
 angular.module("log_viewer/views/logsInstructionPane.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("log_viewer/views/logsInstructionPane.html",
-    "<div class=\"panel panel-default logs-instruction-pane\" ng-hide=\"tabs.length > 0\" fill-down ng-style=\"{ height: windowHeight }\" style=\"overflow:auto\">\n" +
+    "<div class=\"panel panel-default rha-logsinstructionpane\" ng-hide=\"tabs.length > 0\" rha-filldown ng-style=\"{ height: windowHeight }\" style=\"overflow:auto\">\n" +
     "                        <div class=\"panel-body\" >\n" +
     "                            <div>\n" +
-    "                                <h2>Log File Viewer</h2>\n" +
+    "                                <h2 translate=''>Log File Viewer</h2>\n" +
     "                                <p>\n" +
-    "                                    <h3>The log file viewer gives the ability to diagnose application logs as well as file a support case with Red Hat Global Support Services.\n" +
+    "                                    <h3 translate=''>The log file viewer gives the ability to diagnose application logs as well as file a support case with Red Hat Global Support Services.\n" +
     "                                    </h3>\n" +
     "                            </div>\n" +
     "                            <div>\n" +
     "                                <br>\n" +
-    "                                <h4>\n" +
+    "                                <h4 translate>\n" +
     "                                    <span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Select Log</h4>\n" +
-    "                                <p>\n" +
-    "                                    Simply navigate to and select a log file from the list on the left and click the 'Select File' button.\n" +
+    "                                <p translate>\n" +
+    "                                    Simply navigate to and select a log file from the list on the left and click the 'Select File' button. </p>\n" +
     "\n" +
     "                            </div>\n" +
     "                            <div>\n" +
     "                                <br>\n" +
     "                                <h4>\n" +
-    "                                    <span class=\"glyphicon glyphicon-search\"></span>&nbsp;Diagnose\n" +
+    "                                    <span class=\"glyphicon glyphicon-search\"></span>&nbsp;{{'Diagnose'|translate}}\n" +
     "                                </h4>\n" +
-    "                                <p>\n" +
-    "                                    Once you have selected your log file then you may diagnose any part of the log file and clicking the 'Red Hat Diagnose' button. This will then display relevant articles and solutons from our Red Hat Knowledge base.\n" +
+    "                                <p translate>Once you have selected your log file then you may diagnose any part of the log file and clicking the 'Red Hat Diagnose' button. This will then display relevant articles and solutons from our Red Hat Knowledge base.</p>\n" +
     "\n" +
     "                            </div>\n" +
     "                            <div>\n" +
     "                                <br>\n" +
-    "                                <h4>\n" +
+    "                                <h4 translate>\n" +
     "                                    <span class=\"glyphicon glyphicon-plus\"></span>&nbsp;Open a New Support Case\n" +
     "                                </h4>\n" +
-    "                                <p>\n" +
-    "                                    In the event that you would still like to open a support case, select 'Open a New Support Case'. The case will be pre-populated with the portion of the log previously selected.\n" +
+    "                                <p translate>In the event that you would still like to open a support case, select 'Open a New Support Case'. The case will be pre-populated with the portion of the log previously selected.</p>\n" +
     "\n" +
     "                            </div>\n" +
     "                        </div>\n" +
@@ -18499,10 +24059,10 @@ angular.module("log_viewer/views/logsInstructionPane.html", []).run(["$templateC
 
 angular.module("log_viewer/views/navSideBar.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("log_viewer/views/navSideBar.html",
-    "<div class=\"nav-side-bar col-xs-3\" ng-class=\"{ showMe: sidePaneToggle }\" fill-down ng-style=\"{height: windowHeight }\">\n" +
+    "<div class=\"rha-navsidebar col-xs-3\" ng-class=\"{ showMe: sidePaneToggle }\" rha-filldown ng-style=\"{height: windowHeight }\">\n" +
     "    <div class=\"hideable-side-bar\" ng-class=\"{ showMe: sidePaneToggle }\">\n" +
     "        <div ng-controller=\"DropdownCtrl\" ng-init=\"init()\">\n" +
-    "            <h4 class=\"file-list-title\" ng-class=\"{ showMe: hideDropdown}\">Available Log Files</h4>\n" +
+    "            <h4 class=\"file-list-title\" ng-class=\"{ showMe: hideDropdown}\" translate=''>Available Log Files</h4>\n" +
     "            <div class=\"btn-group\" ng-class=\"{ hideMe: hideDropdown}\">\n" +
     "                <div class=\"machines-spinner\" ng-class=\"{ showMe: loading }\">\n" +
     "                    <span class=\"rha-search-spinner pull-right\"></span>\n" +
@@ -18517,11 +24077,11 @@ angular.module("log_viewer/views/navSideBar.html", []).run(["$templateCache", fu
     "                    </li>\n" +
     "                </ul>\n" +
     "            </div>\n" +
-    "            <div id=\"fileList\" fill-down ng-style=\"{ height: windowHeight }\" class=\"fileList\" ng-controller=\"fileController\">\n" +
+    "            <div id=\"fileList\" rha-filldown ng-style=\"{ height: windowHeight }\" class=\"fileList\" ng-controller=\"fileController\">\n" +
     "                <div data-angular-treeview=\"true\" data-tree-id=\"mytree\" data-tree-model=\"roleList\" data-node-id=\"roleId\" data-node-label=\"roleName\" data-node-children=\"children\">\n" +
     "                </div>\n" +
     "            </div>\n" +
-    "            <button ng-disabled=\"retrieveFileButtonIsDisabled.check\" type=\"button\" class=\"pull-right btn btn-sm btn-primary\" ng-controller=\"selectFileButton\" ng-click=\"fileSelected()\">\n" +
+    "            <button ng-disabled=\"retrieveFileButtonIsDisabled.check\" type=\"button\" class=\"pull-right btn btn-sm btn-primary\" ng-controller=\"selectFileButton\" ng-click=\"fileSelected()\" translate=''>\n" +
     "                Select File</button>\n" +
     "        </div>\n" +
     "    </div>\n" +
@@ -18533,8 +24093,8 @@ angular.module("log_viewer/views/navSideBar.html", []).run(["$templateCache", fu
 
 angular.module("log_viewer/views/recommendations.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("log_viewer/views/recommendations.html",
-    "<div class=\"col-xs-6 pull-right solutions\" fill-down ng-style=\"{height: windowHeight }\" ng-class=\"{ showMe: solutionsToggle }\">\n" +
-    "    <div id=\"resizeable-solution-view\" fill-down class=\"resizeable-solution-view\" ng-class=\"{ showMe: solutionsToggle }\" ng-style=\"{height: windowHeight }\" x-rha-accordion-search-results='' opencase='true' ng-controller='SearchController'>\n" +
+    "<div class=\"col-xs-6 pull-right solutions\" rha-filldown ng-style=\"{height: windowHeight }\" ng-class=\"{ showMe: solutionsToggle }\">\n" +
+    "    <div id=\"resizeable-solution-view\" rha-filldown class=\"resizeable-solution-view\" ng-class=\"{ showMe: solutionsToggle }\" ng-style=\"{height: windowHeight }\" rha-accordionsearchresults='' opencase='true' ng-controller='SearchController'>\n" +
     "    </div>\n" +
     "    <a ng-click=\"solutionsToggle = !solutionsToggle\">\n" +
     "        <span ng-class=\"{ showMe: solutionsToggle }\" class=\"glyphicon glyphicon-chevron-left right-side-glyphicon\"></span>\n" +

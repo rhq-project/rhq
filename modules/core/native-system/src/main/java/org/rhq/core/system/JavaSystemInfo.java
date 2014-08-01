@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.NetConnection;
 import org.hyperic.sigar.Swap;
@@ -49,6 +51,8 @@ import org.rhq.core.util.exec.ProcessToStart;
  * @author John Mazzitelli
  */
 public class JavaSystemInfo implements SystemInfo {
+
+    private final Log log = LogFactory.getLog(JavaSystemInfo.class);
 
     private final ProcessExecutor javaExec;
 
@@ -101,6 +105,8 @@ public class JavaSystemInfo implements SystemInfo {
 
         // TODO - find out the other os.name values for the other platforms
 
+        log.warn("Defaulting to Java OS. Did not recogize [" + osName + "], derived from ["
+            + System.getProperty("os.name") + "]");
         return OperatingSystemType.JAVA;
     }
 

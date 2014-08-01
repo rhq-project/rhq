@@ -31,20 +31,16 @@ import org.rhq.core.pluginapi.operation.OperationServices;
  */
 public class OperationContextImpl implements OperationContext {
     private final int resourceId;
-    private final OperationManager operationManager;
+    private final PluginContainer pluginContainer;
 
-    public OperationContextImpl(int resourceId, OperationManager operationManager) {
+    public OperationContextImpl(int resourceId, PluginContainer pluginContainer) {
         this.resourceId = resourceId;
-        this.operationManager = operationManager;
+        this.pluginContainer = pluginContainer;
     }
 
-    @Deprecated
-    public OperationContextImpl(int resourceId) {
-        this(resourceId, PluginContainer.getInstance().getOperationManager());
-    }
-
+    @Override
     public OperationServices getOperationServices() {
-        return new OperationServicesAdapter(operationManager);
+        return new OperationServicesAdapter(pluginContainer.getOperationManager());
     }
 
     public int getResourceId() {

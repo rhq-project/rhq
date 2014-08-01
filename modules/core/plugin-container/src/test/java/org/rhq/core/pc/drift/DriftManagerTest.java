@@ -49,7 +49,6 @@ import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
-import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.plugin.PluginLifecycleListenerManagerImpl;
@@ -397,7 +396,7 @@ public class DriftManagerTest extends DriftTest {
         private final Map<Integer, ResourceContainer> resourceContainers = new HashMap<Integer, ResourceContainer>();
 
         public FakeInventoryManager(PluginContainerConfiguration configuration) {
-            super(configuration, null, pluginManager, new EventManager(configuration));
+            super(configuration, null, pluginManager);
             initialize();
         }
 

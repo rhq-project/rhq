@@ -68,7 +68,6 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationContextImpl;
-import org.rhq.core.pc.operation.OperationManager;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pc.standaloneContainer.Command;
 import org.rhq.core.pc.standaloneContainer.History;
@@ -409,8 +408,7 @@ public class StandaloneContainer {
             return;
         }
 
-        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
-        OperationContext operationContext = new OperationContextImpl(resourceId, operationManager);
+        OperationContext operationContext = new OperationContextImpl(resourceId, PluginContainer.getInstance());
         OperationServices operationServices = operationContext.getOperationServices();
         opId++;
 

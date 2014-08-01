@@ -32,23 +32,19 @@ import org.rhq.core.pluginapi.content.ContentServices;
  */
 public class ContentContextImpl implements ContentContext {
     private final int resourceId;
-    private final ContentServices contentServices;
+    private final PluginContainer pluginContainer;
 
-    public ContentContextImpl(int resourceId, ContentServices contentServices) {
+    public ContentContextImpl(int resourceId, PluginContainer pluginContainer) {
         this.resourceId = resourceId;
-        this.contentServices = contentServices;
-    }
-
-    @Deprecated
-    public ContentContextImpl(int resourceId) {
-        this(resourceId, PluginContainer.getInstance().getContentManager());
+        this.pluginContainer = pluginContainer;
     }
 
     public int getResourceId() {
         return resourceId;
     }
 
+    @Override
     public ContentServices getContentServices() {
-        return contentServices;
+        return pluginContainer.getContentManager();
     }
 }

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.event.EventPoller;
 
@@ -37,13 +38,15 @@ import org.rhq.core.pluginapi.event.EventPoller;
  */
 public class EventContextImpl implements EventContext {
     private final Resource resource;
-    private final EventManager eventManager;
+    private final PluginContainer pluginContainer;
 
-    public EventContextImpl(@NotNull Resource resource, EventManager eventManager) {
+    public EventContextImpl(@NotNull
+    Resource resource, PluginContainer pluginContainer) {
         this.resource = resource;
-        this.eventManager = eventManager;
+        this.pluginContainer = pluginContainer;
     }
 
+    @Override
     public void publishEvent(@NotNull Event event) {
         //noinspection ConstantConditions
         if (event == null)
@@ -55,17 +58,18 @@ public class EventContextImpl implements EventContext {
                 + event.getType() + "'.");
         Set<Event> events = new HashSet<Event>();
         events.add(event);
-        eventManager.publishEvents(events, this.resource);
+        pluginContainer.getEventManager().publishEvents(events, this.resource);
     }
 
+    @Override
     public void registerEventPoller(@NotNull EventPoller poller, int pollingInterval) {
         //noinspection ConstantConditions
         if (poller == null)
             throw new IllegalArgumentException("poller parameter must not be null.");
-        String sourceLocation = null;
-        registerEventPollerInternal(poller, pollingInterval, sourceLocation);
+        registerEventPollerInternal(poller, pollingInterval, null);
     }
 
+    @Override
     public void registerEventPoller(@NotNull EventPoller poller, int pollingInterval, @NotNull String sourceLocation) {
         //noinspection ConstantConditions
         if (poller == null)
@@ -76,14 +80,15 @@ public class EventContextImpl implements EventContext {
         registerEventPollerInternal(poller, pollingInterval, sourceLocation);
     }
 
+    @Override
     public void unregisterEventPoller(@NotNull String eventType) {
         //noinspection ConstantConditions
         if (eventType == null)
             throw new IllegalArgumentException("eventType parameter must not be null.");
-        String sourceLocation = null;
-        unregisterEventPollerInternal(eventType, sourceLocation);
+        unregisterEventPollerInternal(eventType, null);
     }
 
+    @Override
     public void unregisterEventPoller(@NotNull String eventType, @NotNull String sourceLocation) {
         //noinspection ConstantConditions
         if (eventType == null)
@@ -94,9 +99,10 @@ public class EventContextImpl implements EventContext {
         unregisterEventPollerInternal(eventType, sourceLocation);
     }
 
+    @Override
     @Nullable
     public SigarProxy getSigar() {
-        return eventManager.getSigar();
+        return pluginContainer.getEventManager().getSigar();
     }
 
     /**
@@ -113,7 +119,8 @@ public class EventContextImpl implements EventContext {
             throw new IllegalArgumentException("Poller has unknown event type - no EventDefinition exists with name '"
                 + poller.getEventType() + "'.");
         final int adjustedPollingInterval = Math.max(EventContext.MINIMUM_POLLING_INTERVAL, pollingInterval);
-        eventManager.registerEventPoller(poller, adjustedPollingInterval, resource, sourceLocation);
+        pluginContainer.getEventManager()
+            .registerEventPoller(poller, adjustedPollingInterval, resource, sourceLocation);
     }
 
     private void unregisterEventPollerInternal(String eventType, String sourceLocation) {
@@ -121,6 +128,6 @@ public class EventContextImpl implements EventContext {
         if (eventDefinition == null)
             throw new IllegalArgumentException("Unknown event type - no EventDefinition exists with name '" + eventType
                 + "'.");
-        eventManager.unregisterEventPoller(this.resource, eventType, sourceLocation);
+        pluginContainer.getEventManager().unregisterEventPoller(this.resource, eventType, sourceLocation);
     }
 }

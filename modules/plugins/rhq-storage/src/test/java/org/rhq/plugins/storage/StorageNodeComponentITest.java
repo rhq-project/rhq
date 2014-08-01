@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileReader;
-import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -90,8 +89,7 @@ public class StorageNodeComponentITest {
 
     private Resource storageNode;
 
-    private InetAddress node1Address;
-    private InetAddress node2Address;
+    private PluginContainer pluginContainer;
 
     private final static int TAKE_SNAPSHOTS = 5;
     private final static String TAKE_SNAPSHOTS_DELETE_NAME = TAKE_SNAPSHOTS + 1 + "";
@@ -100,8 +98,6 @@ public class StorageNodeComponentITest {
     @BeforeSuite
     public void deployStorageNodeAndPluginContainer() throws Exception {
         basedir = new File("target", "rhq-storage");
-        node1Address = InetAddress.getByName("127.0.0.1");
-        node2Address = InetAddress.getByName("127.0.0.2");
         deployStorageNode();
         initPluginContainer();
     }
@@ -196,10 +192,11 @@ public class StorageNodeComponentITest {
         File pluginsDir = new File(System.getProperty("pc.plugins.dir"));
         pcConfig.setPluginDirectory(pluginsDir);
         pcConfig.setPluginFinder(new FileSystemPluginFinder(pluginsDir));
-
         pcConfig.setInsideAgent(false);
-        PluginContainer.getInstance().setConfiguration(pcConfig);
-        PluginContainer.getInstance().initialize();
+
+        pluginContainer = PluginContainer.getInstance();
+        pluginContainer.setConfiguration(pcConfig);
+        pluginContainer.initialize();
     }
 
     @AfterSuite
@@ -242,7 +239,7 @@ public class StorageNodeComponentITest {
         OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
 
         long timeout = 1000 * 60;
-        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), pluginContainer);
         OperationServicesResult result = operationsService.invokeOperation(operationContext, "shutdown",
             new Configuration(), timeout);
 
@@ -262,7 +259,7 @@ public class StorageNodeComponentITest {
         OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
 
         long timeout = 1000 * 60;
-        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), pluginContainer);
         OperationServicesResult result = operationsService.invokeOperation(operationContext, "start",
             new Configuration(), timeout);
 
@@ -282,7 +279,7 @@ public class StorageNodeComponentITest {
         OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
 
         long timeout = 1000 * 60;
-        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), pluginContainer);
         Configuration params = new Configuration();
         for (int i = 0; i < TAKE_SNAPSHOTS; i++) {
             params = Configuration.builder().addSimple("snapshotName", "" + i).build();
@@ -301,7 +298,7 @@ public class StorageNodeComponentITest {
         OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
 
         long timeout = 1000 * 60;
-        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), pluginContainer);
 
         final int keepN = 3;
 
@@ -323,7 +320,7 @@ public class StorageNodeComponentITest {
         OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
 
         long timeout = 1000 * 60;
-        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), pluginContainer);
 
         final int keepN = 1;
 
@@ -362,7 +359,7 @@ public class StorageNodeComponentITest {
         OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
 
         long timeout = 1000 * 60;
-        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), pluginContainer);
 
         // mark snaphosts left by takeSnapshotsKeepLastNAndMove test as 2 days old
         for (File parent : getSnaphostDirs()) {
@@ -463,7 +460,7 @@ public class StorageNodeComponentITest {
 
             InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
             InventoryReport inventoryReport = inventoryManager.executeServerScanImmediately();
-            Resource newStorageNode = null;
+            Resource newStorageNode;
 
             if (inventoryReport.getAddedRoots().isEmpty()) {
                 // could be empty if the storage node is already in inventory from
@@ -486,7 +483,7 @@ public class StorageNodeComponentITest {
             OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
 
             long timeout = 1000 * 60;
-            OperationContextImpl operationContext = new OperationContextImpl(newStorageNode.getId(), operationManager);
+            OperationContextImpl operationContext = new OperationContextImpl(newStorageNode.getId(), pluginContainer);
             OperationServicesResult result = operationsService.invokeOperation(operationContext, "prepareForBootstrap",
                 params, timeout);
 

@@ -99,7 +99,6 @@ public abstract class ComponentTest {
         PluginContainer pluginContainer = PluginContainer.getInstance();
         pluginContainer.setConfiguration(pcc);
         pluginContainer.initialize();
-        eventManager = pluginContainer.getEventManager();
 
         Resource resource = new Resource();
         resource.setResourceType(resourceType);
@@ -113,12 +112,12 @@ public abstract class ComponentTest {
         File temporaryDirectory = temp;
         File dataDirectory = temp;
         String pluginContainerName = "rhq";
-        EventContext eventContext = new EventContextImpl(resource, eventManager);
-        OperationContext operationContext = new OperationContextImpl(0);
-        ContentContext contentContext = new ContentContextImpl(0);
+        EventContext eventContext = new EventContextImpl(resource, pluginContainer);
+        OperationContext operationContext = new OperationContextImpl(0, pluginContainer);
+        ContentContext contentContext = new ContentContextImpl(0, pluginContainer);
         PluginContainerDeployment pluginContainerDeployment = null;
         AvailabilityContext availContext = new AvailabilityContextImpl(resource, pluginContainer.getInventoryManager());
-        InventoryContext inventoryContext = new InventoryContextImpl(resource);
+        InventoryContext inventoryContext = new InventoryContextImpl(resource, pluginContainer);
         ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
             resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
             eventContext, operationContext, contentContext, availContext, inventoryContext, pluginContainerDeployment);

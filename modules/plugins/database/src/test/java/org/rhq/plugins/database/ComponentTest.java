@@ -297,9 +297,9 @@ public abstract class ComponentTest {
         ResourceComponent component = (ResourceComponent) Class.forName(rclassname).newInstance();
 
         availabilityContext = new AvailabilityContextImpl(cresource, pluginContainer.getInventoryManager());
-        inventoryContext = new InventoryContextImpl(cresource);
+        inventoryContext = new InventoryContextImpl(cresource, pluginContainer);
 
-        EventContext eventContext = new EventContextImpl(resource, eventManager);
+        EventContext eventContext = new EventContextImpl(resource, pluginContainer);
         ResourceContext context = new ResourceContext(cresource, parentComponent,
                 null, rdc, systemInfo, temporaryDirectory, dataDirectory,
                 pluginContainerName, eventContext, operationContext, contentContext,

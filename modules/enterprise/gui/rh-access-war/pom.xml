@@ -13,7 +13,7 @@
     <name>RHQ RedHat Access</name>
     <properties>
         <!-- whem updating this version, please make sure org.rhq.server.rhaccess.Config#getUserAgent() returns appropriate value -->
-        <redhat-support-lib.version>1.0.4.jbossorg-1</redhat-support-lib.version>
+        <redhat-support-lib.version>1.0.4</redhat-support-lib.version>
     </properties>
     <build>
         <finalName>rh-access</finalName>

@@ -19,6 +19,8 @@
 
 package org.rhq.modules.plugins.jbossas7.helper;
 
+import static org.rhq.modules.plugins.jbossas7.util.SecurityUtil.loadKeystore;
+
 import java.io.File;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -289,7 +291,12 @@ public class ServerPluginConfiguration {
                 try {
                     KeyStore.getInstance(truststoreType);
                 } catch (KeyStoreException e) {
-                    throw new InvalidPluginConfigurationException("Truststore type not supported: " + e.getMessage(), e);
+                    throw new InvalidPluginConfigurationException("Truststore type not supported: " + e.getMessage());
+                }
+                try {
+                    loadKeystore(truststoreType, truststore, getTruststorePassword());
+                } catch (Exception e) {
+                    throw new InvalidPluginConfigurationException("Cannot read the truststore: " + e.getMessage());
                 }
             }
             if (isClientcertAuthentication()) {
@@ -309,7 +316,12 @@ public class ServerPluginConfiguration {
                 try {
                     KeyStore.getInstance(keystoreType);
                 } catch (KeyStoreException e) {
-                    throw new InvalidPluginConfigurationException("Keystore type not supported: " + e.getMessage(), e);
+                    throw new InvalidPluginConfigurationException("Keystore type not supported: " + e.getMessage());
+                }
+                try {
+                    loadKeystore(keystoreType, keystore, getKeystorePassword());
+                } catch (Exception e) {
+                    throw new InvalidPluginConfigurationException("Cannot read the keystore: " + e.getMessage());
                 }
             }
         }

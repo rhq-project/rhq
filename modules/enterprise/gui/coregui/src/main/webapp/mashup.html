@@ -5,7 +5,7 @@
 <title>Mashup</title>
 <link rel="stylesheet" href="css/patternfly.min.css" />
 <style>
-body { padding: 7px;}
+body { padding-left: 10px;}
 h3.title, h4.title {padding-left: 8px;}
 ul {margin-left: -4px;}
 .panel-title a {
@@ -16,11 +16,25 @@ ul {margin-left: -4px;}
   padding-bottom: 7px;
   border-bottom: 1px solid #ccc;
 }
+
+.scroll-pane {
+  width: 100%;
+  height: 240px;
+  overflow: auto;
+}
 </style>
+
+<!-- styles needed by jScrollPane -->
+<link type="text/css" href="css/jquery.jscrollpane.css" rel="stylesheet" media="all" />
 </head>
 <body>
 <script src="js/jquery-1.7.2.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
+<!-- the mousewheel plugin - optional to provide mousewheel support -->
+<script type="text/javascript" src="js/jquery.mousewheel.js"></script>
+<!-- the jScrollPane script -->
+<script type="text/javascript" src="js/jquery.jscrollpane.min.js"></script>
+<div class="scroll-pane">
 <h3 class="title">RHQ</h3>
 <div class="bottom-border"></div>
 <ul>
@@ -73,5 +87,20 @@ ul {margin-left: -4px;}
     </div>
   </div>
 </div>
+</div>
+<script type="text/javascript" language="javascript">
+<!--
+$(document).ready(function() {
+  $('.scroll-pane').jScrollPane({showArrows: true});
+  $('#accordion-markup').click(function(event) {
+    /* the recalculation of the scrollbar needs to be posponed because of the animation effect of the bootstrap accordion */
+    setTimeout(function(){
+      $('.scroll-pane').jScrollPane({showArrows: true}).reinitialise();
+    }, 200);
+  });
+});
+// -->
+</script>
+
 </body>
 </html>

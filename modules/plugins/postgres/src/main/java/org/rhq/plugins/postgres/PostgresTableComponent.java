@@ -409,8 +409,8 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                 .getSimple("columnPrecision").getIntegerValue();
             columnDefault = (column.getSimple("columnDefault") == null) ? null : column.getSimple("columnDefault")
                 .getStringValue();
-            columnNullable = (column.getSimple("columnNullable") == null) ? false : column.getSimple("columnNullable")
-                .getBooleanValue();
+            columnNullable = !(column.getSimple("columnNullable") == null || column.getSimple("columnNullable").getBooleanValue() == null)
+                    && column.getSimple("columnNullable").getBooleanValue().booleanValue();
         }
 
         public String getColumnSql() {

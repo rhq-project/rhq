@@ -28,9 +28,18 @@ import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
+ * <p>
  * This class tries to deal with invalid aggregate metrics. An invalid metric is one where
- * either min > avg or max < avg. It will recompute the metrics if possible; otherwise it
- * will delete them.
+ * either min > avg or max < avg. There are a couple different bugs which made these
+ * situations possible See https://bugzilla.redhat.com/show_bug.cgi?id=1110462 and
+ * https://bugzilla.redhat.com/show_bug.cgi?id=1104885 for details.
+ * </p>
+ *
+ * <p>
+ * When an invalid metric is found, it is {@link #submit(MetricsTable, AggregateNumericMetric) submitted}
+ * to an internal queue for later processing. Metrics will be recomputed if possible;
+ * otherwise, they will be deleted.
+ * </p>
  *
  * @author John Sanda
  */
@@ -85,6 +94,10 @@ public class InvalidMetricsManager {
         this.delay = delay;
     }
 
+    /**
+     * Shuts down the executor, waiting for any in progress work to finish. Any invalid
+     * metrics that are in the queue will not be processed.
+     */
     public void shutdown() {
         log.info("Shutting down...");
         isShutdown = true;
@@ -133,7 +146,7 @@ public class InvalidMetricsManager {
      *
      * @return The queue of invalid metrics
      */
-    DelayQueue<InvalidMetric> getQueue() {
+    public DelayQueue<InvalidMetric> getQueue() {
         return queue;
     }
 
@@ -354,7 +367,8 @@ public class InvalidMetricsManager {
 
     public boolean isInvalidMetric(AggregateNumericMetric metric) {
         return (metric.getMax() < metric.getAvg() && Math.abs(metric.getMax() - metric.getAvg()) > THRESHOLD) ||
-            (metric.getMin() > metric.getAvg() && Math.abs(metric.getMin() - metric.getAvg()) > THRESHOLD);
+            (metric.getMin() > metric.getAvg() && Math.abs(metric.getMin() - metric.getAvg()) > THRESHOLD) ||
+            (Double.isNaN(metric.getAvg()) || Double.isNaN(metric.getMin()) || Double.isNaN(metric.getMin()));
     }
 
     /**

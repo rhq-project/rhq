@@ -242,7 +242,6 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
         ResultSet columns;
         try {
             connection = this.resourceContext.getParentResourceComponent().getConnection();
-            connection.setCatalog(this.resourceContext.getParentResourceComponent().getDatabaseName());
             DatabaseMetaData databaseMetaData = connection.getMetaData();
             columns = databaseMetaData.getColumns("", getSchemaNameFromContext(resourceContext),
                 getTableNameFromContext(resourceContext), "");
@@ -275,7 +274,6 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
             PropertyList updatedColumns = updatedConfiguration.getList("columns");
 
             Connection connection = this.resourceContext.getParentResourceComponent().getConnection();
-            connection.setCatalog(this.resourceContext.getParentResourceComponent().getDatabaseName());
 
             DatabaseMetaData dmd = connection.getMetaData();
             ResultSet rs = dmd.getColumns("", "", getTableNameFromContext(resourceContext), "");

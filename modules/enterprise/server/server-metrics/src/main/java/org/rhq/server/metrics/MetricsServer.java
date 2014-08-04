@@ -102,6 +102,13 @@ public class MetricsServer {
     }
 
     /**
+     * A test hook
+     */
+    InvalidMetricsManager getInvalidMetricsManager() {
+        return invalidMetricsManager;
+    }
+
+    /**
      * In normal operating mode we compute aggregates from the last hour. If the server has
      * been down, we need to determine the most recently stored raw data so we know the
      * starting hour for which to compute aggregates. We only need to check up to the raw
@@ -362,76 +369,6 @@ public class MetricsServer {
         }
         return data;
 
-    }
-
-//    private List<MeasurementDataNumericHighLowComposite> createComposites(Iterable<AggregateNumericMetric> metrics,
-//        long beginTime, long endTime, int numberOfBuckets, MetricsTable type) {
-//
-//        Buckets buckets = new Buckets(beginTime, endTime, numberOfBuckets);
-//        for (AggregateNumericMetric metric : metrics) {
-//            // see https://bugzilla.redhat.com/show_bug.cgi?id=1015706 for details
-//            if (metric.getMax() < metric.getAvg() && Math.abs(metric.getMax() - metric.getAvg()) > THRESHOLD) {
-//                log.warn(metric + " is invalid. The max value for an aggregate metric should not be larger than " +
-//                    "its average. The max will be set to the average.");
-//                metric.setMax(metric.getAvg());
-//                updateMaxWithNewTTL(metric, type);
-//            }
-//            buckets.insert(metric.getTimestamp(), metric.getAvg(), metric.getMin(), metric.getMax());
-//        }
-//
-//        List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
-//        for (int i = 0; i < buckets.getNumDataPoints(); ++i) {
-//            Buckets.Bucket bucket = buckets.get(i);
-//            data.add(new MeasurementDataNumericHighLowComposite(bucket.getStartTime(), bucket.getAvg(),
-//                bucket.getMax(), bucket.getMin()));
-//        }
-//        return data;
-//    }
-
-    private void updateMaxWithNewTTL(AggregateNumericMetric metric, MetricsTable type) {
-        int newTTL;
-
-        switch (type) {
-            case ONE_HOUR:
-                newTTL = calculateNewTTL(MetricsTable.ONE_HOUR.getTTLinMilliseconds(), metric.getTimestamp());
-                updateMax(metric, MetricsTable.ONE_HOUR, newTTL);
-                break;
-            case SIX_HOUR:
-                newTTL = calculateNewTTL(MetricsTable.SIX_HOUR.getTTLinMilliseconds(), metric.getTimestamp());
-                updateMax(metric, MetricsTable.SIX_HOUR, newTTL);
-                break;
-           case TWENTY_FOUR_HOUR:
-               newTTL = calculateNewTTL(MetricsTable.TWENTY_FOUR_HOUR.getTTLinMilliseconds(), metric.getTimestamp());
-               updateMax(metric, MetricsTable.TWENTY_FOUR_HOUR, newTTL);
-               break;
-           default: // raw
-               throw new IllegalArgumentException("This method should only be called for aggregate metrics");
-        }
-    }
-
-    private int calculateNewTTL(long originalTTLMillis, long timestamp) {
-        return new Duration(originalTTLMillis - (System.currentTimeMillis() - timestamp)).toStandardSeconds()
-            .getSeconds();
-    }
-
-    private void updateMax(final AggregateNumericMetric metric, MetricsTable table, int ttl) {
-        StorageSession session = dao.getStorageSession();
-        StorageResultSetFuture future = session.executeAsync(
-            "INSERT INTO " + table + " (schedule_id, time, type, value) " +
-            "VALUES (" + metric.getScheduleId() + ", " + metric.getTimestamp() + ", " + AggregateType.MAX.ordinal() +
-                ", " + metric.getMax() + ") " +
-            "USING TTL " + ttl);
-        Futures.addCallback(future, new FutureCallback<ResultSet>() {
-            @Override
-            public void onSuccess(ResultSet result) {
-                log.info("Successfully updated the max value for " + metric);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                log.warn("Failed to update the max value for " + metric, t);
-            }
-        });
     }
 
     public void addNumericData(final Set<MeasurementDataNumeric> dataSet,

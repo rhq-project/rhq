@@ -109,7 +109,7 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
 
     @Override
     public Connection getConnection() {
-        if (useOwnJdbcConnections) {
+        if (!useOwnJdbcConnections) {
             return postgresServerComponent.getConnection();
         } else {
             buildDatabaseConnectionIfNeeded();

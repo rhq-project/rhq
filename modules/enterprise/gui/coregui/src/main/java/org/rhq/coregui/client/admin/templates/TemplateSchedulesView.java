@@ -26,6 +26,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.inventory.common.AbstractSchedulesView;
 import org.rhq.coregui.client.util.message.Message;
@@ -49,7 +50,7 @@ public class TemplateSchedulesView extends AbstractSchedulesView {
     }
 
     public static String getTitle(ResourceType type) {
-        return MSG.view_adminConfig_metricTemplates() + " [" + type.getName() + "]";
+        return MSG.view_adminConfig_metricTemplates() + " [" + ResourceTypeUtility.displayName(type) + "]";
     }
 
     @Override

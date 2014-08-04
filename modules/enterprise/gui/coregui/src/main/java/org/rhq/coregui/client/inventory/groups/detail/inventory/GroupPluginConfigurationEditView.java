@@ -38,6 +38,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.RefreshableView;
 import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
@@ -50,8 +51,8 @@ import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 import org.rhq.coregui.client.util.message.MessageCenter;
@@ -215,7 +216,7 @@ public class GroupPluginConfigurationEditView extends EnhancedVLayout implements
         GWTServiceLookup.getConfigurationService().updatePluginConfigurationsForGroup(this.group.getId(),
             resourceConfigurations, new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
-                    String typeName = group.getResourceType().getName();
+                    String typeName = ResourceTypeUtility.displayName(group.getResourceType());
                     CoreGUI.getErrorHandler().handleError(
                         MSG.view_group_pluginConfig_edit_saveFailure(typeName, group.getName()), caught);
                 }
@@ -223,7 +224,8 @@ public class GroupPluginConfigurationEditView extends EnhancedVLayout implements
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.view_group_pluginConfig_edit_saveInitiated_concise(), MSG
-                            .view_group_pluginConfig_edit_saveInitiated_full(group.getResourceType().getName(),
+                            .view_group_pluginConfig_edit_saveInitiated_full(
+                                ResourceTypeUtility.displayName(group.getResourceType()),
                                 group.getName()), Message.Severity.Info));
                     refresh();
                 }

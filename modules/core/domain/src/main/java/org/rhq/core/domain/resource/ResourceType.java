@@ -371,6 +371,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @Column(name = "SUBCATEGORY")
     private String subCategory;
 
+    @Column(name = "DISPLAY_NAME")
+    private String displayName;
+
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     @OrderBy
     // primary key
@@ -471,6 +474,14 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public ResourceCategory getCategory() {

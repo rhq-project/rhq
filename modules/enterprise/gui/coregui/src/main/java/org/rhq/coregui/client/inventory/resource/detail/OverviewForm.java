@@ -39,6 +39,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.form.EditableFormItem;
 import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
@@ -147,7 +148,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         // Type
         StaticTextItem typeItem = new StaticTextItem("type", MSG.view_summaryOverviewForm_field_type());
         typeItem.setTooltip(MSG.common_title_plugin() + ": " + type.getPlugin() + "\n<br>" + MSG.common_title_type()
-            + ": " + type.getName());
+            + ": " + ResourceTypeUtility.displayName(type));
         typeItem.setValue(AncestryUtil.getFormattedType(type));
         formItems.add(typeItem);
 

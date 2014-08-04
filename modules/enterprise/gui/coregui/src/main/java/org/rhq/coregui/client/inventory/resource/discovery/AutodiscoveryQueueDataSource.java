@@ -42,6 +42,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.PermissionsLoadedListener;
@@ -289,7 +290,7 @@ public class AutodiscoveryQueueDataSource extends DataSource {
             setAttribute("id", id);
             setAttribute("parentId", parentId);
             setAttribute("name", resource.getName());
-            setAttribute("typeName", resource.getResourceType().getName());
+            setAttribute("typeName", ResourceTypeUtility.displayName(resource.getResourceType()));
             setAttribute("resourceKey", resource.getResourceKey());
             setAttribute("description", resource.getDescription());
             setAttribute("ctime", new Date(resource.getCtime()));

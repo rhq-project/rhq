@@ -38,6 +38,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite.GroupAvailabilityType;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.UserSessionManager;
@@ -260,7 +261,7 @@ public class ResourceGroupTitleBar extends EnhancedVLayout {
         // case, because recursive compat groups are typically used specifically for groups of logically equivalent
         // resources, like cloned AS instances.  The problem is that it is not localized. Change it on the fly.
         if (isAutoCluster) {
-            String typeName = group.getResourceType().getName();
+            String typeName = ResourceTypeUtility.displayName(group.getResourceType());
             String cannedName = "Group of " + typeName;
             if (cannedName.equals(group.getName())) {
                 group.setName(MSG.group_tree_groupOfResourceType(typeName));

@@ -22,6 +22,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedEvent;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedHandler;
 
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.upload.DynamicFormHandler;
 import org.rhq.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
@@ -46,8 +47,9 @@ public class ResourceFactoryPackageStep extends AbstractWizardStep {
     public Canvas getCanvas() {
         if (null == uploadForm) {
 
-            uploadForm = new PackageVersionFileUploadForm(wizard.getNewResourcePackageType().getId(), wizard
-                .getChildType().getName(), wizard.getNewResourceVersion(), wizard.getNewResourceArchitectureId(), null,
+            uploadForm = new PackageVersionFileUploadForm(wizard.getNewResourcePackageType().getId(),
+                ResourceTypeUtility.displayName(wizard.getChildType()), wizard.getNewResourceVersion(),
+                wizard.getNewResourceArchitectureId(), null,
                 true, true, null);
             uploadForm.setPadding(20);
             uploadForm.addFormHandler(new DynamicFormHandler() {

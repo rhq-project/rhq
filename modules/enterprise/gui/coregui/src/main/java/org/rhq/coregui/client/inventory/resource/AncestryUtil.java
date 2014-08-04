@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.util.StringUtility;
@@ -190,7 +191,7 @@ public abstract class AncestryUtil {
         sb.append(" [<i>");
         sb.append(type.getPlugin());
         sb.append("</i>, ");
-        sb.append(type.getName());
+        sb.append(ResourceTypeUtility.displayName(type));
         sb.append("]");
         return sb;
     }

@@ -32,6 +32,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.wizard.WizardStep;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -108,7 +109,7 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
     }
 
     public String getTitle() {
-        return MSG.widget_resourceFactoryWizard_createWizardTitle(getChildType().getName());
+        return MSG.widget_resourceFactoryWizard_createWizardTitle(ResourceTypeUtility.displayName(getChildType()));
     }
 
     public String getSubtitle() {
@@ -147,7 +148,8 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.widget_resourceFactoryWizard_createSubmitType(getChildType().getName()),
+                            new Message(MSG.widget_resourceFactoryWizard_createSubmitType(ResourceTypeUtility
+                                .displayName(getChildType())),
                                 Message.Severity.Info));
                         getView().closeDialog();
                     }

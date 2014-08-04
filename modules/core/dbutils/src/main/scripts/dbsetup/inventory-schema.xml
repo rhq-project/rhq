@@ -26,6 +26,7 @@
         <column name="IGNORED" type="BOOLEAN" default="FALSE" required="TRUE"/>
         <column name="SUPPORTS_MISSING" type="BOOLEAN" default="FALSE" required="TRUE"/>
         <column name="MISSING_POLICY" type="VARCHAR2" size="16" required="true"/>
+        <column name="DISPLAY_NAME" type="VARCHAR2" size="100" />
 
         <index name="RHQ_RES_TYPE_IDX_PLG_NAME" unique="true">
             <field ref="NAME"/>

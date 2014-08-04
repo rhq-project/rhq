@@ -56,6 +56,7 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.alert.definitions.ResourceOperationNotificationInfo.ResourceSelectionMode;
 import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
@@ -293,7 +294,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 public void onSuccess(ArrayList<ResourceType> results) {
                     LinkedHashMap<String, String> map = new LinkedHashMap<String, String>(results.size());
                     for (ResourceType rt : results) {
-                        map.put(String.valueOf(rt.getId()), rt.getName());
+                        map.put(String.valueOf(rt.getId()), ResourceTypeUtility.displayName(rt));
                     }
                     ancestorTypeSelectItem.setValueMap(map);
                     if (selectedResourceTypeId != null) {

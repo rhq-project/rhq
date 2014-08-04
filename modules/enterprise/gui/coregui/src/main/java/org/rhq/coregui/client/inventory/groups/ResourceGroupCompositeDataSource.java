@@ -45,6 +45,7 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.Messages;
@@ -225,7 +226,8 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
 
         if (from.getResourceGroup().getResourceType() != null) {
             record.setAttribute("resourceType", from.getResourceGroup().getResourceType());
-            record.setAttribute(TYPE.propertyName(), from.getResourceGroup().getResourceType().getName());
+            record.setAttribute(TYPE.propertyName(),
+                ResourceTypeUtility.displayName(from.getResourceGroup().getResourceType()));
             record.setAttribute(PLUGIN.propertyName(), from.getResourceGroup().getResourceType().getPlugin());
         }
 

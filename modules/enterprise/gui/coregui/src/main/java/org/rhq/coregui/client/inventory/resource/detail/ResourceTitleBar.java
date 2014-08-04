@@ -47,6 +47,7 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.UserSessionManager;
@@ -493,7 +494,8 @@ public class ResourceTitleBar extends EnhancedVLayout {
             resource.setName(resourceName); // the name must have been changed by the user via the editable field
         }
         this.title.setContents("<span class=\"SectionHeader\">" + StringUtility.escapeHtml(resourceName)
-            + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
+            + "</span>&nbsp;<span class=\"subtitle\">" + ResourceTypeUtility.displayName(resource.getResourceType())
+            + "</span>");
         this.title.markForRedraw();
     }
 

@@ -44,6 +44,7 @@ import org.rhq.core.domain.resource.MissingPolicy;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.ImageManager;
@@ -217,7 +218,7 @@ public class MissingPolicyResourceTypesView extends ResourceTypeTreeView {
                                             type.setMissingPolicy(newPolicy);
 
                                             String msg = MSG.view_adminConfig_missingResourcePolicy_success(
-                                                getPolicyDisplay(newPolicy), type.getName());
+                                                getPolicyDisplay(newPolicy), ResourceTypeUtility.displayName(type));
                                             CoreGUI.getMessageCenter().notify(new Message(msg));
 
                                             // refresh the grid

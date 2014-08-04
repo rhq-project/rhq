@@ -75,6 +75,12 @@ public abstract class ResourceTypeUtility {
         return null;
     }
 
+    public static String displayName(ResourceType resourceType) {
+        if (resourceType == null)
+            return null;
+        return resourceType.getDisplayName() == null ? resourceType.getName() : resourceType.getDisplayName();
+    }
+
     private ResourceTypeUtility() {
     }
 

@@ -49,6 +49,7 @@ import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.LinkManager;
@@ -124,7 +125,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
     }
 
     public static String getTitle(ResourceType type) {
-        return DriftDefinitionTemplateTypeView.VIEW_ID.getTitle() + " [" + type.getName() + "]";
+        return DriftDefinitionTemplateTypeView.VIEW_ID.getTitle() + " [" + ResourceTypeUtility.displayName(type) + "]";
     }
 
     @Override

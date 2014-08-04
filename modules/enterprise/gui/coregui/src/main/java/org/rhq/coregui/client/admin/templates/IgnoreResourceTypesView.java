@@ -40,6 +40,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.ImageManager;
@@ -108,8 +109,9 @@ public class IgnoreResourceTypesView extends ResourceTypeTreeView {
                 }
 
                 final boolean newIgnoreFlag = !type.isIgnored();
-                String msg = newIgnoreFlag ? MSG.view_adminConfig_ignoreResourceTypes_confirmIgnore(type.getName())
-                    : MSG.view_adminConfig_ignoreResourceTypes_confirmUnignore(type.getName());
+                String msg = newIgnoreFlag ? MSG.view_adminConfig_ignoreResourceTypes_confirmIgnore(ResourceTypeUtility
+                    .displayName(type)) : MSG.view_adminConfig_ignoreResourceTypes_confirmUnignore(ResourceTypeUtility
+                    .displayName(type));
                 SC.ask(MSG.common_msg_areYouSure(), msg, new BooleanCallback() {
                     public void execute(Boolean value) {
                         if (Boolean.TRUE.equals(value)) {
@@ -128,8 +130,10 @@ public class IgnoreResourceTypesView extends ResourceTypeTreeView {
                                     type.setIgnored(newIgnoreFlag); // this type reference is inside our cache so make sure we update it
 
                                     String msg = newIgnoreFlag ? MSG
-                                        .view_adminConfig_ignoreResourceTypes_successIgnore(type.getName()) : MSG
-                                        .view_adminConfig_ignoreResourceTypes_successUnignore(type.getName());
+                                        .view_adminConfig_ignoreResourceTypes_successIgnore(ResourceTypeUtility
+                                            .displayName(type)) : MSG
+                                        .view_adminConfig_ignoreResourceTypes_successUnignore(ResourceTypeUtility
+                                            .displayName(type));
                                     CoreGUI.getMessageCenter().notify(new Message(msg));
 
                                     // refresh the listgrid

@@ -960,6 +960,13 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
+      <xs:attribute name="displayName" use="optional" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>
+               Formatted name displayed to the user. If this is omitted, the value "name" attribute will be used.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
       <xs:anyAttribute/>
    </xs:complexType>
    

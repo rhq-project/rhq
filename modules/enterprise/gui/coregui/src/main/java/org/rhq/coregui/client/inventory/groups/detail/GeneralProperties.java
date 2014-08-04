@@ -32,6 +32,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.components.form.CheckboxEditableFormItem;
@@ -138,8 +139,8 @@ public class GeneralProperties extends EnhancedVLayout {
         if (type != null) {
             // compatible group
             typeItem.setTooltip(MSG.common_title_plugin() + ": " + type.getPlugin() + "\n<br>"
-                + MSG.common_title_type() + ": " + type.getName());
-            typeItem.setValue(type.getName() + " (" + type.getPlugin() + ")");
+                + MSG.common_title_type() + ": " + ResourceTypeUtility.displayName(type));
+            typeItem.setValue(ResourceTypeUtility.displayName(type) + " (" + type.getPlugin() + ")");
         } else {
             // mixed group
             typeItem.setValue("<i>" + MSG.view_group_summary_mixed() + "</i>");

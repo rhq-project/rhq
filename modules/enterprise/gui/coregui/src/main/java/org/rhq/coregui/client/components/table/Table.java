@@ -610,25 +610,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
             if (null == tableAction.getValueMap()) {
                 // button action
-                IButton button = new EnhancedIButton(tableAction.getTitle());
-                // set the id prefix to be able to match in css on this element
-                if (tableAction.getButtonColor() != null) {
-                    switch (tableAction.getButtonColor()) {
-                    case BLUE:
-                        button.setID("primary" + id + tableAction.getTitle());
-                        break;
-                    case RED:
-                        button.setID("destructive" + id + tableAction.getTitle());
-                        break;
-                    default:
-                        break;
-                    }
-                }
-                // just in case, someone forgot to explicitly set the red color (works only for English)
-                if (tableAction.getTitle().toLowerCase().contains("delete")
-                    || tableAction.getTitle().toLowerCase().contains("remove")) {
-                    button.setID("destructive" + id + tableAction.getTitle());
-                }
+                IButton button = new EnhancedIButton(tableAction.getTitle(), tableAction.getButtonColor());
                 button.setTooltip(tableAction.getTooltip());
                 button.setDisabled(true);
                 button.setOverflow(Overflow.VISIBLE);
@@ -676,7 +658,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 }
 
                 IMenuButton menuButton = new IMenuButton(tableAction.getTitle());
-                menuButton.setID("menuButton" + id + tableAction.getTitle());
+                menuButton.setID("menuButton" + id + tableAction.getTitle().replaceAll(" ", "_"));
                 menuButton.setTooltip(tableAction.getTooltip());
                 menuButton.setMenu(menu);
                 menuButton.setDisabled(true);

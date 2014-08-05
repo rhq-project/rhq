@@ -22,7 +22,8 @@ public class EnhancedIButton extends IButton {
     public EnhancedIButton(String title, ButtonColor buttonColor) {
         super(title);
         if (!ButtonColor.GRAY.equals(buttonColor)) {
-            setID((ButtonColor.BLUE.equals(buttonColor) ? "primary" : "destructive") + id + title);
+            // set the id prefix to be able to match in css on this element
+            setID((ButtonColor.BLUE.equals(buttonColor) ? "primary" : "destructive") + id + title.replaceAll(" ", "_"));
         }
         init();
     }

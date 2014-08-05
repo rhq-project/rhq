@@ -104,8 +104,8 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
             }
         });
 
-        addTableAction(MSG.view_adminTopology_server_removeSelected(), null, ButtonColor.RED,
-            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.view_adminTopology_server_removeSelected(), ButtonColor.RED, new AuthorizedTableAction(this,
+            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 final List<String> selectedNames = getSelectedNames(selections);
                 String message = MSG.view_adminTopology_message_removeAGroupsConfirm(selectedNames.toString());

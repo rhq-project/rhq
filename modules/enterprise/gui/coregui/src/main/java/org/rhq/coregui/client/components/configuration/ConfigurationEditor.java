@@ -1213,7 +1213,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
             footer.setMembersMargin(15);
             vLayout.addMember(footer);
 
-            final IButton deleteButton = new EnhancedIButton();
+            final IButton deleteButton = new EnhancedIButton(MSG.common_button_delete());
             deleteButton.setIcon(Window.getImgURL(ImageManager.getRemoveIcon()));
             deleteButton.setTooltip(MSG.view_configEdit_tooltip_1());
             deleteButton.setDisabled(true);
@@ -1273,7 +1273,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
                     if (propertyList.getList().size() >= propertyDefinitionList.getMax()) {
                         SC.say(MSG.view_configEdit_maxBoundsExceeded(String.valueOf(propertyDefinitionList.getMax())));
                     } else {
-                        final Window popup = createPopup(MSG.view_configEdit_addItem(), 300, 145);
+                        final Window popup = createPopup(MSG.view_configEdit_addItem(), 400, 150);
 
                         VLayout vLayout = new VLayout();
                         vLayout.setMargin(10);

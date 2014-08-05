@@ -925,7 +925,6 @@ div[eventproxy*="PortalColumn"] > .dialogBackground {
 .selectItemPickerIconDisabled,
 .selectItemPickerIconError {
     margin: 0;
-    font-weight: 600;
     cursor: pointer;
     background-image: none;
     white-space: nowrap;
@@ -939,7 +938,13 @@ div[eventproxy*="PortalColumn"] > .dialogBackground {
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', endColorstr='#ffededed', GradientType=0);
     color: #4d5258;
     border: 1px solid #b7b7b7;
-    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+}
+
+.selectItemText,
+.selectItemTextError,
+.selectItemTextFocused,
+.selectItemTextDisabled {
+    padding-left: 3px;
 }
 
 .selectItemPickerIcon,

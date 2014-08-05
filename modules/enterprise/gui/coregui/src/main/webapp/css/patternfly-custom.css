@@ -28,7 +28,7 @@
 }
 
 #patternFlyLogin .caps {
-    background-image: url(img/caps.png);
+    background-image: url(../img/caps.png);
     background-position: right center;
     background-repeat: no-repeat;
 }
@@ -37,7 +37,7 @@
     background-position: left bottom;
     background-repeat: no-repeat;
     padding-bottom: 1em;
-    background-image: url(img/feedback-error-arrow-down.png);
+    background-image: url(../img/feedback-error-arrow-down.png);
     position: absolute;
     transition: opacity 0.33s ease-in-out;
     -moz-transition: opacity 0.33s ease-in-out;
@@ -56,7 +56,7 @@
 }
 
 #patternFlyLogin #errorFeedback p {
-    background-image: url(img/feedback-error-sign.png);
+    background-image: url(../img/feedback-error-sign.png);
     padding: 0.90909090909091em 3.63636363636364em;
     border-color: #b91415;
     border-style: solid;
@@ -73,7 +73,7 @@
 /* navbar customizations */
 .navbar-pf {
     border-top: 3px solid #4e627a;
-    background-image: url(images/top-bar.png);
+    background-image: url(../img/top-bar.png);
 }
 
 .navbar-logo {

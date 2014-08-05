@@ -102,6 +102,8 @@ public class NativeSystemInfo implements SystemInfo {
             return OperatingSystemType.BSD;
         }
 
+        log.warn("Could not parse operating system name from " + os.getName() + ", returning Java platform");
+
         return OperatingSystemType.JAVA;
     }
 

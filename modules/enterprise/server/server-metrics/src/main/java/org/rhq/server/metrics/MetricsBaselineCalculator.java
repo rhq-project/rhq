@@ -24,8 +24,9 @@
  */
 package org.rhq.server.metrics;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -47,15 +48,14 @@ public class MetricsBaselineCalculator {
         this.metricsDAO = metricsDAO;
     }
 
-    public List<MeasurementBaseline> calculateBaselines(List<Integer> schedules, long startTime,
-        long endTime) {
-        List<MeasurementBaseline> calculatedBaselines = new ArrayList<MeasurementBaseline>();
+    public Map<Integer, MeasurementBaseline> calculateBaselines(Set<Integer> scheduleIds, long startTime, long endTime) {
+        Map<Integer, MeasurementBaseline> calculatedBaselines = new HashMap<Integer, MeasurementBaseline>();
 
         MeasurementBaseline measurementBaseline;
-        for (Integer schedule : schedules) {
-            measurementBaseline = this.calculateBaseline(schedule, startTime, endTime);
+        for (Integer scheduleId : scheduleIds) {
+            measurementBaseline = this.calculateBaseline(scheduleId, startTime, endTime);
             if (measurementBaseline != null) {
-                calculatedBaselines.add(measurementBaseline);
+                calculatedBaselines.put(scheduleId, measurementBaseline);
             }
         }
 

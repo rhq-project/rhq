@@ -2431,6 +2431,18 @@
             <schemaSpec version="2.155">
                 <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="DEPLOY_DIR" nullable="true"/>
             </schemaSpec>
+
+            <schemaSpec version="2.156">
+                <schema-directSQL ignoreError="true">
+                    <statement desc="Dropping non-unique index RHQ_MEAS_BASELINE_SID_IDX">
+                        DROP INDEX RHQ_MEAS_BASELINE_SID_IDX
+                    </statement>
+                    <statement desc="Recreating RHQ_MEAS_BASELINE_SID_IDX as unique index">
+                        CREATE UNIQUE INDEX RHQ_MEAS_BASELINE_SID_IDX ON RHQ_MEASUREMENT_BLINE ( SCHEDULE_ID )
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

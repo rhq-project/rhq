@@ -98,7 +98,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             String firstAddress = vhost.hosts.get(0);
 
             String resourceKey = createResourceKey(vhost.serverName, vhost.hosts);
-            String resourceName = resourceKey; //this'll get overridden below if we find a better value using the address variable
+            String resourceName = resourceKey;
 
             Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
 
@@ -147,8 +147,9 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                         rtLogFile.toString());
                 pluginConfiguration.put(rtLogProp);
 
-                //redefine the resourcename using the virtual host sample address
-                resourceName = address.toString(false, true);
+                if(vhost.serverName == null) {
+                    resourceName = createResourceKey(address.toString(false, true), vhost.hosts);
+                }
             }
 
             discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,

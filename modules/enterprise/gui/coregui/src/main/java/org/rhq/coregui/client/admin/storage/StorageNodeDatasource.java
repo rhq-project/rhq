@@ -193,7 +193,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             new AsyncCallback<PageList<StorageNodeLoadComposite>>() {
                 public void onSuccess(PageList<StorageNodeLoadComposite> result) {
                     response.setData(buildRecords(result));
-                    response.setTotalRows(result.size());
+                    setPagingInfo(response, result);
                     processResponse(request.getRequestId(), response);
                 }
 

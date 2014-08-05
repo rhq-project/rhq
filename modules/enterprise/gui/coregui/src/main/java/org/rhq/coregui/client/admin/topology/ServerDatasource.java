@@ -122,7 +122,7 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Serve
         GWTServiceLookup.getTopologyService().findServersByCriteria(criteria, new AsyncCallback<PageList<Server>>() {
             public void onSuccess(PageList<Server> result) {
                 response.setData(buildRecords(result));
-                response.setTotalRows(result.size());
+                setPagingInfo(response, result);
                 processResponse(request.getRequestId(), response);
             }
 

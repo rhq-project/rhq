@@ -716,8 +716,9 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 ProductInfo productInfo = result.getProductInfo();
                 form.setValue(productName.getName(), productInfo.getName());
                 form.setValue(productVersion.getName(), productInfo.getVersion());
-                form.setValue(productBuildNumber.getName(), productInfo.getBuildNumber());
-
+                form.setValue(productBuildNumber.getName(), productInfo.getBuildNumber()
+                    + (CoreGUI.isRHQ() ? " (<a target='_blank' href='https://github.com/rhq-project/rhq/commit/"
+                        + productInfo.getBuildNumber() + "'>GitHub</a>)" : ""));
                 Map<Detail, String> details = result.getDetails();
                 form.setValue(serverName.getName(), details.get(ServerDetails.Detail.SERVER_IDENTITY));
                 form.setValue(serverTimezone.getName(), details.get(ServerDetails.Detail.SERVER_TIMEZONE));

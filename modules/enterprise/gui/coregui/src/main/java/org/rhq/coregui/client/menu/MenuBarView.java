@@ -168,7 +168,6 @@ public class MenuBarView extends EnhancedVLayout {
     public static final ViewName LOGOUT_VIEW_ID = new ViewName("LogOut", MSG.view_menuBar_logout());
     private final ProductInfo productInfo = CoreGUI.get().getProductInfo();
     private String currentlySelectedSection = DashboardsView.VIEW_ID.getName();
-    private AboutModalWindow aboutModalWindow;
     private MessageBar messageBar;
     private MessageCenterView messageCenter;
     private FavoritesButton favoritesButton;
@@ -183,7 +182,6 @@ public class MenuBarView extends EnhancedVLayout {
     protected void onInit() {
         super.onInit();
         setZIndex(1);
-        aboutModalWindow = new AboutModalWindow(productInfo);
         messageCenter = new MessageCenterView();
         messageBar = new MessageBar();
         // messageBar.setHeight(1);
@@ -244,7 +242,7 @@ public class MenuBarView extends EnhancedVLayout {
 
     // called via JSNI - RHQ on logo click
     public void showAboutBox() {
-        aboutModalWindow.show();
+        new AboutModalWindow(productInfo).show();
     }
 
     public MessageBar getMessageBar() {

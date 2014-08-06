@@ -227,7 +227,7 @@ isc.loadSkin = function (theWindow) {
             });
             isc.Window.changeDefaults("headerDefaults", {
                 height:25,
-                layoutMargin:0,
+                layoutMargin:3,
                 membersMargin:3
             });
             isc.Window.changeDefaults("headerIconDefaults", {
@@ -238,14 +238,14 @@ isc.loadSkin = function (theWindow) {
 
             isc.Window.changeDefaults("closeButtonDefaults", {
                 src:"[SKIN]/headerIcons/close.png",
-                showRollOver:false,
+                showRollOver:true,
                 showDown:false,
                 width:15,
                 height:15
             });
             isc.Window.changeDefaults("minimizeButtonDefaults", {
                 src:"[SKIN]/headerIcons/minimize.png",
-                showRollOver:false,
+                showRollOver:true,
                 showDown:false,
                 width:15,
                 height:15
@@ -253,7 +253,7 @@ isc.loadSkin = function (theWindow) {
 
             isc.Window.changeDefaults("restoreButtonDefaults", {
                 src:"[SKIN]/headerIcons/restore.png",
-                showRollOver:false,
+                showRollOver:true,
                 showDown:false,
                 width:15,
                 height:15
@@ -262,7 +262,7 @@ isc.loadSkin = function (theWindow) {
             isc.Window.changeDefaults("maximizeButtonDefaults", {
               src:"[SKIN]/headerIcons/maximize.gif",
               opacity:isc._edgeOpacity,
-              showRollOver:false,
+              showRollOver:true,
               width:15,
               height:15
             })

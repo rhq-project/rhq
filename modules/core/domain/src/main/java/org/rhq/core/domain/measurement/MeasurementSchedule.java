@@ -104,7 +104,7 @@ import org.rhq.core.domain.resource.Resource;
         + "SELECT SUM(1000.0 / ms.interval) * 60.0 " //
         + "  FROM MeasurementSchedule ms " //
         + " WHERE ms.enabled = true " //
-        + "   AND ms.definition.name <> '" + MeasurementDefinition.AVAILABILITY_NAME + "' " // 
+        + "   AND ms.definition.name <> '" + MeasurementDefinition.AVAILABILITY_NAME + "' " //
         + "   AND ms.resource.inventoryStatus = :status"), //
     @NamedQuery(name = MeasurementSchedule.DISABLE_ALL, query = "" //
         + "UPDATE MeasurementSchedule ms " //
@@ -215,7 +215,7 @@ public class MeasurementSchedule implements Serializable {
      * merge-merge cascade).
      */
     // Remove now performed by bulk delete
-    @OneToOne(mappedBy = "schedule", cascade = { CascadeType.MERGE }, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "schedule", cascade = { CascadeType.MERGE }, fetch = FetchType.LAZY, optional = true)
     private MeasurementBaseline baseline;
 
     /**

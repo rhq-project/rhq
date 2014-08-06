@@ -30,9 +30,11 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -74,14 +76,15 @@ public class MetricsBaselineCalculatorTest {
         when(mockMetricsDAO.findAggregatedSimpleOneHourMetric(eq(1), eq(0), eq(1))).thenReturn(
             new ArrayList<AggregateSimpleNumericMetric>());
 
-        int expectedScheduleId = 2567;
+        Set expectedScheduleId = new HashSet(1);
+        expectedScheduleId.add(2567);
 
         //create object to test and inject required dependencies
         MetricsBaselineCalculator objectUnderTest = new MetricsBaselineCalculator(new MetricsDAO(mockSession,
             metricsConfiguration));
 
         //run code under test
-        List<MeasurementBaseline> result = objectUnderTest.calculateBaselines(Arrays.asList(expectedScheduleId), 0, 1);
+        Map<Integer, MeasurementBaseline> result = objectUnderTest.calculateBaselines(expectedScheduleId, 0, 1);
 
         //verify the results (Assert and mock verification)
         assertEquals(result.size(), 0, "No baselines expected");
@@ -129,6 +132,8 @@ public class MetricsBaselineCalculatorTest {
         long expectedStartTime = 135;
         long expectedEndTime = 246;
         long beforeComputeTime = System.currentTimeMillis();
+        Set expectedScheduleIdSet = new HashSet(1);
+        expectedScheduleIdSet.add(expectedScheduleId);
 
         //tell the method story as it happens: mock dependencies and configure
         //those dependencies to get the method under test to completion.
@@ -146,7 +151,7 @@ public class MetricsBaselineCalculatorTest {
             metricsConfiguration));
 
         //run code under test
-        List<MeasurementBaseline> result = objectUnderTest.calculateBaselines(Arrays.asList(expectedScheduleId),
+        Map<Integer, MeasurementBaseline> result = objectUnderTest.calculateBaselines(expectedScheduleIdSet,
             expectedStartTime, expectedEndTime);
 
         //verify the results (Assert and mock verification)
@@ -189,6 +194,8 @@ public class MetricsBaselineCalculatorTest {
         int expectedScheduleId = 567;
         long expectedStartTime = 135;
         long expectedEndTime = 246;
+        Set expectedScheduleIdSet = new HashSet(1);
+        expectedScheduleIdSet.add(expectedScheduleId);
 
         //tell the method story as it happens: mock dependencies and configure
         //those dependencies to get the method under test to completion.
@@ -206,7 +213,7 @@ public class MetricsBaselineCalculatorTest {
             metricsConfiguration));
 
         //run code under test
-        List<MeasurementBaseline> result = objectUnderTest.calculateBaselines(Arrays.asList(expectedScheduleId),
+        Map<Integer, MeasurementBaseline> result = objectUnderTest.calculateBaselines(expectedScheduleIdSet,
             expectedStartTime, expectedEndTime);
 
         //verify the results (Assert and mock verification)

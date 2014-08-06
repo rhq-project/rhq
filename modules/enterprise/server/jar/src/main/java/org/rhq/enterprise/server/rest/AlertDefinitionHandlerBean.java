@@ -25,7 +25,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -69,8 +68,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -297,9 +294,6 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         for (AlertNotificationRest anr : adr.getNotifications()) {
 
             AlertNotification notification = notificationRestToNotification(alertDefinition, anr);
-            if (pluginManager.getAlertSenderForNotification(notification)==null) {
-                throw new StuffNotFoundException("AlertSender with name [" + anr.getSenderName() +"]");
-            }
 
             notifications.add(notification);
         }
@@ -456,14 +450,12 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     private AlertNotification notificationRestToNotification(AlertDefinition alertDefinition,
                                                              AlertNotificationRest anr) {
         AlertNotification notification = new AlertNotification(anr.getSenderName());
-        // TODO validate sender
-        notification.setAlertDefinition(alertDefinition);
-        Configuration configuration = new Configuration();
-        for (Map.Entry<String, Object> entry : anr.getConfig().entrySet()) {
-            configuration.put(new PropertySimple(entry.getKey(), entry.getValue()));
+        if (notificationMgr.getAlertInfoForSender(anr.getSenderName()) == null) {
+            throw new StuffNotFoundException("AlertSender with name [" + anr.getSenderName() + "]");
         }
-        notification.setConfiguration(configuration);
-        // TODO extra configuration (?)
+        notification.setAlertDefinition(alertDefinition);
+        notification.setConfiguration(ConfigurationHelper.mapToConfiguration(anr.getConfig()));
+        notification.setExtraConfiguration(ConfigurationHelper.mapToConfiguration(anr.getExtraConfig()));
         return notification;
     }
 
@@ -999,33 +991,19 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         @ApiParam("Id of the alert definition that should get the notification definition") @PathParam("id") int definitionId,
         @ApiParam("The notification definition to add") AlertNotificationRest notificationRest, @Context UriInfo uriInfo) {
 
-        AlertNotification notification = new AlertNotification(notificationRest.getSenderName());
-
-        // first check if the sender by name exists
-        AlertSenderPluginManager pluginManager = alertManager.getAlertPluginManager();
-        if (pluginManager.getAlertSenderForNotification(notification)==null) {
-            throw new StuffNotFoundException("AlertSender with name [" + notificationRest.getSenderName() +"]");
-        }
-
         // Now check if the definition exists as well
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,definitionId);
         if (definition==null) {
             throw new StuffNotFoundException("AlertDefinition with id " + definitionId);
         }
 
+        AlertNotification notification = notificationRestToNotification(definition, notificationRest);
+
         // definition and sender are valid, continue
         int existingNotificationCount = definition.getAlertNotifications().size();
 
 //        notification.setAlertDefinition(definition); setting this will result in duplicated notifications
         definition.addAlertNotification(notification);
-
-        Configuration configuration = new Configuration();
-        for (Map.Entry<String,Object> entry: notificationRest.getConfig().entrySet()) {
-            configuration.put(new PropertySimple(entry.getKey(),entry.getValue()));
-        }
-        notification.setConfiguration(configuration);
-        // TODO extra configuration (?)
-
 
         alertDefinitionManager.updateAlertDefinitionInternal(caller, definitionId, definition, false, true, true);
 

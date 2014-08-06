@@ -77,6 +77,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -89,6 +90,7 @@ import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
+import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -98,6 +100,7 @@ import org.rhq.enterprise.server.rest.domain.AlertDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.AlertNotificationRest;
 import org.rhq.enterprise.server.rest.domain.AlertSender;
 import org.rhq.enterprise.server.rest.domain.Link;
+import org.rhq.enterprise.server.rest.helper.ConfigurationHelper;
 
 /**
  * Deal with Alert Definitions. Note that this class shares the /alert/ sub-context with the
@@ -127,6 +130,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @EJB
     private ResourceTypeManagerLocal resourceTypeMgr;
+
+    @EJB
+    private OperationManagerLocal operationMgr;
 
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -453,8 +459,8 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         // TODO validate sender
         notification.setAlertDefinition(alertDefinition);
         Configuration configuration = new Configuration();
-        for (Map.Entry<String,Object> entry: anr.getConfig().entrySet()) {
-            configuration.put(new PropertySimple(entry.getKey(),entry.getValue()));
+        for (Map.Entry<String, Object> entry : anr.getConfig().entrySet()) {
+            configuration.put(new PropertySimple(entry.getKey(), entry.getValue()));
         }
         notification.setConfiguration(configuration);
         // TODO extra configuration (?)
@@ -1186,12 +1192,17 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         AlertNotificationRest anr = new AlertNotificationRest();
         anr.setId(notification.getId());
         anr.setSenderName(notification.getSenderName());
-
-        for (Map.Entry<String, PropertySimple> entry : notification.getConfiguration().getSimpleProperties().entrySet()) {
-            anr.getConfig().put(entry.getKey(),entry.getValue().getStringValue()); // TODO correct type conversion of 2nd argument
+        ConfigurationDefinition configDef = notificationMgr.getConfigurationDefinitionForSender(notification
+            .getSenderName());
+        anr.setConfig(ConfigurationHelper.configurationToMap(notification.getConfiguration(), configDef, false));
+        ConfigurationDefinition extraConfigDef = null;
+        if ("Resource Operations".equals(notification.getSenderName())) {
+            OperationDefinition opDef = operationMgr.getOperationDefinition(caller,
+                Integer.valueOf(notification.getConfiguration().getSimpleValue("operation-definition-id", "0")));
+            extraConfigDef = opDef.getParametersConfigurationDefinition();
         }
-        // TODO Extra Configuration
-
+        anr.setExtraConfig(ConfigurationHelper.configurationToMap(notification.getExtraConfiguration(), extraConfigDef,
+            false));
         return anr;
     }
 

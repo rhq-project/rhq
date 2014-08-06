@@ -31,6 +31,7 @@ public class AlertNotification {
     private int id;
     private String senderName;
     private Map<String,Object> config = new HashMap<String, Object>();
+    private Map<String, Object> extraConfig = new HashMap<String, Object>();
 
     public AlertNotification() {
     }
@@ -61,5 +62,13 @@ public class AlertNotification {
 
     public void setConfig(Map<String, Object> config) {
         this.config = config;
+    }
+
+    public void setExtraConfig(Map<String, Object> extraConfig) {
+        this.extraConfig = extraConfig;
+    }
+
+    public Map<String, Object> getExtraConfig() {
+        return extraConfig;
     }
 }

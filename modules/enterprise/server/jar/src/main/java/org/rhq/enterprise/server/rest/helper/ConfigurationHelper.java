@@ -73,6 +73,14 @@ public class ConfigurationHelper {
 
     }
 
+    /**
+     * convert passed configuration to generic map
+     * @param configuration to be converted
+     * @param definition to convert to proper types, can be null, but strict has to be set to false. If null, all simple properties will be rendered as strings 
+     * @param strict if enabled all configuration properties must have appropriate property definitions
+     * @return generic map
+     * @throws IllegalArgumentException if strict is true and configuration contains property without matching property definition
+     */
     public static Map<String,Object> configurationToMap(Configuration configuration, ConfigurationDefinition definition,
                                                         boolean strict) {
 
@@ -89,13 +97,13 @@ public class ConfigurationHelper {
         for (Property property : configuration.getProperties()) {
 
             String propertyName = property.getName();
-            PropertyDefinition propertyDefinition = definition.get(propertyName);
+            PropertyDefinition propertyDefinition = null;
+            if (definition != null) {
+                propertyDefinition = definition.get(propertyName);
+            }
             if (propertyDefinition==null) {
                 if (strict) {
                     throw new IllegalArgumentException("No definition for property " + propertyName + "found");
-                } else {
-                    // no definition found and not strict, so skip the property
-                    continue;
                 }
             }
 
@@ -117,7 +125,7 @@ public class ConfigurationHelper {
             target = getInnerList(propertyList, (PropertyDefinitionList)propertyDefinition, strict);
         } else {
             target= convertSimplePropertyValue((PropertySimple) property,
-                ((PropertyDefinitionSimple)propertyDefinition));
+                ((PropertyDefinitionSimple) propertyDefinition), strict);
         }
         return target;
     }
@@ -131,7 +139,10 @@ public class ConfigurationHelper {
         Set<String> names = map.keySet();
         for (String name : names ) {
             Property property = map.get(name);
-            PropertyDefinition definition = propertyDefinition.get(name);
+            PropertyDefinition definition = null;
+            if (propertyDefinition != null) {
+                definition = propertyDefinition.get(name);
+            }
 
             Object target = convertProperty(property,definition, strict);
             result.put(name,target);
@@ -148,13 +159,13 @@ public class ConfigurationHelper {
         if (definition==null) {
             if (strict) {
                 throw new IllegalArgumentException("No Definition exists for " + propertyList.getName());
-            } else {
-                return result;
             }
         }
 
-
-        PropertyDefinition memberDefinition = definition.getMemberDefinition();
+        PropertyDefinition memberDefinition = null;
+        if (definition != null) {
+            memberDefinition = definition.getMemberDefinition();
+        }
         for (Property property : propertyList.getList()) {
             Object target = convertProperty(property,memberDefinition, strict);
             result.add(target);
@@ -208,14 +219,19 @@ public class ConfigurationHelper {
      * @param definition Definition of the Property
      * @return Object with the correct type
      */
-    public static Object convertSimplePropertyValue(PropertySimple property, PropertyDefinitionSimple definition) {
+    public static Object convertSimplePropertyValue(PropertySimple property, PropertyDefinitionSimple definition,
+        boolean strict) {
 
-        if (definition==null) {
+        if (definition == null && strict) {
             throw new IllegalArgumentException("No definition provided");
         }
 
         if (property==null) {
             return null;
+        }
+
+        if (definition == null) {
+            return property.getStringValue();
         }
 
         PropertySimpleType type = definition.getType();

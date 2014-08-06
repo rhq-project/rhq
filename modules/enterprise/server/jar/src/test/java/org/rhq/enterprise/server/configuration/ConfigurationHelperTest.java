@@ -639,6 +639,47 @@ public class ConfigurationHelperTest {
 
     }
 
+    @Test(expectedExceptions={IllegalArgumentException.class})
+    public void testConfigToMapNoDefinitionStrict() throws Exception {
+        ConfigurationHelper.configurationToMap(Configuration.builder().addSimple("test", "test").build(), null, true);
+    }
+
+    @Test()
+    public void testConfigToMapNoDefinition() throws Exception {
+        Configuration config = Configuration.builder()
+            .openList("list1", "map")
+                .openMap()
+                    .addSimple("val1", "true")
+                    .addSimple("val2", "123")
+                .closeMap()
+            .closeList()
+            .addSimple("simple1", "simple1")
+            .openMap("map2")
+                .addSimple("val3", "FOO")
+             .closeMap()
+            .build();
+
+        Map<String, Object> map = ConfigurationHelper.configurationToMap(config, null, false);
+        assert map != null;
+        assert map.size() == 3;
+        assert map.get("list1") instanceof List;
+        List list1 = (List) map.get("list1");
+        assert list1.size() == 1;
+        assert list1.get(0) instanceof Map;
+        Map<String, Object> map1 = (Map<String, Object>) list1.get(0);
+        assert map1.get("val1") instanceof String;
+        assert "true".equals(map1.get("val1"));
+        assert map1.get("val2") instanceof String;
+        assert "123".equals(map1.get("val2"));
+        assert map.get("simple1") instanceof String;
+        assert "simple1".equals(map.get("simple1"));
+        assert map.get("map2") instanceof Map;
+        Map<String, Object> map2 = (Map<String, Object>) map.get("map2");
+        assert map2.size() == 1;
+        assert map2.get("val3") instanceof String;
+        assert "FOO".equals(map2.get("val3"));
+    }
+
     @Test
     public void testConfigToMapComplexMap() throws Exception {
 
@@ -735,7 +776,8 @@ public class ConfigurationHelperTest {
     @Test
     public void testConvertSingleValueNoProperty() throws Exception {
 
-        Object o = ConfigurationHelper.convertSimplePropertyValue(null,new PropertyDefinitionSimple("dummy",null,false,PropertySimpleType.STRING));
+        Object o = ConfigurationHelper.convertSimplePropertyValue(null, new PropertyDefinitionSimple("dummy", null,
+            false, PropertySimpleType.STRING), true);
 
         assert o == null;
 
@@ -745,7 +787,7 @@ public class ConfigurationHelperTest {
     public void testConvertSingleValueNoDefinition() throws Exception {
 
         try {
-            ConfigurationHelper.convertSimplePropertyValue(new PropertySimple("foo","bar"),null);
+            ConfigurationHelper.convertSimplePropertyValue(new PropertySimple("foo", "bar"), null, true);
             assert false;
         }
         catch (IllegalArgumentException iae) {

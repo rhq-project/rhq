@@ -1148,9 +1148,11 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
             if (!wasEnabled) {
                 /*
-                 * recover the other alert, go through the manager layer so as to update the alert cache
+                 * - recover the other alert def, go through the manager layer so as to update the alert cache
+                 * - we know this is a resource alert def so make that call directly. this is more efficient
+                 *   and also avoids the issue in BZ 1126853.
                  */
-                alertDefinitionManager.enableAlertDefinitions(overlord, new int[] { recoveryDefinitionId });
+                alertDefinitionManager.enableResourceAlertDefinitions(overlord, new int[] { recoveryDefinitionId });
             }
 
             /*
@@ -1165,11 +1167,12 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             }
 
             /*
-             * disable until recovered manually or by recovery definition
-             *
-             * go through the manager layer so as to update the alert cache
+             * - disable alert def until recovered manually or by recovery definition.
+             * - go through the manager layer so as to update the alert cache.
+             * - we know this is a resource alert def so make that call directly. this is more efficient
+             *   and also avoids the issue in BZ 1126853.
              */
-            alertDefinitionManager.disableAlertDefinitions(overlord, new int[] { firedDefinition.getId() });
+            alertDefinitionManager.disableResourceAlertDefinitions(overlord, new int[] { firedDefinition.getId() });
 
             /*
              * there's no reason to update the cache directly anymore.  even though this direct type of update is safe

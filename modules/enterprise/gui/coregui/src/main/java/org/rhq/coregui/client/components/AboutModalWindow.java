@@ -77,7 +77,9 @@ public class AboutModalWindow extends PopupWindow {
         version.setWrapTitle(false);
 
         StaticTextItem buildNumber = new StaticTextItem("buildnumber", MSG.view_aboutBox_buildNumber());
-        buildNumber.setValue(productInfo.getBuildNumber());
+        buildNumber.setValue(productInfo.getBuildNumber()
+            + (CoreGUI.isRHQ() ? " (<a target='_blank' href='https://github.com/rhq-project/rhq/commit/"
+                + productInfo.getBuildNumber() + "'>GitHub</a>)" : ""));
         buildNumber.setWrap(false);
         buildNumber.setWrapTitle(false);
 

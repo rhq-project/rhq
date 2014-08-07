@@ -2431,6 +2431,74 @@
             <schemaSpec version="2.155">
                 <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="DEPLOY_DIR" nullable="true"/>
             </schemaSpec>
+
+            <schemaSpec version="2.156">
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (69, 'STORAGE_REGULAR_SNAPSHOTS', 'false', 'false', true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (69, 'STORAGE_REGULAR_SNAPSHOTS', 'false', 'false', 1)
+                </statement>
+              </schema-directSQL>
+
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (70, 'STORAGE_REGULAR_SNAPSHOTS_SCHEDULE','0 0 0 ? * SUN', '0 0 0 ? * SUN', true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (70, 'STORAGE_REGULAR_SNAPSHOTS_SCHEDULE', '0 0 0 ? * SUN', '0 0 0 ? * SUN', 1)
+                </statement>
+              </schema-directSQL>
+
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (71, 'STORAGE_REGULAR_SNAPSHOTS_RETENTION','Keep All', 'Keep All', true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (71, 'STORAGE_REGULAR_SNAPSHOTS_RETENTION', 'Keep All', 'Keep All', 1)
+                </statement>
+              </schema-directSQL>
+
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (72, 'STORAGE_REGULAR_SNAPSHOTS_RETENTION_COUNT','1', '1', true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (72, 'STORAGE_REGULAR_SNAPSHOTS_RETENTION_COUNT', '1', '1', 1)
+                </statement>
+              </schema-directSQL>
+
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (73, 'STORAGE_REGULAR_SNAPSHOTS_DELETION','Delete', 'Delete', true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (73, 'STORAGE_REGULAR_SNAPSHOTS_DELETION', 'Delete', 'Delete', 1)
+                </statement>
+              </schema-directSQL>
+
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (74, 'STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION','', '', true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (74, 'STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION', '', '', 1)
+                </statement>
+              </schema-directSQL>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

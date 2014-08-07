@@ -403,6 +403,12 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         case STORAGE_AUTOMATIC_DEPLOYMENT:
         case STORAGE_PASSWORD:
         case STORAGE_USERNAME:
+        case STORAGE_REGULAR_SNAPSHOTS:
+        case STORAGE_REGULAR_SNAPSHOTS_SCHEDULE:
+        case STORAGE_REGULAR_SNAPSHOTS_RETENTION:
+        case STORAGE_REGULAR_SNAPSHOTS_RETENTION_COUNT:
+        case STORAGE_REGULAR_SNAPSHOTS_DELETION:
+        case STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION:
             return true;
         default:
             return false;

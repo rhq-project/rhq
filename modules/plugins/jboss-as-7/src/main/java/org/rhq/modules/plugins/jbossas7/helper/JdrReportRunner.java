@@ -35,6 +35,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 
 public class JdrReportRunner {
 
+    public static final int JDR_OPERATION_TIMEOUT = 60 * 10;
+
     final Log log = LogFactory.getLog(JdrReportRunner.class);
 
     private final Address path;
@@ -49,7 +51,7 @@ public class JdrReportRunner {
     public InputStream getReport() throws Exception {
         log.info("Obtaining JDR Report form " + this.path);
         Operation operation = new Operation("generate-jdr-report", this.path);
-        Result res = this.connection.execute(operation, false, 120);
+        Result res = this.connection.execute(operation, false, JDR_OPERATION_TIMEOUT); // 10minutes should be enough
         if (res.isSuccess()) {
             @SuppressWarnings("unchecked")
             Map<String, Object> map = (Map<String, Object>) res.getResult();

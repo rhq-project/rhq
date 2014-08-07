@@ -25,6 +25,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.helper.JdrReportRunner;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -42,7 +43,7 @@ public class JDRComponent extends BaseComponent<ResourceComponent<?>> implements
         OperationResult operationResult = new OperationResult();
         Address address = new Address(path);
         Operation operation = new Operation(name, address);
-        Result asResult = getASConnection().execute(operation, false, 120);
+        Result asResult = getASConnection().execute(operation, false, JdrReportRunner.JDR_OPERATION_TIMEOUT);
 
         if (!asResult.isSuccess()) {
             operationResult.setErrorMessage(asResult.getFailureDescription());

@@ -74,7 +74,6 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  * @author Ian Springer
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTimeDataManagerRemote {
     private static final String DATA_VALUE_TABLE_NAME = "RHQ_CALLTIME_DATA_VALUE";
     private static final String DATA_KEY_TABLE_NAME = "RHQ_CALLTIME_DATA_KEY";
@@ -101,7 +100,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource rhqDs;
 
     @EJB
@@ -292,7 +291,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
 
         try {
             conn = rhqDs.getConnection();
-            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+            DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
 
             if (dbType instanceof Postgresql83DatabaseType) {
                 Statement st = null;

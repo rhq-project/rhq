@@ -71,7 +71,6 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  * @author Joseph Marques
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
     // NOTE: We need to do the fancy subselects to figure out the event def id, because the PC does not know the id's of
@@ -93,7 +92,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource rhqDs;
 
     @EJB
@@ -115,7 +114,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         PreparedStatement ps = null;
         try {
             conn = rhqDs.getConnection();
-            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+            DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
 
             if (dbType instanceof PostgresqlDatabaseType || dbType instanceof OracleDatabaseType
                 || dbType instanceof H2DatabaseType) {

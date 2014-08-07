@@ -22,7 +22,6 @@ import java.util.Properties;
 
 import javax.ejb.Local;
 
-import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
@@ -33,16 +32,6 @@ import org.rhq.core.domain.common.composite.SystemSettings;
  */
 @Local
 public interface SystemManagerLocal extends SystemManagerRemote {
-    /**
-     * Returns the {@link DatabaseType} that corresponds to the database the JON Server uses for its backend.
-     *
-     * <p>This method is mainly to allow the caller to determine the kind of database in use so as to determine what
-     * syntax to use for a particular native query.</p>
-     *
-     * @return the type of database
-     */
-    DatabaseType getDatabaseType();
-
     /**
      * Schedules the internal timer job that periodically refreshes the configuration cache.
      * This is needed in case a user changed the system configuration on another server in the HA

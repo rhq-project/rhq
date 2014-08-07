@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.measurement;
 
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -32,7 +31,6 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -47,7 +45,6 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.util.collection.ArrayUtils;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -67,7 +64,6 @@ import org.rhq.server.metrics.MetricsBaselineCalculator;
  * @author Joseph Marques
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class MeasurementBaselineManagerBean implements MeasurementBaselineManagerLocal,
     MeasurementBaselineManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -95,9 +91,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     @EJB
     private StorageClientManager sessionManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
-    private DataSource rhqDs;
-
     private final Log log = LogFactory.getLog(MeasurementBaselineManagerBean.class);
 
     private static final int BASELINE_PROCESSING_LIMIT = 100;
@@ -122,7 +115,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         // measurement data to include in the calculations.
         long amountOfData = Long.parseLong(baselineDataSetString);
         long baselineFrequency = Long.parseLong(baselineFrequencyString);
-        if (baselineFrequency==0) {
+        if (baselineFrequency == 0) {
             log.info("Baseline frequency is set to 0 - not recomputing baselines. Go to Admin->System settings to change this.");
             return;
         }
@@ -156,45 +149,45 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
                 + (System.currentTimeMillis() - now) + ")ms");
 
             now = System.currentTimeMillis();
-                /*
-                 * each call is done in a separate xtn of at most 100K inserted rows; this helps to keep the xtn
-                 * shorter to avoid timeouts in scenarios where baseline calculations bunch together. the idea was that
-                 * by basing a batch of baseline calculations off of the import time of the resource into inventory,
-                 * that the total work would naturally be staggered throughout the day. in practice, this didn't always
-                 * work as intended for one of several reasons:
-                 *
-                 *   1) all servers in the cloud were down for a few days (maybe a slow product upgrade, maybe a cold
-                 *      data center relocation)
-                 *   2) issues with running the job itself, if quartz had locking issues under severe load and somehow
-                 *      this job wasn't get executed for a few hours / days
-                 *   3) the user tended to import all new resources / platforms at the same time of day, thus bypassing
-                 *      the implicit optimization of trying to stagger the calculations by resource commit time
-                 *
-                 * 2/18/2010 NOTE: Limits weren't / aren't actually achieving the affect we want.  The baseline query
-                 * follows the general form of "insert into...select from <big query> having <subquery> limit X".
-                 * In this case, the limit was reducing the number of rows inserted, but it was still taking the full
-                 * cost of calculating everything that should have been inserted.  The limit was intended as a cheap
-                 * method of chunking or partitioning the work, but wasn't properly chunking the expensive
-                 * part - the "big query".  What we actually want to do is come of with a strategy that lessens the
-                 * amount of data we need to select, thereby reducing the amount of time it takes to calculate the
-                 * insertion list.
-                 *
-                 * One proposed strategy for this would be to chunk on the scheduleId.  So if there were, say,
-                 * 5M scheduleIds in the systems, we might take 500K of them at a time and then execute the
-                 * baseline insertion job 10 times against a much smaller set of data each time.  But the
-                 * complication here is how to calculate precise groups of 500K schedules at a time, and then
-                 * walk that chunked list.
-                 *
-                 * Another strategy would be to divy things up by resource type. Since a measurementSchedule is
-                 * linked to a measurementDefinition which is linked to a resourceType, we could very easily chunk
-                 * the insertion based off the schedules that belong to each resourceType.  This would create
-                 * one insert statement for each type of resource in system.  The complication here, however,
-                 * is that you may have millions of resources of one type, but hardly any resources of another.
-                 * So there's still a chance that some insertions proceed slowly (in the worst case).
-                 *
-                 * In any event, an appropriate chunking solution needs to be found, and that partitioning strategy
-                 * needs to replace the limits in the query today.
-                 */
+            /*
+             * each call is done in a separate xtn of at most 100K inserted rows; this helps to keep the xtn
+             * shorter to avoid timeouts in scenarios where baseline calculations bunch together. the idea was that
+             * by basing a batch of baseline calculations off of the import time of the resource into inventory,
+             * that the total work would naturally be staggered throughout the day. in practice, this didn't always
+             * work as intended for one of several reasons:
+             *
+             *   1) all servers in the cloud were down for a few days (maybe a slow product upgrade, maybe a cold
+             *      data center relocation)
+             *   2) issues with running the job itself, if quartz had locking issues under severe load and somehow
+             *      this job wasn't get executed for a few hours / days
+             *   3) the user tended to import all new resources / platforms at the same time of day, thus bypassing
+             *      the implicit optimization of trying to stagger the calculations by resource commit time
+             *
+             * 2/18/2010 NOTE: Limits weren't / aren't actually achieving the affect we want.  The baseline query
+             * follows the general form of "insert into...select from <big query> having <subquery> limit X".
+             * In this case, the limit was reducing the number of rows inserted, but it was still taking the full
+             * cost of calculating everything that should have been inserted.  The limit was intended as a cheap
+             * method of chunking or partitioning the work, but wasn't properly chunking the expensive
+             * part - the "big query".  What we actually want to do is come of with a strategy that lessens the
+             * amount of data we need to select, thereby reducing the amount of time it takes to calculate the
+             * insertion list.
+             *
+             * One proposed strategy for this would be to chunk on the scheduleId.  So if there were, say,
+             * 5M scheduleIds in the systems, we might take 500K of them at a time and then execute the
+             * baseline insertion job 10 times against a much smaller set of data each time.  But the
+             * complication here is how to calculate precise groups of 500K schedules at a time, and then
+             * walk that chunked list.
+             *
+             * Another strategy would be to divy things up by resource type. Since a measurementSchedule is
+             * linked to a measurementDefinition which is linked to a resourceType, we could very easily chunk
+             * the insertion based off the schedules that belong to each resourceType.  This would create
+             * one insert statement for each type of resource in system.  The complication here, however,
+             * is that you may have millions of resources of one type, but hardly any resources of another.
+             * So there's still a chance that some insertions proceed slowly (in the worst case).
+             *
+             * In any event, an appropriate chunking solution needs to be found, and that partitioning strategy
+             * needs to replace the limits in the query today.
+             */
             List<Integer> schedulesWithoutBaselines = measurementBaselineManager.getSchedulesWithoutBaselines();
 
             List<Integer> accumulator = new ArrayList<Integer>();
@@ -235,14 +228,11 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public List<Integer> getSchedulesWithoutBaselines() {
-        Connection connection = null;
         try {
-            connection = rhqDs.getConnection();
-            DatabaseType databaseType = DatabaseTypeFactory.getDatabaseType(connection);
-            final String sql =
-                "SELECT s.id FROM rhq_measurement_sched s INNER JOIN rhq_measurement_def d ON s.definition = d.id " +
-                "LEFT JOIN rhq_measurement_bline b ON s.id = b.schedule_id WHERE s.enabled = " +
-                    databaseType.getBooleanValue(true) + " AND b.schedule_id IS NULL AND d.numeric_type = 0";
+            DatabaseType databaseType = DatabaseTypeFactory.getDefaultDatabaseType();
+            final String sql = "SELECT s.id FROM rhq_measurement_sched s INNER JOIN rhq_measurement_def d ON s.definition = d.id "
+                + "LEFT JOIN rhq_measurement_bline b ON s.id = b.schedule_id WHERE s.enabled = "
+                + databaseType.getBooleanValue(true) + " AND b.schedule_id IS NULL AND d.numeric_type = 0";
             Query query = this.entityManager.createNativeQuery(sql);
             List results = query.getResultList();
             List<Integer> scheduleIds = new ArrayList<Integer>();
@@ -251,10 +241,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
             }
             return scheduleIds;
         } catch (Exception e) {
-            throw new RuntimeException("An unexpected error occurred while trying to retrieve schedules without baselines",
-                e);
-        } finally {
-            JDBCUtil.safeClose(connection);
+            throw new RuntimeException(
+                "An unexpected error occurred while trying to retrieve schedules without baselines", e);
         }
     }
 
@@ -375,8 +363,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
             // only check permissions if the user is attempting to save a new baseline
             if (save
-                && !authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resource
-                    .getId())) {
+                && !authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS,
+                    resource.getId())) {
                 log.error("Cannot calculate baseline - permission denied. " + "resource=" + resource + "; user="
                     + subject + "; perm=" + Permission.MANAGE_MEASUREMENTS);
                 throw new PermissionException("Cannot calculate baseline - you do not have permission on this resource");
@@ -480,8 +468,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
             throw new BaselineCreationException("Baseline calculation is only valid for a dynamic measurement");
         }
 
-        MeasurementAggregate agg = dataManager.getMeasurementAggregate(subjectManager.getOverlord(), schedule.getId(), startDate,
-            endDate);
+        MeasurementAggregate agg = dataManager.getMeasurementAggregate(subjectManager.getOverlord(), schedule.getId(),
+            startDate, endDate);
 
         // attach the entity, so we can find the baseline
         schedule = entityManager.merge(schedule);

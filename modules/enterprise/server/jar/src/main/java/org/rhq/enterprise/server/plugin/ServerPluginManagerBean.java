@@ -47,6 +47,7 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -59,6 +60,7 @@ import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
@@ -80,13 +82,13 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
  * @author John Mazzitelli
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class ServerPluginManagerBean implements ServerPluginManagerLocal, ServerPluginManagerRemote {
 
     private final Log log = LogFactory.getLog(ServerPluginManagerBean.class);
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
-    @javax.annotation.Resource(name = "RHQ_DS")
+
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;
 
     @EJB
@@ -691,7 +693,7 @@ public class ServerPluginManagerBean implements ServerPluginManagerLocal, Server
         q.setParameter("serverId", serverId);
 
         @SuppressWarnings("unchecked")
-        List<ServerPlugin> plugins = (List<ServerPlugin>) q.getResultList();
+        List<ServerPlugin> plugins = q.getResultList();
 
         Server server = entityManager.find(Server.class, serverId);
 
@@ -734,7 +736,7 @@ public class ServerPluginManagerBean implements ServerPluginManagerLocal, Server
             }
         } finally {
             JDBCUtil.safeClose(conn, ps, rs);
-            fis.close();
+            StreamUtil.safeClose(fis);
         }
         return;
     }

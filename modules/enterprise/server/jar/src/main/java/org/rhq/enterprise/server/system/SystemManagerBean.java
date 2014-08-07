@@ -161,28 +161,6 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     }
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public DatabaseType getDatabaseType() {
-        Connection conn = null;
-        DatabaseType dbtype = null;
-        try {
-            conn = dataSource.getConnection();
-            dbtype = DatabaseTypeFactory.getDatabaseType(conn);
-            return dbtype;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    LOG.warn("Failed to close temporary connection", e);
-                }
-            }
-        }
-    }
-
-    @Override
     @Deprecated
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public Properties getSystemConfiguration(Subject subject) {
@@ -673,7 +651,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         DatabaseType dbtype = null;
         try {
             conn = dataSource.getConnection();
-            dbtype = DatabaseTypeFactory.getDatabaseType(conn);
+            dbtype = DatabaseTypeFactory.getDefaultDatabaseType();
             if (!DatabaseTypeFactory.isPostgres(dbtype)) {
                 return -1;
             }
@@ -698,7 +676,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         DatabaseType dbtype = null;
         try {
             conn = dataSource.getConnection();
-            dbtype = DatabaseTypeFactory.getDatabaseType(conn);
+            dbtype = DatabaseTypeFactory.getDefaultDatabaseType();
             long duration = 0;
             if (DatabaseTypeFactory.isPostgres(dbtype)) {
                 for (String table : TABLES_TO_REINDEX) {
@@ -739,7 +717,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         DatabaseType dbtype = null;
         try {
             conn = dataSource.getConnection();
-            dbtype = DatabaseTypeFactory.getDatabaseType(conn);
+            dbtype = DatabaseTypeFactory.getDefaultDatabaseType();
             if (!DatabaseTypeFactory.isPostgres(dbtype)) {
                 return -1;
             }

@@ -750,11 +750,7 @@ public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemot
             }
         } finally {
             JDBCUtil.safeClose(conn, ps, rs);
-
-            try {
-                fis.close();
-            } catch (Throwable t) {
-            }
+            StreamUtil.safeClose(fis);
         }
         return;
     }

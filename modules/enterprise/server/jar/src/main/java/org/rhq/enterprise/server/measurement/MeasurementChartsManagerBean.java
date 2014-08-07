@@ -67,7 +67,6 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
  * @author Joseph Marques
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 @Interceptors(PerformanceMonitorInterceptor.class)
 public class MeasurementChartsManagerBean implements MeasurementChartsManagerLocal {
 
@@ -76,7 +75,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource rhqDs;
 
     @EJB

@@ -78,7 +78,6 @@ import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
  * @author Ian Springer
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal {
     private final Log log = LogFactory.getLog(ResourceMetadataManagerBean.class);
 

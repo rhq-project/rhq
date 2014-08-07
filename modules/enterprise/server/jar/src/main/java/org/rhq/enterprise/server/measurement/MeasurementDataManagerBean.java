@@ -57,7 +57,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
 
-import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jboss.remoting.CannotConnectException;
 
 import org.rhq.core.domain.auth.Subject;
@@ -118,7 +117,6 @@ import org.rhq.server.metrics.domain.RawNumericMetric;
  * @author Ian Springer
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, MeasurementDataManagerRemote {
     // time_stamp, schedule_id, value, schedule_id, schedule_id, value, value, value, value
     private static final String TRAIT_INSERT_STATEMENT = "INSERT INTO RHQ_measurement_data_trait \n"
@@ -141,7 +139,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource rhqDs;
 
     @EJB
@@ -939,7 +937,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         if (definitionIds == null || definitionIds.length == 0) {
             return Collections.<MeasurementData>emptySet();
         }
-        
+
         Set<MeasurementData> values = new HashSet<MeasurementData>();
         if (resourceIds != null) {
             Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_RESOURCE_IDS_WITH_AGENTS_BY_RESOURCE_IDS);

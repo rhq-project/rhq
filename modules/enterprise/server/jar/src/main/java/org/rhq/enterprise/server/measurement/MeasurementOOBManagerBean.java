@@ -70,7 +70,6 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
  * @author Heiko W. Rupp
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
     private static final int BATCH_SIZE = 500;
@@ -79,7 +78,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource rhqDs;
 
     @EJB
@@ -114,7 +113,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         try {
             log.info("Calculating OOBs for hour starting at " + new Date(begin));
             conn = rhqDs.getConnection();
-            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+            DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
 
             long t0 = System.currentTimeMillis();
             long tstart = t0;

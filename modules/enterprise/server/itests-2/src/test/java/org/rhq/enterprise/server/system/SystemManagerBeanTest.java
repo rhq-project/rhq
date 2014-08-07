@@ -22,7 +22,6 @@ import java.util.Properties;
 
 import org.testng.annotations.Test;
 
-import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
@@ -73,10 +72,6 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
 
     public void testEnableHibernateStatistics() {
         systemManager.enableHibernateStatistics();
-    }
-
-    public void testGetDatabaseType() {
-        assert systemManager.getDatabaseType() instanceof DatabaseType;
     }
 
     public void testReindex() {

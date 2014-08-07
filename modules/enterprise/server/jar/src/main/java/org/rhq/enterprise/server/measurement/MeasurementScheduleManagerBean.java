@@ -105,7 +105,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Joseph Marques
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 @Interceptors(PerformanceMonitorInterceptor.class)
 public class MeasurementScheduleManagerBean implements MeasurementScheduleManagerLocal,
     MeasurementScheduleManagerRemote {
@@ -116,7 +115,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     private DataSource dataSource;
 
     @EJB
-    //@IgnoreDependency
     private AgentManagerLocal agentManager;
 
     @EJB
@@ -126,7 +124,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     private ResourceManagerLocal resourceManager;
 
     @EJB
-    //@IgnoreDependency
     private ResourceGroupManagerLocal resourceGroupManager;
 
     @EJB
@@ -1075,7 +1072,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         int created = -1;
         try {
             conn = dataSource.getConnection();
-            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+            DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
 
             String insertQueryString = null;
             if (dbType instanceof PostgresqlDatabaseType) {
@@ -1101,19 +1098,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                     + batchIds + "]");
             }
         } finally {
-            if (insertStatement != null) {
-                try {
-                    insertStatement.close();
-                } catch (Exception e) {
-                }
-            }
-
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (Exception e) {
-                }
-            }
+            JDBCUtil.safeClose(conn, insertStatement, null);
         }
         return created;
     }
@@ -1165,19 +1150,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 results.close();
             }
         } finally {
-            if (resultsStatement != null) {
-                try {
-                    resultsStatement.close();
-                } catch (Exception e) {
-                }
-            }
-
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (Exception e) {
-                }
-            }
+            JDBCUtil.safeClose(conn, resultsStatement, null);
         }
         return created;
     }

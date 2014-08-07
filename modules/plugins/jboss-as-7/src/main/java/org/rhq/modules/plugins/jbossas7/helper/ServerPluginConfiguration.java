@@ -271,6 +271,10 @@ public class ServerPluginConfiguration {
      * @throws InvalidPluginConfigurationException if settings are incorrect
      */
     public void validate() {
+        if (getPort() == null || getPort() <= 0) {
+            throw new InvalidPluginConfigurationException(
+                "Unable to detect management port. Please enable management HTTP interface on and then set correct port number in Connection Settings of this resource");
+        }
         if (isSecure()) {
             String truststore = getTruststore();
             if (truststore != null) {

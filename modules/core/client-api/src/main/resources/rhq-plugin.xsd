@@ -509,6 +509,167 @@
 
    <!-- == Bundle Target ================================================== -->
 
+   <xs:complexType name="BundleDestination">
+       <xs:sequence>
+           <xs:element name="accepts" minOccurs="0" maxOccurs="unbounded">
+               <xs:annotation>
+                   <xs:documentation>
+                       Using the accepts elements, one can limit the applicability of
+                       the destination to only given bundle types.
+
+                       The rules governing whether a destination is available when deploying
+                       a bundle of type "B" to a group of resources of type "T" are the following:
+
+                       1) If no destination from type "T" explicitly accepts bundle type "B", only those
+                       destinations that don't specifically accept ANY bundle type are available
+                       for deployment.
+                       2) If at least one destination from type "T" accepts bundle type "B" then
+                       only those that accept it explicitly are available for deployment.
+
+                       These rules support the 2 main kinds of bundle types: generic, filesystem based
+                       bundle types and specific, API based bundle types.
+
+                       The generic types deploy to the destinations that don't explicitly accept any
+                       type, while specific types deploy to destinations specifically tailored for
+                       those types.
+
+                       It is supposed that a single destination will not likely be shared between
+                       the generic and specific bundle types.
+                   </xs:documentation>
+               </xs:annotation>
+               <xs:complexType>
+                   <xs:attribute name="bundle-type" type="xs:string" use="required">
+                       <xs:annotation>
+                           <xs:documentation>
+                               The name of the bundle type that can deploy to this destination.
+                           </xs:documentation>
+                       </xs:annotation>
+                   </xs:attribute>
+               </xs:complexType>
+           </xs:element>
+       </xs:sequence>
+       <xs:attribute name="name" type="xs:string" use="required">
+           <xs:annotation>
+               <xs:documentation>
+                   The name given to identify this particular destination.
+               </xs:documentation>
+           </xs:annotation>
+       </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType name="BundleDestinationBaseDir">
+       <xs:complexContent>
+           <xs:extension base="rhq:BundleDestination">
+               <xs:annotation>
+                   <xs:documentation>
+                       Defines where a bundle can be deployed under the resource.
+                       You must define one destination base directory, but may define more.
+                       Each destination base directory's value is obtained from a particular context
+                       (e.g. in the resource's plugin configuration or its resource configuration).
+                       Within that context, the base directory value is obtained by looking up the named value in the given context.
+                       For example, if the value-name is "install.dir" and the value-context is "pluginConfiguration",
+                       then the destination base directory value is obtained by getting the "install.dir" property value
+                       found in the resource's plugin configuration.
+                   </xs:documentation>
+               </xs:annotation>
+               <xs:sequence>
+                   <xs:element name="value-context">
+                       <xs:simpleType>
+                           <xs:restriction base="xs:string">
+                               <xs:enumeration value="pluginConfiguration"/>
+                               <xs:enumeration value="resourceConfiguration"/>
+                               <xs:enumeration value="measurementTrait"/>
+                               <xs:enumeration value="fileSystem"/>
+                           </xs:restriction>
+                       </xs:simpleType>
+                   </xs:element>
+                   <xs:element name="value-name" type="xs:string"/>
+               </xs:sequence>
+               <xs:attribute name="description" type="xs:string" use="optional">
+                   <xs:annotation>
+                       <xs:documentation>
+                           An explanation to the user to describe what this destination location is.
+                       </xs:documentation>
+                   </xs:annotation>
+               </xs:attribute>
+           </xs:extension>
+       </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType name="BundleDestinationDefinition">
+       <xs:complexContent>
+           <xs:extension base="rhq:BundleDestination">
+               <xs:annotation>
+                   <xs:documentation>
+                       A complex definition of a destination meant for bundle handlers that
+                       require a rich set of "connection properties" to successfully connect
+                       to an API-based bundle target and deploy stuff to it.
+                   </xs:documentation>
+               </xs:annotation>
+               <xs:sequence>
+                   <xs:element name="description" minOccurs="0" type="xs:normalizedString">
+                       <xs:annotation>
+                           <xs:documentation>
+                               The description of the destination definition.
+                           </xs:documentation>
+                       </xs:annotation>
+                   </xs:element>
+                   <xs:element name="connection" minOccurs="0" type="xs:normalizedString">
+                       <xs:annotation>
+                           <xs:documentation>
+                               The expression specifying the location of the destination.
+                               You can reference the values from the plugin or resource configuration
+                               or a value of a trait using the ${} notation.
+
+                               E.g. connection="http://${pluginConfiguration.host}/webapp" would replace
+                               the ${} section with the value of the "host" property from the plugin configuration.
+                               The escape character in expression is the backslash, i.e. \${} would be
+                               interpreted as literal "${}".
+
+                               The names of properties are free form, so in case the name of the property
+                               contains a closing curly brace "}", you can quote the name of the property in
+                               double quotes, with backslash as the escape char.
+                               E.g. expression='http://${pluginConfiguration."crazy\"Name{}"}/webapp' reads the
+                               value of property called crazy"Name{} from the plugin configuration.
+                           </xs:documentation>
+                       </xs:annotation>
+                   </xs:element>
+                   <xs:sequence>
+                       <xs:choice minOccurs="0">
+                           <!-- Note that this guy would require quite large scale changes, because this
+                                basically is a replacement for the "deployDir" of bundle destination with
+                                a fully-fledged configuration definition of props that can be defined on a
+                                bundle destination. While this would be nice, it is actually not needed for
+                                the current round of enhancements
+                           <xs:element name="explicit-configuration" type="config:configuration">
+                               <xs:annotation>
+                                   <xs:documentation>
+                                       The configuration options required to be specified by the user when
+                                       creating the destination.
+                                   </xs:documentation>
+                               </xs:annotation>
+                           </xs:element>
+                           -->
+                           <xs:element name="referenced-configuration">
+                               <xs:complexType>
+                                   <xs:sequence>
+                                       <xs:choice maxOccurs="unbounded">
+                                           <xs:element name="map-property-ref" type="rhq:BundleConfigPropertyReference"/>
+                                           <xs:element name="list-property-ref" type="rhq:BundleConfigPropertyReference"/>
+                                           <xs:element name="simple-property-ref" type="rhq:BundleConfigPropertyReference"/>
+                                           <xs:element name="trait-ref" type="rhq:BundleTraitReference" />
+                                           <xs:element name="all" type="rhq:BundleConfigFullCopy"/>
+                                       </xs:choice>
+                                   </xs:sequence>
+                               </xs:complexType>
+                           </xs:element>
+                       </xs:choice>
+                   </xs:sequence>
+               </xs:sequence>
+           </xs:extension>
+       </xs:complexContent>
+   </xs:complexType>
+
    <xs:element name="bundle-target">
         <xs:annotation>
            <xs:appinfo>
@@ -522,121 +683,8 @@
         <xs:complexType>
            <xs:sequence>
               <xs:choice minOccurs="1" maxOccurs="unbounded">
-                  <xs:element name="destination-base-dir">
-                      <xs:complexType>
-                          <xs:annotation>
-                              <xs:documentation>
-                                  Defines where a bundle can be deployed under the resource.
-                                  You must define one destination base directory, but may define more.
-                                  Each destination base directory's value is obtained from a particular context
-                                  (e.g. in the resource's plugin configuration or its resource configuration).
-                                  Within that context, the base directory value is obtained by looking up the named value in the given context.
-                                  For example, if the value-name is "install.dir" and the value-context is "pluginConfiguration",
-                                  then the destination base directory value is obtained by getting the "install.dir" property value
-                                  found in the resource's plugin configuration.
-                              </xs:documentation>
-                          </xs:annotation>
-                          <xs:sequence>
-                              <xs:element name="value-context">
-                                  <xs:simpleType>
-                                      <xs:restriction base="xs:string">
-                                          <xs:enumeration value="pluginConfiguration"></xs:enumeration>
-                                          <xs:enumeration value="resourceConfiguration"></xs:enumeration>
-                                          <xs:enumeration value="measurementTrait"></xs:enumeration>
-                                          <xs:enumeration value="fileSystem"></xs:enumeration>
-                                      </xs:restriction>
-                                  </xs:simpleType>
-                              </xs:element>
-                              <xs:element name="value-name" type="xs:string"></xs:element>
-                          </xs:sequence>
-                          <xs:attribute name="name" type="xs:string" use="required">
-                              <xs:annotation>
-                                  <xs:documentation>
-                                      The name given to identify this particular destination base directory.
-                                  </xs:documentation>
-                              </xs:annotation>
-                          </xs:attribute>
-                          <xs:attribute name="description" type="xs:string" use="optional">
-                              <xs:annotation>
-                                  <xs:documentation>
-                                      An explanation to the user to describe what this destination location is.
-                                  </xs:documentation>
-                              </xs:annotation>
-                          </xs:attribute>
-                      </xs:complexType>
-                  </xs:element>
-                  <xs:element name="destination-definition">
-                      <xs:annotation>
-                          <xs:documentation>
-                              A complex definition of a destination meant for bundle handlers that
-                              require a rich set of "connection properties" to successfully connect
-                              to an API-based bundle target and deploy stuff to it.
-                          </xs:documentation>
-                      </xs:annotation>
-                      <xs:complexType>
-                          <xs:sequence>
-                              <xs:element name="description" minOccurs="0" type="xs:normalizedString">
-                                  <xs:annotation>
-                                      <xs:documentation>
-                                          The description of the destination definition.
-                                      </xs:documentation>
-                                  </xs:annotation>
-                              </xs:element>
-                              <xs:element name="connection" minOccurs="0" type="xs:normalizedString">
-                                  <xs:annotation>
-                                      <xs:documentation>
-                                          The expression specifying the location of the destination.
-                                          You can reference the values from the plugin or resource configuration
-                                          or a value of a trait using the ${} notation.
-
-                                          E.g. connection="http://${pluginConfiguration.host}/webapp" would replace
-                                          the ${} section with the value of the "host" property from the plugin configuration.
-                                          The escape character in expression is the backslash, i.e. \${} would be
-                                          interpreted as literal "${}".
-
-                                          The names of properties are free form, so in case the name of the property
-                                          contains a closing curly brace "}", you can quote the name of the property in
-                                          double quotes, with blackslash as the escape char.
-                                          E.g. expression='http://${pluginConfiguration."crazy\"Name{}"}/webapp' reads the
-                                          value of property called crazy"Name{} from the plugin configuration.
-                                      </xs:documentation>
-                                  </xs:annotation>
-                              </xs:element>
-                              <xs:sequence>
-                                  <xs:choice minOccurs="0">
-                                      <!-- Note that this guy would require quite large scale changes, because this
-                                           basically is a replacement for the "deployDir" of bundle destination with
-                                           a fully-fledged configuration definition of props that can be defined on a
-                                           bundle destination. While this would be nice, it is actually not needed for
-                                           the current round of enhancements
-                                      <xs:element name="explicit-configuration" type="config:configuration">
-                                          <xs:annotation>
-                                              <xs:documentation>
-                                                  The configuration options required to be specified by the user when
-                                                  creating the destination.
-                                              </xs:documentation>
-                                          </xs:annotation>
-                                      </xs:element>
-                                      -->
-                                      <xs:element name="referenced-configuration">
-                                          <xs:complexType>
-                                              <xs:sequence>
-                                                  <xs:choice maxOccurs="unbounded">
-                                                      <xs:element name="map-property-ref" type="rhq:BundleConfigPropertyReference"/>
-                                                      <xs:element name="list-property-ref" type="rhq:BundleConfigPropertyReference"/>
-                                                      <xs:element name="simple-property-ref" type="rhq:BundleConfigPropertyReference"/>
-                                                      <xs:element name="trait-ref" type="rhq:BundleTraitReference" />
-                                                      <xs:element name="all" type="rhq:BundleConfigFullCopy"/>
-                                                  </xs:choice>
-                                              </xs:sequence>
-                                          </xs:complexType>
-                                      </xs:element>
-                                  </xs:choice>
-                              </xs:sequence>
-                          </xs:sequence>
-                          <xs:attribute name="name" type="xs:string"/>
-                      </xs:complexType>
-                  </xs:element>
+                  <xs:element name="destination-base-dir" type="rhq:BundleDestinationBaseDir"/>
+                  <xs:element name="destination-definition" type="rhq:BundleDestinationDefinition"/>
               </xs:choice>
           </xs:sequence>
        </xs:complexType>
@@ -932,6 +980,34 @@
    </xs:simpleType>
 
    <xs:complexType name="bundle">
+      <xs:all>
+          <xs:element name="targets" minOccurs="0" maxOccurs="1">
+              <xs:annotation>
+                  <xs:documentation>
+                      Optionally lists the resource types that this bundle type can be target of.
+                      If no resource types are specified, the bundle type can target any resource type.
+
+                      The resource types can then further limit the destinations the bundle type can
+                      target by using the "accepts" element in the destination specifications.
+                  </xs:documentation>
+              </xs:annotation>
+              <xs:complexType>
+                  <xs:sequence>
+                      <xs:element name="resource-type" minOccurs="1" maxOccurs="unbounded">
+                          <xs:annotation>
+                              <xs:documentation>
+                                  Specifies the resource type the bundle type can target.
+                              </xs:documentation>
+                          </xs:annotation>
+                          <xs:complexType>
+                              <xs:attribute name="name" use="required" type="xs:string" />
+                              <xs:attribute name="plugin" use="required" type="xs:string" />
+                          </xs:complexType>
+                      </xs:element>
+                  </xs:sequence>
+              </xs:complexType>
+          </xs:element>
+      </xs:all>
       <xs:attribute name="type" type="xs:string"/>
    </xs:complexType>
 

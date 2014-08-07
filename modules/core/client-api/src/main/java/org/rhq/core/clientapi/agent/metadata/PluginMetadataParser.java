@@ -39,8 +39,10 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.descriptor.plugin.Bundle;
 import org.rhq.core.clientapi.descriptor.plugin.BundleConfigFullCopy;
 import org.rhq.core.clientapi.descriptor.plugin.BundleConfigPropertyReference;
+import org.rhq.core.clientapi.descriptor.plugin.BundleDestination;
+import org.rhq.core.clientapi.descriptor.plugin.BundleDestinationBaseDir;
+import org.rhq.core.clientapi.descriptor.plugin.BundleDestinationDefinition;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor.DestinationBaseDir;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTraitReference;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.DiscoveryCallbacksType;
@@ -171,7 +173,34 @@ public class PluginMetadataParser {
         // case we are defining callbacks on types in our own plugin
         parseDiscoveryCallbacks();
 
-        return;
+        parseBundleTypeTargets();
+    }
+
+    private void parseBundleTypeTargets() {
+        parseBundleTypeTarget(pluginDescriptor.getPlatforms());
+        parseBundleTypeTarget(pluginDescriptor.getServers());
+        parseBundleTypeTarget(pluginDescriptor.getServices());
+    }
+
+    private void parseBundleTypeTarget(List<? extends ResourceDescriptor> resourceTypes) {
+        for (ResourceDescriptor d : resourceTypes) {
+            if (d.getBundle() != null) {
+                ResourceType rt = getResourceTypeFromPlugin(d.getName(), pluginDescriptor.getName());
+                BundleType bt = rt.getBundleType();
+                parseBundleTypeTarget(bt, d.getBundle().getTargets());
+            }
+        }
+    }
+
+    private void parseBundleTypeTarget(BundleType bundleType, Bundle.Targets target) {
+        if (target == null) {
+            return;
+        }
+
+        for (Bundle.Targets.ResourceType ref : target.getResourceType()) {
+            ResourceType rt = getResourceTypeFromPlugin(ref.getName(), ref.getPlugin());
+            bundleType.addTargetedResourceType(rt);
+        }
     }
 
     private void parseDiscoveryCallbacks() throws InvalidPluginDescriptorException {
@@ -613,30 +642,39 @@ public class PluginMetadataParser {
             if (bundle != null) {
                 String typeName = bundle.getType();
                 resourceType.setBundleType(new BundleType(typeName, resourceType));
+                // do NOT parse the target types of bundle type right now so that we don't
+                // require the plugin writer to order the types herself
             }
 
             BundleTargetDescriptor bundleTarget = resourceDescriptor.getBundleTarget();
             if (bundleTarget != null) {
-                List<Object> destDefs = bundleTarget.getDestinationBaseDirOrDestinationDefinition();
+                List<BundleDestination> destDefs = bundleTarget.getDestinationBaseDirOrDestinationDefinition();
                 if (destDefs != null && destDefs.size() > 0) {
                     Configuration c = new Configuration();
                     ResourceTypeBundleConfiguration bundleConfiguration = new ResourceTypeBundleConfiguration(c);
-                    for (Object destDef : destDefs) {
-                        if (destDef instanceof DestinationBaseDir) {
-                            DestinationBaseDir destBaseDir = (DestinationBaseDir) destDef;
+                    for (BundleDestination destDef : destDefs) {
+                        if (destDef instanceof BundleDestinationBaseDir) {
+                            BundleDestinationBaseDir destBaseDir = (BundleDestinationBaseDir) destDef;
                             String name = destBaseDir.getName();
                             String valueContext = destBaseDir.getValueContext();
                             String valueName = destBaseDir.getValueName();
                             String description = destBaseDir.getDescription();
+                            List<String> accepts = new ArrayList<String>();
+                            for(BundleDestination.Accepts accept : destBaseDir.getAccepts()) {
+                                accepts.add(accept.getBundleType());
+                            }
                             bundleConfiguration.addBundleDestinationBaseDirectory(name, valueContext, valueName,
-                                description);
-                        } else if (destDef instanceof BundleTargetDescriptor.DestinationDefinition) {
-                            BundleTargetDescriptor.DestinationDefinition def =
-                                (BundleTargetDescriptor.DestinationDefinition) destDef;
+                                description, accepts);
+                        } else if (destDef instanceof BundleDestinationDefinition) {
+                            BundleDestinationDefinition def = (BundleDestinationDefinition) destDef;
 
                             ResourceTypeBundleConfiguration.BundleDestinationDefinition.Builder bld = bundleConfiguration
                                 .createDestinationDefinitionBuilder(def.getName());
                             bld.withDescription(def.getDescription()).withConnectionString(def.getConnection());
+
+                            for (BundleDestination.Accepts accept : def.getAccepts()) {
+                                bld.addAcceptedBundleType(accept.getBundleType());
+                            }
 
                             for (JAXBElement<?> ref : def.getReferencedConfiguration()
                                 .getMapPropertyRefOrListPropertyRefOrSimplePropertyRef()) {

@@ -33,6 +33,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -845,6 +847,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
      * @return name attribute from host.xml file
      */
     protected String findASDomainHostName() {
+        if (getMode().equals(AS7Mode.STANDALONE)) {
+            return null;
+        }
         File hostXmlFile = getServerPluginConfiguration().getHostConfigFile();
         if (hostXmlFile == null) {
             return null;
@@ -862,8 +867,30 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         } catch (Exception e) {
             LOG.error(e.getMessage());
         }
-        if (hostName == null)
-            hostName = "local"; // Fallback to the installation default
+        if (hostName == null || hostName.equals("")) {
+            LOG.warn("Failed to read domain host name from [" + hostXmlFile + "] auto-detecting...");
+            String qualifiedHostName = System.getenv("HOSTNAME");
+            if (qualifiedHostName == null) {
+                qualifiedHostName = System.getenv("COMPUTERNAME");
+            }
+            if (qualifiedHostName == null) {
+                try {
+                    qualifiedHostName = InetAddress.getLocalHost().getHostName();
+                    if (qualifiedHostName != null && qualifiedHostName.matches("^\\d+\\.\\d+\\.\\d+\\.\\d+$|:")) {
+                        // IP address is not acceptable
+                        qualifiedHostName = null;
+                    }
+                } catch (UnknownHostException e) {
+                    qualifiedHostName = null;
+                }
+            }
+            if (qualifiedHostName == null) {
+                qualifiedHostName = "unknown-host.unknown-domain";
+            }
+            final int idx = qualifiedHostName.indexOf('.');
+            hostName = idx == -1 ? qualifiedHostName : qualifiedHostName.substring(0, idx);
+            LOG.info("Domain host name was detected as [" + hostName + "]");
+        }
         return hostName;
     }
 

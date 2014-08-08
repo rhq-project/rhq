@@ -51,6 +51,7 @@ import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.file.FileReverter;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.file.FileVisitor;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
@@ -65,11 +66,12 @@ import org.rhq.server.control.util.ExecutorAssist;
  */
 public abstract class AbstractInstall extends ControlCommand {
 
-    protected final String AGENT_CONFIG_OPTION = "agent-config";
-    protected final String START_OPTION = "start";
+    protected static final String AGENT_CONFIG_OPTION = "agent-config";
+    protected static final String FROM_AGENT_DIR_OPTION = "from-agent-dir";
+    protected static final String START_OPTION = "start";
 
-    protected final String AGENT_PREFERENCE = "agent-preference";
-    protected final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
+    protected static final String AGENT_PREFERENCE = "agent-preference";
+    protected static final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
 
     // some known agent preference setting names
     private static final String PREF_RHQ_AGENT_CONFIGURATION_SETUP_FLAG = "rhq.agent.configuration-setup-flag";
@@ -367,7 +369,7 @@ public abstract class AbstractInstall extends ControlCommand {
             }
 
             org.apache.commons.exec.CommandLine commandLine;
-            
+
             if (isWindows()) {
                 // For windows we will [re-]install the server as a windows service, then start the service.
 
@@ -418,7 +420,7 @@ public abstract class AbstractInstall extends ControlCommand {
             log.error("An error occurred while starting the RHQ server: " + e.getMessage());
             throw e;
         }
-        
+
         return rValue;
     }
 
@@ -441,7 +443,7 @@ public abstract class AbstractInstall extends ControlCommand {
             /**
              * @TODO There's no way this could catch the resultValue..
              */
-            
+
             org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
             ExecutorAssist.execute(getBinDir(), commandLine, true);
             log.info("The server installer is running");
@@ -624,6 +626,70 @@ public abstract class AbstractInstall extends ControlCommand {
             agentPrefs.flush();
             Preferences.userRoot().sync();
         }
+    }
+
+    protected int updateAndMoveExistingAgent(final File agentBasedir, final File oldAgentDir,
+        final File agentInstallerJar) throws Exception {
+
+        // Make sure we use the appropriate java version, don't just fall back to PATH
+        String javaExeFilePath = System.getProperty("rhq.java-exe-file-path");
+
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(javaExeFilePath) //
+            .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath()) //
+            .addArgument("--update=" + oldAgentDir.getAbsolutePath()) //
+            .addArgument("--log=" + new File(getLogDir(), "rhq-agent-update.log")) //
+            .addArgument("--launch=false"); // we can't launch this copy - we still have to move it to the new location
+
+        int exitValue = ExecutorAssist.execute(getBaseDir(), commandLine);
+        log.info("The agent installer finished updating with exit value " + exitValue);
+
+        // We need to now move the new, updated agent over to the new agent location.
+        // renameTo() may fail if we are crossing file system boundaries, so try a true copy as a fallback.
+        if (!agentBasedir.equals(oldAgentDir)) {
+            // BZ 1118906 - we need to guard against the possibility that one or both of these are symlinks which aren't
+            // "equal" to each other but yet still point to the same location. If they point to the same location
+            // it is as if they are "equal" and we should do nothing.
+            if (!agentBasedir.getCanonicalPath().equals(oldAgentDir.getCanonicalPath())) {
+                FileUtil.purge(agentBasedir, true); // clear the way for the new upgraded agent
+                if (!oldAgentDir.renameTo(agentBasedir)) {
+                    FileUtil.copyDirectory(oldAgentDir, agentBasedir);
+
+                    // we need to retain the execute bits for the executable scripts and libraries
+                    FileVisitor visitor = new FileVisitor() {
+                        @Override
+                        public void visit(File file) {
+                            String filename = file.getName();
+                            if (filename.contains(".so") || filename.contains(".sl") || filename.contains(".dylib")) {
+                                file.setExecutable(true);
+                            } else if (filename.endsWith(".sh")) {
+                                file.setExecutable(true);
+                            }
+                        }
+                    };
+
+                    FileUtil.forEachFile(new File(agentBasedir, "bin"), visitor);
+                    FileUtil.forEachFile(new File(agentBasedir, "lib"), visitor);
+                }
+            }
+        }
+
+        return exitValue;
+    }
+
+    static protected File getFromAgentDir(CommandLine commandLine) {
+        return (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) ? new File(
+            commandLine.getOptionValue(FROM_AGENT_DIR_OPTION)) : null;
+    }
+
+    protected File getFileDownload(String directory, final String fileMatch) {
+        File downloadDir = new File(getBaseDir(),
+            "modules/org/rhq/server-startup/main/deployments/rhq.ear/rhq-downloads/" + directory);
+        return downloadDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.getName().contains(fileMatch);
+            }
+        })[0];
     }
 
     private Preferences getAgentPreferences() {
@@ -828,10 +894,10 @@ public abstract class AbstractInstall extends ControlCommand {
 
             // Ignore empty values
             Iterator<Map.Entry<Object, Object>> iterator = properties.entrySet().iterator();
-            while(iterator.hasNext()) {
+            while (iterator.hasNext()) {
                 Map.Entry<Object, Object> entry = iterator.next();
                 String value = (String) entry.getValue();
-                if(value == null || value.length() < 1) {
+                if (value == null || value.length() < 1) {
                     iterator.remove();
                 }
             }

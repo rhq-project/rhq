@@ -226,49 +226,48 @@ isc.loadSkin = function (theWindow) {
                 modalMaskOpacity : 10
             });
             isc.Window.changeDefaults("headerDefaults", {
-                height:25,
+                height:27,
                 layoutMargin:3,
                 membersMargin:3
             });
             isc.Window.changeDefaults("headerIconDefaults", {
                 width:15,
                 height:15,
-                src: "[SKIN]/headerIcons/headerIcon.png",
+                src: "[SKIN]/headerIcons/headerIcon.png"
             });
 
             isc.Window.changeDefaults("closeButtonDefaults", {
-                src:"[SKIN]/headerIcons/close.png",
+                src:"[SKIN]/headerIcons/close.gif",
                 showRollOver:true,
                 showDown:false,
                 width:15,
                 height:15
             });
             isc.Window.changeDefaults("minimizeButtonDefaults", {
-                src:"[SKIN]/headerIcons/minimize.png",
+                src:"[SKIN]/headerIcons/minimize.gif",
                 showRollOver:true,
                 showDown:false,
                 width:15,
                 height:15
+            });
+            isc.Window.changeDefaults("maximizeButtonDefaults", {
+              src:"[SKIN]/headerIcons/maximize.gif",
+              showRollOver:true,
+              showDown:false,
+              width:15,
+              height:15
             });
 
             isc.Window.changeDefaults("restoreButtonDefaults", {
-                src:"[SKIN]/headerIcons/restore.png",
+                src:"[SKIN]/headerIcons/restore.gif",
                 showRollOver:true,
                 showDown:false,
                 width:15,
                 height:15
             });
-
-            isc.Window.changeDefaults("maximizeButtonDefaults", {
-              src:"[SKIN]/headerIcons/maximize.gif",
-              opacity:isc._edgeOpacity,
-              showRollOver:true,
-              width:15,
-              height:15
-            })
             isc.Window.changeDefaults("toolbarDefaults", {
                 buttonConstructor: "IButton"
-            }) ;
+            });
 
             if (isc.ColorPicker) {
                 isc.ColorPicker.addProperties({

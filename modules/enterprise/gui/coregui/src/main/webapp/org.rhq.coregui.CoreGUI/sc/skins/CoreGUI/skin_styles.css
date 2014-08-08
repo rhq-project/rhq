@@ -509,8 +509,8 @@ div[eventproxy$="_body"][eventproxy^="isc_Menu_"].normal {
     background-color: #fff !important;
     border: 1px solid #ddd;
     border-radius: 1px;
-    -webkit-box-shadow: 0 6px 12px rgba(0, 0, 0, 0.275);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.275);
+    -webkit-box-shadow: 0 9px 15px rgba(0, 0, 0, 0.275);
+    box-shadow: 0 9px 15px rgba(0, 0, 0, 0.275);
  
 }
 
@@ -546,13 +546,18 @@ div[eventproxy*="PortalColumn"] > .dialogBackground {
     border-top-right-radius: 0;
     border-top-left-radius: 0;
 }
-
+/*
 .windowHeader *,
 .windowHeaderHilite *,
 .dialogHeader *,
 .dialogHeaderHilite * {
     position: relative;
     top: 4%;
+}
+*/
+
+div[eventproxy*="HeaderControl"] > img[src*="headerIcons"] {
+  cursor: pointer;
 }
 
 .windowHeaderHilite,
@@ -1635,14 +1640,14 @@ div[eventproxy^="isc_DateChooser"] {
 }
 
 .vScrollThumbOver {
-    background: #eaeaea; /* Old browsers */
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #eaeaea), color-stop(100%, #f8f8f8)); /* Chrome,Safari4+ */
-    background: -webkit-linear-gradient(top, #eaeaea 0%, #f8f8f8 100%); /* Chrome10+,Safari5.1+ */
-    background: -o-linear-gradient(top, #eaeaea 0%, #f8f8f8 100%); /* Opera 11.10+ */
-    background: -ms-linear-gradient(top, #eaeaea 0%, #f8f8f8 100%); /* IE10+ */
-    background: linear-gradient(to bottom, #eaeaea 0%, #f8f8f8 100%); /* W3C */
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eaeaea', endColorstr='#f8f8f8', GradientType=0); /* IE6-9 */
-    border: 1px solid #cccccc;
+    background: #e5e5e5; /* Old browsers */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #e5e5e5), color-stop(100%, #f0f0f0)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top, #e5e5e5 0%, #f0f0f0 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top, #e5e5e5 0%, #f0f0f0 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top, #e5e5e5 0%, #f0f0f0 100%); /* IE10+ */
+    background: linear-gradient(to bottom, #e5e5e5 0%, #f0f0f0 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#e5e5e5', endColorstr='#f0f0f0', GradientType=0); /* IE6-9 */
+    border: 1px solid #c2c2c2;
     -moz-border-radius: 2px;
     -webkit-border-radius: 2px;
     -o-border-radius: 2px;
@@ -1662,16 +1667,15 @@ div[eventproxy^="isc_DateChooser"] {
 
 .hScrollThumbOver {
     text-shadow: 0 1px 0 rgb(240, 240, 240);
-    border-color: #b2b2b2;
-    border-color: rgba(0, 0, 0, 0.3);
+    border-color: #c2c2c2;
     border-width: 1px;
     border-style: solid;
     color: #4D5258;
-    background-color: #f0f0f0;
-    background-image: linear-gradient(#f0f0f0, #f0f0f0 38%, #e0e0e0);
-    background-image: -webkit-linear-gradient(#f0f0f0, #f0f0f0 38%, #e0e0e0);
-    background-image: -moz-linear-gradient(#f0f0f0, #f0f0f0 38%, #e0e0e0);
-    background-image: -o-linear-gradient(#f0f0f0, #f0f0f0 38%, #e0e0e0);
+    background-color: #e5e5e5;
+    background-image: linear-gradient(#f0f0f0, #f0f0f0 38%, #e5e5e5);
+    background-image: -webkit-linear-gradient(#f0f0f0, #f0f0f0 38%, #e5e5e5);
+    background-image: -moz-linear-gradient(#f0f0f0, #f0f0f0 38%, #e5e5e5);
+    background-image: -o-linear-gradient(#f0f0f0, #f0f0f0 38%, #e5e5e5);
     box-shadow: 0 1px 0 #f0f0f0, inset 0 1px 2px #f0f0f0;
     -webkit-box-shadow: 0 1px 0 #f0f0f0, inset 0 1px 2px #f0f0f0;
     -moz-box-shadow: 0 1px 0 #f0f0f0, inset 0 1px 2px #f0f0f0;

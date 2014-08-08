@@ -26,20 +26,14 @@ import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-
-import org.rhq.core.domain.cloud.StorageNode;
 
 /**
  * A Storage Maintenance Job
@@ -49,31 +43,49 @@ import org.rhq.core.domain.cloud.StorageNode;
 @Entity(name = "MaintenanceStep")
 @NamedQueries( //
 {
- @NamedQuery(name = MaintenanceStep.QUERY_FIND_ALL, query = "SELECT s FROM MaintenanceStep s")
+    @NamedQuery(name = MaintenanceStep.FIND_BY_JOB_NUM, query =
+        "SELECT s FROM MaintenanceStep s WHERE s.jobNumber = :jobNumber ORDER BY s.stepNumber"),
+    @NamedQuery(name = MaintenanceStep.FIND_ALL, query =
+        "SELECT s FROM MaintenanceStep s ORDER BY s.jobNumber, s.stepNumber"),
+    @NamedQuery(name = MaintenanceStep.DELETE_STEP, query =
+        "DELETE FROM MaintenanceStep s WHERE s.id = :id")
 })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_STORAGE_MAINT_STEP_ID_SEQ", sequenceName = "RHQ_STORAGE_MAINT_STEP_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE,
+    name = "RHQ_STORAGE_MAINT_STEP_ID_SEQ", sequenceName = "RHQ_STORAGE_MAINT_STEP_ID_SEQ")
 @Table(name = "RHQ_STORAGE_MAINT_STEP")
 public class MaintenanceStep implements Serializable {
 
     public static final long serialVersionUID = 1L;
 
-    public static final String QUERY_FIND_ALL = "MaintenanceStep.findAll";
+    public static final String FIND_BY_JOB_NUM = "MaintenanceStep.findJob";
+
+    public static final String FIND_ALL = "MaintenanceStep.findAll";
+
+    public static final String DELETE_STEP = "MaintenanceStep.deleteStep";
+
+    public static enum JobType {
+        DEPLOY,
+        UNDEPLOY,
+        CHANGE_ENDPOINT,
+        CHANGE_RHQ_DATA_DIR
+    }
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_STORAGE_MAINT_STEP_ID_SEQ")
     @Id
     private int id;
 
-    @JoinColumn(name = "STORAGE_MAINT_JOB_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
-    private MaintenanceJob maintenanceJob;
+    @Column(name = "JOB_NUM", nullable = false)
+    private int jobNumber;
 
-    @Column(name = "STEP", nullable = false)
-    private int step;
+    @Column(name = "STEP_NUM", nullable = false)
+    private int stepNumber;
 
-    @ManyToOne
-    @JoinColumn(name = "STORAGE_NODE_ID", referencedColumnName = "ID", nullable = true)
-    private StorageNode storageNode;
+    @Column(name = "JOB_TYPE", nullable = false)
+    private JobType jobType;
+
+    @Column(name = "DESCRIPTION")
+    private String description;
 
     // I think this should simply be the name of the class that executes the
     // step. The server can then easily create the object to execute the step.
@@ -88,9 +100,6 @@ public class MaintenanceStep implements Serializable {
     @Column(name = "MTIME", nullable = false)
     private long mtime;
 
-    @Column(name = "ARGS", nullable = true)
-    private String args;
-
     // required for JPA
     public MaintenanceStep() {
     }
@@ -104,40 +113,53 @@ public class MaintenanceStep implements Serializable {
         return this;
     }
 
-    public MaintenanceJob getMaintenanceJob() {
-        return maintenanceJob;
+    public int getJobNumber() {
+        return jobNumber;
     }
 
-    public MaintenanceStep setMaintenanceJob(MaintenanceJob maintenanceJob) {
-        this.maintenanceJob = maintenanceJob;
+    public MaintenanceStep setJobNumber(int jobNumber) {
+        this.jobNumber = jobNumber;
         return this;
     }
 
-    public int getStep() {
-        return step;
+    public int getStepNumber() {
+        return stepNumber;
     }
 
-    public MaintenanceStep setStep(int step) {
-        this.step = step;
+    public MaintenanceStep setStepNumber(int step) {
+        this.stepNumber = step;
         return this;
     }
 
-    public StorageNode getStorageNode() {
-        return storageNode;
+    public JobType getJobType() {
+        return jobType;
     }
 
-    public MaintenanceStep setStorageNode(StorageNode storageNode) {
-        this.storageNode = storageNode;
+    public MaintenanceStep setJobType(JobType jobType) {
+        this.jobType = jobType;
         return this;
     }
 
-    public String getOperationName() {
+    public String getName() {
         return name;
     }
 
     public MaintenanceStep setName(String name) {
         this.name = name;
         return this;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public MaintenanceStep setDescription(String description) {
+        this.description = description;
+        return this;
+    }
+
+    public boolean isBaseStep() {
+        return stepNumber == 0;
     }
 
     public long getCtime() {
@@ -153,20 +175,11 @@ public class MaintenanceStep implements Serializable {
         return this;
     }
 
-    public String getArgs() {
-        return args;
+    @Override
+    public String toString() {
+        return "MaintenanceStep[id = " + id + ", jobNumber = " + jobNumber + ", jobType = " + jobType +
+            ", stepNumber = " + stepNumber + ", name = " + name + ", ctime = " + ctime + ", mtime = " + mtime + "]";
     }
-
-    public MaintenanceStep setArgs(String args) {
-        this.args = args;
-        return this;
-    }
-
-//    @Override
-//    public String toString() {
-//        return "MaintenanceStep[id=" + id + ", name=" + name + ", Type=" + type
-//            + ", ctime=" + ctime + "]";
-//    }
 
     @PrePersist
     void onPersist() {
@@ -174,39 +187,24 @@ public class MaintenanceStep implements Serializable {
         this.mtime = this.ctime;
     }
 
-//    @Override
-//    public int hashCode() {
-//        final int prime = 31;
-//        int result = 1;
-//        result = prime * result + ((name == null) ? 0 : name.hashCode()) + ((type == null) ? 0 : type.hashCode())
-//            + step + ((nodeAddress == null) ? 0 : nodeAddress.hashCode());
-//        return result;
-//    }
-
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MaintenanceStep)) return false;
 
-        if (obj == null || !(obj instanceof MaintenanceStep)) {
-            return false;
-        }
+        MaintenanceStep that = (MaintenanceStep) o;
 
-        final MaintenanceStep other = (MaintenanceStep) obj;
-
-
-        if (getId() != other.getId() || getCtime() != other.getCtime()) {
-            return false;
-        }
+        if (jobNumber != that.jobNumber) return false;
+        if (stepNumber != that.stepNumber) return false;
 
         return true;
     }
 
-    public enum Type {
-        ResourceUpdate,
-        EntityUpdate,
-        ResourceOperation,
-        ServerUpdate
+    @Override
+    public int hashCode() {
+        int result = jobNumber;
+        result = 31 * result + stepNumber;
+        return result;
     }
+
 }

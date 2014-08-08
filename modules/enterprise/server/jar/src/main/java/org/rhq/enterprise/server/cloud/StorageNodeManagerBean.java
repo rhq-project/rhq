@@ -88,6 +88,8 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.storage.MaintenanceStep;
+import org.rhq.core.domain.storage.StorageMaintenanceJob;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -103,6 +105,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.storage.StorageClientManager;
+import org.rhq.enterprise.server.storage.StorageClusterMaintenanceManagerLocal;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
 import org.rhq.enterprise.server.storage.StorageNodeOperationsHandlerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
@@ -172,6 +175,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @EJB
     private StorageNodeOperationsHandlerLocal storageNodeOperationsHandler;
 
+    @EJB
+    private StorageClusterMaintenanceManagerLocal clusterMaintenanceManager;
+
     @Override
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void linkResource(Resource resource) {
@@ -215,8 +221,17 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                     log.info("Scheduling cluster maintenance to deploy " + storageNode + " into the storage cluster...");
                 }
                 if (clusterSettings.getAutomaticDeployment()) {
-                    log.info("Deploying " + storageNode);
-                    storageNodeManager.deployStorageNode(subjectManager.getOverlord(), storageNode);
+//                    log.info("Deploying " + storageNode);
+//                    storageNodeManager.deployStorageNode(subjectManager.getOverlord(), storageNode);
+
+                    StorageMaintenanceJob job = new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY,
+                        "Deploy " + storageNode.getAddress());
+
+//                    MaintenanceJob job = new MaintenanceJob()
+//                        .setName("Deploy storage node " + storageNode.getAddress())
+//                        .setStorageNode(storageNode)
+//                        .setType(MaintenanceJob.Type.DEPLOY);
+                    clusterMaintenanceManager.scheduleMaintenance(job);
                 } else {
                     log.info("Automatic deployment is disabled. " + storageNode + " will not become part of the "
                         + "cluster until it is deployed.");

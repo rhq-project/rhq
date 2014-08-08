@@ -56,7 +56,7 @@ public class MaintenanceJobRunner {
 
         for (MaintenanceStep step : job.getMaintenanceSteps()) {
             try {
-                runners.get(step.getOperationName()).execute(step);
+                runners.get(step.getName()).execute(step);
             } catch (Exception e) {
                 //do nothing for now ... exception handling to be decided a later
             }

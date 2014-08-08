@@ -18,20 +18,7 @@
  */
 package org.rhq.enterprise.server.storage.maintenance.step;
 
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-
-import org.rhq.core.domain.cloud.StorageNode;
-import org.rhq.core.domain.common.JobTrigger;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.storage.MaintenanceStep;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerBean;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerBean;
@@ -40,68 +27,68 @@ import org.rhq.enterprise.server.operation.OperationManagerBean;
  * @author Stefan Negrea
  *
  */
-@Stateless
+//@Stateless
 public class UpdateStorageNodeEndpoints implements MaintenanceStepRunner {
 
-    @EJB
+//    @EJB
     private StorageNodeManagerBean storageNodeManager;
 
-    @EJB
+//    @EJB
     private SubjectManagerBean subjectManager;
 
-    @EJB
+//    @EJB
     private OperationManagerBean operationManager;
 
-    @Override
-    public void execute(MaintenanceStep maintenanceStep) throws Exception {
+//    @Override
+    public void execute(MaintenanceStep maintenanceStep) {
 
-        StorageNode storageNode = storageNodeManager.findStorageNodeByAddress(maintenanceStep.getStorageNode()
-            .getAddress());
-        Resource storageNodeResource = storageNode.getResource();
-        //scheduling the operation
-        long operationStartTime = System.currentTimeMillis();
-
-        ResourceOperationSchedule newSchedule = new ResourceOperationSchedule();
-        newSchedule.setJobTrigger(JobTrigger.createNowTrigger());
-        newSchedule.setResource(storageNodeResource);
-        newSchedule.setOperationName("updateEndpoints");
-        newSchedule.setDescription("Run by StorageNodeManagerBean");
-        newSchedule.setParameters(new Configuration());
-
-        storageNodeManager.scheduleOperationInNewTransaction(subjectManager.getOverlord(), newSchedule);
-
-        //waiting for the operation result then return it
-        int iteration = 0;
-        boolean successResultFound = false;
-        while (iteration < 10 && !successResultFound) {
-            ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
-            criteria.addFilterResourceIds(storageNodeResource.getId());
-            criteria.addFilterStartTime(operationStartTime);
-            criteria.addFilterOperationName("updateEndpoints");
-            criteria.addFilterStatus(OperationRequestStatus.SUCCESS);
-            criteria.setPageControl(PageControl.getUnlimitedInstance());
-
-            PageList<ResourceOperationHistory> results = operationManager.findResourceOperationHistoriesByCriteria(
-                subjectManager.getOverlord(), criteria);
-
-            if (results != null && results.size() > 0) {
-                successResultFound = true;
-            }
-
-            if (successResultFound) {
-                break;
-            } else {
-                try {
-                    Thread.sleep(100);
-                } catch (Exception e) {
-                }
-            }
-
-            iteration++;
-        }
-
-        if (!successResultFound) {
-            throw new Exception();
-        }
+//        StorageNode storageNode = storageNodeManager.findStorageNodeByAddress(maintenanceStep.getStorageNode()
+//            .getAddress());
+//        Resource storageNodeResource = storageNode.getResource();
+//        //scheduling the operation
+//        long operationStartTime = System.currentTimeMillis();
+//
+//        ResourceOperationSchedule newSchedule = new ResourceOperationSchedule();
+//        newSchedule.setJobTrigger(JobTrigger.createNowTrigger());
+//        newSchedule.setResource(storageNodeResource);
+//        newSchedule.setOperationName("updateEndpoints");
+//        newSchedule.setDescription("Run by StorageNodeManagerBean");
+//        newSchedule.setParameters(new Configuration());
+//
+//        storageNodeManager.scheduleOperationInNewTransaction(subjectManager.getOverlord(), newSchedule);
+//
+//        //waiting for the operation result then return it
+//        int iteration = 0;
+//        boolean successResultFound = false;
+//        while (iteration < 10 && !successResultFound) {
+//            ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+//            criteria.addFilterResourceIds(storageNodeResource.getId());
+//            criteria.addFilterStartTime(operationStartTime);
+//            criteria.addFilterOperationName("updateEndpoints");
+//            criteria.addFilterStatus(OperationRequestStatus.SUCCESS);
+//            criteria.setPageControl(PageControl.getUnlimitedInstance());
+//
+//            PageList<ResourceOperationHistory> results = operationManager.findResourceOperationHistoriesByCriteria(
+//                subjectManager.getOverlord(), criteria);
+//
+//            if (results != null && results.size() > 0) {
+//                successResultFound = true;
+//            }
+//
+//            if (successResultFound) {
+//                break;
+//            } else {
+//                try {
+//                    Thread.sleep(100);
+//                } catch (Exception e) {
+//                }
+//            }
+//
+//            iteration++;
+//        }
+//
+//        if (!successResultFound) {
+//            throw new RuntimeException();
+//        }
     }
 }

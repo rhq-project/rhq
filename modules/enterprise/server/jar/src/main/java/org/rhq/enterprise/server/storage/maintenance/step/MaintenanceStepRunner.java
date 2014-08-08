@@ -26,5 +26,5 @@ import org.rhq.core.domain.storage.MaintenanceStep;
  */
 public interface MaintenanceStepRunner {
 
-    void execute(MaintenanceStep maintenanceStep) throws Exception;
+    void execute(MaintenanceStep maintenanceStep);
 }

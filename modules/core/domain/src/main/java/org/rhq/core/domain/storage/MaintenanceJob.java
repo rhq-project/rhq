@@ -28,20 +28,15 @@ import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
 
 import org.rhq.core.domain.cloud.StorageNode;
 
@@ -50,13 +45,13 @@ import org.rhq.core.domain.cloud.StorageNode;
  *
  * @author Stefan Negrea
  */
-@Entity(name = "MaintenanceJob")
-@NamedQueries( //
-{
- @NamedQuery(name = MaintenanceJob.QUERY_FIND_ALL, query = "SELECT s FROM MaintenanceJob s")
-})
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_STORAGE_MAINT_JOB_ID_SEQ", sequenceName = "RHQ_STORAGE_MAINT_JOB_ID_SEQ")
-@Table(name = "RHQ_STORAGE_MAINT_JOB")
+//@Entity(name = "MaintenanceJob")
+//@NamedQueries( //
+//{
+// @NamedQuery(name = MaintenanceJob.QUERY_FIND_ALL, query = "SELECT s FROM MaintenanceJob s")
+//})
+//@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_STORAGE_MAINT_JOB_ID_SEQ", sequenceName = "RHQ_STORAGE_MAINT_JOB_ID_SEQ")
+//@Table(name = "RHQ_STORAGE_MAINT_JOB")
 public class MaintenanceJob implements Serializable {
 
     public static final long serialVersionUID = 1L;
@@ -88,7 +83,7 @@ public class MaintenanceJob implements Serializable {
     @JoinColumn(name = "STORAGE_NODE_ID", nullable = true)
     private StorageNode storageNode;
 
-    @OneToMany(mappedBy = "maintenanceJob", fetch = FetchType.LAZY, cascade = {CascadeType.ALL})
+    @OneToMany(mappedBy = "maintenanceJob", fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @OrderBy("step")
     private List<MaintenanceStep> steps = new ArrayList<MaintenanceStep>();
 
@@ -135,17 +130,19 @@ public class MaintenanceJob implements Serializable {
         return steps;
     }
 
-    public MaintenanceJob setSteps(List<MaintenanceStep> steps) {
-        this.steps = steps;
-        return this;
-    }
+//    public MaintenanceJob addStep(MaintenanceStep step) {
+//        step.setMaintenanceJob(this);
+//        steps.add(step);
+//        return this;
+//    }
 
     public StorageNode getStorageNode() {
         return storageNode;
     }
 
-    public void setStorageNode(StorageNode storageNode) {
+    public MaintenanceJob setStorageNode(StorageNode storageNode) {
         this.storageNode = storageNode;
+        return this;
     }
 
     public int getMaintenanceStepCount() {

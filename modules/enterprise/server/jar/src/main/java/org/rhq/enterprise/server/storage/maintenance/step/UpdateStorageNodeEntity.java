@@ -18,13 +18,9 @@
  */
 package org.rhq.enterprise.server.storage.maintenance.step;
 
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.rhq.core.domain.storage.MaintenanceStep;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 
@@ -32,16 +28,16 @@ import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
  * @author Stefan Negrea
  *
  */
-@Stateless
+//@Stateless
 public class UpdateStorageNodeEntity implements MaintenanceStepRunner {
 
-    @EJB
+//    @EJB
     StorageNodeManagerLocal storageNodeManagerBean;
 
-    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+//    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @EJB
+//    @EJB
     private SubjectManagerLocal subjectManager;
 
     public UpdateStorageNodeEntity() {
@@ -49,11 +45,11 @@ public class UpdateStorageNodeEntity implements MaintenanceStepRunner {
 
     @Override
     public void execute(MaintenanceStep step) {
-        if (step.getStorageNode() == null || step.getStorageNode() == null)
-            throw new IllegalArgumentException("Storage node not found.");
-
-        step.getStorageNode().setCqlPort(Integer.parseInt(step.getArgs()));
-
-        entityManager.persist(step.getStorageNode());
+//        if (step.getStorageNode() == null || step.getStorageNode() == null)
+//            throw new IllegalArgumentException("Storage node not found.");
+//
+//        step.getStorageNode().setCqlPort(Integer.parseInt(step.getArgs()));
+//
+//        entityManager.persist(step.getStorageNode());
     }
 }

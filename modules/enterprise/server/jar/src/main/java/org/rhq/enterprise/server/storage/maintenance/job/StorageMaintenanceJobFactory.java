@@ -18,15 +18,10 @@
  */
 package org.rhq.enterprise.server.storage.maintenance.job;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.core.domain.storage.MaintenanceJob;
 import org.rhq.core.domain.storage.MaintenanceStep;
-import org.rhq.enterprise.server.storage.maintenance.step.ShutdownStorageClient;
-import org.rhq.enterprise.server.storage.maintenance.step.StartStorageClient;
-import org.rhq.enterprise.server.storage.maintenance.step.UpdateStorageNodeEndpoints;
-import org.rhq.enterprise.server.storage.maintenance.step.UpdateStorageNodeEntity;
 
 /**
  * @author Stefan Negrea
@@ -44,7 +39,7 @@ public class StorageMaintenanceJobFactory {
         job.setName(operation);
 
         if (operation.equals("NodeChangeAddress")) {
-            job.setSteps(createNodeChangeAddressSteps(job, existingStorageNodes, affectedNodes));
+//            job.setSteps(createNodeChangeAddressSteps(job, existingStorageNodes, affectedNodes));
         }
 
         return job;
@@ -52,38 +47,40 @@ public class StorageMaintenanceJobFactory {
 
     public List<MaintenanceStep> createNodeChangeAddressSteps(MaintenanceJob job, String[] existingNodes,
         String[] affectedNodes) {
-
-        List<MaintenanceStep> steps = new ArrayList<MaintenanceStep>();
-
-        if (existingNodes.length == 1) {
-            int stepCount = 0;
-
-            MaintenanceStep step = new MaintenanceStep();
-            step.setStep(stepCount++)
-                .setName(UpdateStorageNodeEntity.class.getSimpleName())
-                .setMaintenanceJob(job);
-            steps.add(step);
-
-            step = new MaintenanceStep();
-            step.setStep(stepCount++)
-                .setName(ShutdownStorageClient.class.getSimpleName())
-                .setMaintenanceJob(job);
-            steps.add(step);
-
-            step = new MaintenanceStep();
-            step.setStep(stepCount++)
-                .setName(UpdateStorageNodeEndpoints.class.getSimpleName())
-                .setMaintenanceJob(job);
-            steps.add(step);
-
-            step = new MaintenanceStep();
-            step.setStep(stepCount++)
-                .setName(StartStorageClient.class.getSimpleName())
-                .setMaintenanceJob(job);
-            steps.add(step);
-        }
-
-        return steps;
+        return null;
     }
+
+//        List<MaintenanceStep> steps = new ArrayList<MaintenanceStep>();
+//
+//        if (existingNodes.length == 1) {
+//            int stepCount = 0;
+//
+//            MaintenanceStep step = new MaintenanceStep();
+//            step.setStepNumber(stepCount++)
+//                .setName(UpdateStorageNodeEntity.class.getSimpleName())
+//                .setMaintenanceJob(job);
+//            steps.add(step);
+//
+//            step = new MaintenanceStep();
+//            step.setStepNumber(stepCount++)
+//                .setName(ShutdownStorageClient.class.getSimpleName())
+//                .setMaintenanceJob(job);
+//            steps.add(step);
+//
+//            step = new MaintenanceStep();
+//            step.setStepNumber(stepCount++)
+//                .setName(UpdateStorageNodeEndpoints.class.getSimpleName())
+//                .setMaintenanceJob(job);
+//            steps.add(step);
+//
+//            step = new MaintenanceStep();
+//            step.setStepNumber(stepCount++)
+//                .setName(StartStorageClient.class.getSimpleName())
+//                .setMaintenanceJob(job);
+//            steps.add(step);
+//        }
+//
+//        return steps;
+//    }
 
 }

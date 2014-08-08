@@ -726,6 +726,7 @@ public class StartupBean implements StartupLocal {
         }
 
         try {
+            // Wait long enough to allow the Server instance jobs to start executing first.
             String cronString = "0 30 0 ? * SUN *"; // every sunday starting at 00:30.
             schedulerBean.scheduleSimpleCronJob(StorageClusterReadRepairJob.class, true, true, cronString);
         } catch (Exception e) {

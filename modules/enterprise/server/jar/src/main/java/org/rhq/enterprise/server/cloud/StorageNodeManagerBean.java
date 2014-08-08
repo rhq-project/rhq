@@ -813,8 +813,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void runClusterMaintenance(Subject subject) {
-        List<StorageNode> storageNodes = getClusterNodes();
+        List<StorageNode> storageNodes = storageNodeManager.getClusterNodes();
 
         for (StorageNode storageNode : storageNodes) {
             Resource test = storageNode.getResource();
@@ -828,6 +829,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 criteria);
             if (resources.size() > 0) {
                 Resource storageServiceResource = resources.get(0);
+                log.info("Scheduling snapshot for storage node [" + storageNode.getAddress() + "] Storage Service");
 
                 ResourceOperationSchedule newSchedule = new ResourceOperationSchedule();
                 newSchedule.setJobTrigger(JobTrigger.createNowTrigger());
@@ -837,6 +839,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 newSchedule.setParameters(new Configuration());
 
                 storageNodeManager.scheduleOperationInNewTransaction(subjectManager.getOverlord(), newSchedule);
+            } else {
+                log.info("No snapshot taken for storage node [" + storageNode.getAddress()
+                    + "]. No storage service found.");
             }
         }
 

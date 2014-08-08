@@ -182,11 +182,11 @@ public class ServerPluginConfiguration {
     }
 
     public TrustStrategy getTrustStrategy() {
-        return TrustStrategy.findByName(pluginConfig.getSimpleValue(Property.TRUST_STRATEGY));
+        return TrustStrategy.findByName(pluginConfig.getSimpleValue(Property.TRUST_STRATEGY, TrustStrategy.STANDARD.name));
     }
 
     public HostnameVerification getHostnameVerification() {
-        return HostnameVerification.findByName(pluginConfig.getSimpleValue(Property.HOSTNAME_VERIFICATION));
+        return HostnameVerification.findByName(pluginConfig.getSimpleValue(Property.HOSTNAME_VERIFICATION, HostnameVerification.STRICT.name));
     }
 
     public String getTruststoreType() {

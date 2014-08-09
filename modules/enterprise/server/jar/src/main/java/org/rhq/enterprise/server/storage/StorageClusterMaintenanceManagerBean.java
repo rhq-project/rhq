@@ -84,12 +84,17 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     }
 
     @Override
-    public void deleteStep(MaintenanceStep step) {
-//        entityManager.remove(step);
-        int result = entityManager.createNamedQuery(MaintenanceStep.DELETE_STEP).setParameter("id", step.getId())
-            .executeUpdate();
-        if (result == 0) {
-            log.warn("Failed to delete " + step);
+    public void deleteStep(int stepId) {
+        MaintenanceStep step = entityManager.find(MaintenanceStep.class, stepId);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Deleting " + step.toString(true));
+        }
+
+        if (step == null) {
+            log.info("Nothing to delete. No step found with id " + stepId);
+        } else {
+            entityManager.remove(step);
         }
     }
 
@@ -121,7 +126,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
             return;
         }
         log.info("Executing " + job);
-        maintenanceManager.deleteStep(job.getBaseStep());
+        maintenanceManager.deleteStep(job.getBaseStep().getId());
         log.info("Finished executing " + job);
     }
 

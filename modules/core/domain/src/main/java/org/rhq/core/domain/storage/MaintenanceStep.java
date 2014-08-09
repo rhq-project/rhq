@@ -24,16 +24,22 @@ package org.rhq.core.domain.storage;
 
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
+import org.rhq.core.domain.configuration.Configuration;
 
 /**
  * A Storage Maintenance Job
@@ -92,6 +98,10 @@ public class MaintenanceStep implements Serializable {
     @Column(name = "NAME", nullable = false)
     private String name;
 
+    @JoinColumn(name = "STEP_CONFIG_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, optional = true)
+    private Configuration configuration;
+
     // the time this maintenance workflow was created
     @Column(name = "CTIME", nullable = false)
     private long ctime;
@@ -149,6 +159,15 @@ public class MaintenanceStep implements Serializable {
         return this;
     }
 
+    public Configuration getConfiguration() {
+        return configuration;
+    }
+
+    public MaintenanceStep setConfiguration(Configuration configuration) {
+        this.configuration = configuration;
+        return this;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -177,8 +196,13 @@ public class MaintenanceStep implements Serializable {
 
     @Override
     public String toString() {
+        return toString(false);
+    }
+
+    public String toString(boolean verbose) {
         return "MaintenanceStep[id = " + id + ", jobNumber = " + jobNumber + ", jobType = " + jobType +
-            ", stepNumber = " + stepNumber + ", name = " + name + ", ctime = " + ctime + ", mtime = " + mtime + "]";
+            ", stepNumber = " + stepNumber + ", name = " + name + ", ctime = " + ctime + ", mtime = " + mtime +
+            ", configuration = " + configuration.toString(verbose) + "]";
     }
 
     @PrePersist

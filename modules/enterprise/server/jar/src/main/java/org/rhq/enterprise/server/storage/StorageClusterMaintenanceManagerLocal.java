@@ -3,7 +3,6 @@ package org.rhq.enterprise.server.storage;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.storage.MaintenanceJob;
-import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.core.domain.storage.StorageMaintenanceJob;
 
 /**
@@ -20,7 +19,7 @@ public interface StorageClusterMaintenanceManagerLocal {
 
     StorageMaintenanceJob getNextJob();
 
-    void deleteStep(MaintenanceStep step);
+    void deleteStep(int stepId);
 
     void execute();
 

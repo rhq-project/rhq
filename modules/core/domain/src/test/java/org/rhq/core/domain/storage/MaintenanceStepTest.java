@@ -12,6 +12,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.shared.TransactionCallback;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 
@@ -92,13 +93,23 @@ public class MaintenanceStepTest extends AbstractEJB3Test {
                     .setJobType(MaintenanceStep.JobType.DEPLOY)
                     .setName("Announce")
                     .setStepNumber(1)
-                    .setDescription("Announce 127.0.0.1 to 127.0.0.2"));
+                    .setDescription("Announce 127.0.0.1 to 127.0.0.2")
+                    .setConfiguration(new Configuration.Builder()
+                        .openMap("parameters")
+                        .addSimple("address", "127.0.0.1")
+                        .closeMap()
+                        .build()));
                 em.persist(new MaintenanceStep()
                     .setJobNumber(jobNumber.get())
                     .setJobType(MaintenanceStep.JobType.DEPLOY)
                     .setName("Announce")
                     .setStepNumber(2)
-                    .setDescription("Announce 127.0.0.1 to 127.0.0.3"));
+                    .setDescription("Announce 127.0.0.1 to 127.0.0.3")
+                    .setConfiguration(new Configuration.Builder()
+                        .openMap("parameters")
+                        .addSimple("address", "127.0.0.1")
+                        .closeMap()
+                        .build()));
             }
         }, "Failed to persist new job steps");
 
@@ -114,9 +125,94 @@ public class MaintenanceStepTest extends AbstractEJB3Test {
                     new MaintenanceStep().setJobNumber(jobNumber.get()).setStepNumber(2)
                 );
 
+                Configuration expectedConfig = new Configuration.Builder()
+                    .openMap("parameters")
+                    .addSimple("address", "127.0.0.1")
+                    .closeMap()
+                    .build();
+
                 org.testng.Assert.assertEquals(steps, expected, "The job steps do not match the expected values");
+                assertEquals(steps.get(1).getConfiguration(), expectedConfig,
+                    "The configuration is wrong for step " + steps.get(1).getStepNumber());
+                assertEquals(steps.get(2).getConfiguration(), expectedConfig,
+                    "The configuration is wrong for step " + steps.get(2).getStepNumber());
+
             }
         }, "There was an unexpected error fetching the job steps");
+    }
+
+    @Test(groups = "integration.ejb3")
+    public void deleteStepFromJob() throws Exception {
+        final AtomicInteger jobNumber = new AtomicInteger();
+        final AtomicInteger configId = new AtomicInteger();
+        final AtomicInteger stepId = new AtomicInteger();
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                MaintenanceStep step = new MaintenanceStep()
+                    .setJobType(MaintenanceStep.JobType.DEPLOY)
+                    .setName("BASE_STEP")
+                    .setStepNumber(0)
+                    .setDescription("Deploy 127.0.0.1");
+
+                em.persist(step);
+
+                step.setJobNumber(step.getId());
+                jobNumber.set(step.getJobNumber());
+            }
+        }, "Cannot add steps to job. Failed to persist base step.");
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                em.persist(new MaintenanceStep()
+                    .setJobNumber(jobNumber.get())
+                    .setJobType(MaintenanceStep.JobType.DEPLOY)
+                    .setName("Announce")
+                    .setStepNumber(1)
+                    .setDescription("Announce 127.0.0.1 to 127.0.0.2")
+                    .setConfiguration(new Configuration.Builder()
+                        .openMap("parameters")
+                        .addSimple("address", "127.0.0.1")
+                        .closeMap()
+                        .build()));
+                em.persist(new MaintenanceStep()
+                    .setJobNumber(jobNumber.get())
+                    .setJobType(MaintenanceStep.JobType.DEPLOY)
+                    .setName("Announce")
+                    .setStepNumber(2)
+                    .setDescription("Announce 127.0.0.1 to 127.0.0.3")
+                    .setConfiguration(new Configuration.Builder()
+                        .openMap("parameters")
+                        .addSimple("address", "127.0.0.1")
+                        .closeMap()
+                        .build()));
+            }
+        }, "Failed to persist new job steps");
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                List<MaintenanceStep> steps = em.createNamedQuery(MaintenanceStep.FIND_BY_JOB_NUM,
+                    MaintenanceStep.class).setParameter("jobNumber", jobNumber.get()).getResultList();
+
+                assertEquals("Cannot proceed with deletion. The number of steps is wrong.", 3, steps.size());
+
+                MaintenanceStep step = steps.get(1);
+                stepId.set(step.getId());
+                configId.set(step.getConfiguration().getId());
+                em.remove(step);
+            }
+        }, "Failed to delete step");
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                assertNull("The step configuration was not deleted", em.find(Configuration.class, configId.get()));
+                assertNull("The step was not deleted", em.find(MaintenanceStep.class, stepId.get()));
+            }
+        }, "Failed to verify the step deletion");
     }
 
     private void executeInTransaction(TransactionCallback callback, String errorMsg) {
@@ -146,6 +242,7 @@ public class MaintenanceStepTest extends AbstractEJB3Test {
             @Override
             public void execute() throws Exception {
                 purgeTable(MaintenanceStep.class);
+                purgeTable(Configuration.class);
             }
         }, "Failed to clean up database");
     }
@@ -153,6 +250,12 @@ public class MaintenanceStepTest extends AbstractEJB3Test {
     private void purgeTable(Class clazz) {
         EntityManager em = getEntityManager();
         em.createQuery("DELETE FROM " + clazz.getSimpleName()).executeUpdate();
+    }
+
+    private void assertEquals(Configuration actual, Configuration expected, String msg) {
+        if (!actual.equals(expected)) {
+            fail(msg + ": Expected " + expected.toString(true) + " but was " + actual.toString(true));
+        }
     }
 
 }

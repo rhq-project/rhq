@@ -470,6 +470,7 @@
     <column name="STEP_NUM" required="true" type="INTEGER" />
     <column name="JOB_TYPE" required="true" type="INTEGER" />
     <column name="NAME" required="true" size="1024" type="VARCHAR2" />
+    <column name="STEP_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
     <column name="DESCRIPTION" required="true" size="2048" type="VARCHAR2" />
     <column name="CTIME" required="true" type="LONG" />
     <column name="MTIME" required="true" type="LONG" />
@@ -477,6 +478,10 @@
     <index name="RHQ_STORAGE_MAINT_JOB_STEP_IDX" unique="true">
       <field ref="JOB_NUM"/>
       <field ref="STEP_NUM"/>
+    </index>
+
+    <index name="RHQ_STORAGE_MAINT_CONFIG_ID_FK">
+      <field ref="STEP_CONFIG_ID"/>
     </index>
   </table>
 

@@ -2444,6 +2444,7 @@
                 <schema-alterColumn table="RHQ_STORAGE_MAINT_STEP" column="STEP_NUM" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="NAME" columnType="VARCHAR2" precision="1024" />
                 <schema-alterColumn table="RHQ_STORAGE_MAINT_STEP" column="NAME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="STEP_CONFIG_ID" columnType="INTEGER"/>
                 <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="DESCRIPTION" columnType="VARCHAR2" precision="2048" />
 
                 <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="CTIME" columnType="LONG" />
@@ -2459,6 +2460,13 @@
                     <statement desc="Creating RHQ_STORAGE_MAINT_JOB_STEP_IDX unique constraint">
                       CREATE UNIQUE INDEX RHQ_STORAGE_MAINT_JOB_STEP_IDX ON RHQ_STORAGE_MAINT_STEP ( JOB_NUM, STEP_NUM )
                     </statement>
+
+                  <statement desc="Creating RHQ_STORAGE_MAINT_STEP foreign key relation to RHQ_CONFIG">
+                    ALTER TABLE RHQ_STORAGE_MAINT_STEP
+                    ADD CONSTRAINT RHQ_STORAGE_MAINT_CONFIG_ID_FK
+                    FOREIGN KEY (STEP_CONFIG_ID)
+                    REFERENCES RHQ_CONFIG (ID)
+                  </statement>
                 </schema-directSQL>
             </schemaSpec>
         </dbupgrade>

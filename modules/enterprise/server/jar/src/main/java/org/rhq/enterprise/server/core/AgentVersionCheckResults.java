@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.core;
 
 import java.io.Serializable;
-import java.util.Properties;
 
 import org.rhq.core.clientapi.server.core.AgentVersion;
 
@@ -40,7 +39,7 @@ public class AgentVersionCheckResults implements Serializable {
 
     public AgentVersionCheckResults(boolean isSupported, AgentVersion latestAgentVersion) {
         this.isSupported = isSupported;
-        this.latestAgentVersion = (AgentVersion) ((latestAgentVersion != null) ? latestAgentVersion : new Properties());
+        this.latestAgentVersion = (AgentVersion) ((latestAgentVersion != null) ? latestAgentVersion : new AgentVersion("", ""));
 
     }
 

@@ -647,6 +647,7 @@ public class AgentManagerBean implements AgentManagerLocal, AgentManagerRemote {
         try {
             Properties properties = getAgentUpdateVersionFileContent();
 
+            String supportedAgentBuilds = properties.getProperty(RHQ_AGENT_SUPPORTED_BUILDS); // this is optional
             String latestAgentVersion = properties.getProperty(RHQ_AGENT_LATEST_VERSION);
             String latestAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
             if (latestAgentVersion == null) {
@@ -661,8 +662,9 @@ public class AgentManagerBean implements AgentManagerLocal, AgentManagerRemote {
 
             boolean isSupported;
 
-            //if no list of supportedBuilds provided then,    
+            //if no list of supportedBuilds provident then,
             if (supportedAgentBuilds == null || supportedAgentBuilds.isEmpty()) {
+                // we weren't given a regex of supported versions, make a simple string equality test on latest agent version
                 ComparableVersion agent = new ComparableVersion(agentVersionInfo.getVersion());
                 ComparableVersion server = new ComparableVersion(latestAgentVersion);
                 isSupported = agent.equals(server);

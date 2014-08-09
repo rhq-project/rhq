@@ -30,7 +30,7 @@ import java.io.Serializable;
  * @author John Mazzitelli
  */
 public class ConnectAgentRequest implements Serializable {
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 1L;
 
     private final String agentName;
     private final AgentVersion agentVersion;

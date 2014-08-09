@@ -30,7 +30,7 @@ import java.io.Serializable;
  * @author John Mazzitelli
  */
 public class ConnectAgentResults implements Serializable {
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 1L;
 
     private final long serverTime;
     private final boolean isDown;

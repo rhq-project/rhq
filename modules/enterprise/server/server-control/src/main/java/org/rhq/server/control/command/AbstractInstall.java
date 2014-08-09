@@ -325,11 +325,8 @@ public abstract class AbstractInstall extends ControlCommand {
                 rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            String pid = getAgentPid();
-            if (pid != null) {
-                commandLine = getCommandLine("rhq-agent-wrapper", "kill");
-                rValue = Math.max(rValue, ExecutorAssist.execute(agentBinDir, commandLine));
-            }
+            commandLine = getCommandLine("rhq-agent-wrapper", "kill");
+            rValue = Math.max(rValue, ExecutorAssist.execute(agentBinDir, commandLine));
         }
         return rValue;
     }

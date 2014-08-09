@@ -171,14 +171,8 @@ public class Remove extends ControlCommand {
                 rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            String pid = getServerPid();
-
-            if (pid != null) {
-                commandLine = getCommandLine("rhq-server", "stop");
-                rValue = ExecutorAssist.execute(getBinDir(), commandLine);
-            } else {
-                rValue = RHQControl.EXIT_CODE_OK;
-            }
+            commandLine = getCommandLine("rhq-server", "stop");
+            rValue = ExecutorAssist.execute(getBinDir(), commandLine);
         }
         return rValue;
     }
@@ -201,14 +195,8 @@ public class Remove extends ControlCommand {
                 rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            String pid = getAgentPid();
-
-            if (pid != null) {
-                commandLine = getCommandLine("rhq-agent-wrapper", "stop");
-                rValue = ExecutorAssist.execute(agentBinDir, commandLine);
-            } else {
-                rValue = RHQControl.EXIT_CODE_OK;
-            }
+            commandLine = getCommandLine("rhq-agent-wrapper", "stop");
+            rValue = ExecutorAssist.execute(agentBinDir, commandLine);
         }
         return rValue;
     }

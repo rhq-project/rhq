@@ -158,21 +158,9 @@ public class Stop extends AbstractInstall {
 
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "stop");
 
-        int rValue;
-
-        if (isWindows()) {
-            rValue = ExecutorAssist.execute(getBinDir(), commandLine);
-            if(rValue != RHQControl.EXIT_CODE_OK) {
-                log.debug("Failed to stop server service");                    
-            }
-        } else {
-            String pid = getServerPid();
-
-            if (pid != null) {
-                rValue = ExecutorAssist.execute(getBinDir(), commandLine);
-            } else {
-                rValue = RHQControl.EXIT_CODE_OK;
-            }
+        int rValue = ExecutorAssist.execute(getBinDir(), commandLine);
+        if(rValue != RHQControl.EXIT_CODE_OK) {
+            log.debug("Failed to stop server service");
         }
         return rValue;
     }
@@ -183,21 +171,9 @@ public class Stop extends AbstractInstall {
         File agentBinDir = new File(getAgentBasedir(), "bin");
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "stop");
 
-        int rValue;
-
-        if (isWindows()) {
-            rValue = ExecutorAssist.execute(agentBinDir, commandLine);
-            if(rValue != RHQControl.EXIT_CODE_OK) {
-                log.debug("Failed to stop agent service, return value" + rValue);                
-            }
-        } else {
-            String pid = getAgentPid();
-
-            if (pid != null) {
-                rValue = ExecutorAssist.execute(agentBinDir, commandLine);
-            } else {
-                rValue = RHQControl.EXIT_CODE_OK;
-            }
+        int rValue = ExecutorAssist.execute(agentBinDir, commandLine);
+        if(rValue != RHQControl.EXIT_CODE_OK) {
+            log.debug("Failed to stop agent service, return value" + rValue);
         }
         return rValue;
     }

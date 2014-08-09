@@ -156,19 +156,17 @@ public interface EnhancedScheduler extends Scheduler {
         String cronString) throws SchedulerException;
 
     /**
-     * Schedules the job with the given trigger.  If the trigger is null then the durable job is simply created,
-     * if necessary, and will await future triggers.
+     * Schedules the job with the given trigger.
      *
      * <p>This is a convenience method for adding a trigger to a job.  There is no job-level {@link JobDataMap} but
      * each trigger may contain a trigger-specific {@link JobDataMap}.</p>
      *
      * <p>This method delegates to {@link #addJob(org.quartz.JobDetail, boolean)} where the <code>
      * name</code> is the name of the given class (<code>jobClass.getName()</code>) and <code>replace</code> is
-     * false. If <code>trigger</code> is not null, then
-     * {@link Scheduler#scheduleJob(org.quartz.JobDetail, org.quartz.Trigger)} will be called to schedule the job.</p>
+     * false. {@link Scheduler#scheduleJob(org.quartz.JobDetail, org.quartz.Trigger)} is called to schedule the job.</p>
      *
      * @param  jobClass           the class of the job that will be executed when the trigger fires
-     * @param  trigger            an optional trigger for firing the job
+     * @param  trigger            the trigger for firing the job
      *
      * @throws SchedulerException
      *

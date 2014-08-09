@@ -48,6 +48,7 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.ObjectAlreadyExistsException;
 import org.quartz.SchedulerException;
 
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -735,10 +736,13 @@ public class StartupBean implements StartupLocal {
 
         // storage cluster maintenance job
         try {
+            log.debug("Scheduling " + StorageClusterMaintenanceJob.GROUP_NAME + " for execution");
             schedulerBean.scheduleTriggeredJob(StorageClusterMaintenanceJob.class,
                 StorageClusterMaintenanceJob.GROUP_NAME, false, StorageClusterMaintenanceJob.getTrigger());
-        } catch (SchedulerException e) {
-            log.error("Cannot create storage cluster maintenance job", e);
+        } catch (ObjectAlreadyExistsException e) {
+            log.debug(StorageClusterMaintenanceJob.JOB_NAME + " already exists");
+        } catch (Exception e) {
+            log.error("Failed to create storage cluster maintenance job " + StorageClusterMaintenanceJob.JOB_NAME, e);
         }
     }
 

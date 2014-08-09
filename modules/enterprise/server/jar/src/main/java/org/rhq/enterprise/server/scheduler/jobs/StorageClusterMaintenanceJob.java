@@ -31,14 +31,16 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class StorageClusterMaintenanceJob extends AbstractStatefulJob {
 
-    public static final String TRIGGER_PREFIX = "StorageClusterMaintenanceTrigger";
+    public static final String JOB_NAME = StorageClusterMaintenanceJob.class.getName();
+
+    public static final String TRIGGER_NAME = "StorageClusterMaintenanceTrigger";
 
     public static final String GROUP_NAME = "StorageClusterMaintenanceGroup";
 
     private Log log = LogFactory.getLog(StorageClusterMaintenanceJob.class);
 
     public static Trigger getTrigger() {
-        String triggerName = TRIGGER_PREFIX + "-" + System.currentTimeMillis();
+        String triggerName = TRIGGER_NAME;
         SimpleTrigger trigger = new SimpleTrigger(triggerName, GROUP_NAME,
             new Date(System.currentTimeMillis() + getInterval()));
         trigger.setJobName(StorageClusterMaintenanceJob.class.getName());
@@ -65,6 +67,7 @@ public class StorageClusterMaintenanceJob extends AbstractStatefulJob {
         } finally {
             try {
                 SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+                scheduler.unscheduleJob(TRIGGER_NAME, GROUP_NAME);
                 scheduler.scheduleJob(getTrigger());
             } catch (SchedulerException e) {
                 // TODO What should we do in the event of an error?

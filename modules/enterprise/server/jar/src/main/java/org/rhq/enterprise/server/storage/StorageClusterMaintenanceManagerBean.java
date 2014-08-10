@@ -19,7 +19,9 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
+import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.job.DeployCalculator;
 import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
@@ -41,6 +43,12 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
 
     @EJB
     private StorageClusterMaintenanceManagerLocal maintenanceManager;
+
+    @EJB
+    private OperationManagerLocal operationManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
 
     @Override
     public void scheduleMaintenance(StorageMaintenanceJob job) {
@@ -81,7 +89,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
 
     private void refreshJob(StorageMaintenanceJob job) {
         StepCalculator stepCalculator = getStepCalculator(job.getJobType());
-        stepCalculator.calculateSteps(job, storageNodeManager.getStorageNodes());
+        stepCalculator.calculateSteps(job, storageNodeManager.getClusterNodes());
     }
 
     private StepCalculator getStepCalculator(MaintenanceStep.JobType jobType) {
@@ -126,6 +134,11 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         log.info("Executing " + job);
         for (MaintenanceStep step : job) {
             log.info("Executing " + step);
+            MaintenanceStepRunner stepRunner = getStepRunner(step);
+            stepRunner.setOperationManager(operationManager);
+            stepRunner.setStorageNodeManager(storageNodeManager);
+            stepRunner.setSubjectManager(subjectManager);
+            stepRunner.execute(step);
             maintenanceManager.deleteStep(step.getId());
         }
         maintenanceManager.deleteStep(job.getBaseStep().getId());
@@ -134,7 +147,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
 
     private MaintenanceStepRunner getStepRunner(MaintenanceStep step) {
         try {
-            Class clazz = Class.forName("org.rhq.enterprise.server.storage.maintenance.step." + step.getName());
+            Class clazz = Class.forName(step.getName());
             MaintenanceStepRunner runner = (MaintenanceStepRunner) clazz.newInstance();
 
             return runner;

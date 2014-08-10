@@ -1,37 +1,67 @@
 package org.rhq.enterprise.server.storage.maintenance.step;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
-
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.operation.OperationHistory;
+import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
+import org.rhq.enterprise.server.operation.OperationManagerLocal;
 
 /**
  * @author John Sanda
  */
-public class BaseStepRunner {
+public abstract class BaseStepRunner implements MaintenanceStepRunner {
 
-    private ObjectMapper mapper;
+    private static final int DEFAULT_OPERATION_TIMEOUT = 300;
 
-    private TypeReference<HashMap<String,String>> typeReference;
+    private StorageNodeManagerLocal storageNodeManager;
 
-    protected void executeOperation(StorageNode node, String operation, Configuration arguments) {
+    private OperationManagerLocal operationManager;
 
+    private SubjectManagerLocal subjectManager;
+
+    @Override
+    public void setStorageNodeManager(StorageNodeManagerLocal storageNodeManager) {
+        this.storageNodeManager = storageNodeManager;
     }
 
-    protected List<StorageNode> getCluster() {
-        return null;
+    @Override
+    public void setOperationManager(OperationManagerLocal operationManager) {
+        this.operationManager = operationManager;
     }
 
-    protected Map<String, String> convertArgs(String args) {
+    @Override
+    public void setSubjectManager(SubjectManagerLocal subjectManager) {
+        this.subjectManager = subjectManager;
+    }
+
+    protected void executeOperation(String storageNodeAddress, String operation, Configuration parameters) {
+        StorageNode node = storageNodeManager.findStorageNodeByAddress(storageNodeAddress);
+        int resourceId = node.getResource().getId();
+        ResourceOperationSchedule operationSchedule = operationManager.scheduleResourceOperation(
+            subjectManager.getOverlord(), resourceId, operation, 0, 0, 0, DEFAULT_OPERATION_TIMEOUT,
+            parameters.deepCopyWithoutProxies(), "");
+        waitForOperationToComplete(operationSchedule);
+    }
+
+    private OperationHistory waitForOperationToComplete(ResourceOperationSchedule schedule) {
         try {
-            return mapper.readValue(args, typeReference);
-        } catch (IOException e) {
+            ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+            criteria.addFilterJobId(schedule.getJobId());
+
+            Thread.sleep(5000);
+            OperationHistory operationHistory = operationManager.getOperationHistoryByJobId(
+                subjectManager.getOverlord(), schedule.getJobId().toString());
+            while (operationHistory.getStatus() == OperationRequestStatus.INPROGRESS) {
+                Thread.sleep(5000);
+                operationHistory = operationManager.getOperationHistoryByJobId(subjectManager.getOverlord(),
+                    schedule.getJobId().toString());
+            }
+            return operationHistory;
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }

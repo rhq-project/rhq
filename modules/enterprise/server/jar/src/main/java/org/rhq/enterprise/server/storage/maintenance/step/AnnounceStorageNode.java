@@ -3,6 +3,8 @@ package org.rhq.enterprise.server.storage.maintenance.step;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.storage.MaintenanceStep;
 
 /**
@@ -14,15 +16,15 @@ public class AnnounceStorageNode extends BaseStepRunner implements MaintenanceSt
 
     @Override
     public void execute(MaintenanceStep step) {
-//        Map<String, String> argsMap = convertArgs(step.getArgs());
-//        Configuration args = new Configuration();
-//        args.put(new PropertySimple("address", argsMap.get("address")));
-//
-//        log.info("Announcing new node " + argsMap.get("address") + " to " + step.getStorageNode().getAddress());
-//
-//        executeOperation(step.getStorageNode(), "announce", args);
-
         log.info("Announcing new node");
+        Configuration configuration = step.getConfiguration();
+        String targetAddress = configuration.getSimpleValue("targetAddress");
+        PropertyMap params = (PropertyMap) configuration.get("parameters");
+
+        Configuration operationParams = new Configuration();
+        operationParams.put(params.get("addresses"));
+//        operationParams.put(new PropertySimple("address", params.getSimple("address").getStringValue()));
+        executeOperation(targetAddress, "announce", operationParams);
     }
 
 }

@@ -29,7 +29,7 @@ import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
  *
  */
 //@Stateless
-public class UpdateStorageNodeEntity implements MaintenanceStepRunner {
+public class UpdateStorageNodeEntity extends BaseStepRunner implements MaintenanceStepRunner {
 
 //    @EJB
     StorageNodeManagerLocal storageNodeManagerBean;

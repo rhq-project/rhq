@@ -28,7 +28,7 @@ import org.rhq.enterprise.server.operation.OperationManagerBean;
  *
  */
 //@Stateless
-public class UpdateStorageNodeEndpoints implements MaintenanceStepRunner {
+public class UpdateStorageNodeEndpoints extends BaseStepRunner implements MaintenanceStepRunner {
 
 //    @EJB
     private StorageNodeManagerBean storageNodeManager;

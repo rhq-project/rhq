@@ -26,7 +26,7 @@ import org.rhq.enterprise.server.storage.StorageClientManager;
  *
  */
 //@Stateless
-public class StartStorageClient implements MaintenanceStepRunner {
+public class StartStorageClient extends BaseStepRunner implements MaintenanceStepRunner {
 
 //    @EJB
     private StorageClientManager storageClientManager;

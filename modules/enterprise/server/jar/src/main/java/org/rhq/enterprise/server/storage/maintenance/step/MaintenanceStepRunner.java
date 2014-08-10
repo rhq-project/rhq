@@ -19,6 +19,9 @@
 package org.rhq.enterprise.server.storage.maintenance.step;
 
 import org.rhq.core.domain.storage.MaintenanceStep;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
+import org.rhq.enterprise.server.operation.OperationManagerLocal;
 
 /**
  * @author Stefan Negrea
@@ -27,4 +30,10 @@ import org.rhq.core.domain.storage.MaintenanceStep;
 public interface MaintenanceStepRunner {
 
     void execute(MaintenanceStep maintenanceStep);
+
+    void setStorageNodeManager(StorageNodeManagerLocal storageNodeManager);
+
+    void setOperationManager(OperationManagerLocal operationManager);
+
+    void setSubjectManager(SubjectManagerLocal subjectManager);
 }

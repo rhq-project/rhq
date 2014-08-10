@@ -1,5 +1,6 @@
 package org.rhq.enterprise.server.storage;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,7 +17,6 @@ import javax.persistence.PersistenceContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.storage.MaintenanceJob;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
@@ -42,8 +42,6 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     @EJB
     private StorageClusterMaintenanceManagerLocal maintenanceManager;
 
-    private List<StorageMaintenanceJob> queue = new LinkedList<StorageMaintenanceJob>();
-
     @Override
     public void scheduleMaintenance(StorageMaintenanceJob job) {
         MaintenanceStep baseStep = job.getBaseStep();
@@ -56,13 +54,13 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     }
 
     @Override
-    public void loadQueue() {
+    public List<StorageMaintenanceJob> loadQueue() {
         List<MaintenanceStep> steps = entityManager.createNamedQuery(MaintenanceStep.FIND_ALL, MaintenanceStep.class)
             .getResultList();
-        queue = new LinkedList<StorageMaintenanceJob>();
+        List<StorageMaintenanceJob> queue = new LinkedList<StorageMaintenanceJob>();
 
         if (steps.isEmpty()) {
-            return;
+            return Collections.emptyList();
         }
 
         Iterator<MaintenanceStep> iterator = steps.iterator();
@@ -77,21 +75,13 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
                 job = new StorageMaintenanceJob(step);
             }
         }
+
+        return queue;
     }
 
-    @Override
-    public MaintenanceJob updateQueue(MaintenanceJob job) {
-        return entityManager.merge(job);
-    }
-
-    @Override
-    public StorageMaintenanceJob getNextJob() {
-        StorageMaintenanceJob job = queue.get(0);
-        job.setClusterSnapshot(storageNodeManager.getClusterNodes());
+    private void refreshJob(StorageMaintenanceJob job) {
         StepCalculator stepCalculator = getStepCalculator(job.getJobType());
-        stepCalculator.calculateSteps(job);
-
-        return job;
+        stepCalculator.calculateSteps(job, storageNodeManager.getStorageNodes());
     }
 
     private StepCalculator getStepCalculator(MaintenanceStep.JobType jobType) {
@@ -105,13 +95,6 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         } catch (NamingException e) {
             throw new RuntimeException("Failed to look up step calculator", e);
         }
-    }
-
-    @Override
-    public MaintenanceJob updateSteps(MaintenanceJob job) {
-//        JobBuilder jobBuilder = new JobBuilder(storageNodeManager.getStorageNodes());
-//        return entityManager.merge(jobBuilder.build(job));
-        return null;
     }
 
     @Override
@@ -132,12 +115,13 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void execute() {
-        maintenanceManager.loadQueue();
+        List<StorageMaintenanceJob> queue = maintenanceManager.loadQueue();
         if (queue.isEmpty()) {
             log.info("There are no jobs to execute");
             return;
         }
-        StorageMaintenanceJob job = maintenanceManager.getNextJob();
+        StorageMaintenanceJob job = queue.remove(0);
+        refreshJob(job);
 
         log.info("Executing " + job);
         for (MaintenanceStep step : job) {

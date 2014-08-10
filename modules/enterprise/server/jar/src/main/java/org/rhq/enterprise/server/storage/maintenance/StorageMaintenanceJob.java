@@ -2,6 +2,7 @@ package org.rhq.enterprise.server.storage.maintenance;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -93,6 +94,11 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
     public Set<String> getClusterSnapshot() {
         Configuration configuration = getBaseStep().getConfiguration();
         PropertyList propertyList = (PropertyList) configuration.get("clusterSnapshot");
+
+        if (propertyList == null) {
+            return Collections.emptySet();
+        }
+
         Set<String> snapshot = new HashSet<String>();
 
         for (Property p : propertyList.getList()) {

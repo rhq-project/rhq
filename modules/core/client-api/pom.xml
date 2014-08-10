@@ -11,7 +11,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-core-client-api</artifactId>
-  <version>4.9.0.JON320GA-redhat-1</version>
+  <version>4.9.0.JON320GA-redhat-2</version>
   <packaging>jar</packaging>
 
   <name>RHQ Client API</name>

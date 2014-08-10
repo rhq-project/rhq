@@ -202,7 +202,7 @@ public class MaintenanceStep implements Serializable {
     public String toString(boolean verbose) {
         return "MaintenanceStep[id = " + id + ", jobNumber = " + jobNumber + ", jobType = " + jobType +
             ", stepNumber = " + stepNumber + ", name = " + name + ", ctime = " + ctime + ", mtime = " + mtime +
-            ", configuration = " + configuration.toString(verbose) + "]";
+            ", configuration = " + (configuration == null ? "null" : configuration.toString(verbose)) + "]";
     }
 
     @PrePersist

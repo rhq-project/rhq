@@ -13,6 +13,8 @@ import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.shared.TransactionCallback;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 
@@ -42,8 +44,10 @@ public class MaintenanceStepTest extends AbstractEJB3Test {
                     .setJobType(MaintenanceStep.JobType.DEPLOY)
                     .setName("BASE_STEP")
                     .setStepNumber(0)
-                    .setDescription("Deploy 127.0.0.1");
+                    .setDescription("Deploy 127.0.0.1")
+                    .setConfiguration(convert(new Configuration.Builder().addSimple("address", "127.0.0.1").build()));
 
+                em.persist(step.getConfiguration());
                 em.persist(step);
 
                 step.setJobNumber(step.getId());
@@ -63,6 +67,17 @@ public class MaintenanceStepTest extends AbstractEJB3Test {
 
             }
         }, "Failed to find job " + jobNumber + " which should not have any steps yet");
+    }
+
+    private Configuration convert(Configuration params) {
+        Configuration configuration = new Configuration();
+        PropertyMap propertyMap = new PropertyMap("parameters");
+        for (Property p : params.getProperties()) {
+            propertyMap.put(p.deepCopy(false));
+        }
+        configuration.put(propertyMap);
+
+        return configuration;
     }
 
     @Test(groups = "integration.ejb3")

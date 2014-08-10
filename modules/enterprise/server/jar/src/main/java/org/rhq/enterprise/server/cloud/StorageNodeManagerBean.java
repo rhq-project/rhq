@@ -89,7 +89,7 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.storage.MaintenanceStep;
-import org.rhq.core.domain.storage.StorageMaintenanceJob;
+import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -225,7 +225,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 //                    storageNodeManager.deployStorageNode(subjectManager.getOverlord(), storageNode);
 
                     StorageMaintenanceJob job = new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY,
-                        "Deploy " + storageNode.getAddress());
+                        "Deploy " + storageNode.getAddress(), new Configuration.Builder()
+                        .addSimple("address", storageNode.getAddress()).build());
 
 //                    MaintenanceJob job = new MaintenanceJob()
 //                        .setName("Deploy storage node " + storageNode.getAddress())

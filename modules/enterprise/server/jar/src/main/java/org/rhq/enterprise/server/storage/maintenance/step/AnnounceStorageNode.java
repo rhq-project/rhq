@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.storage.MaintenanceStep;
 
 /**
@@ -22,8 +23,7 @@ public class AnnounceStorageNode extends BaseStepRunner implements MaintenanceSt
         PropertyMap params = (PropertyMap) configuration.get("parameters");
 
         Configuration operationParams = new Configuration();
-        operationParams.put(params.get("addresses"));
-//        operationParams.put(new PropertySimple("address", params.getSimple("address").getStringValue()));
+        operationParams.put(new PropertySimple("address", params.getSimple("address").getStringValue()));
         executeOperation(targetAddress, "announce", operationParams);
     }
 

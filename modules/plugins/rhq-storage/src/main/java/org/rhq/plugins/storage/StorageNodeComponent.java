@@ -315,20 +315,17 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
     private OperationResult announce(Configuration params) {
         OperationResult result = new OperationResult();
-        Set<String> addressesToAdd = null;
+        String addressToAdd = params.getSimpleValue("address");
         try {
-            addressesToAdd = getAddreses(params);
-            log.info("Announcing "  + addressesToAdd);
-
-            createSnapshots(addressesToAdd, "pre_" + StringUtil.collectionToString(addressesToAdd) + "_bootstrap_");
+            log.info("Announcing "  + addressToAdd);
 
             Set<String> knownAddresses = getAuthAddresses();
-            knownAddresses.addAll(addressesToAdd);
+            knownAddresses.add(addressToAdd);
             setAuthAddresses(knownAddresses);
             reloadInternodeAuthConfig();
 
             result.getComplexResults().put(new PropertySimple("details",
-                "Successfully announced " + addressesToAdd));
+                "Successfully announced " + addressToAdd));
         } catch (InternodeAuthConfUpdateException e) {
             result.setErrorMessage("Failed to update authorized nodes due to the following error(s): " +
                 ThrowableUtil.getAllMessages(e));
@@ -338,46 +335,22 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
     private OperationResult unannounce(Configuration params) {
         OperationResult result = new OperationResult();
-        Set<String> addressesToRemove = null;
+        String addressToRemove = params.getSimpleValue("address");
         try {
-            addressesToRemove = getAddreses(params);
-            log.info("Unannouncing " + addressesToRemove);
-
-            createSnapshots(addressesToRemove, "pre_" + StringUtil.collectionToString(addressesToRemove) +
-                "_decommission_");
+            log.info("Unannouncing " + addressToRemove);
 
             Set<String> knownAddresses = getAuthAddresses();
-            knownAddresses.removeAll(addressesToRemove);
+            knownAddresses.remove(addressToRemove);
             setAuthAddresses(knownAddresses);
             reloadInternodeAuthConfig();
 
             result.getComplexResults().put(new PropertySimple("details",
-                "Successfully unannounced " + addressesToRemove));
+                "Successfully unannounced " + addressToRemove));
         } catch (InternodeAuthConfUpdateException e) {
             result.setErrorMessage("Failed to update authorized nodes due to the following error(s): " +
                 ThrowableUtil.getAllMessages(e));
         }
         return result;
-    }
-
-    private Set<String> getAddreses(Configuration params) {
-        PropertyList propertyList = params.getList("addresses");
-        Set<String> ipAddresses = new HashSet<String>();
-
-        for (Property property : propertyList.getList()) {
-            PropertySimple propertySimple = (PropertySimple) property;
-            ipAddresses.add(propertySimple.getStringValue());
-        }
-
-        return ipAddresses;
-    }
-
-    private void createSnapshots(Set<String> addressesToAdd, String snapshotPrefix) {
-        EmsConnection emsConnection = getEmsConnection();
-        KeyspaceService keyspaceService = new KeyspaceService(emsConnection);
-        keyspaceService.takeSnapshot(SYSTEM_KEYSPACE, snapshotPrefix + System.currentTimeMillis());
-        keyspaceService.takeSnapshot(SYSTEM_AUTH_KEYSPACE, snapshotPrefix + System.currentTimeMillis());
-        keyspaceService.takeSnapshot(RHQ_KEYSPACE, snapshotPrefix + System.currentTimeMillis());
     }
 
     private void reloadInternodeAuthConfig() {

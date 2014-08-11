@@ -111,9 +111,7 @@
     <operation name="announce" description="This operation is NOT intended for direct usage. It is part of the
       deployment process. Please see the storage node deployment documentation for more information.">
       <parameters>
-        <c:list-property name="addresses">
-          <c:simple-property name="address"/>
-        </c:list-property>
+        <c:simple-property name="address"/>
       </parameters>
       <results>
         <c:simple-property name="details"/>
@@ -123,9 +121,7 @@
     <operation name="unannounce" description="This operation is NOT intended for direct usage. It is part of
       the undeployment process. Please see the storage node (un)deployment documentation for more information.">
       <parameters>
-        <c:list-property name="addresses">
-          <c:simple-property name="address"/>
-        </c:list-property>
+        <c:simple-property name="address"/>
       </parameters>
       <results>
         <c:simple-property name="details"/>

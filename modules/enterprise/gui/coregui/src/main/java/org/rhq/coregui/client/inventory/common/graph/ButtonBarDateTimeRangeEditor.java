@@ -23,6 +23,7 @@ import java.util.Date;
 import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.types.SelectionType;
 import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
@@ -41,6 +42,7 @@ import org.rhq.coregui.client.components.measurement.RefreshIntervalMenu;
 import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
@@ -84,7 +86,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         toolStrip.addSpacer(10);
 
         for (DateTimeButton dateTimeButton : DateTimeButton.values()) {
-            IButton oneHourButton = new IButton(dateTimeButton.label);
+            IButton oneHourButton = new EnhancedIButton(dateTimeButton.label);
             oneHourButton.setWidth(BUTTON_WIDTH);
             oneHourButton.setActionType(SelectionType.RADIO);
             oneHourButton.setRadioGroup(TIMERANGE);
@@ -93,7 +95,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             toolStrip.addMember(oneHourButton);
         }
 
-        IButton customButton = new IButton(MSG.common_buttonbar_custom());
+        IButton customButton = new EnhancedIButton(MSG.common_buttonbar_custom());
         customButton.setWidth(60);
         customButton.setActionType(SelectionType.RADIO);
         customButton.setRadioGroup(TIMERANGE);
@@ -264,7 +266,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             setIsModal(true);
             setShowModalMask(true);
             setWidth(420);
-            setHeight(450);
+            setHeight(480);
             setShowResizer(true);
             setCanDragResize(true);
             centerInPage();
@@ -272,7 +274,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             DynamicForm form = new DynamicForm();
             form.setGroupTitle(windowTitle + " "+title);
             form.setIsGroup(true);
-            form.setMargin(25);
+            form.setMargin(20);
             form.setAutoFocus(true);
             form.setShowErrorText(true);
             form.setErrorOrientation(FormErrorOrientation.BOTTOM);
@@ -319,12 +321,18 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
                     endDateItem,
                     endTimeHours, endTimeMinutes,
                 new RowSpacerItem());
-            this.addItem(form);
+            addItem(form);
+            
+            final HTMLFlow startBeforeEndLabel = new HTMLFlow();
+            startBeforeEndLabel.setMargin(15);
+            startBeforeEndLabel.setHeight(30);
+            startBeforeEndLabel.setExtraSpace(0);
+            addItem(startBeforeEndLabel);
 
             HLayout buttonHLayout = new HLayout();
-            buttonHLayout.setMargin(75);
+            buttonHLayout.setMargin(35);
             buttonHLayout.setMembersMargin(20);
-            IButton cancelButton = new IButton(MSG.common_buttonbar_custom_cancel());
+            IButton cancelButton = new EnhancedIButton(MSG.common_buttonbar_custom_cancel());
             cancelButton.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
@@ -333,21 +341,27 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             });
             buttonHLayout.addMember(cancelButton);
 
-            IButton saveButton = new IButton(MSG.common_buttonbar_custom_save());
+            IButton saveButton = new EnhancedIButton(MSG.common_buttonbar_custom_save(), ButtonColor.BLUE);
             saveButton.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
                     //@todo: eventually get rid of deprecated calls but not in 3.2.1 minor release
                     Date newStartDate = new Date(startDateItem.getValueAsDate().getYear(), startDateItem
-                        .getValueAsDate().getMonth(), startDateItem.getValueAsDate().getDate(),  (Integer) startTimeHours.getValue(),
-                            (Integer) startTimeMinutes.getValue());
+                        .getValueAsDate().getMonth(), startDateItem.getValueAsDate().getDate(),
+                        (Integer) startTimeHours.getValue(), (Integer) startTimeMinutes.getValue());
                     Date newEndDate = new Date(endDateItem.getValueAsDate().getYear(), endDateItem.getValueAsDate()
                         .getMonth(), endDateItem.getValueAsDate().getDate(), (Integer) endTimeHours.getValue(),
-                            (Integer) endTimeMinutes.getValue());
-                    buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), newEndDate.getTime());
-                    redrawGraphs();
-                    showUserFriendlyTimeRange(newStartDate.getTime(), newEndDate.getTime());
-                    CustomDateRangeWindow.this.destroy();
+                        (Integer) endTimeMinutes.getValue());
+                    if (newStartDate.before(newEndDate)) {
+                        startBeforeEndLabel.setContents("");
+                        buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), newEndDate.getTime());
+                        redrawGraphs();
+                        showUserFriendlyTimeRange(newStartDate.getTime(), newEndDate.getTime());
+                        CustomDateRangeWindow.this.destroy();
+                    } else {
+                        startBeforeEndLabel.setContents("<img src='images/resources/availability_red_24.png'/> &nbsp;"
+                            + MSG.view_measureTable_startBeforeEnd());
+                    }
                 }
             });
 

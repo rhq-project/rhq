@@ -103,6 +103,11 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
 
             executeInClassScope(new Callable<Void>() {
                 public Void call() throws Exception {
+                    boolean deploy = Boolean.valueOf(System.getProperty("rhq.storage.deploy", "true"));
+                    if (!deploy) {
+                        return null;
+                    }
+
                     SchemaManager schemaManager = null;
                     try {
                         ClusterInitService clusterInitService = new ClusterInitService();
@@ -211,8 +216,9 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
         final AfterStop event, ArquillianDescriptor descriptor) {
             executeInClassScope(new Callable<Void>() {
                 public Void call() throws Exception {
+                    boolean shutdown = Boolean.valueOf(System.getProperty("rhq.storage.shutdown", "true"));
 
-                    if (null != ccm) {
+                    if (null != ccm && shutdown) {
                         ccm.shutdownCluster();
                     }
 

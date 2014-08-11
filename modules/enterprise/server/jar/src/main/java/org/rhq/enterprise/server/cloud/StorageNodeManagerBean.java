@@ -221,17 +221,10 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                     log.info("Scheduling cluster maintenance to deploy " + storageNode + " into the storage cluster...");
                 }
                 if (clusterSettings.getAutomaticDeployment()) {
-//                    log.info("Deploying " + storageNode);
-//                    storageNodeManager.deployStorageNode(subjectManager.getOverlord(), storageNode);
-
                     StorageMaintenanceJob job = new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY,
                         "Deploy " + storageNode.getAddress(), new Configuration.Builder()
                         .addSimple("address", storageNode.getAddress()).build());
 
-//                    MaintenanceJob job = new MaintenanceJob()
-//                        .setName("Deploy storage node " + storageNode.getAddress())
-//                        .setStorageNode(storageNode)
-//                        .setType(MaintenanceJob.Type.DEPLOY);
                     clusterMaintenanceManager.scheduleMaintenance(job);
                 } else {
                     log.info("Automatic deployment is disabled. " + storageNode + " will not become part of the "

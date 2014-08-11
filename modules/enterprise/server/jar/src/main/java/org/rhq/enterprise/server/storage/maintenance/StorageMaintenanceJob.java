@@ -67,6 +67,10 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
         return steps.get(0);
     }
 
+    public boolean hasSteps() {
+        return steps.size() > 1;
+    }
+
     @Override
     public Iterator<MaintenanceStep> iterator() {
         return steps.subList(1, steps.size()).iterator();

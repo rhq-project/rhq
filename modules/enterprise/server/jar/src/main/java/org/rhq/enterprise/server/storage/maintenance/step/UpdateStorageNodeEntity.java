@@ -52,4 +52,9 @@ public class UpdateStorageNodeEntity extends BaseStepRunner implements Maintenan
 //
 //        entityManager.persist(step.getStorageNode());
     }
+
+    @Override
+    public StepFailureStrategy getFailureStrategy() {
+        return null;
+    }
 }

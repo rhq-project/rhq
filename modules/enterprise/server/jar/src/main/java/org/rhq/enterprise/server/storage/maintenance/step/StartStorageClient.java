@@ -35,4 +35,9 @@ public class StartStorageClient extends BaseStepRunner implements MaintenanceSte
     public void execute(MaintenanceStep maintenanceStep) {
         storageClientManager.init();
     }
+
+    @Override
+    public StepFailureStrategy getFailureStrategy() {
+        return null;
+    }
 }

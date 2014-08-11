@@ -26,6 +26,7 @@ import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.job.DeployCalculator;
 import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
 import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
+import org.rhq.enterprise.server.storage.maintenance.step.StepFailureException;
 
 /**
  * @author John Sanda
@@ -62,6 +63,28 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     }
 
     @Override
+    public void rescheduleJob(int jobNumber) {
+        List<MaintenanceStep> steps = entityManager.createNamedQuery(MaintenanceStep.FIND_BY_JOB_NUM,
+            MaintenanceStep.class).setParameter("jobNumber", jobNumber).getResultList();
+        StorageMaintenanceJob job = new StorageMaintenanceJob(steps);
+        MaintenanceStep oldBaseStep = job.getBaseStep();
+        MaintenanceStep newBaseStep = new MaintenanceStep()
+            .setName(oldBaseStep.getName())
+            .setDescription(oldBaseStep.getDescription())
+            .setJobType(oldBaseStep.getJobType())
+            .setConfiguration(oldBaseStep.getConfiguration().deepCopyWithoutProxies());
+
+        entityManager.remove(oldBaseStep);
+        entityManager.persist(newBaseStep.getConfiguration());
+        entityManager.persist(newBaseStep);
+        newBaseStep.setJobNumber(newBaseStep.getId());
+        for (MaintenanceStep step : job) {
+            step.setJobNumber(newBaseStep.getJobNumber());
+            entityManager.merge(step);
+        }
+    }
+
+    @Override
     public List<StorageMaintenanceJob> loadQueue() {
         List<MaintenanceStep> steps = entityManager.createNamedQuery(MaintenanceStep.FIND_ALL, MaintenanceStep.class)
             .getResultList();
@@ -87,9 +110,9 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         return queue;
     }
 
-    private void refreshJob(StorageMaintenanceJob job) {
+    private StorageMaintenanceJob refreshJob(StorageMaintenanceJob job) {
         StepCalculator stepCalculator = getStepCalculator(job.getJobType());
-        stepCalculator.calculateSteps(job, storageNodeManager.getClusterNodes());
+        return stepCalculator.calculateSteps(job.getJobNumber(), storageNodeManager.getClusterNodes());
     }
 
     private StepCalculator getStepCalculator(MaintenanceStep.JobType jobType) {
@@ -103,6 +126,12 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         } catch (NamingException e) {
             throw new RuntimeException("Failed to look up step calculator", e);
         }
+    }
+
+    @Override
+    public MaintenanceStep reloadStep(int stepId) {
+        return entityManager.createNamedQuery(MaintenanceStep.FIND_STEP_AND_CONFIG, MaintenanceStep.class)
+            .setParameter("stepId", stepId).getSingleResult();
     }
 
     @Override
@@ -128,21 +157,48 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
             log.info("There are no jobs to execute");
             return;
         }
-        StorageMaintenanceJob job = queue.remove(0);
-        refreshJob(job);
+        for (StorageMaintenanceJob job : queue) {
+            executeJob(refreshJob(job));
+        }
+    }
 
+    private void executeJob(StorageMaintenanceJob job) {
         log.info("Executing " + job);
         for (MaintenanceStep step : job) {
-            log.info("Executing " + step);
             MaintenanceStepRunner stepRunner = getStepRunner(step);
+            boolean succeeded = executeStep(maintenanceManager.reloadStep(step.getId()), stepRunner);
+            if (succeeded) {
+                maintenanceManager.deleteStep(step.getId());
+            } else {
+                switch (stepRunner.getFailureStrategy()) {
+                    case ABORT:
+                        log.info("Aborting " + job);
+                        maintenanceManager.rescheduleJob(job.getJobNumber());
+                        return;
+                    case CONTINUE:
+                        // TODO schedule new job for failed step
+                    default:
+                        throw new IllegalStateException("We shouldn't get here");
+                }
+            }
+        }
+        log.info("Finished executing " + job);
+        maintenanceManager.deleteStep(job.getBaseStep().getId());
+    }
+
+    private boolean executeStep(MaintenanceStep step, MaintenanceStepRunner stepRunner) {
+        try {
+            log.info("Executing " + step);
             stepRunner.setOperationManager(operationManager);
             stepRunner.setStorageNodeManager(storageNodeManager);
             stepRunner.setSubjectManager(subjectManager);
             stepRunner.execute(step);
-            maintenanceManager.deleteStep(step.getId());
+
+            return true;
+        } catch (StepFailureException e) {
+            log.info(step + " failed: " + e.getMessage());
+            return false;
         }
-        maintenanceManager.deleteStep(job.getBaseStep().getId());
-        log.info("Finished executing " + job);
     }
 
     private MaintenanceStepRunner getStepRunner(MaintenanceStep step) {

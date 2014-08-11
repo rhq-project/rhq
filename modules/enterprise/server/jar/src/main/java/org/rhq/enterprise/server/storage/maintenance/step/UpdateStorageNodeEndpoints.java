@@ -91,4 +91,9 @@ public class UpdateStorageNodeEndpoints extends BaseStepRunner implements Mainte
 //            throw new RuntimeException();
 //        }
     }
+
+    @Override
+    public StepFailureStrategy getFailureStrategy() {
+        return null;
+    }
 }

@@ -29,4 +29,9 @@ public class BootstrapNode extends BaseStepRunner {
 
         executeOperation(targetAddress, "prepareForBootstrap", operationParams);
     }
+
+    @Override
+    public StepFailureStrategy getFailureStrategy() {
+        return StepFailureStrategy.ABORT;
+    }
 }

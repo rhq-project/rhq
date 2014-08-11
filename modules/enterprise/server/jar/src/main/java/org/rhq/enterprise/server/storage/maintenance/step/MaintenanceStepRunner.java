@@ -29,7 +29,9 @@ import org.rhq.enterprise.server.operation.OperationManagerLocal;
  */
 public interface MaintenanceStepRunner {
 
-    void execute(MaintenanceStep maintenanceStep);
+    void execute(MaintenanceStep maintenanceStep) throws StepFailureException;
+
+    StepFailureStrategy getFailureStrategy();
 
     void setStorageNodeManager(StorageNodeManagerLocal storageNodeManager);
 

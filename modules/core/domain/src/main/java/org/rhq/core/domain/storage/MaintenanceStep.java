@@ -53,6 +53,8 @@ import org.rhq.core.domain.configuration.Configuration;
         "SELECT s FROM MaintenanceStep s WHERE s.jobNumber = :jobNumber ORDER BY s.stepNumber"),
     @NamedQuery(name = MaintenanceStep.FIND_ALL, query =
         "SELECT s FROM MaintenanceStep s ORDER BY s.jobNumber, s.stepNumber"),
+    @NamedQuery(name = MaintenanceStep.FIND_STEP_AND_CONFIG, query =
+        "SELECT s FROM MaintenanceStep s LEFT JOIN FETCH s.configuration WHERE s.id = :stepId"),
     @NamedQuery(name = MaintenanceStep.DELETE_STEP, query =
         "DELETE FROM MaintenanceStep s WHERE s.id = :id")
 })
@@ -66,6 +68,8 @@ public class MaintenanceStep implements Serializable {
     public static final String FIND_BY_JOB_NUM = "MaintenanceStep.findJob";
 
     public static final String FIND_ALL = "MaintenanceStep.findAll";
+
+    public static final String FIND_STEP_AND_CONFIG = "MaintenanceStep.findStepAndConfig";
 
     public static final String DELETE_STEP = "MaintenanceStep.deleteStep";
 

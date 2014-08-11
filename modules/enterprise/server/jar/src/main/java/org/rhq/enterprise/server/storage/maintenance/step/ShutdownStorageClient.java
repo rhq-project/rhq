@@ -35,4 +35,9 @@ public class ShutdownStorageClient extends BaseStepRunner implements Maintenance
     public void execute(MaintenanceStep maintenanceStep) {
         storageClientManager.shutdown();
     }
+
+    @Override
+    public StepFailureStrategy getFailureStrategy() {
+        return null;
+    }
 }

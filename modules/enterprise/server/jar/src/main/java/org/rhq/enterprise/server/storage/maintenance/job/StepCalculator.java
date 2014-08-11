@@ -3,6 +3,7 @@ package org.rhq.enterprise.server.storage.maintenance.job;
 import java.util.List;
 
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 
 /**
@@ -10,6 +11,8 @@ import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
  */
 public interface StepCalculator {
 
-    StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job, List<StorageNode> cluster);
+    StorageMaintenanceJob calculateSteps(int jobNumber, List<StorageNode> cluster);
+
+    StorageMaintenanceJob calculateSteps(StorageMaintenanceJob originalJob, MaintenanceStep failedStep);
 
 }

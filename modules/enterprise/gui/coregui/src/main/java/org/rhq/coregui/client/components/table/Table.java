@@ -658,7 +658,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 }
 
                 IMenuButton menuButton = new IMenuButton(tableAction.getTitle());
-                menuButton.setID("menuButton" + id + tableAction.getTitle().replaceAll(" ", "_"));
+                menuButton.setID(EnhancedUtility.getSafeId("menuButton" + id + tableAction.getTitle()));
                 menuButton.setTooltip(tableAction.getTooltip());
                 menuButton.setMenu(menu);
                 menuButton.setDisabled(true);

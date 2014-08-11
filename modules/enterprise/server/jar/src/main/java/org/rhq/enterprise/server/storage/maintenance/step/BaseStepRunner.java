@@ -5,7 +5,9 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -53,14 +55,20 @@ public abstract class BaseStepRunner implements MaintenanceStepRunner {
             criteria.addFilterJobId(schedule.getJobId());
 
             Thread.sleep(5000);
-            OperationHistory operationHistory = operationManager.getOperationHistoryByJobId(
-                subjectManager.getOverlord(), schedule.getJobId().toString());
-            while (operationHistory.getStatus() == OperationRequestStatus.INPROGRESS) {
-                Thread.sleep(5000);
-                operationHistory = operationManager.getOperationHistoryByJobId(subjectManager.getOverlord(),
-                    schedule.getJobId().toString());
+            PageList<ResourceOperationHistory> results = operationManager.findResourceOperationHistoriesByCriteria(
+                subjectManager.getOverlord(), criteria);
+            if (results.isEmpty()) {
+                throw new RuntimeException("Failed to find resource operation history for " + schedule);
             }
-            return operationHistory;
+            OperationHistory history = results.get(0);
+
+
+            while (history.getStatus() == OperationRequestStatus.INPROGRESS) {
+                Thread.sleep(5000);
+                history = operationManager.getOperationHistoryByHistoryId(subjectManager.getOverlord(),
+                    history.getId());
+            }
+            return history;
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

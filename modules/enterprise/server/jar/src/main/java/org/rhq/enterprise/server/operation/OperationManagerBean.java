@@ -103,7 +103,6 @@ import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.storage.StorageNodeOperationsHandlerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -132,9 +131,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     private SchedulerLocal scheduler;
     @EJB
     private SubjectManagerLocal subjectManager;
-
-    @EJB
-    private StorageNodeOperationsHandlerLocal storageNodeOperationsHandler;
 
     @Override
     @SuppressWarnings("unchecked")
@@ -1032,7 +1028,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         if (history.getParameters() != null) {
             history.getParameters().getId(); // eagerly reload the parameters
         }
-        storageNodeOperationsHandler.handleOperationUpdateIfNecessary(history);
         notifyAlertConditionCacheManager("updateOperationHistory", history);
         return history;
     }

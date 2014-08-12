@@ -20,17 +20,12 @@ import org.rhq.enterprise.server.storage.maintenance.step.BootstrapNode;
 /**
  * @author John Sanda
  */
-//@Singleton
-//@LocalBean
 public class DeployCalculator implements StepCalculator {
 
-//    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-//    @EJB
     private StorageClusterSettingsManagerLocal clusterSettingsManager;
 
-//    @EJB
     private SubjectManagerLocal subjectManager;
 
     @Override

@@ -13,18 +13,22 @@ import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
 /**
  * @author John Sanda
  */
-public class TestDeployCalculator implements StepCalculator {
+public class TestStepCalculator implements StepCalculator {
 
-    private EntityManager entityManager;
+    protected SubjectManagerLocal subjectManager;
+
+    protected StorageClusterSettingsManagerLocal clusterSettingsManager;
+
+    protected EntityManager entityManager;
 
     @Override
     public void setSubjectManager(SubjectManagerLocal subjectManager) {
-
+        this.subjectManager = subjectManager;
     }
 
     @Override
     public void setStorageClusterSettingsManager(StorageClusterSettingsManagerLocal clusterSettingsManager) {
-
+        this.clusterSettingsManager = clusterSettingsManager;
     }
 
     @Override
@@ -34,16 +38,7 @@ public class TestDeployCalculator implements StepCalculator {
 
     @Override
     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job, List<StorageNode> cluster) {
-        MaintenanceStep step = new MaintenanceStep()
-            .setJobNumber(job.getJobNumber())
-            .setJobType(job.getJobType())
-            .setName(FakeStepRunner.class.getName())
-            .setDescription("Fake step")
-            .setStepNumber(1);
-        entityManager.persist(step);
-        job.addStep(step);
-
-        return job;
+        return null;
     }
 
     @Override

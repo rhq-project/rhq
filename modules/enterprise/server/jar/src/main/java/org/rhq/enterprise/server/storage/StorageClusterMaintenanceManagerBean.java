@@ -65,6 +65,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     }
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void scheduleMaintenance(StorageMaintenanceJob job) {
         MaintenanceStep baseStep = job.getBaseStep();
 
@@ -121,6 +122,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
                 job.addStep(step);
             } else {
                 job = new StorageMaintenanceJob(step);
+                queue.add(job);
             }
         }
 

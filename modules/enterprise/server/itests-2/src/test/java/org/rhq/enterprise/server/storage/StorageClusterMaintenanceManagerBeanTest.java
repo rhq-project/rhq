@@ -2,6 +2,7 @@ package org.rhq.enterprise.server.storage;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.ejb.EJB;
 import javax.persistence.EntityManager;
@@ -12,11 +13,8 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.storage.MaintenanceStep;
-import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunnerFactory;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
-import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
-import org.rhq.enterprise.server.storage.maintenance.step.StepFailureException;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 
@@ -45,23 +43,34 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
 
     @Test
     public void runMaintenanceWhenQueueHasOneJob() throws Exception {
-        final AtomicBoolean stepExecuted = new AtomicBoolean(false);
-        final String stepName = "FakeStep1";
+        final AtomicBoolean step1Executed = new AtomicBoolean(false);
+        final AtomicBoolean step2Executed = new AtomicBoolean(false);
+        final String step1Name = "FakeStep1";
+        final String step2Name = "FakeStep2";
 
-        final CalculatorLookup calculatorLookup = new CalculatorLookup() {
+        CalculatorLookup calculatorLookup = new CalculatorLookup() {
             @Override
             public StepCalculator lookup(MaintenanceStep.JobType jobType) {
-                return new TestDeployCalculator() {
+                return new TestStepCalculator() {
                     @Override
                     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job, List<StorageNode> cluster) {
-                        MaintenanceStep step = new MaintenanceStep()
+                        MaintenanceStep step1 = new MaintenanceStep()
                             .setJobNumber(job.getJobNumber())
                             .setJobType(job.getJobType())
-                            .setName(stepName)
-                            .setDescription(stepName)
+                            .setName(step1Name)
+                            .setDescription(step1Name)
                             .setStepNumber(1);
-                        em.persist(step);
-                        job.addStep(step);
+                        MaintenanceStep step2 = new MaintenanceStep()
+                            .setJobNumber(job.getJobNumber())
+                            .setJobType(job.getJobType())
+                            .setName(step2Name)
+                            .setDescription(step2Name)
+                            .setStepNumber(2);
+
+                        entityManager.persist(step1);
+                        entityManager.persist(step2);
+                        job.addStep(step1);
+                        job.addStep(step2);
 
                         return job;
                     }
@@ -69,19 +78,8 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
             }
         };
 
-        MaintenanceStepRunnerFactory stepRunnerFactory = new MaintenanceStepRunnerFactory() {
-            @Override
-            public MaintenanceStepRunner newStepRunner(MaintenanceStep step) {
-                return new FakeStepRunner() {
-                    @Override
-                    public void execute(MaintenanceStep maintenanceStep) throws StepFailureException {
-                        stepExecuted.set(true);
-                    }
-                };
-            }
-        };
-
-        maintenanceManager.init(calculatorLookup, stepRunnerFactory);
+        maintenanceManager.init(calculatorLookup, new TestStepRunnerFactory(
+            new FakeStepRunner(step1Executed, step1Name, 1), new FakeStepRunner(step2Executed, step2Name, 2)));
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -98,9 +96,82 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
             @Override
             public void execute() throws Exception {
                 assertEquals("The job queue should be empty", 0, maintenanceManager.loadQueue().size());
-                assertTrue(stepName + " was not executed", stepExecuted.get());
+                assertTrue(step1Name + " was not executed", step1Executed.get());
+                assertTrue(step2Executed + " was not executed", step2Executed.get());
             }
         }, "Failed to verify whether the test deploy job was run");
+    }
+
+    @Test
+    public void runMaintenanceWhenQueueHasMultipleJobs() throws Exception {
+        final AtomicBoolean job1Step1Executed = new AtomicBoolean();
+        final AtomicBoolean job1Step2Executed = new AtomicBoolean();
+        final AtomicBoolean job2Step1Executed = new AtomicBoolean();
+        final AtomicBoolean job2Step2Executed = new AtomicBoolean();
+        final AtomicInteger jobCount = new AtomicInteger(1);
+
+        CalculatorLookup calculatorLookup = new CalculatorLookup() {
+            @Override
+            public StepCalculator lookup(MaintenanceStep.JobType jobType) {
+                return new TestStepCalculator() {
+                    @Override
+                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job, List<StorageNode> cluster) {
+                        MaintenanceStep step1 = new MaintenanceStep()
+                            .setJobNumber(job.getJobNumber())
+                            .setJobType(job.getJobType())
+                            .setName("Job " + jobCount.get() + " Step 1")
+                            .setDescription("Job " + jobCount.get() + " Step 1")
+                            .setStepNumber(1);
+                        MaintenanceStep step2 = new MaintenanceStep()
+                            .setJobNumber(job.getJobNumber())
+                            .setJobType(job.getJobType())
+                            .setName("Job " + jobCount.get() + " Step 2")
+                            .setDescription("Job " + jobCount.get() + " Step 2")
+                            .setStepNumber(2);
+                        jobCount.incrementAndGet();
+                        entityManager.persist(step1);
+                        entityManager.persist(step2);
+                        job.addStep(step1);
+                        job.addStep(step2);
+
+                        return job;
+                    }
+                };
+            }
+        };
+
+        maintenanceManager.init(calculatorLookup, new TestStepRunnerFactory(
+            new FakeStepRunner(job1Step1Executed, "Job 1 Step 1", 1),
+            new FakeStepRunner(job1Step2Executed, "Job 1 Step 2", 2),
+            new FakeStepRunner(job2Step1Executed, "Job 2 Step 1", 1),
+            new FakeStepRunner(job2Step2Executed, "Job 2 Step 2", 2)
+        ));
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                StorageMaintenanceJob job1 = new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY, "test deploy 1",
+                    new Configuration());
+                maintenanceManager.scheduleMaintenance(job1);
+
+                StorageMaintenanceJob job2 = new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY, "test deploy 2",
+                    new Configuration());
+                maintenanceManager.scheduleMaintenance(job2);
+            }
+        }, "Failed to create test deploy job");
+
+        maintenanceManager.execute();
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                assertEquals("The job queue should be empty", 0, maintenanceManager.loadQueue().size());
+                assertTrue("Job 1 Step 1 was not executed", job1Step1Executed.get());
+                assertTrue("Job 1 Step 2 was not executed", job1Step2Executed.get());
+                assertTrue("Job 2 Step 1 was not executed", job2Step1Executed.get());
+                assertTrue("Job 2 Step 2 was not executed", job2Step2Executed.get());
+            }
+        }, "Failed to verify whether or not jobs were run");
     }
 
     private void executeInTransaction(TransactionCallback callback, String errorMsg) {

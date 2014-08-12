@@ -162,7 +162,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test-scheduler.properties");
         testClassesJar.addAsResource("cassandra-test.properties");
         testClassesJar
-            .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v1.xml");
+            .addAsResource(
+                "org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v1.xml");
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v2.xml");
         testClassesJar.addAsResource("org/rhq/enterprise/server/discovery/DiscoveryBossBeanTest.xml");
@@ -224,7 +225,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("org/rhq/enterprise/server/resource/metadata/PluginManagerBeanTest/plugin_3.xml");
 
         testClassesJar
-            .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/child1_plugin_v1.xml");
+            .addAsResource(
+                "org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/child1_plugin_v1.xml");
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/child2_plugin_v1.xml");
         testClassesJar
@@ -330,15 +332,26 @@ public abstract class AbstractEJB3Test extends Arquillian {
         MavenResolverSystem earResolver = Resolvers.use(MavenResolverSystem.class);
         // this must be named rhq.ear because the "rhq" portion is used in the jndi names
         earResolver.offline();
+
+        JavaArchive serverJar = earResolver.resolve("org.rhq:rhq-enterprise-server:ejb:" + projectVersion)
+            .withoutTransitivity().asSingle(JavaArchive.class);
+
         EnterpriseArchive testEar = ShrinkWrap.create(EnterpriseArchive.class, "rhq.ear");
         EnterpriseArchive rhqEar = earResolver.resolve("org.rhq:rhq-enterprise-server-ear:ear:" + projectVersion)
             .withoutTransitivity().asSingle(EnterpriseArchive.class);
+
         // merge rhq.ear into testEar but include only the EJB jars and the supporting libraries. Note that we
         // don't include the services sar because tests are responsible for prepare/unprepare of all required services,
         // we don't want the production services performing any unexpected work.
         testEar = testEar.merge(rhqEar, Filters.include("/lib.*|/rhq.*ejb3\\.jar.*|/rhq-server.jar.*"));
         // remove startup beans and shutdown listeners, we don't want this to be a full server deployment. The tests
         // start/stop what they need, typically with test services or mocks.
+
+        testEar.delete(ArchivePaths.create("/rhq-server.jar"));
+        JavaArchive testServerJar = ShrinkWrap.create(JavaArchive.class, "rhq-server.jar");
+        testServerJar.merge(serverJar);
+        testEar.addAsModule(testServerJar);
+
         testEar.delete(ArchivePaths
             .create("/rhq-server.jar/org/rhq/enterprise/server/core/StartupBean.class"));
         testEar.delete(ArchivePaths
@@ -412,8 +425,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         //System.out.println("** The Deployment EAR: " + testEar.toString(true) + "\n");
 
         // Save the test EAR to a zip file for inspection (set file explicitly)
-        //String tmpDir = System.getProperty("java.io.tmpdir");
-        //exportZip(testEar, new File(tmpDir, "test.ear"));
+//        String tmpDir = System.getProperty("java.io.tmpdir");
+//        exportZip(testEar, new File(tmpDir, "test.ear"));
 
         return testEar;
     }

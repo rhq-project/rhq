@@ -32,6 +32,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -255,7 +256,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                 col.put(new PropertySimple("columnLength", columns.getInt("COLUMN_SIZE")));
                 col.put(new PropertySimple("columnPrecision", columns.getInt("DECIMAL_DIGITS")));
                 col.put(new PropertySimple("columnDefault", columns.getString("COLUMN_DEF")));
-                col.put(new PropertySimple("columnNullable", columns.getBoolean("IS_NULLABLE")));
+                col.put(new PropertySimple("columnNullable", Boolean.valueOf(isNullableToBoolean(columns.getInt("NULLABLE")))));
 
                 columnList.add(col);
             }
@@ -395,7 +396,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
             columnLength = rs.getInt("COLUMN_SIZE");
             columnPrecision = rs.getInt("DECIMAL_DIGITS");
             columnDefault = rs.getString("COLUMN_DEF");
-            columnNullable = rs.getBoolean("IS_NULLABLE");
+            columnNullable = isNullableToBoolean(rs.getInt("NULLABLE"));
         }
 
         public ColumnDefinition(PropertyMap column) {
@@ -449,5 +450,9 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
 
     private static String getQuoted(String s) {
         return "\"" + s + "\"";
+    }
+
+    private static boolean isNullableToBoolean(int isNullable) {
+        return isNullable == ResultSetMetaData.columnNoNulls ? false : true;
     }
 }

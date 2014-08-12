@@ -140,4 +140,9 @@ class UpdateFile implements Comparable<UpdateFile> {
     public int compareTo(UpdateFile o) {
         return this.getFile().compareTo(o.getFile());
     }
+
+    @Override
+    public String toString() {
+        return this.getFile().toString();
+    }
 }

@@ -139,7 +139,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
             connection = context.getParentResourceComponent().getPooledConnectionProvider().getPooledConnection();
             statement = connection.prepareStatement(TABLE_EXISTS_QUERY);
             statement.setString(1, getSchemaNameFromContext(context));
-            statement.setString(2, getTableNameFromContext(context));
+            statement.setString(2, getTableNameFromContext(context)); // Do not use quoted name here
             resultSet = statement.executeQuery();
             return resultSet.next();
         } finally {
@@ -210,7 +210,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
     }
 
     private String getCountQuery(String schemaName, String tableName) {
-        return "select count(1) from " + getFullyQualifiedTableName(schemaName, tableName);
+        return "select count(1) from " + getFullyQualifiedTableName(schemaName, getQuoted(tableName));
     }
 
     private String getFullyQualifiedTableName(String schemaName, String tableName) {
@@ -224,7 +224,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
             connection = getPooledConnectionProvider().getPooledConnection();
             statement = connection.prepareStatement("drop table "
                 + getFullyQualifiedTableName(getSchemaNameFromContext(resourceContext),
-                    getTableNameFromContext(resourceContext)));
+                    getQuoted(getTableNameFromContext(resourceContext))));
             statement.executeUpdate();
         } finally {
             safeClose(connection, statement);
@@ -294,7 +294,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                 ColumnDefinition newDef = new ColumnDefinition(colDef);
                 if (existingDef == null) {
                     // This is a new column to add
-                    String sql = "ALTER TABLE " + getTableNameFromContext(resourceContext) + " ADD COLUMN "
+                    String sql = "ALTER TABLE " + getQuoted(getTableNameFromContext(resourceContext)) + " ADD COLUMN "
                         + newDef.getColumnSql();
                     if (DatabaseQueryUtility.executeUpdate(this, sql) != 0) {
                         throw new RuntimeException("Couldn't add column using SQL: " + sql);
@@ -307,8 +307,8 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                         .equals(newDef.columnPrecision)) || (existingDef.columnPrecision == null && existingDef.columnPrecision != null));
                     if (!existingDef.columnType.equals(newDef.columnType) || columnLengthChanged
                         || columnPrecisionChanged) {
-                        String sql = "ALTER TABLE " + getTableNameFromContext(resourceContext) + " ALTER COLUMN "
-                            + newDef.columnName + " TYPE " + newDef.columnType;
+                        String sql = "ALTER TABLE " + getQuoted(getTableNameFromContext(resourceContext)) + " ALTER COLUMN "
+                            + getQuoted(newDef.columnName) + " TYPE " + newDef.columnType;
                         if (newDef.columnLength != null) {
                             sql += " ( " + newDef.columnLength;
                             // TODO: Implement a more robust check to figure out if this column has a numeric type.
@@ -326,8 +326,8 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                     boolean columnDefaultChanged = ((existingDef.columnDefault != null && !existingDef.columnDefault
                         .equals(newDef.columnDefault)) || (existingDef.columnDefault == null && newDef.columnDefault != null));
                     if (columnDefaultChanged) {
-                        String sql = "ALTER TABLE " + getTableNameFromContext(resourceContext) + " ALTER COLUMN "
-                            + newDef.columnName;
+                        String sql = "ALTER TABLE " + getQuoted(getTableNameFromContext(resourceContext)) + " ALTER COLUMN "
+                            + getQuoted(newDef.columnName);
                         if (newDef.columnDefault == null) {
                             sql += " DROP DEFAULT";
                         } else {
@@ -343,8 +343,8 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
 
             // Cols left in existdef map have been removed and need to be dropped
             for (ColumnDefinition def : existingDefs.values()) {
-                DatabaseQueryUtility.executeUpdate(this, "ALTER TABLE " + getTableNameFromContext(resourceContext)
-                    + " DROP COLUMN " + def.columnName);
+                DatabaseQueryUtility.executeUpdate(this, "ALTER TABLE " + getQuoted(getTableNameFromContext(resourceContext))
+                    + " DROP COLUMN " + getQuoted(def.columnName));
             }
 
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
@@ -372,7 +372,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                 connection = getPooledConnectionProvider().getPooledConnection();
                 statement = connection.prepareStatement("vacuum "
                     + getFullyQualifiedTableName(getSchemaNameFromContext(resourceContext),
-                        getTableNameFromContext(resourceContext)));
+                        getQuoted(getTableNameFromContext(resourceContext))));
                 statement.executeUpdate();
             } finally {
                 safeClose(connection, statement);
@@ -413,7 +413,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
 
         public String getColumnSql() {
             StringBuilder buf = new StringBuilder();
-            buf.append(columnName).append(" ").append(columnType);
+            buf.append(getQuoted(columnName)).append(" ").append(columnType);
             if(!isArrayColumnType(columnType)) {
                 if (columnLength != null) {
                     buf.append("(").append(columnLength).append(")");
@@ -445,5 +445,9 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
 
     private static String getTableNameFromContext(ResourceContext<PostgresDatabaseComponent> resourceContext) {
         return resourceContext.getPluginConfiguration().getSimpleValue("tableName");
+    }
+
+    private static String getQuoted(String s) {
+        return "\"" + s + "\"";
     }
 }

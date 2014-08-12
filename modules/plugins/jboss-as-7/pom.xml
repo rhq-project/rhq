@@ -110,6 +110,13 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-platform-plugin</artifactId>
+      <version>${rhq-platform-plugin.version}</version>
+      <scope>test</scope>
+    </dependency>
+
     <!-- For native subsystem -->
     <dependency>
         <groupId>org.hyperic</groupId>

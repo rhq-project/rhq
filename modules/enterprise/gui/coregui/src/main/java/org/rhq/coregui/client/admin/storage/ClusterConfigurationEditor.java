@@ -35,11 +35,15 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.IntegerItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IsIntegerValidator;
 import com.smartgwt.client.widgets.form.validator.MatchesFieldValidator;
 import com.smartgwt.client.widgets.form.validator.Validator;
@@ -166,7 +170,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             + MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings_desc() + "</div>");
 
         List<FormItem> items = buildHeaderItems();
-        IsIntegerValidator validator = new IsIntegerValidator();
+        Validator validator = new IsIntegerValidator();
 
         // cql port field
         FormItemBuilder builder = new FormItemBuilder();
@@ -255,6 +259,9 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         items.addAll(passwordVerifyItems);
         credentialsForm.setFields(items.toArray(new FormItem[items.size()]));
 
+        validator = new IntegerRangeValidator();
+        ((IntegerRangeValidator) validator).setMin(0);
+
         regularSnapshotsForm = buildForm("<div align='left' class='storageConfig'><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement() + "</div><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_desc() + "</div>");
@@ -296,8 +303,18 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_count_title())
             .withValue(String.valueOf(settings.getRegularSnapshots().getCount()))
             .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_count_desc())
-            .withValidators(validator).build();
+            .withReadOnlySetTo("Keep All".equals(settings.getRegularSnapshots().getRetention()))
+            .withValidators(validator).build(new IntegerItem());
         items.addAll(snapshotsCountFormItems);
+
+        final FormItem snapshotsCountNumber = snapshotsCountFormItems.get(1);
+
+        snapshotsRetentionSelect.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                snapshotsCountNumber.setDisabled("Keep All".equals(event.getValue()));
+            }
+        });
 
         List<FormItem> snapshotsDeletionFormItems = new FormItemBuilder().withName(FIELD_SNAPSHOTS_DELETION)
             .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_deletion_title())
@@ -313,8 +330,17 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             .withValue(settings.getRegularSnapshots().getLocation())
             .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_location_desc())
             .withRequiredSetTo(false)
+            .withReadOnlySetTo("Delete".equals(settings.getRegularSnapshots().getDeletion()))
             .build();
         items.addAll(snapshotsLocationFormItems);
+        final FormItem snapshotsLocationText = snapshotsLocationFormItems.get(1);
+
+        snapshotsDeletionSelect.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                snapshotsLocationText.setDisabled("Delete".equals(event.getValue()));
+            }
+        });
 
         regularSnapshotsForm.setFields(items.toArray(new FormItem[items.size()]));
 

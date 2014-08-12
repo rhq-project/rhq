@@ -2434,6 +2434,11 @@
 
             <schemaSpec version="2.156">
                 <schema-directSQL ignoreError="true">
+                    <statement desc="Repair RHQ_MEASUREMENT_BLINE by removing duplicates prior to creating the unique index.">
+                        DELETE FROM rhq_measurement_bline WHERE (id, schedule_id) NOT IN
+                           ( SELECT id, schedule_id FROM
+                               ( SELECT MAX(id) id, schedule_id FROM rhq_measurement_bline GROUP BY schedule_id) tokeep)
+                    </statement>
                     <statement desc="Dropping non-unique index RHQ_MEAS_BASELINE_SID_IDX">
                         DROP INDEX RHQ_MEAS_BASELINE_SID_IDX
                     </statement>

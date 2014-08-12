@@ -20,6 +20,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunnerFactory;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
 import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
@@ -51,20 +52,16 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     @EJB
     private StorageClusterSettingsManagerLocal clusterSettingsManager;
 
-    private CalculatorLookup calculatorLookup;
+    private CalculatorLookup calculatorLookup = new DefaultCalculatorLookup();
+
+    private MaintenanceStepRunnerFactory stepRunnerFactory;
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void init() {
-        try {
-            // This is a test hook to make it easier to test fake jobs
-            String lookClassName = System.getProperty("rhq.storage.maintenance.calculator.lookup",
-                "org.rhq.enterprise.server.storage.DefaultCalculatorLookup");
-            Class clazz = Class.forName(lookClassName);
-            calculatorLookup = (CalculatorLookup) clazz.newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException("Initialization failed", e);
-        }
+    public void init(CalculatorLookup calculatorLookup, MaintenanceStepRunnerFactory stepRunnerFactory) {
+        log.warn("This method is for testing only. It should not be used in production code");
+        this.calculatorLookup = calculatorLookup;
+        this.stepRunnerFactory = stepRunnerFactory;
     }
 
     @Override
@@ -80,8 +77,6 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
 
     @Override
     public void rescheduleJob(int jobNumber) {
-//        List<MaintenanceStep> steps = entityManager.createNamedQuery(MaintenanceStep.FIND_BY_JOB_NUM,
-//            MaintenanceStep.class).setParameter("jobNumber", jobNumber).getResultList();
         StorageMaintenanceJob job = loadJob(jobNumber);
         MaintenanceStep oldBaseStep = job.getBaseStep();
         MaintenanceStep newBaseStep = new MaintenanceStep()
@@ -185,7 +180,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     private void executeJob(StorageMaintenanceJob job) {
         log.info("Executing " + job);
         for (MaintenanceStep step : job) {
-            MaintenanceStepRunner stepRunner = getStepRunner(step);
+            MaintenanceStepRunner stepRunner = stepRunnerFactory.newStepRunner(step);
             boolean succeeded = executeStep(maintenanceManager.reloadStep(step.getId()), stepRunner);
             if (succeeded) {
                 maintenanceManager.deleteStep(step.getId());
@@ -224,9 +219,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     private MaintenanceStepRunner getStepRunner(MaintenanceStep step) {
         try {
             Class clazz = Class.forName(step.getName());
-            MaintenanceStepRunner runner = (MaintenanceStepRunner) clazz.newInstance();
-
-            return runner;
+            return (MaintenanceStepRunner) clazz.newInstance();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         } catch (InstantiationException e) {

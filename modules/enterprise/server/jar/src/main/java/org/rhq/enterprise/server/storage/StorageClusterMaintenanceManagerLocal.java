@@ -5,6 +5,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.storage.MaintenanceStep;
+import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunnerFactory;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 
 /**
@@ -13,7 +14,13 @@ import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 @Local
 public interface StorageClusterMaintenanceManagerLocal {
 
-    void init();
+    /**
+     * <strong>Note:</strong> This only here for testing.
+     *
+     * @param calculatorLookup The lookup class to use during tests
+     * @param stepRunnerFactory The step runner factory to use during tests
+     */
+    void init(CalculatorLookup calculatorLookup, MaintenanceStepRunnerFactory stepRunnerFactory);
 
     void scheduleMaintenance(StorageMaintenanceJob job);
 

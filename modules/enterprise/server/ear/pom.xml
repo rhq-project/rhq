@@ -390,7 +390,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>rhq-cassandra-plugin</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${rhq-cassandra-plugin.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>

@@ -10,6 +10,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-cassandra-plugin</artifactId>
+  <version>4.9.0.JON320GA</version>
   <name>RHQ Cassandra Plugin</name>
   <description>An RHQ plugin for monitoring and managing a Cassandra cluster</description>
 
@@ -96,7 +97,7 @@
                      <fileset dir="${settings.localRepository}/">
                         <include name="org/rhq/rhq-jmx-plugin/${rhq-jmx-plugin.version}/rhq-jmx-plugin-${rhq-jmx-plugin.version}.jar" />
                      </fileset>
-                     <fileset dir="${project.build.directory}" includes="${project.artifactId}-${project.version}.jar" />
+                     <fileset dir="${project.build.directory}" includes="${project.artifactId}-${rhq-cassandra-plugin.version}.jar" />
                   </copy>
 
                   <mkdir dir="target/testsetup/lib" />
@@ -150,7 +151,7 @@
                     </property>
                     <property>
                        <name>project.version</name>
-                       <value>${project.version}</value>
+                       <value>${rhq-cassandra-plugin.version}</value>
                     </property>
                  </systemProperties>
               </configuration>
@@ -181,7 +182,7 @@
          <dependency>
            <groupId>${rhq.groupId}</groupId>
            <artifactId>rhq-core-plugin-test-api</artifactId>
-           <version>${project.version}</version>
+           <version>${rhq.pom.version}</version>
            <type>pom</type>
            <scope>test</scope>
         </dependency>
@@ -189,7 +190,7 @@
         <dependency>
            <groupId>${rhq.groupId}</groupId>
            <artifactId>rhq-core-plugin-test-util</artifactId>
-           <version>${project.version}</version>
+           <version>${rhq.pom.version}</version>
            <scope>test</scope>
         </dependency>
        </dependencies>

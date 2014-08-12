@@ -9,8 +9,6 @@ import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -23,7 +21,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
-import org.rhq.enterprise.server.storage.maintenance.job.DeployCalculator;
 import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
 import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
 import org.rhq.enterprise.server.storage.maintenance.step.StepFailureException;
@@ -51,6 +48,25 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     @EJB
     private SubjectManagerLocal subjectManager;
 
+    @EJB
+    private StorageClusterSettingsManagerLocal clusterSettingsManager;
+
+    private CalculatorLookup calculatorLookup;
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void init() {
+        try {
+            // This is a test hook to make it easier to test fake jobs
+            String lookClassName = System.getProperty("rhq.storage.maintenance.calculator.lookup",
+                "org.rhq.enterprise.server.storage.DefaultCalculatorLookup");
+            Class clazz = Class.forName(lookClassName);
+            calculatorLookup = (CalculatorLookup) clazz.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Initialization failed", e);
+        }
+    }
+
     @Override
     public void scheduleMaintenance(StorageMaintenanceJob job) {
         MaintenanceStep baseStep = job.getBaseStep();
@@ -64,9 +80,9 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
 
     @Override
     public void rescheduleJob(int jobNumber) {
-        List<MaintenanceStep> steps = entityManager.createNamedQuery(MaintenanceStep.FIND_BY_JOB_NUM,
-            MaintenanceStep.class).setParameter("jobNumber", jobNumber).getResultList();
-        StorageMaintenanceJob job = new StorageMaintenanceJob(steps);
+//        List<MaintenanceStep> steps = entityManager.createNamedQuery(MaintenanceStep.FIND_BY_JOB_NUM,
+//            MaintenanceStep.class).setParameter("jobNumber", jobNumber).getResultList();
+        StorageMaintenanceJob job = loadJob(jobNumber);
         MaintenanceStep oldBaseStep = job.getBaseStep();
         MaintenanceStep newBaseStep = new MaintenanceStep()
             .setName(oldBaseStep.getName())
@@ -82,6 +98,12 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
             step.setJobNumber(newBaseStep.getJobNumber());
             entityManager.merge(step);
         }
+    }
+
+    private StorageMaintenanceJob loadJob(int jobNumber) {
+        List<MaintenanceStep> steps = entityManager.createNamedQuery(MaintenanceStep.FIND_BY_JOB_NUM,
+            MaintenanceStep.class).setParameter("jobNumber", jobNumber).getResultList();
+        return new StorageMaintenanceJob(steps);
     }
 
     @Override
@@ -111,21 +133,19 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     }
 
     private StorageMaintenanceJob refreshJob(StorageMaintenanceJob job) {
-        StepCalculator stepCalculator = getStepCalculator(job.getJobType());
-        return stepCalculator.calculateSteps(job.getJobNumber(), storageNodeManager.getClusterNodes());
+        StepCalculator stepCalculator = calculatorLookup.lookup(job.getJobType());
+        return stepCalculator.calculateSteps(job, storageNodeManager.getClusterNodes());
     }
 
-    private StepCalculator getStepCalculator(MaintenanceStep.JobType jobType) {
-        try {
-            if (jobType == MaintenanceStep.JobType.DEPLOY) {
-                return (StepCalculator) new InitialContext().lookup(
-                    "java:global/rhq/rhq-server/" + DeployCalculator.class.getSimpleName());
-            }
-            throw new UnsupportedOperationException("There is no support yet for calculating steps for jobs of type " +
-                jobType);
-        } catch (NamingException e) {
-            throw new RuntimeException("Failed to look up step calculator", e);
-        }
+    @Override
+    public StorageMaintenanceJob refreshJob(int jobNumber) {
+        StorageMaintenanceJob job = loadJob(jobNumber);
+        StepCalculator stepCalculator = calculatorLookup.lookup(job.getJobType());
+        stepCalculator.setSubjectManager(subjectManager);
+        stepCalculator.setEntityManager(entityManager);
+        stepCalculator.setStorageClusterSettingsManager(clusterSettingsManager);
+
+        return stepCalculator.calculateSteps(job, storageNodeManager.getClusterNodes());
     }
 
     @Override
@@ -158,7 +178,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
             return;
         }
         for (StorageMaintenanceJob job : queue) {
-            executeJob(refreshJob(job));
+            executeJob(maintenanceManager.refreshJob(job.getJobNumber()));
         }
     }
 

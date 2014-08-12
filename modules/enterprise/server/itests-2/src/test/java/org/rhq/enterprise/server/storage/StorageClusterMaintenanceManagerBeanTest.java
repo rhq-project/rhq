@@ -8,6 +8,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.storage.MaintenanceStep;
+import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 
@@ -30,8 +31,37 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test
-    public void executeWhenJobQueueIsEmpty() {
+    public void runMaintenanceWhenQueueIsEmpty() {
         maintenanceManager.execute();
+    }
+
+    @Test
+    public void runMaintenanceWhenQueueHasOneJob() throws Exception {
+        System.setProperty("rhq.storage.maintenance.calculator.lookup", TestCalculatorLookup.class.getName());
+        maintenanceManager.init();
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                StorageMaintenanceJob job = new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY, "test deply",
+                    new Configuration());
+                maintenanceManager.scheduleMaintenance(job);
+//                em.persist(new MaintenanceStep()
+//                    .setJobType(MaintenanceStep.JobType.DEPLOY)
+//                    .setName("BASE_STEP")
+//                    .setStepNumber(0)
+//                    .setDescription("Deploy 127.0.0.2"));
+            }
+        }, "Failed to create test deploy job");
+
+        maintenanceManager.execute();
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                assertEquals("The job queue should be empty", 0, maintenanceManager.loadQueue().size());
+            }
+        }, "Failed to verify whether the test deploy job was run");
     }
 
     private void executeInTransaction(TransactionCallback callback, String errorMsg) {

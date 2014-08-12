@@ -13,6 +13,8 @@ import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 @Local
 public interface StorageClusterMaintenanceManagerLocal {
 
+    void init();
+
     void scheduleMaintenance(StorageMaintenanceJob job);
 
     void rescheduleJob(int jobNumber);
@@ -22,6 +24,8 @@ public interface StorageClusterMaintenanceManagerLocal {
     void deleteStep(int stepId);
 
     void execute();
+
+    StorageMaintenanceJob refreshJob(int jobNumber);
 
     MaintenanceStep reloadStep(int stepId);
 

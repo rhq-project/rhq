@@ -4,18 +4,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.ejb.EJB;
-import javax.ejb.LocalBean;
-import javax.ejb.Singleton;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.storage.MaintenanceStep;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
@@ -25,22 +20,36 @@ import org.rhq.enterprise.server.storage.maintenance.step.BootstrapNode;
 /**
  * @author John Sanda
  */
-@Singleton
-@LocalBean
+//@Singleton
+//@LocalBean
 public class DeployCalculator implements StepCalculator {
 
-    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+//    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @EJB
+//    @EJB
     private StorageClusterSettingsManagerLocal clusterSettingsManager;
 
-    @EJB
+//    @EJB
     private SubjectManagerLocal subjectManager;
 
     @Override
-    public StorageMaintenanceJob calculateSteps(int jobNumber, List<StorageNode> cluster) {
-        StorageMaintenanceJob job = loadJob(jobNumber);
+    public void setSubjectManager(SubjectManagerLocal subjectManager) {
+        this.subjectManager = subjectManager;
+    }
+
+    @Override
+    public void setStorageClusterSettingsManager(StorageClusterSettingsManagerLocal clusterSettingsManager) {
+        this.clusterSettingsManager = clusterSettingsManager;
+    }
+
+    @Override
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
+    @Override
+    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job, List<StorageNode> cluster) {
         Set<String> clusterSnapshot = job.getClusterSnapshot();
         if (!clusterSnapshot.isEmpty()) {
             Set<String> newClusterSnapshot = createSnapshot(cluster);
@@ -96,12 +105,6 @@ public class DeployCalculator implements StepCalculator {
         job.addStep(bootstrapStep);
 
         return job;
-    }
-
-    private StorageMaintenanceJob loadJob(int jobNumber) {
-        List<MaintenanceStep> steps = entityManager.createNamedQuery(MaintenanceStep.FIND_BY_JOB_NUM,
-            MaintenanceStep.class).setParameter("jobNumber", jobNumber).getResultList();
-        return new StorageMaintenanceJob(steps);
     }
 
     private Set<String> createSnapshot(List<StorageNode> cluster) {

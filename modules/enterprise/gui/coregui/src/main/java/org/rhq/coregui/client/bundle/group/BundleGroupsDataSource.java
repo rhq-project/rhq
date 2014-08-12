@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -101,7 +101,7 @@ public class BundleGroupsDataSource extends RPCDataSource<BundleGroup, BundleGro
 
             public void onSuccess(PageList<BundleGroup> result) {
                 response.setData(buildRecords(result));
-                response.setTotalRows(result.getTotalSize());
+                setPagingInfo(response, result);
                 processResponse(request.getRequestId(), response);
             }
         });

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010-2011 Red Hat, Inc.
+ * Copyright (C) 2010-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -282,11 +282,10 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     protected void dataRetrieved(final PageList<Alert> result, final DSResponse response, final DSRequest request) {
         switch (entityContext.type) {
 
-        // no need to disambiguate, the alerts are for a singe resource
+        // no need to disambiguate, the alerts are for a single resource
         case Resource:
             response.setData(buildRecords(result));
-            // for paging to work we have to specify size of full result set
-            response.setTotalRows(getTotalRows(result, response, request));
+            setPagingInfo(response, result);
             processResponse(request.getRequestId(), response);
             break;
 
@@ -321,7 +320,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
                     }
                     response.setData(records);
                     // for paging to work we have to specify size of full result set
-                    response.setTotalRows(getTotalRows(result, response, request));
+                    setPagingInfo(response, result);
                     processResponse(request.getRequestId(), response);
                 }
             });

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2011 Red Hat, Inc.
+ * Copyright (C) 2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -207,9 +207,8 @@ public class DriftDefinitionTemplateDataSource extends
      */
     protected void dataRetrieved(final PageList<DriftDefinitionTemplate> result, final DSResponse response,
         final DSRequest request) {
-
         response.setData(buildRecords(result));
-        response.setTotalRows(result.getTotalSize());
+        setPagingInfo(response, result);
         processResponse(request.getRequestId(), response);
     }
 

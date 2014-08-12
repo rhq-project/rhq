@@ -372,7 +372,7 @@
     <rhq-apache-plugin.version>${rhq.pom.version}</rhq-apache-plugin.version>
     <rhq-augeas-plugin.version>${rhq.pom.version}</rhq-augeas-plugin.version>
     <rhq-byteman-plugin.version>${rhq.pom.version}</rhq-byteman-plugin.version>
-    <rhq-cassandra-plugin.version>${rhq.pom.version}</rhq-cassandra-plugin.version>
+    <rhq-cassandra-plugin.version>${rhq.pom.version}-redhat-1</rhq-cassandra-plugin.version>
     <rhq-cobbler-plugin.version>${rhq.pom.version}</rhq-cobbler-plugin.version>
     <rhq-cron-plugin.version>${rhq.pom.version}</rhq-cron-plugin.version>
     <rhq-database-plugin.version>${rhq.pom.version}-redhat-1</rhq-database-plugin.version>

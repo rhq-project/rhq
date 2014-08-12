@@ -207,7 +207,7 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
         String tablespace = configuration.getSimpleValue("tablespace", null);
         PropertyList columnList = configuration.getList("columns");
 
-        buf.append("CREATE TABLE ").append(tableName).append("(\n");
+        buf.append("CREATE TABLE ").append("\"").append(tableName).append("\" (\n");
 
         boolean first = true;
         for (Property c : columnList.getList()) {

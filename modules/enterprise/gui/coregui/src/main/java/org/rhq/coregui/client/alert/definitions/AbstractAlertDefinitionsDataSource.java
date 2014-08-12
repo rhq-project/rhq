@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -199,6 +199,7 @@ public abstract class AbstractAlertDefinitionsDataSource extends
                 }
 
                 public void onSuccess(PageList<AlertDefinition> result) {
+                    setPagingInfo(response, result);
                     dataRetrieved(result, response, request);
                 }
             });

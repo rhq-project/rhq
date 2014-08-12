@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -68,7 +68,7 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
 
                 public void onSuccess(PageList<BundleWithLatestVersionComposite> result) {
                     response.setData(buildRecords(result));
-                    response.setTotalRows(result.getTotalSize());
+                    setPagingInfo(response, result);
                     processResponse(request.getRequestId(), response);
                 }
             });

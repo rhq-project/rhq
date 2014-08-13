@@ -48,7 +48,6 @@ import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystem;
 import org.jboss.shrinkwrap.resolver.api.maven.ScopeType;
-import org.jboss.shrinkwrap.resolver.api.maven.strategy.AcceptScopesStrategy;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
@@ -127,8 +126,8 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         // Pull in any required plugins from our pom's dependencies.
 
         Collection<RhqAgentPluginArchive> requiredPlugins = Arrays.asList(mavenDependencyResolver
-            .loadPomFromFile("pom.xml").importRuntimeAndTestDependencies(new AcceptScopesStrategy(ScopeType.PROVIDED))
-            .as(RhqAgentPluginArchive.class));
+            .loadPomFromFile("pom.xml").importDependencies(ScopeType.TEST, ScopeType.PROVIDED).resolve()
+            .withTransitivity().as(RhqAgentPluginArchive.class));
 
         return ShrinkWrap.create(ZipImporter.class, pluginJarFile.getName()).importFrom(pluginJarFile)
             .as(RhqAgentPluginArchive.class).withRequiredPluginsFrom(requiredPlugins);

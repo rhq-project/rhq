@@ -14,7 +14,6 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.ScopeType;
-import org.jboss.shrinkwrap.resolver.api.maven.strategy.AcceptScopesStrategy;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -43,8 +42,8 @@ public class RhqAgentPluginContainerTest extends Arquillian {
             .addClasses(TestDiscoveryComponent.class, TestResourceComponent.class)
             .setPluginDescriptor("test-dependent-rhq-plugin.xml")
             .withRequiredPluginsFrom(
-                Maven.resolver().loadPomFromFile("pom.xml")
-                    .importRuntimeAndTestDependencies(new AcceptScopesStrategy(ScopeType.TEST)).as(JavaArchive.class));
+                Maven.resolver().loadPomFromFile("pom.xml").importDependencies(ScopeType.TEST, ScopeType.RUNTIME)
+                    .resolve().withTransitivity().as(JavaArchive.class));
     }
 
     @Deployment(name = "manuallyDeployed", managed = false)

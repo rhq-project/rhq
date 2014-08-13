@@ -22,6 +22,15 @@ public interface StorageClusterMaintenanceManagerLocal {
      */
     void init(CalculatorLookup calculatorLookup, MaintenanceStepRunnerFactory stepRunnerFactory);
 
+    /**
+     * Adds a job to the maintenance queue for later execution. Clients should use this method to schedule
+     * maintenance such as deploying a new node into the cluster or changing a node's endpoint address. This method
+     * should only be used for scheduling new jobs. As such all of the
+     * {@link org.rhq.core.domain.storage.MaintenanceStep steps} in the job should be transient, i.e., not yet
+     * persisted in the database.
+     *
+     * @param job The {@link org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob job} to schedule
+     */
     void scheduleMaintenance(StorageMaintenanceJob job);
 
     void rescheduleJob(int jobNumber);

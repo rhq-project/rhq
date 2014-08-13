@@ -35,7 +35,7 @@
     <!-- cassandra connection properties -->
     <rhq.storage.username>rhqadmin</rhq.storage.username>
     <rhq.storage.password>1eeb2f255e832171df8592078de921bc</rhq.storage.password>
-    <rhq.storage.nodes>127.0.0.1,127.0.0.2</rhq.storage.nodes>
+    <rhq.storage.nodes>127.0.0.1</rhq.storage.nodes>
     <rhq.storage.cql-port>9042</rhq.storage.cql-port>
   </properties>
 

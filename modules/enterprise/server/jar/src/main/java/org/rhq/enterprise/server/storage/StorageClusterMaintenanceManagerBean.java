@@ -67,6 +67,10 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void scheduleMaintenance(StorageMaintenanceJob job) {
+        // If multiple jobs are scheduled in the same transaction, it can lead to a
+        // constraint violation on the job number/step number index. I am not sure
+        // why that is, but that is why this method now requires a new transaction.
+
         MaintenanceStep baseStep = job.getBaseStep();
 
         log.info("Adding " + job + " to maintenance job queue");
@@ -215,19 +219,10 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         } catch (StepFailureException e) {
             log.info(step + " failed: " + e.getMessage());
             return false;
+        } catch (Exception e) {
+            log.warn(step + " failed with an unexpected exception", e);
+            return false;
         }
     }
 
-    private MaintenanceStepRunner getStepRunner(MaintenanceStep step) {
-        try {
-            Class clazz = Class.forName(step.getName());
-            return (MaintenanceStepRunner) clazz.newInstance();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

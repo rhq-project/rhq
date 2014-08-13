@@ -1,5 +1,8 @@
 package org.rhq.enterprise.server.storage;
 
+import static java.util.Arrays.asList;
+import static org.testng.Assert.assertNotEquals;
+
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,6 +18,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
+import org.rhq.enterprise.server.storage.maintenance.step.StepFailureStrategy;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 
@@ -158,7 +162,7 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
                     new Configuration());
                 maintenanceManager.scheduleMaintenance(job2);
             }
-        }, "Failed to create test deploy job");
+        }, "Failed to create jobs");
 
         maintenanceManager.execute();
 
@@ -170,6 +174,111 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
                 assertTrue("Job 1 Step 2 was not executed", job1Step2Executed.get());
                 assertTrue("Job 2 Step 1 was not executed", job2Step1Executed.get());
                 assertTrue("Job 2 Step 2 was not executed", job2Step2Executed.get());
+            }
+        }, "Failed to verify whether or not jobs were run");
+    }
+
+    @Test
+    public void jobFailsAndShouldBeAborted() throws Exception {
+        final AtomicInteger failedJobNumber = new AtomicInteger();
+
+        CalculatorLookup calculatorLookup = new CalculatorLookup() {
+            @Override
+            public StepCalculator lookup(MaintenanceStep.JobType jobType) {
+                return new TestStepCalculator() {
+                    @Override
+                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job, List<StorageNode> cluster) {
+                        List<MaintenanceStep> steps;
+                        if (job.getBaseStep().getName().equals("FailedJob")) {
+                            steps = asList(
+                                new MaintenanceStep()
+                                    .setJobNumber(job.getJobNumber())
+                                    .setJobType(job.getJobType())
+                                    .setName("FailedJobStep1")
+                                    .setDescription("FailedJobStep1")
+                                    .setStepNumber(1),
+                                new MaintenanceStep()
+                                    .setJobNumber(job.getJobNumber())
+                                    .setJobType(job.getJobType())
+                                    .setName("FailedJobStep2")
+                                    .setDescription("FailedJobStep2")
+                                    .setStepNumber(2),
+                                new MaintenanceStep()
+                                    .setJobNumber(job.getJobNumber())
+                                    .setJobType(job.getJobType())
+                                    .setName("FailedJobStep3")
+                                    .setDescription("FailedJobStep3")
+                                    .setStepNumber(3)
+                            );
+                        } else {
+                            steps = asList(
+                                new MaintenanceStep()
+                                    .setJobNumber(job.getJobNumber())
+                                    .setJobType(job.getJobType())
+                                    .setName("SuccessfulJobStep1")
+                                    .setDescription("SuccessfulJobStep1")
+                                    .setStepNumber(1),
+                                new MaintenanceStep()
+                                    .setJobNumber(job.getJobNumber())
+                                    .setJobType(job.getJobType())
+                                    .setName("SuccessfulJobStep2")
+                                    .setDescription("SuccessfulJobStep2")
+                                    .setStepNumber(2)
+                            );
+                        }
+                        for (MaintenanceStep step : steps) {
+                            entityManager.persist(step);
+                            job.addStep(step);
+                        }
+                        return job;
+                    }
+                };
+            }
+        };
+
+        maintenanceManager.init(calculatorLookup, new TestStepRunnerFactory(
+            new FakeStepRunner("FailedJobStep1", 1),
+            new FailedStepRunner("FailedJobStep2", 2, StepFailureStrategy.ABORT),
+            new FakeStepRunner("SuccessfulJobStep1", 1),
+            new FakeStepRunner("SuccessfulJobStep2", 2)
+        ));
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                StorageMaintenanceJob job1 = new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY, "FailedJob",
+                    new Configuration());
+                maintenanceManager.scheduleMaintenance(job1);
+
+                failedJobNumber.set(job1.getJobNumber());
+
+                StorageMaintenanceJob job2 = new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY, "SuccessfulJob",
+                    new Configuration());
+                maintenanceManager.scheduleMaintenance(job2);
+            }
+        }, "Failed to create jobs");
+
+        maintenanceManager.execute();
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                List<StorageMaintenanceJob> jobs = maintenanceManager.loadQueue();
+                assertEquals("There should only be one job left in the queue", 1, jobs.size());
+
+                StorageMaintenanceJob job = jobs.get(0);
+                assertEquals("The job name is wrong", "FailedJob", job.getJobName());
+                assertNotEquals(job.getJobNumber(), failedJobNumber.get(), "The job number should be different " +
+                        "since the job is added back to the maintenance queue");
+
+                List<MaintenanceStep> steps = job.getSteps();
+                assertEquals("Expected the failed job to have two remaining steps", 2, steps.size());
+
+                assertEquals("The step name for the first step is wrong", "FailedJobStep2", steps.get(0).getName());
+                assertEquals("The step number for the first step is wrong", 2, steps.get(0).getStepNumber());
+
+                assertEquals("The step name for the second step is wrong", "FailedJobStep3", steps.get(1).getName());
+                assertEquals("The step number for the second step is wrong", 3, steps.get(1).getStepNumber());
             }
         }, "Failed to verify whether or not jobs were run");
     }

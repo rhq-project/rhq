@@ -21,6 +21,11 @@ public class FakeStepRunner extends BaseStepRunner {
     public FakeStepRunner() {
     }
 
+    public FakeStepRunner(String stepName, int stepNumber) {
+        this.stepName = stepName;
+        this.stepNumber = stepNumber;
+    }
+
     public FakeStepRunner(AtomicBoolean executed) {
         this.executed = executed;
     }

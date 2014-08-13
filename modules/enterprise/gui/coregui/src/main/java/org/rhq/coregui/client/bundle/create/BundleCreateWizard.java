@@ -32,8 +32,9 @@ public class BundleCreateWizard extends AbstractBundleCreateWizard {
         setWindowTitle(MSG.view_bundle_createWizard_windowTitle());
         setTitle(MSG.view_bundle_createWizard_title());
 
-        //slightly increase the default dialog height so that we don't show the ugly scrollbar.
-        setDialogHeight(660);
+        //slightly increase the default dialog height and width so that we don't show the ugly scrollbar.
+        setDialogHeight(680);
+        setDialogWidth(840);
 
         this.globalPermissions = globalPermissions;
 

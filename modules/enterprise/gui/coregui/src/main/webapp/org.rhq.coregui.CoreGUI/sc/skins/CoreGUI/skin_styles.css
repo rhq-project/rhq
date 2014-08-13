@@ -20,8 +20,9 @@ hr {
     height: 1px;
 }
 
-/*bz1116784*/
-input[name="fileUploadItem"] {
+/*bz1116784, bz1126923*/
+input[name="fileUploadItem"],
+input[name="textFile"] {
     height: 27px !important;
     width: 450px !important;
 }

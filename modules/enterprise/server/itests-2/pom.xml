@@ -25,18 +25,25 @@
       -Djboss.modules.policy-permissions=true
       -Drhq.ant-bundle.serverplugin.path=${rhq.ant-bundle.serverplugin.path}
       -Drunning.itests-2=true
+      -Drhq.storage.deploy=false
     </jboss.vm.args>
     <jboss.vm.args.debug></jboss.vm.args.debug> <!-- -Ditest.debug can override this, see below -->
     <!-- These properties guide which datasources are used for integration tests. Only one should be true. The default is
       Postgres, specify -Pitest.oracle to use Oracle -->
     <skip.postgres>false</skip.postgres>
     <skip.oracle>true</skip.oracle>
+    <!-- controls whether arquillian will do maven dependency resolution offline -->
+    <resolver.offline>false</resolver.offline>
 
     <!-- cassandra connection properties -->
     <rhq.storage.username>rhqadmin</rhq.storage.username>
     <rhq.storage.password>1eeb2f255e832171df8592078de921bc</rhq.storage.password>
     <rhq.storage.nodes>127.0.0.1</rhq.storage.nodes>
     <rhq.storage.cql-port>9042</rhq.storage.cql-port>
+    <!-- see the disable-storage profile for below for details on the following 3 properties -->
+    <rhq.storage.subsytem.init>true</rhq.storage.subsytem.init>
+    <rhq.storage.deploy>true</rhq.storage.deploy>
+    <rhq.storage.shutdown>true</rhq.storage.shutdown>
   </properties>
 
   <dependencies>
@@ -553,8 +560,12 @@
             <clean.db>${clean.db}</clean.db>
             <log4j.configDebug>false</log4j.configDebug>
             <project.version>${project.version}</project.version>
+            <resolver.offline>${resolver.offline}</resolver.offline>
             <rhq.skip.oracle>${skip.oracle}</rhq.skip.oracle>
             <rhq.ojdbc.version>${ojdbc6.version}</rhq.ojdbc.version>
+            <rhq.storage.subsytem.init>${rhq.storage.subsytem.init}</rhq.storage.subsytem.init>
+            <rhq.storage.deploy>${rhq.storage.deploy}</rhq.storage.deploy>
+            <Drhq.storage.shutdown>${rhq.storage.shutdown}</Drhq.storage.shutdown>
           </systemPropertyVariables>
           <additionalClasspathElements>
             <!-- The below is required for tests to run against Oracle. -->
@@ -855,6 +866,28 @@
       <properties>
         <jboss.socket.binding.port-offset>0</jboss.socket.binding.port-offset>
         <jboss.management.native.port>9999</jboss.management.native.port>
+      </properties>
+    </profile>
+
+    <!--
+      Enabling this profile does two things. It disables storage node deployment, and it disables the storage client
+      subsystem initialization. This can be useful for tests that do not require Cassandra, more specifically, tests
+      that do involve reading from/writing to Cassandra. Enabling this profile will speed up test set up considerably.
+    -->
+    <profile>
+      <id>disable-storage</id>
+      <activation>
+        <property>
+          <name>rhq.storage.disable</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <properties>
+        <rhq.storage.subsytem.init>false</rhq.storage.subsytem.init>
+        <rhq.storage.deploy>false</rhq.storage.deploy>
+        <rhq.storage.shutdown>false</rhq.storage.shutdown>
+        <!-- this is for some added speed up -->
+        <resolver.offline>true</resolver.offline>
       </properties>
     </profile>
 

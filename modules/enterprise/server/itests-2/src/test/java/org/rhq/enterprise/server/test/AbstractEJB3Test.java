@@ -391,6 +391,9 @@ public abstract class AbstractEJB3Test extends Arquillian {
         thirdPartyDeps.add("org.rhq:test-utils:" + projectVersion);
 
         MavenResolverSystem resolver = Maven.resolver();
+        if (Boolean.valueOf(System.getProperty("resolver.offline"))) {
+            resolver.offline();
+        }
 
         Collection<JavaArchive> dependencies = new HashSet<JavaArchive>();
         dependencies.addAll(Arrays.asList(resolver.loadPomFromFile("pom.xml").resolve(thirdPartyDeps)
@@ -537,7 +540,9 @@ public abstract class AbstractEJB3Test extends Arquillian {
                     }
                 }
                 originalServerIdentity = System.getProperty(TestConstants.RHQ_SERVER_NAME_PROPERTY);
-                storageClientManager.init();
+                if (Boolean.valueOf("rhq.storage.subsytem.init")) {
+                    storageClientManager.init();
+                }
                 beforeMethod();
                 beforeMethod(method);
 

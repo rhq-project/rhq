@@ -342,10 +342,6 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
                                 .setStepNumber(2)
                                 .setName("Retry2")
                                 .setDescription("Retry2"));
-//                        entityManager.persist(newJob.getBaseStep());
-//                        for (MaintenanceStep step : newJob) {
-//                            entityManager.persist(step);
-//                        }
                         return newJob;
                     }
                 };

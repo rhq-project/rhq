@@ -22,6 +22,7 @@ import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 
 /**
  * @author Stefan Negrea
@@ -32,6 +33,8 @@ public interface MaintenanceStepRunner {
     void execute(MaintenanceStep maintenanceStep) throws StepFailureException;
 
     StepFailureStrategy getFailureStrategy();
+
+    void setStorageClientManager(StorageClientManager storageClientManager);
 
     void setStorageNodeManager(StorageNodeManagerLocal storageNodeManager);
 

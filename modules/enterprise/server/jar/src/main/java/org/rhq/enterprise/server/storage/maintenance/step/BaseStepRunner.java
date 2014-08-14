@@ -11,6 +11,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 
 /**
  * @author John Sanda
@@ -19,11 +20,13 @@ public abstract class BaseStepRunner implements MaintenanceStepRunner {
 
     private static final int DEFAULT_OPERATION_TIMEOUT = 300;
 
-    private StorageNodeManagerLocal storageNodeManager;
+    protected StorageNodeManagerLocal storageNodeManager;
 
-    private OperationManagerLocal operationManager;
+    protected OperationManagerLocal operationManager;
 
-    private SubjectManagerLocal subjectManager;
+    protected SubjectManagerLocal subjectManager;
+
+    protected StorageClientManager storageClientManager;
 
     @Override
     public void setStorageNodeManager(StorageNodeManagerLocal storageNodeManager) {
@@ -33,6 +36,11 @@ public abstract class BaseStepRunner implements MaintenanceStepRunner {
     @Override
     public void setOperationManager(OperationManagerLocal operationManager) {
         this.operationManager = operationManager;
+    }
+
+    @Override
+    public void setStorageClientManager(StorageClientManager storageClientManager) {
+        this.storageClientManager = storageClientManager;
     }
 
     @Override

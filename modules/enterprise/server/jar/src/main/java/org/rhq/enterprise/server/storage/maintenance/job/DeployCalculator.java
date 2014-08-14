@@ -9,13 +9,17 @@ import javax.persistence.EntityManager;
 import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
+import org.rhq.enterprise.server.storage.maintenance.step.AddMaintenance;
 import org.rhq.enterprise.server.storage.maintenance.step.AnnounceStorageNode;
 import org.rhq.enterprise.server.storage.maintenance.step.BootstrapNode;
+import org.rhq.enterprise.server.storage.maintenance.step.UpdateSchema;
 
 /**
  * @author John Sanda
@@ -78,7 +82,7 @@ public class DeployCalculator implements StepCalculator {
         StorageClusterSettings clusterSettings = clusterSettingsManager.getClusterSettings(
             subjectManager.getOverlord());
 
-        MaintenanceStep bootstrapStep = new MaintenanceStep()
+        MaintenanceStep bootstrap = new MaintenanceStep()
             .setJobNumber(job.getJobNumber())
             .setJobType(job.getJobType())
             .setName(BootstrapNode.class.getName())
@@ -96,8 +100,49 @@ public class DeployCalculator implements StepCalculator {
                 .closeMap()
                 .build());
 
-        entityManager.persist(bootstrapStep);
-        job.addStep(bootstrapStep);
+        entityManager.persist(bootstrap);
+        job.addStep(bootstrap);
+
+        SchemaChanges schemaChanges = determineSchemaChanges(cluster.size(), cluster.size() + 1);
+        if (schemaChanges.replicationFactor != null) {
+            Configuration configuration = new Configuration();
+            configuration.put(new PropertySimple("replicationFactor", schemaChanges.replicationFactor));
+            if (schemaChanges.gcGraceSeconds != null) {
+                configuration.put(new PropertySimple("gcGraceSeconds", schemaChanges.gcGraceSeconds));
+            }
+
+            MaintenanceStep updateSchema = new MaintenanceStep()
+                .setJobNumber(job.getJobNumber())
+                .setStepNumber(stepNumber++)
+                .setJobType(job.getJobType())
+                .setName(UpdateSchema.class.getName())
+                .setDescription("Update Storage Cluster with new replication_factor of " +
+                    schemaChanges.replicationFactor)
+                .setConfiguration(configuration);
+            entityManager.persist(updateSchema);
+            job.addStep(updateSchema);
+        }
+
+        MaintenanceStep addMaintenance;
+        for (String address : clusterSnapshot) {
+            addMaintenance = new MaintenanceStep()
+                .setJobNumber(job.getJobNumber())
+                .setStepNumber(stepNumber++)
+                .setJobType(job.getJobType())
+                .setName(AddMaintenance.class.getName())
+                .setDescription("Run cluster maintenance on " + address)
+                .setConfiguration(new Configuration.Builder()
+                    .addSimple("targetAddress", address)
+                    .addSimple("runRepair", schemaChanges.replicationFactor != null)
+                    .addSimple("newNodeAddress", newNodeAddress)
+                    .addSimple("updateSeedsList", true)
+                    .openList("seedsList", "seedsList")
+                    .addSimples(job.getClusterSnapshot().toArray(new String[job.getClusterSnapshot().size()]))
+                    .closeList()
+                    .build());
+            entityManager.persist(addMaintenance);
+            job.addStep(addMaintenance);
+        }
 
         return job;
     }
@@ -110,11 +155,62 @@ public class DeployCalculator implements StepCalculator {
         return snapshot;
     }
 
+    private PropertyList createPropertyListOfAddresses(String propertyName, List<StorageNode> nodes) {
+        PropertyList list = new PropertyList(propertyName);
+        for (StorageNode storageNode : nodes) {
+            list.add(new PropertySimple("address", storageNode.getAddress()));
+        }
+        return list;
+    }
+
     @Override
     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob originalJob, MaintenanceStep failedStep) {
-
-
         return null;
+    }
+
+    private SchemaChanges determineSchemaChanges(int oldClusterSize, int newClusterSize) {
+        SchemaChanges changes = new SchemaChanges();
+
+        if (oldClusterSize == 0) {
+            throw new IllegalStateException("previousClusterSize cannot be 0");
+        }
+        if (newClusterSize == 0) {
+            throw new IllegalStateException("newClusterSize cannot be 0");
+        }
+        if (Math.abs(newClusterSize - oldClusterSize) != 1) {
+            throw new IllegalStateException("The absolute difference between previousClusterSize["
+                + oldClusterSize + "] and newClusterSize[" + newClusterSize + "] must be 1");
+        }
+
+        if (newClusterSize == 1) {
+            changes.replicationFactor = 1;
+            changes.gcGraceSeconds = 0;
+        } else if (newClusterSize >= 5) {
+            // no changes necessary
+        } else if (oldClusterSize > 4) {
+            // no changes necessary
+        } else if (oldClusterSize == 4 && newClusterSize == 3) {
+            changes.replicationFactor = 2;
+        } else if (oldClusterSize == 3 && newClusterSize == 2) {
+            // no changes necessary
+        } else if (oldClusterSize == 1 && newClusterSize == 2) {
+            changes.replicationFactor = 2;
+            changes.gcGraceSeconds = 691200;   // 8 days
+        } else if (oldClusterSize == 2 && newClusterSize == 3) {
+            // no changes necessary
+        } else if (oldClusterSize == 3 && newClusterSize == 4) {
+            changes.replicationFactor = 3;
+        } else {
+            throw new IllegalStateException("previousClusterSize[" + oldClusterSize + "] and newClusterSize["
+                + newClusterSize + "] is not supported");
+        }
+
+        return changes;
+    }
+
+    private static class SchemaChanges {
+        public Integer replicationFactor;
+        public Integer gcGraceSeconds;
     }
 
 }

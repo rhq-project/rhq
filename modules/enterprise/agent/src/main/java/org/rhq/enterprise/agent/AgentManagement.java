@@ -23,6 +23,10 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
@@ -37,7 +41,6 @@ import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 
-import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.server.core.CoreServerService;
@@ -99,21 +102,44 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         // restarting the agent is a suicidal act - this MBean instance will
         // be unregistered after we shutdown.  Therefore, we must do this in a
         // separate thread so as to allow this method to return successfully
-        // first. Therefore, this method must inheritently do its thing asynchronously.
+        // first. Therefore, this method must inherently do its thing asynchronously.
+
+        // Another important fact is that if this method is called from the rhq-agent plugin
+        // which is co-located in the same JVM, restarting the plugin container actually creates
+        // a whole bunch of new classloaders that ALL inherit the access control context of the
+        // agent plugin executing thread and classloader. The access control context contains
+        // a reference to the agent plugin's classloader through its protection domain and thus,
+        // by using the rhq-agent's restart, shutdown or restartPluginContainer operations we
+        // create a classloader leak.
+        //
+        // The old rhq-agent's plugin classloader will never be released and will carry along with
+        // it all the classes, slowly contributing to the eventual permgen depletion and OOMEs.
+        //
+        // To solve this problem, we run the restart, shutdown and restartPluginContainer methods with
+        // the access control context of this class. This class is defined in the agent itself and thus
+        // its access control context doesn't contain the "baggage" from the plugin classloaders.
+
         new Thread(new Runnable() {
             public void run() {
-                ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
-                try {
-                    Thread.sleep(5000L); // give our restart() caller a chance to return and finish
-                    Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-                    m_agent.shutdown();
-                    m_agent.start();
-                    m_agent.getAgentRestartCounter().restartedAgent(AgentRestartReason.OPERATION);
-                } catch (Exception e) {
-                    e.printStackTrace(); // TODO what do to here?
-                } finally {
-                    Thread.currentThread().setContextClassLoader(originalCL);
-                }
+                AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                    @Override
+                    public Void run() {
+                        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+                        try {
+                            Thread.sleep(5000L); // give our restart() caller a chance to return and finish
+                            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+                            m_agent.shutdown();
+                            m_agent.start();
+                            m_agent.getAgentRestartCounter().restartedAgent(AgentRestartReason.OPERATION);
+                        } catch (Exception e) {
+                            e.printStackTrace(); // TODO what do to here?
+                        } finally {
+                            Thread.currentThread().setContextClassLoader(originalCL);
+                        }
+
+                        return null;
+                    }
+                });
             }
         }, "RHQ Agent Restart Thread").start();
     }
@@ -122,19 +148,30 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         // shutting down the agent is a suicidal act - this MBean instance will
         // be unregistered after we shutdown.  Therefore, we must do this in a
         // separate thread so as to allow this method to return successfully
-        // first. Therefore, this method must inheritently do its thing asynchronously.
+        // first. Therefore, this method must inherently do its thing asynchronously.
+
+        // see the explanation in the restart() method for why we're running this as
+        // a privileged action
+
         new Thread(new Runnable() {
             public void run() {
-                ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
-                try {
-                    Thread.sleep(5000L); // give our shutdown() caller a chance to return and finish
-                    Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-                    m_agent.shutdown();
-                } catch (InterruptedException e) {
-                    // exit the thread
-                } finally {
-                    Thread.currentThread().setContextClassLoader(originalCL);
-                }
+                AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                    @Override
+                    public Void run() {
+                        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+                        try {
+                            Thread.sleep(5000L); // give our shutdown() caller a chance to return and finish
+                            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+                            m_agent.shutdown();
+                        } catch (InterruptedException e) {
+                            // exit the thread
+                        } finally {
+                            Thread.currentThread().setContextClassLoader(originalCL);
+                        }
+
+                        return null;
+                    }
+                });
             }
         }, "RHQ Agent Shutdown Thread").start();
     }
@@ -263,19 +300,29 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
     }
 
     public void restartPluginContainer() {
+        // see the explanation in the restart() method for why we're running this as
+        // a privileged action
+
         new Thread(new Runnable() {
             public void run() {
-                ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
-                try {
-                    Thread.sleep(5000L); // give our caller a chance to return and finish
-                    Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-                    m_agent.shutdownPluginContainer();
-                    m_agent.startPluginContainer(500L);
-                } catch (InterruptedException e) {
-                    // exit the thread
-                } finally {
-                    Thread.currentThread().setContextClassLoader(originalCL);
-                }
+                AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                    @Override
+                    public Void run() {
+                        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+                        try {
+                            Thread.sleep(5000L); // give our caller a chance to return and finish
+                            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+                            m_agent.shutdownPluginContainer();
+                            m_agent.startPluginContainer(500L);
+                        } catch (InterruptedException e) {
+                            // exit the thread
+                        } finally {
+                            Thread.currentThread().setContextClassLoader(originalCL);
+                        }
+
+                        return null;
+                    }
+                });
             }
         }, "RHQ Agent Plugin Container Restart Thread").start();
     }
@@ -384,25 +431,44 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         return;
     }
 
-    public String executePromptCommand(String command) throws ExecutionException {
-        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-            CharArrayWriter listener = new CharArrayWriter();
-            AgentPrintWriter apw = m_agent.getOut();
-            try {
-                apw.addListener(listener);
-                m_agent.executePromptCommand(command); // TODO should we do something if false is returned? (i.e. kill agent?)
-            } catch (Exception e) {
-                throw new ExecutionException(listener.toString(), e); // the message is the output, cause is the thrown exception
-            } finally {
-                apw.removeListener(listener);
-            }
+    public String executePromptCommand(final String command) throws ExecutionException {
+        // we don't know what command will get executed, so let's proactively run it in the privileged action
+        // for why it is a good idea, see the comments in the restart() method
 
-            String output = listener.toString();
-            return output;
-        } finally {
-            Thread.currentThread().setContextClassLoader(originalCL);
+        try {
+            return AccessController.doPrivileged(new PrivilegedExceptionAction<String>() {
+                @Override
+                public String run() throws Exception {
+                    ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+                    try {
+                        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+                        CharArrayWriter listener = new CharArrayWriter();
+                        AgentPrintWriter apw = m_agent.getOut();
+                        try {
+                            apw.addListener(listener);
+                            m_agent.executePromptCommand(
+                                command); // TODO should we do something if false is returned? (i.e. kill agent?)
+                        } catch (Exception e) {
+                            throw new ExecutionException(listener.toString(),
+                                e); // the message is the output, cause is the thrown exception
+                        } finally {
+                            apw.removeListener(listener);
+                        }
+
+                        String output = listener.toString();
+                        return output;
+                    } finally {
+                        Thread.currentThread().setContextClassLoader(originalCL);
+                    }
+                }
+            });
+        } catch (PrivilegedActionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof ExecutionException) {
+                throw (ExecutionException) cause;
+            } else {
+                throw new ExecutionException(e);
+            }
         }
     }
 

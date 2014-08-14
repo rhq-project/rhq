@@ -20,6 +20,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.storage.maintenance.DefaultStepRunnerFactory;
 import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunnerFactory;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
@@ -53,9 +54,12 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     @EJB
     private StorageClusterSettingsManagerLocal clusterSettingsManager;
 
+    @EJB
+    private StorageClientManager storageClientManager;
+
     private CalculatorLookup calculatorLookup = new DefaultCalculatorLookup();
 
-    private MaintenanceStepRunnerFactory stepRunnerFactory;
+    private MaintenanceStepRunnerFactory stepRunnerFactory = new DefaultStepRunnerFactory();
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
@@ -217,6 +221,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
             stepRunner.setOperationManager(operationManager);
             stepRunner.setStorageNodeManager(storageNodeManager);
             stepRunner.setSubjectManager(subjectManager);
+            stepRunner.setStorageClientManager(storageClientManager);
             stepRunner.execute(step);
 
             return true;

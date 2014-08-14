@@ -10,12 +10,22 @@ import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunnerFactor
 import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
 
 /**
+ * A {@link MaintenanceStepRunnerFactory maintenance step factory} which verifies that
+ * {@link MaintenanceStepRunner step runners} are requested in the order specified as determined by the constructor.
  * @author John Sanda
  */
 public class TestStepRunnerFactory implements MaintenanceStepRunnerFactory {
 
     Queue<FakeStepRunner> queue = new LinkedList<FakeStepRunner>();
 
+    /**
+     * The order of the step runners passed to the constructor is significant. This factory assumes that
+     * {@link #newStepRunner(org.rhq.core.domain.storage.MaintenanceStep)} will be called with steps corresponding to
+     * the specified runners in the same order.
+     *
+     * @param stepRunners The step runners to return to
+     * {@link org.rhq.enterprise.server.storage.StorageClusterMaintenanceManagerLocal StorageClusterMaintenanceManagerBean}
+     */
     public TestStepRunnerFactory(FakeStepRunner... stepRunners) {
         for (FakeStepRunner stepRunner : stepRunners) {
             queue.offer(stepRunner);

@@ -25,6 +25,7 @@ import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
 import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
 import org.rhq.enterprise.server.storage.maintenance.step.StepFailureException;
+import org.rhq.enterprise.server.storage.maintenance.step.StepFailureStrategy;
 
 /**
  * @author John Sanda
@@ -75,9 +76,14 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
 
         log.info("Adding " + job + " to maintenance job queue");
 
-        entityManager.persist(baseStep.getConfiguration());
+//        entityManager.persist(baseStep.getConfiguration());
         entityManager.persist(baseStep);
         baseStep.setJobNumber(baseStep.getId());
+
+        for (MaintenanceStep step : job) {
+            step.setJobNumber(job.getJobNumber());
+            entityManager.persist(step);
+        }
     }
 
     @Override
@@ -190,17 +196,15 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
             boolean succeeded = executeStep(maintenanceManager.reloadStep(step.getId()), stepRunner);
             if (succeeded) {
                 maintenanceManager.deleteStep(step.getId());
-            } else {
-                switch (stepRunner.getFailureStrategy()) {
-                    case ABORT:
-                        log.info("Aborting " + job);
-                        maintenanceManager.rescheduleJob(job.getJobNumber());
-                        return;
-                    case CONTINUE:
-                        // TODO schedule new job for failed step
-                    default:
-                        throw new IllegalStateException("We shouldn't get here");
-                }
+            } else if (stepRunner.getFailureStrategy() == StepFailureStrategy.CONTINUE) {
+                StepCalculator stepCalculator = calculatorLookup.lookup(job.getJobType());
+                StorageMaintenanceJob newJob = stepCalculator.calculateSteps(job, step);
+                maintenanceManager.scheduleMaintenance(newJob);
+                maintenanceManager.deleteStep(step.getId());
+            } else {  // failure strategy == ABORT
+                log.info("Aborting " + job);
+                maintenanceManager.rescheduleJob(job.getJobNumber());
+                return;
             }
         }
         log.info("Finished executing " + job);

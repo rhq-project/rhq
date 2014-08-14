@@ -96,8 +96,9 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
         return getBaseStep().getConfiguration().getMap("parameters");
     }
 
-    public void addStep(MaintenanceStep step) {
+    public StorageMaintenanceJob addStep(MaintenanceStep step) {
         steps.add(step);
+        return this;
     }
 
     /**

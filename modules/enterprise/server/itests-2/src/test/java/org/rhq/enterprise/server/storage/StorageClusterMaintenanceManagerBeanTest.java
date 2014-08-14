@@ -179,7 +179,7 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test
-    public void jobFailsAndShouldBeAborted() throws Exception {
+    public void abortJobThatFails() throws Exception {
         final AtomicInteger failedJobNumber = new AtomicInteger();
 
         CalculatorLookup calculatorLookup = new CalculatorLookup() {
@@ -281,6 +281,129 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
                 assertEquals("The step number for the second step is wrong", 3, steps.get(1).getStepNumber());
             }
         }, "Failed to verify whether or not jobs were run");
+    }
+
+    @Test
+    public void continueJobThatFails() throws Exception {
+        final AtomicBoolean failed3Executed = new AtomicBoolean();
+        final AtomicBoolean retry1Executed = new AtomicBoolean();
+        final AtomicBoolean retry2Executed = new AtomicBoolean();
+        final AtomicBoolean stepsCalculated = new AtomicBoolean();
+
+        CalculatorLookup calculatorLookup = new CalculatorLookup() {
+            @Override
+            public StepCalculator lookup(MaintenanceStep.JobType jobType) {
+                return new TestStepCalculator() {
+                    @Override
+                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job, List<StorageNode> cluster) {
+                        if (stepsCalculated.get()) {
+                            return job;
+                        }
+                        List<MaintenanceStep> steps = asList(
+                            new MaintenanceStep()
+                                .setJobNumber(job.getJobNumber())
+                                .setJobType(job.getJobType())
+                                .setName("FailedJobStep1")
+                                .setDescription("FailedJobStep1")
+                                .setStepNumber(1),
+                            new MaintenanceStep()
+                                .setJobNumber(job.getJobNumber())
+                                .setJobType(job.getJobType())
+                                .setName("FailedJobStep2")
+                                .setDescription("FailedJobStep2")
+                                .setStepNumber(2),
+                            new MaintenanceStep()
+                                .setJobNumber(job.getJobNumber())
+                                .setJobType(job.getJobType())
+                                .setName("FailedJobStep3")
+                                .setDescription("FailedJobStep3")
+                                .setStepNumber(3)
+                        );
+                        for (MaintenanceStep step : steps) {
+                            entityManager.persist(step);
+                            job.addStep(step);
+                        }
+                        stepsCalculated.set(true);
+                        return job;
+                    }
+
+                    @Override
+                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob originalJob,
+                        MaintenanceStep failedStep) {
+                        StorageMaintenanceJob newJob = new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY,
+                            "RetryJob", new Configuration())
+                            .addStep(new MaintenanceStep()
+                                .setJobType(originalJob.getJobType())
+                                .setName("Retry1")
+                                .setStepNumber(1)
+                                .setDescription("Retry1"))
+                            .addStep(new MaintenanceStep()
+                                .setJobType(originalJob.getJobType())
+                                .setStepNumber(2)
+                                .setName("Retry2")
+                                .setDescription("Retry2"));
+//                        entityManager.persist(newJob.getBaseStep());
+//                        for (MaintenanceStep step : newJob) {
+//                            entityManager.persist(step);
+//                        }
+                        return newJob;
+                    }
+                };
+            }
+        };
+
+        maintenanceManager.init(calculatorLookup, new TestStepRunnerFactory(
+            new FakeStepRunner("FailedJobStep1", 1),
+            new FailedStepRunner("FailedJobStep2", 2, StepFailureStrategy.CONTINUE),
+            new FakeStepRunner(failed3Executed, "FailedJobStep3", 3),
+            new FakeStepRunner(retry1Executed, "Retry1", 1),
+            new FakeStepRunner(retry2Executed, "Retry2", 2)
+        ));
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                StorageMaintenanceJob job = new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY, "FailedJob",
+                    new Configuration());
+                maintenanceManager.scheduleMaintenance(job);
+            }
+        }, "Failed to create job");
+
+        maintenanceManager.execute();
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                assertTrue("Step FailedJobStep3 should have been executed since the failure strategy for the " +
+                        "previous failed step was " + StepFailureStrategy.CONTINUE, failed3Executed.get());
+
+                List<StorageMaintenanceJob> jobs = maintenanceManager.loadQueue();
+                assertEquals("There should be one remaining job in the queue", 1, jobs.size());
+
+
+                StorageMaintenanceJob job = jobs.get(0);
+                assertEquals("The job name is wrong", "RetryJob", job.getJobName());
+
+                List<MaintenanceStep> steps = job.getSteps();
+                assertEquals("The number of steps for RetryJob is wrong", 2, steps.size());
+                assertEquals("The step name for the first step is wrong", "Retry1", steps.get(0).getName());
+                assertEquals("The step number for the first step is wrong", 1, steps.get(0).getStepNumber());
+
+                assertEquals("The step name for the second step is wrong", "Retry2", steps.get(1).getName());
+                assertEquals("The step number for the second step is wrong", 2, steps.get(1).getStepNumber());
+            }
+        }, "Failed to verify whether or not FailedJob was run");
+
+        maintenanceManager.execute();
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                assertEquals("The job queue should be empty", 0, maintenanceManager.loadQueue().size());
+                assertTrue("Step Retry1 should have been executed", retry1Executed.get());
+                assertTrue("Step Retry2 should have been executed", retry2Executed.get());
+            }
+        }, "Failed to verify whether or not RetryJob was run");
     }
 
     private void executeInTransaction(TransactionCallback callback, String errorMsg) {

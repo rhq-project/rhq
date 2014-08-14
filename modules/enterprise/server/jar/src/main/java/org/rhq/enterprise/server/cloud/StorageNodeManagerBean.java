@@ -709,6 +709,11 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return runner.execute();
     }
 
+    @Override
+    public StorageNode updateStorageNode(StorageNode node) {
+        return entityManager.merge(node);
+    }
+
     public StorageNode findStorageNodeByAddress(String address) {
         TypedQuery<StorageNode> query = entityManager.<StorageNode> createNamedQuery(StorageNode.QUERY_FIND_BY_ADDRESS,
             StorageNode.class);

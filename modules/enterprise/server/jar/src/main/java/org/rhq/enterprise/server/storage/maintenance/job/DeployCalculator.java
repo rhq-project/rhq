@@ -20,6 +20,7 @@ import org.rhq.enterprise.server.storage.maintenance.step.AddMaintenance;
 import org.rhq.enterprise.server.storage.maintenance.step.AnnounceStorageNode;
 import org.rhq.enterprise.server.storage.maintenance.step.BootstrapNode;
 import org.rhq.enterprise.server.storage.maintenance.step.UpdateSchema;
+import org.rhq.enterprise.server.storage.maintenance.step.UpdateStorageNodeStatus;
 
 /**
  * @author John Sanda
@@ -61,6 +62,21 @@ public class DeployCalculator implements StepCalculator {
         job.setClusterSnapshot(cluster);
         PropertyMap parametersMap = job.getJobParameters();
         String newNodeAddress = parametersMap.getSimple("address").getStringValue();
+
+        MaintenanceStep updateStatus = new MaintenanceStep()
+                .setJobNumber(job.getJobNumber())
+                .setJobType(job.getJobType())
+                .setName(UpdateStorageNodeStatus.class.getName())
+                .setStepNumber(stepNumber++)
+                .setDescription("Update operation mode of " + newNodeAddress + " to " +
+                    StorageNode.OperationMode.ANNOUNCE)
+                .setConfiguration(new Configuration.Builder()
+                    .addSimple("targetAddress", newNodeAddress)
+                    .addSimple("operationMode", StorageNode.OperationMode.ANNOUNCE.toString())
+                .build());
+        entityManager.persist(updateStatus);
+        job.addStep(updateStatus);
+
         for (String address : job.getClusterSnapshot()) {
             MaintenanceStep step = new MaintenanceStep()
                 .setJobNumber(job.getJobNumber())
@@ -78,6 +94,20 @@ public class DeployCalculator implements StepCalculator {
             entityManager.persist(step);
             job.addStep(step);
         }
+
+        updateStatus = new MaintenanceStep()
+            .setJobNumber(job.getJobNumber())
+            .setJobType(job.getJobType())
+            .setName(UpdateStorageNodeStatus.class.getName())
+            .setStepNumber(stepNumber++)
+            .setDescription("Update operation mode of " + newNodeAddress + " to " +
+                StorageNode.OperationMode.BOOTSTRAP)
+            .setConfiguration(new Configuration.Builder()
+                .addSimple("targetAddress", newNodeAddress)
+                .addSimple("operationMode", StorageNode.OperationMode.BOOTSTRAP.toString())
+                .build());
+        entityManager.persist(updateStatus);
+        job.addStep(updateStatus);
 
         StorageClusterSettings clusterSettings = clusterSettingsManager.getClusterSettings(
             subjectManager.getOverlord());
@@ -123,6 +153,20 @@ public class DeployCalculator implements StepCalculator {
             job.addStep(updateSchema);
         }
 
+        updateStatus = new MaintenanceStep()
+            .setJobNumber(job.getJobNumber())
+            .setJobType(job.getJobType())
+            .setName(UpdateStorageNodeStatus.class.getName())
+            .setStepNumber(stepNumber++)
+            .setDescription("Update operation mode of " + newNodeAddress + " to " +
+                StorageNode.OperationMode.ADD_MAINTENANCE)
+            .setConfiguration(new Configuration.Builder()
+                .addSimple("targetAddress", newNodeAddress)
+                .addSimple("operationMode", StorageNode.OperationMode.ADD_MAINTENANCE.toString())
+                .build());
+        entityManager.persist(updateStatus);
+        job.addStep(updateStatus);
+
         MaintenanceStep addMaintenance;
         for (String address : clusterSnapshot) {
             addMaintenance = new MaintenanceStep()
@@ -143,6 +187,20 @@ public class DeployCalculator implements StepCalculator {
             entityManager.persist(addMaintenance);
             job.addStep(addMaintenance);
         }
+
+        updateStatus = new MaintenanceStep()
+            .setJobNumber(job.getJobNumber())
+            .setJobType(job.getJobType())
+            .setName(UpdateStorageNodeStatus.class.getName())
+            .setStepNumber(stepNumber++)
+            .setDescription("Update operation mode of " + newNodeAddress + " to " +
+                StorageNode.OperationMode.NORMAL)
+            .setConfiguration(new Configuration.Builder()
+                .addSimple("targetAddress", newNodeAddress)
+                .addSimple("operationMode", StorageNode.OperationMode.NORMAL.toString())
+                .build());
+        entityManager.persist(updateStatus);
+        job.addStep(updateStatus);
 
         return job;
     }

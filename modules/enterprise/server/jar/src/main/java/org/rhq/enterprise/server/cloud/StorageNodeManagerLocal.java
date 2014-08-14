@@ -66,6 +66,8 @@ public interface StorageNodeManagerLocal extends StorageNodeManagerRemote {
 
     StorageNode findStorageNodeByAddress(String address);
 
+    StorageNode updateStorageNode(StorageNode node);
+
     /**
      * Find ids for all resources and sub-resources of Storage Nodes that
      * have alert definitions. This can be used by the resource criteria queries to find

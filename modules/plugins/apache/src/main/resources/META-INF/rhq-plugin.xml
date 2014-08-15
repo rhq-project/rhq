@@ -312,6 +312,13 @@
                 using the restart operation in the operations tab) once all the configuration updates are finished.
             </c:description>
          </c:simple-property>
+
+         <!-- Bmx Configuration -->
+         <c:simple-property name="bmxUrl" displayName="BMX Handler" required="false" default="http://localhost:8000/bmx">
+            <c:description>
+              If set to a valid URL to mod_bmx handler allow to use mod_bmx instead of mod_snmp.
+            </c:description>
+         </c:simple-property>
           
           <!-- Augeas Configuration -->
           <c:group name="Augeas Configuration">

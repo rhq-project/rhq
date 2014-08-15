@@ -189,6 +189,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod-snmpcommon.c", "snmpcommon_module");
         MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod-snmpagt.c", "snmpagt_module");
         MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("covalent-snmp-v20.c", "snmp_agt_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_bmx.c", "bmx_module");
 
         //this list is for apache 1.3
         MODULE_SOURCE_FILE_TO_MODULE_NAME_13 = new LinkedHashMap<String, String>();
@@ -364,6 +365,9 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SNMP_AGENT_HOST, host
                 .getHostAddress()));
             pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SNMP_AGENT_PORT, port));
+        } else {
+            /* try mod_bmx VirtualHost and Location */
+            snmpAddresses = findBMXAddresses(serverConfig, new File(serverRoot));
         }
 
         return createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(), binaryInfo);
@@ -805,6 +809,18 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
         return ret;
     }
+
+    /* TODO: try to find the VirtualHost containing something like:
+     *   <Location /bmx>
+     *      SetHandler bmx-handler
+     *   </Location>
+     */
+    private static List<InetSocketAddress> findBMXAddresses(ApacheDirectiveTree tree, File serverRoot) {
+        List<InetSocketAddress> ret = new ArrayList<InetSocketAddress>();
+
+        return ret;
+    }
+    /* TODO: We need also the Location */
 
     private static String findSNMPAgentAddressConfigLine(File snmpdConf) throws IOException {
         BufferedReader rdr = new BufferedReader(new FileReader(snmpdConf));

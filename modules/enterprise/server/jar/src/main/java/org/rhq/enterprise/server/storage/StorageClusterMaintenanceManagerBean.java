@@ -27,6 +27,7 @@ import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.storage.maintenance.DefaultStepRunnerFactory;
 import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunnerFactory;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
+import org.rhq.enterprise.server.storage.maintenance.job.DeployCalculator;
 import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
 import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
 import org.rhq.enterprise.server.storage.maintenance.step.StepFailureException;
@@ -158,7 +159,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
             if (log.isDebugEnabled()) {
                 log.debug("Calculating steps for " + job);
             }
-            calculateAndPersistSteps(job);
+            calculateAndPersistSteps(job, currentClusterSnapshot);
         } else if (currentClusterSnapshot.equals(job.getClusterSnapshot())) {
             // We already have steps and they do not need to be recalculated
             if (log.isDebugEnabled()) {
@@ -178,14 +179,22 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
             job.setClusterSnapshot(currentClusterSnapshot);
 
             // now calculate and persist the new steps
-            calculateAndPersistSteps(job);
+            calculateAndPersistSteps(job, currentClusterSnapshot);
         }
 
         return job;
     }
 
-    private void calculateAndPersistSteps(StorageMaintenanceJob job) {
+    private void calculateAndPersistSteps(StorageMaintenanceJob job, Set<String> clusterSnapshot) {
+        job.setClusterSnapshot(clusterSnapshot);
+
         StepCalculator stepCalculator = calculatorLookup.lookup(job.getJobType());
+        if (stepCalculator instanceof DeployCalculator) {
+            // Need to figure out how we want to inject dependencies into the step calculators.
+            // If only we could use CDI...
+            ((DeployCalculator)stepCalculator).setClusterSettings(clusterSettingsManager.getClusterSettings(
+                subjectManager.getOverlord()));
+        }
         stepCalculator.calculateSteps(job);
         for (MaintenanceStep step : job) {
             entityManager.persist(step);

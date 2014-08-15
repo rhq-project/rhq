@@ -57,13 +57,6 @@ public class SingleCompatibleResourceGroupSelector extends ComboBoxItem {
     }
 
     protected class CompatibleResourceGroupsDataSource extends ResourceGroupsDataSource {
-
-        @Override
-        public void executeFetch(DSRequest request, DSResponse response, ResourceGroupCriteria criteria) {
-            //TODO implement
-            super.executeFetch(request, response, criteria);
-        }
-
         @Override
         protected ResourceGroupCriteria getFetchCriteria(final DSRequest request) {
             // We don't want to use the superclass's getFetchCriteria because our selected value

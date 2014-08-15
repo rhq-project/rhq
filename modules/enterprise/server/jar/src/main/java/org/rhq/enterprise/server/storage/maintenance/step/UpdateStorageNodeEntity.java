@@ -18,11 +18,15 @@
  */
 package org.rhq.enterprise.server.storage.maintenance.step;
 
-import javax.persistence.EntityManager;
-
+import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.operation.OperationHistory;
+import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.storage.MaintenanceStep;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
+import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Stefan Negrea
@@ -31,14 +35,7 @@ import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 //@Stateless
 public class UpdateStorageNodeEntity extends BaseStepRunner implements MaintenanceStepRunner {
 
-//    @EJB
-    StorageNodeManagerLocal storageNodeManagerBean;
-
-//    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
-    private EntityManager entityManager;
-
-//    @EJB
-    private SubjectManagerLocal subjectManager;
+    protected static final int DEFAULT_OPERATION_TIMEOUT = 300;
 
     public UpdateStorageNodeEntity() {
     }
@@ -56,5 +53,39 @@ public class UpdateStorageNodeEntity extends BaseStepRunner implements Maintenan
     @Override
     public StepFailureStrategy getFailureStrategy() {
         return null;
+    }
+
+    protected OperationHistory executeOperation(String storageNodeAddress, String operation, Configuration parameters) {
+        StorageNode node = storageNodeManager.findStorageNodeByAddress(storageNodeAddress);
+        int resourceId = node.getResource().getId();
+        ResourceOperationSchedule operationSchedule = operationManager.scheduleResourceOperation(
+            subjectManager.getOverlord(), resourceId, operation, 0, 0, 0, StartStorageClient.DEFAULT_OPERATION_TIMEOUT,
+            parameters.deepCopyWithoutProxies(), "");
+        return waitForOperationToComplete(operationSchedule);
+    }
+
+    private OperationHistory waitForOperationToComplete(ResourceOperationSchedule schedule) {
+        try {
+            ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+            criteria.addFilterJobId(schedule.getJobId());
+
+            Thread.sleep(5000);
+            PageList<ResourceOperationHistory> results = operationManager.findResourceOperationHistoriesByCriteria(
+                subjectManager.getOverlord(), criteria);
+            if (results.isEmpty()) {
+                throw new RuntimeException("Failed to find resource operation history for " + schedule);
+            }
+            OperationHistory history = results.get(0);
+
+
+            while (history.getStatus() == OperationRequestStatus.INPROGRESS) {
+                Thread.sleep(5000);
+                history = operationManager.getOperationHistoryByHistoryId(subjectManager.getOverlord(),
+                    history.getId());
+            }
+            return history;
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

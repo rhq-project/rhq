@@ -49,7 +49,7 @@ public class DeployCalculator implements StepCalculator {
                 .setConfiguration(new Configuration.Builder()
                     .addSimple("targetAddress", address)
                     .openMap("parameters")
-                    .addSimple("address", newNodeAddress)
+                        .addSimple("address", newNodeAddress)
                     .closeMap()
                     .build());
             job.addStep(step);
@@ -114,12 +114,14 @@ public class DeployCalculator implements StepCalculator {
                 .setDescription("Run cluster maintenance on " + address)
                 .setConfiguration(new Configuration.Builder()
                     .addSimple("targetAddress", address)
-                    .addSimple("runRepair", schemaChanges.replicationFactor != null)
-                    .addSimple("newNodeAddress", newNodeAddress)
-                    .addSimple("updateSeedsList", true)
-                    .openList("seedsList", "seedsList")
-                        .addSimples(job.getClusterSnapshot().toArray(new String[job.getClusterSnapshot().size()]))
-                    .closeList()
+                    .openMap("parameters")
+                        .addSimple("runRepair", schemaChanges.replicationFactor != null)
+                        .addSimple("newNodeAddress", newNodeAddress)
+                        .addSimple("updateSeedsList", true)
+                        .openList("seedsList", "seedsList")
+                            .addSimples(job.getClusterSnapshot().toArray(new String[job.getClusterSnapshot().size()]))
+                        .closeList()
+                    .closeMap()
                     .build());
             job.addStep(addMaintenance);
         }

@@ -1,25 +1,11 @@
-/*
- * RHQ Management Platform
- * Copyright (C) 2005-2014 Red Hat, Inc.
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
 package org.rhq.enterprise.server.storage.maintenance.step;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
@@ -27,27 +13,45 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.storage.StorageClientManager;
 
 /**
- * @author Stefan Negrea
- *
+ * @author John Sanda
  */
-//@Stateless
-public class ShutdownStorageClient extends BaseStepRunner implements MaintenanceStepRunner {
+public abstract class ResourceOperationStepRunner extends BaseStepRunner {
 
     protected static final int DEFAULT_OPERATION_TIMEOUT = 300;
-    //    @EJB
-    private StorageClientManager storageClientManager;
+    private static final Log log = LogFactory.getLog(ResourceOperationStepRunner.class);
 
-//    @Override
-    public void execute(MaintenanceStep maintenanceStep) {
-        storageClientManager.shutdown();
+    private String operation;
+
+    protected ResourceOperationStepRunner(String operation) {
+        this.operation = operation;
     }
 
     @Override
-    public StepFailureStrategy getFailureStrategy() {
-        return null;
+    public void execute(MaintenanceStep step) throws StepFailureException {
+        Configuration configuration = step.getConfiguration();
+        String targetAddress = configuration.getSimpleValue("targetAddress");
+        PropertyMap params = (PropertyMap) configuration.get("parameters");
+        Configuration operationParams = new Configuration();
+
+        for (String name : params.getMap().keySet()) {
+            operationParams.put(params.get(name).deepCopy(false));
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("Scheduling resource operation [" + operation + "] against " + targetAddress + " with parameters " +
+                operationParams.toString(true));
+        } else {
+            log.info("Scheduling resource operation [" + operation + "] against " + targetAddress);
+        }
+
+        OperationHistory operationHistory = executeOperation(targetAddress, operation, operationParams);
+        if (operationHistory.getStatus() != OperationRequestStatus.SUCCESS) {
+            throw new StepFailureException("Resource operation [" + operation + "] against " + targetAddress +
+                " failed: " + operationHistory.getErrorMessage());
+        }
+
     }
 
     protected OperationHistory executeOperation(String storageNodeAddress, String operation, Configuration parameters) {

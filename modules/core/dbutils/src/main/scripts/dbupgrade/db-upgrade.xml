@@ -2506,6 +2506,7 @@
                   CREATE INDEX rhq_adef_resource_type_idx ON rhq_alert_definition(resource_type_id)
                 </statement>
               </schema-directSQL>
+            </schemaSpec>
 
             <schemaSpec version="2.158">
                 <schema-directSQL>

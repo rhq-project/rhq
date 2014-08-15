@@ -93,7 +93,6 @@ import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 import org.jboss.util.file.FilenameSuffixFilter;
-
 import org.rhq.core.clientapi.agent.lifecycle.PluginContainerLifecycle;
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
@@ -186,6 +185,7 @@ import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvoc
 import org.rhq.enterprise.communications.command.server.CommandListener;
 import org.rhq.enterprise.communications.command.server.IncomingCommandTrace;
 import org.rhq.enterprise.communications.util.CommandTraceUtil;
+import org.rhq.enterprise.communications.util.NotPermittedException;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 
 /**
@@ -3950,10 +3950,16 @@ public class AgentMain {
         public void receivedCommand(Command command) {
             try {
                 if (!(command instanceof RemotePojoInvocationCommand)
-                    || !((RemotePojoInvocationCommand) command).getTargetInterfaceName().equals(PING_INTERFACE_NAME)) {
-                    m_latch.await();
+                    || !((RemotePojoInvocationCommand) command).getTargetInterfaceName().equals(PING_INTERFACE_NAME))
+                {
+                    // only wait a finite time, otherwise shutdown may be blocked
+                    long timeout = m_configuration.getWaitForServerAtStartupMsecs();
+                    if (!m_latch.await(timeout, TimeUnit.MILLISECONDS)) {
+                        throw new NotPermittedException(timeout);
+                    }
                 }
-            } catch (Exception e) {
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
 

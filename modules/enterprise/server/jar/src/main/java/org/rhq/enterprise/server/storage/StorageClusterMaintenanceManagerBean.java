@@ -1,9 +1,12 @@
 package org.rhq.enterprise.server.storage;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
@@ -15,6 +18,7 @@ import javax.persistence.PersistenceContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -80,7 +84,6 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
 
         log.info("Adding " + job + " to maintenance job queue");
 
-//        entityManager.persist(baseStep.getConfiguration());
         entityManager.persist(baseStep);
         baseStep.setJobNumber(baseStep.getId());
 
@@ -101,7 +104,6 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
             .setConfiguration(oldBaseStep.getConfiguration().deepCopyWithoutProxies());
 
         entityManager.remove(oldBaseStep);
-        entityManager.persist(newBaseStep.getConfiguration());
         entityManager.persist(newBaseStep);
         newBaseStep.setJobNumber(newBaseStep.getId());
         for (MaintenanceStep step : job) {
@@ -127,36 +129,75 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         }
 
         Iterator<MaintenanceStep> iterator = steps.iterator();
-        StorageMaintenanceJob job = new StorageMaintenanceJob(iterator.next());
-        queue.add(job);
+        MaintenanceStep baseStep = iterator.next();
+        List<MaintenanceStep> jobSteps = new ArrayList<MaintenanceStep>();
 
         while (iterator.hasNext()) {
             MaintenanceStep step = iterator.next();
-            if (step.getJobNumber() == job.getJobNumber()) {
-                job.addStep(step);
+            if (step.getJobNumber() == baseStep.getJobNumber()) {
+                jobSteps.add(step);
             } else {
-                job = new StorageMaintenanceJob(step);
-                queue.add(job);
+                queue.add(new StorageMaintenanceJob(baseStep, jobSteps));
+                baseStep = step;
+                jobSteps = new ArrayList<MaintenanceStep>();
             }
         }
+        queue.add(new StorageMaintenanceJob(baseStep, jobSteps));
 
         return queue;
-    }
-
-    private StorageMaintenanceJob refreshJob(StorageMaintenanceJob job) {
-        StepCalculator stepCalculator = calculatorLookup.lookup(job.getJobType());
-        return stepCalculator.calculateSteps(job, storageNodeManager.getClusterNodes());
     }
 
     @Override
     public StorageMaintenanceJob refreshJob(int jobNumber) {
         StorageMaintenanceJob job = loadJob(jobNumber);
-        StepCalculator stepCalculator = calculatorLookup.lookup(job.getJobType());
-        stepCalculator.setSubjectManager(subjectManager);
-        stepCalculator.setEntityManager(entityManager);
-        stepCalculator.setStorageClusterSettingsManager(clusterSettingsManager);
 
-        return stepCalculator.calculateSteps(job, storageNodeManager.getClusterNodes());
+        log.info("Checking to see if steps to need to (re)calculated for " + job);
+
+        Set<String> currentClusterSnapshot = createSnapshot(storageNodeManager.getClusterNodes());
+        if (job.getClusterSnapshot().isEmpty()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Calculating steps for " + job);
+            }
+            calculateAndPersistSteps(job);
+        } else if (currentClusterSnapshot.equals(job.getClusterSnapshot())) {
+            // We already have steps and they do not need to be recalculated
+            if (log.isDebugEnabled()) {
+                log.debug("No changes are necessary to " + job + ". Steps are up to date");
+            }
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Recalculating steps for " + job);
+            }
+            // Delete any existing steps and add new ones
+            for (MaintenanceStep step : job) {
+                entityManager.remove(step);
+            }
+            job.clearSteps();
+            // Delete the old cluster snapshot
+            entityManager.remove(job.getClusterSnapshotProperty());
+            job.setClusterSnapshot(currentClusterSnapshot);
+
+            // now calculate and persist the new steps
+            calculateAndPersistSteps(job);
+        }
+
+        return job;
+    }
+
+    private void calculateAndPersistSteps(StorageMaintenanceJob job) {
+        StepCalculator stepCalculator = calculatorLookup.lookup(job.getJobType());
+        stepCalculator.calculateSteps(job);
+        for (MaintenanceStep step : job) {
+            entityManager.persist(step);
+        }
+    }
+
+    private Set<String> createSnapshot(List<StorageNode> cluster) {
+        Set<String> snapshot = new HashSet<String>();
+        for (StorageNode node : cluster) {
+            snapshot.add(node.getAddress());
+        }
+        return snapshot;
     }
 
     @Override
@@ -188,6 +229,8 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
             log.info("There are no jobs to execute");
             return;
         }
+        log.info("Loaded maintenance job queue: " + queue);
+
         for (StorageMaintenanceJob job : queue) {
             executeJob(maintenanceManager.refreshJob(job.getJobNumber()));
         }

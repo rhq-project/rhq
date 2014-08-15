@@ -18,11 +18,6 @@
  */
 package org.rhq.enterprise.server.storage.maintenance.job;
 
-import java.util.List;
-
-import org.rhq.core.domain.storage.MaintenanceJob;
-import org.rhq.core.domain.storage.MaintenanceStep;
-
 /**
  * @author Stefan Negrea
  *
@@ -32,7 +27,7 @@ public class StorageMaintenanceJobFactory {
     private StorageMaintenanceJobFactory() {
     }
 
-    public MaintenanceJob createJob(String operation, String[] existingStorageNodes, String[] affectedNodes, String args) {
+//    public MaintenanceJob createJob(String operation, String[] existingStorageNodes, String[] affectedNodes, String args) {
 //        MaintenanceJob job = new MaintenanceJob();
 //
 //        job.setType(MaintenanceJob.Type.CHANGE_ENDPOINT);
@@ -43,13 +38,13 @@ public class StorageMaintenanceJobFactory {
 //        }
 //
 //        return job;
-        return null;
-    }
+//        return null;
+//    }
 
-    public List<MaintenanceStep> createNodeChangeAddressSteps(MaintenanceJob job, String[] existingNodes,
-        String[] affectedNodes) {
-        return null;
-    }
+//    public List<MaintenanceStep> createNodeChangeAddressSteps(MaintenanceJob job, String[] existingNodes,
+//        String[] affectedNodes) {
+//        return null;
+//    }
 
 //        List<MaintenanceStep> steps = new ArrayList<MaintenanceStep>();
 //

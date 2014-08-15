@@ -18,14 +18,8 @@
  */
 package org.rhq.enterprise.server.storage.maintenance.job;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.ejb.EJB;
 
-import org.rhq.core.domain.storage.MaintenanceJob;
-import org.rhq.core.domain.storage.MaintenanceStep;
-import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
 import org.rhq.enterprise.server.storage.maintenance.step.ShutdownStorageClient;
 import org.rhq.enterprise.server.storage.maintenance.step.StartStorageClient;
 import org.rhq.enterprise.server.storage.maintenance.step.UpdateStorageNodeEndpoints;
@@ -46,20 +40,20 @@ public class MaintenanceJobRunner {
     UpdateStorageNodeEntity updateStorageNodeEntity;
 
 
-    public void runJob(MaintenanceJob job) {
-        Map<String, MaintenanceStepRunner> runners = new HashMap<String, MaintenanceStepRunner>();
-        runners.put(startStorageClient.getClass().getSimpleName(), startStorageClient);
-        runners.put(shutdownStorageClient.getClass().getSimpleName(), shutdownStorageClient);
-        runners.put(updateStorageNodeEndpoints.getClass().getSimpleName(), updateStorageNodeEndpoints);
-        runners.put(updateStorageNodeEntity.getClass().getSimpleName(), updateStorageNodeEntity);
-
-
-        for (MaintenanceStep step : job.getMaintenanceSteps()) {
-            try {
-                runners.get(step.getName()).execute(step);
-            } catch (Exception e) {
-                //do nothing for now ... exception handling to be decided a later
-            }
-        }
-    }
+//    public void runJob(MaintenanceJob job) {
+//        Map<String, MaintenanceStepRunner> runners = new HashMap<String, MaintenanceStepRunner>();
+//        runners.put(startStorageClient.getClass().getSimpleName(), startStorageClient);
+//        runners.put(shutdownStorageClient.getClass().getSimpleName(), shutdownStorageClient);
+//        runners.put(updateStorageNodeEndpoints.getClass().getSimpleName(), updateStorageNodeEndpoints);
+//        runners.put(updateStorageNodeEntity.getClass().getSimpleName(), updateStorageNodeEntity);
+//
+//
+//        for (MaintenanceStep step : job.getMaintenanceSteps()) {
+//            try {
+//                runners.get(step.getName()).execute(step);
+//            } catch (Exception e) {
+//                //do nothing for now ... exception handling to be decided a later
+//            }
+//        }
+//    }
 }

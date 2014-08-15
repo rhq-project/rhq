@@ -10,7 +10,6 @@ import java.util.Set;
 
 import com.google.common.base.Preconditions;
 
-import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -25,6 +24,8 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
 
     public static final long serialVersionUID = 1L;
 
+    private MaintenanceStep baseStep;
+
     private List<MaintenanceStep> steps = new ArrayList<MaintenanceStep>();
 
     public StorageMaintenanceJob(MaintenanceStep.JobType jobType, String name, Configuration params) {
@@ -33,16 +34,11 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
 
     public StorageMaintenanceJob(MaintenanceStep.JobType jobType, String name, String description,
         Configuration params) {
-        steps.add(new MaintenanceStep()
+        baseStep = new MaintenanceStep()
             .setJobType(jobType)
             .setName(name)
             .setDescription(description)
-            .setConfiguration(convert(params)));
-    }
-
-    public StorageMaintenanceJob(MaintenanceStep baseStep) {
-        Preconditions.checkArgument(baseStep.getStepNumber() == 0, baseStep + " should be a base step");
-        steps.add(baseStep);
+            .setConfiguration(convert(params));
     }
 
     private Configuration convert(Configuration params) {
@@ -56,48 +52,57 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
         return configuration;
     }
 
+    public StorageMaintenanceJob(MaintenanceStep baseStep, List<MaintenanceStep> jobSteps) {
+        this.baseStep = baseStep;
+        steps = jobSteps;
+    }
+
     public StorageMaintenanceJob(List<MaintenanceStep> steps) {
-        if (steps.isEmpty()) {
-            throw new IllegalArgumentException("Cannot create a maintenance job from an empty list of steps");
+        Preconditions.checkArgument(steps.size() > 0, "Cannot create a maintenance job from an empty list of steps");
+        Preconditions.checkArgument(steps.get(0).getStepNumber() == 0, steps.get(0) + " should be a base step");
+
+        baseStep = steps.get(0);
+        for (int i = 1; i < steps.size(); ++i) {
+            this.steps.add(steps.get(i));
         }
-        this.steps = steps;
     }
 
     public MaintenanceStep getBaseStep() {
-        return steps.get(0);
+        return baseStep;
     }
 
-    public boolean hasSteps() {
-        return steps.size() > 1;
+    public void clearSteps() {
+        steps.clear();
     }
 
     public List<MaintenanceStep> getSteps() {
-        return steps.subList(1, steps.size());
+        return steps;
     }
 
     @Override
     public Iterator<MaintenanceStep> iterator() {
-        return steps.subList(1, steps.size()).iterator();
+        return steps.iterator();
     }
 
     public String getJobName() {
-        return getBaseStep().getName();
+        return baseStep.getName();
     }
 
     public int getJobNumber() {
-        return getBaseStep().getJobNumber();
+        return baseStep.getJobNumber();
     }
 
     public MaintenanceStep.JobType getJobType() {
-        return getBaseStep().getJobType();
+        return baseStep.getJobType();
     }
 
     public PropertyMap getJobParameters() {
-        return getBaseStep().getConfiguration().getMap("parameters");
+        return baseStep.getConfiguration().getMap("parameters");
     }
 
     public StorageMaintenanceJob addStep(MaintenanceStep step) {
-        steps.add(step);
+        steps.add(step.setJobNumber(baseStep.getJobNumber()).setJobType(baseStep.getJobType())
+            .setStepNumber(steps.size() + 1));
         return this;
     }
 
@@ -105,7 +110,7 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
      * Returns a set of all known node addresses from the time the snapshot was created.
      */
     public Set<String> getClusterSnapshot() {
-        Configuration configuration = getBaseStep().getConfiguration();
+        Configuration configuration = baseStep.getConfiguration();
         PropertyList propertyList = (PropertyList) configuration.get("clusterSnapshot");
 
         if (propertyList == null) {
@@ -122,18 +127,21 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
         return snapshot;
     }
 
-    public void setClusterSnapshot(List<StorageNode> clusterNodes) {
-        MaintenanceStep baseStep = getBaseStep();
+    public Property getClusterSnapshotProperty() {
+        return baseStep.getConfiguration().get("clusterSnapshot");
+    }
+
+    public void setClusterSnapshot(Set<String> clusterSnapshot) {
         Configuration configuration = baseStep.getConfiguration();
 
         if (configuration == null) {
             configuration = new Configuration();
         }
         PropertyList snapshot = new PropertyList("clusterSnapshot");
-        for (StorageNode node : clusterNodes) {
+        for (String address : clusterSnapshot) {
             // Eventually we will also store the node's host id and listen address in the
             // StorageNode entity. We will want that info in the snapshot.
-            snapshot.add(new PropertySimple("address", node.getAddress()));
+            snapshot.add(new PropertySimple("address", address));
         }
         configuration.put(snapshot);
         baseStep.setConfiguration(configuration);

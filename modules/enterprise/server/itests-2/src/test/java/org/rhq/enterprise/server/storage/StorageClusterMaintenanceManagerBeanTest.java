@@ -13,7 +13,6 @@ import javax.transaction.SystemException;
 
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
@@ -57,22 +56,14 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
             public StepCalculator lookup(MaintenanceStep.JobType jobType) {
                 return new TestStepCalculator() {
                     @Override
-                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job, List<StorageNode> cluster) {
+                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {
                         MaintenanceStep step1 = new MaintenanceStep()
-                            .setJobNumber(job.getJobNumber())
-                            .setJobType(job.getJobType())
                             .setName(step1Name)
-                            .setDescription(step1Name)
-                            .setStepNumber(1);
+                            .setDescription(step1Name);
                         MaintenanceStep step2 = new MaintenanceStep()
-                            .setJobNumber(job.getJobNumber())
-                            .setJobType(job.getJobType())
                             .setName(step2Name)
-                            .setDescription(step2Name)
-                            .setStepNumber(2);
+                            .setDescription(step2Name);
 
-                        entityManager.persist(step1);
-                        entityManager.persist(step2);
                         job.addStep(step1);
                         job.addStep(step2);
 
@@ -119,22 +110,14 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
             public StepCalculator lookup(MaintenanceStep.JobType jobType) {
                 return new TestStepCalculator() {
                     @Override
-                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job, List<StorageNode> cluster) {
+                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {
                         MaintenanceStep step1 = new MaintenanceStep()
-                            .setJobNumber(job.getJobNumber())
-                            .setJobType(job.getJobType())
                             .setName("Job " + jobCount.get() + " Step 1")
-                            .setDescription("Job " + jobCount.get() + " Step 1")
-                            .setStepNumber(1);
+                            .setDescription("Job " + jobCount.get() + " Step 1");
                         MaintenanceStep step2 = new MaintenanceStep()
-                            .setJobNumber(job.getJobNumber())
-                            .setJobType(job.getJobType())
                             .setName("Job " + jobCount.get() + " Step 2")
-                            .setDescription("Job " + jobCount.get() + " Step 2")
-                            .setStepNumber(2);
+                            .setDescription("Job " + jobCount.get() + " Step 2");
                         jobCount.incrementAndGet();
-                        entityManager.persist(step1);
-                        entityManager.persist(step2);
                         job.addStep(step1);
                         job.addStep(step2);
 
@@ -187,47 +170,31 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
             public StepCalculator lookup(MaintenanceStep.JobType jobType) {
                 return new TestStepCalculator() {
                     @Override
-                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job, List<StorageNode> cluster) {
+                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {
                         List<MaintenanceStep> steps;
                         if (job.getBaseStep().getName().equals("FailedJob")) {
                             steps = asList(
                                 new MaintenanceStep()
-                                    .setJobNumber(job.getJobNumber())
-                                    .setJobType(job.getJobType())
                                     .setName("FailedJobStep1")
-                                    .setDescription("FailedJobStep1")
-                                    .setStepNumber(1),
+                                    .setDescription("FailedJobStep1"),
                                 new MaintenanceStep()
-                                    .setJobNumber(job.getJobNumber())
-                                    .setJobType(job.getJobType())
                                     .setName("FailedJobStep2")
-                                    .setDescription("FailedJobStep2")
-                                    .setStepNumber(2),
+                                    .setDescription("FailedJobStep2"),
                                 new MaintenanceStep()
-                                    .setJobNumber(job.getJobNumber())
-                                    .setJobType(job.getJobType())
                                     .setName("FailedJobStep3")
                                     .setDescription("FailedJobStep3")
-                                    .setStepNumber(3)
                             );
                         } else {
                             steps = asList(
                                 new MaintenanceStep()
-                                    .setJobNumber(job.getJobNumber())
-                                    .setJobType(job.getJobType())
                                     .setName("SuccessfulJobStep1")
-                                    .setDescription("SuccessfulJobStep1")
-                                    .setStepNumber(1),
+                                    .setDescription("SuccessfulJobStep1"),
                                 new MaintenanceStep()
-                                    .setJobNumber(job.getJobNumber())
-                                    .setJobType(job.getJobType())
                                     .setName("SuccessfulJobStep2")
                                     .setDescription("SuccessfulJobStep2")
-                                    .setStepNumber(2)
                             );
                         }
                         for (MaintenanceStep step : steps) {
-                            entityManager.persist(step);
                             job.addStep(step);
                         }
                         return job;
@@ -295,32 +262,22 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
             public StepCalculator lookup(MaintenanceStep.JobType jobType) {
                 return new TestStepCalculator() {
                     @Override
-                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job, List<StorageNode> cluster) {
+                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {
                         if (stepsCalculated.get()) {
                             return job;
                         }
                         List<MaintenanceStep> steps = asList(
                             new MaintenanceStep()
-                                .setJobNumber(job.getJobNumber())
-                                .setJobType(job.getJobType())
                                 .setName("FailedJobStep1")
-                                .setDescription("FailedJobStep1")
-                                .setStepNumber(1),
+                                .setDescription("FailedJobStep1"),
                             new MaintenanceStep()
-                                .setJobNumber(job.getJobNumber())
-                                .setJobType(job.getJobType())
                                 .setName("FailedJobStep2")
-                                .setDescription("FailedJobStep2")
-                                .setStepNumber(2),
+                                .setDescription("FailedJobStep2"),
                             new MaintenanceStep()
-                                .setJobNumber(job.getJobNumber())
-                                .setJobType(job.getJobType())
                                 .setName("FailedJobStep3")
                                 .setDescription("FailedJobStep3")
-                                .setStepNumber(3)
                         );
                         for (MaintenanceStep step : steps) {
-                            entityManager.persist(step);
                             job.addStep(step);
                         }
                         stepsCalculated.set(true);

@@ -83,8 +83,6 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
 
         MaintenanceStep baseStep = job.getBaseStep();
 
-        log.info("Adding " + job + " to maintenance job queue");
-
         entityManager.persist(baseStep);
         baseStep.setJobNumber(baseStep.getId());
 
@@ -92,6 +90,8 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
             step.setJobNumber(job.getJobNumber());
             entityManager.persist(step);
         }
+
+        log.info("Adding " + job + " to maintenance job queue");
     }
 
     @Override
@@ -249,6 +249,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         log.info("Executing " + job);
         for (MaintenanceStep step : job) {
             MaintenanceStepRunner stepRunner = stepRunnerFactory.newStepRunner(step);
+            stepRunner.setClusterSnapshot(job.getClusterSnapshot());
             boolean succeeded = executeStep(maintenanceManager.reloadStep(step.getId()), stepRunner);
             if (succeeded) {
                 maintenanceManager.deleteStep(step.getId());

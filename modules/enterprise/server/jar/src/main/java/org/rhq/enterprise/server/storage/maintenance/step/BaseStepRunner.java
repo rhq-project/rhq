@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.storage.maintenance.step;
 
+import java.util.Set;
+
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -10,6 +12,8 @@ import org.rhq.enterprise.server.storage.StorageClientManager;
  */
 public abstract class BaseStepRunner implements MaintenanceStepRunner {
 
+    protected Set<String> clusterSnapshot;
+
     protected StorageNodeManagerLocal storageNodeManager;
 
     protected OperationManagerLocal operationManager;
@@ -17,6 +21,11 @@ public abstract class BaseStepRunner implements MaintenanceStepRunner {
     protected SubjectManagerLocal subjectManager;
 
     protected StorageClientManager storageClientManager;
+
+    @Override
+    public void setClusterSnapshot(Set<String> clusterSnapshot) {
+        this.clusterSnapshot = clusterSnapshot;
+    }
 
     @Override
     public void setStorageNodeManager(StorageNodeManagerLocal storageNodeManager) {

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.storage.maintenance.step;
 
+import java.util.Set;
+
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
@@ -29,6 +31,8 @@ import org.rhq.enterprise.server.storage.StorageClientManager;
  *
  */
 public interface MaintenanceStepRunner {
+
+    void setClusterSnapshot(Set<String> clusterSnapshot);
 
     void execute(MaintenanceStep maintenanceStep) throws StepFailureException;
 

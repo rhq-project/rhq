@@ -35,8 +35,10 @@ public abstract class ResourceOperationStepRunner extends BaseStepRunner {
         PropertyMap params = (PropertyMap) configuration.get("parameters");
         Configuration operationParams = new Configuration();
 
-        for (String name : params.getMap().keySet()) {
-            operationParams.put(params.get(name).deepCopy(false));
+        if (params != null) {
+            for (String name : params.getMap().keySet()) {
+                operationParams.put(params.get(name).deepCopy(false));
+            }
         }
 
         if (log.isDebugEnabled()) {

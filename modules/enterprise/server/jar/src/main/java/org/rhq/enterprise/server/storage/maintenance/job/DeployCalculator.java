@@ -82,20 +82,7 @@ public class DeployCalculator implements StepCalculator {
         job.addStep(bootstrap);
 
         SchemaChanges schemaChanges = determineSchemaChanges(clusterSnapshot.size(), clusterSnapshot.size() + 1);
-        if (schemaChanges.replicationFactor != null) {
-            Configuration configuration = new Configuration();
-            configuration.put(new PropertySimple("replicationFactor", schemaChanges.replicationFactor));
-            if (schemaChanges.gcGraceSeconds != null) {
-                configuration.put(new PropertySimple("gcGraceSeconds", schemaChanges.gcGraceSeconds));
-            }
-
-            MaintenanceStep updateSchema = new MaintenanceStep()
-                .setName(UpdateSchema.class.getName())
-                .setDescription("Update Storage Cluster with new replication_factor of " +
-                    schemaChanges.replicationFactor)
-                .setConfiguration(configuration);
-            job.addStep(updateSchema);
-        }
+        applySchemaChanges(job, schemaChanges);
 
         updateStatus = new MaintenanceStep()
             .setName(UpdateStorageNodeStatus.class.getName())
@@ -115,12 +102,12 @@ public class DeployCalculator implements StepCalculator {
                 .setConfiguration(new Configuration.Builder()
                     .addSimple("targetAddress", address)
                     .openMap("parameters")
-                        .addSimple("runRepair", schemaChanges.replicationFactor != null)
-                        .addSimple("newNodeAddress", newNodeAddress)
-                        .addSimple("updateSeedsList", true)
-                        .openList("seedsList", "seedsList")
-                            .addSimples(job.getClusterSnapshot().toArray(new String[job.getClusterSnapshot().size()]))
-                        .closeList()
+                    .addSimple("runRepair", schemaChanges.replicationFactor != null)
+                    .addSimple("newNodeAddress", newNodeAddress)
+                    .addSimple("updateSeedsList", true)
+                    .openList("seedsList", "seedsList")
+                    .addSimples(job.getClusterSnapshot().toArray(new String[job.getClusterSnapshot().size()]))
+                    .closeList()
                     .closeMap()
                     .build());
             job.addStep(addMaintenance);
@@ -139,12 +126,29 @@ public class DeployCalculator implements StepCalculator {
         return job;
     }
 
+    protected void applySchemaChanges(StorageMaintenanceJob job, SchemaChanges schemaChanges) {
+        if (schemaChanges.replicationFactor != null) {
+            Configuration configuration = new Configuration();
+            configuration.put(new PropertySimple("replicationFactor", schemaChanges.replicationFactor));
+            if (schemaChanges.gcGraceSeconds != null) {
+                configuration.put(new PropertySimple("gcGraceSeconds", schemaChanges.gcGraceSeconds));
+            }
+
+            MaintenanceStep updateSchema = new MaintenanceStep()
+                .setName(UpdateSchema.class.getName())
+                .setDescription("Update Storage Cluster with new replication_factor of " +
+                    schemaChanges.replicationFactor)
+                .setConfiguration(configuration);
+            job.addStep(updateSchema);
+        }
+    }
+
     @Override
     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob originalJob, MaintenanceStep failedStep) {
         return null;
     }
 
-    private SchemaChanges determineSchemaChanges(int oldClusterSize, int newClusterSize) {
+    protected SchemaChanges determineSchemaChanges(int oldClusterSize, int newClusterSize) {
         SchemaChanges changes = new SchemaChanges();
 
         if (oldClusterSize == 0) {
@@ -184,7 +188,7 @@ public class DeployCalculator implements StepCalculator {
         return changes;
     }
 
-    private static class SchemaChanges {
+    protected static class SchemaChanges {
         public Integer replicationFactor;
         public Integer gcGraceSeconds;
     }

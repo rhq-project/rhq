@@ -109,6 +109,10 @@ public interface StorageNodeManagerLocal extends StorageNodeManagerRemote {
 
     StorageNode createStorageNode(Resource resource, StorageClusterSettings clusterSettings);
 
+    void deleteStorageNode(String address);
+
+    void detachFromResource(int storageNodeId);
+
     /**
      * Resets all StorageNode errorMessage and failedOperation values to null.
      * Done in new trans to ensure ensuing logic sees the reset and avoids locking.

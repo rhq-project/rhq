@@ -2364,7 +2364,7 @@
                 </schema-directSQL>
             </schemaSpec>
 
-  	        <schemaSpec version="2.149">
+            <schemaSpec version="2.149">
               <schema-addColumn   table="RHQ_RESOURCE_TYPE" column="SUBCATEGORY" columnType="VARCHAR2" precision="4000" />
               <schema-javaTask className="SubcategoryUpgradeTask" />
               <schema-deleteColumn table="RHQ_RESOURCE_TYPE" column="SUBCATEGORY_ID" />
@@ -2519,6 +2519,35 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+
+            <schemaSpec version="2.158">
+                <schema-directSQL>
+                    <statement desc="Create RHQ_BUNDLE_TYPE_TARGET_MAP mapping table">
+                        CREATE TABLE rhq_bundle_type_target_map (
+                            bundle_type_id INT NOT NULL REFERENCES rhq_bundle_type,
+                            resource_type_id INT NOT NULL REFERENCES rhq_resource_type,
+                            CONSTRAINT rhq_bundle_type_target_map_pk PRIMARY KEY (bundle_type_id, resource_type_id)
+                        )
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.159">
+                <schema-directSQL ignoreError="true">
+                    <statement desc="Repair RHQ_MEASUREMENT_BLINE by removing duplicates prior to creating the unique index.">
+                        DELETE FROM rhq_measurement_bline WHERE (id, schedule_id) NOT IN
+                           ( SELECT id, schedule_id FROM
+                               ( SELECT MAX(id) id, schedule_id FROM rhq_measurement_bline GROUP BY schedule_id) tokeep)
+                    </statement>
+                    <statement desc="Dropping non-unique index RHQ_MEAS_BASELINE_SID_IDX">
+                        DROP INDEX RHQ_MEAS_BASELINE_SID_IDX
+                    </statement>
+                    <statement desc="Recreating RHQ_MEAS_BASELINE_SID_IDX as unique index">
+                        CREATE UNIQUE INDEX RHQ_MEAS_BASELINE_SID_IDX ON RHQ_MEASUREMENT_BLINE ( SCHEDULE_ID )
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

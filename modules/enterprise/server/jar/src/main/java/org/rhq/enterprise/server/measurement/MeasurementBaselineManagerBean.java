@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,11 +18,13 @@
  */
 package org.rhq.enterprise.server.measurement;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -34,16 +36,19 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.exception.ConstraintViolationException;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -188,9 +193,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
              * In any event, an appropriate chunking solution needs to be found, and that partitioning strategy
              * needs to replace the limits in the query today.
              */
-            List<Integer> schedulesWithoutBaselines = measurementBaselineManager.getSchedulesWithoutBaselines();
-
-            List<Integer> accumulator = new ArrayList<Integer>();
+            Set<Integer> schedulesWithoutBaselines = measurementBaselineManager.getSchedulesWithoutBaselines();
+            Set<Integer> accumulator = new HashSet<Integer>();
             for (Integer value : schedulesWithoutBaselines) {
                 accumulator.add(value);
                 if (accumulator.size() == BASELINE_PROCESSING_LIMIT) {
@@ -226,16 +230,18 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     }
 
     @SuppressWarnings("unchecked")
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public List<Integer> getSchedulesWithoutBaselines() {
+    public Set<Integer> getSchedulesWithoutBaselines() {
         try {
             DatabaseType databaseType = DatabaseTypeFactory.getDefaultDatabaseType();
-            final String sql = "SELECT s.id FROM rhq_measurement_sched s INNER JOIN rhq_measurement_def d ON s.definition = d.id "
-                + "LEFT JOIN rhq_measurement_bline b ON s.id = b.schedule_id WHERE s.enabled = "
-                + databaseType.getBooleanValue(true) + " AND b.schedule_id IS NULL AND d.numeric_type = 0";
+            final String sql = "" //
+                + "SELECT DISTINCT s.id " //
+                + "  FROM rhq_measurement_sched s JOIN rhq_measurement_def d ON s.definition = d.id " //
+                + " WHERE s.enabled = " + databaseType.getBooleanValue(true) //
+                + "   AND d.numeric_type = 0 " //
+                + "   AND NOT EXISTS (SELECT * FROM rhq_measurement_bline b WHERE b.schedule_id = s.id)";
             Query query = this.entityManager.createNativeQuery(sql);
             List results = query.getResultList();
-            List<Integer> scheduleIds = new ArrayList<Integer>();
+            Set<Integer> scheduleIds = new HashSet<Integer>();
             for (Object object : results) {
                 scheduleIds.add(databaseType.getInteger(object));
             }
@@ -246,15 +252,16 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         }
     }
 
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void calculateBaselines(List<Integer> schedules, long olderThan, long amountOfData) {
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void calculateBaselines(Set<Integer> scheduleIds, long olderThan, long amountOfData) {
         long endTime = olderThan;
         long startTime = endTime - amountOfData;
 
-        log.debug("Computing baselines for " + schedules.size() + " schedules");
+        log.debug("Computing baselines for " + scheduleIds.size() + " schedules");
         MetricsBaselineCalculator baselineCalculator = new MetricsBaselineCalculator(sessionManager.getMetricsDAO());
         long calcStartTime = System.currentTimeMillis();
-        List<MeasurementBaseline> results = baselineCalculator.calculateBaselines(schedules, startTime, endTime);
+        Map<Integer, MeasurementBaseline> results = baselineCalculator.calculateBaselines(scheduleIds, startTime,
+            endTime);
         long calcEndTime = System.currentTimeMillis();
 
         if (log.isDebugEnabled()) {
@@ -265,7 +272,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         log.debug("Persisting baselines calculations");
         long saveStartTime = System.currentTimeMillis();
 
-        measurementBaselineManager.saveNewBaselines(results);
+        saveNewBaselines(results);
 
         long saveEndTime = System.currentTimeMillis();
         if (log.isDebugEnabled()) {
@@ -274,14 +281,56 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         }
     }
 
+    private void saveNewBaselines(Map<Integer, MeasurementBaseline> baselines) {
+        // Chunk the work to solve both Oracle limits and Tx Size
+        final int CHUNK = 200;
+        Set<Integer> scheduleIds = new HashSet<Integer>(CHUNK);
+        for (Integer scheduleId : baselines.keySet()) {
+            scheduleIds.add(scheduleId);
+            if (scheduleIds.size() == CHUNK) {
+                saveNewBaselinesChunk(scheduleIds, baselines);
+                scheduleIds.clear();
+            }
+        }
+        if (!scheduleIds.isEmpty()) {
+            saveNewBaselinesChunk(scheduleIds, baselines);
+        }
+    }
+
+    // We trap unique constraint exceptions because we can't 100% ensure that the quartz job wont run
+    // simultaneously (see BZ 1125439).  If we're storing a duplicate it likely means that the baselines
+    // have already been updated.  Even if we fail to store a valid baseline (since we store more than 1 in a Tx) the
+    // situation should be rectified on the next run of the job.
+    private void saveNewBaselinesChunk(Set<Integer> scheduleIds, Map<Integer, MeasurementBaseline> baselines) {
+        try {
+            measurementBaselineManager.saveNewBaselines(scheduleIds, baselines);
+        } catch (RuntimeException e) {
+            for (Throwable t = e, cause = t.getCause(); (null != cause && t != cause); t = cause, cause = t.getCause()) {
+                if (cause instanceof ConstraintViolationException) {
+                    log.warn(
+                        "Failed to store baselines for scheduleIds: "
+                            + scheduleIds
+                            + ".  This is expected in certain situations and can be ignored if the problem does not persist.",
+                        log.isDebugEnabled() ? e : null);
+                    return;
+                }
+            }
+            throw e;
+        }
+    }
+
     @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void saveNewBaselines(List<MeasurementBaseline> baselines) {
-        for (MeasurementBaseline baseline : baselines) {
-            MeasurementSchedule schedule = new MeasurementSchedule();
-            schedule.setId(baseline.getScheduleId());
-            baseline.setSchedule(schedule);
-            this.entityManager.merge(baseline);
+    public void saveNewBaselines(Set<Integer> scheduleIds, Map<Integer, MeasurementBaseline> baselines) {
+        MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+        criteria.addFilterIds(scheduleIds.toArray(new Integer[scheduleIds.size()]));
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
+        List<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByCriteria(
+            subjectManager.getOverlord(), criteria);
+        for (MeasurementSchedule schedule : schedules) {
+            MeasurementBaseline baseline = baselines.get(schedule.getId());
+            baseline.setScheduleId(schedule.getId());
+            baseline.setSchedule(schedule); // this sets the reverse, owning relationship as well
+            entityManager.persist(baseline);
         }
     }
 

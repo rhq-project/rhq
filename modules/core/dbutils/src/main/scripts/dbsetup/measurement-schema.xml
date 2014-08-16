@@ -71,7 +71,7 @@
       <index name="RHQ_MEAS_BASELINE_CTIME_IDX">
          <field ref="BL_COMPUTE_TIME"/>
       </index>
-      <index name="RHQ_MEAS_BASELINE_SID_IDX">
+      <index name="RHQ_MEAS_BASELINE_SID_IDX" unique="true">
          <field ref="SCHEDULE_ID"/>
       </index>
    </table>

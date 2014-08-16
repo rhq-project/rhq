@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -63,7 +63,7 @@ public class SchedulerBean implements SchedulerLocal {
      */
     private SchedulerServiceMBean getSchedulerService() throws SchedulerException {
         try {
-            return (SchedulerServiceMBean) MBeanServerInvocationHandler.newProxyInstance(
+            return MBeanServerInvocationHandler.newProxyInstance(
                 ManagementFactory.getPlatformMBeanServer(), SCHEDULER_MBEAN_NAME, SchedulerServiceMBean.class, false);
         } catch (Exception e) {
             throw new SchedulerException("Failed to get a proxy to the scheduler service MBean", e);
@@ -107,10 +107,10 @@ public class SchedulerBean implements SchedulerLocal {
      * @see SchedulerLocal#scheduleSimpleCronJob(Class, boolean, boolean, String)
      */
     public void scheduleSimpleCronJob(Class<? extends Job> jobClass, boolean rescheduleIfExists, boolean isVolatile,
-        String cronString) throws SchedulerException {
+        String cronString, Integer misfireInstruction) throws SchedulerException {
 
         new EnhancedSchedulerImpl(getSchedulerService()).scheduleSimpleCronJob(jobClass, rescheduleIfExists,
-            isVolatile, cronString);
+            isVolatile, cronString, misfireInstruction);
         return;
     }
 

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -95,6 +95,13 @@ public class EnhancedSchedulerImpl implements EnhancedScheduler {
     public void scheduleCronJob(String name, String groupName, JobDataMap jobData, Class<? extends Job> jobClass,
         boolean rescheduleIfExists, boolean isVolatile, String cronString) throws SchedulerException {
 
+        scheduleCronJob(name, groupName, jobData, jobClass, rescheduleIfExists, isVolatile, cronString, null);
+    }
+
+    private void scheduleCronJob(String name, String groupName, JobDataMap jobData, Class<? extends Job> jobClass,
+        boolean rescheduleIfExists, boolean isVolatile, String cronString, Integer misfireInstruction)
+        throws SchedulerException {
+
         // See if the job is already scheduled and if so,
         // either remove it so we can reschedule it or keep it (based on rescheduleIfExists).
         JobDetail existingJob = getExistingJob(name, groupName, rescheduleIfExists);
@@ -111,7 +118,7 @@ public class EnhancedSchedulerImpl implements EnhancedScheduler {
         }
 
         JobDetail job = createJobDetail(name, groupName, jobClass, isVolatile, jobData);
-        CronTrigger trigger = createCronTrigger(name, groupName, isVolatile, cronString);
+        CronTrigger trigger = createCronTrigger(name, groupName, isVolatile, cronString, misfireInstruction);
         Date next = this.scheduler.scheduleJob(job, trigger);
 
         log.info("Scheduled cron job [" + name + ':' + groupName + "] to fire next at [" + next
@@ -135,10 +142,10 @@ public class EnhancedSchedulerImpl implements EnhancedScheduler {
      * @see EnhancedScheduler#scheduleSimpleCronJob(Class, boolean, boolean, String)
      */
     public void scheduleSimpleCronJob(Class<? extends Job> jobClass, boolean rescheduleIfExists, boolean isVolatile,
-        String cronString) throws SchedulerException {
+        String cronString, Integer misfireInstruction) throws SchedulerException {
 
         scheduleCronJob(jobClass.getName(), jobClass.getName(), null, jobClass, rescheduleIfExists, isVolatile,
-            cronString);
+            cronString, misfireInstruction);
         return;
     }
 
@@ -487,11 +494,14 @@ public class EnhancedSchedulerImpl implements EnhancedScheduler {
         return trigger;
     }
 
-    private CronTrigger createCronTrigger(String name, String groupName, boolean isVolatile, String cronString)
-        throws SchedulerException {
+    private CronTrigger createCronTrigger(String name, String groupName, boolean isVolatile, String cronString,
+        Integer misfireInstruction) throws SchedulerException {
         CronTrigger trigger;
         try {
             trigger = new CronTrigger(name, groupName, name, groupName, cronString);
+            if (null != misfireInstruction) {
+                trigger.setMisfireInstruction(misfireInstruction.intValue());
+            }
         } catch (ParseException e) {
             throw new SchedulerException(e);
         }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -434,11 +435,13 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
         platform = new Resource("platform1", "testAutoBaseline Platform One", platformType);
         platform.setUuid("" + new Random().nextInt());
+        platform.setInventoryStatus(InventoryStatus.COMMITTED);
         em.persist(platform);
         platform.setAgent(agent);
 
         platform2 = new Resource("platform2", "testAutoBaseline Platform Two", platformType);
         platform2.setUuid("" + new Random().nextInt());
+        platform2.setInventoryStatus(InventoryStatus.COMMITTED);
         // deleteResource removes the agent, so we can't have two direct platforms for it, make one a child of the other
         platform.addChildResource(platform2);
         em.persist(platform2);

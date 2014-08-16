@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.scheduler.jobs;
 
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Properties;
 
@@ -29,7 +28,6 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.SimpleTrigger;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -39,21 +37,19 @@ import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.TimingVoodoo;
-import org.rhq.server.metrics.MetricsServer;
-import org.rhq.server.metrics.domain.AggregateNumericMetric;
 
 /**
- * This implements {@link StatefulJob} (as opposed to {@link Job}) because we do not need nor want this job triggered
- * concurrently. That is, we don't want multiple data purge jobs performing the data purge at the same time.
+ * This implements {@link org.quartz.StatefulJob} (as opposed to {@link org.quartz.Job}) because we do not need nor want
+ * this job triggered concurrently. That is, we don't want multiple data purge jobs performing the data purge at the
+ * same time.
+ *
+ * Note, some of the work previously performed in this job has been moved to {@link DataCalcJob}.
  */
 public class DataPurgeJob extends AbstractStatefulJob {
     private static final Log LOG = LogFactory.getLog(DataPurgeJob.class);
@@ -88,33 +84,13 @@ public class DataPurgeJob extends AbstractStatefulJob {
         try {
             Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
                 LookupUtil.getSubjectManager().getOverlord());
-            Iterable<AggregateNumericMetric> oneHourAggregates = compressMeasurementData();
             purgeEverything(systemConfig);
             performDatabaseMaintenance(LookupUtil.getSystemManager(), systemConfig);
-            calculateAutoBaselines(LookupUtil.getMeasurementBaselineManager());
-            calculateOOBs(oneHourAggregates);
         } catch (Exception e) {
             LOG.error("Data Purge Job FAILED TO COMPLETE. Cause: " + e);
         } finally {
             long duration = System.currentTimeMillis() - timeStart;
             LOG.info("Data Purge Job FINISHED [" + duration + "]ms");
-        }
-    }
-
-    private Iterable<AggregateNumericMetric> compressMeasurementData() {
-        long timeStart = System.currentTimeMillis();
-        LOG.info("Measurement data compression starting at " + new Date(timeStart));
-
-        try {
-            StorageClientManager storageClientManager = LookupUtil.getStorageClientManager();
-            MetricsServer metricsServer = storageClientManager.getMetricsServer();
-            return metricsServer.calculateAggregates();
-        } catch (Exception e) {
-            LOG.error("Failed to compress measurement data. Cause: " + e, e);
-            return Collections.emptyList();
-        } finally {
-            long duration = System.currentTimeMillis() - timeStart;
-            LOG.info("Measurement data compression completed in [" + duration + "]ms");
         }
     }
 
@@ -369,45 +345,5 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
 
         return;
-    }
-
-    private void calculateAutoBaselines(MeasurementBaselineManagerLocal measurementBaselineManager) {
-        long timeStart = System.currentTimeMillis();
-        LOG.info("Auto-calculation of baselines starting at " + new Date(timeStart));
-
-        try {
-            measurementBaselineManager.calculateAutoBaselines();
-        } catch (Exception e) {
-            LOG.error("Failed to auto-calculate baselines. Cause: " + e, e);
-        } finally {
-            long duration = System.currentTimeMillis() - timeStart;
-            LOG.info("Auto-calculation of baselines completed in [" + duration + "]ms");
-        }
-    }
-
-    /**
-     * Calculate the OOB values for the last hour.
-     * This also removes outdated ones due to recalculated baselines.
-     */
-    public void calculateOOBs(Iterable<AggregateNumericMetric> oneHourAggregates) {
-
-        long timeStart = System.currentTimeMillis();
-        LOG.info("Auto-calculation of OOBs starting");
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        MeasurementOOBManagerLocal manager = LookupUtil.getOOBManager();
-        // purge oobs whose baseline just got recalculated
-        // For now just assume that our system is fast, so a cutoff of 30mins is ok,
-        // as the calculate baseline job runs hourly
-        long cutOff = System.currentTimeMillis() - (30L * 60L * 1000L);
-        manager.removeOutdatedOOBs(overlord, cutOff);
-
-        // clean up
-        LookupUtil.getSystemManager().vacuum(overlord, new String[] { "RHQ_MEASUREMENT_OOB" });
-
-        // Now caclulate the fresh OOBs
-        manager.computeOOBsForLastHour(overlord, oneHourAggregates);
-
-        long duration = System.currentTimeMillis() - timeStart;
-        LOG.info("Auto-calculation of OOBs completed in [" + duration + "]ms");
     }
 }

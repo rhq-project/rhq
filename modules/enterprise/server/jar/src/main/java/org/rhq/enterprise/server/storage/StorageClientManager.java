@@ -81,6 +81,7 @@ import org.rhq.server.metrics.MetricsConstants;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.StorageSession;
+import org.rhq.server.metrics.SystemDAO;
 
 /**
  * @author John Sanda
@@ -116,6 +117,7 @@ public class StorageClientManager implements StorageClientManagerMBean{
     private MetricsConfiguration metricsConfiguration;
     private MetricsDAO metricsDAO;
     private MetricsServer metricsServer;
+    private SystemDAO systemDAO;
     private boolean initialized;
     private StorageClusterMonitor storageClusterMonitor;
 
@@ -182,6 +184,8 @@ public class StorageClientManager implements StorageClientManagerMBean{
 
             metricsConfiguration = new MetricsConfiguration();
             metricsDAO = new MetricsDAO(session, metricsConfiguration);
+
+            systemDAO = new SystemDAO(session);
 
             initMetricsServer();
             JMXUtil.registerMBean(this, OBJECT_NAME);
@@ -305,6 +309,11 @@ public class StorageClientManager implements StorageClientManagerMBean{
         session = null;
         JMXUtil.unregisterMBeanQuietly(OBJECT_NAME);
         initialized = false;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public SystemDAO getSystemDAO() {
+        return systemDAO;
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)

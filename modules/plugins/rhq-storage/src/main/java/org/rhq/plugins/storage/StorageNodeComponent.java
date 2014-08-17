@@ -60,6 +60,7 @@ import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.cassandra.util.RepairService;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -639,20 +640,54 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     }
 
     private OperationResult repair() {
-        KeyspaceService keyspaceService = new KeyspaceService(getEmsConnection());
-        OperationResult result = new OperationResult();
-        Configuration resultConfig = result.getComplexResults();
-        PropertyList resultsList = new PropertyList("results");
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+        String url = pluginConfig.getSimpleValue("connectorAddress");
+        RepairService repairService = new RepairService(url);
 
-        OpResult opResult = repairKeyspace(keyspaceService, RHQ_KEYSPACE);
-        resultsList.add(toPropertyMap(opResult));
+        return repairService.repairPrimaryRange("rhq", "six_hour_metrics");
 
-        opResult = repairKeyspace(keyspaceService, SYSTEM_AUTH_KEYSPACE);
-        resultsList.add(toPropertyMap(opResult));
+//        OperationResult result = new OperationResult();
+//        try {
+//            Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+//            String url = pluginConfig.getSimpleValue("connectorAddress");
+//            JMXServiceURL serviceURL = new JMXServiceURL(url);
+//            JMXConnector connector = JMXConnectorFactory.connect(serviceURL, null);
+//
+//            MBeanServerConnection serverConnection = connector.getMBeanServerConnection();
+//            ObjectName storageService = new ObjectName("org.apache.cassandra.db:type=StorageService");
+//
+//            NotificationListener listener = new NotificationListener() {
+//                @Override
+//                public void handleNotification(Notification notification, Object handback) {
+//                    log.info(notification.getMessage());
+//                }
+//            };
+//
+//            serverConnection.addNotificationListener(storageService, listener, null, null);
+//            serverConnection.invoke(storageService, "forceTableRepairPrimaryRange", new Object[] {"rhq", false, true,
+//                new String[] {"six_hour_metrics"}}, new String[] {String.class.getName(), boolean.class.getName(),
+//                boolean.class.getName(), String[].class.getName()});
+//            serverConnection.removeNotificationListener(storageService, listener);
+//        } catch (Exception e) {
+//            result.setErrorMessage("Repair failed: " + ThrowableUtil.getAllMessages(e));
+//        }
+//        return result;
 
-        resultConfig.put(resultsList);
 
-        return result;
+//        KeyspaceService keyspaceService = new KeyspaceService(getEmsConnection());
+//        OperationResult result = new OperationResult();
+//        Configuration resultConfig = result.getComplexResults();
+//        PropertyList resultsList = new PropertyList("results");
+//
+//        OpResult opResult = repairKeyspace(keyspaceService, RHQ_KEYSPACE);
+//        resultsList.add(toPropertyMap(opResult));
+//
+//        opResult = repairKeyspace(keyspaceService, SYSTEM_AUTH_KEYSPACE);
+//        resultsList.add(toPropertyMap(opResult));
+//
+//        resultConfig.put(resultsList);
+//
+//        return result;
     }
 
     private OpResult repairKeyspace(KeyspaceService keyspaceService, String keyspace) {

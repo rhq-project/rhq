@@ -56,12 +56,8 @@
 
     <operation name="repair" description="Runs anti-entropy repair on the primary range of rhq and system_auth keyspaces">
       <results>
-        <c:list-property name="results">
-          <c:map-property name="resultsMap">
-          <c:simple-property name="task" type="string"/>
-          <c:simple-property name="succeeded" type="boolean"/>
-          <c:simple-property name="details" type="string"/>
-        </c:map-property>
+        <c:list-property name="failedSessions">
+          <c:simple-property name="range"/>
         </c:list-property>
       </results>
     </operation>

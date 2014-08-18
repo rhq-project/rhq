@@ -250,13 +250,12 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
             return false;
         }
 
+        ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resource.getId());
         // if we've already checked this resource then just check the children
         if (!rootMemberCheckedSet.contains(resource.getId())) {
 
-            ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resource.getId());
             ConfigurationFacet resourceComponent = null;
             ResourceType resourceType = resource.getResourceType();
-
             boolean debugEnabled = log.isDebugEnabled();
 
             if (resourceContainer != null && resourceContainer.getAvailability() != null
@@ -334,26 +333,25 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
                 }
             }
 
-            // recurse on any child other than a top-level server, which is treated as a separate root resource.
-            boolean isPlatform = null == resource.getParentResource();
-            for (Resource child : inventoryManager.getContainerChildren(resource, resourceContainer)) {
-                if (isPlatform && (ResourceCategory.SERVER == child.getResourceType().getCategory())) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Not Recursing on platform child (top-level-server [" + child.getName() + "])");
-                    }
-                    continue;
+        }
+        // recurse on any child other than a top-level server, which is treated as a separate root resource.
+        boolean isPlatform = null == resource.getParentResource();
+        for (Resource child : inventoryManager.getContainerChildren(resource, resourceContainer)) {
+            if (isPlatform && (ResourceCategory.SERVER == child.getResourceType().getCategory())) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Not Recursing on platform child (top-level-server [" + child.getName() + "])");
                 }
+                continue;
+            }
 
-                try {
-                    if (!checkConfigurations(inventoryManager, child, countTime, stopTime)) {
-                        return false;
-                    }
-                } catch (Exception e) {
-                    log.error("Failed to check Resource configuration for " + child + ".", e);
+            try {
+                if (!checkConfigurations(inventoryManager, child, countTime, stopTime)) {
+                    return false;
                 }
+            } catch (Exception e) {
+                log.error("Failed to check Resource configuration for " + child + ".", e);
             }
         }
-
         return true;
     }
 

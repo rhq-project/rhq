@@ -678,6 +678,12 @@
           <artifactId>shrinkwrap-resolver-depchain</artifactId>
           <type>pom</type>
           <scope>test</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>com.google.guava</groupId>
+              <artifactId>guava</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
 
         <dependency>

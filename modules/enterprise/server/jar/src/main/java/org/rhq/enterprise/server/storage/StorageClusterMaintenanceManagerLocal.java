@@ -33,7 +33,13 @@ public interface StorageClusterMaintenanceManagerLocal {
      */
     void scheduleMaintenance(StorageMaintenanceJob job);
 
+    void scheduleMaintenance(int jobNumer, int failedStepNumber);
+
+    void handleFailedJob(StorageMaintenanceJob job, MaintenanceStep failedStep);
+
     void rescheduleJob(int jobNumber);
+
+    StorageMaintenanceJob loadJob(int jobNumber);
 
     List<StorageMaintenanceJob> loadQueue();
 

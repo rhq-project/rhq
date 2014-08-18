@@ -20,6 +20,7 @@
 package org.rhq.cassandra.ccm.arquillian;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 
 import org.jboss.arquillian.config.descriptor.api.ArquillianDescriptor;
@@ -129,6 +130,10 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                             options.setHeapSize("256M");
                             options.setHeapNewSize("64M");
                             options.setStartRpc(true);
+
+                            String nodesString = System.getProperty("rhq.storage.nodes", "127.0.0.1");
+                            nodes = nodesString.split(",");
+                            options.setNumNodes(nodes.length);
 
                             ccm = new CassandraClusterManager(options);
                             ccm.createCluster();

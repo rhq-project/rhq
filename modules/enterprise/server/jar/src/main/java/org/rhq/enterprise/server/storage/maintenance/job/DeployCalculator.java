@@ -3,10 +3,12 @@ package org.rhq.enterprise.server.storage.maintenance.job;
 import static org.rhq.core.domain.storage.MaintenanceStep.JobType.FAILED_ANNOUNCE;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.google.common.collect.ImmutableSet;
 
 import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
@@ -49,6 +51,10 @@ public class DeployCalculator implements StepCalculator {
 
     @Override
     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {
+        if (job.getJobType() == FAILED_ANNOUNCE) {
+            addFailedAnnounceSteps(job);
+        }
+
         Set<String> clusterSnapshot = job.getClusterSnapshot();
         PropertyMap parametersMap = job.getJobParameters();
         String newNodeAddress = parametersMap.getSimple("address").getStringValue();
@@ -137,6 +143,25 @@ public class DeployCalculator implements StepCalculator {
         return job;
     }
 
+    private void addFailedAnnounceSteps(StorageMaintenanceJob job) {
+        Set<String> clusterSnapshot = job.getClusterSnapshot();
+        PropertyMap parametersMap = job.getJobParameters();
+        String targetAddress = parametersMap.getSimple("address").getStringValue();
+        String newNodeAddress = parametersMap.getSimple("newNodeAddress").getStringValue();
+
+        job.addStep(new MaintenanceStep()
+            .setName(AnnounceStorageNode.class.getName())
+            .setDescription("Announce " + newNodeAddress + " to " + targetAddress)
+            .setConfiguration(new Configuration.Builder()
+                .addSimple("targetAddress", targetAddress)
+                .openMap("parameters")
+                .addSimple("address", newNodeAddress)
+                .closeMap()
+                .build()));
+        addRepairSteps(job, SystemDAO.Keyspace.SYSTEM_AUTH, ImmutableSet.of(targetAddress));
+        addRepairSteps(job, SystemDAO.Keyspace.RHQ, ImmutableSet.of(targetAddress));
+    }
+
     protected void addRepairSteps(StorageMaintenanceJob job, SystemDAO.Keyspace keyspace, Set<String> addresses) {
         ResultSet resultSet = systemDAO.findTables(keyspace);
         for (Row row : resultSet) {
@@ -221,7 +246,7 @@ public class DeployCalculator implements StepCalculator {
     @Override
     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob originalJob, MaintenanceStep failedStep) {
         if (failedStep.getName().equals(AnnounceStorageNode.class.getName())) {
-            createFailedAnnounceJob(originalJob, failedStep);
+            return createFailedAnnounceJob(originalJob, failedStep);
         }
 
         return null;
@@ -230,18 +255,31 @@ public class DeployCalculator implements StepCalculator {
     private StorageMaintenanceJob createFailedAnnounceJob(StorageMaintenanceJob originalJob,
         MaintenanceStep failedStep) {
         String address = failedStep.getConfiguration().getSimpleValue("targetAddress");
-        StorageMaintenanceJob newJob = new StorageMaintenanceJob(FAILED_ANNOUNCE, FAILED_ANNOUNCE + " " + address,
-            new Configuration.Builder().addSimple("address", address).build());
+        String newNodeAddress = failedStep.getConfiguration().getMap("parameters").getSimple("address")
+            .getStringValue();
 
-        newJob.addStep(failedStep);
-        for (MaintenanceStep step : originalJob) {
-            if (step.getName().equals(RunRepair.class.getName()) &&
-                step.getConfiguration().getSimpleValue("targetAddress").equals(address)) {
-                newJob.addStep(step);
+        Iterator<MaintenanceStep> iterator = originalJob.iterator();
+        while (iterator.hasNext()) {
+            MaintenanceStep step = iterator.next();
+            if (step.equals(failedStep) || (step.getName().equals(RunRepair.class.getName()) &&
+                step.getConfiguration().getSimpleValue("targetAddress").equals(address))) {
+                iterator.remove();
             }
         }
 
-        return newJob;
+        return new StorageMaintenanceJob(FAILED_ANNOUNCE, FAILED_ANNOUNCE + " " + address,
+            new Configuration.Builder().addSimple("address", address).addSimple("newNodeAddress", newNodeAddress)
+                .build());
+
+//        newJob.addStep(failedStep);
+//        for (MaintenanceStep step : originalJob) {
+//            if (step.getName().equals(RunRepair.class.getName()) &&
+//                step.getConfiguration().getSimpleValue("targetAddress").equals(address)) {
+//                newJob.addStep(step);
+//            }
+//        }
+//
+//        return newJob;
     }
 
 }

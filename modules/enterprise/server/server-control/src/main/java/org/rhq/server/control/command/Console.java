@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
@@ -123,7 +124,7 @@ public class Console extends ControlCommand {
 
     private int startServerInForeground() throws Exception {
         log.debug("Starting RHQ server in foreground");
-
+        validateServerPropertiesFile();
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "console");
         return ExecutorAssist.execute(getBinDir(), commandLine);
     }

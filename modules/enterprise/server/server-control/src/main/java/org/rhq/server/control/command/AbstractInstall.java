@@ -356,6 +356,7 @@ public abstract class AbstractInstall extends ControlCommand {
         int rValue = RHQControl.EXIT_CODE_OK;
 
         try {
+            validateServerPropertiesFile();
             log.info("The RHQ Server must be started to complete its installation. Starting the RHQ server in preparation of running the server installer...");
 
             // when you unzip the distro, you are getting a fresh, unadulterated, out-of-box EAP installation, which by default listens

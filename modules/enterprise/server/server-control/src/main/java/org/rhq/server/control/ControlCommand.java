@@ -25,9 +25,12 @@
 
 package org.rhq.server.control;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -537,5 +540,22 @@ public abstract class ControlCommand {
         @Override
         public void write(byte[] b) throws IOException {
         }
+    }
+
+    /**
+     * reads rhq-server.properties file and outputs warning in case there are trailing spaces
+     */
+    protected void validateServerPropertiesFile() throws IOException {
+        InputStreamReader isr = new InputStreamReader(new FileInputStream(getServerPropertiesFile()));
+        BufferedReader in = new BufferedReader(isr);
+
+        for (String line = in.readLine(); line != null; line = in.readLine()) {
+            if (line.matches("(?!^[ \t]*#).*[ \t]+$")) {
+                log.warn("Line \"" + line + "\" contains trailing white-spaces, fix " + getServerPropertiesFile()
+                    + " if you encounter issues");
+            }
+
+        }
+        in.close();
     }
 }

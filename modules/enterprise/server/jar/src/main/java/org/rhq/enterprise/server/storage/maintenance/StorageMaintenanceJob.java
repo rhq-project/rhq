@@ -28,10 +28,25 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
 
     private List<MaintenanceStep> steps = new ArrayList<MaintenanceStep>();
 
+    /**
+     * Creates a new job having no steps.
+     *
+     * @param jobType
+     * @param name
+     * @param params
+     */
     public StorageMaintenanceJob(MaintenanceStep.JobType jobType, String name, Configuration params) {
         this(jobType, name, name, params);
     }
 
+    /**
+     * Creates a new job having no steps
+     *
+     * @param jobType
+     * @param name
+     * @param description
+     * @param params
+     */
     public StorageMaintenanceJob(MaintenanceStep.JobType jobType, String name, String description,
         Configuration params) {
         baseStep = new MaintenanceStep()
@@ -52,11 +67,26 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
         return configuration;
     }
 
+    /**
+     * This constructor should only be used for loading the steps of an existing job from the database. It is assumed
+     * that the job and step numbers are already set correctly on each step; therefore, this should <strong>not</strong>
+     * be used to create new jobs.
+     *
+     * @param baseStep
+     * @param jobSteps
+     */
     public StorageMaintenanceJob(MaintenanceStep baseStep, List<MaintenanceStep> jobSteps) {
         this.baseStep = baseStep;
         steps = jobSteps;
     }
 
+    /**
+     * This constructor should only be used for loading the steps of an existing job from the database. It is assumed
+     * that the job and step numbers are already set correctly on each step; therefore, this should <strong>not</strong>
+     * be used to create new jobs.
+     *
+     * @param steps
+     */
     public StorageMaintenanceJob(List<MaintenanceStep> steps) {
         Preconditions.checkArgument(steps.size() > 0, "Cannot create a maintenance job from an empty list of steps");
         Preconditions.checkArgument(steps.get(0).getStepNumber() == 0, steps.get(0) + " should be a base step");
@@ -107,7 +137,9 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
     }
 
     /**
-     * Returns a set of all known node addresses from the time the snapshot was created.
+     * Returns a set of all known node addresses from the time the snapshot was created. Note that we will change
+     * the return type with a more strongly typed object once the additional fields are added to the StorageNode
+     * class for supporting address changes.
      */
     public Set<String> getClusterSnapshot() {
         Configuration configuration = baseStep.getConfiguration();

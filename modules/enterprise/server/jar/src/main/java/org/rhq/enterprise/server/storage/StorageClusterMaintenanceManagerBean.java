@@ -250,7 +250,13 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
                 StepCalculator stepCalculator = calculatorLookup.lookup(job.getJobType());
                 StorageMaintenanceJob newJob = stepCalculator.calculateSteps(job, step);
                 maintenanceManager.scheduleMaintenance(newJob);
-                maintenanceManager.deleteStep(step.getId());
+                // TODO make sure we clean up after the failed step
+                // In most circumstances we should expect that the failed step will be moved
+                // into the new job and therefore should not be deleted. That assumption
+                // means every StepCalculator needs to move the failed step. Maybe we ought
+                // to go ahead and delete the step and pass a copy of it to stepCalculator.
+                //
+//                maintenanceManager.deleteStep(step.getId());
             } else {  // failure strategy == ABORT
                 log.info("Aborting " + job);
                 maintenanceManager.rescheduleJob(job.getJobNumber());

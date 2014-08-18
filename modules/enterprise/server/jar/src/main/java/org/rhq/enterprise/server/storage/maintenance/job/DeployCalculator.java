@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.storage.maintenance.job;
 
+import static org.rhq.core.domain.storage.MaintenanceStep.JobType.FAILED_ANNOUNCE;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -171,11 +173,6 @@ public class DeployCalculator implements StepCalculator {
         }
     }
 
-    @Override
-    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob originalJob, MaintenanceStep failedStep) {
-        return null;
-    }
-
     protected SchemaChanges determineSchemaChanges(int oldClusterSize, int newClusterSize) {
         SchemaChanges changes = new SchemaChanges();
 
@@ -219,6 +216,32 @@ public class DeployCalculator implements StepCalculator {
     protected static class SchemaChanges {
         public Integer replicationFactor;
         public Integer gcGraceSeconds;
+    }
+
+    @Override
+    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob originalJob, MaintenanceStep failedStep) {
+        if (failedStep.getName().equals(AnnounceStorageNode.class.getName())) {
+            createFailedAnnounceJob(originalJob, failedStep);
+        }
+
+        return null;
+    }
+
+    private StorageMaintenanceJob createFailedAnnounceJob(StorageMaintenanceJob originalJob,
+        MaintenanceStep failedStep) {
+        String address = failedStep.getConfiguration().getSimpleValue("targetAddress");
+        StorageMaintenanceJob newJob = new StorageMaintenanceJob(FAILED_ANNOUNCE, FAILED_ANNOUNCE + " " + address,
+            new Configuration.Builder().addSimple("address", address).build());
+
+        newJob.addStep(failedStep);
+        for (MaintenanceStep step : originalJob) {
+            if (step.getName().equals(RunRepair.class.getName()) &&
+                step.getConfiguration().getSimpleValue("targetAddress").equals(address)) {
+                newJob.addStep(step);
+            }
+        }
+
+        return newJob;
     }
 
 }

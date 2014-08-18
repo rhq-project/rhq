@@ -82,6 +82,8 @@ public class RepairService {
             }
 
             if (message.contains("failed")) {
+                log.info(message);
+
                 int index = message.indexOf("range (");
                 int start = index + "range (".length();
                 int end = message.indexOf("]");

@@ -27,7 +27,6 @@ import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.storage.maintenance.DefaultStepRunnerFactory;
 import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunnerFactory;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
-import org.rhq.enterprise.server.storage.maintenance.job.DeployCalculator;
 import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
 import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
 import org.rhq.enterprise.server.storage.maintenance.step.StepFailureException;
@@ -189,12 +188,6 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         job.setClusterSnapshot(clusterSnapshot);
 
         StepCalculator stepCalculator = calculatorLookup.lookup(job.getJobType());
-        if (stepCalculator instanceof DeployCalculator) {
-            // Need to figure out how we want to inject dependencies into the step calculators.
-            // If only we could use CDI...
-            ((DeployCalculator)stepCalculator).setClusterSettings(clusterSettingsManager.getClusterSettings(
-                subjectManager.getOverlord()));
-        }
         stepCalculator.calculateSteps(job);
         for (MaintenanceStep step : job) {
             entityManager.persist(step);

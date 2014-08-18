@@ -55,6 +55,10 @@
       documentation for more information."/>
 
     <operation name="repair" description="Runs anti-entropy repair on the primary range of rhq and system_auth keyspaces">
+      <parameters>
+        <c:simple-property name="keyspace" type="string" required="true"/>
+        <c:simple-property name="table" type="string" required="true"/>
+      </parameters>
       <results>
         <c:list-property name="failedSessions">
           <c:simple-property name="range"/>

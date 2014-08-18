@@ -1,6 +1,10 @@
 package org.rhq.enterprise.server.storage.maintenance.job;
 
+import java.util.HashSet;
 import java.util.Set;
+
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 
 import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
@@ -8,22 +12,37 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.storage.MaintenanceStep;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
-import org.rhq.enterprise.server.storage.maintenance.step.AddMaintenance;
 import org.rhq.enterprise.server.storage.maintenance.step.AnnounceStorageNode;
 import org.rhq.enterprise.server.storage.maintenance.step.BootstrapNode;
+import org.rhq.enterprise.server.storage.maintenance.step.RunRepair;
 import org.rhq.enterprise.server.storage.maintenance.step.UpdateSchema;
 import org.rhq.enterprise.server.storage.maintenance.step.UpdateStorageNodeStatus;
+import org.rhq.server.metrics.SystemDAO;
 
 /**
  * @author John Sanda
  */
 public class DeployCalculator implements StepCalculator {
 
-    private StorageClusterSettings clusterSettings;
+    private StorageClusterSettingsManagerLocal clusterSettingsManager;
 
-    public void setClusterSettings(StorageClusterSettings clusterSettings) {
-        this.clusterSettings = clusterSettings;
+    private SystemDAO systemDAO;
+
+    private SubjectManagerLocal subjectManager;
+
+    public void setClusterSettingsManager(StorageClusterSettingsManagerLocal clusterSettingsManager) {
+        this.clusterSettingsManager = clusterSettingsManager;
+    }
+
+    public void setSystemDAO(SystemDAO systemDAO) {
+        this.systemDAO = systemDAO;
+    }
+
+    public void setSubjectManager(SubjectManagerLocal subjectManager) {
+        this.subjectManager = subjectManager;
     }
 
     @Override
@@ -65,6 +84,9 @@ public class DeployCalculator implements StepCalculator {
                 .build());
         job.addStep(updateStatus);
 
+        StorageClusterSettings clusterSettings = clusterSettingsManager.getClusterSettings(
+            subjectManager.getOverlord());
+
         MaintenanceStep bootstrap = new MaintenanceStep()
             .setName(BootstrapNode.class.getName())
             .setDescription("Bootstrap new node " + newNodeAddress)
@@ -94,24 +116,11 @@ public class DeployCalculator implements StepCalculator {
                 .build());
         job.addStep(updateStatus);
 
-        MaintenanceStep addMaintenance;
-        for (String address : clusterSnapshot) {
-            addMaintenance = new MaintenanceStep()
-                .setName(AddMaintenance.class.getName())
-                .setDescription("Run cluster maintenance on " + address)
-                .setConfiguration(new Configuration.Builder()
-                    .addSimple("targetAddress", address)
-                    .openMap("parameters")
-                    .addSimple("runRepair", schemaChanges.replicationFactor != null)
-                    .addSimple("newNodeAddress", newNodeAddress)
-                    .addSimple("updateSeedsList", true)
-                    .openList("seedsList", "seedsList")
-                    .addSimples(job.getClusterSnapshot().toArray(new String[job.getClusterSnapshot().size()]))
-                    .closeList()
-                    .closeMap()
-                    .build());
-            job.addStep(addMaintenance);
-        }
+        Set<String> addressess = new HashSet<String>(clusterSnapshot);
+        addressess.add(newNodeAddress);
+
+        addRepairSteps(job, SystemDAO.Keyspace.SYSTEM_AUTH, addressess);
+        addRepairSteps(job, SystemDAO.Keyspace.RHQ, addressess);
 
         updateStatus = new MaintenanceStep()
             .setName(UpdateStorageNodeStatus.class.getName())
@@ -124,6 +133,25 @@ public class DeployCalculator implements StepCalculator {
         job.addStep(updateStatus);
 
         return job;
+    }
+
+    protected void addRepairSteps(StorageMaintenanceJob job, SystemDAO.Keyspace keyspace, Set<String> addresses) {
+        ResultSet resultSet = systemDAO.findTables(keyspace);
+        for (Row row : resultSet) {
+            String table = row.getString(0);
+            for (String address : addresses) {
+                job.addStep(new MaintenanceStep()
+                    .setName(RunRepair.class.getName())
+                    .setDescription("Run repair on " + keyspace + "." + table + " on " + address)
+                    .setConfiguration(new Configuration.Builder()
+                        .addSimple("targetAddress", address)
+                        .openMap("parameters")
+                        .addSimple("keyspace", keyspace)
+                        .addSimple("table", table)
+                        .closeMap()
+                        .build()));
+            }
+        }
     }
 
     protected void applySchemaChanges(StorageMaintenanceJob job, SchemaChanges schemaChanges) {

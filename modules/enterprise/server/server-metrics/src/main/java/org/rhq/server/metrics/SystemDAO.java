@@ -12,7 +12,15 @@ import org.apache.commons.logging.LogFactory;
  */
 public class SystemDAO {
 
-    public static enum Keyspace { SYSTEM_AUTH, RHQ }
+    public static enum Keyspace {
+        SYSTEM_AUTH, RHQ;
+
+        @Override
+        public String toString() {
+            return super.toString().toLowerCase();
+        }
+
+    }
 
     private final Log log = LogFactory.getLog(SystemDAO.class);
 
@@ -27,7 +35,7 @@ public class SystemDAO {
 
     public void initPreparedStatements() {
         log.info("Initializing prepared statements");
-        findTables = session.prepare("SELECT columnfamily_name FROM system.schema_columnfamilies WHERE keyspace = ?");
+        findTables = session.prepare("SELECT columnfamily_name FROM system.schema_columnfamilies WHERE keyspace_name = ?");
     }
 
     public ResultSet findTables(Keyspace keyspace) {

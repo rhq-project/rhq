@@ -53,6 +53,7 @@ public class DeployCalculator implements StepCalculator {
     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {
         if (job.getJobType() == FAILED_ANNOUNCE) {
             addFailedAnnounceSteps(job);
+            return job;
         }
 
         Set<String> clusterSnapshot = job.getClusterSnapshot();
@@ -244,42 +245,34 @@ public class DeployCalculator implements StepCalculator {
     }
 
     @Override
-    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob originalJob, MaintenanceStep failedStep) {
+    public void updateSteps(StorageMaintenanceJob job, MaintenanceStep failedStep) {
         if (failedStep.getName().equals(AnnounceStorageNode.class.getName())) {
-            return createFailedAnnounceJob(originalJob, failedStep);
-        }
+            String address = failedStep.getConfiguration().getSimpleValue("targetAddress");
 
-        return null;
+            Iterator<MaintenanceStep> iterator = job.iterator();
+            while (iterator.hasNext()) {
+                MaintenanceStep step = iterator.next();
+                if (step.equals(failedStep) || (step.getName().equals(RunRepair.class.getName()) &&
+                    step.getConfiguration().getSimpleValue("targetAddress").equals(address))) {
+                    iterator.remove();
+                }
+            }
+        } else {
+            throw new UnsupportedOperationException("There is no support for a failure in " + failedStep.getName());
+        }
     }
 
-    private StorageMaintenanceJob createFailedAnnounceJob(StorageMaintenanceJob originalJob,
-        MaintenanceStep failedStep) {
-        String address = failedStep.getConfiguration().getSimpleValue("targetAddress");
-        String newNodeAddress = failedStep.getConfiguration().getMap("parameters").getSimple("address")
-            .getStringValue();
-
-        Iterator<MaintenanceStep> iterator = originalJob.iterator();
-        while (iterator.hasNext()) {
-            MaintenanceStep step = iterator.next();
-            if (step.equals(failedStep) || (step.getName().equals(RunRepair.class.getName()) &&
-                step.getConfiguration().getSimpleValue("targetAddress").equals(address))) {
-                iterator.remove();
-            }
+    @Override
+    public StorageMaintenanceJob createNewJob(StorageMaintenanceJob originalJob, MaintenanceStep failedStep) {
+        if (failedStep.getName().equals(AnnounceStorageNode.class.getName())) {
+            String address = failedStep.getConfiguration().getSimpleValue("targetAddress");
+            String newNodeAddress = failedStep.getConfiguration().getMap("parameters").getSimple("address")
+                .getStringValue();
+            return new StorageMaintenanceJob(FAILED_ANNOUNCE, FAILED_ANNOUNCE + " " + address,
+                new Configuration.Builder().addSimple("address", address).addSimple("newNodeAddress", newNodeAddress)
+                    .build());
         }
-
-        return new StorageMaintenanceJob(FAILED_ANNOUNCE, FAILED_ANNOUNCE + " " + address,
-            new Configuration.Builder().addSimple("address", address).addSimple("newNodeAddress", newNodeAddress)
-                .build());
-
-//        newJob.addStep(failedStep);
-//        for (MaintenanceStep step : originalJob) {
-//            if (step.getName().equals(RunRepair.class.getName()) &&
-//                step.getConfiguration().getSimpleValue("targetAddress").equals(address)) {
-//                newJob.addStep(step);
-//            }
-//        }
-//
-//        return newJob;
+        throw new UnsupportedOperationException("There is no support for a failure in " + failedStep.getName());
     }
 
 }

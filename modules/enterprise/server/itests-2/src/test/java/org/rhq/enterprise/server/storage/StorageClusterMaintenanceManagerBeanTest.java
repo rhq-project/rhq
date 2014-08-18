@@ -300,20 +300,23 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
                     }
 
                     @Override
-                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob originalJob,
-                        MaintenanceStep failedStep) {
+                    public void updateSteps(StorageMaintenanceJob job, MaintenanceStep failedStep) {
                         // Step 2 of the original job failed. We want to create a new job
                         // that consists of steps 2 and 3.
-                        Iterator<MaintenanceStep> iterator = originalJob.getSteps().iterator();
+                        Iterator<MaintenanceStep> iterator = job.getSteps().iterator();
                         while (iterator.hasNext()) {
                             MaintenanceStep step = iterator.next();
                             if (step.getName().equals("FailedJobStep2") || step.getName().equals("FailedJobStep3")) {
                                 iterator.remove();
                             }
                         }
+                    }
 
-                        return new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY,
-                            "RetryJob", new Configuration());
+                    @Override
+                    public StorageMaintenanceJob createNewJob(StorageMaintenanceJob originalJob,
+                        MaintenanceStep failedStep) {
+                        return new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY, "RetryJob",
+                            new Configuration());
                     }
                 };
             }

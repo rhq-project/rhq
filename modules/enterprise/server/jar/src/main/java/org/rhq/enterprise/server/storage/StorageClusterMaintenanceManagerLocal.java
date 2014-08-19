@@ -37,6 +37,11 @@ public interface StorageClusterMaintenanceManagerLocal {
 
     void rescheduleJob(int jobNumber);
 
+    /**
+     * Loads the specified job including all its steps. It is assumed that callers of this method will work with the
+     * job outside of a transactional context; therefore, each step's configuration is eagerly loaded to avoid lazy
+     * init exceptions.
+     */
     StorageMaintenanceJob loadJob(int jobNumber);
 
     List<StorageMaintenanceJob> loadQueue();

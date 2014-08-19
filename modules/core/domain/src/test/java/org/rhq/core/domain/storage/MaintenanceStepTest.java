@@ -2,6 +2,7 @@ package org.rhq.core.domain.storage;
 
 import static java.util.Arrays.asList;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -228,6 +229,58 @@ public class MaintenanceStepTest extends AbstractEJB3Test {
                 assertNull("The step was not deleted", em.find(MaintenanceStep.class, stepId.get()));
             }
         }, "Failed to verify the step deletion");
+    }
+
+    @Test(groups = "integration.ejb3")
+    public void findStepsByJobNumber() throws Exception {
+        final AtomicInteger jobNumber = new AtomicInteger();
+        final List<MaintenanceStep> steps = new ArrayList<MaintenanceStep>();
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                MaintenanceStep baseStep = new MaintenanceStep()
+                    .setJobType(MaintenanceStep.JobType.DEPLOY)
+                    .setStepNumber(0)
+                    .setName("LoadJobTest")
+                    .setDescription("LoadJobTest")
+                    .setConfiguration(new Configuration.Builder()
+                        .openMap("parameters")
+                        .addSimple("target", "127.0.0.1")
+                        .closeMap()
+                        .build());
+                em.persist(baseStep);
+                baseStep.setJobNumber(baseStep.getId());
+
+                jobNumber.set(baseStep.getJobNumber());
+
+                em.persist(new MaintenanceStep()
+                    .setJobType(MaintenanceStep.JobType.DEPLOY)
+                    .setStepNumber(1)
+                    .setJobNumber(baseStep.getJobNumber())
+                    .setName("Step1")
+                    .setDescription("Step1")
+                    .setConfiguration(new Configuration.Builder()
+                        .addSimple("target", "127.0.0.1")
+                        .openMap("parameters")
+                        .addSimple("address", "127.0.0.2")
+                        .closeMap()
+                        .build()));
+            }
+        }, "Failed to persist job steps");
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                steps.addAll(em.createNamedQuery(MaintenanceStep.FIND_BY_JOB_NUM, MaintenanceStep.class)
+                    .setParameter("jobNumber", jobNumber.get()).getResultList());
+            }
+        }, "Failed to load steps");
+
+        for (MaintenanceStep step : steps) {
+            // call Configuration.toString() to make sure the config is loaded
+            assertNotNull("The step configuration should be loaded", step.getConfiguration().toString(true));
+        }
     }
 
     private void executeInTransaction(TransactionCallback callback, String errorMsg) {

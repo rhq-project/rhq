@@ -281,7 +281,6 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
                             for (MaintenanceStep step : steps) {
                                 job.addStep(step);
                             }
-//                            stepsCalculated.set(true);
                             return job;
                         }
 
@@ -359,12 +358,6 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
 
                 List<MaintenanceStep> steps = job.getSteps();
                 assertTrue("RetryJob should have no steps but found " + steps, steps.isEmpty());
-//                assertEquals("The number of steps for RetryJob is wrong", 2, steps.size());
-//                assertEquals("The step name for the first step is wrong", "FailedJobStep2", steps.get(0).getName());
-//                assertEquals("The step number for the first step is wrong", 1, steps.get(0).getStepNumber());
-//
-//                assertEquals("The step name for the second step is wrong", "FailedJobStep3", steps.get(1).getName());
-//                assertEquals("The step number for the second step is wrong", 2, steps.get(1).getStepNumber());
             }
         }, "Failed to verify whether or not FailedJob was run");
 
@@ -378,6 +371,51 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
                 assertTrue("FailedJobStep2 should have been executed", failed3Executed.get());
             }
         }, "Failed to verify whether or not RetryJob was run");
+    }
+
+    @Test
+    public void loadJob() throws Exception {
+        final AtomicInteger jobNumber = new AtomicInteger();
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                MaintenanceStep baseStep = new MaintenanceStep()
+                    .setJobType(MaintenanceStep.JobType.DEPLOY)
+                    .setStepNumber(0)
+                    .setName("LoadJobTest")
+                    .setDescription("LoadJobTest")
+                    .setConfiguration(new Configuration.Builder()
+                        .openMap("parameters")
+                            .addSimple("target", "127.0.0.1")
+                        .closeMap()
+                        .build());
+                em.persist(baseStep);
+                baseStep.setJobNumber(baseStep.getId());
+
+                jobNumber.set(baseStep.getJobNumber());
+
+                em.persist(new MaintenanceStep()
+                    .setJobType(MaintenanceStep.JobType.DEPLOY)
+                    .setStepNumber(1)
+                    .setJobNumber(baseStep.getJobNumber())
+                    .setName("Step1")
+                    .setDescription("Step1")
+                    .setConfiguration(new Configuration.Builder()
+                        .addSimple("target", "127.0.0.1")
+                        .openMap("parameters")
+                        .addSimple("address", "127.0.0.2")
+                        .closeMap()
+                        .build()));
+            }
+        }, "Failed to persist job steps");
+
+        StorageMaintenanceJob job = maintenanceManager.loadJob(jobNumber.get());
+        // Call toString() on each step to make sure we do not hit any lazy init exceptions. The loadJob method
+        // needs to load each step's configuration.
+        job.getBaseStep().getConfiguration().toString(true);
+        for (MaintenanceStep step : job) {
+            step.toString(true);
+        }
     }
 
     private void executeInTransaction(TransactionCallback callback, String errorMsg) {

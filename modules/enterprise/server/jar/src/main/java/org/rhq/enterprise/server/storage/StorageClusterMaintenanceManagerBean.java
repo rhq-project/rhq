@@ -21,6 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.RHQConstants;
@@ -158,11 +159,10 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         List<MaintenanceStep> baseSteps = entityManager.createNamedQuery(MaintenanceStep.FIND_BASE_STEPS_BY_JOB_TYPE,
             MaintenanceStep.class).setParameter("jobType", job.getJobType()).getResultList();
         for (MaintenanceStep baseStep : baseSteps) {
-            entityManager.refresh(baseStep.getConfiguration());
-            property = baseStep.getConfiguration().getSimple("address");
-            if (property == null) {
+            PropertyMap params = baseStep.getConfiguration().getMap("parameters");
+            if (params == null || params.getSimple("address") == null) {
                 log.warn(baseStep + " does not have required parameter [address]");
-            } else if (address.equals(property.getStringValue())) {
+            } else if (address.equals(params.getSimple("address").getStringValue())) {
                 return baseStep;
             }
         }
@@ -192,6 +192,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     public StorageMaintenanceJob loadJob(int jobNumber) {
         List<MaintenanceStep> steps = entityManager.createNamedQuery(MaintenanceStep.FIND_BY_JOB_NUM,
             MaintenanceStep.class).setParameter("jobNumber", jobNumber).getResultList();
+
         return new StorageMaintenanceJob(steps);
     }
 
@@ -294,7 +295,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         }
 
         if (step == null) {
-            log.info("Nothing to delete. No step found with id " + stepId);
+            log.warn("Nothing to delete. No step found with id " + stepId);
         } else {
             entityManager.remove(step);
         }
@@ -312,18 +313,19 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
 
         for (StorageMaintenanceJob job : queue) {
             execute(maintenanceManager.refreshJob(job.getJobNumber()));
-//            executeJob(maintenanceManager.refreshJob(job.getJobNumber()));
         }
     }
 
     private void execute(StorageMaintenanceJob job) {
         log.info("Executing " + job);
-        MaintenanceStep currentStep = null;
+        MaintenanceStep step = null;
         MaintenanceStepRunner stepRunner = null;
-        try {
-            for (MaintenanceStep step : job) {
+        Iterator<MaintenanceStep> iterator = job.getSteps().iterator();
+
+        while (iterator != null && iterator.hasNext()) {
+            try {
+                step = iterator.next();
                 log.info("Executing " + step);
-                currentStep = step;
                 stepRunner = stepRunnerFactory.newStepRunner(step);
                 stepRunner.setClusterSnapshot(job.getClusterSnapshot());
                 stepRunner.setOperationManager(operationManager);
@@ -333,75 +335,26 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
                 stepRunner.execute(step);
 
                 maintenanceManager.deleteStep(step.getId());
-            }
-            log.info("Finished executing " + job);
-            maintenanceManager.deleteStep(job.getBaseStep().getId());
-        } catch (Exception e) {
-            if (e instanceof StepFailureException) {
-                log.info(currentStep + " failed: " + e.getMessage());
-            } else {
-                log.warn(currentStep + " failed with an unexpected exception", e);
-            }
+            } catch (Exception e) {
+                if (e instanceof StepFailureException) {
+                    log.info(step + " failed: " + e.getMessage());
+                } else {
+                    log.warn(step + " failed with an unexpected exception", e);
+                }
 
-            if (stepRunner.getFailureStrategy() == StepFailureStrategy.ABORT) {
-                log.info("Aborting " + job);
-                maintenanceManager.rescheduleJob(job.getJobNumber());
-            } else {   // failure strategy is continue
-                maintenanceManager.scheduleMaintenance(job.getJobNumber(), currentStep.getStepNumber());
-                execute(maintenanceManager.loadJob(job.getJobNumber()));
+                if (stepRunner.getFailureStrategy() == StepFailureStrategy.ABORT) {
+                    log.info("Aborting" + job);
+                    maintenanceManager.rescheduleJob(job.getJobNumber());
+                    iterator = null;
+                } else {    // failure strategy is continue
+                    maintenanceManager.scheduleMaintenance(job.getJobNumber(), step.getStepNumber());
+                    StorageMaintenanceJob updatedJob = maintenanceManager.loadJob(job.getJobNumber());
+                    iterator = updatedJob.getSteps().iterator();
+                }
             }
         }
-    }
-
-//    private void executeJob(StorageMaintenanceJob job) {
-//        log.info("Executing " + job);
-//        for (MaintenanceStep step : job) {
-//            MaintenanceStepRunner stepRunner = stepRunnerFactory.newStepRunner(step);
-//            stepRunner.setClusterSnapshot(job.getClusterSnapshot());
-//            boolean succeeded = executeStep(maintenanceManager.reloadStep(step.getId()), stepRunner);
-//            if (succeeded) {
-//                maintenanceManager.deleteStep(step.getId());
-//            } else if (stepRunner.getFailureStrategy() == StepFailureStrategy.CONTINUE) {
-//                StepCalculator stepCalculator = calculatorLookup.lookup(job.getJobType());
-//                StorageMaintenanceJob newJob = stepCalculator.calculateSteps(job, step);
-//                maintenanceManager.scheduleMaintenance(newJob);
-//
-////                maintenanceManager.handleFailedJob(job, step);
-//
-//                // TODO make sure we clean up after the failed step
-//                // In most circumstances we should expect that the failed step will be moved
-//                // into the new job and therefore should not be deleted. That assumption
-//                // means every StepCalculator needs to move the failed step. Maybe we ought
-//                // to go ahead and delete the step and pass a copy of it to stepCalculator.
-//                //
-//                //maintenanceManager.deleteStep(step.getId());
-//            } else {  // failure strategy == ABORT
-//                log.info("Aborting " + job);
-//                maintenanceManager.rescheduleJob(job.getJobNumber());
-//                return;
-//            }
-//        }
-//        log.info("Finished executing " + job);
-//        maintenanceManager.deleteStep(job.getBaseStep().getId());
-//    }
-
-    private boolean executeStep(MaintenanceStep step, MaintenanceStepRunner stepRunner) {
-        try {
-            log.info("Executing " + step);
-            stepRunner.setOperationManager(operationManager);
-            stepRunner.setStorageNodeManager(storageNodeManager);
-            stepRunner.setSubjectManager(subjectManager);
-            stepRunner.setStorageClientManager(storageClientManager);
-            stepRunner.execute(step);
-
-            return true;
-        } catch (StepFailureException e) {
-            log.info(step + " failed: " + e.getMessage());
-            return false;
-        } catch (Exception e) {
-            log.warn(step + " failed with an unexpected exception", e);
-            return false;
-        }
+        log.info("Finished executing " + job);
+        maintenanceManager.deleteStep(job.getBaseStep().getId());
     }
 
 }

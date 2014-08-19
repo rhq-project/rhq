@@ -50,7 +50,7 @@ import org.rhq.core.domain.configuration.Configuration;
 @NamedQueries( //
 {
     @NamedQuery(name = MaintenanceStep.FIND_BY_JOB_NUM, query =
-        "SELECT s FROM MaintenanceStep s WHERE s.jobNumber = :jobNumber ORDER BY s.stepNumber"),
+        "SELECT s FROM MaintenanceStep s LEFT JOIN FETCH s.configuration WHERE s.jobNumber = :jobNumber ORDER BY s.stepNumber"),
     @NamedQuery(name = MaintenanceStep.FIND_ALL, query =
         "SELECT s FROM MaintenanceStep s ORDER BY s.jobNumber, s.stepNumber"),
     @NamedQuery(name = MaintenanceStep.FIND_STEP_AND_CONFIG, query =
@@ -58,7 +58,7 @@ import org.rhq.core.domain.configuration.Configuration;
     @NamedQuery(name = MaintenanceStep.DELETE_STEP, query =
         "DELETE FROM MaintenanceStep s WHERE s.id = :id"),
     @NamedQuery(name = MaintenanceStep.FIND_BASE_STEPS_BY_JOB_TYPE, query =
-        "SELECT s FROM MaintenanceStep s WHERE s.jobType = :jobType AND s.stepNumber = 0")
+        "SELECT s FROM MaintenanceStep s JOIN FETCH s.configuration WHERE s.jobType = :jobType AND s.stepNumber = 0")
 })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE,
     name = "RHQ_STORAGE_MAINT_STEP_ID_SEQ", sequenceName = "RHQ_STORAGE_MAINT_STEP_ID_SEQ")

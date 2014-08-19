@@ -118,7 +118,7 @@ public abstract class ComponentTest {
         ContentContext contentContext = new ContentContextImpl(0);
         PluginContainerDeployment pluginContainerDeployment = null;
         AvailabilityContext availContext = new AvailabilityContextImpl(resource, pluginContainer.getInventoryManager());
-        InventoryContext inventoryContext = new InventoryContextImpl(resource);
+        InventoryContext inventoryContext = new InventoryContextImpl(resource, pluginContainer.getInventoryManager());
         ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
             resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
             eventContext, operationContext, contentContext, availContext, inventoryContext, pluginContainerDeployment);

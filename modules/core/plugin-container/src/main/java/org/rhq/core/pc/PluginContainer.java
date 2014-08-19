@@ -289,18 +289,21 @@ public class PluginContainer {
             PluginLifecycleListenerManager pluginLifecycle = new PluginLifecycleListenerManagerImpl();
             pluginManager = new PluginManager(configuration, pluginLifecycle);
             eventManager = new EventManager(configuration);
-            inventoryManager = new InventoryManager(configuration, agentServiceStreamRemoter, pluginManager, eventManager);
+            operationManager = new OperationManager(configuration, agentServiceStreamRemoter);
+            inventoryManager = new InventoryManager(configuration, agentServiceStreamRemoter, pluginManager,
+                eventManager, operationManager);
             inventoryManager.initialize();
             measurementManager = inventoryManager.getMeasurementManager();
+            contentManager = inventoryManager.getContentManager();
             pluginComponentFactory = inventoryManager.getPluginComponentFactory();
             ComponentService componentService = new ComponentServiceImpl(pluginManager);
             ConfigManagementFactory factory = new ConfigManagementFactoryImpl(componentService);
-            configurationManager = new ConfigurationManager(configuration, componentService, factory, agentServiceStreamRemoter, inventoryManager);
-            operationManager = new OperationManager(configuration, agentServiceStreamRemoter);
+            configurationManager = new ConfigurationManager(configuration, componentService, factory,
+                agentServiceStreamRemoter, inventoryManager);
             resourceFactoryManager = new ResourceFactoryManager(configuration, agentServiceStreamRemoter, pluginManager);
-            contentManager = new ContentManager(configuration, agentServiceStreamRemoter, inventoryManager);
             supportManager = new SupportManager(agentServiceStreamRemoter);
-            bundleManager = new BundleManager(configuration, agentServiceStreamRemoter, inventoryManager, measurementManager);
+            bundleManager = new BundleManager(configuration, agentServiceStreamRemoter, inventoryManager,
+                measurementManager);
             driftManager = new DriftManager(configuration, agentServiceStreamRemoter, inventoryManager);
             pingManager = new PingManager(agentServiceStreamRemoter);
 
@@ -322,17 +325,18 @@ public class PluginContainer {
      * Agent services, returned in alphabetical order...
      */
     private AgentService[] services() {
-        return new AgentService[] {
-            bundleManager,
-            configurationManager,
-            contentManager,
-            driftManager,
-            inventoryManager,
-            measurementManager,
-            operationManager,
-            pingManager,
-            resourceFactoryManager,
-            supportManager };
+        return new AgentService[] { //
+            bundleManager, //
+            configurationManager, //
+            contentManager, //
+            driftManager, //
+            inventoryManager, //
+            measurementManager, //
+            operationManager, //
+            pingManager, //
+            resourceFactoryManager, //
+            supportManager //
+        };
     }
 
     /**

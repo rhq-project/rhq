@@ -31,6 +31,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -641,15 +642,45 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
     private OperationResult repair(Configuration params) {
         String keyspace = params.getSimpleValue("keyspace");
-        String table = params.getSimpleValue("table");
-
-        log.info("Running repair on " + keyspace + "." + table);
+        String[] tables;
+        PropertyList tablesList = params.getList("tables");
+        if (tablesList == null) {
+            tables = new String[0];
+        } else {
+            tables = new String[tablesList.getList().size()];
+            for (int i = 0; i < tables.length; ++i) {
+                PropertySimple property = (PropertySimple) tablesList.getList().get(i);
+                tables[i] = property.getStringValue();
+            }
+        }
 
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         String url = pluginConfig.getSimpleValue("connectorAddress");
         RepairService repairService = new RepairService(url);
 
-        return repairService.repairPrimaryRange(keyspace, table);
+        PropertySimple useSnapshot = params.getSimple("snapshot");
+        PropertySimple isPrimaryRangeRepair = params.getSimple("primaryRange");
+
+        if (isPrimaryRangeRepair != null && isPrimaryRangeRepair.getBooleanValue()) {
+            log.info("Running primary range repair on {keyspace: " + keyspace + ", tables: " +
+                Arrays.toString(tables) + "}");
+            return repairService.repairPrimaryRange(keyspace, useSnapshot.getBooleanValue(), tables);
+        } else {
+            PropertyMap rangeMap = params.getMap("range");
+            if (rangeMap != null) {
+                String startToken = rangeMap.getSimple("start").getStringValue();
+                String endToken = rangeMap.getSimple("end").getStringValue();
+
+                log.info("Running repair on {startToken: " + startToken + ", endToken: " + endToken + ", keyspace: " +
+                    keyspace + ", tables: " + Arrays.toString(tables) + "}");
+
+                return repairService.repairRange(keyspace, useSnapshot.getBooleanValue(), startToken, endToken, tables);
+            } else {
+                log.info("Running repair on {keyspace: " + keyspace + ", tables: " + Arrays.toString(tables) + "}");
+
+                return repairService.repair(keyspace, useSnapshot.getBooleanValue(), tables);
+            }
+        }
     }
 
     private OpResult repairKeyspace(KeyspaceService keyspaceService, String keyspace) {

@@ -56,12 +56,44 @@
 
     <operation name="repair" description="Runs anti-entropy repair on the primary range of rhq and system_auth keyspaces">
       <parameters>
+        <c:simple-property name="primaryRange" type="boolean" default="false"
+                           description="Repairs only the first range returned by the partitioner. This option should be
+                           set when running repair on the entire cluster as it minimizes duplicate work. It does cause
+                           all replicas to perform validation compaction at the same time which can slow down requests
+                           for the data being repaired."/>
+        <c:simple-property name="snapshot" type="boolean" default="true"
+                           description="When set each replica takes a snapshot and repair is performed sequentially
+                           by each node using the snapshots. This option may cause the operation to take longer but
+                           reduces the load on the replicas."/>
         <c:simple-property name="keyspace" type="string" required="true"/>
-        <c:simple-property name="table" type="string" required="true"/>
+        <c:list-property name="tables" required="false"
+                         description="A list of tables to repair. If not specified, all tables in the keyspace will be
+                         repaired">
+          <c:simple-property name="table" type="string"/>
+        </c:list-property>
+        <c:map-property name="range"
+                        description="Specify to repair only a portion of the data belonging to the node.
+                         Specifying ranges increases the overall precision of the repair operation which in turn
+                         minimizes excessive streaming of data. Note that if the primary range option is true, then
+                         this argument is ignored.">
+          <c:simple-property name="start" type="string" required="true"
+                             description="The start of the range exclusive"/>
+          <c:simple-property name="end" type="string" required="true"
+                             description="The end of the range inclusive"/>
+        </c:map-property>
       </parameters>
       <results>
+        <c:simple-property name="keyspace" type="string" required="true"/>
+        <c:list-property name="tables" required="false">
+          <c:simple-property name="table" type="string"/>
+        </c:list-property>
         <c:list-property name="failedSessions">
-          <c:simple-property name="range"/>
+          <c:map-property name="range">
+            <c:simple-property name="start" type="string" required="true"
+                               description="The start of the range exclusive"/>
+            <c:simple-property name="end" type="string" required="true"
+                               description="The end of the range inclusive"/>
+          </c:map-property>
         </c:list-property>
       </results>
     </operation>

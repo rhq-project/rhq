@@ -180,7 +180,7 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
     }
 
     private void setLabelEmpty() {
-        content.setContents(NON_BREAKING_SPACE);
+        content.setContents("");
     }
 
     private String messageContent(String message, Severity severity) {

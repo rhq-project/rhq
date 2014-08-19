@@ -52,7 +52,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 
 /**
  * An alert condition (e.g. ActiveThreads > 100) as configured in an alert definition.
- * 
+ *
  * @author Joseph Marques
  */
 @Entity
@@ -63,7 +63,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_BASELINE, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionBaselineCategoryComposite " //
         + "       ( " //
-        + "         ac, " //
+        + AlertCondition.COMP_COLS
         + "         ms.id, " //
         + "         mb.id, " //
         + "         mb.baselineMin, " //
@@ -97,11 +97,11 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
         + "     AND ms.definition = md " //
         + "     AND ms.resource = res " //
         + "     AND mb IS NOT NULL " //
-        + "     AND ac.category = 'BASELINE' "), // 
+        + "     AND ac.category = 'BASELINE' "), //
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_CHANGE, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionChangesCategoryComposite " //
         + "       ( " //
-        + "         ac, " //
+        + AlertCondition.COMP_COLS
         + "         ms.id, " //
         + "         md.dataType " //
         + "       ) " //
@@ -120,7 +120,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_TRAIT, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionTraitCategoryComposite " //
         + "       ( " //
-        + "         ac, " //
+        + AlertCondition.COMP_COLS
         + "         ms.id, " //
         + "         (" //
         + "           SELECT md.value " //
@@ -149,7 +149,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_AVAILABILITY, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionAvailabilityCategoryComposite " //
         + "       ( " //
-        + "         ac, " //
+        + AlertCondition.COMP_COLS
         + "         ad.id, " // needed for avail duration
         + "         res.id, " //
         + "         (" //
@@ -172,7 +172,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_CONTROL, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionControlCategoryComposite " //
         + "       ( " //
-        + "         ac, " //
+        + AlertCondition.COMP_COLS
         + "         res.id, " //
         + "         (" //
         + "           SELECT op.id " //
@@ -194,7 +194,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_THRESHOLD, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionScheduleCategoryComposite " //
         + "       ( " //
-        + "         ac, " //
+        + AlertCondition.COMP_COLS
         + "         ms.id, " //
         + "         md.dataType " //
         + "       ) " //
@@ -213,7 +213,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_EVENT, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionEventCategoryComposite " //
         + "       ( " //
-        + "         ac, " //
+        + AlertCondition.COMP_COLS
         + "         res.id " //
         + "       ) " //
         + "    FROM AlertCondition AS ac " //
@@ -228,7 +228,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_RESOURCE_CONFIG, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionResourceConfigurationCategoryComposite " //
         + "       ( " //
-        + "         ac, " //
+        + AlertCondition.COMP_COLS
         + "         res.id, " //
         + "         resConfig " //
         + "       ) " //
@@ -245,7 +245,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_DRIFT, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionDriftCategoryComposite " //
         + "       ( " //
-        + "         ac, " //
+        + AlertCondition.COMP_COLS
         + "         res.id " //
         + "       ) " //
         + "    FROM AlertCondition AS ac " //
@@ -260,7 +260,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_RANGE, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionRangeCategoryComposite " //
         + "       ( " //
-        + "         ac, " //
+        + AlertCondition.COMP_COLS
         + "         ms.id, " //
         + "         md.dataType " //
         + "       ) " //
@@ -301,6 +301,14 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AlertCondition implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    /**
+     * When you select an entity into a composite, Hibernate creates an unloaded
+     * entity. This causes N+1 selects when the cache is created. Hence the select
+     * for every entity column, minus the alert definition ID.
+     */
+    static final String COMP_COLS =
+        "ac.id, ac.category, ac.name, ac.comparator, ac.threshold, ac.option, ac.triggerId,";
 
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertCondition.deleteByResources";
     public static final String QUERY_BY_CATEGORY_BASELINE = "AlertCondition.byCategoryBaseline";
@@ -398,6 +406,22 @@ public class AlertCondition implements Serializable {
         // Don't copy the condition logs.
     }
 
+    /**
+     * Construct with some fields.
+     */
+    public AlertCondition(int id, AlertConditionCategory category, String name,
+            String comparator, Double threshold, String option,
+            Integer triggerId)
+    {
+        this.id = id;
+        this.category = category;
+        this.name = name;
+        this.comparator = comparator;
+        this.threshold = threshold;
+        this.option = option;
+        this.triggerId = triggerId;
+    }
+
     public int getId() {
         return this.id;
     }
@@ -414,7 +438,7 @@ public class AlertCondition implements Serializable {
      * Identifies the measurement definition of the metric that is to be compared when determining
      * if the condition is true. This is null if the condition category is not a metric-related one
      * (metric related categories are THRESHOLD, TRAIT, BASELINE and CHANGE; others are not).
-     * 
+     *
      * @return measurement definition or null
      */
     public MeasurementDefinition getMeasurementDefinition() {
@@ -427,7 +451,7 @@ public class AlertCondition implements Serializable {
 
     /**
      * The name of the condition whose semantics are different based on this condition's category:
-     * 
+     *
      * AVAILABILITY: The relevant Avail AlertConditionOperator name
      * THRESHOLD: the name of the metric (TODO: today its the display name, very bad for i18n purposes)
      * BASELINE: the name of the metric (TODO: today its the display name, very bad for i18n purposes)
@@ -441,9 +465,9 @@ public class AlertCondition implements Serializable {
      * DRIFT: the name of the drift definition that triggered the drift detection. This is actually a
      *        regex that allows the user to match more than one drift definition if they so choose.
      *        (this value may be null, in which case it doesn't matter which drift definition were the ones
-     *         in which the drift was detected) 
+     *         in which the drift was detected)
      * RANGE: the name of the metric (TODO: today its the display name, very bad for i18n purposes)
-     * 
+     *
      * @return additional information about the condition
      */
     public String getName() {
@@ -455,12 +479,12 @@ public class AlertCondition implements Serializable {
     }
 
     /**
-     * THRESHOLD and BASELINE: one of these comparators: "<", ">" or "=" 
+     * THRESHOLD and BASELINE: one of these comparators: "<", ">" or "="
      * For calltime alert conditions (i.e. category CHANGE for calltime metric definitions),
      * comparator will be one of these comparators: "HI", "LO", "CH" (where "CH" means "change").
      * RANGE: one of these comparators "<", ">" (meaning inside and outside the range respectively)
      *        or one of these "<=", ">=" (meaning inside and outside inclusive respectively)
-     * 
+     *
      * Other types of conditions will return <code>null</code> (i.e. this will be
      * null if the condition does not compare values).
      *
@@ -479,10 +503,10 @@ public class AlertCondition implements Serializable {
      * This is only valid for conditions of category THRESHOLD, BASELINE, RANGE and CHANGE (but
      * only where CHANGE is for a calltime metric alert condition). All other
      * condition types will return <code>null</code>.
-     * 
+     *
      * Note: If RANGE condition, this threshold is always the LOW end of the range.
      *       The high end of the range is in {@link #getOption()}.
-     *  
+     *
      * @return threshold value or null
      */
     public Double getThreshold() {

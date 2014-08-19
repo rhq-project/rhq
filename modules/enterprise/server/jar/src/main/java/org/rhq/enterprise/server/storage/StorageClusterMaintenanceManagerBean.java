@@ -159,6 +159,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         List<MaintenanceStep> baseSteps = entityManager.createNamedQuery(MaintenanceStep.FIND_BASE_STEPS_BY_JOB_TYPE,
             MaintenanceStep.class).setParameter("jobType", job.getJobType()).getResultList();
         for (MaintenanceStep baseStep : baseSteps) {
+            // TODO Not sure this is right. We probably need to check all the params here
             PropertyMap params = baseStep.getConfiguration().getMap("parameters");
             if (params == null || params.getSimple("address") == null) {
                 log.warn(baseStep + " does not have required parameter [address]");
@@ -318,21 +319,21 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
 
     private void execute(StorageMaintenanceJob job) {
         log.info("Executing " + job);
-        MaintenanceStep step = null;
-        MaintenanceStepRunner stepRunner = null;
+        MaintenanceStep step;
+        MaintenanceStepRunner stepRunner;
         Iterator<MaintenanceStep> iterator = job.getSteps().iterator();
 
-        while (iterator != null && iterator.hasNext()) {
+        while (iterator.hasNext()) {
+            step = iterator.next();
+            log.info("Executing " + step);
+            stepRunner = stepRunnerFactory.newStepRunner(step);
+            stepRunner.setClusterSnapshot(job.getClusterSnapshot());
+            stepRunner.setOperationManager(operationManager);
+            stepRunner.setStorageNodeManager(storageNodeManager);
+            stepRunner.setSubjectManager(subjectManager);
+            stepRunner.setStorageClientManager(storageClientManager);
+            stepRunner.setStep(step);
             try {
-                step = iterator.next();
-                log.info("Executing " + step);
-                stepRunner = stepRunnerFactory.newStepRunner(step);
-                stepRunner.setClusterSnapshot(job.getClusterSnapshot());
-                stepRunner.setOperationManager(operationManager);
-                stepRunner.setStorageNodeManager(storageNodeManager);
-                stepRunner.setSubjectManager(subjectManager);
-                stepRunner.setStorageClientManager(storageClientManager);
-                stepRunner.setStep(step);
                 stepRunner.execute();
 
                 maintenanceManager.deleteStep(step.getId());
@@ -346,7 +347,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
                 if (stepRunner.getFailureStrategy() == StepFailureStrategy.ABORT) {
                     log.info("Aborting" + job);
                     maintenanceManager.rescheduleJob(job.getJobNumber());
-                    iterator = null;
+                    return;
                 } else {    // failure strategy is continue
                     maintenanceManager.scheduleMaintenance(job.getJobNumber(), step.getStepNumber());
                     StorageMaintenanceJob updatedJob = maintenanceManager.loadJob(job.getJobNumber());

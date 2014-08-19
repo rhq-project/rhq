@@ -33,8 +33,36 @@ public interface StorageClusterMaintenanceManagerLocal {
      */
     void scheduleMaintenance(StorageMaintenanceJob job);
 
+    /**
+     * Schedules a new job for later execution when the currently running job encounters a step failure with a failure
+     * strategy of {@link org.rhq.enterprise.server.storage.maintenance.step.StepFailureStrategy#CONTINUE CONTINUE}.
+     * <p>
+     * This method calls
+     * {@link org.rhq.enterprise.server.storage.maintenance.job.StepCalculator#createNewJob(StorageMaintenanceJob, MaintenanceStep) StepCalculator.createNewJob(StorageMaintenanceJob, MaintenanceStep)}
+     * to get the new job for the failed step to be scheduled for later execution. A check is performed to see if a
+     * similar job is already in the queue. The new job is persisted only if no other similar job is found. The reason
+     * for this is to avoid creating duplicate, redundant work. For example, we would not want to keep scheduling a
+     * repair operation over and over when we just need it to run once on a given node. If a repair operation fails,
+     * and there is already a job in the queue for running repair over the same table/data, then there is no need to
+     * schedule another job to do the same work.
+     * </p>
+     * <p>
+     * {@link org.rhq.enterprise.server.storage.maintenance.job.StepCalculator#updateSteps(StorageMaintenanceJob, MaintenanceStep)}  StepCalculator.updateSteps(StorageMaintenanceJob, MaintenanceStep)}
+     * is called so that steps can be added to or removed from the job if necessary. The addition/removal of steps is
+     * updated in the database as well.
+     * </p>
+     *
+     * @param jobNumer The job number of the job currently running
+     * @param failedStepNumber The number of the step that just was executed and failed
+     */
     void scheduleMaintenance(int jobNumer, int failedStepNumber);
 
+    /**
+     * Adds a job back to the queue. This is done when a job is aborted due a to a step failure. When this method
+     * completes all of the steps associated with <code>jobNumber</code> will have a new job number.
+     *
+     * @param jobNumber The original job number of the job to be rescheduled
+     */
     void rescheduleJob(int jobNumber);
 
     /**

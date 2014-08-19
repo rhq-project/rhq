@@ -62,6 +62,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
+import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
@@ -346,7 +347,7 @@ public class BundleManagerTest {
         public final HashMap<Integer, ResourceContainer> idResourceContainerMap = new HashMap<Integer, ResourceContainer>();
 
         public MockInventoryManager() {
-            super(pcConfig, null, pluginManager);
+            super(pcConfig, null, pluginManager, new EventManager(pcConfig));
             platformType = new ResourceType("platformResourceTypeName", "pluginName", ResourceCategory.PLATFORM, null);
             bundleHandlerType = new ResourceType("bhRTypeName", "pluginName", ResourceCategory.SERVER, platformType);
             serverTypeFS = new ResourceType("typeName-fileSystem", "pluginName", ResourceCategory.SERVER, platformType);

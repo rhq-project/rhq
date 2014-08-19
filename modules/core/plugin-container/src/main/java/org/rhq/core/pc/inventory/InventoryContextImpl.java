@@ -1,7 +1,8 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2014 Red Hat, Inc.
- * All rights reserved.
+ * Copyright 2012, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,8 +14,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
 package org.rhq.core.pc.inventory;
@@ -25,14 +26,17 @@ import org.rhq.core.pluginapi.inventory.InventoryContext;
 
 /**
  * @author Stefan Negrea
+ *
  */
 public class InventoryContextImpl implements InventoryContext {
-    private final Resource resource;
-    private final PluginContainer pluginContainer;
 
-    public InventoryContextImpl(Resource resource, PluginContainer pluginContainer) {
+    private final Resource resource;
+
+    /**
+     * @param resource resource
+     */
+    public InventoryContextImpl(Resource resource) {
         this.resource = resource;
-        this.pluginContainer = pluginContainer;
     }
 
     /* (non-Javadoc)
@@ -40,7 +44,7 @@ public class InventoryContextImpl implements InventoryContext {
      */
     @Override
     public void requestDeferredChildResourcesDiscovery() {
-        pluginContainer.getInventoryManager().executeServiceScanDeferred(resource.getId());
+        PluginContainer.getInstance().getInventoryManager().executeServiceScanDeferred(resource.getId());
     }
 
     /* (non-Javadoc)
@@ -48,6 +52,6 @@ public class InventoryContextImpl implements InventoryContext {
      */
     @Override
     public void requestChildResourcesDiscovery() {
-        pluginContainer.getInventoryManager().executeServiceScanImmediately(resource);
+        PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately(resource);
     }
 }

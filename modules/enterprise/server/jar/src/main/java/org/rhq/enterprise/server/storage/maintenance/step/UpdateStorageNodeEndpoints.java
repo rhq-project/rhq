@@ -25,7 +25,6 @@ import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
-import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -33,12 +32,12 @@ import org.rhq.core.domain.util.PageList;
  *
  */
 //@Stateless
-public class UpdateStorageNodeEndpoints extends BaseStepRunner implements MaintenanceStepRunner {
+public class UpdateStorageNodeEndpoints extends BaseStepRunner {
 
     protected static final int DEFAULT_OPERATION_TIMEOUT = 300;
 
     //    @Override
-    public void execute(MaintenanceStep maintenanceStep) {
+    public void execute() {
 
 //        StorageNode storageNode = storageNodeManager.findStorageNodeByAddress(maintenanceStep.getStorageNode()
 //            .getAddress());

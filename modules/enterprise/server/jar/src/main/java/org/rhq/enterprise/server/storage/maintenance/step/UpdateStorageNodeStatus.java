@@ -11,7 +11,6 @@ import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
-import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -23,7 +22,7 @@ public class UpdateStorageNodeStatus extends BaseStepRunner {
     private static final Log log = LogFactory.getLog(UpdateStorageNodeStatus.class);
 
     @Override
-    public void execute(MaintenanceStep step) throws StepFailureException {
+    public void execute() throws StepFailureException {
         Configuration configuration = step.getConfiguration();
         String targetAddress = configuration.getSimpleValue("targetAddress");
         String mode = configuration.getSimpleValue("operationMode");

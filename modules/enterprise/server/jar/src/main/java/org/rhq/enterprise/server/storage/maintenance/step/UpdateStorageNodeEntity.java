@@ -25,7 +25,6 @@ import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
-import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -33,7 +32,7 @@ import org.rhq.core.domain.util.PageList;
  *
  */
 //@Stateless
-public class UpdateStorageNodeEntity extends BaseStepRunner implements MaintenanceStepRunner {
+public class UpdateStorageNodeEntity extends BaseStepRunner {
 
     protected static final int DEFAULT_OPERATION_TIMEOUT = 300;
 
@@ -41,7 +40,7 @@ public class UpdateStorageNodeEntity extends BaseStepRunner implements Maintenan
     }
 
     @Override
-    public void execute(MaintenanceStep step) {
+    public void execute() {
 //        if (step.getStorageNode() == null || step.getStorageNode() == null)
 //            throw new IllegalArgumentException("Storage node not found.");
 //

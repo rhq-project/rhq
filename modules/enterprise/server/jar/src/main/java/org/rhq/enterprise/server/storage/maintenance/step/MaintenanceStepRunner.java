@@ -34,7 +34,9 @@ public interface MaintenanceStepRunner {
 
     void setClusterSnapshot(Set<String> clusterSnapshot);
 
-    void execute(MaintenanceStep step) throws StepFailureException;
+    void setStep(MaintenanceStep step);
+
+    void execute() throws StepFailureException;
 
     StepFailureStrategy getFailureStrategy();
 

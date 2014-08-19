@@ -332,7 +332,8 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
                 stepRunner.setStorageNodeManager(storageNodeManager);
                 stepRunner.setSubjectManager(subjectManager);
                 stepRunner.setStorageClientManager(storageClientManager);
-                stepRunner.execute(step);
+                stepRunner.setStep(step);
+                stepRunner.execute();
 
                 maintenanceManager.deleteStep(step.getId());
             } catch (Exception e) {

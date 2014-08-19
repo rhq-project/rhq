@@ -25,7 +25,6 @@ import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
-import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.storage.StorageClientManager;
 
@@ -34,14 +33,14 @@ import org.rhq.enterprise.server.storage.StorageClientManager;
  *
  */
 //@Stateless
-public class StartStorageClient extends BaseStepRunner implements MaintenanceStepRunner {
+public class StartStorageClient extends BaseStepRunner {
 
     protected static final int DEFAULT_OPERATION_TIMEOUT = 300;
     //    @EJB
     private StorageClientManager storageClientManager;
 
     @Override
-    public void execute(MaintenanceStep maintenanceStep) {
+    public void execute() {
         storageClientManager.init();
     }
 

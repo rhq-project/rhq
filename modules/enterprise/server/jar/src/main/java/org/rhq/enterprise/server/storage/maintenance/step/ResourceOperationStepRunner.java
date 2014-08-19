@@ -11,7 +11,6 @@ import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
-import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -29,7 +28,7 @@ public abstract class ResourceOperationStepRunner extends BaseStepRunner {
     }
 
     @Override
-    public void execute(MaintenanceStep step) throws StepFailureException {
+    public void execute() throws StepFailureException {
         Configuration configuration = step.getConfiguration();
         String targetAddress = configuration.getSimpleValue("targetAddress");
         PropertyMap params = (PropertyMap) configuration.get("parameters");

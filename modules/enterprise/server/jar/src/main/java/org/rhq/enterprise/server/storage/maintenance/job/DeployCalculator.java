@@ -155,8 +155,9 @@ public class DeployCalculator implements StepCalculator {
             .setDescription("Announce " + newNodeAddress + " to " + targetAddress)
             .setConfiguration(new Configuration.Builder()
                 .addSimple("targetAddress", targetAddress)
+                .addSimple("failureStrategy", "ABORT")
                 .openMap("parameters")
-                .addSimple("address", newNodeAddress)
+                    .addSimple("address", newNodeAddress)
                 .closeMap()
                 .build()));
         addRepairSteps(job, SystemDAO.Keyspace.SYSTEM_AUTH, ImmutableSet.of(targetAddress));

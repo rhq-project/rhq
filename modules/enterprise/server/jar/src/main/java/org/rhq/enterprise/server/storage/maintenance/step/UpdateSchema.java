@@ -9,7 +9,6 @@ import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
-import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.server.metrics.StorageSession;
 
@@ -21,8 +20,8 @@ public class UpdateSchema extends BaseStepRunner {
     protected static final int DEFAULT_OPERATION_TIMEOUT = 300;
 
     @Override
-    public void execute(MaintenanceStep maintenanceStep) throws StepFailureException {
-        Configuration configuration = maintenanceStep.getConfiguration();
+    public void execute() throws StepFailureException {
+        Configuration configuration = step.getConfiguration();
         Integer replicationFactor = configuration.getSimple("replicationFactor").getIntegerValue();
         updateReplicationFactor(replicationFactor);
 

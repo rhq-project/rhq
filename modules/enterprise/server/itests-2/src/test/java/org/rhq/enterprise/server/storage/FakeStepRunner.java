@@ -2,7 +2,6 @@ package org.rhq.enterprise.server.storage;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.storage.maintenance.step.BaseStepRunner;
 import org.rhq.enterprise.server.storage.maintenance.step.StepFailureException;
 import org.rhq.enterprise.server.storage.maintenance.step.StepFailureStrategy;
@@ -37,7 +36,7 @@ public class FakeStepRunner extends BaseStepRunner {
     }
 
     @Override
-    public void execute(MaintenanceStep maintenanceStep) throws StepFailureException {
+    public void execute() throws StepFailureException {
         executed.set(true);
     }
 

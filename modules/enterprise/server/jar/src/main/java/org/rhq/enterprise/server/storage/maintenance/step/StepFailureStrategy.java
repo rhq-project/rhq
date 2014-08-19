@@ -18,6 +18,16 @@ public enum StepFailureStrategy {
      * Continue execution of the job. A new job will be created for the failed step and added to the queue.
      *
      */
-    CONTINUE
+    CONTINUE;
+
+    public static StepFailureStrategy fromString(String strategy) {
+        if (strategy.equals(ABORT.toString())) {
+            return ABORT;
+        } else if (strategy.equals(CONTINUE.toString())) {
+            return CONTINUE;
+        } else {
+            throw new IllegalArgumentException(strategy + " is not a " + StepFailureStrategy.class.getSimpleName());
+        }
+    }
 
 }

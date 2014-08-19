@@ -13,15 +13,16 @@ import com.google.common.collect.ImmutableSet;
 import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
+import org.rhq.enterprise.server.storage.maintenance.JobProperties;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.step.AnnounceStorageNode;
 import org.rhq.enterprise.server.storage.maintenance.step.BootstrapNode;
 import org.rhq.enterprise.server.storage.maintenance.step.RunRepair;
+import org.rhq.enterprise.server.storage.maintenance.step.StepFailureStrategy;
 import org.rhq.enterprise.server.storage.maintenance.step.UpdateSchema;
 import org.rhq.enterprise.server.storage.maintenance.step.UpdateStorageNodeStatus;
 import org.rhq.server.metrics.SystemDAO;
@@ -57,16 +58,15 @@ public class DeployCalculator implements StepCalculator {
         }
 
         Set<String> clusterSnapshot = job.getClusterSnapshot();
-        PropertyMap parametersMap = job.getJobParameters();
-        String newNodeAddress = parametersMap.getSimple("address").getStringValue();
+        String newNodeAddress = job.getTarget();
 
         MaintenanceStep updateStatus = new MaintenanceStep()
                 .setName(UpdateStorageNodeStatus.class.getName())
                 .setDescription("Update operation mode of " + newNodeAddress + " to " +
                     StorageNode.OperationMode.ANNOUNCE)
                 .setConfiguration(new Configuration.Builder()
-                    .addSimple("targetAddress", newNodeAddress)
-                    .addSimple("operationMode", StorageNode.OperationMode.ANNOUNCE.toString())
+                    .addSimple(JobProperties.TARGET, newNodeAddress)
+                    .addSimple(JobProperties.OPERATION_MODE, StorageNode.OperationMode.ANNOUNCE.toString())
                 .build());
         job.addStep(updateStatus);
 
@@ -75,8 +75,8 @@ public class DeployCalculator implements StepCalculator {
                 .setName(AnnounceStorageNode.class.getName())
                 .setDescription("Announce new node " + newNodeAddress + " to " + address)
                 .setConfiguration(new Configuration.Builder()
-                    .addSimple("targetAddress", address)
-                    .openMap("parameters")
+                    .addSimple(JobProperties.TARGET, address)
+                    .openMap(JobProperties.PARAMETERS)
                         .addSimple("address", newNodeAddress)
                     .closeMap()
                     .build());
@@ -88,8 +88,8 @@ public class DeployCalculator implements StepCalculator {
             .setDescription("Update operation mode of " + newNodeAddress + " to " +
                 StorageNode.OperationMode.BOOTSTRAP)
             .setConfiguration(new Configuration.Builder()
-                .addSimple("targetAddress", newNodeAddress)
-                .addSimple("operationMode", StorageNode.OperationMode.BOOTSTRAP.toString())
+                .addSimple(JobProperties.TARGET, newNodeAddress)
+                .addSimple(JobProperties.OPERATION_MODE, StorageNode.OperationMode.BOOTSTRAP.toString())
                 .build());
         job.addStep(updateStatus);
 
@@ -100,8 +100,8 @@ public class DeployCalculator implements StepCalculator {
             .setName(BootstrapNode.class.getName())
             .setDescription("Bootstrap new node " + newNodeAddress)
             .setConfiguration(new Configuration.Builder()
-                .addSimple("targetAddress", newNodeAddress)
-                .openMap("parameters")
+                .addSimple(JobProperties.TARGET, newNodeAddress)
+                .openMap(JobProperties.PARAMETERS)
                 .addSimple("cqlPort", clusterSettings.getCqlPort())
                 .addSimple("gossipPort", clusterSettings.getGossipPort())
                 .openList("addresses", "addresses")
@@ -120,8 +120,8 @@ public class DeployCalculator implements StepCalculator {
             .setDescription("Update operation mode of " + newNodeAddress + " to " +
                 StorageNode.OperationMode.ADD_MAINTENANCE)
             .setConfiguration(new Configuration.Builder()
-                .addSimple("targetAddress", newNodeAddress)
-                .addSimple("operationMode", StorageNode.OperationMode.ADD_MAINTENANCE.toString())
+                .addSimple(JobProperties.TARGET, newNodeAddress)
+                .addSimple(JobProperties.OPERATION_MODE, StorageNode.OperationMode.ADD_MAINTENANCE.toString())
                 .build());
         job.addStep(updateStatus);
 
@@ -136,8 +136,8 @@ public class DeployCalculator implements StepCalculator {
             .setDescription("Update operation mode of " + newNodeAddress + " to " +
                 StorageNode.OperationMode.NORMAL)
             .setConfiguration(new Configuration.Builder()
-                .addSimple("targetAddress", newNodeAddress)
-                .addSimple("operationMode", StorageNode.OperationMode.NORMAL.toString())
+                .addSimple(JobProperties.TARGET, newNodeAddress)
+                .addSimple(JobProperties.OPERATION_MODE, StorageNode.OperationMode.NORMAL.toString())
                 .build());
         job.addStep(updateStatus);
 
@@ -145,18 +145,16 @@ public class DeployCalculator implements StepCalculator {
     }
 
     private void addFailedAnnounceSteps(StorageMaintenanceJob job) {
-        Set<String> clusterSnapshot = job.getClusterSnapshot();
-        PropertyMap parametersMap = job.getJobParameters();
-        String targetAddress = parametersMap.getSimple("address").getStringValue();
-        String newNodeAddress = parametersMap.getSimple("newNodeAddress").getStringValue();
+        String targetAddress = job.getTarget();
+        String newNodeAddress = job.getConfiguration().getSimpleValue("newNodeAddress");
 
         job.addStep(new MaintenanceStep()
             .setName(AnnounceStorageNode.class.getName())
             .setDescription("Announce " + newNodeAddress + " to " + targetAddress)
             .setConfiguration(new Configuration.Builder()
-                .addSimple("targetAddress", targetAddress)
-                .addSimple("failureStrategy", "ABORT")
-                .openMap("parameters")
+                .addSimple(JobProperties.TARGET, targetAddress)
+                .addSimple(JobProperties.FAILURE_STRATEGY, StepFailureStrategy.ABORT.toString())
+                .openMap(JobProperties.PARAMETERS)
                     .addSimple("address", newNodeAddress)
                 .closeMap()
                 .build()));
@@ -173,10 +171,10 @@ public class DeployCalculator implements StepCalculator {
                     .setName(RunRepair.class.getName())
                     .setDescription("Run repair on " + keyspace + "." + table + " on " + address)
                     .setConfiguration(new Configuration.Builder()
-                        .addSimple("targetAddress", address)
-                        .openMap("parameters")
-                        .addSimple("keyspace", keyspace)
-                        .addSimple("table", table)
+                        .addSimple(JobProperties.TARGET, address)
+                        .openMap(JobProperties.PARAMETERS)
+                            .addSimple("keyspace", keyspace)
+                            .addSimple("table", table)
                         .closeMap()
                         .build()));
             }
@@ -248,13 +246,13 @@ public class DeployCalculator implements StepCalculator {
     @Override
     public void updateSteps(StorageMaintenanceJob job, MaintenanceStep failedStep) {
         if (failedStep.getName().equals(AnnounceStorageNode.class.getName())) {
-            String address = failedStep.getConfiguration().getSimpleValue("targetAddress");
+            String address = failedStep.getConfiguration().getSimpleValue(JobProperties.TARGET);
 
             Iterator<MaintenanceStep> iterator = job.iterator();
             while (iterator.hasNext()) {
                 MaintenanceStep step = iterator.next();
                 if (step.equals(failedStep) || (step.getName().equals(RunRepair.class.getName()) &&
-                    step.getConfiguration().getSimpleValue("targetAddress").equals(address))) {
+                    step.getConfiguration().getSimpleValue(JobProperties.TARGET).equals(address))) {
                     iterator.remove();
                 }
             }
@@ -266,12 +264,14 @@ public class DeployCalculator implements StepCalculator {
     @Override
     public StorageMaintenanceJob createNewJob(StorageMaintenanceJob originalJob, MaintenanceStep failedStep) {
         if (failedStep.getName().equals(AnnounceStorageNode.class.getName())) {
-            String address = failedStep.getConfiguration().getSimpleValue("targetAddress");
-            String newNodeAddress = failedStep.getConfiguration().getMap("parameters").getSimple("address")
-                .getStringValue();
-            return new StorageMaintenanceJob(FAILED_ANNOUNCE, FAILED_ANNOUNCE + " " + address,
-                new Configuration.Builder().addSimple("address", address).addSimple("newNodeAddress", newNodeAddress)
-                    .build());
+            String address = failedStep.getConfiguration().getSimpleValue(JobProperties.TARGET);
+            Configuration newJobConfiguration = new Configuration.Builder()
+                .addSimple(JobProperties.TARGET, address)
+                .addSimple("newNodeAddress", failedStep.getConfiguration().getMap(JobProperties.PARAMETERS)
+                    .getSimple("address"))
+                .build();
+
+            return new StorageMaintenanceJob(FAILED_ANNOUNCE, FAILED_ANNOUNCE + " " + address, newJobConfiguration);
         }
         throw new UnsupportedOperationException("There is no support for a failure in " + failedStep.getName());
     }

@@ -12,6 +12,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.storage.maintenance.JobProperties;
 
 /**
  * @author John Sanda
@@ -24,8 +25,8 @@ public class UpdateStorageNodeStatus extends BaseStepRunner {
     @Override
     public void execute() throws StepFailureException {
         Configuration configuration = step.getConfiguration();
-        String targetAddress = configuration.getSimpleValue("targetAddress");
-        String mode = configuration.getSimpleValue("operationMode");
+        String targetAddress = configuration.getSimpleValue(JobProperties.TARGET);
+        String mode = configuration.getSimpleValue(JobProperties.OPERATION_MODE);
         StorageNode.OperationMode operationMode = getOperationMode(mode);
 
         log.info("Updating operation mode of " + targetAddress + " to " + mode);

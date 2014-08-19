@@ -12,6 +12,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.storage.maintenance.JobProperties;
 
 /**
  * @author John Sanda
@@ -30,8 +31,8 @@ public abstract class ResourceOperationStepRunner extends BaseStepRunner {
     @Override
     public void execute() throws StepFailureException {
         Configuration configuration = step.getConfiguration();
-        String targetAddress = configuration.getSimpleValue("targetAddress");
-        PropertyMap params = (PropertyMap) configuration.get("parameters");
+        String targetAddress = configuration.getSimpleValue(JobProperties.TARGET);
+        PropertyMap params = (PropertyMap) configuration.get(JobProperties.PARAMETERS);
         Configuration operationParams = new Configuration();
 
         if (params != null) {

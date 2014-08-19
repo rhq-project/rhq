@@ -5,6 +5,7 @@ import java.util.Set;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.storage.MaintenanceStep;
+import org.rhq.enterprise.server.storage.maintenance.JobProperties;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.step.DecommissionStorageNode;
 import org.rhq.enterprise.server.storage.maintenance.step.DeleteStorageNode;
@@ -21,22 +22,22 @@ public class UndeployCalculator extends DeployCalculator {
     @Override
     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {
         Set<String> clusterSnapshot = job.getClusterSnapshot();
-        String nodeAddress = job.getJobParameters().getSimple("address").getStringValue();
+        String nodeAddress = job.getTarget();
 
         job.addStep(new MaintenanceStep()
             .setName(UpdateStorageNodeStatus.class.getName())
             .setDescription("Update operation mode of " + nodeAddress + " to " +
                 StorageNode.OperationMode.DECOMMISSION)
             .setConfiguration(new Configuration.Builder()
-                .addSimple("targetAddress", nodeAddress)
-                .addSimple("operationMode", StorageNode.OperationMode.DECOMMISSION.toString())
+                .addSimple(JobProperties.TARGET, nodeAddress)
+                .addSimple(JobProperties.OPERATION_MODE, StorageNode.OperationMode.DECOMMISSION.toString())
                 .build()));
 
         job.addStep(new MaintenanceStep()
             .setName(DecommissionStorageNode.class.getName())
             .setDescription("Decommission " + nodeAddress)
             .setConfiguration(new Configuration.Builder()
-                .addSimple("targetAddress", nodeAddress)
+                .addSimple(JobProperties.TARGET, nodeAddress)
                 .build()));
 
         SchemaChanges schemaChanges = determineSchemaChanges(clusterSnapshot.size(), clusterSnapshot.size() - 1);
@@ -47,8 +48,8 @@ public class UndeployCalculator extends DeployCalculator {
             .setDescription("Update operation mode of " + nodeAddress + " to " +
                 StorageNode.OperationMode.REMOVE_MAINTENANCE)
             .setConfiguration(new Configuration.Builder()
-                .addSimple("targetAddress", nodeAddress)
-                .addSimple("operationMode", StorageNode.OperationMode.REMOVE_MAINTENANCE.toString())
+                .addSimple(JobProperties.TARGET, nodeAddress)
+                .addSimple(JobProperties.OPERATION_MODE, StorageNode.OperationMode.REMOVE_MAINTENANCE.toString())
                 .build()));
 
         for (String address : clusterSnapshot) {
@@ -56,8 +57,8 @@ public class UndeployCalculator extends DeployCalculator {
                 .setName(RemoveMaintenance.class.getName())
                 .setDescription("Run cluster maintenance on " + address)
                 .setConfiguration(new Configuration.Builder()
-                    .addSimple("targetAddress", address)
-                    .openMap("parameters")
+                    .addSimple(JobProperties.TARGET, address)
+                    .openMap(JobProperties.PARAMETERS)
                         .addSimple("removedNodeAddress", nodeAddress)
                         .addSimple("runRepair", schemaChanges.replicationFactor != null)
                         .addSimple("updateSeedsList", true)
@@ -73,8 +74,8 @@ public class UndeployCalculator extends DeployCalculator {
             .setDescription("Update operation mode of " + nodeAddress + " to " +
                 StorageNode.OperationMode.UNANNOUNCE)
             .setConfiguration(new Configuration.Builder()
-                .addSimple("targetAddress", nodeAddress)
-                .addSimple("operationMode", StorageNode.OperationMode.UNANNOUNCE.toString())
+                .addSimple(JobProperties.TARGET, nodeAddress)
+                .addSimple(JobProperties.OPERATION_MODE, StorageNode.OperationMode.UNANNOUNCE.toString())
                 .build()));
 
         for (String address : clusterSnapshot) {
@@ -82,9 +83,9 @@ public class UndeployCalculator extends DeployCalculator {
                 .setName(UnannounceStorageNode.class.getName())
                 .setDescription("Unannouncing " + nodeAddress + " to " + address)
                 .setConfiguration(new Configuration.Builder()
-                    .addSimple("targetAddress", address)
-                    .openMap("parameters")
-                    .addSimple("address", nodeAddress)
+                    .addSimple(JobProperties.TARGET, address)
+                    .openMap(JobProperties.PARAMETERS)
+                        .addSimple("address", nodeAddress)
                     .closeMap()
                     .build()));
         }
@@ -94,22 +95,22 @@ public class UndeployCalculator extends DeployCalculator {
             .setDescription("Update operation mode of " + nodeAddress + " to " +
                 StorageNode.OperationMode.UNINSTALL)
             .setConfiguration(new Configuration.Builder()
-                .addSimple("targetAddress", nodeAddress)
-                .addSimple("operationMode", StorageNode.OperationMode.UNINSTALL.toString())
+                .addSimple(JobProperties.TARGET, nodeAddress)
+                .addSimple(JobProperties.OPERATION_MODE, StorageNode.OperationMode.UNINSTALL.toString())
                 .build()));
 
         job.addStep(new MaintenanceStep()
             .setName(UninstallStorageNode.class.getName())
             .setDescription("Uninstalling " + nodeAddress)
             .setConfiguration(new Configuration.Builder()
-                .addSimple("targetAddress", nodeAddress)
+                .addSimple(JobProperties.TARGET, nodeAddress)
                 .build()));
 
         job.addStep(new MaintenanceStep()
             .setName(DeleteStorageNode.class.getName())
             .setDescription("Deleting " + nodeAddress + " from inventory")
             .setConfiguration(new Configuration.Builder()
-                .addSimple("targetAddress", nodeAddress)
+                .addSimple(JobProperties.TARGET, nodeAddress)
                 .build()));
 
         return job;

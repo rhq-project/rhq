@@ -53,7 +53,7 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
             .setJobType(jobType)
             .setName(name)
             .setDescription(description)
-            .setConfiguration(convert(params));
+            .setConfiguration(params.deepCopyWithoutProxies());
     }
 
     private Configuration convert(Configuration params) {
@@ -127,7 +127,7 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
     }
 
     public PropertyMap getJobParameters() {
-        return baseStep.getConfiguration().getMap("parameters");
+        return baseStep.getConfiguration().getMap(JobProperties.PARAMETERS);
     }
 
     public StorageMaintenanceJob addStep(MaintenanceStep step) {
@@ -157,6 +157,21 @@ public class StorageMaintenanceJob implements Serializable, Iterable<Maintenance
         }
 
         return snapshot;
+    }
+
+    /**
+     * @return The value of the <code>target</code> property which is part of the job-level configuration. This is
+     * currently a string which is a node's address. Once storage node data model changes are made, this will likely
+     * be a complex type that includes the client (i.e., cql) address, gossip address, the host id, and probably the
+     * storage node id.
+     */
+    public String getTarget() {
+        Configuration configuration = baseStep.getConfiguration();
+        return configuration.getSimpleValue("target");
+    }
+
+    public Configuration getConfiguration() {
+        return baseStep.getConfiguration();
     }
 
     public Property getClusterSnapshotProperty() {

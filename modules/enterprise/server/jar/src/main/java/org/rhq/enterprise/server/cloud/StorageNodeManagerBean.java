@@ -223,7 +223,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 if (clusterSettings.getAutomaticDeployment()) {
                     StorageMaintenanceJob job = new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY,
                         "Deploy " + storageNode.getAddress(), new Configuration.Builder()
-                        .addSimple("address", storageNode.getAddress()).build());
+                        .addSimple("target", storageNode.getAddress()).build());
 
                     clusterMaintenanceManager.scheduleMaintenance(job);
                 } else {
@@ -346,39 +346,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             .addSimple("address", storageNode.getAddress()).build());
 
         clusterMaintenanceManager.scheduleMaintenance(job);
-
-//        switch (storageNode.getOperationMode()) {
-//        case INSTALLED:
-//            storageNodeManager.resetInNewTransaction();
-//            storageNodeOperationsHandler.uninstall(subject, storageNode);
-//            break;
-//        case ANNOUNCE:
-//        case BOOTSTRAP:
-//            storageNodeManager.resetInNewTransaction();
-//            storageNodeOperationsHandler.unannounceStorageNode(subject, storageNode);
-//            break;
-//        case ADD_MAINTENANCE:
-//        case NORMAL:
-//        case DECOMMISSION:
-//            storageNodeManager.resetInNewTransaction();
-//            storageNodeOperationsHandler.decommissionStorageNode(subject, storageNode);
-//            break;
-//        case REMOVE_MAINTENANCE:
-//            storageNodeManager.resetInNewTransaction();
-//            storageNodeOperationsHandler.performRemoveNodeMaintenance(subject, storageNode);
-//            break;
-//        case UNANNOUNCE:
-//            storageNodeManager.resetInNewTransaction();
-//            storageNodeOperationsHandler.unannounceStorageNode(subject, storageNode);
-//            break;
-//        case UNINSTALL:
-//            storageNodeManager.resetInNewTransaction();
-//            storageNodeOperationsHandler.uninstall(subject, storageNode);
-//            break;
-//        default:
-//            // TODO what do we do with/about maintenance mode
-//            throw new RuntimeException("Cannot undeploy " + storageNode);
-//        }
     }
 
     @Override

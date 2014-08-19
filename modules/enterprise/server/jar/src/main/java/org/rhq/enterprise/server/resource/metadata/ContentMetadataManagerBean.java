@@ -61,30 +61,23 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
         BundleType newBundleType = newType.getBundleType();
 
         if (newBundleType != null) {
-            boolean changed = false;
-
             BundleType existingBundleType = existingType.getBundleType();
-            if (existingBundleType != null) {
-                changed = true;
-            }
 
             Set<ResourceType> targetedResourceTypes = new HashSet<ResourceType>(
                 newBundleType.getExplicitlyTargetedResourceTypes().size());
 
             if (!newBundleType.getExplicitlyTargetedResourceTypes().isEmpty()) {
-                changed = true;
-
                 for (ResourceType targetType : newBundleType.getExplicitlyTargetedResourceTypes()) {
-                    existingType = resourceTypeMgr
+                    ResourceType existingTargetType = resourceTypeMgr
                         .getResourceTypeByNameAndPlugin(targetType.getName(), targetType.getPlugin());
 
-                    if (existingType == null) {
+                    if (existingTargetType == null) {
                         throw new IllegalStateException(
                             "Cannot find a resource type explicitly targeted by bundle type " + newBundleType +
                                 ". This should not happen because such type should always be persisted prior to the bundle type.");
                     }
 
-                    targetedResourceTypes.add(existingType);
+                    targetedResourceTypes.add(existingTargetType);
                 }
             }
 
@@ -95,17 +88,15 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
             // above. This is because the above code can query the database during which the changes might
             // be flushed to the DB (if at least 1 of those changes involved associating the new bundle type
             // with an entity from the persistence context.
-            if (changed) {
-                if (existingBundleType != null) {
-                    newBundleType.setId(existingBundleType.getId());
-                }
-
-                newBundleType.setResourceType(existingType);
-                newBundleType.getExplicitlyTargetedResourceTypes().clear();
-                newBundleType.getExplicitlyTargetedResourceTypes().addAll(targetedResourceTypes);
-
-                newBundleType = entityMgr.merge(newBundleType);
+            if (existingBundleType != null) {
+                newBundleType.setId(existingBundleType.getId());
             }
+
+            newBundleType.setResourceType(existingType);
+            newBundleType.getExplicitlyTargetedResourceTypes().clear();
+            newBundleType.getExplicitlyTargetedResourceTypes().addAll(targetedResourceTypes);
+
+            newBundleType = entityMgr.merge(newBundleType);
 
             existingType.setBundleType(newBundleType);
 

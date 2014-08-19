@@ -32,6 +32,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
 import org.rhq.core.util.file.FileReverter;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
@@ -41,10 +42,20 @@ import org.rhq.server.control.RHQControlException;
  */
 public class Install extends AbstractInstall {
 
+    private static final String FROM_AGENT_DIR_OPTION = "from-agent-dir";
+
     private Options options;
 
     public Install() {
         options = new Options()
+            .addOption(
+                null,
+                FROM_AGENT_DIR_OPTION,
+                true,
+                "Full path to the install directory of the existing RHQ Agent. This is used when installing a "
+                    + "new RHQ HA Server, or an RHQ Storage Node, to a machine with an existing RHQ Agent installed. "
+                    + "The existing agent will be updated as needed and relocated into the default location: "
+                    + "<server-dir>/../rhq-agent.")
             .addOption(
                 null,
                 "storage",
@@ -124,6 +135,16 @@ public class Install extends AbstractInstall {
                 }
             });
 
+            // If using non-default agent location then save it so it will be applied to all subsequent rhqctl commands.
+            boolean hasFromAgentOption = commandLine.hasOption(FROM_AGENT_DIR_OPTION);
+            File fromAgentDir = null;
+            if (hasFromAgentOption) {
+                // stop the existing agent  if it is running, this validates the path as well
+                log.info("Stopping the existing agent, if running...");
+                fromAgentDir = getFromAgentDir(commandLine);
+                rValue = Math.max(rValue, killAgent(fromAgentDir));
+            }
+
             boolean installAll = (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) || commandLine
                 .hasOption(AGENT_OPTION)));
             boolean installStorage = installAll || commandLine.hasOption(STORAGE_OPTION);
@@ -180,15 +201,35 @@ public class Install extends AbstractInstall {
                     if (isWindows()) {
                         try {
                             log.info("Ensuring the RHQ Agent Windows service exists. Ignore any CreateService failure.");
-                            rValue = Math.max(rValue, installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", false, false));
+                            rValue = Math.max(
+                                rValue,
+                                installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", false,
+                                    false));
                         } catch (Exception e) {
                             // Ignore, service may already exist or be running, wrapper script returns 1
                             log.debug("Failed to stop agent service", e);
                         }
                     }
                 } else {
-                    File agentBasedir = getAgentBasedir();
-                    installAgent(agentBasedir, commandLine);
+                    final File agentBasedir = getAgentBasedir();
+
+                    if (!hasFromAgentOption) {
+                        installAgent(agentBasedir, commandLine);
+
+                    } else {
+                        // update the existing agent, it may be out of date, and then move it to the proper location
+                        File agentInstallerJar = getFileDownload("rhq-agent", "rhq-enterprise-agent");
+
+                        int exitValue = updateAndMoveExistingAgent(agentBasedir, fromAgentDir, agentInstallerJar);
+
+                        addUndoTask(new ControlCommand.UndoTask("Removing agent install directory") {
+                            public void performUndoWork() {
+                                FileUtil.purge(agentBasedir, true);
+                            }
+                        });
+
+                        log.info("The agent has been upgraded and placed in: " + agentBasedir);
+                    }
 
                     rValue = Math.max(rValue, updateWindowsAgentService(agentBasedir));
 
@@ -249,6 +290,27 @@ public class Install extends AbstractInstall {
                 && commandLine.hasOption(AGENT_CONFIG_OPTION)) {
                 File agentConfig = new File(commandLine.getOptionValue(AGENT_CONFIG_OPTION));
                 validateAgentConfigOption(agentConfig, errors);
+            }
+        }
+
+        if (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
+            if (isAgentInstalled()) {
+                errors.add("An Agent is already installed. The " + FROM_AGENT_DIR_OPTION + " option is not allowed.");
+            } else {
+                File fromAgentDir = new File(commandLine.getOptionValue(FROM_AGENT_DIR_OPTION));
+                if (!fromAgentDir.isDirectory()) {
+                    errors.add("The " + FROM_AGENT_DIR_OPTION + " directory does not exist: [" + fromAgentDir.getPath()
+                        + "]");
+                } else {
+                    String agentEnvFileName = (File.separatorChar == '/') ? "bin/rhq-agent-env.sh"
+                        : "bin/rhq-agent-env.bat";
+                    File agentEnvFile = new File(fromAgentDir, agentEnvFileName);
+                    if (!agentEnvFile.isFile()) {
+                        errors.add("The " + FROM_AGENT_DIR_OPTION
+                            + " directory does not appear to be an RHQ Agent installation. Missing expected file: ["
+                            + agentEnvFile.getPath() + "]");
+                    }
+                }
             }
         }
 

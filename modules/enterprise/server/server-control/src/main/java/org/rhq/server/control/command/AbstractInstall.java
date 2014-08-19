@@ -38,6 +38,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Future;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -135,7 +136,7 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    protected void waitForRHQServerToInitialize() throws Exception {
+    protected void waitForRHQServerToInitialize(Future<Integer> installerExitCode) throws Exception {
         try {
             final long messageInterval = 30000L;
             final long problemMessageInterval = 120000L;
@@ -144,6 +145,11 @@ public abstract class AbstractInstall extends ControlCommand {
 
             while (!isRHQServerInitialized()) {
                 Long now = System.currentTimeMillis();
+
+                if(installerExitCode.isDone() && installerExitCode.get().intValue() != RHQControl.EXIT_CODE_OK) {
+                    stopServer();
+                    throw new RuntimeException("Installer failed with code " + installerExitCode.get().intValue() + ", shut down server");
+                }
 
                 if ((now - intervalStart) > messageInterval) {
                     long totalWait = (now - timerStart);
@@ -338,18 +344,17 @@ public abstract class AbstractInstall extends ControlCommand {
         log.debug("Stopping RHQ server...");
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "stop");
 
-        int rValue = RHQControl.EXIT_CODE_OK;
-
+        int rValue;
         if (isWindows()) {
             try {
-                rValue = Math.max(rValue, ExecutorAssist.execute(serverBinDir, commandLine));
+                rValue = ExecutorAssist.execute(serverBinDir, commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to stop server service", e);
                 rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            rValue = Math.max(rValue, ExecutorAssist.execute(serverBinDir, commandLine));
+            rValue = ExecutorAssist.execute(serverBinDir, commandLine);
         }
         return rValue;
     }
@@ -389,7 +394,7 @@ public abstract class AbstractInstall extends ControlCommand {
             } else {
                 // For *nix, just start the server in the background
                 commandLine = getCommandLine("rhq-server", "start");
-                rValue = Math.max(rValue, ExecutorAssist.execute(getBinDir(), commandLine, true));
+                ExecutorAssist.executeAsync(getBinDir(), commandLine, null);
             }
 
             addUndoTaskToStopComponent("--server"); // if any errors occur after now, we need to stop the server
@@ -425,34 +430,25 @@ public abstract class AbstractInstall extends ControlCommand {
         return rValue;
     }
 
-    protected int runRHQServerInstaller() throws IOException {
-        try {
-            log.info("Installing RHQ server");
+    protected Future<Integer> runRHQServerInstaller() throws Exception {
+        log.info("Installing RHQ server");
 
-            // If the install fails, we will remove the install marker file allowing the installer to be able to run again.
-            // We also need to revert mgmt-users.properties
-            File mgmtUserPropertiesFile = new File(getBaseDir(),
+        // If the install fails, we will remove the install marker file allowing the installer to be able to run again.
+        // We also need to revert mgmt-users.properties
+        File mgmtUserPropertiesFile = new File(getBaseDir(),
                 "jbossas/standalone/configuration/mgmt-users.properties");
-            final FileReverter mgmtUserPropertiesReverter = new FileReverter(mgmtUserPropertiesFile);
-            addUndoTask(new ControlCommand.UndoTask("Removing server-installed marker file and management user") {
-                public void performUndoWork() throws Exception {
-                    getServerInstalledMarkerFile(getBaseDir()).delete();
-                    mgmtUserPropertiesReverter.revert();
-                }
-            });
+        final FileReverter mgmtUserPropertiesReverter = new FileReverter(mgmtUserPropertiesFile);
+        addUndoTask(new ControlCommand.UndoTask("Removing server-installed marker file and management user") {
+            public void performUndoWork() throws Exception {
+                getServerInstalledMarkerFile(getBaseDir()).delete();
+                mgmtUserPropertiesReverter.revert();
+            }
+        });
 
-            /**
-             * @TODO There's no way this could catch the resultValue..
-             */
-
-            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
-            ExecutorAssist.execute(getBinDir(), commandLine, true);
-            log.info("The server installer is running");
-            return RHQControl.EXIT_CODE_OK; // the installer really didn't exit yet, so we don't know the result
-        } catch (Exception e) {
-            log.error("An error occurred while starting the server installer: " + e.getMessage());
-            return RHQControl.EXIT_CODE_NOT_INSTALLED;
-        }
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
+        Future<Integer> integerFuture = ExecutorAssist.executeAsync(getBinDir(), commandLine, null);
+        log.info("The server installer is running");
+        return integerFuture;
     }
 
     private class StorageDataDirectories {

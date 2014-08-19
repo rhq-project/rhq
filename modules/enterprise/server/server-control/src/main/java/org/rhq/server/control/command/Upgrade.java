@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Future;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -329,12 +330,10 @@ public class Upgrade extends AbstractInstall {
 
         // start the server, then invoke the installer and wait for the server to be completely installed
         rValue = Math.max(rValue, startRHQServerForInstallation());
-        int installerStatusCode = runRHQServerInstaller();
-        rValue = Math.max(rValue, installerStatusCode);
-        if (installerStatusCode == RHQControl.EXIT_CODE_OK) {
-            waitForRHQServerToInitialize();
-        }
+        Future<Integer> integerFuture = runRHQServerInstaller();
+        waitForRHQServerToInitialize(integerFuture);
 
+        rValue = Math.max(rValue, integerFuture.get());
         return rValue;
     }
 

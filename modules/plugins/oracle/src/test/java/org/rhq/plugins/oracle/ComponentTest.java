@@ -153,7 +153,7 @@ public abstract class ComponentTest {
             ResourceDiscoveryComponent resourceDiscoveryComponent = new NothingDiscoveringDiscoveryComponent();
             EventContext eventContext = new EventContextImpl(resource, eventManager);
             AvailabilityContext availContext = new AvailabilityContextImpl(resource, pluginContainer.getInventoryManager());
-            InventoryContext inventoryContext = new InventoryContextImpl(resource);
+            InventoryContext inventoryContext = new InventoryContextImpl(resource, pluginContainer.getInventoryManager());
             ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
                 resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
                 eventContext, operationContext, contentContext, availContext, inventoryContext,
@@ -191,7 +191,7 @@ public abstract class ComponentTest {
 
         EventContext eventContext = new EventContextImpl(resource, eventManager);
         AvailabilityContext availContext = new AvailabilityContextImpl(resource, pluginContainer.getInventoryManager());
-        InventoryContext inventoryContext = new InventoryContextImpl(resource);
+        InventoryContext inventoryContext = new InventoryContextImpl(resource, pluginContainer.getInventoryManager());
         ResourceContext context = new ResourceContext(resource, component, parentContext, resourceDiscoveryComponent,
             systemInfo, temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext,
             contentContext, availContext, inventoryContext, pluginContainerDeployment);
@@ -223,7 +223,7 @@ public abstract class ComponentTest {
 
         EventContext eventContext = new EventContextImpl(resource, eventManager);
         AvailabilityContext availContext = new AvailabilityContextImpl(resource, pluginContainer.getInventoryManager());
-        InventoryContext inventoryContext = new InventoryContextImpl(resource);
+        InventoryContext inventoryContext = new InventoryContextImpl(resource, pluginContainer.getInventoryManager());
         ResourceContext context = new ResourceContext(cresource, parentComponent, parentContext,
             resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
             eventContext, operationContext, contentContext, availContext, inventoryContext, pluginContainerDeployment);

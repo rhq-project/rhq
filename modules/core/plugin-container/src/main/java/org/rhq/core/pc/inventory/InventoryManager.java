@@ -20,8 +20,6 @@
 package org.rhq.core.pc.inventory;
 
 import static org.rhq.core.util.StringUtil.isNotBlank;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.io.File;
 import java.net.URL;
@@ -48,6 +46,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -237,21 +238,26 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private final ResourceUpgradeDelegate resourceUpgradeDelegate = new ResourceUpgradeDelegate(this);
     private final PluginComponentFactory pluginFactory;
     private final EventManager eventManager;
+    private final OperationManager operationManager;
+
     private MeasurementManager measurementManager;
+    private ContentManager contentManager;
 
     /**
      * Constructs a new instance.
      * Call {@link #initialize()} once constructed.
      */
     public InventoryManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter,
-        PluginManager pluginManager, EventManager eventManager) {
+                            PluginManager pluginManager, EventManager eventManager, OperationManager operationManager) {
         super(DiscoveryAgentService.class, streamRemoter);
         this.configuration = configuration;
-        if (pluginManager == null)
+        if (pluginManager == null) {
             throw new NullPointerException("pluginManager is null");
+        }
         this.pluginManager = pluginManager;
         this.pluginFactory = new PluginComponentFactory(this, pluginManager);
         this.eventManager = eventManager;
+        this.operationManager = operationManager;
         availabilityExecutor = new AvailabilityExecutor(this);
         serviceScanExecutor = new RuntimeDiscoveryExecutor(this, configuration);
         serverScanExecutor = new AutoDiscoveryExecutor(null, this);
@@ -284,8 +290,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // Discover the platform first thing.
             executePlatformScan();
 
-            // Initialize measurement manager
             measurementManager = new MeasurementManager(configuration, getStreamRemoter(), this);
+            contentManager = new ContentManager(configuration, getStreamRemoter(), this);
 
             //try the resource upgrade before we have any schedulers set up
             //so that we don't get any interventions from concurrently running
@@ -1462,8 +1468,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.error("Cannot re-register with the agent, something bad is happening", e);
             }
         }
-
-        return;
     }
 
     /**
@@ -1979,8 +1983,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             this.inventoryLock.readLock().unlock();
             activatedResources.clear();
         }
-
-        return;
     }
 
     private ResourceContainer initResourceContainer(Resource resource) {
@@ -2788,9 +2790,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     @Override
     public void requestFullAvailabilityReport() {
-        if (null != availabilityExecutor) {
-            availabilityExecutor.sendFullReportNextTime();
-        }
+        availabilityExecutor.sendFullReportNextTime();
     }
 
     /**
@@ -2881,7 +2881,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.error("Error while invoking resource activated event on listener", t);
             }
         }
-        return;
     }
 
     private void fireResourceDeactivated(Resource resource) {
@@ -2905,7 +2904,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.error("Error while invoking resource deactivated event on listener", t);
             }
         }
-        return;
     }
 
     /**
@@ -3044,9 +3042,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.info("Resource ID is 0! Operation features will not work until the resource is synced with server");
         }
 
-        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
-        OperationContext operationContext = new OperationContextImpl(resource.getId(), operationManager);
-        return operationContext;
+        return new OperationContextImpl(resource.getId(), operationManager);
     }
 
     private ContentContext getContentContext(Resource resource) {
@@ -3069,9 +3065,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (resource.getId() == 0) {
             log.info("Resource ID is 0! Content features will not work until the resource is synced with server");
         }
-        ContentManager contentManager = PluginContainer.getInstance().getContentManager();
-        ContentContext contentContext = new ContentContextImpl(resource.getId(), contentManager);
-        return contentContext;
+
+        return new ContentContextImpl(resource.getId(), contentManager);
     }
 
     private AvailabilityContext getAvailabilityContext(Resource resource) {
@@ -3093,9 +3088,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (null == resource.getUuid() || resource.getUuid().isEmpty()) {
             log.error("RESOURCE UUID IS NOT SET! Inventory features may not work!");
         }
-
-        InventoryContext inventoryContext = new InventoryContextImpl(resource);
-        return inventoryContext;
+        return new InventoryContextImpl(resource, this);
     }
 
     private void processSyncInfo(Collection<ResourceSyncInfo> syncInfos, Set<Resource> syncedResources,
@@ -3243,7 +3236,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private Set<Resource> mergeModifiedResources(Set<Integer> modifiedResourceIds) {
         if (null == modifiedResourceIds || modifiedResourceIds.isEmpty()) {
-            return Collections.<Resource> emptySet();
+            return Collections.emptySet();
         }
 
         if (log.isDebugEnabled()) {
@@ -3265,7 +3258,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private Set<Resource> mergeUnknownResources(Set<ResourceSyncInfo> unknownResourceSyncInfos) {
         if (null == unknownResourceSyncInfos || unknownResourceSyncInfos.isEmpty()) {
-            return Collections.<Resource> emptySet();
+            return Collections.emptySet();
         }
 
         if (log.isDebugEnabled()) {
@@ -3582,10 +3575,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private void purgeObsoleteResources(Set<String> allUuids) {
         // Remove previously synchronized Resources that no longer exist in the Server's inventory...
         log.debug("Purging obsolete Resources...");
-        if (this.resourceContainersByUUID == null) {
-            log.debug("No containers present, immediately returning ..");
-            return;
-        }
         this.inventoryLock.writeLock().lock();
         try {
             int removedResources = 0;
@@ -3766,5 +3755,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     public MeasurementManager getMeasurementManager() {
         return measurementManager;
+    }
+
+    public ContentManager getContentManager() {
+        return contentManager;
     }
 }

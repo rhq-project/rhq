@@ -13849,7 +13849,8 @@
     <strong>action = deployment: deploys the content to a server group</strong><br>
     Required parameters:<br>
     <ul>
-        <li>serverGroup: The name of the server group this deployment should be deployed to</li>
+        <li>serverGroup: The name of the server group this deployment should be deployed to; this is the EAP domain
+        server group, do not confuse it with RHQ's bundle destination resource group</li>
     </ul>
     Optional parameters:<br>
     <ul>

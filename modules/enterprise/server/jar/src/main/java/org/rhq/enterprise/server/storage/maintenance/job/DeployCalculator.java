@@ -128,8 +128,10 @@ public class DeployCalculator implements StepCalculator {
         Set<String> addressess = new HashSet<String>(clusterSnapshot);
         addressess.add(newNodeAddress);
 
-        addRepairSteps(job, SystemDAO.Keyspace.SYSTEM_AUTH, addressess);
-        addRepairSteps(job, SystemDAO.Keyspace.RHQ, addressess);
+        if (schemaChanges.replicationFactor != null) {
+            addRepairSteps(job, SystemDAO.Keyspace.SYSTEM_AUTH, addressess);
+            addRepairSteps(job, SystemDAO.Keyspace.RHQ, addressess);
+        }
 
         updateStatus = new MaintenanceStep()
             .setName(UpdateStorageNodeStatus.class.getName())
@@ -173,6 +175,8 @@ public class DeployCalculator implements StepCalculator {
                     .setConfiguration(new Configuration.Builder()
                         .addSimple(JobProperties.TARGET, address)
                         .openMap(JobProperties.PARAMETERS)
+                            .addSimple("primaryRange", true)
+                            .addSimple("snapshot", true)
                             .addSimple("keyspace", keyspace)
                             .addSimple("table", table)
                         .closeMap()

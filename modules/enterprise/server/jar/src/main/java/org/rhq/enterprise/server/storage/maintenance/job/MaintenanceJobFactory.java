@@ -6,7 +6,7 @@ import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 /**
  * @author John Sanda
  */
-public interface StepCalculator {
+public interface MaintenanceJobFactory {
 
     /**
      * Calculates the steps for a job. This method is invoked immediately before a job is run. If the job is put back

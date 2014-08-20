@@ -31,7 +31,7 @@ import org.rhq.enterprise.server.storage.maintenance.DefaultStepRunnerFactory;
 import org.rhq.enterprise.server.storage.maintenance.JobProperties;
 import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunnerFactory;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
-import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
+import org.rhq.enterprise.server.storage.maintenance.job.MaintenanceJobFactory;
 import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
 import org.rhq.enterprise.server.storage.maintenance.step.StepFailureException;
 import org.rhq.enterprise.server.storage.maintenance.step.StepFailureStrategy;
@@ -116,7 +116,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         }
         // TODO handle failedStep null (which should not happen)
 
-        StepCalculator stepCalculator = calculatorLookup.lookup(job.getJobType());
+        MaintenanceJobFactory stepCalculator = calculatorLookup.lookup(job.getJobType());
 //        StorageMaintenanceJob newJob = stepCalculator.createNewJob(job, failedStep);
 //        MaintenanceStep scheduleBaseStep = findBaseStep(newJob);
 
@@ -271,7 +271,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     private void calculateAndPersistSteps(StorageMaintenanceJob job, Set<String> clusterSnapshot) {
         job.setClusterSnapshot(clusterSnapshot);
 
-        StepCalculator stepCalculator = calculatorLookup.lookup(job.getJobType());
+        MaintenanceJobFactory stepCalculator = calculatorLookup.lookup(job.getJobType());
         stepCalculator.calculateSteps(job);
         for (MaintenanceStep step : job) {
             entityManager.persist(step);

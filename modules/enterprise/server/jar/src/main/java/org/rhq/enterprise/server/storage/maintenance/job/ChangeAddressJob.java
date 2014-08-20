@@ -31,7 +31,7 @@ import org.rhq.enterprise.server.storage.maintenance.step.StartStorageClient;
 import org.rhq.enterprise.server.storage.maintenance.step.UpdateStorageNodeEndpoints;
 import org.rhq.enterprise.server.storage.maintenance.step.UpdateStorageNodeEntity;
 
-public class ChangeAddressJob implements StepCalculator {
+public class ChangeAddressJob implements MaintenanceJobFactory {
 
     private StorageClusterSettingsManagerLocal clusterSettingsManager;
 

@@ -2452,10 +2452,6 @@
                 <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="MTIME" columnType="LONG" />
                 <schema-alterColumn table="RHQ_STORAGE_MAINT_STEP" column="MTIME" nullable="FALSE" />
 
-                <schema-addColumn   table="STORAGE_NODE_ID" column="STORAGE_NODE_ID" columnType="INTEGER"/>
-                <schema-addColumn   table="RHQ_STORAGE_MAINT_STEP" column="ARGS" columnType="VARCHAR2" precision="4000" />
-                <schema-alterColumn table="RHQ_STORAGE_MAINT_STEP" column="ARGS" nullable="true"/>
-
                 <schema-directSQL>
                     <statement desc="Creating RHQ_STORAGE_MAINT_JOB_STEP_IDX unique constraint">
                       CREATE UNIQUE INDEX RHQ_STORAGE_MAINT_JOB_STEP_IDX ON RHQ_STORAGE_MAINT_STEP ( JOB_NUM, STEP_NUM )

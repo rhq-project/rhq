@@ -467,8 +467,8 @@
   <table name="RHQ_STORAGE_MAINT_STEP">
     <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER" />
     <column name="JOB_NUM" required="true" type="INTEGER" />
-    <column name="STEP_NUM" required="true" type="INTEGER" />
     <column name="JOB_TYPE" required="true" type="INTEGER" />
+    <column name="STEP_NUM" required="true" type="INTEGER" />
     <column name="NAME" required="true" size="1024" type="VARCHAR2" />
     <column name="STEP_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
     <column name="DESCRIPTION" required="true" size="2048" type="VARCHAR2" />

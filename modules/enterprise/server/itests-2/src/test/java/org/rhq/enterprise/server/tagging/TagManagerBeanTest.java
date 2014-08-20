@@ -275,8 +275,11 @@ public class TagManagerBeanTest extends AbstractEJB3Test {
     private BundleDestination createBundleDestination() throws Exception {
         Bundle bundle = createBundle();
         ResourceGroup resourceGroup = createResourceGroupForBundleDeployments();
+        String destName = resourceGroup.getResourceType().getResourceTypeBundleConfiguration()
+            .getBundleDestinationSpecifications().iterator().next().getName();
+
         return bundleManager.createBundleDestination(overlord, bundle.getId(), getRandomString(), getRandomString(),
-            getRandomString(), getRandomString(), resourceGroup.getId());
+            destName, getRandomString(), resourceGroup.getId());
     }
 
     private BundleDeployment createBundleDeployment() throws Exception {

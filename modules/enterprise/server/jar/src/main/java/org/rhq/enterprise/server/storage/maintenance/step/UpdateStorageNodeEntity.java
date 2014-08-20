@@ -58,7 +58,7 @@ public class UpdateStorageNodeEntity extends BaseStepRunner {
         StorageNode node = storageNodeManager.findStorageNodeByAddress(storageNodeAddress);
         int resourceId = node.getResource().getId();
         ResourceOperationSchedule operationSchedule = operationManager.scheduleResourceOperation(
-            subjectManager.getOverlord(), resourceId, operation, 0, 0, 0, StartStorageClient.DEFAULT_OPERATION_TIMEOUT,
+            subjectManager.getOverlord(), resourceId, operation, 0, 0, 0, DEFAULT_OPERATION_TIMEOUT,
             parameters.deepCopyWithoutProxies(), "");
         return waitForOperationToComplete(operationSchedule);
     }

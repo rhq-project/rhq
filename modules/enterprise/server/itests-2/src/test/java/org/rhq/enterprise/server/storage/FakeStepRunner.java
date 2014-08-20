@@ -2,9 +2,9 @@ package org.rhq.enterprise.server.storage;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.rhq.enterprise.server.storage.maintenance.StepFailureException;
+import org.rhq.enterprise.server.storage.maintenance.StepFailureStrategy;
 import org.rhq.enterprise.server.storage.maintenance.step.BaseStepRunner;
-import org.rhq.enterprise.server.storage.maintenance.step.StepFailureException;
-import org.rhq.enterprise.server.storage.maintenance.step.StepFailureStrategy;
 
 /**
  * @author John Sanda

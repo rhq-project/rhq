@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.storage.maintenance.step;
 
+import org.rhq.enterprise.server.storage.maintenance.StepFailureStrategy;
+
 /**
  * @author John Sanda
  */

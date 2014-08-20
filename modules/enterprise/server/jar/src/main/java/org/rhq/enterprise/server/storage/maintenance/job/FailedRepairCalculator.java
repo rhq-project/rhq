@@ -7,6 +7,7 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.storage.maintenance.JobProperties;
+import org.rhq.enterprise.server.storage.maintenance.MaintenanceJobFactory;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.step.RunRepair;
 

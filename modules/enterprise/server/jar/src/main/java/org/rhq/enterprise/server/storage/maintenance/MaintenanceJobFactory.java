@@ -1,7 +1,6 @@
-package org.rhq.enterprise.server.storage.maintenance.job;
+package org.rhq.enterprise.server.storage.maintenance;
 
 import org.rhq.core.domain.storage.MaintenanceStep;
-import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 
 /**
  * @author John Sanda

@@ -6,8 +6,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import org.rhq.core.domain.storage.MaintenanceStep;
+import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunner;
 import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunnerFactory;
-import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
 
 /**
  * A {@link MaintenanceStepRunnerFactory maintenance step factory} which verifies that

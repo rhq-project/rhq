@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.storage.maintenance.step;
+package org.rhq.enterprise.server.storage.maintenance;
 
 import java.util.Set;
 
@@ -25,7 +25,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.storage.StorageClientManager;
-import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 
 /**
  * @author Stefan Negrea

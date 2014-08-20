@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.storage.maintenance.JobProperties;
+import org.rhq.enterprise.server.storage.maintenance.StepFailureStrategy;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 
 /**

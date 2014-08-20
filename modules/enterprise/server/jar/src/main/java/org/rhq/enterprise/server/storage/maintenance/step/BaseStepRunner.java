@@ -7,6 +7,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.storage.StorageClientManager;
+import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunner;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 
 /**

@@ -35,7 +35,7 @@ public interface StorageClusterMaintenanceManagerLocal {
 
     /**
      * Schedules a new job for later execution when the currently running job encounters a step failure with a failure
-     * strategy of {@link org.rhq.enterprise.server.storage.maintenance.step.StepFailureStrategy#CONTINUE CONTINUE}.
+     * strategy of {@link org.rhq.enterprise.server.storage.maintenance.StepFailureStrategy#CONTINUE CONTINUE}.
      * <p>
      * This method calls
      * {@link org.rhq.enterprise.server.storage.maintenance.job.StepCalculator#createNewJob(StorageMaintenanceJob, MaintenanceStep) StepCalculator.createNewJob(StorageMaintenanceJob, MaintenanceStep)}

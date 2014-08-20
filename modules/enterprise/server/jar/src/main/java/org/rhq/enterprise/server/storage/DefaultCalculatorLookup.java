@@ -1,9 +1,9 @@
 package org.rhq.enterprise.server.storage;
 
 import org.rhq.core.domain.storage.MaintenanceStep;
+import org.rhq.enterprise.server.storage.maintenance.MaintenanceJobFactory;
 import org.rhq.enterprise.server.storage.maintenance.job.DeployCalculator;
 import org.rhq.enterprise.server.storage.maintenance.job.FailedRepairCalculator;
-import org.rhq.enterprise.server.storage.maintenance.job.MaintenanceJobFactory;
 import org.rhq.enterprise.server.storage.maintenance.job.UndeployCalculator;
 import org.rhq.enterprise.server.util.LookupUtil;
 

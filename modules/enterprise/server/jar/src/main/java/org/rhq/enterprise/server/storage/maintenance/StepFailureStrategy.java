@@ -1,4 +1,4 @@
-package org.rhq.enterprise.server.storage.maintenance.step;
+package org.rhq.enterprise.server.storage.maintenance;
 
 /**
  * Specifies what to do when a step fails. We may need to turn this into a callback interface of sorts if it turns out

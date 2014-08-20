@@ -29,12 +29,12 @@ import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.storage.maintenance.DefaultStepRunnerFactory;
 import org.rhq.enterprise.server.storage.maintenance.JobProperties;
+import org.rhq.enterprise.server.storage.maintenance.MaintenanceJobFactory;
+import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunner;
 import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunnerFactory;
+import org.rhq.enterprise.server.storage.maintenance.StepFailureException;
+import org.rhq.enterprise.server.storage.maintenance.StepFailureStrategy;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
-import org.rhq.enterprise.server.storage.maintenance.job.MaintenanceJobFactory;
-import org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner;
-import org.rhq.enterprise.server.storage.maintenance.step.StepFailureException;
-import org.rhq.enterprise.server.storage.maintenance.step.StepFailureStrategy;
 
 /**
  * @author John Sanda

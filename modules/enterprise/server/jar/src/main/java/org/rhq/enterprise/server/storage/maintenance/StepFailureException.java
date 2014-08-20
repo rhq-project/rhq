@@ -1,4 +1,4 @@
-package org.rhq.enterprise.server.storage.maintenance.step;
+package org.rhq.enterprise.server.storage.maintenance;
 
 /**
  * @author John Sanda

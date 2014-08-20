@@ -6,6 +6,8 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.storage.maintenance.JobProperties;
+import org.rhq.enterprise.server.storage.maintenance.StepFailureException;
+import org.rhq.enterprise.server.storage.maintenance.StepFailureStrategy;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 
 /**

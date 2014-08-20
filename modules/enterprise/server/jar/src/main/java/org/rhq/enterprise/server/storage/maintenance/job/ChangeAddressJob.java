@@ -25,6 +25,7 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
+import org.rhq.enterprise.server.storage.maintenance.MaintenanceJobFactory;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.step.ShutdownStorageClient;
 import org.rhq.enterprise.server.storage.maintenance.step.StartStorageClient;

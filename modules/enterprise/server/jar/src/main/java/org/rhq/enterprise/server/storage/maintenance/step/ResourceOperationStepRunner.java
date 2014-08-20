@@ -12,6 +12,7 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.storage.maintenance.JobProperties;
+import org.rhq.enterprise.server.storage.maintenance.StepFailureException;
 
 /**
  * @author John Sanda

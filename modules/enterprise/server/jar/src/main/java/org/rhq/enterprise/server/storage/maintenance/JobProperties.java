@@ -27,10 +27,10 @@ public final class JobProperties {
     public static final String PARAMETERS = "parameters";
 
     /**
-     * Specifies the {@link org.rhq.enterprise.server.storage.maintenance.step.StepFailureStrategy failure strategy} for
-     * a step. Each {@link org.rhq.enterprise.server.storage.maintenance.step.MaintenanceStepRunner#getFailureStrategy() step runner}
+     * Specifies the {@link org.rhq.enterprise.server.storage.maintenance.StepFailureStrategy failure strategy} for
+     * a step. Each {@link org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunner#getFailureStrategy() step runner}
      * defines a failure strategy. This property can be used as a hint or as an override. It should be a string whose
-     * value is one of the {@link org.rhq.enterprise.server.storage.maintenance.step.StepFailureStrategy failure strategies}
+     * value is one of the {@link org.rhq.enterprise.server.storage.maintenance.StepFailureStrategy failure strategies}
      */
     public static final String FAILURE_STRATEGY = "failureStrategy";
 

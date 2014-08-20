@@ -17,7 +17,7 @@ import org.rhq.enterprise.server.storage.maintenance.step.UpdateStorageNodeStatu
 /**
  * @author John Sanda
  */
-public class UndeployCalculator extends DeployCalculator {
+public class UndeployNode extends DeployNode {
 
     @Override
     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {

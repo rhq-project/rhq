@@ -31,7 +31,7 @@ import org.rhq.server.metrics.SystemDAO;
 /**
  * @author John Sanda
  */
-public class DeployCalculator implements MaintenanceJobFactory {
+public class DeployNode implements MaintenanceJobFactory {
 
     private StorageClusterSettingsManagerLocal clusterSettingsManager;
 

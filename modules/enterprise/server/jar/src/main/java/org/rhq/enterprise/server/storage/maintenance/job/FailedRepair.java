@@ -14,7 +14,7 @@ import org.rhq.enterprise.server.storage.maintenance.step.RunRepair;
 /**
  * @author John Sanda
  */
-public class FailedRepairCalculator implements MaintenanceJobFactory {
+public class FailedRepair implements MaintenanceJobFactory {
 
     @Override
     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {

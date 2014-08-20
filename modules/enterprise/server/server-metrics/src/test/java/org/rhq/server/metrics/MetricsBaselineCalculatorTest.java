@@ -156,7 +156,7 @@ public class MetricsBaselineCalculatorTest {
         //verify the results (Assert and mock verification)
         Assert.assertEquals(result.size(), 1);
 
-        MeasurementBaseline baselineResult = result.get(0);
+        MeasurementBaseline baselineResult = result.get(Integer.valueOf(expectedScheduleId));
         Assert.assertEquals(baselineResult.getMean(), average, TEST_PRECISION);
         Assert.assertEquals(baselineResult.getMax(), expectedMax, TEST_PRECISION);
         Assert.assertEquals(baselineResult.getMin(), expectedMin, TEST_PRECISION);

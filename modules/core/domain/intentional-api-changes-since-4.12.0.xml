@@ -32,4 +32,31 @@
     <field>MAX_LOG_LENGTH</field>
     <justification>Increasing the length of db column and this constant depends on it.</justification>
   </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/common/ProductInfo</className>
+    <differenceType>7002</differenceType> <!-- method removed -->
+    <method>java.lang.String getSupportedAgentVersions()</method>
+    <justification>Method renamed for build identifier.</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/common/ProductInfo</className>void setSupportedAgentVersions(java.lang.String)'
+    <differenceType>7002</differenceType> <!-- method removed -->
+    <method>void setSupportedAgentVersions(java.lang.String)</method>
+    <justification>Method renamed for build identifier.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/common/ProductInfo</className>
+    <differenceType>7012</differenceType><!-- method added -->
+    <method>java.lang.String getSupportedAgentBuilds()</method>
+    <justification>Method renamed for build identifier.</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/common/ProductInfo</className>
+    <differenceType>7012</differenceType><!-- method added -->
+    <method>void setSupportedAgentBuilds(java.lang.String)</method>
+    <justification>Method renamed for build identifier.</justification>
+  </difference>
+
 </differences>

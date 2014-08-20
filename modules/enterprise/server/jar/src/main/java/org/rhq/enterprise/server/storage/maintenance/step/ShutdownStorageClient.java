@@ -35,6 +35,6 @@ public class ShutdownStorageClient extends BaseStepRunner implements Maintenance
 
     @Override
     public StepFailureStrategy getFailureStrategy() {
-        return null;
+        return StepFailureStrategy.ABORT;
     }
 }

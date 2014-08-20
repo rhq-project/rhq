@@ -35,6 +35,6 @@ public class StartStorageClient extends BaseStepRunner implements MaintenanceSte
 
     @Override
     public StepFailureStrategy getFailureStrategy() {
-        return null;
+        return StepFailureStrategy.ABORT;
     }
 }

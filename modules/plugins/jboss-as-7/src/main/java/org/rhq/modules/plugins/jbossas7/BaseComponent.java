@@ -141,7 +141,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
     @Override
     public void stop() {
-        return;
     }
 
     /**
@@ -150,15 +149,22 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
      */
     @Override
     public AvailabilityType getAvailability() {
-        ReadResource op = new ReadResource(address);
-        Result res = getASConnection().execute(op, AVAIL_OP_TIMEOUT_SECONDS);
+        ReadResource readResourceOperation = new ReadResource(address);
+        /*
+         * Make the operation return minimum information. We just want to make sure we can read the resource. There's no
+         * need to read the children names, evaluate defaults, and retrieve runtime attributes.
+         */
+        readResourceOperation.attributesOnly(true);
+        readResourceOperation.includeDefaults(false);
+        readResourceOperation.includeRuntime(false);
 
+        Result res = getASConnection().execute(readResourceOperation, AVAIL_OP_TIMEOUT_SECONDS);
         if (res != null && res.isSuccess()) {
             return AvailabilityType.UP;
-        } else if (res != null && !res.isSuccess() && res.isTimedout()) {
+        }
+        if (res != null && res.isTimedout()) {
             return AvailabilityType.UNKNOWN;
         }
-
         return AvailabilityType.DOWN;
     }
 

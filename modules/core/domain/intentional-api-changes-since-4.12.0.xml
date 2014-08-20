@@ -59,4 +59,25 @@
     <justification>Method renamed for build identifier.</justification>
   </difference>
 
+
+    <!--
+    Covers these cases:
+    [ERROR] 7004: org.rhq.core.domain.alert.composite.AlertConditionAvailabilityCategoryComposite:
+    In method 'public AlertConditionAvailabilityCategoryComposite(org.rhq.core.domain.alert.AlertCondition,
+    java.lang.Integer, java.lang.Integer, org.rhq.core.domain.measurement.AvailabilityType)' the number of arguments
+    has changed
+    -->
+  <difference>
+    <className>org/rhq/core/domain/alert/composite/*CategoryComposite</className>
+    <differenceType>7004</differenceType>
+    <method>*CategoryComposite(org.rhq.core.domain.alert.AlertCondition, *)</method>
+    <justification>BZ1032192: Hibernate query change to be more efficient</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/alert/composite/AlertConditionAvailabilityCategoryComposite</className>
+    <differenceType>7002</differenceType>
+    <method>AlertConditionAvailabilityCategoryComposite(org.rhq.core.domain.alert.AlertCondition, java.lang.Integer, org.rhq.core.domain.measurement.AvailabilityType)</method>
+    <justification>BZ1032192: Method was deprecated and couldn't create a valid object anyway</justification>
+  </difference>
+
 </differences>

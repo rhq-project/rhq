@@ -1,13 +1,13 @@
 package org.rhq.enterprise.server.storage;
 
 import org.rhq.core.domain.storage.MaintenanceStep;
+import org.rhq.enterprise.server.storage.maintenance.MaintenanceJobFactory;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
-import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
 
 /**
  * @author John Sanda
  */
-public class TestStepCalculator implements StepCalculator {
+public class TestStepCalculator implements MaintenanceJobFactory {
 
     @Override
     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {

@@ -16,9 +16,9 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.storage.MaintenanceStep;
+import org.rhq.enterprise.server.storage.maintenance.MaintenanceJobFactory;
 import org.rhq.enterprise.server.storage.maintenance.StepFailureStrategy;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
-import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 
@@ -54,7 +54,7 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
 
         CalculatorLookup calculatorLookup = new CalculatorLookup() {
             @Override
-            public StepCalculator lookup(MaintenanceStep.JobType jobType) {
+            public MaintenanceJobFactory lookup(MaintenanceStep.JobType jobType) {
                 return new TestStepCalculator() {
                     @Override
                     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {
@@ -108,7 +108,7 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
 
         CalculatorLookup calculatorLookup = new CalculatorLookup() {
             @Override
-            public StepCalculator lookup(MaintenanceStep.JobType jobType) {
+            public MaintenanceJobFactory lookup(MaintenanceStep.JobType jobType) {
                 return new TestStepCalculator() {
                     @Override
                     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {
@@ -168,7 +168,7 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
 
         CalculatorLookup calculatorLookup = new CalculatorLookup() {
             @Override
-            public StepCalculator lookup(MaintenanceStep.JobType jobType) {
+            public MaintenanceJobFactory lookup(MaintenanceStep.JobType jobType) {
                 return new TestStepCalculator() {
                     @Override
                     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {
@@ -259,7 +259,7 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
 
         CalculatorLookup calculatorLookup = new CalculatorLookup() {
             @Override
-            public StepCalculator lookup(MaintenanceStep.JobType jobType) {
+            public MaintenanceJobFactory lookup(MaintenanceStep.JobType jobType) {
                 return new TestStepCalculator() {
                     @Override
                     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {

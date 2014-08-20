@@ -207,7 +207,7 @@ public class MenuBarView extends EnhancedVLayout {
         if (item.getPermission() != null) {
             item.setHidden(!globalPermissions.contains(item.getPermission()));
         }
-        if (item.getView().equals(TaggedView.VIEW_ID)) { // Reports->Tags shown only for RHQ
+        if (TaggedView.VIEW_ID.getName().equals(item.getView().getName())) { // Reports->Tags shown only for RHQ
             item.setHidden(!CoreGUI.isTagsEnabledForUI());
         }
         for (MenuItem child : item.getSubItems()) {

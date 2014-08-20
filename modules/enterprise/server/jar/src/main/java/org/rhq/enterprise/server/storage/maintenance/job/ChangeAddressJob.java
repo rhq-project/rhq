@@ -85,8 +85,6 @@ public class ChangeAddressJob implements StepCalculator {
     }
 
     @Override
-    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob originalJob, MaintenanceStep failedStep) {
-        // TODO Auto-generated method stub
-        return null;
+    public void updateSteps(StorageMaintenanceJob originalJob, MaintenanceStep failedStep) {
     }
 }

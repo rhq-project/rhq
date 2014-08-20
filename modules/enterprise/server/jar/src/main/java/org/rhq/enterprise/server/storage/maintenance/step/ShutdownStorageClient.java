@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.storage.maintenance.step;
 
-import org.rhq.core.domain.storage.MaintenanceStep;
 
 /**
  * @author Stefan Negrea
@@ -27,7 +26,7 @@ import org.rhq.core.domain.storage.MaintenanceStep;
 public class ShutdownStorageClient extends BaseStepRunner implements MaintenanceStepRunner {
 
     @Override
-    public void execute(MaintenanceStep maintenanceStep) {
+    public void execute() {
         storageClientManager.shutdown();
     }
 

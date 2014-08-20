@@ -260,6 +260,9 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
             // Delete the old cluster snapshot
             entityManager.remove(job.getClusterSnapshotProperty());
             job.setClusterSnapshot(currentClusterSnapshot);
+            // We need to flush the deletes before we persist the new steps; otherwise, we
+            // will wind with a constraint violation on the job number/step number index.
+            entityManager.flush();
 
             // now calculate and persist the new steps
             calculateAndPersistSteps(job, currentClusterSnapshot);

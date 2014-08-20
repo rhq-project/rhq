@@ -14,8 +14,10 @@ import javax.transaction.SystemException;
 
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.storage.MaintenanceStep;
+import org.rhq.enterprise.server.storage.maintenance.JobProperties;
 import org.rhq.enterprise.server.storage.maintenance.MaintenanceJobFactory;
 import org.rhq.enterprise.server.storage.maintenance.StepFailureStrategy;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
@@ -27,8 +29,11 @@ import org.rhq.enterprise.server.test.TransactionCallback;
  */
 public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
 
+    private static final String TEST_NODE_ADDRESS = "my.test.node.com";
+
     @EJB
     private StorageClusterMaintenanceManagerLocal maintenanceManager;
+
 
     @Override
     protected void beforeMethod() throws Exception {
@@ -395,9 +400,9 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
                     .setName("Step1")
                     .setDescription("Step1")
                     .setConfiguration(new Configuration.Builder()
-                        .addSimple("target", "127.0.0.1")
+                        .addSimple("target", "my.test.node.com")
                         .openMap("parameters")
-                        .addSimple("address", "127.0.0.2")
+                        .addSimple("address", "my.test.node.com")
                         .closeMap()
                         .build()));
             }
@@ -410,6 +415,61 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
         for (MaintenanceStep step : job) {
             step.toString(true);
         }
+    }
+
+    @Test
+    public void refreshJobWhoseStepsNeedToBeRecalculated() {
+        maintenanceManager.scheduleMaintenance(new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY,
+            "RecalculateStepsTest", new Configuration.Builder().addSimple(JobProperties.TARGET, "127.0.0.1").build()));
+
+        List<StorageMaintenanceJob> jobs = maintenanceManager.loadQueue();
+        assertEquals("There should only be one job in the queue. Found " + jobs, 1, jobs.size());
+        StorageMaintenanceJob job = jobs.get(0);
+
+        CalculatorLookup calculatorLookup = new CalculatorLookup() {
+            @Override
+            public MaintenanceJobFactory lookup(MaintenanceStep.JobType jobType) {
+                return new TestStepCalculator() {
+                    @Override
+                    public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {
+                        int i = 1;
+                        for (String address : job.getClusterSnapshot()) {
+                            job.addStep(new MaintenanceStep()
+                                .setName("Step" + i)
+                                .setDescription("Step" + i)
+                                .setConfiguration(new Configuration.Builder()
+                                    .addSimple(JobProperties.TARGET, address)
+                                    .build()));
+                            ++i;
+                        }
+                        return job;
+                    }
+                };
+            }
+        };
+
+        maintenanceManager.init(calculatorLookup, new TestStepRunnerFactory(
+            new FakeStepRunner("Step1", 1)
+        ));
+
+        // Persist a new storage node in order to force steps to be recalculated
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                StorageNode node = new StorageNode();
+                node.setAddress(TEST_NODE_ADDRESS);
+                node.setOperationMode(StorageNode.OperationMode.NORMAL);
+                node.setCqlPort(9142);
+
+                em.persist(node);
+            }
+        }, "Failed to persist storage node");
+
+        StorageMaintenanceJob refreshedJob = maintenanceManager.refreshJob(job.getJobNumber());
+        assertEquals("The job should have two steps, found " + refreshedJob.getSteps(), 2,
+            refreshedJob.getSteps().size());
+        assertEquals("The first step name is wrong", "Step1", refreshedJob.getSteps().get(0).getName());
+        assertEquals("The second step name is wrong", "Step2", refreshedJob.getSteps().get(1).getName());
     }
 
     private void executeInTransaction(TransactionCallback callback, String errorMsg) {
@@ -440,6 +500,8 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
             public void execute() throws Exception {
                 purgeTable(MaintenanceStep.class);
                 purgeTable(Configuration.class);
+                em.createQuery("DELETE FROM StorageNode n WHERE n.address = '" + TEST_NODE_ADDRESS + "'")
+                    .executeUpdate();
             }
         }, "Failed to clean up database");
     }

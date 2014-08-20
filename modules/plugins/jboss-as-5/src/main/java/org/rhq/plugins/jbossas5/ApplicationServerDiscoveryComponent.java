@@ -207,7 +207,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             if (isReadable(clientJarUrl)) {
                 clientJarUrls.add(clientJarUrl);
             } else {
-                LOG.warn("Client JAR [" + clientJarUrl + "] does not exist or is not readable (note, this JAR "
+                LOG.debug("Client JAR [" + clientJarUrl + "] does not exist or is not readable (note, this JAR "
                     + " may not be required for some app server versions).");
             }
         }

@@ -172,7 +172,7 @@ public class Upgrade extends AbstractInstall {
                 return exitValue;
             }
 
-            // If any failures occur during upgrade, we know we need to reset rhq-server.properties.
+            // If any failures occur during upgrade, we know we need to reset rhq-server.properties
             final FileReverter serverPropFileReverter = new FileReverter(getServerPropertiesFile());
             addUndoTask(new ControlCommand.UndoTask("Reverting server properties file") {
                 public void performUndoWork() throws Exception {
@@ -425,6 +425,18 @@ public class Upgrade extends AbstractInstall {
                 File newServerEnvFile = new File(getBaseDir(), envFile);
                 File newServerEnvFileBackup = new File(getBaseDir(), (envFile + ".default"));
                 try {
+                    // If any failures occur during upgrade reset the env file to the default
+                    final FileReverter serverEnvFileReverter = new FileReverter(newServerEnvFile);
+                    addUndoTask(new ControlCommand.UndoTask("Reverting server environment file") {
+                        public void performUndoWork() throws Exception {
+                            try {
+                                serverEnvFileReverter.revert();
+                            } catch (Exception e) {
+                                throw new Exception("Cannot reset rhq-server-env.sh|bat - revert manually", e);
+                            }
+                        }
+                    });
+
                     FileUtil.copyFile(newServerEnvFile, newServerEnvFileBackup);
                     newServerEnvFile.delete();
                     FileUtil.copyFile(oldServerEnvFile, newServerEnvFile);

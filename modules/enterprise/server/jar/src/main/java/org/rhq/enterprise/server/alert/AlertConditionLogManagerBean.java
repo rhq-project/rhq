@@ -18,10 +18,8 @@
  */
 package org.rhq.enterprise.server.alert;
 
-import java.sql.Connection;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -31,12 +29,11 @@ import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.exception.ConstraintViolationException;
-import org.rhq.core.db.DatabaseType;
+
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
@@ -44,9 +41,7 @@ import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.BooleanExpression;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 
 /**
  * @author Joseph Marques
@@ -61,24 +56,6 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
     private AlertConditionManagerLocal alertConditionManager;
     @EJB
     private AlertDampeningManagerLocal alertDampeningManager;
-    
-    @javax.annotation.Resource(name = "RHQ_DS")
-    private DataSource rhqDs;
-    
-    private DatabaseType dbType;
-
-    @PostConstruct
-    public void init() {
-        Connection conn = null;
-        try {
-            conn = rhqDs.getConnection();
-            dbType = DatabaseTypeFactory.getDatabaseType(conn);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            JDBCUtil.safeClose(conn);
-        }
-    }
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -122,7 +99,7 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
                  * "ctime" and "value" properties.
                  */
                 alertConditionLog.setCtime(ctime);
-                value = dbType.getString(value, AlertConditionLog.MAX_LOG_LENGTH);
+                value = DatabaseTypeFactory.getDefaultDatabaseType().getString(value, AlertConditionLog.MAX_LOG_LENGTH);
                 alertConditionLog.setValue(value);
                 if (log.isDebugEnabled()) {
                     log.debug("Updating unmatched alert condition log: " + alertConditionLog);

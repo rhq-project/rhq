@@ -245,11 +245,32 @@ public class AlertFormatUtility {
             str.append(condition.getName());
             str.append("]");
             if (condition.getOption() != null && condition.getOption().length() > 0) {
-                str.append(" ");
-                str.append(MSG.view_alert_common_tab_conditions_type_event_matching());
-                str.append(" '");
-                str.append(condition.getOption());
-                str.append("'");
+                String eventDetailsRegexValue = "", eventSourcePathRegexValue = "";
+                if (condition.getOption().contains(AlertCondition.ADHOC_SEPARATOR)) {
+                    String[] regexes = condition.getOption().split(AlertCondition.ADHOC_SEPARATOR);
+                    if (regexes.length > 0) {
+                        eventDetailsRegexValue = regexes[0];
+                        if (regexes.length > 1) {
+                            eventSourcePathRegexValue = regexes[1];
+                        }
+                    }
+                } else {
+                    eventDetailsRegexValue = condition.getOption(); // old approach -> probably working with db before rhq 4.13
+                }
+                if (!eventSourcePathRegexValue.isEmpty()) {
+                    str.append(" ");
+                    str.append(MSG.view_alert_common_tab_conditions_type_event_matching());
+                    str.append(" '");
+                    str.append(eventSourcePathRegexValue);
+                    str.append("'");
+                }
+                if (!eventDetailsRegexValue.isEmpty()) {
+                    str.append(" ");
+                    str.append(MSG.view_alert_common_tab_conditions_type_event_details_matching());
+                    str.append(" '");
+                    str.append(eventDetailsRegexValue);
+                    str.append("'");
+                }
             }
             break;
         }

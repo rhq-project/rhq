@@ -105,7 +105,7 @@
         <column name="CTIME" required="true" type="LONG"/>
         <column name="ALERT_ID" required="false" type="INTEGER" references="RHQ_ALERT(ID)"/>
         <column name="CONDITION_ID" required="true" type="INTEGER" references="RHQ_ALERT_CONDITION(ID)"/>
-        <column name="VALUE" required="true" size="250" type="VARCHAR2"/>
+        <column name="VALUE" required="true" size="4000" type="VARCHAR2"/>
         <index name="RHQ_ALERT_COND_LOG_IDX_TIME">
             <field ref="CTIME" />
         </index>

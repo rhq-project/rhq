@@ -120,8 +120,4 @@ public class UndeployCalculator extends DeployCalculator {
     public void updateSteps(StorageMaintenanceJob job, MaintenanceStep failedStep) {
     }
 
-    @Override
-    public StorageMaintenanceJob createNewJob(StorageMaintenanceJob originalJob, MaintenanceStep failedStep) {
-        return null;
-    }
 }

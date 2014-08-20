@@ -2,7 +2,7 @@ package org.rhq.enterprise.server.storage;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.rhq.core.domain.storage.MaintenanceStep;
+import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.step.StepFailureException;
 import org.rhq.enterprise.server.storage.maintenance.step.StepFailureStrategy;
 
@@ -13,6 +13,8 @@ public class FailedStepRunner extends FakeStepRunner {
 
     private StepFailureStrategy failureStrategy;
 
+    private StorageMaintenanceJob jobForFailedStep;
+
     public FailedStepRunner(StepFailureStrategy failureStrategy) {
         this.failureStrategy = failureStrategy;
     }
@@ -22,6 +24,13 @@ public class FailedStepRunner extends FakeStepRunner {
         this.failureStrategy = failureStrategy;
     }
 
+    public FailedStepRunner(String stepName, int stepNumber, StepFailureStrategy failureStrategy,
+        StorageMaintenanceJob jobForFailedStep) {
+        super(stepName, stepNumber);
+        this.failureStrategy = failureStrategy;
+        this.jobForFailedStep = jobForFailedStep;
+    }
+
     public FailedStepRunner(AtomicBoolean executed, String stepName, int stepNumber,
         StepFailureStrategy failureStrategy) {
         super(executed, stepName, stepNumber);
@@ -29,13 +38,17 @@ public class FailedStepRunner extends FakeStepRunner {
     }
 
     @Override
-    public void execute(MaintenanceStep maintenanceStep) throws StepFailureException {
-        super.execute(maintenanceStep);
-        throw new RuntimeException(maintenanceStep.getName() + " failed");
+    public void execute() throws StepFailureException {
+        throw new RuntimeException(step.getName() + " failed");
     }
 
     @Override
     public StepFailureStrategy getFailureStrategy() {
         return failureStrategy;
+    }
+
+    @Override
+    public StorageMaintenanceJob createNewJobForFailedStep() {
+        return jobForFailedStep;
     }
 }

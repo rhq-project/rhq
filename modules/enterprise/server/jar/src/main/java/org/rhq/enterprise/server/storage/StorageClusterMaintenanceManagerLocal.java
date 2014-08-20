@@ -55,7 +55,7 @@ public interface StorageClusterMaintenanceManagerLocal {
      * @param jobNumer The job number of the job currently running
      * @param failedStepNumber The number of the step that just was executed and failed
      */
-    void scheduleMaintenance(int jobNumer, int failedStepNumber);
+    void scheduleMaintenance(int jobNumer, int failedStepNumber, StorageMaintenanceJob newJob);
 
     /**
      * Adds a job back to the queue. This is done when a job is aborted due a to a step failure. When this method

@@ -39,20 +39,4 @@ public interface StepCalculator {
      */
     void updateSteps(StorageMaintenanceJob job, MaintenanceStep failedStep);
 
-    /**
-     * Invoked when a step fails and the job should execution. This method creates a new job for the failed step for
-     * later execution. The job will be added to the maintenance queue.
-     *
-     * <p>
-     * <strong>Note:</strong> I am not 100% convinced that this method belongs here. It might make more sense to put
-     * this in the step runner. The step calculator has to have branching logic to determine what job to created based
-     * on the type of the failed step.  The step runner already knows the step it is executing.
-     * </p>
-     *
-     * @param originalJob The job in which the failure occurred
-     * @param failedStep The step that failed
-     * @return The new job to be added to the maintenance queue
-     */
-    StorageMaintenanceJob createNewJob(StorageMaintenanceJob originalJob, MaintenanceStep failedStep);
-
 }

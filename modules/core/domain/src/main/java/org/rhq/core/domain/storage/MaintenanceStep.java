@@ -82,7 +82,8 @@ public class MaintenanceStep implements Serializable {
         UNDEPLOY,
         CHANGE_ENDPOINT,
         CHANGE_RHQ_DATA_DIR,
-        FAILED_ANNOUNCE
+        FAILED_ANNOUNCE,
+        FAILED_REPAIR
     }
 
     @Column(name = "ID", nullable = false)

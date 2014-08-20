@@ -22,13 +22,13 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.storage.maintenance.DefaultStepRunnerFactory;
+import org.rhq.enterprise.server.storage.maintenance.JobProperties;
 import org.rhq.enterprise.server.storage.maintenance.MaintenanceStepRunnerFactory;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.job.StepCalculator;
@@ -97,8 +97,14 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         log.info("Adding " + job + " to maintenance job queue");
     }
 
+    // This method does two things - 1) schedules the new job and 2) updates the new job if
+    // necessary. I think this should be refactored a bit. We should just use the existing
+    // scheduleMaintenance(StorageMaintenanceJob) method for scheduling the new job, and
+    // just have this method update the current job. We probably want to rename this method
+    // as well. Also need to determine if it should all be done in a single transaction as
+    // it currently is.
     @Override
-    public void scheduleMaintenance(int jobNumber, int failedStepNumber) {
+    public void scheduleMaintenance(int jobNumber, int failedStepNumber, StorageMaintenanceJob newJob) {
         StorageMaintenanceJob job = loadJob(jobNumber);
         MaintenanceStep failedStep = null;
 
@@ -111,14 +117,14 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
         // TODO handle failedStep null (which should not happen)
 
         StepCalculator stepCalculator = calculatorLookup.lookup(job.getJobType());
-        StorageMaintenanceJob newJob = stepCalculator.createNewJob(job, failedStep);
-        MaintenanceStep scheduleBaseStep = findBaseStep(newJob);
+//        StorageMaintenanceJob newJob = stepCalculator.createNewJob(job, failedStep);
+//        MaintenanceStep scheduleBaseStep = findBaseStep(newJob);
 
-        if (scheduleBaseStep != null) {
-            log.info(new StorageMaintenanceJob(scheduleBaseStep, Collections.<MaintenanceStep>emptyList()) +
-                " is already in the queue. No new job will be scheduled.");
-            return;
-        }
+//        if (scheduleBaseStep != null) {
+//            log.info(new StorageMaintenanceJob(scheduleBaseStep, Collections.<MaintenanceStep>emptyList()) +
+//                " is already in the queue. No new job will be scheduled.");
+//            return;
+//        }
 
         Set<MaintenanceStep> originalSteps = new HashSet<MaintenanceStep>(job.getSteps());
         stepCalculator.updateSteps(job, failedStep);
@@ -150,12 +156,11 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
     }
 
     private MaintenanceStep findBaseStep(StorageMaintenanceJob job) {
-        PropertySimple property = job.getJobParameters().getSimple("address");
-        if (property == null) {
-            log.warn(job + " does not have required parameter [address]");
+        String target = job.getTarget();
+        if (target == null) {
+            log.warn(job + " does not have required parameter [" + JobProperties.TARGET + "]");
             return null;
         }
-        String address = property.getStringValue();
         List<MaintenanceStep> baseSteps = entityManager.createNamedQuery(MaintenanceStep.FIND_BASE_STEPS_BY_JOB_TYPE,
             MaintenanceStep.class).setParameter("jobType", job.getJobType()).getResultList();
         for (MaintenanceStep baseStep : baseSteps) {
@@ -163,7 +168,7 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
             PropertyMap params = baseStep.getConfiguration().getMap("parameters");
             if (params == null || params.getSimple("address") == null) {
                 log.warn(baseStep + " does not have required parameter [address]");
-            } else if (address.equals(params.getSimple("address").getStringValue())) {
+            } else if (target.equals(params.getSimple("address").getStringValue())) {
                 return baseStep;
             }
         }
@@ -349,7 +354,9 @@ public class StorageClusterMaintenanceManagerBean implements StorageClusterMaint
                     maintenanceManager.rescheduleJob(job.getJobNumber());
                     return;
                 } else {    // failure strategy is continue
-                    maintenanceManager.scheduleMaintenance(job.getJobNumber(), step.getStepNumber());
+                    // TODO check for and handle newJob == null
+                    StorageMaintenanceJob newJob = stepRunner.createNewJobForFailedStep();
+                    maintenanceManager.scheduleMaintenance(job.getJobNumber(), step.getStepNumber(), newJob);
                     StorageMaintenanceJob updatedJob = maintenanceManager.loadJob(job.getJobNumber());
                     iterator = updatedJob.getSteps().iterator();
                 }

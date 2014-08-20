@@ -7,7 +7,6 @@ import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
@@ -24,6 +23,8 @@ public abstract class ResourceOperationStepRunner extends BaseStepRunner {
 
     private String operation;
 
+    protected ResourceOperationHistory history;
+
     protected ResourceOperationStepRunner(String operation) {
         this.operation = operation;
     }
@@ -31,7 +32,7 @@ public abstract class ResourceOperationStepRunner extends BaseStepRunner {
     @Override
     public void execute() throws StepFailureException {
         Configuration configuration = step.getConfiguration();
-        String targetAddress = configuration.getSimpleValue(JobProperties.TARGET);
+        String targetAddress = getTarget();
         PropertyMap params = (PropertyMap) configuration.get(JobProperties.PARAMETERS);
         Configuration operationParams = new Configuration();
 
@@ -48,15 +49,21 @@ public abstract class ResourceOperationStepRunner extends BaseStepRunner {
             log.info("Scheduling resource operation [" + operation + "] against " + targetAddress);
         }
 
-        OperationHistory operationHistory = executeOperation(targetAddress, operation, operationParams);
-        if (operationHistory.getStatus() != OperationRequestStatus.SUCCESS) {
+        history = executeOperation(targetAddress, operation, operationParams);
+        if (history.getStatus() != OperationRequestStatus.SUCCESS) {
             throw new StepFailureException("Resource operation [" + operation + "] against " + targetAddress +
-                " failed: " + operationHistory.getErrorMessage());
+                " failed: " + history.getErrorMessage());
         }
 
     }
 
-    protected OperationHistory executeOperation(String storageNodeAddress, String operation, Configuration parameters) {
+    protected String getTarget() {
+        Configuration configuration = step.getConfiguration();
+        return configuration.getSimpleValue(JobProperties.TARGET);
+    }
+
+    protected ResourceOperationHistory executeOperation(String storageNodeAddress, String operation,
+        Configuration parameters) {
         StorageNode node = storageNodeManager.findStorageNodeByAddress(storageNodeAddress);
         int resourceId = node.getResource().getId();
         ResourceOperationSchedule operationSchedule = operationManager.scheduleResourceOperation(
@@ -65,28 +72,34 @@ public abstract class ResourceOperationStepRunner extends BaseStepRunner {
         return waitForOperationToComplete(operationSchedule);
     }
 
-    private OperationHistory waitForOperationToComplete(ResourceOperationSchedule schedule) {
+    private ResourceOperationHistory waitForOperationToComplete(ResourceOperationSchedule schedule) {
         try {
             ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
             criteria.addFilterJobId(schedule.getJobId());
 
             Thread.sleep(5000);
-            PageList<ResourceOperationHistory> results = operationManager.findResourceOperationHistoriesByCriteria(
-                subjectManager.getOverlord(), criteria);
-            if (results.isEmpty()) {
-                throw new RuntimeException("Failed to find resource operation history for " + schedule);
-            }
-            OperationHistory history = results.get(0);
 
+            ResourceOperationHistory history = getHistory(criteria);
 
             while (history.getStatus() == OperationRequestStatus.INPROGRESS) {
                 Thread.sleep(5000);
-                history = operationManager.getOperationHistoryByHistoryId(subjectManager.getOverlord(),
-                    history.getId());
+                history = getHistory(criteria);
             }
-            return history;
+            // Now that the operation is done, do one more fetch to load the results
+            criteria.fetchResults(true);
+
+            return getHistory(criteria);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private ResourceOperationHistory getHistory(ResourceOperationHistoryCriteria criteria) {
+        PageList<ResourceOperationHistory> results = operationManager.findResourceOperationHistoriesByCriteria(
+            subjectManager.getOverlord(), criteria);
+        if (results.size() != 1) {
+            throw new RuntimeException("Failed to find resource operation history, instead found " + results);
+        }
+        return results.get(0);
     }
 }

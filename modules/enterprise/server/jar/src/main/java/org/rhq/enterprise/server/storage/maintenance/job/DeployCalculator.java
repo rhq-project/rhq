@@ -265,19 +265,4 @@ public class DeployCalculator implements StepCalculator {
         }
     }
 
-    @Override
-    public StorageMaintenanceJob createNewJob(StorageMaintenanceJob originalJob, MaintenanceStep failedStep) {
-        if (failedStep.getName().equals(AnnounceStorageNode.class.getName())) {
-            String address = failedStep.getConfiguration().getSimpleValue(JobProperties.TARGET);
-            Configuration newJobConfiguration = new Configuration.Builder()
-                .addSimple(JobProperties.TARGET, address)
-                .addSimple("newNodeAddress", failedStep.getConfiguration().getMap(JobProperties.PARAMETERS)
-                    .getSimple("address"))
-                .build();
-
-            return new StorageMaintenanceJob(FAILED_ANNOUNCE, FAILED_ANNOUNCE + " " + address, newJobConfiguration);
-        }
-        throw new UnsupportedOperationException("There is no support for a failure in " + failedStep.getName());
-    }
-
 }

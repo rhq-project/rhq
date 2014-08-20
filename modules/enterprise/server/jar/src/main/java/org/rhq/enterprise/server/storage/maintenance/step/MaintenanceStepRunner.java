@@ -25,6 +25,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.storage.StorageClientManager;
+import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 
 /**
  * @author Stefan Negrea
@@ -39,6 +40,18 @@ public interface MaintenanceStepRunner {
     void execute() throws StepFailureException;
 
     StepFailureStrategy getFailureStrategy();
+
+    /**
+     * <p>
+     * Invoked when the step fails and the runner has a failure strategy of {@link StepFailureStrategy#CONTINUE}. This
+     * method is responsible for creating new job to be scheduled for the failed step. The job will be added to the
+     * maintenance queue for later execution.
+     * </p>
+     * <p>
+     * Note that null can be returned if it is unnecessary to create a new job.
+     * </p>
+     */
+    StorageMaintenanceJob createNewJobForFailedStep();
 
     void setStorageClientManager(StorageClientManager storageClientManager);
 

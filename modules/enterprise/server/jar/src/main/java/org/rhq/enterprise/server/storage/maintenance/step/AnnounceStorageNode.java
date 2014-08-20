@@ -1,11 +1,14 @@
 package org.rhq.enterprise.server.storage.maintenance.step;
 
+import static org.rhq.core.domain.storage.MaintenanceStep.JobType.FAILED_ANNOUNCE;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.storage.maintenance.JobProperties;
+import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 
 /**
  * @author John Sanda
@@ -33,5 +36,16 @@ public class AnnounceStorageNode extends ResourceOperationStepRunner {
             return StepFailureStrategy.ABORT;
         }
         return StepFailureStrategy.CONTINUE;
+    }
+
+    @Override
+    public StorageMaintenanceJob createNewJobForFailedStep() {
+        Configuration newJobConfiguration = new Configuration.Builder()
+            .addSimple(JobProperties.TARGET, getTarget())
+            .addSimple("newNodeAddress", step.getConfiguration().getMap(JobProperties.PARAMETERS)
+                .getSimple("address"))
+            .build();
+
+        return new StorageMaintenanceJob(FAILED_ANNOUNCE, FAILED_ANNOUNCE + " " + getTarget(), newJobConfiguration);
     }
 }

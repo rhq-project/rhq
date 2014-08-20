@@ -310,13 +310,6 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
                             }
                         }
                     }
-
-                    @Override
-                    public StorageMaintenanceJob createNewJob(StorageMaintenanceJob originalJob,
-                        MaintenanceStep failedStep) {
-                        return new StorageMaintenanceJob(MaintenanceStep.JobType.DEPLOY, "RetryJob",
-                            new Configuration());
-                    }
                 };
             }
         };
@@ -326,7 +319,8 @@ public class StorageClusterMaintenanceManagerBeanTest extends AbstractEJB3Test {
             // steps 2 and 3; therefore,  step 4 should be executed after step 2 fails.
             // Then after step 4 we should execute steps 2 and 3 as part of the new job.
             new FakeStepRunner("FailedJobStep1", 1),
-            new FailedStepRunner("FailedJobStep2", 2, StepFailureStrategy.CONTINUE),
+            new FailedStepRunner("FailedJobStep2", 2, StepFailureStrategy.CONTINUE, new StorageMaintenanceJob(
+                MaintenanceStep.JobType.DEPLOY, "RetryJob", new Configuration())),
             new FakeStepRunner(failed4Executed, "FailedJobStep4", 4),
             new FakeStepRunner(failed2Executed, "FailedJobStep2", 1),
             new FakeStepRunner(failed3Executed, "FailedJobStep3", 2)

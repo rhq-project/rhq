@@ -18,8 +18,4 @@ public class TestStepCalculator implements StepCalculator {
     public void updateSteps(StorageMaintenanceJob job, MaintenanceStep failedStep) {
     }
 
-    @Override
-    public StorageMaintenanceJob createNewJob(StorageMaintenanceJob originalJob, MaintenanceStep failedStep) {
-        return null;
-    }
 }

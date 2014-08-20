@@ -2252,13 +2252,15 @@ public class AgentMain {
             try {
                 ConnectAgentResults results = (ConnectAgentResults) connectResponse.getResults();
 
-                // BZ 1124614 - if the agent is configured to auto-update itself, and it is not of the same version
-                // as the latest agent version as told to us by the server, then this agent should update now.
-                // Notice we will only check version string - we ignore build number to determine version equality
+                // BZ 1124614 - We know here the agent version is compatible with the server.  But it may not
+                // be the same version.  If the agent is configured to auto-update itself, and it is not the same
+                // version as the latest agent version as told to us by the server, then this agent should update now.
+                // Notice we will only check the build number (hash), the version may be the same but the
+                // build hashes will be different.
                 boolean agentUpdateEnabled = getConfiguration().isAgentUpdateEnabled();
                 if (agentUpdateEnabled) {
                     AgentVersion latestVersion = results.getLatestAgentVersion();
-                    if (latestVersion != null && latestVersion.getVersion() != null) {
+                    if (latestVersion != null && latestVersion.getBuild() != null) {
                         AgentVersion ourVersion = getAgentVersion();
                         if (!ourVersion.getBuild().equals(latestVersion.getBuild())) {
                             throw new AgentNotSupportedException(MSG.getMsg(

@@ -669,7 +669,7 @@ public class AgentManagerBean implements AgentManagerLocal, AgentManagerRemote {
                 ComparableVersion server = new ComparableVersion(latestAgentVersion);
                 isSupported = agent.equals(server);
             } else {
-                // we were given a regex of supported versions, check the agent version to see if it matches the regex
+                // we were given a regex of supported builds, check the agent build to see if it matches the regex
                 isSupported = agentVersionInfo.getBuild().matches(supportedAgentBuilds);
             }
             return new AgentVersionCheckResults(isSupported, new AgentVersion(latestAgentVersion, latestAgentBuild));

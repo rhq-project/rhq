@@ -239,25 +239,26 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private final PluginComponentFactory pluginFactory;
     private final EventManager eventManager;
     private final OperationManager operationManager;
-
-    private MeasurementManager measurementManager;
-    private ContentManager contentManager;
+    private final MeasurementManager measurementManager;
+    private final ContentManager contentManager;
 
     /**
      * Constructs a new instance.
      * Call {@link #initialize()} once constructed.
      */
     public InventoryManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter,
-                            PluginManager pluginManager, EventManager eventManager, OperationManager operationManager) {
+        PluginManager pluginManager) {
         super(DiscoveryAgentService.class, streamRemoter);
         this.configuration = configuration;
         if (pluginManager == null) {
             throw new NullPointerException("pluginManager is null");
         }
         this.pluginManager = pluginManager;
-        this.pluginFactory = new PluginComponentFactory(this, pluginManager);
-        this.eventManager = eventManager;
-        this.operationManager = operationManager;
+        pluginFactory = new PluginComponentFactory(this, pluginManager);
+        eventManager = new EventManager(configuration);
+        operationManager = new OperationManager(configuration, getStreamRemoter());
+        measurementManager = new MeasurementManager(configuration, getStreamRemoter(), this);
+        contentManager = new ContentManager(configuration, getStreamRemoter(), this);
         availabilityExecutor = new AvailabilityExecutor(this);
         serviceScanExecutor = new RuntimeDiscoveryExecutor(this, configuration);
         serverScanExecutor = new AutoDiscoveryExecutor(null, this);
@@ -289,9 +290,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             // Discover the platform first thing.
             executePlatformScan();
-
-            measurementManager = new MeasurementManager(configuration, getStreamRemoter(), this);
-            contentManager = new ContentManager(configuration, getStreamRemoter(), this);
 
             //try the resource upgrade before we have any schedulers set up
             //so that we don't get any interventions from concurrently running
@@ -3751,6 +3749,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     public PluginManager getPluginManager() {
         return pluginManager;
+    }
+
+    public EventManager getEventManager() {
+        return eventManager;
+    }
+
+    public OperationManager getOperationManager() {
+        return operationManager;
     }
 
     public MeasurementManager getMeasurementManager() {

@@ -106,30 +106,35 @@ public class ContentManager extends AgentService implements ContainerService, Co
     /**
      * Event listener to receive notifications of changes to the inventory.
      */
-    private final ContentInventoryEventListener inventoryEventListener;
     private final InventoryManager inventoryManager;
 
-    public ContentManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter, InventoryManager im) {
+    private ContentInventoryEventListener inventoryEventListener;
+
+    public ContentManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter,
+        InventoryManager inventoryManager) {
+
         super(ContentAgentService.class, streamRemoter);
 
-        LOG.info("Initializing Content Manager...");
-
         this.configuration = configuration;
-        this.inventoryManager = im;
+        this.inventoryManager = inventoryManager;
+
         // Determine discovery mode - we only enable discovery if we are inside the agent and the period is positive non-zero
-        this.scheduledDiscoveriesEnabled = (configuration.getContentDiscoveryPeriod() > 0);
+        scheduledDiscoveriesEnabled = (configuration.getContentDiscoveryPeriod() > 0);
 
         // Create thread pool executor. Used in both scheduled and non-scheduled mode for all discoveries.
         int threadPoolSize = configuration.getContentDiscoveryThreadPoolSize();
 
         discoveryThreadPoolExecutor = new ScheduledThreadPoolExecutor(threadPoolSize, new LoggingThreadFactory(
             "Content.discovery", true));
-
         discoveryThreadPoolExecutor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
         discoveryThreadPoolExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
 
         crudExecutor = new ThreadPoolExecutor(1, 5, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(10000),
             new LoggingThreadFactory("Content.crud", true));
+    }
+
+    public void initialize() {
+        LOG.info("Initializing Content Manager...");
 
         // When running in scheduled mode, create and schedule the thread pool for discovering content
         if (scheduledDiscoveriesEnabled) {
@@ -149,24 +154,26 @@ public class ContentManager extends AgentService implements ContainerService, Co
             inventoryEventListener = new ContentInventoryEventListener();
 
             // the inventory manager has probably already activated some resources, so let's prepopulate our schedules
-            im.notifyForAllActivatedResources(inventoryEventListener);
+            inventoryManager.notifyForAllActivatedResources(inventoryEventListener);
 
             // now ask that the inventory manager tell us about resources that will be activated in the future
-            im.addInventoryEventListener(inventoryEventListener);
-        } else {
-            inventoryEventListener = null;
+            inventoryManager.addInventoryEventListener(inventoryEventListener);
         }
+
         LOG.info("Content Manager initialized...");
     }
 
+    @Override
     public void shutdown() {
         LOG.info("Shutting down Content Manager...");
         PluginContainer.shutdownExecutorService(discoveryThreadPoolExecutor, true);
         // pass false, so we don't interrupt a plugin in the middle of a content update
         PluginContainer.shutdownExecutorService(crudExecutor, false);
         inventoryManager.removeInventoryEventListener(inventoryEventListener);
+        inventoryEventListener = null;
     }
 
+    @Override
     public Set<ResourcePackageDetails> getLastDiscoveredResourcePackages(int resourceId) {
         // Get the resource component
         ResourceContainer container = inventoryManager.getResourceContainer(resourceId);
@@ -181,6 +188,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         return container.getInstalledPackages();
     }
 
+    @Override
     public ContentDiscoveryReport executeResourcePackageDiscoveryImmediately(int resourceId, String packageTypeName)
         throws PluginContainerException {
         // Load the package type object
@@ -205,6 +213,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         return results;
     }
 
+    @Override
     public void deployPackages(DeployPackagesRequest request) {
         Runnable runner = new CreateContentRunner(this, request);
         crudExecutor.submit(runner);
@@ -220,16 +229,19 @@ public class ContentManager extends AgentService implements ContainerService, Co
         }
     }
 
+    @Override
     public void deletePackages(DeletePackagesRequest request) {
         DeleteContentRunner runner = new DeleteContentRunner(this, request);
         crudExecutor.submit(runner);
     }
 
+    @Override
     public void retrievePackageBits(RetrievePackageBitsRequest request) {
         RetrieveContentBitsRunner runner = new RetrieveContentBitsRunner(this, request);
         crudExecutor.submit(runner);
     }
 
+    @Override
     public List<DeployPackageStep> translateInstallationSteps(int resourceId, ResourcePackageDetails packageDetails)
         throws PluginContainerException {
         List<DeployPackageStep> steps;
@@ -245,6 +257,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
 
     // ContentServices Implementation  --------------------------------------------
 
+    @Override
     public long downloadPackageBitsForChildResource(ContentContext context, String childResourceTypeName,
         PackageDetailsKey key, OutputStream outputStream) {
 
@@ -258,6 +271,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         return count;
     }
 
+    @Override
     public long downloadPackageBits(ContentContext context, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, boolean resourceExists) {
         ContentContextImpl contextImpl = (ContentContextImpl) context; // this has to be of this type, we gave it to the plugin
@@ -278,6 +292,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         return count;
     }
 
+    @Override
     public long downloadPackageBitsRange(ContentContext context, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, long startByte, long endByte, boolean resourceExists) {
         ContentContextImpl contextImpl = (ContentContextImpl) context; // this has to be of this type, we gave it to the plugin
@@ -293,6 +308,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         return count;
     }
 
+    @Override
     public long getPackageBitsLength(ContentContext context, PackageDetailsKey packageDetailsKey) {
         ContentContextImpl contextImpl = (ContentContextImpl) context; // this has to be of this type, we gave it to the plugin
         ContentServerService serverService = getContentServerService();
@@ -300,6 +316,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         return size;
     }
 
+    @Override
     public PageList<PackageVersionMetadataComposite> getPackageVersionMetadata(ContentContext context, PageControl pc) {
         ContentContextImpl contextImpl = (ContentContextImpl) context; // this has to be of this type, we gave it to the plugin
         ContentServerService serverService = getContentServerService();
@@ -308,6 +325,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         return metadata;
     }
 
+    @Override
     public String getResourceSubscriptionMD5(ContentContext context) {
         ContentContextImpl contextImpl = (ContentContextImpl) context; // this has to be of this type, we gave it to the plugin
         ContentServerService serverService = getContentServerService();
@@ -685,6 +703,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
      */
     private class ContentInventoryEventListener implements InventoryEventListener {
 
+        @Override
         public void resourceActivated(Resource resource) {
             // Schedule content discovery if resource is synchronized and COMMITED
             if (resource.getId() != 0 && resource.getInventoryStatus() == COMMITTED) {
@@ -692,14 +711,17 @@ public class ContentManager extends AgentService implements ContainerService, Co
             }
         }
 
+        @Override
         public void resourceDeactivated(Resource resource) {
             ContentManager.this.unscheduleDiscoveries(resource);
         }
 
+        @Override
         public void resourcesAdded(Set<Resource> resources) {
             // when activated, we'll add the schedules
         }
 
+        @Override
         public void resourcesRemoved(Set<Resource> resources) {
             for (Resource removeMe : resources) {
                 ContentManager.this.unscheduleDiscoveries(removeMe);

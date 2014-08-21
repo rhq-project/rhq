@@ -182,10 +182,8 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
             .setTitle(MSG.view_adminTopology_agents() + ": " + MSG.view_adminTopology_affinityGroups_createNew());
         modalWindow.setOverflow(Overflow.VISIBLE);
         modalWindow.setWidth(800);
-        modalWindow.setHeight(400);
+        modalWindow.setHeight(410);
         modalWindow.setAutoCenter(true);
-        modalWindow.setCanDragResize(true);
-        modalWindow.setCanDragReposition(true);
 
         layout = new VLayout();
         layout.setWidth100();

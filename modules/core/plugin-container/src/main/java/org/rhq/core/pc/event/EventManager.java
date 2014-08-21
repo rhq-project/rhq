@@ -68,33 +68,32 @@ public class EventManager implements ContainerService {
     private SigarProxy sigar;
 
     public EventManager(PluginContainerConfiguration configuration) {
-        this.pcConfig = configuration;
-        this.activeReport = new EventReport(this.pcConfig.getEventReportMaxPerSource(), this.pcConfig
-            .getEventReportMaxTotal());
-
-        // Schedule sender thread(s) to send Event reports to the Server periodically.
-        EventSenderRunner senderRunner = new EventSenderRunner(this);
-        this.senderThreadPool = new ScheduledThreadPoolExecutor(SENDER_THREAD_POOL_CORE_SIZE, new LoggingThreadFactory(
+        pcConfig = configuration;
+        activeReport = new EventReport(pcConfig.getEventReportMaxPerSource(), pcConfig.getEventReportMaxTotal());
+        senderThreadPool = new ScheduledThreadPoolExecutor(SENDER_THREAD_POOL_CORE_SIZE, new LoggingThreadFactory(
             SENDER_THREAD_POOL_NAME, true));
-        this.senderThreadPool.scheduleAtFixedRate(senderRunner, this.pcConfig.getEventSenderInitialDelay(),
-            this.pcConfig.getEventSenderPeriod(), TimeUnit.SECONDS);
-
         // Set up a thread pool for polling threads. Polling threads will be added to the pool via calls to
         // registerEventPoller().
-        this.pollerThreadPool = new ScheduledThreadPoolExecutor(POLLER_THREAD_POOL_CORE_SIZE, new LoggingThreadFactory(
+        pollerThreadPool = new ScheduledThreadPoolExecutor(POLLER_THREAD_POOL_CORE_SIZE, new LoggingThreadFactory(
             POLLER_THREAD_POOL_NAME, true));
-        this.pollerThreads = new HashMap<PollerKey, Runnable>();
+        pollerThreads = new HashMap<PollerKey, Runnable>();
     }
 
+    public void initialize() {
+        log.info("Initializing Event Manager...");
+        // Schedule sender thread(s) to send Event reports to the Server periodically.
+        EventSenderRunner senderRunner = new EventSenderRunner(this);
+        senderThreadPool.scheduleAtFixedRate(senderRunner, pcConfig.getEventSenderInitialDelay(),
+            pcConfig.getEventSenderPeriod(), TimeUnit.SECONDS);
+        log.info("Event Manager initialized.");
+    }
+
+    @Override
     public void shutdown() {
-        if (this.senderThreadPool != null) {
-            log.debug("Shutting down event sender thread pool...");
-            PluginContainer.shutdownExecutorService(this.senderThreadPool, true);
-        }
-        if (this.pollerThreadPool != null) {
-            log.debug("Shutting down event poller thread pool...");
-            PluginContainer.shutdownExecutorService(this.pollerThreadPool, true);
-        }
+        log.debug("Shutting down event sender thread pool...");
+        PluginContainer.shutdownExecutorService(this.senderThreadPool, true);
+        log.debug("Shutting down event poller thread pool...");
+        PluginContainer.shutdownExecutorService(this.pollerThreadPool, true);
     }
 
     void publishEvents(@NotNull Set<Event> events, @NotNull Resource resource) {

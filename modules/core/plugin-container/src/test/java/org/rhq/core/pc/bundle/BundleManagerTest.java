@@ -62,11 +62,9 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
-import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
-import org.rhq.core.pc.operation.OperationManager;
 import org.rhq.core.pc.plugin.PluginLifecycleListenerManager;
 import org.rhq.core.pc.plugin.PluginLifecycleListenerManagerImpl;
 import org.rhq.core.pc.plugin.PluginManager;
@@ -348,8 +346,7 @@ public class BundleManagerTest {
         public final HashMap<Integer, ResourceContainer> idResourceContainerMap = new HashMap<Integer, ResourceContainer>();
 
         public MockInventoryManager() {
-            super(pcConfig, null, pluginManager, new EventManager(pcConfig), new OperationManager(pcConfig,
-                new MockAgentServiceStreamRemoter()));
+            super(pcConfig, null, pluginManager);
             platformType = new ResourceType("platformResourceTypeName", "pluginName", ResourceCategory.PLATFORM, null);
             bundleHandlerType = new ResourceType("bhRTypeName", "pluginName", ResourceCategory.SERVER, platformType);
             serverTypeFS = new ResourceType("typeName-fileSystem", "pluginName", ResourceCategory.SERVER, platformType);

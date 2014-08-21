@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.storage.maintenance.step;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.enterprise.server.storage.maintenance.JobProperties;
 import org.rhq.enterprise.server.storage.maintenance.StepFailureException;
 import org.rhq.enterprise.server.storage.maintenance.StepFailureStrategy;
 
@@ -33,7 +34,7 @@ public class DeleteStorageNode extends BaseStepRunner {
 
     @Override
     public void execute() throws StepFailureException {
-        String address = step.getConfiguration().getSimpleValue("targetAddress");
+        String address = step.getConfiguration().getSimpleValue(JobProperties.TARGET);
         log.info("Deleting storage node " + address);
         storageNodeManager.deleteStorageNode(address);
         log.info("Storage node " + address + " has been deleted");

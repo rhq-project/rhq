@@ -62,7 +62,7 @@ public class AnnounceStorageNode extends ResourceOperationStepRunner {
         Configuration newJobConfiguration = new Configuration.Builder()
             .addSimple(JobProperties.TARGET, getTarget())
             .addSimple("newNodeAddress", step.getConfiguration().getMap(JobProperties.PARAMETERS)
-                .getSimple("address"))
+                .getSimple("address").getStringValue())
             .build();
 
         return new StorageMaintenanceJob(FAILED_ANNOUNCE, FAILED_ANNOUNCE + " " + getTarget(), newJobConfiguration);

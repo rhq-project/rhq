@@ -57,6 +57,11 @@ public final class JobProperties {
      */
     public static final String OPERATION_MODE = "operationMode";
 
+    /**
+     * A flag to indicate whether or not the replication factor has been changed.
+     */
+    public static final String REPLICATION_FACTOR_CHANGED = "replicationFactorChanged";
+
     private JobProperties() {}
 
 }

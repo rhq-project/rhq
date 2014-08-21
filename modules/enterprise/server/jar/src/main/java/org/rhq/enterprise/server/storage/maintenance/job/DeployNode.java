@@ -195,7 +195,7 @@ public class DeployNode implements MaintenanceJobFactory {
                         .addSimple(JobProperties.TARGET, address)
                         .openMap(JobProperties.PARAMETERS)
                             .addSimple("primaryRange", true)
-                            .addSimple("snapshot", true)
+                            .addSimple("snapshot", false)
                             .addSimple("keyspace", keyspace)
                             .addSimple("table", table)
                         .closeMap()
@@ -205,6 +205,8 @@ public class DeployNode implements MaintenanceJobFactory {
     }
 
     protected void applySchemaChanges(StorageMaintenanceJob job, SchemaChanges schemaChanges) {
+        job.getConfiguration().put(new PropertySimple(JobProperties.REPLICATION_FACTOR_CHANGED,
+            schemaChanges.replicationFactor != null));
         if (schemaChanges.replicationFactor != null) {
             Configuration configuration = new Configuration();
             configuration.put(new PropertySimple("replicationFactor", schemaChanges.replicationFactor));

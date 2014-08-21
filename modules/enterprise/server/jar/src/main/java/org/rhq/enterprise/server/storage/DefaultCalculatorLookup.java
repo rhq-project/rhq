@@ -2,6 +2,7 @@ package org.rhq.enterprise.server.storage;
 
 import org.rhq.core.domain.storage.MaintenanceStep;
 import org.rhq.enterprise.server.storage.maintenance.MaintenanceJobFactory;
+import org.rhq.enterprise.server.storage.maintenance.job.AnnounceNewNode;
 import org.rhq.enterprise.server.storage.maintenance.job.DeployNode;
 import org.rhq.enterprise.server.storage.maintenance.job.FailedRepair;
 import org.rhq.enterprise.server.storage.maintenance.job.UndeployNode;
@@ -25,6 +26,8 @@ public class DefaultCalculatorLookup implements CalculatorLookup {
             return new UndeployNode();
         } else if (jobType == MaintenanceStep.JobType.FAILED_REPAIR) {
             return new FailedRepair();
+        } else if (jobType == MaintenanceStep.JobType.FAILED_ANNOUNCE) {
+            return new AnnounceNewNode();
         }
         throw new UnsupportedOperationException(jobType + " is not yet supported");
     }

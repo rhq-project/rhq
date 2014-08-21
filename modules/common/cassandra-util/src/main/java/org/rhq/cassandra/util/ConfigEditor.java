@@ -27,7 +27,7 @@ public class ConfigEditor {
 
     private Map config;
 
-    public ConfigEditor(File cassandraYamlFile)  {
+    public ConfigEditor(File cassandraYamlFile) {
         configFile = cassandraYamlFile;
     }
 
@@ -53,14 +53,23 @@ public class ConfigEditor {
     }
 
     public void save() {
+        FileWriter fw = null;
         try {
-            yaml.dump(config, new FileWriter(configFile));
+            fw = new FileWriter(configFile);
+            yaml.dump(config, fw);
             backupFile.delete();
             yaml = null;
             config = null;
             backupFile = null;
         } catch (Exception e) {
             throw new ConfigEditorException("Failed to save changes to " + configFile, e);
+        } finally {
+            if (null != fw) {
+                try {
+                    fw.close();
+                } catch (IOException e) {
+                }
+            }
         }
     }
 

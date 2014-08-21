@@ -173,6 +173,14 @@ public class Install extends AbstractInstall {
                 startedStorage = true;
                 Start startCommand = new Start();
                 rValue = Math.max(rValue, startCommand.exec(new String[] { "--storage" }));
+
+                // More recent versions of Cassandra are taking a little longer to lay down the initial
+                // files on the first startup.  Pause for 10s to ensure that Cassandra is ready for the
+                // Server install to connect with the default 'cassandra' user and update the schema.
+                if (installServer) {
+                    log.info("Pausing to ensure RHQ Storage is initialized prior to RHQ Server installation.");
+                    Thread.sleep(10000L);
+                }
             }
 
             if (installServer && rValue == RHQControl.EXIT_CODE_OK) {

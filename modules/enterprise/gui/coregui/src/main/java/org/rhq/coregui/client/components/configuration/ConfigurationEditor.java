@@ -1797,7 +1797,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
         buttonBar.setMembersMargin(15);
         buttonBar.setAlign(Alignment.CENTER);
 
-        final IButton okButton = new IButton(MSG.common_button_ok());
+        final IButton okButton = new EnhancedIButton(MSG.common_button_ok(), ButtonColor.BLUE);
         if (!mapReadOnly) {
             okButton.disable();
         }

@@ -494,13 +494,18 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                     }
                     report.addData(mdt);
                  } else {
-                    Double val = Double.valueOf(values.get(metricName));
+                    String s = values.get(metricName);
+                    if (s.endsWith("u"))
+                        s = s.substring(0,s.length()-1);
+                    Double val = Double.valueOf(s);
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Collected BMX metric [" + metricName + "], value = " + val);
                     }
                     MeasurementDataNumeric mdn = new MeasurementDataNumeric(schedule,val);
                     report.addData(mdn);
                  }
+             } else {
+                 LOG.warn("BMX metric [" + metricName + "] not found");
              }
          }
     }
@@ -511,6 +516,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             return "global:ServerName";
         if (string.equals("wwwServiceStartTime"))
             return "global:RestartTime";
+        if (string.equals("applInboundAssociations"))
+            return "global:BusyWorkers";
         if (string.startsWith("wwwSummary")) {
             return "forever:" + string.substring(10);
         } else if (string.startsWith("wwwRequest")) {
@@ -552,11 +559,32 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
 
             // If the section does not match our vhost, ignore it.
-            // TODO the vHost of RHQ needs to be ajusted to the BMX ones.
-            if (vHost == null)
-                vHost = "_GLOBAL_";
-            if (!line.contains("Host="+vHost))
-                continue;
+            // RHQ will do 3 kinds of vHost:
+            // null = Guessing Host=_GLOBAL_
+            // MainServer = ignore the Host and use Port=_ANY_
+            // |*:6666 = ignore the Host and use Port=6666
+            // neo4|*:7777 = Use the Host and ignore the Port.
+            if (vHost == null) {
+                if (!line.contains("Host=_GLOBAL_,"))
+                    continue;
+            } else if (vHost.startsWith("|")) {
+                if (line.contains("Host=_GLOBAL_,"))
+                    continue;
+                String port = vHost.substring(vHost.indexOf(':')+1);
+                if (!line.endsWith("Port=" + port))
+                    continue;
+            } else if (vHost.equals("MainServer")) {
+                if (line.contains("Host=_GLOBAL_,"))
+                    continue;
+                if (!line.endsWith("Port=_ANY_"))
+                    continue;
+            } else {
+                if (line.contains("Host=_GLOBAL_,"))
+                    continue;
+                String host = vHost.substring(0,vHost.indexOf('|'));
+                if (!line.contains("Host=" + host + ","))
+                    continue;
+            }
 
             // Now some global data
             Matcher m = typePattern.matcher(line);
@@ -568,6 +596,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
                 slurpSection(ret, reader, type);
             }
+            if (line.contains("Type=info,"))
+                break; // We are done with the VirtualHost.
         }
 
         in.close();

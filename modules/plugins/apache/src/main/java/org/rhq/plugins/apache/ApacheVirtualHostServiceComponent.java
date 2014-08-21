@@ -416,6 +416,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                         + RESPONSE_TIME_LOG_FILE_CONFIG_PROP + "' connection property.");
                     // TODO: Communicate this error back to the server for display in the GUI.
                 }
+             } else {
+                LOG.warn("BMX metric [" + metricName + "] not found");
              }
          }
          

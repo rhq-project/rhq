@@ -26,6 +26,7 @@ package org.rhq.plugins.jmx.test;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.rhq.core.domain.measurement.DataType.MEASUREMENT;
+import static org.rhq.core.domain.resource.ResourceCategory.SERVICE;
 import static org.rhq.core.util.StringUtil.isNotBlank;
 import static org.rhq.plugins.jmx.util.JvmResourceKey.Type.Explicit;
 import static org.rhq.plugins.jmx.util.JvmResourceKey.Type.JmxRemotingPort;
@@ -34,7 +35,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -73,10 +73,7 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pc.util.ComponentUtil;
-import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 import org.rhq.plugins.jmx.util.JvmResourceKey;
@@ -95,6 +92,8 @@ public class JMXPluginTest extends AbstractJMXPluginTest {
     private static final int JMX_REMOTING_PORT2 = 9922;
     private static final String EXPLICIT_RESOURCE_KEY1 = "foo1";
     private static final String EXPLICIT_RESOURCE_KEY2 = "foo2";
+    private static final ResourceType TEST_SERVICE_RESOURCE_TYPE = new ResourceType("TestService_", "Custom-JMX",
+        SERVICE, null);
 
     static {
         File customPluginFile = null;
@@ -105,6 +104,11 @@ public class JMXPluginTest extends AbstractJMXPluginTest {
         }
         AbstractJMXPluginTest.ADDITIONAL_PLUGIN_FILES.add(customPluginFile);
     }
+
+    private Resource explicitKey1ServerResource;
+    private Resource explicitKey2ServerResource;
+    private Resource jmxRemotingServerResource;
+    private Set<Resource> jmxServers = new HashSet<Resource>();
 
     private static File createCustomPluginFile() throws Exception {
 
@@ -189,25 +193,34 @@ public class JMXPluginTest extends AbstractJMXPluginTest {
                 InventoryReport report = getInventoryManager().executeServerScanImmediately();
                 LOG.info("Discovery took: " + (report.getEndTime() - report.getStartTime()) + " ms");
 
-                boolean foundExplicitKey1Server = findTestServerResource(Explicit, EXPLICIT_RESOURCE_KEY1) != null;
-                boolean foundExplicitKey2Server = findTestServerResource(Explicit, EXPLICIT_RESOURCE_KEY2) != null;
-                boolean foundJmxRemotingServer = findTestServerResource(JmxRemotingPort, JMX_REMOTING_PORT1) != null;
-
-                LOG.info("foundJmxRemotingServer = " + foundJmxRemotingServer);
+                explicitKey1ServerResource = findTestServerResource(Explicit, EXPLICIT_RESOURCE_KEY1);
+                boolean foundExplicitKey1Server = explicitKey1ServerResource != null;
                 LOG.info("foundExplicitKey1Server = " + foundExplicitKey1Server);
+
+                explicitKey2ServerResource = findTestServerResource(Explicit, EXPLICIT_RESOURCE_KEY2);
+                boolean foundExplicitKey2Server = explicitKey2ServerResource != null;
                 LOG.info("foundExplicitKey2Server = " + foundExplicitKey2Server);
+
+                jmxRemotingServerResource = findTestServerResource(JmxRemotingPort, JMX_REMOTING_PORT1);
+                boolean foundJmxRemotingServer = jmxRemotingServerResource != null;
+                LOG.info("foundJmxRemotingServer = " + foundJmxRemotingServer);
 
                 // key1Server not started, see above
                 return /*foundExplicitKey1Server &&*/foundExplicitKey2Server && foundJmxRemotingServer;
             }
         }, "Could not find all JMX servers", 2, MINUTES, 10, SECONDS);
+
+        // key1Server not started, see above
+        // jmxServers.add(explicitKey1ServerResource);
+        jmxServers.add(explicitKey2ServerResource);
+        jmxServers.add(jmxRemotingServerResource);
     }
 
     private Resource findTestServerResource(JvmResourceKey.Type keyType, Object value) {
         Resource platform = getInventoryManager().getPlatform();
 
-        Set<Resource> jmxServers = getChildResourcesOfType(platform, SERVER_TYPE);
-        for (Resource jmxServer : jmxServers) {
+        Set<Resource> serverResources = getChildResourcesOfType(platform, SERVER_TYPE);
+        for (Resource jmxServer : serverResources) {
 
             JvmResourceKey key = JvmResourceKey.valueOf(jmxServer.getResourceKey());
             boolean isTestProgram = TestProgram.class.getName().equals(key.getMainClassName());
@@ -239,17 +252,6 @@ public class JMXPluginTest extends AbstractJMXPluginTest {
                 InventoryReport report = getInventoryManager().executeServiceScanImmediately();
                 LOG.info("Discovery took: " + (report.getEndTime() - report.getStartTime()) + " ms");
 
-                Set<Resource> jmxServers = new HashSet<Resource>();
-
-                @SuppressWarnings("unused")
-                Resource explicitKey1Server = findTestServerResource(Explicit, EXPLICIT_RESOURCE_KEY1);
-                // key1Server not started, see above
-                // jmxServers.add(explicitKey1Server);
-                Resource explicitKey2Server = findTestServerResource(Explicit, EXPLICIT_RESOURCE_KEY2);
-                jmxServers.add(explicitKey2Server);
-                Resource jmxRemotingServer = findTestServerResource(JmxRemotingPort, JMX_REMOTING_PORT1);
-                jmxServers.add(jmxRemotingServer);
-
                 for (Resource jmxServer : jmxServers) {
                     Set<Resource> childResources = jmxServer.getChildResources();
                     // Each JMX Server should have exactly six singleton child Resources with the following types:
@@ -270,97 +272,90 @@ public class JMXPluginTest extends AbstractJMXPluginTest {
 
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testMeasurement() throws Exception {
-        MeasurementFacet measurementFacet = getResourceComponentFacet("Operating System", MeasurementFacet.class);
-        Set<MeasurementScheduleRequest> metricList = new HashSet<MeasurementScheduleRequest>();
-        metricList.add(new MeasurementScheduleRequest(1, "CommittedVirtualMemorySize", 1000, true, MEASUREMENT));
-        MeasurementReport report = new MeasurementReport();
-        measurementFacet.getValues(report, metricList);
-        Map<String, Object> metricsData = getMetricsData(report);
-        assertTrue(getMetric(metricsData, "CommittedVirtualMemorySize") > 0);
+        for (Resource jmxServer : jmxServers) {
+            Set<Resource> childResources = getChildResourcesOfType(jmxServer, OPERATING_SYSTEM_RESOURCE_TYPE);
+            assertEquals(childResources.size(), 1, String.valueOf(childResources));
+
+            MeasurementFacet measurementFacet = getResourceComponentFacet(childResources.iterator().next(),
+                MeasurementFacet.class);
+            Set<MeasurementScheduleRequest> metricList = new HashSet<MeasurementScheduleRequest>();
+            metricList.add(new MeasurementScheduleRequest(1, "CommittedVirtualMemorySize", 1000, true, MEASUREMENT));
+
+            MeasurementReport report = new MeasurementReport();
+            measurementFacet.getValues(report, metricList);
+            Map<String, Object> metricsData = getMetricsData(report);
+
+            assertTrue(getMetric(metricsData, "CommittedVirtualMemorySize") > 0);
+        }
     }
 
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testOperation1() throws Exception {
-        OperationResult operationResult = invokeOperation("Threading", "threadDump", new Configuration());
-        assertNotNull(operationResult);
-        Configuration complexResults = operationResult.getComplexResults();
-        assertNotNull(complexResults);
-        assertTrue(isNotBlank(complexResults.getSimpleValue("totalCount")));
+        for (Resource jmxServer : jmxServers) {
+            Set<Resource> childResources = getChildResourcesOfType(jmxServer, THREADING_RESOURCE_TYPE);
+            assertEquals(childResources.size(), 1, String.valueOf(childResources));
+
+            OperationResult operationResult = invokeOperation(childResources.iterator().next(), "threadDump",
+                new Configuration());
+            assertNotNull(operationResult);
+            Configuration complexResults = operationResult.getComplexResults();
+            assertNotNull(complexResults);
+            assertTrue(isNotBlank(complexResults.getSimpleValue("totalCount")));
+        }
     }
 
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testOperation2() throws Exception {
-        OperationResult operationResult = invokeOperation("TestService_", "doSomething", new Configuration());
-        assertNull(operationResult); // Operation did not define a "<results>" block.
+        for (Resource jmxServer : jmxServers) {
+            Set<Resource> childResources = getChildResourcesOfType(jmxServer, TEST_SERVICE_RESOURCE_TYPE);
+            assertEquals(childResources.size(), 1, String.valueOf(childResources));
+
+            OperationResult operationResult = invokeOperation(childResources.iterator().next(), "doSomething",
+                new Configuration());
+            assertNull(operationResult); // Operation did not define a "<results>" block.
+        }
     }
 
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testOperation3() throws Exception {
-        OperationResult operationResult = invokeOperation("TestService_", "hello", new Configuration());
-        assertNotNull(operationResult);
-        assertEquals(operationResult.getSimpleResult(), "Hello World");
+        for (Resource jmxServer : jmxServers) {
+            Set<Resource> childResources = getChildResourcesOfType(jmxServer, TEST_SERVICE_RESOURCE_TYPE);
+            assertEquals(childResources.size(), 1, String.valueOf(childResources));
+
+            OperationResult operationResult = invokeOperation(childResources.iterator().next(), "hello",
+                new Configuration());
+            assertNotNull(operationResult);
+            assertEquals(operationResult.getSimpleResult(), "Hello World");
+        }
     }
 
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testOperation4() throws Exception {
-        Configuration parameters = new Configuration();
-        parameters.put(new PropertySimple("p1", "Hello Test"));
-        OperationResult operationResult = invokeOperation("TestService_", "echo", parameters);
-        assertNotNull(operationResult);
-        assertEquals(operationResult.getSimpleResult(), "Hello Test");
+        for (Resource jmxServer : jmxServers) {
+            Set<Resource> childResources = getChildResourcesOfType(jmxServer, TEST_SERVICE_RESOURCE_TYPE);
+            assertEquals(childResources.size(), 1, String.valueOf(childResources));
+
+            Configuration parameters = new Configuration();
+            parameters.put(new PropertySimple("p1", "Hello Test"));
+            OperationResult operationResult = invokeOperation(childResources.iterator().next(), "echo", parameters);
+            assertNotNull(operationResult);
+            assertEquals(operationResult.getSimpleResult(), "Hello Test");
+        }
     }
 
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testOperation5() throws Exception {
-        Configuration parameters = new Configuration();
-        parameters.put(new PropertySimple("p1", "Hello"));
-        parameters.put(new PropertySimple("p2", "Test"));
-        OperationResult operationResult = invokeOperation("TestService_", "concat", parameters);
-        assertNotNull(operationResult);
-        assertEquals(operationResult.getSimpleResult(), "HelloTest");
-    }
+        for (Resource jmxServer : jmxServers) {
+            Set<Resource> childResources = getChildResourcesOfType(jmxServer, TEST_SERVICE_RESOURCE_TYPE);
+            assertEquals(childResources.size(), 1, String.valueOf(childResources));
 
-    private OperationResult invokeOperation(String typeName, String operationName, Configuration parameters)
-        throws Exception {
-
-        OperationFacet operationFacet = getResourceComponentFacet(typeName, OperationFacet.class);
-        OperationResult operationResult = operationFacet.invokeOperation(operationName, parameters);
-
-        if (operationResult != null && operationResult.getErrorMessage() != null) {
-            fail("Operation (" + operationName + ") failed : " + operationResult.getErrorMessage());
+            Configuration parameters = new Configuration();
+            parameters.put(new PropertySimple("p1", "Hello"));
+            parameters.put(new PropertySimple("p2", "Test"));
+            OperationResult operationResult = invokeOperation(childResources.iterator().next(), "concat", parameters);
+            assertNotNull(operationResult);
+            assertEquals(operationResult.getSimpleResult(), "HelloTest");
         }
-        return operationResult;
-    }
-
-    private <FACET> FACET getResourceComponentFacet(String typeName, Class<FACET> facetType) throws Exception {
-        Resource platform = getInventoryManager().getPlatform();
-        for (Resource server : platform.getChildResources()) {
-
-            List<Resource> resources = new ArrayList<Resource>(server.getChildResources());
-            for (Resource resource : resources) {
-
-                if (resource.getResourceType().getName().equals(typeName)) {
-
-                    return ComponentUtil.getComponent(resource.getId(), facetType, FacetLockType.WRITE,
-                        MINUTES.toMillis(1), true, true, true);
-                }
-            }
-        }
-
-        throw new AssertionError("Not found: " + "typeName = [" + typeName + "], facetType = [" + facetType + "]");
-    }
-
-    private static Set<Resource> getChildResourcesOfType(Resource platform, ResourceType resourceType) {
-        Set<Resource> childResources = platform.getChildResources();
-        Set<Resource> results = new HashSet<Resource>();
-        for (Resource resource : childResources) {
-            ResourceType childResourceType = resource.getResourceType();
-            if (childResourceType.getPlugin().equals(resourceType.getPlugin())
-                && childResourceType.getName().equals(resourceType.getName())) {
-                results.add(resource);
-            }
-        }
-        return results;
     }
 
     public static class OutputReader implements Runnable {

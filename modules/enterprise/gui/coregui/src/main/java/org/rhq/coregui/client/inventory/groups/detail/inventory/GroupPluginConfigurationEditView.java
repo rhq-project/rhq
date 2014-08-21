@@ -139,7 +139,7 @@ public class GroupPluginConfigurationEditView extends EnhancedVLayout implements
             this.editor.setOverflow(Overflow.AUTO);
             this.editor.addPropertyValueChangeListener(this);
             this.editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
-            addMember(this.editor);
+            addMember(editor, 0);
             this.refreshing = false;
         }
     }

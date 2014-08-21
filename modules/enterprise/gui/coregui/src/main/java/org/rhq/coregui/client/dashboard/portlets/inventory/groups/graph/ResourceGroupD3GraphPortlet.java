@@ -37,6 +37,7 @@ import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -247,8 +248,8 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
             protected Criteria getPickListFilterCriteria() {
                 Criteria criteria = new Criteria();
 
-                if (resourceGroupSelector.getSelectedItems().size() == 1) {
-                    int groupId = resourceGroupSelector.getSelectedItems().iterator().next().getId();
+                if (resourceGroupSelector.getSelection().size() == 1) {
+                    int groupId = resourceGroupSelector.getSelection().iterator().next();
                     criteria.addCriteria(CFG_RESOURCE_GROUP_ID, groupId);
                     form.setValue(CFG_RESOURCE_GROUP_ID, groupId);
                 }
@@ -265,7 +266,7 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
 
             public void onSelectionChanged(AssignedItemsChangedEvent event) {
 
-                if (resourceGroupSelector.getSelectedItems().size() == 1) {
+                if (resourceGroupSelector.getSelection().size() == 1) {
                     metric.fetchData();
                     form.clearValue(CFG_DEFINITION_ID);
                 }
@@ -276,8 +277,13 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID) != null) {
             Integer integerValue = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID).getIntegerValue();
-            if (integerValue != null)
+            if (integerValue != null) {
                 form.setValue(CFG_RESOURCE_GROUP_ID, integerValue);
+                ListGridRecord group = new ListGridRecord();
+                group.setAttribute("id", integerValue);
+                ListGridRecord[] groups = { group }; 
+                resourceGroupSelector.setAssigned(groups);
+            }
 
             PropertySimple propertySimple = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
             if (propertySimple != null && propertySimple.getIntegerValue() != null)
@@ -289,8 +295,9 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
 
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
             public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
-                storedPortlet.getConfiguration().put(
-                    new PropertySimple(CFG_RESOURCE_GROUP_ID, form.getValue(CFG_RESOURCE_GROUP_ID)));
+                ResourceGroup selectedGroup = resourceGroupSelector.getSelectedGroup();
+                String groupId = selectedGroup == null ? null : String.valueOf(selectedGroup.getId()); // can be null 
+                storedPortlet.getConfiguration().put(new PropertySimple(CFG_RESOURCE_GROUP_ID, groupId));
                 storedPortlet.getConfiguration().put(
                     new PropertySimple(CFG_DEFINITION_ID, form.getValue(CFG_DEFINITION_ID)));
 

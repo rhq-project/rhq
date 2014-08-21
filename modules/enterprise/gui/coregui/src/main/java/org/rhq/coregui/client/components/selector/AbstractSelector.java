@@ -355,24 +355,10 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
                 try {
                     availableRecords = new ArrayList<Record>();
                     Record[] allRecords = response.getData();
-                    ListGridRecord[] assignedRecords = assignedGrid.getRecords();
-                    if (assignedRecords.length != 0) {
-                        Set<String> selectedRecordIds = new HashSet<String>(assignedRecords.length);
-                        for (Record record : assignedRecords) {
-                            String id = record.getAttribute(getSelectorKey());
-                            selectedRecordIds.add(id);
-                        }
-                        for (Record record : allRecords) {
-                            String id = record.getAttribute(getSelectorKey());
-                            if (!selectedRecordIds.contains(id)) {
-                                availableRecords.add(record);
-                            }
-                        }
-                    } else {
-                        availableRecords.addAll(Arrays.asList(allRecords));
-                    }
+                    int assignedNumber = doPostPopulateAvailableGrid(allRecords);
+
                     int totalRecords = (response.getTotalRows() != null) ? response.getTotalRows() : allRecords.length;
-                    int totalAvailableRecords = totalRecords - assignedRecords.length;
+                    int totalAvailableRecords = totalRecords - assignedNumber;
                     if (availableRecords.size() < totalAvailableRecords) {
                         // TODO: i18n
                         messageLayout.setContents(imgHTML(ImageManager.getAvailabilityYellowIcon()) + " Only "
@@ -386,11 +372,33 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
                     }
                     messageLayout.markForRedraw();
                     availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
+                    
+                    doPostPopulateAvailableGrid(allRecords);
                 } finally {
                     updateButtonEnablement();
                 }
             }
         }, requestProperties);
+    }
+    
+    public int doPostPopulateAvailableGrid(Record[] allRecords) {
+        ListGridRecord[] assignedRecords = assignedGrid.getRecords();
+        if (assignedRecords.length != 0) {
+            Set<String> selectedRecordIds = new HashSet<String>(assignedRecords.length);
+            for (Record record : assignedRecords) {
+                String id = record.getAttribute(getSelectorKey());
+                selectedRecordIds.add(id);
+            }
+            for (Record record : allRecords) {
+                String id = record.getAttribute(getSelectorKey());
+                if (!selectedRecordIds.contains(id)) {
+                    availableRecords.add(record);
+                }
+            }
+        } else {
+            availableRecords.addAll(Arrays.asList(allRecords));
+        }
+        return assignedRecords.length;
     }
 
     private VStack buildButtonStack() {

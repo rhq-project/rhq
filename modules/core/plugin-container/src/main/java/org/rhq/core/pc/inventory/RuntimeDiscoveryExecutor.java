@@ -325,7 +325,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                 && !mergedResources.containsKey(existingChildResource.getUuid())
                 && (existingChildResource.getId() == 0 || !this.pluginContainerConfiguration.isInsideAgent())) {
                 log.info("Removing stale resource [" + existingChildResource + "]");
-                this.inventoryManager.removeResourceAndIndicateIfScanIsNeeded(existingChildResource);
+                this.inventoryManager.removeResourceAndIndicateIfScanIsNeeded(existingChildResource, true);
             }
         }
     }

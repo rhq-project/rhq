@@ -1518,7 +1518,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
             return;
         }
-        boolean scan = removeResourceAndIndicateIfScanIsNeeded(resourceContainer.getResource());
+        boolean scan = removeResourceAndIndicateIfScanIsNeeded(resourceContainer.getResource(), true);
 
         //only actually schedule the scanning when we are finished with resource upgrade. The resource upgrade
         //happens before any scanning infrastructure is established.
@@ -1534,7 +1534,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param resource the Resource to be removed
      * @return true if this method deleted things that requires a scan.
      */
-    boolean removeResourceAndIndicateIfScanIsNeeded(Resource resource) {
+    boolean removeResourceAndIndicateIfScanIsNeeded(Resource resource, boolean isRoot) {
         boolean scanIsNeeded = false;
 
         this.inventoryLock.writeLock().lock();
@@ -1543,25 +1543,27 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.debug("Removing [" + resource + "] from local inventory...");
             }
 
-            // this will deactivate the resource starting bottom-up - so this ends up as a no-op if we are being called
-            // recursively, but we need to do this now to ensure everything is stopped prior to removing them from inventory
-            deactivateResource(resource);
+            // deactivateResource recursively deactivates the resource and its children. No need to do this
+            // if we are recursing as well.
+            if (isRoot) {
+                deactivateResource(resource);
+            }
 
+            Set<Resource> children = getContainerChildren(resource);
             // see BZ 801432
             if (log.isDebugEnabled()) {
-                if (!resource.getChildResources().getClass().getName().contains("Collections$SetFromMap")) {
+                if ((children.size() > 0) && (!(children instanceof CopyOnWriteArraySet))) {
                     Exception e = new Exception(
-                        "Unexpected child set - if you see this, please notify support or log it in bugzilla"
-                            + resource.getChildResources().getClass().getName() + ":" + resource.getId() + ":"
-                            + resource.getName());
+                        "Unexpected child set - if you see this, please notify support or log it in bugzilla. "
+                            + children.getClass().getName() + ":" + resource.getId() + ":" + resource.getName()
+                            + ":numChildResources=" + children.size());
                     log.debug("[BZ 801432]", e);
                 }
             }
 
-            Set<Resource> children = getContainerChildren(resource);
             Set<Resource> tmp = new HashSet<Resource>(children);
             for (Resource child : tmp) {
-                scanIsNeeded |= removeResourceAndIndicateIfScanIsNeeded(child);
+                scanIsNeeded |= removeResourceAndIndicateIfScanIsNeeded(child, false);
             }
 
             Resource parent = resource.getParentResource();
@@ -2434,12 +2436,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 inventoryFile.loadInventory();
 
                 this.platform = inventoryFile.getPlatform();
+                practiceSafeSets(this.platform);
                 this.resourceContainersByUUID.clear();
                 this.resourceContainerByResourceId.clear();
                 for (String uuid : inventoryFile.getResourceContainers().keySet()) {
                     ResourceContainer resourceContainer = inventoryFile.getResourceContainers().get(uuid);
                     this.resourceContainersByUUID.put(uuid, resourceContainer);
                     Resource resource = resourceContainer.getResource();
+                    practiceSafeSets(resource);
                     this.resourceContainerByResourceId.put(resource.getId(), resourceContainer);
                     compactResource(resource);
                 }
@@ -2459,6 +2463,20 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     + "it will resync its inventory once it can reconnect with a server.", e);
         } finally {
             this.inventoryLock.writeLock().unlock();
+        }
+    }
+
+    // Make sure the child resources are in our desired Set impl
+    private void practiceSafeSets(final Resource resource) {
+        Set<Resource> children = resource.getChildResources();
+        if (null == children) {
+            resource.setChildResources(new CopyOnWriteArraySet<Resource>());
+        } else if (!(children instanceof CopyOnWriteArraySet)) {
+            if (log.isDebugEnabled()) {
+                log.debug("Converting persisted childResources to CopyOnWriteArraySet from ["
+                    + children.getClass().getSimpleName() + "] for [" + resource.getName() + "]");
+            }
+            resource.setChildResources(new CopyOnWriteArraySet<Resource>(children));
         }
     }
 
@@ -2619,7 +2637,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (this.platform != null && this.platform.getResourceType() == type) {
             return this.platform;
         }
-        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
+        Set<Resource> childResources = new CopyOnWriteArraySet<Resource>(
+            Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>()));
         Resource platform = new Resource(childResources);
         platform.setResourceKey("testkey" + configuration.getContainerName());
         platform.setName("testplatform");
@@ -3339,7 +3358,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             for (Resource r : resourceBatch) {
                 //  protect against childResources notNull assumptions downstream
                 if (null == r.getChildResources()) {
-                    r.setChildResources(Collections.EMPTY_SET); // this will actually initialize to an empty Set
+                    r.setChildResources(new CopyOnWriteArraySet()); // this will actually initialize to an empty Set
                 }
                 compactResource(r);
                 resourceMap.put(r.getId(), r);

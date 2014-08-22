@@ -1128,8 +1128,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                     }
 
                     if (null == existingParent) {
-                        // I think getReference may be slightly faster here but it's likely negligible
-                        existingParent = entityManager.getReference(Resource.class, parentId);
+                        existingParent = entityManager.find(Resource.class, parentId);
                         if (null != existingParent) {
                             if (null != parentMap) {
                                 parentMap.put(parentId, existingParent);
@@ -1345,7 +1344,14 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
             // if the parent exists, create the parent-child relationship and add it to the map
             if (null != parentResource) {
-                parentResource.addChildResource(resource);
+                // We specifically call resource.setParentResource(parentResource) here and not
+                // parentResource.addChildResource(resource).  This is because the former call updates only
+                // the resource being merged. To use the latter we actually need to pull the child set of the
+                // parent and add the new child resource to the set.  This can be a very intensive thing to do
+                // for parents with large-cardinality child-sets.  This is safe *only* because don't actually
+                // need the parent's children for any other reason, and we only need to update one side of
+                // the relation.
+                resource.setParentResource(parentResource);
                 parentMap.put(parentId, parentResource);
             }
         }

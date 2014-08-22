@@ -176,10 +176,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     private static final String[] CONTROL_SCRIPT_PATHS = { "bin/apachectl", "sbin/apachectl", "bin/apachectl2",
         "sbin/apachectl2" };
 
-    private static final String DEFAULT_BMX_HANDLER_URL = "http://localhost:8000/bmx";
-
-    private static String bmxUrl;
-    private static boolean useBMX = false;
+    private String bmxUrl;
+    private boolean useBMX = false;
     static Pattern typePattern = Pattern.compile(".*Type=([\\w-]+),.*");
 
     private ResourceContext<PlatformComponent> resourceContext;
@@ -351,11 +349,11 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
         this.lastKnownAvailability = null;
     }
 
-    public static String getBMXUrl() {
+    public String getBMXUrl() {
         return bmxUrl;
     }
 
-    public static boolean getUseBMX() {
+    public boolean getUseBMX() {
         return useBMX;
     }
 
@@ -467,7 +465,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
         }
     }
     private void getBMXValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
-         Map<String,String> values = parseBMXInput(null);
+         Map<String,String> values = parseBMXInput(null, this.getBMXUrl());
          if (LOG.isDebugEnabled()) {
                  LOG.debug("BMX map: " + values);
          }
@@ -530,7 +528,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
         return string;
     }
     
-    public static Map<String, String> parseBMXInput(String vHost) throws Exception {
+    public static Map<String, String> parseBMXInput(String vHost, String bmxUrl) throws Exception {
         Map<String,String> ret = new HashMap<String, String>();
     	// TODO do some clever caching of data here, so that we won't hammer mod_bmx
         URL url = new URL(bmxUrl);
@@ -540,67 +538,77 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
         String line;
 
-        while ((line = reader.readLine())!=null) {
+        try {
+            while ((line = reader.readLine())!=null) {
 
-            if (!line.startsWith("Name: mod_bmx_"))
-                continue;
+                if (!line.startsWith("Name: mod_bmx_"))
+                    continue;
 
-            // Skip over sample data - this is no real module
-            if (line.contains("mod_bmx_example"))
-                continue;
+                // Skip over sample data - this is no real module
+                if (line.contains("mod_bmx_example"))
+                    continue;
 
-            // Now we have a modules output
+                // Now we have a modules output
 
-            // check for the status module
-            if (line.contains("mod_bmx_status")) {
-                slurpSection(ret,reader,"global");
-                continue;
+                // check for the status module
+                if (line.contains("mod_bmx_status")) {
+                    slurpSection(ret,reader,"global");
+                    continue;
+                }
+
+
+                // If the section does not match our vhost, ignore it.
+                // RHQ will do 3 kinds of vHost:
+                // null = Guessing Host=_GLOBAL_
+                // MainServer = ignore the Host and use Port=_ANY_
+                // |*:6666 = ignore the Host and use Port=6666
+                // neo4|*:7777 = Use the Host and ignore the Port.
+                if (vHost == null) {
+                    if (!line.contains("Host=_GLOBAL_,"))
+                        continue;
+                } else if (vHost.startsWith("|")) {
+                    if (line.contains("Host=_GLOBAL_,"))
+                        continue;
+                    String port = vHost.substring(vHost.indexOf(':')+1);
+                    if (!line.endsWith("Port=" + port))
+                        continue;
+                } else if (vHost.equals("MainServer")) {
+                    if (line.contains("Host=_GLOBAL_,"))
+                        continue;
+                    if (!line.endsWith("Port=_ANY_"))
+                        continue;
+                } else {
+                    if (line.contains("Host=_GLOBAL_,"))
+                        continue;
+                    String host = vHost.substring(0,vHost.indexOf('|'));
+                    if (!line.contains("Host=" + host + ","))
+                        continue;
+                }
+
+                // Now some global data
+                Matcher m = typePattern.matcher(line);
+
+                if (m.matches()) {
+                    String type = m.group(1);
+                    if (type.contains("-"))
+                        type= type.substring(type.indexOf("-")+1);
+
+                    slurpSection(ret, reader, type);
+                }
+                if (line.contains("Type=info,"))
+                    break; // We are done with the VirtualHost.
             }
-
-
-            // If the section does not match our vhost, ignore it.
-            // RHQ will do 3 kinds of vHost:
-            // null = Guessing Host=_GLOBAL_
-            // MainServer = ignore the Host and use Port=_ANY_
-            // |*:6666 = ignore the Host and use Port=6666
-            // neo4|*:7777 = Use the Host and ignore the Port.
-            if (vHost == null) {
-                if (!line.contains("Host=_GLOBAL_,"))
-                    continue;
-            } else if (vHost.startsWith("|")) {
-                if (line.contains("Host=_GLOBAL_,"))
-                    continue;
-                String port = vHost.substring(vHost.indexOf(':')+1);
-                if (!line.endsWith("Port=" + port))
-                    continue;
-            } else if (vHost.equals("MainServer")) {
-                if (line.contains("Host=_GLOBAL_,"))
-                    continue;
-                if (!line.endsWith("Port=_ANY_"))
-                    continue;
-            } else {
-                if (line.contains("Host=_GLOBAL_,"))
-                    continue;
-                String host = vHost.substring(0,vHost.indexOf('|'));
-                if (!line.contains("Host=" + host + ","))
-                    continue;
+        } catch (Exception e) {
+                 LOG.warn("parseBMXInput failed" + e);
+                 throw e;
+        } finally {
+            try {
+                 in.close();
+            } catch (Exception e) {
+                 // Ignore it.
             }
-
-            // Now some global data
-            Matcher m = typePattern.matcher(line);
-
-            if (m.matches()) {
-                String type = m.group(1);
-                if (type.contains("-"))
-                    type= type.substring(type.indexOf("-")+1);
-
-                slurpSection(ret, reader, type);
-            }
-            if (line.contains("Type=info,"))
-                break; // We are done with the VirtualHost.
         }
 
-        in.close();
         return ret;
     }
     

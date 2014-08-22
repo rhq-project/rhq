@@ -151,7 +151,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public AvailabilityType getAvailability() {
-        if (ApacheServerComponent.getUseBMX())
+        if (resourceContext.getParentResourceComponent().getUseBMX())
             lastKnownAvailability = getAvailabilityBMXInternal();
         else
             lastKnownAvailability = getAvailabilityInternal();
@@ -160,23 +160,32 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     public AvailabilityType getAvailabilityBMXInternal() {	  
     	boolean availability = false;
-    	
+   
+                 HttpURLConnection urlConn = null; 
 	   	 try {
-	   		 URL url = new URL(ApacheServerComponent.getBMXUrl());
-	   		 HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+	   	         URL url = new URL(resourceContext.getParentResourceComponent().getBMXUrl());
+	   	         urlConn = (HttpURLConnection) url.openConnection();
 	   		 urlConn.connect();
 	   		 
 	   		 if(urlConn.getResponseCode() == HttpURLConnection.HTTP_OK)
 	   			 availability = true;
 	   		 else
 	   			 availability = false;
-	   	 }catch (ConnectException e) {
+	   	 } catch (ConnectException e) {
 	   		LOG.info("The Apache server is down !");
 	   	 } catch (MalformedURLException e) {
-	   		LOG.error("Malformed URL : " + ApacheServerComponent.getBMXUrl());
+	   		LOG.error("Malformed URL : " + resourceContext.getParentResourceComponent().getBMXUrl());
 	   	 } catch (IOException e) {
-	   		 e.printStackTrace();
-	   	 }
+	   		 LOG.error("IO Error on : " + resourceContext.getParentResourceComponent().getBMXUrl());
+	   	 } finally {
+                         if (urlConn != null) {
+                                 try {
+                                        urlConn.disconnect();
+                                 } catch (Exception e) {
+                                        // Ignored it.
+                                 }
+                         }
+                 }
 	   	 
 	   	 if(!availability)
 	   		 return AvailabilityType.DOWN;
@@ -319,7 +328,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
-        if (ApacheServerComponent.getUseBMX())
+        if (resourceContext.getParentResourceComponent().getUseBMX())
             getBMXValues(report, schedules);
         else
             getSNMPValues(report, schedules);
@@ -364,7 +373,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                     } catch (SNMPException e) {
                         LOG.error("An error occurred while attempting to collect an SNMP metric.", e);
                     }
-             /* TODO: we need to convert the name like mod_snmp */
                 }
             }
         }
@@ -373,7 +381,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             + this.resourceContext.getResourceKey() + ".");
     }
     private void getBMXValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {    	
-         Map<String,String> values = ApacheServerComponent.parseBMXInput(this.resourceContext.getResourceKey());
+         Map<String,String> values = ApacheServerComponent.parseBMXInput(this.resourceContext.getResourceKey(), resourceContext.getParentResourceComponent().getBMXUrl());
          if (LOG.isDebugEnabled()) {
              LOG.debug("Collecting BMX metrics");
          }

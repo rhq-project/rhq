@@ -18,14 +18,21 @@
  */
 package org.rhq.coregui.client.inventory.resource.selection;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -142,5 +149,30 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup, Resou
             }
             return result;
         }
+    }
+    
+    @Override
+    public int doPostPopulateAvailableGrid(Record[] allRecords) {
+        List<Record> assignedRecordsWithData = new ArrayList<Record>();
+        ListGridRecord[] assignedRecords = assignedGrid.getRecords();
+        if (assignedRecords.length != 0) {
+            Set<String> selectedRecordIds = new HashSet<String>(assignedRecords.length);
+            for (Record record : assignedRecords) {
+                String id = record.getAttribute(getSelectorKey());
+                selectedRecordIds.add(id);
+            }
+            for (Record record : allRecords) {
+                String id = record.getAttribute(getSelectorKey());
+                if (!selectedRecordIds.contains(id)) {
+                    availableRecords.add(record);
+                } else {
+                    assignedRecordsWithData.add(record);
+                }
+            }
+            assignedGrid.setData(assignedRecordsWithData.toArray(new Record[assignedRecordsWithData.size()]));
+        } else {
+            availableRecords.addAll(Arrays.asList(allRecords));
+        }
+        return assignedRecords.length;
     }
 }

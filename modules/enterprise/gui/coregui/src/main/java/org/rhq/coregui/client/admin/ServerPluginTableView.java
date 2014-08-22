@@ -58,6 +58,7 @@ import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -93,8 +94,8 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
 
-        addTableAction(MSG.common_button_enable(), MSG.common_msg_areYouSure(), new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.common_button_enable(), MSG.common_msg_areYouSure(), ButtonColor.BLUE,
+            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
             public void executeAction(ListGridRecord[] selections, Object actionValue) {
                 int[] selectedIds = getSelectedIds(selections);
                 GWTServiceLookup.getPluginService().enableServerPlugins(selectedIds,
@@ -156,7 +157,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        addTableAction(MSG.common_button_delete(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
+        addTableAction(MSG.common_button_delete(), ButtonColor.RED, new AuthorizedTableAction(this, TableActionEnablement.ANY,
             Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 ArrayList<String> selectedNames = getSelectedNames(selections);
@@ -193,7 +194,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        IButton scanForUpdatesButton = new EnhancedIButton(MSG.view_admin_plugins_scan());
+        IButton scanForUpdatesButton = new EnhancedIButton(MSG.view_admin_plugins_scan(), ButtonColor.BLUE);
         scanForUpdatesButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 GWTServiceLookup.getPluginService().scanAndRegister(new AsyncCallback<Void>() {
@@ -214,7 +215,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        IButton restartMasterPCButton = new EnhancedIButton(MSG.view_admin_plugins_restartMasterPC());
+        IButton restartMasterPCButton = new EnhancedIButton(MSG.view_admin_plugins_restartMasterPC(), ButtonColor.RED);
         restartMasterPCButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 Message msg = new Message(MSG.view_admin_plugins_restartMasterPCStarted(), Severity.Info);

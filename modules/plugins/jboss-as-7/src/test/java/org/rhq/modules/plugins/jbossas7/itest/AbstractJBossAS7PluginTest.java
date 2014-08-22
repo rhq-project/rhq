@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,10 +19,13 @@
 
 package org.rhq.modules.plugins.jbossas7.itest;
 
-import java.io.File;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DOMAIN_RESOURCE_TYPE;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.MANAGEMENT_PASSWORD;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.MANAGEMENT_USERNAME;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.PLUGIN_NAME;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_TYPE;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
@@ -31,9 +34,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.plugin.testutil.AbstractAgentPluginTest;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.pluginapi.util.FileUtils;
-import org.rhq.modules.plugins.jbossas7.itest.domain.DomainServerComponentTest;
-import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.test.arquillian.AfterDiscovery;
 
 /**
@@ -43,36 +43,21 @@ import org.rhq.test.arquillian.AfterDiscovery;
  */
 public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest {
 
-    private static final Log log = LogFactory.getLog(AbstractJBossAS7PluginTest.class);
-
-    protected static final String PLUGIN_NAME = "JBossAS7";
-
-    public static final File JBOSS_HOME = new File(FileUtils.getCanonicalPath(System.getProperty("jboss7.home")));
-
-    public static final String MANAGEMENT_USERNAME = "admin";
-    public static final String MANAGEMENT_PASSWORD = "admin";
-
-    protected static final boolean enableInitialDiscovery = true;
-    private static boolean createdManagementUsers;
-
-    /*
+    /**
      * Every test sub-class requires a management user, create it up front
      */
-    @AfterDiscovery()
+    @AfterDiscovery
     public void installManagementUsersTest() throws Exception {
-        if (!createdManagementUsers) {
-            System.out.println("== Installing management users...");
+        System.out.println("== Installing management users...");
 
-            Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
+        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
 
-            Resource domainServer = getResourceByTypeAndKey(platform, DomainServerComponentTest.RESOURCE_TYPE,
-                DomainServerComponentTest.RESOURCE_KEY, true);
-            installManagementUser(domainServer);
+        Resource domainServer = getResourceByTypeAndKey(platform, DOMAIN_RESOURCE_TYPE, DOMAIN_RESOURCE_KEY, true);
+        installManagementUser(domainServer);
 
-            Resource standaloneServer = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-                StandaloneServerComponentTest.RESOURCE_KEY, true);
-            installManagementUser(standaloneServer);
-        }
+        Resource standaloneServer = getResourceByTypeAndKey(platform, STANDALONE_RESOURCE_TYPE,
+            STANDALONE_RESOURCE_KEY, true);
+        installManagementUser(standaloneServer);
     }
 
     protected Resource validatePlatform() throws Exception {
@@ -106,10 +91,8 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
         Resource platform = validatePlatform();
 
         if (serverOnly) {
-            waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-                StandaloneServerComponentTest.RESOURCE_KEY);
-            waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
-                DomainServerComponentTest.RESOURCE_KEY);
+            waitForResourceByTypeAndKey(platform, platform, STANDALONE_RESOURCE_TYPE, STANDALONE_RESOURCE_KEY);
+            waitForResourceByTypeAndKey(platform, platform, DOMAIN_RESOURCE_TYPE, DOMAIN_RESOURCE_KEY);
         } else {
             waitForAsyncDiscoveryToStabilize(platform);
         }
@@ -149,29 +132,4 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
     protected String getPluginName() {
         return PLUGIN_NAME;
     }
-
-    // Not currently used.
-    // TODO: If needed they may need to be modified to recursively start the ancestors first, because you can't
-    //       start a resource whose parent is not started.
-    //
-    //    protected void restartResourceComponent(Resource resource) throws PluginContainerException {
-    //        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
-    //        inventoryManager.deactivateResource(resource);
-    //        ResourceContainer serverContainer = inventoryManager.getResourceContainer(resource);
-    //        inventoryManager.activateResource(resource, serverContainer, true);
-    //    }
-    //
-    //    /**
-    //     * Use to ensure a resourceComponent is started. After discovery it may take unacceptably long for
-    //     * the resource to activate. If already active this call is a no-op.
-    //     *
-    //     * @param resource
-    //     * @throws PluginContainerException
-    //     */
-    //    protected void startResourceComponent(Resource resource) throws PluginContainerException {
-    //        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
-    //        ResourceContainer serverContainer = inventoryManager.getResourceContainer(resource);
-    //        inventoryManager.activateResource(resource, serverContainer, true);
-    //    }
-
 }

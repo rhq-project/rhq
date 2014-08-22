@@ -19,6 +19,7 @@
 package org.rhq.enterprise.agent;
 
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 
 /**
@@ -428,11 +429,13 @@ public interface AgentConfigurationConstants {
     /**
      * The password used to access the keystore file.
      */
+    @ObfuscatedPreferences.Restricted
     String CLIENT_SENDER_SECURITY_KEYSTORE_PASSWORD = PROPERTY_NAME_PREFIX + "client.security.keystore.password";
 
     /**
      * The password to gain access to the key found in the keystore.
      */
+    @ObfuscatedPreferences.Restricted
     String CLIENT_SENDER_SECURITY_KEYSTORE_KEY_PASSWORD = PROPERTY_NAME_PREFIX
         + "client.security.keystore.key-password";
 
@@ -471,6 +474,7 @@ public interface AgentConfigurationConstants {
     /**
      * The password used to access the truststore file.
      */
+    @ObfuscatedPreferences.Restricted
     String CLIENT_SENDER_SECURITY_TRUSTSTORE_PASSWORD = PROPERTY_NAME_PREFIX + "client.security.truststore.password";
 
     /**
@@ -734,11 +738,22 @@ public interface AgentConfigurationConstants {
 
     long DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY = PluginContainerConfiguration.CONFIGURATION_DISCOVERY_INITIAL_DELAY_DEFAULT;
 
-    /* Defines the period of configuration chnage detection checks */
+    /* Defines the interval between configuration detection runs */
+    String PLUGINS_CONFIGURATION_DISCOVERY_INTERVAL = PROPERTY_NAME_PREFIX
+        + "plugins.configuration-discovery.interval-secs";
+
+    long DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_INTERVAL = PluginContainerConfiguration.CONFIGURATION_DISCOVERY_INTERVAL_DEFAULT;
+
+    /* Defines the period of time before a checked resource becomes eligible for a subsequent check */
     String PLUGINS_CONFIGURATION_DISCOVERY_PERIOD = PROPERTY_NAME_PREFIX
         + "plugins.configuration-discovery.period-secs";
 
     long DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_PERIOD = PluginContainerConfiguration.CONFIGURATION_DISCOVERY_PERIOD_DEFAULT;
+
+    /* Defines the maximum elapsed time before a discovery run will defer remaining checks to the next run */
+    String PLUGINS_CONFIGURATION_DISCOVERY_LIMIT = PROPERTY_NAME_PREFIX + "plugins.configuration-discovery.limit-secs";
+
+    long DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_LIMIT = PluginContainerConfiguration.CONFIGURATION_DISCOVERY_LIMIT_DEFAULT;
 
     /**
      * If defined, this is to be the size of the operation invoker thread pool. If not defined, the plugin container
@@ -785,4 +800,16 @@ public interface AgentConfigurationConstants {
      */
     String PLUGINS_EVENT_REPORT_MAX_TOTAL = PROPERTY_NAME_PREFIX + "plugins.event-report.max-total";
     int DEFAULT_PLUGINS_EVENT_REPORT_MAX_TOTAL = PluginContainerConfiguration.EVENT_REPORT_MAX_TOTAL_DEFAULT;
+
+    /**
+     * Communications security keystore password
+     */
+    @ObfuscatedPreferences.Restricted
+    String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_PASSWORD = "rhq.communications.connector.security.keystore.password";
+
+    /**
+     * Communications security actual key password
+     */
+    @ObfuscatedPreferences.Restricted
+    String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_KEY_PASSWORD = "rhq.communications.connector.security.keystore.key-password";
 }

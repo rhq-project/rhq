@@ -18,7 +18,6 @@
  */
 package org.rhq.coregui.client.dashboard;
 
-import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VStack;
 
@@ -36,11 +35,11 @@ public class PortalColumn extends VStack {
 
         // Provide a visible border for framing of columns (especially when empty) and add padding to make
         // the border easier to see for dragging
-        setBorder("2px solid #999999");
+//        setBorder("2px solid #999999");
 
         // Allow column specific vertical scrolling to see off-screen portlets. Takes up real estate but allows
         // a user to see specific portlets in each column at the same time.
-        setOverflow(Overflow.AUTO);
+      //  setOverflow(Overflow.AUTO);
 
         // enable predefined component animation
         setAnimateMembers(true);

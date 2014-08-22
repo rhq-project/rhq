@@ -55,6 +55,7 @@ import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * Component for assigning the agents into affinity group.
@@ -181,10 +182,8 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
             .setTitle(MSG.view_adminTopology_agents() + ": " + MSG.view_adminTopology_affinityGroups_createNew());
         modalWindow.setOverflow(Overflow.VISIBLE);
         modalWindow.setWidth(800);
-        modalWindow.setHeight(400);
+        modalWindow.setHeight(410);
         modalWindow.setAutoCenter(true);
-        modalWindow.setCanDragResize(true);
-        modalWindow.setCanDragReposition(true);
 
         layout = new VLayout();
         layout.setWidth100();
@@ -200,7 +199,7 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
                 closeAndRefresh(parrent, false);
             }
         });
-        IButton save = new EnhancedIButton(MSG.common_button_save());
+        IButton save = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
         save.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 List<Integer> actuallySelected = getIdList(selector.getSelectedRecords());

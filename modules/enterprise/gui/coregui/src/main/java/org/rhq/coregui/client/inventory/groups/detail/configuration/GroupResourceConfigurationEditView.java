@@ -53,10 +53,11 @@ import org.rhq.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.coregui.client.util.message.Message;
-import org.rhq.coregui.client.util.message.MessageCenter;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.MessageCenter;
 
 /**
  * A view for editing a group's configuration.
@@ -105,7 +106,7 @@ public class GroupResourceConfigurationEditView extends EnhancedVLayout implemen
         buttonbar.setMembersMargin(5);
         buttonbar.setLayoutMargin(5);
 
-        this.saveButton = new EnhancedIButton(MSG.common_button_save());
+        this.saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();

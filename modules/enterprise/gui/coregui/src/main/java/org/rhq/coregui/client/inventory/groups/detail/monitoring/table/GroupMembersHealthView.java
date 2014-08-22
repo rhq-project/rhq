@@ -28,6 +28,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.coregui.client.inventory.groups.detail.inventory.MembersView;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * The content pane for the group Monitoring>Tables subtab.
@@ -57,7 +58,7 @@ public class GroupMembersHealthView extends MembersView {
         //add extra list grid field for alerts
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
-        addTableAction(MSG.common_title_compareMetrics(), new TableAction() {
+        addTableAction(MSG.common_title_compareMetrics(), ButtonColor.BLUE, new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return selection != null && selection.length > 1;

@@ -38,6 +38,7 @@ import org.rhq.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * Superclass to the different alert definition views. This should be subclassed
@@ -75,7 +76,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
 
         final boolean isAuthorized = isAuthorizedToModifyAlertDefinitions();
 
-        addTableAction(MSG.common_button_new(), null, new AbstractTableAction() {
+        addTableAction(MSG.common_button_new(), null, ButtonColor.BLUE, new AbstractTableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return super.isEnabled(selection) && isAuthorized;
             }
@@ -107,7 +108,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
                     refresh();
                 }
             });
-        addTableAction(MSG.common_button_delete(), MSG.view_alert_definitions_delete_confirm(),
+        addTableAction(MSG.common_button_delete(), MSG.view_alert_definitions_delete_confirm(), ButtonColor.RED,
             new AbstractTableAction(TableActionEnablement.ANY) {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     return super.isEnabled(selection) && isAuthorized;

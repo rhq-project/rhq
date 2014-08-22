@@ -94,6 +94,7 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
         fields.add(resourceNameField);
 
         ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
+        ancestryField.setCanSortClientOnly(true);
         fields.add(ancestryField);
 
         ListGridField scheduleNameField = new ListGridField("scheduleName", MSG
@@ -108,10 +109,12 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
 
         ListGridField bandField = new ListGridField("formattedBaseband", MSG
             .dataSource_measurementOob_field_formattedBaseband());
+        bandField.setCanSortClientOnly(true);
         fields.add(bandField);
 
         ListGridField outlierField = new ListGridField("formattedOutlier", MSG
             .dataSource_measurementOob_field_formattedOutlier());
+        outlierField.setCanSortClientOnly(true);
         fields.add(outlierField);
 
         ListGridField factorField = new ListGridField("factor", MSG.dataSource_measurementOob_field_factor());
@@ -187,12 +190,19 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     }
 
     protected String getSortFieldForColumn(String columnName) {
-        // Note: I don't think this should even be getting called, but it is. We already setCanSortClientOnly(true)
-        // on all of the ListGridFields. To me that should mean any sorting done client side on those fields should
-        // not be passed in on the Request, but it seems to be...
-
-        // we don't use criterias for this datasource, just return null, don't try and apply any sort.
-        return null;
+        // Allow server-side sorting for only unmodified queries, these keywords are for MeasurementOOBManagerBean.
+        // Rest of the fields should have client-side sorting only.
+        String sortField = null;
+        if("scheduleName".equals(columnName)) {
+            sortField = "def.displayName";
+        } else if("resourceName".equals(columnName)) {
+            sortField = "res.name";
+        } else if("timestamp".equals(columnName)) {
+            sortField = "o.timestamp";
+        } else if("factor".equals(columnName)) {
+            sortField = "o.oobFactor";
+        }
+        return sortField;
     }
 
     @Override

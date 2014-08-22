@@ -31,6 +31,8 @@ import java.util.Map;
  */
 public class CsvWriter<T> {
 
+    public final static String DELIMITER = ",";
+
     public final PropertyConverter<T> SIMPLE_CONVERTER = new SimpleConverter<T>();
 
     public final PropertyConverter<T> DATE_CONVERTER = new DateConverter<T>();
@@ -56,9 +58,9 @@ public class CsvWriter<T> {
             PropertyConverter<T> converter = converters.get(property);
             Object value = converter.convert(object, property);
             if (value == null) {
-                buffer.append(",");
+                buffer.append(DELIMITER);
             } else {
-                buffer.append(ReportFormatHelper.cleanForCSV(value.toString())).append(",");
+                buffer.append(ReportFormatHelper.quoteIfInvalidCharacters(value.toString())).append(DELIMITER);
             }
         }
         buffer.delete(buffer.length() - 1, buffer.length()).append("\n");

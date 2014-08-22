@@ -70,6 +70,8 @@ import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.PopupWindow;
 import org.rhq.coregui.client.components.form.SortedSelectItem;
 import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
@@ -361,7 +363,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         layout.addMember(footerStrip);
 
         // footer OK button
-        final IButton okButton = new IButton(MSG.common_button_ok());
+        final IButton okButton = new EnhancedIButton(MSG.common_button_ok(), ButtonColor.BLUE);
         if (!propertyIsReadOnly) {
             // if its read-only, allow the ok button to be enabled to just let the user close the window
             // otherwise, disable it now and we will enable it after we know things are ready to be saved
@@ -452,7 +454,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             memberValuesGrid.setCanEdit(false);
         } else {
             // put a cancel button in the footer strip to allow the user to exit without saving changes
-            final IButton cancelButton = new IButton(MSG.common_button_cancel());
+            final IButton cancelButton = new EnhancedIButton(MSG.common_button_cancel());
             cancelButton.focus();
             cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -794,6 +796,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
                 break;
             case PASSWORD:
                 editorItem = new PasswordItem();
+                editorItem.setAttribute("autocomplete", "off");
                 break;
             case BOOLEAN:
                 // TODO: we want RadioGroupItem, but smartgwt seems to have a bug and it won't render this when

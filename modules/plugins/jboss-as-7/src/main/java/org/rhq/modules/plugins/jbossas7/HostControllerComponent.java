@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,9 +18,20 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.EXECUTION;
+import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.INVALID_ACTION;
+import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.MISSING_PARAMETER;
+import static org.rhq.core.util.StringUtil.isBlank;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -32,6 +43,8 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.pluginapi.bundle.BundleHandoverRequest;
+import org.rhq.core.pluginapi.bundle.BundleHandoverResponse;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -41,7 +54,9 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -49,12 +64,16 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  *
  * @author Heiko W. Rupp
  */
-public class HostControllerComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T>
-        implements MeasurementFacet, OperationFacet {
+public class HostControllerComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T> implements
+    MeasurementFacet, OperationFacet {
+
+    private static final Log LOG = LogFactory.getLog(HostControllerComponent.class);
 
     private static final String DOMAIN_CONFIG_TRAIT = "domain-config-file";
     private static final String HOST_CONFIG_TRAIT = "host-config-file";
     private static final String DOMAIN_HOST_TRAIT = "domain-host-name";
+    private static final String DOMAIN_NAME_TRAIT = "domain-name";
+    private static final String DOMAIN_TEMP_DIR_TRAIT = "domain-temp-dir";
     private static final String PROCESS_TYPE_DC = "Domain Controller";
 
     private boolean domainController; // determines whether this HC is also DC
@@ -79,15 +98,17 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
         Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
-        for (MeasurementScheduleRequest request: requests) {
+        for (MeasurementScheduleRequest request : requests) {
             String requestName = request.getName();
             if (requestName.equals(DOMAIN_CONFIG_TRAIT) || requestName.equals(HOST_CONFIG_TRAIT)) {
                 collectConfigTrait(report, request);
             } else if (requestName.equals(DOMAIN_HOST_TRAIT)) {
                 MeasurementDataTrait data = new MeasurementDataTrait(request, findASDomainHostName());
                 report.addData(data);
-            }
-            else {
+            } else if (requestName.equals(DOMAIN_NAME_TRAIT)) {
+                MeasurementDataTrait data = new MeasurementDataTrait(request, readAttribute("name"));
+                report.addData(data);
+            } else {
                 leftovers.add(request); // handled below
             }
         }
@@ -148,14 +169,13 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
 
         String resourceName = report.getUserSpecifiedResourceName();
         Configuration rc = report.getResourceConfiguration();
-        Address targetAddress ;
+        Address targetAddress;
 
         // Dispatch according to child type
         if (targetTypeName.equals("ServerGroup")) {
             targetAddress = new Address(); // Server groups are at / level
             targetAddress.add("server-group", resourceName);
             op = new Operation("add", targetAddress);
-
 
             String profile = rc.getSimpleValue("profile", "");
             if (profile.isEmpty()) {
@@ -176,20 +196,19 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
                 op.addAdditionalProperty("socket-binding-port-offset", offset.getIntegerValue());
 
             PropertySimple jvm = rc.getSimple("jvm");
-            if (jvm!=null) {
-                op.addAdditionalProperty("jvm",jvm.getStringValue());
+            if (jvm != null) {
+                op.addAdditionalProperty("jvm", jvm.getStringValue());
             }
-        }
-        else if (targetTypeName.equals(BaseComponent.MANAGED_SERVER)) {
+        } else if (targetTypeName.equals(BaseComponent.MANAGED_SERVER)) {
 
-            String targetHost = rc.getSimpleValue("hostname",null);
-            if (targetHost==null) {
+            String targetHost = rc.getSimpleValue("hostname", null);
+            if (targetHost == null) {
                 report.setErrorMessage("No domain host given");
                 report.setStatus(CreateResourceStatus.FAILURE);
                 return report;
             }
 
-            targetAddress = new Address("host",targetHost);
+            targetAddress = new Address("host", targetHost);
             targetAddress.add("server-config", resourceName);
             op = new Operation("add", targetAddress);
             String socketBindingGroup = rc.getSimpleValue("socket-binding-group", "");
@@ -199,27 +218,26 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
                 return report;
             }
             op.addAdditionalProperty("socket-binding-group", socketBindingGroup);
-            String autostartS = rc.getSimpleValue("auto-start","false");
+            String autostartS = rc.getSimpleValue("auto-start", "false");
             boolean autoStart = Boolean.valueOf(autostartS);
-            op.addAdditionalProperty("auto-start",autoStart);
+            op.addAdditionalProperty("auto-start", autoStart);
 
-            String portS = rc.getSimpleValue("socket-binding-port-offset","0");
+            String portS = rc.getSimpleValue("socket-binding-port-offset", "0");
             int portOffset = Integer.parseInt(portS);
-            op.addAdditionalProperty("socket-binding-port-offset",portOffset);
+            op.addAdditionalProperty("socket-binding-port-offset", portOffset);
 
-            String serverGroup = rc.getSimpleValue("group",null);
-            if (serverGroup==null) {
+            String serverGroup = rc.getSimpleValue("group", null);
+            if (serverGroup == null) {
                 report.setErrorMessage("No server group given");
                 report.setStatus(CreateResourceStatus.FAILURE);
                 return report;
             }
-            op.addAdditionalProperty("group",serverGroup);
+            op.addAdditionalProperty("group", serverGroup);
 
         } else if (targetTypeName.equals("JVM-Definition")) {
             return super.createResource(report);
 
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Don't know yet how to create instances of " + targetTypeName);
         }
         Result res = getASConnection().execute(op);
@@ -235,15 +253,17 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
 
             if (targetTypeName.equals("ServerGroup")) {
                 PropertyList sysProperties = rc.getList("*2");
-                if (sysProperties !=null && !sysProperties.getList().isEmpty()) {
+                if (sysProperties != null && !sysProperties.getList().isEmpty()) {
                     // because AS7 does not allow us to pass system properties while creating server-group we must do it now
                     ConfigurationUpdateReport rep = new ConfigurationUpdateReport(rc);
                     ConfigurationDefinition configDef = report.getResourceType().getResourceConfigurationDefinition();
-                    ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, getASConnection(), targetAddress);
+                    ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, getASConnection(),
+                        targetAddress);
                     delegate.updateResourceConfiguration(rep);
                     if (ConfigurationUpdateStatus.FAILURE.equals(rep.getStatus())) {
                         report.setStatus(CreateResourceStatus.FAILURE);
-                        report.setErrorMessage("Failed to additionally configure server group: "+rep.getErrorMessage());
+                        report.setErrorMessage("Failed to additionally configure server group: "
+                            + rep.getErrorMessage());
                     }
                 }
             }
@@ -255,11 +275,108 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
         return report;
     }
 
+    /**
+     * Handles content handed over during a bundle deployment.<br>
+     * <br>
+     * This component supports the following actions:<br>
+     * <br>
+     * <strong>action = deployment: deploys the content to a server group</strong><br>
+     * <br>
+     * Required parameters:<br>
+     * <ul>
+     *     <li>serverGroup: The name of the server group this deployment should be deployed to</li>
+     * </ul>
+     * <br>
+     * Optional parameters:<br>
+     * <ul>
+     *     <li>runtimeName: Runtime name of the uploaded file (e.g. 'my.war'); if not present, the file name is used</li>
+     * </ul>
+     * <br>
+     * <strong>action = execute-script: executes a server CLI script</strong><br>
+     * <br>
+     * Optional parameters:<br>
+     * <ul>
+     *     <li>waitTime (in seconds): how long to wait for completion; defaults to an hour</li>
+     *     <li>killOnTimeout (true/false): should the CLI process be killed if timeout is reached; defaults to false</li>
+     * </ul>
+     *
+     * @param handoverRequest handover parameters and context
+     * @return a report object indicating success or failure
+     */
+    @Override
+    public BundleHandoverResponse handleContent(BundleHandoverRequest handoverRequest) {
+        try {
+            if (handoverRequest.getAction().equals("deployment")) {
+                return handleDeployment(handoverRequest);
+            }
+            if (handoverRequest.getAction().equals("execute-script")) {
+                return handleExecuteScript(handoverRequest);
+            }
+            return BundleHandoverResponse.failure(INVALID_ACTION);
+        } catch (Exception e) {
+            return BundleHandoverResponse.failure(EXECUTION, "Unexpected handover failure", e);
+        }
+    }
+
+    private BundleHandoverResponse handleDeployment(BundleHandoverRequest handoverRequest) {
+        String serverGroup = handoverRequest.getParams().get("serverGroup");
+        if (isBlank(serverGroup)) {
+            return BundleHandoverResponse.failure(MISSING_PARAMETER, "serverGroup parameter is missing");
+        }
+
+        HandoverContentUploader contentUploader = new HandoverContentUploader(handoverRequest, getASConnection());
+        boolean uploaded = contentUploader.upload();
+        if (!uploaded) {
+            return contentUploader.getFailureResponse();
+        }
+
+        String filename = contentUploader.getFilename();
+        String runtimeName = contentUploader.getRuntimeName();
+        String hash = contentUploader.getHash();
+
+        Redeployer redeployer = new Redeployer(runtimeName, hash, getASConnection());
+        if (redeployer.deploymentExists()) {
+            Result result = redeployer.redeployOnServer();
+            if (result.isRolledBack()) {
+                return BundleHandoverResponse.failure(EXECUTION, result.getFailureDescription());
+            }
+            return BundleHandoverResponse.success();
+        }
+
+        Operation addDeploymentStep = new Operation("add", "deployment", filename);
+        List<Object> addDeploymentContentProperty = new ArrayList<Object>(1);
+        Map<String, Object> contentValues = new HashMap<String, Object>();
+        contentValues.put("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
+        addDeploymentContentProperty.add(contentValues);
+        addDeploymentStep.addAdditionalProperty("content", addDeploymentContentProperty);
+        addDeploymentStep.addAdditionalProperty("name", filename);
+        addDeploymentStep.addAdditionalProperty("runtime-name", runtimeName);
+
+        Address serverGroupDeploymentAddress = new Address();
+        serverGroupDeploymentAddress.add("server-group", serverGroup);
+        serverGroupDeploymentAddress.add("deployment", runtimeName);
+
+        Operation addToServerGroupStep = new Operation("add", serverGroupDeploymentAddress);
+        addToServerGroupStep.addAdditionalProperty("runtime-name", runtimeName);
+        addToServerGroupStep.addAdditionalProperty("enabled", true);
+
+        CompositeOperation compositeOperation = new CompositeOperation();
+        compositeOperation.addStep(addDeploymentStep);
+        compositeOperation.addStep(addToServerGroupStep);
+
+        Result result = getASConnection().execute(compositeOperation, 300);
+        if (!result.isSuccess()) {
+            return BundleHandoverResponse.failure(EXECUTION, result.getFailureDescription());
+        } else {
+            return BundleHandoverResponse.success();
+        }
+    }
+
     private String getProcessTypeAttrValue() {
         try {
             return readAttribute(new Address("/"), "process-type");
         } catch (Exception e) {
-            log.warn("Unable to detect HostController's process-type", e);
+            LOG.warn("Unable to detect HostController's process-type", e);
             return null;
         }
     }
@@ -288,6 +405,11 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
     @Override
     protected String getBaseDirAttributeName() {
         return "domain-base-dir";
+    }
+
+    @Override
+    protected String getTempDirAttributeName() {
+        return DOMAIN_TEMP_DIR_TRAIT;
     }
 
 }

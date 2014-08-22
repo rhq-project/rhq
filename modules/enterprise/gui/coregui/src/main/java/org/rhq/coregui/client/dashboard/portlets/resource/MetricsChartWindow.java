@@ -33,6 +33,7 @@ import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpHandler;
+
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
@@ -58,7 +59,7 @@ public class MetricsChartWindow implements Enhanced {
     private static final String BASELINE_SECTION_TITLE = MSG.chart_baseline_section_title();
     private static final String BASELINE_MEAN = MSG.chart_baseline_baseline_mean();
     private static final String NEW_BASELINE_MEAN = MSG.chart_baseline_baseline_mean_new();
-    private static final String BASELINE_HIGH =  MSG.chart_baseline_baseline_high();
+    private static final String BASELINE_HIGH = MSG.chart_baseline_baseline_high();
     private static final String NEW_BASELINE_HIGH = MSG.chart_baseline_baseline_high_new();
     private static final String BASELINE_LOW = MSG.chart_baseline_baseline_low();
     private static final String NEW_BASELINE_LOW = MSG.chart_baseline_baseline_low_new();
@@ -126,24 +127,21 @@ public class MetricsChartWindow implements Enhanced {
                 hideBaselineEditingFields();
             }
         });
-        PickerIcon saveMeanPicker = new PickerIcon(PickerIcon.REFRESH, new FormItemClickHandler() {
-            public void onFormItemClick(FormItemIconClickEvent event) {
-                double newBaselineMean = Double.parseDouble(newBaselineMeanText.getValueAsString());
-                saveCustomBaselineMean(newBaselineMean);
-            }
-        });
         PickerIcon cancelPicker = new PickerIcon(PickerIcon.CLEAR, new FormItemClickHandler() {
             public void onFormItemClick(FormItemIconClickEvent event) {
                 hideBaselineEditingFields();
             }
         });
-        newBaselineMeanText.setIcons(saveMeanPicker, cancelPicker);
+        newBaselineMeanText.setIcons(cancelPicker);
         newBaselineMeanText.addKeyUpHandler(new KeyUpHandler() {
             @Override
             public void onKeyUp(KeyUpEvent keyUpEvent) {
                 if (keyUpEvent.getKeyName().equals("Enter")) {
-                    double newBaselineMean = Double.parseDouble(newBaselineMeanText.getValueAsString());
-                    saveCustomBaselineMean(newBaselineMean);
+                    hideBaselineEditingFields();
+                    if (null != newBaselineMeanText.getValueAsString()) {
+                        double newBaselineMean = Double.parseDouble(newBaselineMeanText.getValueAsString());
+                        saveCustomBaselineMean(newBaselineMean);
+                    }
                 }
 
             }
@@ -171,19 +169,16 @@ public class MetricsChartWindow implements Enhanced {
                 hideBaselineEditingFields();
             }
         });
-        PickerIcon saveHighPicker = new PickerIcon(PickerIcon.REFRESH, new FormItemClickHandler() {
-            public void onFormItemClick(FormItemIconClickEvent event) {
-                double newBaselineHigh = Double.parseDouble(newExpectedRangeHighText.getValueAsString());
-                saveCustomBaselineHigh(newBaselineHigh);
-            }
-        });
-        newExpectedRangeHighText.setIcons(saveHighPicker,cancelPicker);
+        newExpectedRangeHighText.setIcons(cancelPicker);
         newExpectedRangeHighText.addKeyUpHandler(new KeyUpHandler() {
             @Override
             public void onKeyUp(KeyUpEvent keyUpEvent) {
                 if (keyUpEvent.getKeyName().equals("Enter")) {
-                    double newBaselineHigh = Double.parseDouble(newExpectedRangeHighText.getValueAsString());
-                    saveCustomBaselineHigh(newBaselineHigh);
+                    hideBaselineEditingFields();
+                    if (null != newExpectedRangeHighText.getValueAsString()) {
+                        double newBaselineHigh = Double.parseDouble(newExpectedRangeHighText.getValueAsString());
+                        saveCustomBaselineHigh(newBaselineHigh);
+                    }
                 }
 
             }
@@ -206,25 +201,19 @@ public class MetricsChartWindow implements Enhanced {
         newExpectedRangeLowText.addBlurHandler(new BlurHandler() {
             @Override
             public void onBlur(BlurEvent blurEvent) {
-                double newBaselineLow = Double.parseDouble(newExpectedRangeLowText.getValueAsString());
-                saveCustomBaselineLow(newBaselineLow);
+                hideBaselineEditingFields();
             }
         });
-
-        PickerIcon savePicker = new PickerIcon(PickerIcon.REFRESH, new FormItemClickHandler() {
-            public void onFormItemClick(FormItemIconClickEvent event) {
-                double newBaselineLow = Double.parseDouble(newExpectedRangeLowText.getValueAsString());
-                saveCustomBaselineLow(newBaselineLow);
-            }
-        });
-
-        newExpectedRangeLowText.setIcons(savePicker,cancelPicker);
+        newExpectedRangeLowText.setIcons(cancelPicker);
         newExpectedRangeLowText.addKeyUpHandler(new KeyUpHandler() {
             @Override
             public void onKeyUp(KeyUpEvent keyUpEvent) {
                 if (keyUpEvent.getKeyName().equals("Enter")) {
-                    double newBaselineLow = Double.parseDouble(newExpectedRangeLowText.getValueAsString());
-                    saveCustomBaselineLow(newBaselineLow);
+                    hideBaselineEditingFields();
+                    if (null != newExpectedRangeLowText.getValueAsString()) {
+                        double newBaselineLow = Double.parseDouble(newExpectedRangeLowText.getValueAsString());
+                        saveCustomBaselineLow(newBaselineLow);
+                    }
                 }
 
             }
@@ -302,8 +291,7 @@ public class MetricsChartWindow implements Enhanced {
 
     private void unSuccessfulSave(String failureMessage, Throwable throwable) {
         Log.warn(failureMessage, throwable);
-        CoreGUI.getMessageCenter().notify(new Message(failureMessage, Message.Severity.Error));
-
+        CoreGUI.getMessageCenter().notify(new Message(failureMessage, throwable, Message.Severity.Error));
     }
 
     public void showPopupChart(String title, Resource resource, MeasurementDefinition measurementDefinition,
@@ -345,11 +333,11 @@ public class MetricsChartWindow implements Enhanced {
                         expectedRangeLowText.setTitle(expectedRangeLowText.getTitle());
 
                         newBaselineMeanText.setValue(MeasurementConverterClient.fit(measurementBaseline.getMean(),
-                                md.getUnits()).getValue());
+                            md.getUnits()).getValue());
                         newExpectedRangeHighText.setValue(MeasurementConverterClient.fit(measurementBaseline.getMax(),
-                                units).getValue());
+                            units).getValue());
                         newExpectedRangeLowText.setValue(MeasurementConverterClient.fit(measurementBaseline.getMin(),
-                                units).getValue());
+                            units).getValue());
 
                         newBaselineMeanText.setTitle(newBaselineMeanText.getTitle());
                         newExpectedRangeHighText.setTitle(newExpectedRangeHighText.getTitle());

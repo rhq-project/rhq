@@ -38,6 +38,7 @@ import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -47,6 +48,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
+import org.rhq.enterprise.server.util.BatchIterator;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 import org.rhq.enterprise.server.util.SessionTestHelper;
@@ -87,14 +89,34 @@ public class GroupAlertDefinitionManagerBeanTest extends AbstractEJB3Test {
      * Bug 738799 - deleting a group alertdef containing >1000 member alertdefs fails with
      * "SQLException: ORA-01795: maximum number of expressions in a list is 1000" error
      * https://bugzilla.redhat.com/show_bug.cgi?id=738799
+     * (jshaughn 6/16/2014): make sure this works when called through the alert def remote, which now calls
+     * into the local.
      */
     public void testBug738799() {
-        assertEquals(testData.getResources().size(),
-            getChildrenAlertDefinitionIds(testData.getGroupAlertDefinitionId()).size());
-        int modified = groupAlertDefinitionManager.removeGroupAlertDefinitions(testData.getSubject(),
-            new Integer[] { testData.getGroupAlertDefinitionId() });
+        List<Integer> childDefIds = getChildrenAlertDefinitionIds(testData.getGroupAlertDefinitionId());
+
+        assertEquals(testData.getResources().size(), childDefIds.size());
+
+        int modified = alertDefinitionManager.removeAlertDefinitions(testData.getSubject(),
+            new int[] { testData.getGroupAlertDefinitionId() });
+
         assertEquals(modified, 1);
-        assertEquals(0, getChildrenAlertDefinitionIds(testData.getGroupAlertDefinitionId()).size());
+
+        childDefIds = getChildrenAlertDefinitionIds(testData.getGroupAlertDefinitionId());
+
+        assertEquals(0, childDefIds.size());
+
+        BatchIterator<Integer> childDefIdsBatchIterator = new BatchIterator<Integer>(childDefIds);
+        for (List<Integer> childDefIdsBatch : childDefIdsBatchIterator) {
+
+            AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+            criteria.addFilterIds(childDefIdsBatch.toArray(new Integer[childDefIdsBatch.size()]));
+            List<AlertDefinition> remainingChildDefs = alertDefinitionManager.findAlertDefinitionsByCriteria(
+                testData.getSubject(), criteria);
+
+            assertEquals(0, remainingChildDefs.size());
+
+        }
     }
 
     @Override

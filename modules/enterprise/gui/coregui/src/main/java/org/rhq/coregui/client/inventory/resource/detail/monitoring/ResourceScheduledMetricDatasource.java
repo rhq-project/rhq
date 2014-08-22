@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -105,6 +105,7 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
                     @Override
                     public void onSuccess(PageList<MeasurementDefinition> result) {
                         response.setData(buildRecords(result));
+                        setPagingInfo(response, result);
                         processResponse(request.getRequestId(), response);
                     }
                 });
@@ -125,6 +126,7 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
                     @Override
                     public void onSuccess(PageList<MeasurementSchedule> result) {
                         response.setData(buildRecords(result));
+                        setPagingInfo(response, result);
                         processResponse(request.getRequestId(), response);
                     }
                 });
@@ -145,6 +147,7 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
                     @Override
                     public void onSuccess(PageList<MeasurementSchedule> result) {
                         response.setData(buildRecords(result));
+                        setPagingInfo(response, result);
                         processResponse(request.getRequestId(), response);
                     }
                 });

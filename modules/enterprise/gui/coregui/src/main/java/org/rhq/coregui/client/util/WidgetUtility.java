@@ -18,7 +18,10 @@
  */
 package org.rhq.coregui.client.util;
 
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import com.google.gwt.user.client.ui.Widget;
 import com.smartgwt.client.widgets.BaseWidget;
 import com.smartgwt.client.widgets.Canvas;
@@ -27,10 +30,6 @@ import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Ian Springer

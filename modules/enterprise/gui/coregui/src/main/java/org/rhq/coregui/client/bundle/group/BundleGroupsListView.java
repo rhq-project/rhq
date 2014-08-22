@@ -47,6 +47,7 @@ import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.ErrorHandler;
 import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -118,15 +119,15 @@ public class BundleGroupsListView extends TableSection<BundleGroupsDataSource> i
 
         boolean hasAuthz = globalPermissions.contains(Permission.MANAGE_BUNDLE_GROUPS);
 
-        addTableAction(MSG.common_button_new(), null, new AbstractTableAction((hasAuthz) ? TableActionEnablement.ALWAYS
-            : TableActionEnablement.NEVER) {
+        addTableAction(MSG.common_button_new(), null, ButtonColor.BLUE, new AbstractTableAction(
+            (hasAuthz) ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
         });
 
-        addTableAction(MSG.common_button_delete(), MSG.view_bundleGroup_deleteConfirm(), new AbstractTableAction(
-            (hasAuthz) ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
+        addTableAction(MSG.common_button_delete(), MSG.view_bundleGroup_deleteConfirm(), ButtonColor.RED,
+            new AbstractTableAction((hasAuthz) ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
             public void executeAction(ListGridRecord[] selections, Object actionValue) {
                 if (selections == null || selections.length == 0) {
                     return;

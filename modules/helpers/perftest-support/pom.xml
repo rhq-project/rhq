@@ -3,11 +3,11 @@
     <parent>
         <artifactId>rhq-helpers</artifactId>
         <groupId>org.rhq.helpers</groupId>
-        <version>4.12.0-SNAPSHOT</version>
+        <version>4.13.0-SNAPSHOT</version>
     </parent>
     <groupId>org.rhq.helpers</groupId>
     <artifactId>perftest-support</artifactId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
     <name>Performance Testing Support</name>
     <description>To support performance testing, this is a basic tool to support extracting and later reimporting of
         data from/to a database.
@@ -36,8 +36,8 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>gnu-getopt</groupId>
-            <artifactId>getopt</artifactId>
+            <groupId>gnu.getopt</groupId>
+            <artifactId>java-getopt</artifactId>
         </dependency>
         <dependency>
             <groupId>commons-logging</groupId>

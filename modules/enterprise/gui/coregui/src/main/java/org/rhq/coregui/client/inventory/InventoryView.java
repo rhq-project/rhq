@@ -37,7 +37,6 @@ import org.rhq.coregui.client.PermissionsLoadedListener;
 import org.rhq.coregui.client.PermissionsLoader;
 import org.rhq.coregui.client.components.TitleBar;
 import org.rhq.coregui.client.components.view.AbstractSectionedLeftNavigationView;
-import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.NavigationItem;
 import org.rhq.coregui.client.components.view.NavigationSection;
 import org.rhq.coregui.client.components.view.ViewFactory;
@@ -137,12 +136,24 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     private ResourceSearchView createResourceSearchView(ViewName viewName, Criteria initialCriteria) {
-        return new ResourceSearchViewWrapper(viewName, initialCriteria, viewName.getIcon().getIcon24x24Path());
+        return new ResourceSearchView(initialCriteria, viewName.getTitle(), viewName.getIcon().getIcon24x24Path());
     }
 
     private ResourceSearchView createIgnoredResourceSearchView(ViewName viewName, Criteria initialCriteria) {
-        return new ResourceSearchViewWrapper(false, true, viewName, initialCriteria, viewName.getIcon()
-            .getIcon24x24Path());
+
+        return new ResourceSearchView(initialCriteria, viewName.getTitle(),
+          viewName.getIcon().getIcon24x24Path()) {
+
+            @Override
+            protected boolean shouldShowIgnoreButton() {
+                return false;
+            }
+
+            @Override
+            protected boolean shouldShowUnignoreButton() {
+                return true;
+            }
+          };
     }
 
     private NavigationSection buildResourcesSection() {
@@ -156,7 +167,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
 
         NavigationItem allResourcesItem = new NavigationItem(PAGE_ALL_RESOURCES, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceSearchViewWrapper(PAGE_ALL_RESOURCES, null, null);
+                return createResourceSearchView(PAGE_ALL_RESOURCES, null);
             }
         });
 
@@ -223,20 +234,24 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildGroupsSection() {
         NavigationItem dynagroupDefinitionsItem = new NavigationItem(PAGE_DYNAGROUP_DEFINITIONS, new ViewFactory() {
             public Canvas createView() {
-                return new GroupDefinitionListView();
+                GroupDefinitionListView table =  new GroupDefinitionListView();
+                table.setTitleString(PAGE_DYNAGROUP_DEFINITIONS.getTitle());
+                table.setTitleIcon(PAGE_DYNAGROUP_DEFINITIONS.getIcon().getIcon24x24Path() );
+                return table;
             }
         }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem allGroupsItem = new NavigationItem(PAGE_ALL_GROUPS, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceGroupListView();
+                return new ResourceGroupListView(null, PAGE_ALL_GROUPS.getTitle(), PAGE_ALL_GROUPS.getIcon().getIcon24x24Path());
             }
         });
 
         NavigationItem compatibleGroupsItem = new NavigationItem(PAGE_COMPATIBLE_GROUPS, new ViewFactory() {
             public Canvas createView() {
                 ResourceGroupListView view = new ResourceGroupListView(new Criteria(
-                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()));
+                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()),
+                    PAGE_COMPATIBLE_GROUPS.getTitle(), PAGE_COMPATIBLE_GROUPS.getIcon().getIcon24x24Path());
                 return view;
             }
         });
@@ -244,14 +259,17 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem mixedGroupsItem = new NavigationItem(PAGE_MIXED_GROUPS, new ViewFactory() {
             public Canvas createView() {
                 ResourceGroupListView view = new ResourceGroupListView(new Criteria(
-                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()));
+                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()),
+                    PAGE_MIXED_GROUPS.getTitle(), PAGE_MIXED_GROUPS.getIcon().getIcon24x24Path());
                 return view;
             }
         });
 
         NavigationItem problemGroupsItem = new NavigationItem(PAGE_PROBLEM_GROUPS, new ViewFactory() {
             public Canvas createView() {
-                ResourceGroupListView view = new ResourceGroupListView(new Criteria("downMemberCount", "1"));
+                ResourceGroupListView view =
+                  new ResourceGroupListView(new Criteria("downMemberCount", "1"),
+                    PAGE_PROBLEM_GROUPS.getTitle() , PAGE_PROBLEM_GROUPS.getIcon().getIcon24x24Path());
                 view.setShowNewButton(false);
                 return view;
             }
@@ -259,40 +277,5 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
 
         return new NavigationSection(GROUPS_SECTION_VIEW_ID, allGroupsItem, dynagroupDefinitionsItem,
             compatibleGroupsItem, mixedGroupsItem, problemGroupsItem);
-    }
-
-    private class ResourceSearchViewWrapper extends ResourceSearchView implements HasViewName {
-
-        private ViewName viewName;
-
-        private final boolean showIgnoreButton;
-        private final boolean showUnignoreButton;
-
-        public ResourceSearchViewWrapper(ViewName viewName, Criteria criteria, String headerIcon) {
-            this(true, false, viewName, criteria, headerIcon);
-        }
-
-        public ResourceSearchViewWrapper(boolean showIgnoredButton, boolean showUnignoreButton, ViewName viewName,
-            Criteria criteria, String headerIcon) {
-            super(criteria, viewName.getTitle(), headerIcon);
-            this.viewName = viewName;
-            this.showIgnoreButton = showIgnoredButton;
-            this.showUnignoreButton = showUnignoreButton;
-        }
-
-        @Override
-        public ViewName getViewName() {
-            return viewName;
-        }
-
-        @Override
-        protected boolean shouldShowIgnoreButton() {
-            return this.showIgnoreButton;
-        }
-
-        @Override
-        protected boolean shouldShowUnignoreButton() {
-            return this.showUnignoreButton;
-        }
     }
 }

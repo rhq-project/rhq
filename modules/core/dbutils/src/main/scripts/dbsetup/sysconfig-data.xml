@@ -96,8 +96,8 @@
               DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="FALSE"/>
 
         <!-- Whether to reindex the data tables nightly -->
-        <data ID="35" PROPERTY_KEY="DATA_REINDEX_NIGHTLY" PROPERTY_VALUE="true"
-              DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
+        <data ID="35" PROPERTY_KEY="DATA_REINDEX_NIGHTLY" PROPERTY_VALUE="false"
+              DEFAULT_PROPERTY_VALUE="false" FREAD_ONLY="FALSE"/>
 
         <!-- How long to keep alerts around -->
         <data ID="36" PROPERTY_KEY="ALERT_PURGE" PROPERTY_VALUE="2678400000"
@@ -122,7 +122,7 @@
         <!-- How old does availability have to be in order to get purged -->
         <data ID="55" PROPERTY_KEY="AVAILABILITY_PURGE" PROPERTY_VALUE="31536000000"
               DEFAULT_PROPERTY_VALUE="31536000000" FREAD_ONLY="FALSE"/>
-              
+
         <data ID="56" PROPERTY_KEY="RESOURCE_GENERIC_PROPERTIES_UPGRADE" PROPERTY_VALUE="false"
               DEFAULT_PROPERTY_VALUE="false" FREAD_ONLY="FALSE"/>
 
@@ -156,7 +156,30 @@
       <!-- Flag that protects user without any assigned role to log in to web UI -->
       <data ID="65" PROPERTY_KEY="ENABLE_LOGIN_WITHOUT_ROLES" PROPERTY_VALUE="false" DEFAULT_PROPERTY_VALUE="false" />
 
-      <data ID="66" PROPERTY_KEY="METRICS_CACHE_ACTIVATION_TIME" DEFAULT_PROPERTY_VALUE="-1" FREAD_ONLY="FALSE"/>
+      <data ID="66" PROPERTY_KEY="METRICS_CACHE_ACTIVATION_TIME" PROPERTY_VALUE="-1" DEFAULT_PROPERTY_VALUE="-1" FREAD_ONLY="FALSE"/>
+
+      <!-- If set to true, LDAP will automatically follow any referrals (set Context.REFERRAL to follow(if this is true) or ignore) -->
+      <data ID="67" PROPERTY_KEY="CAM_LDAP_FOLLOW_REFERRALS" PROPERTY_VALUE="false" DEFAULT_PROPERTY_VALUE="false" FREAD_ONLY="FALSE"/>
+
+      <!-- do not purge operation history by default (0 indicates no purge) -->
+      <data ID="68" PROPERTY_KEY="OPERATION_HISTORY_PURGE" PROPERTY_VALUE="0"
+              DEFAULT_PROPERTY_VALUE="0" FREAD_ONLY="FALSE"/>
+
+      <!-- enable regular storage snaphosts? -->
+      <data ID="69" PROPERTY_KEY="STORAGE_REGULAR_SNAPSHOTS" PROPERTY_VALUE="FALSE" DEFAULT_PROPERTY_VALUE="FALSE" FREAD_ONLY="TRUE"/>
+
+      <!-- CRON Expression for regular storage snaphosts -->
+      <data ID="70" PROPERTY_KEY="STORAGE_REGULAR_SNAPSHOTS_SCHEDULE" PROPERTY_VALUE="0 0 0 ? * SUN" DEFAULT_PROPERTY_VALUE="UNSET" FREAD_ONLY="TRUE"/>
+
+      <!-- Retention strategy -->
+      <data ID="71" PROPERTY_KEY="STORAGE_REGULAR_SNAPSHOTS_RETENTION" PROPERTY_VALUE="Keep All" DEFAULT_PROPERTY_VALUE="Keep All" FREAD_ONLY="TRUE"/>
+
+      <data ID="72" PROPERTY_KEY="STORAGE_REGULAR_SNAPSHOTS_RETENTION_COUNT" PROPERTY_VALUE="1" DEFAULT_PROPERTY_VALUE="1" FREAD_ONLY="TRUE"/>
+
+      <data ID="73" PROPERTY_KEY="STORAGE_REGULAR_SNAPSHOTS_DELETION" PROPERTY_VALUE="Delete" DEFAULT_PROPERTY_VALUE="Delete" FREAD_ONLY="TRUE"/>
+
+      <data ID="74" PROPERTY_KEY="STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="TRUE"/>
+
     </table>
 
 </dbsetup>

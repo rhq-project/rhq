@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.core.domain.alert.notification;
 
 import java.io.Serializable;
@@ -60,7 +61,7 @@ import org.rhq.core.domain.alert.Alert;
     query = "DELETE AlertNotificationLog anl " //
         + "   WHERE anl.id IN ( SELECT an.id " //
         + "                       FROM Alert a " //
-        + "                       JOIN a.alertNotificationLogs an" // 
+        + "                       JOIN a.alertNotificationLogs an" //
         + "                      WHERE a.id IN ( :alertIds ) )"),
     @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, //
     query = "DELETE AlertNotificationLog anl " //
@@ -98,9 +99,23 @@ public class AlertNotificationLog implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertNotificationLog.deleteByResources";
     public static final String QUERY_DELETE_BY_RESOURCE_TEMPLATE = "AlertNotificationLog.deleteByResourceType";
     public static final String QUERY_DELETE_BY_RESOURCE_GROUPS = "AlertNotificationLog.deleteByResourceGroups";
+    /**
+     * @deprecated as of RHQ 4.13, no longer used
+     */
+    @Deprecated
     public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertNotificationLog.deleteByAlertCtime";
 
+    /**
+     * @deprecated as of RHQ 4.13, no longer used
+     */
+    @Deprecated
     public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT_NOTIF_LOG";
+
+    /**
+     * this is a character limit, when stored certain vendors may require the string be clipped to
+     * satisfy a byte limit (postgres can store the 4000 chars, oracle only 4000 bytes).
+     */
+    public static final int MESSAGE_MAX_LENGTH = 4000;
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
@@ -119,14 +134,22 @@ public class AlertNotificationLog implements Serializable {
     @Enumerated(EnumType.STRING)
     private ResultState resultState;
 
-    @Column(name = "MESSAGE")
+    @Column(name = "MESSAGE", length = MESSAGE_MAX_LENGTH)
     private String message;
 
+    /**
+     * This is insufficient for certain db vendors as it handles only character limit, not necessarily the
+     * 4000 byte limit on oracle.
+     *
+     * @deprecated the message should be trimmed sufficiently by the caller to meet any db vendor specific
+     * byte limits.
+     */
+    @Deprecated
     @PrePersist
     @PreUpdate
     public void trimMessage() {
-        if (message != null && message.length() > 4000) {
-            message = message.substring(0, 4000);
+        if (message != null && message.length() > MESSAGE_MAX_LENGTH) {
+            message = message.substring(0, MESSAGE_MAX_LENGTH);
         }
     }
 

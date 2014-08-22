@@ -2298,7 +2298,7 @@
 
             <schemaSpec version="2.144">
                 <!-- RHQ_AGENT_INSTALL -->
-                <schema-createSequence name="RHQ_AGENT_INSTALL_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_AGENT_INSTALL_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_AGENT_INSTALL">
                         CREATE TABLE RHQ_AGENT_INSTALL ( ID INTEGER PRIMARY KEY )
@@ -2364,26 +2364,182 @@
                 </schema-directSQL>
             </schemaSpec>
 
-	        <schemaSpec version="2.149">
+            <schemaSpec version="2.149">
               <schema-addColumn   table="RHQ_RESOURCE_TYPE" column="SUBCATEGORY" columnType="VARCHAR2" precision="4000" />
               <schema-javaTask className="SubcategoryUpgradeTask" />
               <schema-deleteColumn table="RHQ_RESOURCE_TYPE" column="SUBCATEGORY_ID" />
               <schema-dropTable table="RHQ_RESOURCE_SUBCAT"/>
             </schemaSpec>
 
-          <schemaSpec version="2.150">
-            <schema-directSQL>
-              <statement targetDBVendor="postgresql" desc="Adding metrics cache table activation time">
-                INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
-                VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', '-1', null, false)
-              </statement>
-              <statement targetDBVendor="oracle" desc="Adding metrics cache table activation time">
-                INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
-                VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', '-1', null, 0)
-              </statement>
-            </schema-directSQL>
-          </schemaSpec>
-       
+            <schemaSpec version="2.150">
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding metrics cache table activation time">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', '-1', null, false)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding metrics cache table activation time">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', '-1', null, 0)
+                </statement>
+              </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.151">
+              <schema-directSQL ignoreError="true">
+                <statement desc="Set the flag that determines whether to follow or not referrals in LDAP">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                  VALUES (67, 'CAM_LDAP_FOLLOW_REFERRALS', 'false', 'false')
+                </statement>
+              </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.152">
+              <schema-directSQL ignoreError="true">
+                <statement desc="Change nightly index to false. unlikely but can set back to true if desired.">
+                  UPDATE rhq_system_config
+                     SET property_value='false', default_property_value='false'
+                   WHERE id=35
+                </statement>
+              </schema-directSQL>
+            </schemaSpec>
+
+<!-- RHQ 4.12.0 uses DB Schema 2.152 -->
+
+            <schemaSpec version="2.153">
+              <schema-directSQL ignoreError="true">
+                <statement desc="Add new operation history purge setting. Inotially set to 0 meaning no purge">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                  VALUES (68, 'OPERATION_HISTORY_PURGE', '0', '0')
+                </statement>
+              </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.154">
+                <schema-directSQL>
+                    <!-- This will let Quartz actually fire the trigger and carry out the job and clean it up afterwards
+                         I think that is a better alternative to a complex DB update that would remove the trigger and
+                         the job manually from the DB.
+
+                         Without this fix, the trigger always fails and is never removed from the database. -->
+                    <statement desc="Silence any stale jobs potentially left behind by the fix to BZ 1029553 (commit 14dca980d0b5794b5c13aebe5add5b61fd068a06)">
+                        UPDATE rhq_qrtz_job_details SET job_class_name='org.quartz.jobs.NoOpJob'
+                        WHERE job_class_name='org.rhq.enterprise.server.scheduler.jobs.AlertAvailabilityDurationJob'
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.155">
+                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="DEPLOY_DIR" nullable="true"/>
+            </schemaSpec>
+
+            <schemaSpec version="2.156">
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (69, 'STORAGE_REGULAR_SNAPSHOTS', 'false', 'false', true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (69, 'STORAGE_REGULAR_SNAPSHOTS', 'false', 'false', 1)
+                </statement>
+              </schema-directSQL>
+
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (70, 'STORAGE_REGULAR_SNAPSHOTS_SCHEDULE','0 0 0 ? * SUN', '0 0 0 ? * SUN', true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (70, 'STORAGE_REGULAR_SNAPSHOTS_SCHEDULE', '0 0 0 ? * SUN', '0 0 0 ? * SUN', 1)
+                </statement>
+              </schema-directSQL>
+
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (71, 'STORAGE_REGULAR_SNAPSHOTS_RETENTION','Keep All', 'Keep All', true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (71, 'STORAGE_REGULAR_SNAPSHOTS_RETENTION', 'Keep All', 'Keep All', 1)
+                </statement>
+              </schema-directSQL>
+
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (72, 'STORAGE_REGULAR_SNAPSHOTS_RETENTION_COUNT','1', '1', true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (72, 'STORAGE_REGULAR_SNAPSHOTS_RETENTION_COUNT', '1', '1', 1)
+                </statement>
+              </schema-directSQL>
+
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (73, 'STORAGE_REGULAR_SNAPSHOTS_DELETION','Delete', 'Delete', true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (73, 'STORAGE_REGULAR_SNAPSHOTS_DELETION', 'Delete', 'Delete', 1)
+                </statement>
+              </schema-directSQL>
+
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (74, 'STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION','', '', true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding storage snapshot management settings">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (74, 'STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION', '', '', 1)
+                </statement>
+              </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.157">
+              <schema-directSQL ignoreError="true">
+                <statement desc="Optimize query for rhq_alert_definition templates (counts)">
+                  CREATE INDEX rhq_adef_resource_type_idx ON rhq_alert_definition(resource_type_id)
+                </statement>
+              </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.158">
+                <schema-directSQL>
+                    <statement desc="Create RHQ_BUNDLE_TYPE_TARGET_MAP mapping table">
+                        CREATE TABLE rhq_bundle_type_target_map (
+                            bundle_type_id INT NOT NULL REFERENCES rhq_bundle_type,
+                            resource_type_id INT NOT NULL REFERENCES rhq_resource_type,
+                            CONSTRAINT rhq_bundle_type_target_map_pk PRIMARY KEY (bundle_type_id, resource_type_id)
+                        )
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.159">
+                <schema-directSQL ignoreError="true">
+                    <statement desc="Repair RHQ_MEASUREMENT_BLINE by removing duplicates prior to creating the unique index.">
+                        DELETE FROM rhq_measurement_bline WHERE (id, schedule_id) NOT IN
+                           ( SELECT id, schedule_id FROM
+                               ( SELECT MAX(id) id, schedule_id FROM rhq_measurement_bline GROUP BY schedule_id) tokeep)
+                    </statement>
+                    <statement desc="Dropping non-unique index RHQ_MEAS_BASELINE_SID_IDX">
+                        DROP INDEX RHQ_MEAS_BASELINE_SID_IDX
+                    </statement>
+                    <statement desc="Recreating RHQ_MEAS_BASELINE_SID_IDX as unique index">
+                        CREATE UNIQUE INDEX RHQ_MEAS_BASELINE_SID_IDX ON RHQ_MEASUREMENT_BLINE ( SCHEDULE_ID )
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.160">
+              <!-- BZ 1070257 + 911432 -->
+              <schema-alterColumn table="RHQ_ALERT_CONDITION_LOG" column="VALUE" columnType="VARCHAR2" precision="4000" />
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

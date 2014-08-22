@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,11 +13,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.server.alert.test;
+
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.rhq.test.AssertUtils.timedAssertion;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -60,6 +64,7 @@ import org.rhq.enterprise.server.resource.metadata.test.UpdatePluginMetadataTest
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.test.AssertUtils;
 
 @Test
 public class AlertConditionTest extends UpdatePluginMetadataTestBase {
@@ -95,8 +100,8 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         // simulate a measurement report coming from the agent - two values, but neither fit in our range, so no alerts are fired
         MeasurementScheduleRequest request = new MeasurementScheduleRequest(schedule);
         MeasurementReport report = new MeasurementReport();
-        report.addData(new MeasurementDataNumeric(getTimestamp(60), request, Double.valueOf(20.0))); // 20 < 60 but !(20 > 40)
-        report.addData(new MeasurementDataNumeric(getTimestamp(30), request, Double.valueOf(70.0))); // !(70 < 60) but 70 > 40
+        report.addData(new MeasurementDataNumeric(getTimestamp(60), request, 20.0)); // 20 < 60 but !(20 > 40)
+        report.addData(new MeasurementDataNumeric(getTimestamp(30), request, 70.0)); // !(70 < 60) but 70 > 40
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         dataManager.mergeMeasurementReport(report);
 
@@ -110,7 +115,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         // simulate another measurement report coming from the agent - one values that fits in our range, so 1 alert is fired
         request = new MeasurementScheduleRequest(schedule);
         report = new MeasurementReport();
-        report.addData(new MeasurementDataNumeric(getTimestamp(15), request, Double.valueOf(50.0))); // 50 < 60 AND 50 > 40
+        report.addData(new MeasurementDataNumeric(getTimestamp(15), request, 50.0)); // 50 < 60 AND 50 > 40
         dataManager.mergeMeasurementReport(report);
 
         // wait for our JMS messages to process and see if we get any alerts
@@ -119,7 +124,6 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         // make sure one alert was triggered
         alerts = getAlerts(resourceWithSchedules.getId());
         assert alerts.size() == 1 : "1 alert should have fired: " + alerts;
-        return;
     }
 
     @Test(enabled = ENABLED)
@@ -135,7 +139,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         // simulate a measurement report coming from the agent - one value that is inside our range, so no alerts are fired
         MeasurementScheduleRequest request = new MeasurementScheduleRequest(schedule);
         MeasurementReport report = new MeasurementReport();
-        report.addData(new MeasurementDataNumeric(getTimestamp(60), request, Double.valueOf(50.0))); // 50 is inside the range 40...60
+        report.addData(new MeasurementDataNumeric(getTimestamp(60), request, 50.0)); // 50 is inside the range 40...60
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         dataManager.mergeMeasurementReport(report);
 
@@ -149,7 +153,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         // simulate another measurement report coming from the agent - one value that is outside the range, so 1 alert is fired
         request = new MeasurementScheduleRequest(schedule);
         report = new MeasurementReport();
-        report.addData(new MeasurementDataNumeric(getTimestamp(15), request, Double.valueOf(20.0))); // 20 is outside 40...60
+        report.addData(new MeasurementDataNumeric(getTimestamp(15), request, 20.0)); // 20 is outside 40...60
         dataManager.mergeMeasurementReport(report);
 
         // wait for our JMS messages to process and see if we get any alerts
@@ -158,7 +162,6 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         // make sure one alert was triggered
         alerts = getAlerts(resourceWithSchedules.getId());
         assert alerts.size() == 1 : "1 alert should have fired: " + alerts;
-        return;
     }
 
     @Test(enabled = ENABLED)
@@ -175,7 +178,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         // with a single metric that makes a condition trigger but does not fire an alert
         MeasurementScheduleRequest request = new MeasurementScheduleRequest(schedule);
         MeasurementReport report = new MeasurementReport();
-        report.addData(new MeasurementDataNumeric(getTimestamp(60), request, Double.valueOf(20.0))); // 20 < 60 but !(20 > 40)
+        report.addData(new MeasurementDataNumeric(getTimestamp(60), request, 20.0)); // 20 < 60 but !(20 > 40)
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         dataManager.mergeMeasurementReport(report);
 
@@ -209,8 +212,6 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         PageList<AlertDefinition> defs = alertDefManager.findAlertDefinitions(getOverlord(), resourceId,
             PageControl.getUnlimitedInstance());
         assert defs.isEmpty() : "failed to delete the alert definition - are condition logs still around?";
-
-        return;
     }
 
     @Test(enabled = ENABLED)
@@ -241,10 +242,18 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         availManager.mergeAvailabilityReport(availReport);
 
         // wait for our JMS messages to process and see if we get any alerts
-        Thread.sleep(3000);
-
-        alerts = getAlerts(resource.getId());
-        assert alerts.size() == 2 : "Two alerts should have fired on the avail change: " + alerts;
+        final PageList<Alert> finalAlerts = alerts;
+        timedAssertion(new AssertUtils.BooleanCondition() {
+            @Override
+            public boolean eval() {
+                PageList<Alert> pageList = getAlerts(resource.getId());
+                if (pageList.size() == 2) {
+                    finalAlerts.addAll(pageList);
+                    return true;
+                }
+                return false;
+            }
+        }, "Two alerts should have fired on the avail change", 1, MINUTES, 1, SECONDS);
 
         assert !alerts.get(0).getAlertDefinition().getName().equals(alerts.get(1).getAlertDefinition().getName()) : "Alerts should have been from different definitions";
 
@@ -257,8 +266,6 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         PageList<AlertDefinition> defs = alertDefManager.findAlertDefinitions(getOverlord(), resourceId,
             PageControl.getUnlimitedInstance());
         assert defs.isEmpty() : "failed to delete the alert definition - are condition logs still around?";
-
-        return;
     }
 
     @Test(enabled = ENABLED)
@@ -299,10 +306,13 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         assert alerts.size() == 0 : "No alert should have fired after 4s, will take at least 10s: " + alerts;
 
         // wait for our alert condition duration to pass and see if we get any alerts
+        timedAssertion(new AssertUtils.BooleanCondition() {
+            @Override
+            public boolean eval() {
+                return getAlerts(resource.getId()).size() == 2;
+            }
+        }, "Two alerts should have fired on the avail duration", 1, MINUTES, 1, SECONDS);
         Thread.sleep(10000);
-
-        alerts = getAlerts(resource.getId());
-        assert alerts.size() == 2 : "Two alerts should have fired on the avail duration: " + alerts;
 
         // purge the resource fully, which should remove all alert defs and alert conditions and condition logs
         int resourceId = resource.getId();
@@ -332,7 +342,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         // simulate a measurement report coming from the agent - one values that fits in our range, so 1 alert is fired
         MeasurementScheduleRequest request = new MeasurementScheduleRequest(schedule);
         MeasurementReport report = new MeasurementReport();
-        report.addData(new MeasurementDataNumeric(getTimestamp(15), request, Double.valueOf(50.0))); // 50 < 60 AND 50 > 40
+        report.addData(new MeasurementDataNumeric(getTimestamp(15), request, 50.0)); // 50 < 60 AND 50 > 40
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         dataManager.mergeMeasurementReport(report);
 
@@ -369,7 +379,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
             "original condition should still have been associated with the alert");
 
         // update the condition on the def and then update the def
-        condition.setThreshold(Double.valueOf(41.0));
+        condition.setThreshold(41.0);
         updatedAlertDef = LookupUtil.getAlertDefinitionManager().updateAlertDefinition(getOverlord(), alertDef.getId(),
             alertDef, true); // note that resetMatching is true
         assert updatedAlertDef.getConditions().size() == 1 : "1 alertDef condition should exist after the update";
@@ -384,8 +394,6 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         conditionLog = alert.getConditionLogs().iterator().next();
         Assert.assertEquals(conditionLog.getCondition().getId(), conditionId,
             "original condition should still have been associated with the alert");
-
-        return;
     }
 
     @Test(enabled = ENABLED)
@@ -400,7 +408,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         int conditionId = condition.getId();
 
         // re-load the resource so we get the measurement schedule
-        Resource resourceWithSchedules = loadResourceWithSchedules(resource.getId());
+        final Resource resourceWithSchedules = loadResourceWithSchedules(resource.getId());
         MeasurementSchedule schedule = resourceWithSchedules.getSchedules().iterator().next();
 
         // simulate a measurement report coming from the agent - one values that changes value, so 1 alert is fired
@@ -410,26 +418,34 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         dataManager.mergeMeasurementReport(report);
 
-        // wait for our JMS messages to process and see if we get any alerts
-        Thread.sleep(5000);
+        final Alert[] alertHolder = new Alert[1];
 
-        // make sure one alert was triggered (prior to the fix an NPE would occur while processing)
-        List<Alert> alerts = getAlerts(resourceWithSchedules.getId());
-        assert alerts.size() == 1 : "1 alert should have fired: " + alerts;
-        Alert alert = alerts.get(0);
+        // wait for our JMS messages to process and see if we get any alerts
+        timedAssertion(new AssertUtils.BooleanCondition() {
+            @Override
+            public boolean eval() {
+                List<Alert> alerts = getAlerts(resourceWithSchedules.getId());
+                if (alerts.size() == 1) {
+                    alertHolder[0] = alerts.iterator().next();
+                    return true;
+                }
+                return false;
+            }
+        }, "1 alert should have fired", 10, SECONDS, 1, SECONDS);
+
+        Alert alert = alertHolder[0];
 
         assert alert.getConditionLogs().size() == 1 : "1 condition log should exist";
+
         AlertConditionLog conditionLog = alert.getConditionLogs().iterator().next();
         Assert.assertEquals(conditionLog.getCondition().getId(), conditionId,
             "original condition should have been associated with the alert");
-
-        return;
     }
 
     public void testDampeningWorksAcrossConditionCacheReloads() throws Exception {
         MeasurementDefinition measDef = createResourceWithMetricSchedule();
 
-        AlertDefinition alertDef = createAlertDefinitionWithDampening(measDef, resource.getId());
+        createAlertDefinitionWithDampening(measDef, resource.getId());
 
         Resource resourceWithSchedules = loadResourceWithSchedules(resource.getId());
         MeasurementSchedule schedule = resourceWithSchedules.getSchedules().iterator().next();
@@ -507,8 +523,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         AlertCriteria alertCriteria = new AlertCriteria();
         alertCriteria.addFilterResourceIds(resourceId);
         alertCriteria.fetchConditionLogs(true);
-        PageList<Alert> alerts = alertManager.findAlertsByCriteria(getOverlord(), alertCriteria);
-        return alerts;
+        return alertManager.findAlertsByCriteria(getOverlord(), alertCriteria);
     }
 
     private AlertCondition getAlertConditionWithLogs(final int conditionId) {
@@ -539,7 +554,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         cond1.setCategory(AlertConditionCategory.THRESHOLD);
         cond1.setName(metricDef.getDisplayName());
         cond1.setComparator(">");
-        cond1.setThreshold(Double.valueOf(40.0)); // value > 40 threshold
+        cond1.setThreshold(40.0); // value > 40 threshold
         cond1.setOption(null);
         cond1.setMeasurementDefinition(metricDef);
         conditions.add(cond1);
@@ -548,7 +563,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         cond2.setCategory(AlertConditionCategory.THRESHOLD);
         cond2.setName(metricDef.getDisplayName());
         cond2.setComparator("<");
-        cond2.setThreshold(Double.valueOf(60.0)); // value < 60 threshold
+        cond2.setThreshold(60.0); // value < 60 threshold
         cond2.setOption(null);
         cond2.setMeasurementDefinition(metricDef);
         conditions.add(cond2);
@@ -558,7 +573,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setEnabled(true);
         alertDefinition.setPriority(AlertPriority.HIGH);
         alertDefinition.setAlertDampening(new AlertDampening(Category.NONE));
-        alertDefinition.setRecoveryId(Integer.valueOf(0));
+        alertDefinition.setRecoveryId(0);
         alertDefinition.setConditionExpression(BooleanExpression.ALL);
         alertDefinition.setConditions(conditions);
 
@@ -591,7 +606,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setEnabled(true);
         alertDefinition.setPriority(AlertPriority.HIGH);
         alertDefinition.setAlertDampening(dampening);
-        alertDefinition.setRecoveryId(Integer.valueOf(0));
+        alertDefinition.setRecoveryId(0);
         alertDefinition.setConditionExpression(BooleanExpression.ALL);
         alertDefinition.setConditions(Collections.singleton(cond));
 
@@ -614,7 +629,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         AlertCondition cond1 = new AlertCondition();
         cond1.setCategory(AlertConditionCategory.RANGE);
         cond1.setName(metricDef.getDisplayName());
-        cond1.setThreshold(Double.valueOf(40.0)); // threshold is always the low value of the range
+        cond1.setThreshold(40.0); // threshold is always the low value of the range
         cond1.setOption(Double.valueOf(60.0).toString()); // option is a stringified double that is always the high value of the range
         cond1.setComparator("<"); // the value must be inside the range
         cond1.setMeasurementDefinition(metricDef);
@@ -625,7 +640,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setEnabled(true);
         alertDefinition.setPriority(AlertPriority.HIGH);
         alertDefinition.setAlertDampening(new AlertDampening(Category.NONE));
-        alertDefinition.setRecoveryId(Integer.valueOf(0));
+        alertDefinition.setRecoveryId(0);
         alertDefinition.setConditionExpression(BooleanExpression.ALL);
         alertDefinition.setConditions(conditions);
 
@@ -654,7 +669,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setEnabled(true);
         alertDefinition.setPriority(AlertPriority.HIGH);
         alertDefinition.setAlertDampening(new AlertDampening(Category.NONE));
-        alertDefinition.setRecoveryId(Integer.valueOf(0));
+        alertDefinition.setRecoveryId(0);
         alertDefinition.setConditionExpression(BooleanExpression.ALL);
         alertDefinition.setConditions(conditions);
 
@@ -687,7 +702,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setEnabled(true);
         alertDefinition.setPriority(AlertPriority.HIGH);
         alertDefinition.setAlertDampening(new AlertDampening(Category.NONE));
-        alertDefinition.setRecoveryId(Integer.valueOf(0));
+        alertDefinition.setRecoveryId(0);
         alertDefinition.setConditionExpression(BooleanExpression.ALL);
         alertDefinition.setConditions(conditions);
 
@@ -720,7 +735,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setEnabled(true);
         alertDefinition.setPriority(AlertPriority.HIGH);
         alertDefinition.setAlertDampening(new AlertDampening(Category.NONE));
-        alertDefinition.setRecoveryId(Integer.valueOf(0));
+        alertDefinition.setRecoveryId(0);
         alertDefinition.setConditionExpression(BooleanExpression.ALL);
         alertDefinition.setConditions(conditions);
 
@@ -743,7 +758,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         AlertCondition cond1 = new AlertCondition();
         cond1.setCategory(AlertConditionCategory.RANGE);
         cond1.setName(metricDef.getDisplayName());
-        cond1.setThreshold(Double.valueOf(40.0)); // threshold is always the low value of the range
+        cond1.setThreshold(40.0); // threshold is always the low value of the range
         cond1.setOption(Double.valueOf(60.0).toString()); // option is a stringified double that is always the high value of the range
         cond1.setComparator(">"); // the value must be outside the range
         cond1.setMeasurementDefinition(metricDef);
@@ -754,7 +769,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setEnabled(true);
         alertDefinition.setPriority(AlertPriority.HIGH);
         alertDefinition.setAlertDampening(new AlertDampening(Category.NONE));
-        alertDefinition.setRecoveryId(Integer.valueOf(0));
+        alertDefinition.setRecoveryId(0);
         alertDefinition.setConditionExpression(BooleanExpression.ALL);
         alertDefinition.setConditions(conditions);
 
@@ -814,42 +829,9 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
     }
 
     /**
-     * Creates a resource, stores it in the "resource" data field and returns the measurement definition
-     * that the schedule is for.
-     *
-     * @return measurement definition that was used to create the schedule for the new resource
-     * @throws Exception
-     */
-    private MeasurementDefinition createResourceWithTraitSchedule() throws Exception {
-        registerPlugin("type-with-trait.xml");
-        ResourceType resourceType = getResourceType("TypeWithTrait");
-        assert resourceType != null : "failed to deploy resource type";
-        assert resourceType.getMetricDefinitions() != null : "failed to create metric defs";
-        assert resourceType.getMetricDefinitions().size() == 1 : "do not have the expected number of metric defs";
-
-        final MeasurementDefinition metricDef = resourceType.getMetricDefinitions().iterator().next();
-
-        resource = persistNewResource(resourceType.getName()); // will have UNKNOWN avail
-        assert resource != null && resource.getId() > 0 : "failed to create test resource";
-
-        executeInTransaction(false, new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                MeasurementSchedule schedule = new MeasurementSchedule(metricDef, resource);
-                em.persist(schedule);
-            }
-        });
-
-        // create a server which attaches our agent to it - we need this for the alert subsystem to do its thing
-        createServerIdentity();
-        return metricDef;
-    }
-
-    /**
      * Returns a epoch millis timestamp that is the current time minus the given number of seconds.
      * In other words, this returns a time in the past - how far in the past is determined by the
      * number of seconds parameter.
-     * @param secondsAgo
      */
     private long getTimestamp(long secondsAgo) {
         return System.currentTimeMillis() - (secondsAgo * 1000);

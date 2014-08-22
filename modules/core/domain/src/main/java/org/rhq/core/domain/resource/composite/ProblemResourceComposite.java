@@ -58,6 +58,7 @@ public class ProblemResourceComposite implements Serializable {
 
     /**
      * This constructor is typically used only to support some predefined queries.
+     * @since 4.12
      */
     public ProblemResourceComposite(int resourceId, int resourceTypeId, String resourceName, String ancestry,
         long numAlerts, AvailabilityType availabilityType, Integer ancestryLength) {

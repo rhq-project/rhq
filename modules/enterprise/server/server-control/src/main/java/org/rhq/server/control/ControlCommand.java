@@ -25,9 +25,12 @@
 
 package org.rhq.server.control;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -65,6 +68,9 @@ public abstract class ControlCommand {
 
     protected static final String STORAGE_BASEDIR_NAME = "rhq-storage";
     protected static final String AGENT_BASEDIR_NAME = "rhq-agent";
+
+    protected static final String RHQ_SERVER_PIDFILE_DIR_ENV_VARIABLE = "RHQ_SERVER_PIDFILE_DIR";
+    protected static final String RHQ_AGENT_PIDFILE_DIR_ENV_VARIABLE = "RHQ_AGENT_PIDFILE_DIR";
 
     private final File defaultStorageBasedir;
     private final File defaultAgentBasedir;
@@ -326,24 +332,6 @@ public abstract class ControlCommand {
         return null;
     }
 
-    protected String getServerPid() throws IOException {
-        File pidFile = new File(binDir, "rhq-server.pid");
-        if (pidFile.exists()) {
-            return StreamUtil.slurp(new FileReader(pidFile));
-        }
-        return null;
-    }
-
-    protected String getAgentPid() throws IOException {
-        File agentBinDir = new File(getAgentBasedir(), "bin");
-        File pidFile = new File(agentBinDir, "rhq-agent.pid");
-
-        if (pidFile.exists()) {
-            return StreamUtil.slurp(new FileReader(pidFile));
-        }
-        return null;
-    }
-
     /**
      * Returns a property from the rhqctl.properties file. If that optional file doesn't
      * exist, the default value is returned. If the file exists but the key isn't found
@@ -552,5 +540,22 @@ public abstract class ControlCommand {
         @Override
         public void write(byte[] b) throws IOException {
         }
+    }
+
+    /**
+     * reads rhq-server.properties file and outputs warning in case there are trailing spaces
+     */
+    protected void validateServerPropertiesFile() throws IOException {
+        InputStreamReader isr = new InputStreamReader(new FileInputStream(getServerPropertiesFile()));
+        BufferedReader in = new BufferedReader(isr);
+
+        for (String line = in.readLine(); line != null; line = in.readLine()) {
+            if (line.matches("(?!^[ \t]*#).*[ \t]+$")) {
+                log.warn("Line \"" + line + "\" contains trailing white-spaces, fix " + getServerPropertiesFile()
+                    + " if you encounter issues");
+            }
+
+        }
+        in.close();
     }
 }

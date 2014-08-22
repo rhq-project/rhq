@@ -2,13 +2,17 @@
     "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0/distro-source/core/src/gwt-module.dtd">
 <module>
 
+
     <inherits name='com.google.gwt.user.User'/>
     <inherits name='com.google.gwt.i18n.I18N'/>
     <inherits name="com.google.gwt.logging.Logging"/>
     <inherits name='org.rhq.core.RHQDomain'/>
 
-    <inherits name='com.smartgwt.SmartGwt' />
+    <!-- inherits name='com.smartgwt.SmartGwt' /-->
     <inherits name="com.smartgwt.tools.SmartGwtTools"/>
+    <inherits name="com.smartgwt.SmartGwtNoTheme"/>
+    <inherits name="org.rhq.coregui.CoreGUI"/>
+    <script src="sc/skins/CoreGUI/load_skin.js"/>
 
     <!-- ============================ gwt logging ============================= -->
     <set-property name="gwt.logging.enabled" value="TRUE"/>

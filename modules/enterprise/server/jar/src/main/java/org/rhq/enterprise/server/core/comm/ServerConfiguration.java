@@ -24,6 +24,7 @@ import java.util.prefs.Preferences;
 
 import mazz.i18n.Logger;
 
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences;
 import org.rhq.enterprise.communications.ServiceContainerConfiguration;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderConfiguration;
 import org.rhq.enterprise.communications.command.client.PersistentFifo;
@@ -59,7 +60,7 @@ public class ServerConfiguration {
             throw new IllegalArgumentException("prefs=null");
         }
 
-        m_preferences = prefs;
+        m_preferences = new ObfuscatedPreferences(prefs, ServerConfigurationConstants.class);
     }
 
     /**

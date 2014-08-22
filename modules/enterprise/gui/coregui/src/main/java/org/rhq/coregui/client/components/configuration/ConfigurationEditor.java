@@ -130,6 +130,7 @@ import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
@@ -163,7 +164,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
 
     private ValuesManager topLevelPropertiesValuesManager = new ValuesManager();
 
-    private Label loadingLabel = new Label("<b>" + MSG.common_msg_loading() + "</b>");
+    private Label loadingLabel = new Label( MSG.common_msg_loading() );
 
     private int resourceId;
     private int resourceTypeId;
@@ -441,13 +442,12 @@ public class ConfigurationEditor extends EnhancedVLayout {
         List<PropertyGroupDefinition> groupDefinitions = configurationDefinition.getGroupDefinitions();
 
         if (groupDefinitions.isEmpty() || groupDefinitions.size() == 1) {
-            // No or one prop groups, so we just need a single form for the non-grouped props 
+            // No or one prop groups, so we just need a single form for the non-grouped props
             // and another one if there is just one group
             List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(
                 configurationDefinition.getNonGroupedProperties());
             if (!propertyDefinitions.isEmpty()) {
                 DynamicForm form = buildPropertiesForm(propertyDefinitions, configuration);
-                form.setBorder("1px solid #AAA");
                 form.validate();
                 layout.addMember(form);
             }
@@ -457,7 +457,6 @@ public class ConfigurationEditor extends EnhancedVLayout {
                 DynamicForm groupForm = buildPropertiesForm(propertyDefinitions, configuration);
                 groupForm.setIsGroup(true);
                 groupForm.setGroupTitle(groupDefinitions.get(0).getDisplayName());
-                groupForm.setBorder("1px solid #AAA");
                 groupForm.validate();
                 layout.addMember(groupForm);
             }
@@ -567,7 +566,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
             String title = "<div style=\"float:left; font-weight: bold;\">"
                 + group.getDisplayName()
                 + "</div>"
-                + (group.getDescription() != null ? ("<div style='padding-left: 10px; font-weight: normal; font-size: smaller; float: left;'>"
+                + (group.getDescription() != null ? ("<div style='border 1px solid red;padding-left: 10px; font-weight: normal; font-size: smaller; float: left;'>"
                     + " - " + group.getDescription() + "</div>")
                     : "");
             section = new SectionStackSection(title);
@@ -602,7 +601,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
         form.setNumCols(4);
         form.setCellPadding(5);
         form.setColWidths(190, 28, 210);
-        
+        form.setStyleName("propertiesForm");
+
 
         List<FormItem> fields = new ArrayList<FormItem>();
         addHeaderItems(fields);
@@ -760,9 +760,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
     protected StaticTextItem buildNameItem(PropertyDefinition propertyDefinition) {
         StaticTextItem nameItem = new StaticTextItem();
         nameItem.setStartRow(true);
-        String title = "<b>"
-            + (propertyDefinition.getDisplayName() != null ? propertyDefinition.getDisplayName() : propertyDefinition
-                .getName()) + "</b>";
+        String title =  (propertyDefinition.getDisplayName() != null ? propertyDefinition.getDisplayName() : propertyDefinition
+                .getName());
         nameItem.setValue(title);
         nameItem.setShowTitle(false);
         return nameItem;
@@ -829,7 +828,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
             buttonBar.setPadding(5);
             buttonBar.setMembersMargin(15);
 
-            final IButton newButton = new EnhancedIButton(MSG.common_button_new());
+            final IButton newButton = new EnhancedIButton(MSG.common_button_new(), ButtonColor.BLUE);
             newButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
             newButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -874,8 +873,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
             selectItem.setValueMap(propertyDefinitionMap.getMap().keySet()
                 .toArray(new String[propertyDefinitionMap.getMap().size()]));
 
-            final EnhancedIButton okButton = new EnhancedIButton();
-            okButton.setTitle(MSG.common_button_ok());
+            final EnhancedIButton okButton = new EnhancedIButton(MSG.common_button_ok(), ButtonColor.BLUE);
             okButton.setDisabled(true);
             okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -976,7 +974,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
         listOfMapsGrids.put(propertyDefinitionList, summaryTable);
         summaryTable.setAlternateRecordStyles(true);
         summaryTable.setShowAllRecords(true);
-        // [BZ 822173 - Table layout problem on configuration page.] 
+        // [BZ 822173 - Table layout problem on configuration page.]
         // setBodyOverflow(Overflow.VISIBLE) && setAutoFitFieldWidths(true) issue
         summaryTable.setBodyOverflow(VISIBLE);
         summaryTable.setOverflow(VISIBLE);
@@ -1081,7 +1079,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
         if (!propertyReadOnly) {
-            IButton addRowButton = new IButton();
+            IButton addRowButton = new EnhancedIButton();
+            addRowButton.setWidth("40px");
             addRowButton.setIcon(Window.getImgURL(ImageManager.getAddIcon()));
             addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -1214,7 +1213,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
             footer.setMembersMargin(15);
             vLayout.addMember(footer);
 
-            final IButton deleteButton = new EnhancedIButton();
+            final IButton deleteButton = new EnhancedIButton(MSG.common_button_delete());
             deleteButton.setIcon(Window.getImgURL(ImageManager.getRemoveIcon()));
             deleteButton.setTooltip(MSG.view_configEdit_tooltip_1());
             deleteButton.setDisabled(true);
@@ -1274,7 +1273,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
                     if (propertyList.getList().size() >= propertyDefinitionList.getMax()) {
                         SC.say(MSG.view_configEdit_maxBoundsExceeded(String.valueOf(propertyDefinitionList.getMax())));
                     } else {
-                        final Window popup = createPopup(MSG.view_configEdit_addItem(), 300, 145);
+                        final Window popup = createPopup(MSG.view_configEdit_addItem(), 400, 150);
 
                         VLayout vLayout = new VLayout();
                         vLayout.setMargin(10);
@@ -1303,7 +1302,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
                         form.setItems(simpleField, spacer);
                         vLayout.addMember(form);
 
-                        final IButton okButton = new EnhancedIButton(MSG.common_button_ok());
+                        final IButton okButton = new EnhancedIButton(MSG.common_button_ok(), ButtonColor.BLUE);
                         okButton.disable();
                         okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                             public void onClick(ClickEvent clickEvent) {
@@ -1434,6 +1433,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
                     break;
                 case PASSWORD:
                     valueItem = new PasswordItem();
+                    valueItem.setAttribute("autocomplete", "off");
                     break;
                 case BOOLEAN:
                     RadioGroupItem radioGroupItem = new RadioGroupItem();
@@ -1797,7 +1797,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
         buttonBar.setMembersMargin(15);
         buttonBar.setAlign(Alignment.CENTER);
 
-        final IButton okButton = new IButton(MSG.common_button_ok());
+        final IButton okButton = new EnhancedIButton(MSG.common_button_ok(), ButtonColor.BLUE);
         if (!mapReadOnly) {
             okButton.disable();
         }

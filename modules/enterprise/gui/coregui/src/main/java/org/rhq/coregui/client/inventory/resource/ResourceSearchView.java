@@ -78,12 +78,13 @@ import org.rhq.coregui.client.report.DriftComplianceReportResourceSearchView;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.TableUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * The list view for {@link Resource}s. If not specified a default title is assigned.  If not specified the list will
- * be initially sorted by resource name, ascending. 
+ * be initially sorted by resource name, ascending.
  *
  * @author Jay Shaughnessy
  * @author Greg Hinkle
@@ -159,6 +160,7 @@ public class ResourceSearchView extends Table {
 
         final RPCDataSource<Resource, ResourceCriteria> datasource = getDataSourceInstance();
         setDataSource(datasource);
+        setStyleName("resourcesearchlist");
     }
 
     // suppress unchecked warnings because the subclasses may have different generic types for the datasource
@@ -172,7 +174,7 @@ public class ResourceSearchView extends Table {
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
         addTableAction(MSG.common_button_uninventory(), MSG.view_inventory_resources_uninventoryConfirm(),
-            new ResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
+            ButtonColor.RED, new ResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
                 Permission.DELETE_RESOURCE, new RecordExtractor<Integer>() {
 
                     public Collection<Integer> extract(Record[] records) {
@@ -295,7 +297,7 @@ public class ResourceSearchView extends Table {
                 }
             });
 
-        addTableAction(MSG.common_button_enable(), MSG.view_inventory_resources_enableConfirm(),
+        addTableAction(MSG.common_button_enable(), MSG.view_inventory_resources_enableConfirm(), ButtonColor.BLUE,
             new AvailabilityTypeResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
                 EnumSet.of(AvailabilityType.DISABLED), Permission.DELETE_RESOURCE,
                 new RecordExtractor<AvailabilityType>() {

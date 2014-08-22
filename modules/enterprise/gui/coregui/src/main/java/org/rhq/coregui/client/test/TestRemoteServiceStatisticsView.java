@@ -41,6 +41,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.rpc.RemoteServiceStatistics;
 import org.rhq.coregui.client.util.rpc.RemoteServiceStatistics.Record.Summary;
 
@@ -113,7 +114,7 @@ public class TestRemoteServiceStatisticsView extends Table {
         getListGrid().setFields(serviceName, methodName, count, slowest, average, fastest, stddev);
         refresh();
 
-        addTableAction(MSG.common_button_delete_all(), MSG.common_msg_areYouSure(), new AbstractTableAction(
+        addTableAction(MSG.common_button_delete_all(), MSG.common_msg_areYouSure(), ButtonColor.RED, new AbstractTableAction(
             TableActionEnablement.ALWAYS) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -179,7 +180,7 @@ public class TestRemoteServiceStatisticsView extends Table {
                 }
             });
 
-            addTableAction("Refresh Timer", null, timerValues, new AbstractTableAction(TableActionEnablement.ALWAYS) {
+            addTableAction("Refresh Timer", null, timerValues, ButtonColor.RED, new AbstractTableAction(TableActionEnablement.ALWAYS) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
 

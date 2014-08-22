@@ -63,8 +63,8 @@ import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementConverterClient;
@@ -72,7 +72,6 @@ import org.rhq.coregui.client.util.MeasurementUtility;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
-import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * A simple data source to read in metric data summaries for a resource.
@@ -95,11 +94,9 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     private int[] enabledScheduleIds;
     private int[] enabledScheduleDefinitionIds;
     private HashMap<Integer, MeasurementUnits> scheduleToMeasurementUnitMap = new HashMap<Integer, MeasurementUnits>();
-    private final MeasurementUserPreferences measurementUserPrefs;
 
     public MetricsViewDataSource(Resource resource) {
         this.resource = resource;
-        measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
     }
 
     /**
@@ -285,11 +282,10 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                         }
                     });
 
-                    queryResourceMetrics(resource, measurementUserPrefs.getMetricRangePreferences().begin,
-                        measurementUserPrefs.getMetricRangePreferences().end, countDownLatch);
-                    queryMetricDisplaySummaries(enabledScheduleIds,
-                        measurementUserPrefs.getMetricRangePreferences().begin,
-                        measurementUserPrefs.getMetricRangePreferences().end, countDownLatch);
+                    Long start = CustomDateRangeState.getInstance().getStartTime();
+                    Long end = CustomDateRangeState.getInstance().getEndTime();
+                    queryResourceMetrics(resource, start, end, countDownLatch);
+                    queryMetricDisplaySummaries(enabledScheduleIds, start, end, countDownLatch);
                 }
 
                 @Override

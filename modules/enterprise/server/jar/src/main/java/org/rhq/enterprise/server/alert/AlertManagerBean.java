@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.alert;
 
 import java.text.SimpleDateFormat;
@@ -36,14 +37,13 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.ejb.QueryImpl;
 
-import org.jboss.ejb3.annotation.TransactionTimeout;
-
+import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
@@ -76,7 +76,6 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
-import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
@@ -94,7 +93,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -120,10 +118,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     private OperationManagerLocal operationManager;
     @EJB
     private EmailManagerLocal emailManager;
-
-    @javax.annotation.Resource(name = "RHQ_DS")
-    private DataSource rhqDs;
-
 
     @Override
     public int deleteAlerts(Subject user, int[] alertIds) {
@@ -370,61 +364,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return existingAlertIds;
     }
 
-    /**
-     * Remove alerts for the specified range of time.
-     */
-    @Override
-    // gonna use bulk delete, make sure we are in new tx to not screw up caller's hibernate session
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(6 * 60 * 60)
-    public int deleteAlerts(long beginTime, long endTime) {
-        long totalTime = 0;
-
-        long start = System.currentTimeMillis();
-        Query query = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_ALERT_CTIME);
-        query.setParameter("begin", beginTime);
-        query.setParameter("end", endTime);
-        int conditionsDeleted = query.executeUpdate();
-        long end = System.currentTimeMillis();
-        if (log.isDebugEnabled()) {
-            log.debug("Deleted [" + conditionsDeleted + "] alert condition logs in [" + (end - start) + "]ms");
-        }
-        totalTime += (end - start);
-
-        start = System.currentTimeMillis();
-        query = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_BY_ALERT_CTIME);
-        query.setParameter("begin", beginTime);
-        query.setParameter("end", endTime);
-        int deletedNotifications = query.executeUpdate();
-        end = System.currentTimeMillis();
-        if (log.isDebugEnabled()) {
-            log.debug("Deleted [" + deletedNotifications + "] alert notifications in [" + (end - start) + "]ms");
-        }
-        totalTime += (end - start);
-
-        start = System.currentTimeMillis();
-        query = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_CTIME);
-        query.setParameter("begin", beginTime);
-        query.setParameter("end", endTime);
-        int deletedAlerts = query.executeUpdate();
-        end = System.currentTimeMillis();
-        if (log.isDebugEnabled()) {
-            log.debug("Deleted [" + deletedAlerts + "] alerts in [" + (end - start) + "]ms");
-        }
-        totalTime += (end - start);
-
-        MeasurementMonitor.getMBean().incrementPurgeTime(totalTime);
-        MeasurementMonitor.getMBean().setPurgedAlerts(deletedAlerts);
-        MeasurementMonitor.getMBean().setPurgedAlertConditions(conditionsDeleted);
-        MeasurementMonitor.getMBean().setPurgedAlertNotifications(deletedNotifications);
-        if (log.isDebugEnabled()) {
-            log.debug("Deleted [" + (deletedAlerts + conditionsDeleted + deletedNotifications) + "] "
-                + "alert audit records in [" + (totalTime) + "]ms");
-        }
-
-        return deletedAlerts;
-    }
-
     @Override
     public int getAlertCountByMeasurementDefinitionId(Integer measurementDefinitionId, long begin, long end) {
         Query query = PersistenceUtility.createCountQuery(entityManager, Alert.QUERY_FIND_BY_MEASUREMENT_DEFINITION_ID);
@@ -618,6 +557,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
             if (alertNotifications != null && alertNotifications.size() > 0) {
                 AlertSenderPluginManager alertSenderPluginManager = getAlertPluginManager();
+                DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
 
                 for (AlertNotification alertNotification : alertNotifications) {
                     AlertNotificationLog notificationLog = null;
@@ -657,6 +597,13 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                         }
                     }
 
+                    // make sure we don't exceed the max message length for the db vendor
+                    String message = dbType.getString(notificationLog.getMessage(),
+                        AlertNotificationLog.MESSAGE_MAX_LENGTH);
+                    if (null != message && !message.equals(notificationLog.getMessage())) {
+                        notificationLog = new AlertNotificationLog(notificationLog.getAlert(),
+                            notificationLog.getSender(), notificationLog.getResultState(), message);
+                    }
                     entityManager.persist(notificationLog);
                     alert.addAlertNotificatinLog(notificationLog);
                 }
@@ -1201,9 +1148,11 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
             if (!wasEnabled) {
                 /*
-                 * recover the other alert, go through the manager layer so as to update the alert cache
+                 * - recover the other alert def, go through the manager layer so as to update the alert cache
+                 * - we know this is a resource alert def so make that call directly. this is more efficient
+                 *   and also avoids the issue in BZ 1126853.
                  */
-                alertDefinitionManager.enableAlertDefinitions(overlord, new int[] { recoveryDefinitionId });
+                alertDefinitionManager.enableResourceAlertDefinitions(overlord, new int[] { recoveryDefinitionId });
             }
 
             /*
@@ -1218,11 +1167,12 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             }
 
             /*
-             * disable until recovered manually or by recovery definition
-             *
-             * go through the manager layer so as to update the alert cache
+             * - disable alert def until recovered manually or by recovery definition.
+             * - go through the manager layer so as to update the alert cache.
+             * - we know this is a resource alert def so make that call directly. this is more efficient
+             *   and also avoids the issue in BZ 1126853.
              */
-            alertDefinitionManager.disableAlertDefinitions(overlord, new int[] { firedDefinition.getId() });
+            alertDefinitionManager.disableResourceAlertDefinitions(overlord, new int[] { firedDefinition.getId() });
 
             /*
              * there's no reason to update the cache directly anymore.  even though this direct type of update is safe

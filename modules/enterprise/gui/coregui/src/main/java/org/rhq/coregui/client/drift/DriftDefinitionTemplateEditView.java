@@ -40,10 +40,11 @@ import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.coregui.client.util.message.Message;
-import org.rhq.coregui.client.util.message.MessageCenter;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.MessageCenter;
 
 /**
  * A view for editing a Resource's configuration.
@@ -80,7 +81,7 @@ public class DriftDefinitionTemplateEditView extends EnhancedVLayout implements 
         buttonbar.setMembersMargin(5);
         buttonbar.setLayoutMargin(5);
 
-        this.saveButton = new EnhancedIButton(MSG.common_button_save());
+        this.saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();

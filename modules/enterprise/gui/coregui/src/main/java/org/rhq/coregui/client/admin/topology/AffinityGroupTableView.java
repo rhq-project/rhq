@@ -58,8 +58,9 @@ import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * Shows the table of all affinity groups.
@@ -96,14 +97,14 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
     }
 
     private void showActions() {
-        addTableAction(MSG.view_adminTopology_affinityGroups_createNew(), new AuthorizedTableAction(this,
-            TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.view_adminTopology_affinityGroups_createNew(), ButtonColor.BLUE, new AuthorizedTableAction(
+            this, TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 showCreateAffinityGroupWindow();
             }
         });
 
-        addTableAction(MSG.view_adminTopology_server_removeSelected(), null, new AuthorizedTableAction(this,
+        addTableAction(MSG.view_adminTopology_server_removeSelected(), ButtonColor.RED, new AuthorizedTableAction(this,
             TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 final List<String> selectedNames = getSelectedNames(selections);
@@ -223,7 +224,7 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
                 AffinityGroupTableView.this.refreshTableInfo();
             }
         });
-        final IButton create = new EnhancedIButton(MSG.view_adminTopology_affinityGroups_createNew());
+        final IButton create = new EnhancedIButton(MSG.view_adminTopology_affinityGroups_createNew(), ButtonColor.BLUE);
         create.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 createNewGroup(modalWindow, form);

@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>4.12.0-SNAPSHOT</version>
+      <version>4.13.0-SNAPSHOT</version>
    </parent>
 
    <artifactId>rhq-core-domain</artifactId>
@@ -330,7 +330,7 @@
                           <prepared-statement-cache-size>75</prepared-statement-cache-size>
                       </statement>
                   </datasource>
-                  <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
+                  <xa-datasource jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
                       <xa-datasource-property name="DatabaseName">${rhq.test.ds.db-name}</xa-datasource-property>
                       <xa-datasource-property name="PortNumber">${rhq.test.ds.port}</xa-datasource-property>
                       <xa-datasource-property name="ServerName">${rhq.test.ds.server-name}</xa-datasource-property>
@@ -406,7 +406,7 @@
                           <prepared-statement-cache-size>75</prepared-statement-cache-size>
                       </statement>
                   </datasource>
-                  <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
+                  <xa-datasource jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
                       <xa-datasource-property name="URL">${rhq.test.ds.connection-url}</xa-datasource-property>
                       <driver>oracle</driver>
                       <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
@@ -524,6 +524,17 @@
          </activation>
 
          <dependencies>
+           <!-- when not explicitly defining xnio, we were getting odd AbstractMethodError exceptions in Arquillian due to pulling in older xnio versions -->
+           <dependency>
+             <groupId>org.jboss.xnio</groupId>
+             <artifactId>xnio-api</artifactId>
+             <scope>test</scope>
+           </dependency>
+           <dependency>
+             <groupId>org.jboss.xnio</groupId>
+             <artifactId>xnio-nio</artifactId>
+             <scope>test</scope>
+           </dependency>
            <dependency>
              <groupId>org.jboss.as</groupId>
              <artifactId>jboss-as-arquillian-container-managed</artifactId>

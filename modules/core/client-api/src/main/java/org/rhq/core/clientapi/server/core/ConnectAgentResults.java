@@ -34,10 +34,12 @@ public class ConnectAgentResults implements Serializable {
 
     private final long serverTime;
     private final boolean isDown;
+    private final AgentVersion latestAgentVersion;
 
-    public ConnectAgentResults(long serverTime, boolean isDown) {
+    public ConnectAgentResults(long serverTime, boolean isDown, AgentVersion latestAgentVersion) {
         this.serverTime = serverTime;
         this.isDown = isDown;
+        this.latestAgentVersion = latestAgentVersion;
     }
 
     /**
@@ -66,8 +68,22 @@ public class ConnectAgentResults implements Serializable {
         return isDown;
     }
 
+    /**
+     * Returns the latest agent version as known by the server returning this results object.
+     * This agent version is that version of the agent update distribution that is served up by
+     * this server. This should represent the most up-to-date agent version available.
+     *
+     * This can be null if the latest agent version cannot be determined.
+     *
+     * @return the most up-to-date agent version known
+     */
+    public AgentVersion getLatestAgentVersion() {
+        return latestAgentVersion;
+    }
+
     @Override
     public String toString() {
-        return "ConnectAgentResults: [server-time=" + this.serverTime + ", is-down=" + this.isDown + "]";
+        return "ConnectAgentResults: [server-time=" + this.serverTime + ", is-down=" + this.isDown
+            + ", latestAgentVersion=" + this.latestAgentVersion + "]";
     }
 }

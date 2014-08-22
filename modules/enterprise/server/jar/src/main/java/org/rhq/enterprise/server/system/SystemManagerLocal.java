@@ -22,8 +22,8 @@ import java.util.Properties;
 
 import javax.ejb.Local;
 
-import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 
 /**
@@ -32,16 +32,6 @@ import org.rhq.core.domain.common.composite.SystemSettings;
  */
 @Local
 public interface SystemManagerLocal extends SystemManagerRemote {
-    /**
-     * Returns the {@link DatabaseType} that corresponds to the database the JON Server uses for its backend.
-     *
-     * <p>This method is mainly to allow the caller to determine the kind of database in use so as to determine what
-     * syntax to use for a particular native query.</p>
-     *
-     * @return the type of database
-     */
-    DatabaseType getDatabaseType();
-
     /**
      * Schedules the internal timer job that periodically refreshes the configuration cache.
      * This is needed in case a user changed the system configuration on another server in the HA
@@ -133,7 +123,7 @@ public interface SystemManagerLocal extends SystemManagerRemote {
     void loadSystemConfigurationCache();
 
     boolean isDebugModeEnabled();
-    
+
     boolean isLoginWithoutRolesEnabled();
 
     boolean isExperimentalFeaturesEnabled();
@@ -191,4 +181,25 @@ public interface SystemManagerLocal extends SystemManagerRemote {
     SystemSettings getObfuscatedSystemSettings(boolean includePrivateSettings);
 
     void deobfuscate(SystemSettings systemSettings);
+
+    /**
+     * Internal use only.  Sets any setting (other than LAST_SYSTEM_CONFIG_UPDATE_TIME) regardless of whether
+     * it is private or read-only.  Guarantees proper cache update.  Performs no validation or un/masking.
+     *
+     * @param setting
+     * @param value
+     */
+    void setAnySystemSetting(SystemSetting setting, String value);
+
+    /**
+     * Internal use only.  Like {@link SystemManagerRemote#setSystemSettings(Subject, SystemSettings)} but can
+     * bypass validation and also ignore the readOnly constraint.
+     *
+     * @param settings
+     * @param skipValidation if true, skip validation
+     * @param ignoreReadOnly if true, ignore the readOnly constraint and set new values if supplied
+     * @param value
+     */
+    void setAnySystemSettings(SystemSettings settings, boolean skipValidation, boolean ignoreReadOnly);
+
 }

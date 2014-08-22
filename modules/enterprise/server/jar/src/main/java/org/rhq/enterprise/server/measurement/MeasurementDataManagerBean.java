@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.measurement;
 
 import java.sql.Connection;
@@ -56,7 +57,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
 
-import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jboss.remoting.CannotConnectException;
 
 import org.rhq.core.domain.auth.Subject;
@@ -117,7 +117,6 @@ import org.rhq.server.metrics.domain.RawNumericMetric;
  * @author Ian Springer
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, MeasurementDataManagerRemote {
     // time_stamp, schedule_id, value, schedule_id, schedule_id, value, value, value, value
     private static final String TRAIT_INSERT_STATEMENT = "INSERT INTO RHQ_measurement_data_trait \n"
@@ -140,7 +139,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource rhqDs;
 
     @EJB
@@ -172,29 +171,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     @EJB
     private SubjectManagerLocal subjectManager;
 
-    // doing a bulk delete in here, need to be in its own tx
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(6 * 60 * 60)
-    public int purgeTraits(long oldest) {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-
-        try {
-            conn = rhqDs.getConnection();
-            stmt = conn.prepareStatement(MeasurementDataTrait.NATIVE_QUERY_PURGE);
-            stmt.setLong(1, oldest);
-            long startTime = System.currentTimeMillis();
-            int deleted = stmt.executeUpdate();
-            MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
-            MeasurementMonitor.getMBean().setPurgedMeasurementTraits(deleted);
-            return deleted;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to purge traits older than [" + oldest + "]", e);
-        } finally {
-            JDBCUtil.safeClose(conn, stmt, null);
-        }
-    }
-
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void mergeMeasurementReport(MeasurementReport report) {
         long start = System.currentTimeMillis();
@@ -231,6 +208,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
      *
      * @param data the actual data points
      */
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void addNumericData(final Set<MeasurementDataNumeric> data) {
         if ((data == null) || (data.isEmpty())) {
@@ -271,6 +249,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         });
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void addTraitData(Set<MeasurementDataTrait> data) {
         if ((data == null) || (data.isEmpty())) {
@@ -324,6 +303,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
      * @param begin          begin time
      * @param end            end time
      */
+    @Override
     @SuppressWarnings("unchecked")
     public Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricDisplaySummariesForResourcesAndParent(
         Subject subject, int resourceTypeId, int parentId, List<Integer> resourceIds, long begin, long end) {
@@ -410,6 +390,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
      * org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal#getNarrowedMetricsDisplaySummaryForCompGroup(org.jboss.on.domain.auth.Subject,
      * int)
      */
+    @Override
     public Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricsDisplaySummariesForCompGroup(Subject subject,
         ResourceGroup group, long beginTime, long endTime) {
         group = entityManager.merge(group);
@@ -428,6 +409,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return resMap;
     }
 
+    @Override
     public Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricsDisplaySummariesForAutoGroup(Subject subject,
         int parentId, int cType, long beginTime, long endTime) {
         List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentId, cType);
@@ -452,6 +434,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
      * {@link ResourceType}. Summaries only contain a basic selection of fields for the purpose of filling the Child
      * resource popups.
      */
+    @Override
     @SuppressWarnings("unchecked")
     public Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricDisplaySummariesForCompatibleResources(
         Subject subject, Collection<Resource> resources, long beginTime, long endTime) {
@@ -572,6 +555,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
      *
      * @return One trait or null if nothing was found in the db.
      */
+    @Override
     @Nullable
     public MeasurementDataTrait getCurrentTraitForSchedule(int scheduleId) {
         Query q = entityManager.createNamedQuery(MeasurementDataTrait.FIND_CURRENT_FOR_SCHEDULES);
@@ -591,6 +575,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         }
     }
 
+    @Override
     @Nullable
     public MeasurementDataNumeric getCurrentNumericForSchedule(int scheduleId) {
         MetricsServer metricsServer = storageClientManager.getMetricsServer();
@@ -649,6 +634,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return new org.rhq.enterprise.server.measurement.MeasurementAggregate(summary.getMin(), summary.getAvg(), summary.getMax());
     }
 
+    @Override
     public MeasurementAggregate getMeasurementAggregate(Subject subject, int scheduleId, long startTime, long endTime) {
         Stopwatch stopwatch = new Stopwatch().start();
         try {
@@ -686,6 +672,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         }
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime,
         long endTime) {
@@ -728,6 +715,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
      *
      * @return a List of MeasurementDataTrait
      */
+    @Override
     @SuppressWarnings("unchecked")
     public List<MeasurementDataTrait> findCurrentTraitsForResource(Subject subject, int resourceId,
         DisplayType displayType) {
@@ -770,6 +758,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return result;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
         int definitionId, long beginTime, long endTime, int numPoints) {
@@ -779,6 +768,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return ret;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForContext(Subject subject,
         EntityContext context, int definitionId, long beginTime, long endTime, int numDataPoints) {
@@ -839,6 +829,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return scheduleIds;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
         int[] definitionIds, long beginTime, long endTime, int numDataPoints) {
@@ -946,7 +937,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         if (definitionIds == null || definitionIds.length == 0) {
             return Collections.<MeasurementData>emptySet();
         }
-        
+
         Set<MeasurementData> values = new HashSet<MeasurementData>();
         if (resourceIds != null) {
             Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_RESOURCE_IDS_WITH_AGENTS_BY_RESOURCE_IDS);
@@ -1034,6 +1025,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
      *
      * @return a List of {@link MeasurementDataTrait} objects.
      */
+    @Override
     @SuppressWarnings("unchecked")
     public List<MeasurementDataTrait> findTraits(Subject subject, int resourceId, int definitionId) {
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
@@ -1057,6 +1049,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return result;
     }
 
+    @Override
     public PageList<MeasurementDataTrait> findTraitsByCriteria(Subject subject, MeasurementDataTraitCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 

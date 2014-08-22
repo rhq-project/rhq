@@ -36,6 +36,7 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionStyle;
@@ -65,6 +66,7 @@ import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
@@ -80,14 +82,15 @@ import org.rhq.coregui.client.components.TitleBar;
 import org.rhq.coregui.client.components.form.DateFilterItem;
 import org.rhq.coregui.client.components.form.EnhancedSearchBarItem;
 import org.rhq.coregui.client.util.CriteriaUtility;
-import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
+
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
@@ -205,7 +208,6 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         }
         setWidth100();
         setHeight100();
-        //setOverflow(Overflow.HIDDEN);
 
         this.titleString = tableTitle;
         this.initialCriteria = criteria;
@@ -217,7 +219,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     /**
      * If this returns true, then even if a {@link #getSearchSubsystem() search subsystem}
      * is defined by the table class, the search bar will not be shown.
-     * 
+     *
      * @return true if the search bar is to be hidden (default is false)
      */
     public boolean getHideSearchBar() {
@@ -243,7 +245,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     /**
      * Override Point:
      * Override this method to use a customized layout.
-     * 
+     *
      * @return the Layout for all of the Table contents
      * @see #configureTableContents(Layout)
      */
@@ -263,7 +265,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * - set to 100% width and height
      * - set to Overflow.AUTO
      * </pre>
-     *  
+     *
      * @param contents
      */
     protected void configureTableContents(Layout contents) {
@@ -284,7 +286,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * - sets to 100% width and height
      * </pre>
      * This is called from onInit() and guarantees grid not null.
-     * 
+     *
      * @param grid
      */
     protected void configureListGrid(ListGrid grid) {
@@ -372,22 +374,25 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         return SelectionStyle.MULTIPLE;
     }
 
-    // Table is an InitializableView. This onDraw() waits until we're sure we're initialized and then 
+    // Table is an InitializableView. This onDraw() waits until we're sure we're initialized and then
     // lays down the canvas.  This gives subclasses a chance to perform initialization (including async calls)
-    // required to support the overrides (like configureTable()) they may have provided and that are called in 
+    // required to support the overrides (like configureTable()) they may have provided and that are called in
     // doOnDraw().
     @Override
     protected void onDraw() {
+
         super.onDraw();
 
         if (isInitialized()) {
             doOnDraw();
 
         } else {
+
             new Timer() {
                 final long startTime = System.currentTimeMillis();
 
                 public void run() {
+
                     if (isInitialized()) {
                         doOnDraw();
                         cancel();
@@ -404,11 +409,12 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                         }
                     }
                 }
-            }.run(); // fire the timer immediately    
+            }.run(); // fire the timer immediately
         }
     }
 
     protected void doOnDraw() {
+
         try {
             // I'm not sure this is necessary as I'm not sure it's the case that draw()/onDraw() will get called
             // multiple times. But if it did/does, this protects us by removing the current members before they
@@ -420,7 +426,6 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
             // add a toolstrip at the top of screen for navigation, date range controls, etc...
             this.topExtraWidgets = new EnhancedToolStrip();
-            topExtraWidgets.setPadding(5);
             topExtraWidgets.setWidth100();
             topExtraWidgets.setMembersMargin(15);
             topExtraWidgets.hide();
@@ -438,9 +443,30 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 contents.addMember(titleLayout, 0);
             }
 
+            HLayout tableHeader = new HLayout();
+            tableHeader.setAutoHeight();
+            tableHeader.setWidth100();
+            tableHeader.setMinMemberSize(27);
+            tableHeader.addStyleName("tableFilter");
+
             if (filterForm.hasContent()) {
-                contents.addMember(filterForm);
+                filterForm.setWidth("60%");
+                tableHeader.addMember(filterForm);
             }
+
+            Label tableInfo = new Label();
+            tableInfo.setStyleName("tableRowCount");
+            tableInfo.setWidth("*");
+            tableInfo.setWrap(false);
+            tableInfo.setOverflow(Overflow.VISIBLE);
+            tableInfo.setAlign(Alignment.CENTER);
+            tableInfo.setValign(VerticalAlignment.CENTER);
+            //tableInfo.setHeight(26);;
+            setTableInfo(tableInfo);
+            tableHeader.addMember(tableInfo);
+            contents.addMember(tableHeader);
+            refreshRowCount();
+
             // add the listGrid defined in onInit
             contents.addMember(listGrid);
 
@@ -449,14 +475,14 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
             // This is hidden from view unless extra widgets are actually added to the table above the main footer.
             this.footerExtraWidgets = new EnhancedToolStrip();
-            footerExtraWidgets.setPadding(5);
             footerExtraWidgets.setWidth100();
             footerExtraWidgets.setMembersMargin(15);
             footerExtraWidgets.hide();
+
             contents.addMember(footerExtraWidgets);
 
             this.footer = new EnhancedToolStrip();
-            footer.setPadding(5);
+            footer.addStyleName("footer");
             footer.setWidth100();
             footer.setMembersMargin(15);
             if (!showFooter) {
@@ -476,10 +502,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 }
             });
 
-            Label tableInfo = new Label();
-            tableInfo.setWrap(false);
-            setTableInfo(tableInfo);
-            refreshRowCount();
+
 
             // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
             //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
@@ -505,6 +528,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             CoreGUI.getErrorHandler().handleError(MSG.view_table_drawFail(this.toString()), e);
         }
 
+
         markForRedraw();
     }
 
@@ -528,11 +552,14 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             if (lengthIsKnown) {
                 int totalRows = this.listGrid.getTotalRows();
                 int selectedRows = this.listGrid.getSelectedRecords().length;
-                contents = MSG.view_table_totalRows(String.valueOf(totalRows), String.valueOf(selectedRows));
+                contents = MSG.view_table_totalRows("<b>" + String.valueOf(totalRows) + "</b>",
+                  "<b>" + String.valueOf(selectedRows) + "</b>");
             } else {
                 contents = MSG.view_table_totalRowsUnknown();
             }
             tableInfo.setContents(contents);
+            //tableInfo.setHeight(tableInfo.getParentCanvas().getHeight());;
+
         }
     }
 
@@ -583,7 +610,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
             if (null == tableAction.getValueMap()) {
                 // button action
-                IButton button = new EnhancedIButton(tableAction.getTitle());
+                IButton button = new EnhancedIButton(tableAction.getTitle(), tableAction.getButtonColor());
                 button.setTooltip(tableAction.getTooltip());
                 button.setDisabled(true);
                 button.setOverflow(Overflow.VISIBLE);
@@ -631,6 +658,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 }
 
                 IMenuButton menuButton = new IMenuButton(tableAction.getTitle());
+                menuButton.setID(EnhancedUtility.getSafeId("menuButton" + id + tableAction.getTitle()));
                 menuButton.setTooltip(tableAction.getTooltip());
                 menuButton.setMenu(menu);
                 menuButton.setDisabled(true);
@@ -651,6 +679,8 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
         if (isShowFooterRefresh()) {
             this.refreshButton = new EnhancedIButton(MSG.common_button_refresh());
+	    //            refreshButton.setOverflow(Overflow.VISIBLE);
+
             refreshButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     disableAllFooterControls();
@@ -660,7 +690,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             footer.addMember(refreshButton);
         }
 
-        footer.addMember(tableInfo);
+      //  footer.addMember(tableInfo);
 
         // Manages enable/disable buttons for the grid
         listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
@@ -706,8 +736,8 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     }
 
     public void setFilterFormItems(FormItem... formItems) {
-        setShowHeader(false);
         this.filterForm.setItems(formItems);
+        this.filterForm.setTitleWidth(1);
         this.filterForm.setNumCols(4);
     }
 
@@ -793,7 +823,6 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         final ListGrid listGrid = getListGrid();
 
         Criteria criteria = getCurrentCriteria();
-        Log.debug(getClass().getName() + ".refresh() using criteria [" + CriteriaUtility.toString(criteria) + "]...");
         listGrid.setCriteria(criteria);
 
         if (resetPaging) {
@@ -898,7 +927,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * <pre>
      * setFields( false, fields );
      * </pre>
-     * 
+     *
      * @param fields the fields
      */
     public void setListGridFields(ListGridField... fields) {
@@ -909,7 +938,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * Wraps ListGrid.setFields(...) but takes care of "id" field display handling.
      *
      * @param forceIdField if true, and "id" is a defined field, then display it. If false, it is displayed
-     *        only in debug mode.  
+     *        only in debug mode.
      * @param fields the fields
      */
     public void setListGridFields(boolean forceIdField, ListGridField... fields) {
@@ -980,7 +1009,11 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * completion. Failure to do so may leave the widgets disabled.
      */
     public void addTableAction(String title, TableAction tableAction) {
-        this.addTableAction(title, null, null, tableAction);
+        this.addTableAction(title, null, null, null, tableAction);
+    }
+
+    public void addTableAction(String title, ButtonColor buttonColor, TableAction tableAction) {
+        this.addTableAction(title, null, null, buttonColor, tableAction);
     }
 
     /**
@@ -990,7 +1023,11 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * completion. Failure to do so may leave the widgets disabled.
      */
     public void addTableAction(String title, String confirmation, TableAction tableAction) {
-        this.addTableAction(title, confirmation, null, tableAction);
+        this.addTableAction(title, confirmation, null, null, tableAction);
+    }
+
+    public void addTableAction(String title, String confirmation, ButtonColor buttonColor, TableAction tableAction) {
+        this.addTableAction(title, confirmation, null, buttonColor, tableAction);
     }
 
     /**
@@ -999,9 +1036,12 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addTableAction(String title, String confirmation, Map<String, Object> valueMap, TableAction tableAction) {
+    public void addTableAction(String title, String confirmation, Map<String, Object> valueMap, ButtonColor buttonColor, TableAction tableAction) {
         TableActionInfo info = new TableActionInfo.TableActionInfoBuilder(title, tableAction)
-                .setConfirmMessage(confirmation).setValueMap(valueMap).createTableActionInfo();
+            .setConfirmMessage(confirmation)
+            .setValueMap(valueMap)
+            .setButtonColor(buttonColor == null ? ButtonColor.GRAY : buttonColor)
+            .createTableActionInfo();
         tableActions.add(info);
     }
 
@@ -1018,15 +1058,15 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     /**
      * Updates the list of table's associated actions <code>tableActions</code>.
      * It automatically updates the gui by calling <code>drawFooter()</code> provided the table has been initialized.
-     * 
+     *
      * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
      * when footer actions take place, typically a button click. It is up to the action to ensure the page
      * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
-     * 
+     *
      * @param title the title of a modified action
-     * @param valueMap the map containing the tuples with name of a select item and <code>actionValue</code> which is 
-     * then passed to <code>tableAction.executeAction()</code>; use the <code>LinkedHashMap</code> if you want to 
+     * @param valueMap the map containing the tuples with name of a select item and <code>actionValue</code> which is
+     * then passed to <code>tableAction.executeAction()</code>; use the <code>LinkedHashMap</code> if you want to
      * preserve the order of map items
      * @param tableAction the tableAction object (on this object the <code>executeAction()</code> is actually invoked)
      */
@@ -1088,10 +1128,10 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * times when you don't want the user to be able to press table action
      * buttons regardless of which rows are selected. This method let's
      * you set this override-disable flag.
-     * 
+     *
      * Note: this also effects the double-click handler - if this disable override
      * is on, the double-click handler is not called.
-     * 
+     *
      * @param disabled if true, all table action buttons will be disabled
      *                 if false, table action buttons will be enabled based on their predefined
      *                 selection enablement rule.
@@ -1194,7 +1234,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * A subclass of SmartGWT's DynamicForm widget that provides a more convenient interface for filtering a
      * {@link Table} of results.
      *
-     * @author Joseph Marques 
+     * @author Joseph Marques
      */
     private static class TableFilter extends DynamicForm implements KeyPressHandler, ChangedHandler {
 
@@ -1204,9 +1244,8 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
         public TableFilter(Table<?> table) {
             super();
-            setOverflow(Overflow.VISIBLE);
-            setAutoWidth();
-            setPadding(5);
+            setAlign(Alignment.LEFT);
+            setHeight(22);
             this.table = table;
         }
 
@@ -1298,14 +1337,21 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         private Map<String, Object> valueMap;
         private TableAction action;
         private Canvas actionCanvas;
+        private ButtonColor buttonColor;
 
         private TableActionInfo(String title, String tooltip, String confirmMessage, Map<String, Object> valueMap,
             TableAction action) {
+            this(title, tooltip, confirmMessage,valueMap, action, ButtonColor.GRAY);
+        }
+
+        private TableActionInfo(String title, String tooltip, String confirmMessage, Map<String, Object> valueMap,
+            TableAction action, ButtonColor buttonColor) {
             this.title = title;
             this.tooltip = tooltip;
             this.confirmMessage = confirmMessage;
             this.valueMap = valueMap;
             this.action = action;
+            this.buttonColor = buttonColor;
         }
 
         public String getTitle() {
@@ -1336,12 +1382,21 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             this.action = action;
         }
 
+        public ButtonColor getButtonColor() {
+            return buttonColor;
+        }
+
+        public void setButtonColor(ButtonColor buttonColor) {
+            this.buttonColor = buttonColor;
+        }
+
         public static class TableActionInfoBuilder {
             private String title;
             private String tooltip;
             private String confirmMessage;
             private Map<String, Object> valueMap;
             private TableAction action;
+            private ButtonColor buttonColor;
 
             public TableActionInfoBuilder(String title, TableAction action) {
                 this.title = title;
@@ -1363,8 +1418,14 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 return this;
             }
 
+            public TableActionInfoBuilder setButtonColor(ButtonColor buttonColor) {
+                this.buttonColor = buttonColor;
+                return this;
+            }
+
             public TableActionInfo createTableActionInfo() {
-                return new TableActionInfo(title, tooltip, confirmMessage, valueMap, action);
+                return new TableActionInfo(title, tooltip, confirmMessage, valueMap, action,
+                    buttonColor == null ? ButtonColor.GRAY : buttonColor);
             }
         }
     }

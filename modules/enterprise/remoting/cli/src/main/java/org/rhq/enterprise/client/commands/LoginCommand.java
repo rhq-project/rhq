@@ -110,7 +110,16 @@ public class LoginCommand implements ClientCommand {
 
         Subject subject = remoteClient.login(username, password);
 
-        String version = remoteClient.getServerVersion() + " (" + remoteClient.getServerBuildNumber() + ")";
+        String versionUpdate = remoteClient.getServerVersionUpdate();
+        String version = "";
+        //Conditionally check for and apply update/patch version details
+        if ((versionUpdate != null) && (!versionUpdate.trim().isEmpty())) {
+            version = remoteClient.getServerVersion() + " " + versionUpdate + " ("
+                + remoteClient.getServerBuildNumber() + ")";
+        } else {
+            version = remoteClient.getServerVersion() + " (" + remoteClient.getServerBuildNumber() + ")";
+        }
+
         client.getPrintWriter().println("Remote server version is: " + version);
 
         // this call has the side effect of setting bindings for the new remote client and its subject

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,7 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.CronTrigger;
 import org.quartz.SchedulerException;
 
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -81,6 +82,7 @@ import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutOperationsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CloudManagerJob;
+import org.rhq.enterprise.server.scheduler.jobs.DataCalcJob;
 import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
 import org.rhq.enterprise.server.scheduler.jobs.DynaGroupAutoRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
@@ -710,10 +712,22 @@ public class StartupBean implements StartupLocal {
         try {
             // TODO [mazz]: make the data purge job's cron string configurable via SystemManagerBean
             // For Quartz cron syntax, see: http://www.quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/crontrigger
-            String cronString = "0 0 * * * ?"; // every hour, on the hour
-            schedulerBean.scheduleSimpleCronJob(DataPurgeJob.class, true, false, cronString);
+            String cronString = "0 30 * * * ?"; // every hour, on the half-hour (to offset from DataCalcJob)
+            schedulerBean.scheduleSimpleCronJob(DataPurgeJob.class, true, false, cronString,
+                CronTrigger.MISFIRE_INSTRUCTION_DO_NOTHING);
         } catch (Exception e) {
             log.error("Cannot schedule data purge job.", e);
+        }
+
+        // Data Calc Job
+        try {
+            // TODO [mazz]: make the data calc job's cron string configurable via SystemManagerBean
+            // For Quartz cron syntax, see: http://www.quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/crontrigger
+            String cronString = "0 0 * * * ?"; // every hour, on the hour
+            schedulerBean.scheduleSimpleCronJob(DataCalcJob.class, true, false, cronString,
+                CronTrigger.MISFIRE_INSTRUCTION_DO_NOTHING);
+        } catch (Exception e) {
+            log.error("Cannot schedule data calc job.", e);
         }
 
         // Server Plugin Jobs
@@ -726,8 +740,9 @@ public class StartupBean implements StartupLocal {
         }
 
         try {
+            // Wait long enough to allow the Server instance jobs to start executing first.
             String cronString = "0 30 0 ? * SUN *"; // every sunday starting at 00:30.
-            schedulerBean.scheduleSimpleCronJob(StorageClusterReadRepairJob.class, true, true, cronString);
+            schedulerBean.scheduleSimpleCronJob(StorageClusterReadRepairJob.class, true, true, cronString, null);
         } catch (Exception e) {
             log.error("Cannot create storage cluster read repair job", e);
         }

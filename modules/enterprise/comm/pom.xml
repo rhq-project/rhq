@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
     <relativePath>../../../pom.xml</relativePath>
   </parent>
 
@@ -20,6 +20,7 @@
     <!-- Ports used by unit tests - can be overridden via profiles in settings.xml -->
     <rhq.comm.test.connectorBindPort>33333</rhq.comm.test.connectorBindPort>
     <rhq.comm.test.connector2BindPort>62621</rhq.comm.test.connector2BindPort>
+    <rhq.internal>false</rhq.internal>
   </properties>
 
   <dependencies>
@@ -53,8 +54,8 @@
     </dependency>
 
     <dependency>
-      <groupId>gnu-getopt</groupId>
-      <artifactId>getopt</artifactId>
+      <groupId>gnu.getopt</groupId>
+      <artifactId>java-getopt</artifactId>
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
 

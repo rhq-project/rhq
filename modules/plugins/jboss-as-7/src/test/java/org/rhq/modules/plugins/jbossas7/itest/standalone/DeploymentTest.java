@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,9 @@ package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.rhq.core.domain.util.ResourceTypeUtility.getMeasurementDefinitions;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.PLUGIN_NAME;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_TYPE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -118,8 +121,8 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
     @RunDiscovery
     public void initialDiscoveryTest() throws Exception {
         platform = validatePlatform();
-        serverResource = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
+        serverResource = waitForResourceByTypeAndKey(platform, platform, STANDALONE_RESOURCE_TYPE,
+            STANDALONE_RESOURCE_KEY);
     }
 
     @Test(priority = 11)
@@ -135,7 +138,7 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
         request.setPluginConfiguration(null);
         request.setPluginName(PLUGIN_NAME);
         request.setResourceConfiguration(deploymentConfig);
-        request.setResourceName(packageDetails.getName());
+        request.setResourceName(TestDeployments.DEPLOYMENT_1.getResourceKey());
         request.setResourceTypeName("Deployment");
 
         CreateResourceResponse response = pluginContainer.getResourceFactoryManager().executeCreateResourceImmediately(
@@ -145,7 +148,7 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
             + response.getErrorMessage();
 
         Resource deployment = waitForResourceByTypeAndKey(platform, serverResource, new ResourceType("Deployment",
-            PLUGIN_NAME, ResourceCategory.SERVICE, null), "deployment=" + packageDetails.getName());
+            PLUGIN_NAME, ResourceCategory.SERVICE, null), "deployment=" + TestDeployments.DEPLOYMENT_1.getResourceKey());
         // these tests may depend on the deployment children to be in inventory, make sure they are
         waitForAsyncDiscoveryToStabilize(deployment, 5000L, 10);
     }
@@ -156,7 +159,8 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
 
         Resource deployment = deploymentResources.iterator().next();
 
-        assert TestDeployments.DEPLOYMENT_1.getDeploymentName().equals(deployment.getName()) : "The deployment doesn't seem to have the expected name";
+        // the resource key and resource name are the same, and should be the filename stripped of version.
+        assert TestDeployments.DEPLOYMENT_1.getResourceKey().equals(deployment.getName()) : "The deployment doesn't seem to have the expected name";
 
         ContentDiscoveryReport report = pluginContainer.getContentManager().executeResourcePackageDiscoveryImmediately(
             deployment.getId(), "file");
@@ -229,9 +233,9 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
         measurementFacet.getValues(report, measurementScheduleRequests);
         assertEquals(report.getCallTimeData().size(), 0, "No calltime data was requested");
         assertTrue(
-                report.getNumericData().size() + report.getTraitData().size() == measurementScheduleRequests.size(),
-                "Some requested measurements are missing: "
-                        + getMissingMeasurements(measurementScheduleRequests, report.getNumericData(), report.getTraitData()));
+            report.getNumericData().size() + report.getTraitData().size() == measurementScheduleRequests.size(),
+            "Some requested measurements are missing: "
+                + getMissingMeasurements(measurementScheduleRequests, report.getNumericData(), report.getTraitData()));
     }
 
     @Test(priority = 16)
@@ -327,7 +331,7 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
     }
 
     static Set<String> getMissingMeasurements(Set<MeasurementScheduleRequest> measurementScheduleRequests,
-                                              Set<MeasurementDataNumeric> numericData, Set<MeasurementDataTrait> traitData) {
+        Set<MeasurementDataNumeric> numericData, Set<MeasurementDataTrait> traitData) {
         Set<String> missingMeasurements = new HashSet<String>();
         for (MeasurementScheduleRequest measurementScheduleRequest : measurementScheduleRequests) {
             missingMeasurements.add(measurementScheduleRequest.getName());
@@ -343,17 +347,18 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
 
     static Set<MeasurementScheduleRequest> getMeasurementScheduleRequests(Resource webRuntimeResource) {
         Set<MeasurementDefinition> measurementDefinitions = getMeasurementDefinitions(
-                webRuntimeResource.getResourceType(), new MeasurementDefinitionFilter() {
-            private final Set<DataType> acceptableDataTypes = EnumSet.of(DataType.MEASUREMENT, DataType.TRAIT);
+            webRuntimeResource.getResourceType(), new MeasurementDefinitionFilter() {
+                private final Set<DataType> acceptableDataTypes = EnumSet.of(DataType.MEASUREMENT, DataType.TRAIT);
 
-            public boolean accept(MeasurementDefinition measurementDefinition) {
-                return acceptableDataTypes.contains(measurementDefinition.getDataType());
-            }
-        });
+                @Override
+                public boolean accept(MeasurementDefinition measurementDefinition) {
+                    return acceptableDataTypes.contains(measurementDefinition.getDataType());
+                }
+            });
         Set<MeasurementScheduleRequest> measurementScheduleRequests = new HashSet<MeasurementScheduleRequest>();
         for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
             measurementScheduleRequests.add(new MeasurementScheduleRequest(-1, measurementDefinition.getName(), -1,
-                    true, measurementDefinition.getDataType(), measurementDefinition.getRawNumericType()));
+                true, measurementDefinition.getDataType(), measurementDefinition.getRawNumericType()));
         }
         return measurementScheduleRequests;
     }

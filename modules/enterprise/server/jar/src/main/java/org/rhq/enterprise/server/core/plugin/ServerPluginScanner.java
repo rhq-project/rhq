@@ -53,7 +53,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
@@ -106,7 +106,7 @@ public class ServerPluginScanner {
         this.scanned.clear();
 
         // we now have to see if the state of existing plugins have changed in the DB
-        ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
+        ServerPluginManagerLocal serverPluginsManager = LookupUtil.getServerPluginManager();
         List<ServerPlugin> allPlugins = serverPluginsManager.getAllServerPlugins();
         List<ServerPlugin> installedPlugins = new ArrayList<ServerPlugin>();
         List<ServerPlugin> undeployedPlugins = new ArrayList<ServerPlugin>();
@@ -198,7 +198,7 @@ public class ServerPluginScanner {
             this.scanned.add(updatedFile);
         }
 
-        ServerPluginsLocal pluginMgr = LookupUtil.getServerPlugins();
+        ServerPluginManagerLocal pluginMgr = LookupUtil.getServerPluginManager();
         ServerManagerLocal serverMgr = LookupUtil.getServerManager();
         Server thisServer = serverMgr.getServer();
 
@@ -242,7 +242,7 @@ public class ServerPluginScanner {
                 plugin.setHelp(String.valueOf(descriptor.getHelp().getContent().get(0)));
             }
 
-            ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
+            ServerPluginManagerLocal serverPluginsManager = LookupUtil.getServerPluginManager();
 
             // see if this plugin has been deleted previously; if so, don't register and delete the file
             PluginKey newPluginKey = new PluginKey(plugin);
@@ -439,7 +439,7 @@ public class ServerPluginScanner {
         List<File> updatedFiles = new ArrayList<File>();
 
         // process all the installed plugins
-        ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
+        ServerPluginManagerLocal serverPluginsManager = LookupUtil.getServerPluginManager();
         List<ServerPlugin> installedPlugins = serverPluginsManager.getServerPlugins();
         for (ServerPlugin installedPlugin : installedPlugins) {
             String name = installedPlugin.getName();

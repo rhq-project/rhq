@@ -2,7 +2,7 @@
 
 <!--
   ~ RHQ Management Platform
-  ~ Copyright (C) 2005-2013 Red Hat, Inc.
+  ~ Copyright (C) 2005-2014 Red Hat, Inc.
   ~ All rights reserved.
   ~
   ~ This program is free software; you can redistribute it and/or modify
@@ -501,11 +501,31 @@
       </operation>
 '>
 
+    <!ENTITY datasourcesConfiguration '
+      <resource-configuration>
+          <c:group name="attribute:installed-drivers" displayName="Installed JDBC drivers">
+              <c:list-property name="*4" displayName="Available drivers">
+                  <c:map-property name="*">
+                      <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="The symbolic name of this driver used to reference it in the register" />
+                      <c:simple-property name="deployment-name" required="false" type="string" readOnly="true" description="The name of the deployment unit from which the driver was loaded, if it was loaded from a deployment"/>
+                      <c:simple-property name="driver-module-name" required="false" type="string" readOnly="true" description="The name of the module from which the driver was loaded, if it was loaded from the module path"/>
+                      <c:simple-property name="module-slot" required="false" type="string" readOnly="true" description="The slot of the module from which the driver was loaded, if it was loaded from the module path"/>
+                      <c:simple-property name="driver-class-name" required="false" type="string" readOnly="true" description="The fully qualified class name of the driver&apos;s implementation of java.sql.Driver"/>
+                      <c:simple-property name="xa-data-source-class" required="false" type="string" readOnly="true" description="The fully qualified class name of the XA datasource implementation of javax.sql.XADataSource"/>
+                      <c:simple-property name="driver-major-version" required="false" type="integer" readOnly="true" description="The driver&apos;s major version number"/>
+                      <c:simple-property name="driver-minor-version" required="false" type="integer" readOnly="true" description="The driver&apos;s minor version number"/>
+                      <c:simple-property name="jdbc-compliant" required="false" type="boolean" readOnly="true" description="Whether or not the driver is JDBC compliant"/>
+                  </c:map-property>
+              </c:list-property>
+          </c:group>
+      </resource-configuration>
+      '>
+
     <!ENTITY datasourceReadWriteConfiguration '
       <resource-configuration>
         <c:simple-property name="connection-url" required="true" type="string" readOnly="false" description="The JDBC driver connection URL"/>
         <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="false">
-          <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
+          <c:option-source target="configuration" expressionScope="baseResource" expression="*4/installed-drivers=driver-name:type=&apos;Datasources&apos;"/>
         </c:simple-property>
         <c:simple-property name="driver-class" required="false" type="string" readOnly="false" description="The fully qualified name of the JDBC driver class"/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="false" description="Specifies the JNDI name for the datasource"/>
@@ -590,7 +610,7 @@
       <resource-configuration>
         <c:simple-property name="connection-url" required="true" type="string" readOnly="true" description="The JDBC driver connection URL"/>
         <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="true">
-          <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
+          <c:option-source target="configuration" expressionScope="baseResource" expression="*4/installed-drivers=driver-name:type=&apos;Datasources&apos;"/>
         </c:simple-property>
         <c:simple-property name="driver-class" required="false" type="string" readOnly="true" description="The fully qualified name of the JDBC driver class"/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
@@ -667,8 +687,8 @@
       <resource-configuration>
         <c:simple-property name="xa-datasource-class" required="true" type="string" readOnly="true" description="The fully qualified name of the javax.sql.XADataSource implementation"/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
-        <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit">
-          <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
+        <c:simple-property name="driver-name" required="true" type="string" readOnly="false" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit">
+          <c:option-source target="configuration" expressionScope="baseResource" expression="*4/installed-drivers=driver-name:type=&apos;Datasources&apos;"/>
         </c:simple-property>
         <c:simple-property name="user-name" required="false" type="string" readOnly="true" description="Specify the username used when creating a new connection."/>
         <c:simple-property name="password" required="false" type="string" readOnly="true" description="Specify the password used when creating a new connection."/>
@@ -779,7 +799,7 @@
         <c:simple-property name="xa-datasource-class" required="true" type="string" readOnly="true" description="The fully qualified name of the javax.sql.XADataSource implementation"/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
         <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit">
-          <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
+          <c:option-source target="configuration" expressionScope="baseResource" expression="*4/installed-drivers=driver-name:type=&apos;Datasources&apos;"/>
         </c:simple-property>
         <c:simple-property name="user-name" required="false" type="string" readOnly="true" description="Specify the username used when creating a new connection."/>
         <c:simple-property name="password" required="false" type="string" readOnly="true" description="Specify the password used when creating a new connection."/>
@@ -996,7 +1016,7 @@
             units="milliseconds" destinationType="Method Name"/>
 '>
 	<!ENTITY executeCliOperations '
-	<operation name="executeCommands" description="Executes command via jboss-cli" displayName="Execute CLI commands" timeout="60">
+	<operation name="executeCommands" description="Executes command via jboss-cli" displayName="Execute CLI commands" timeout="3600">
 		<parameters>
 			<c:simple-property name="commands" type="longString" required="true" description="Commands to be executed" />
 			<c:simple-property name="triggerAvailability" type="boolean" default="false" defaultValue="false" description="Trigger availability scan asynchronously on successfull script finish." />
@@ -1005,10 +1025,10 @@
 			<c:simple-property name="killOnTimeout" required="false" type="boolean" defaultValue="false" description="If true, the script will be forcibly terminated if the wait time expires before the script finishes. In other words, the script process will be killed if it times out. Default is false." />
 		</parameters>
 		<results>
-        	<c:simple-property name="operationResult"/>
+        	<c:simple-property name="operationResult" type="longString"/>
       	</results>
 	</operation>
-	<operation name="executeScript" description="Executes script via jboss-cli" displayName="Execute CLI script" timeout="60">
+	<operation name="executeScript" description="Executes script via jboss-cli" displayName="Execute CLI script" timeout="3600">
 		<parameters>
 			<c:simple-property name="file" type="string" displayName="Script file" required="true" description="JBoss CLI script file. Relative path based on AS Home Directory can be used." />
 			<c:simple-property name="triggerAvailability" type="boolean" default="false" defaultValue="false" description="Trigger availability scan asynchronously on successfull script finish." />
@@ -1017,7 +1037,7 @@
 			<c:simple-property name="killOnTimeout" required="false" type="boolean" defaultValue="false" description="If true, the script will be forcibly terminated if the wait time expires before the script finishes. In other words, the script process will be killed if it times out. Default is false." />
 		</parameters>
 		<results>
-        	<c:simple-property name="operationResult"/>
+        	<c:simple-property name="operationResult" type="longString"/>
       	</results>
 	</operation>
 '>
@@ -1100,16 +1120,19 @@
     <metric property="_internal:maxTime" category="performance" dataType="measurement" defaultInterval="120000"
             displayType="summary" measurementType="dynamic" description="Max time for a request since last metric get" units="milliseconds"
             displayName="Maximum request time"/>
-
     &serverKindMetrics;
     <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
-
     <metric property="domain-config-file" displayName="Domain Config File" dataType="trait" displayType="summary" defaultInterval="3600000"
             description="The name of the domain configuration file this host controller is using"/>
     <metric property="host-config-file" displayName="Host Config File" dataType="trait" displayType="summary" defaultInterval="3600000"
             description="The name of the host configuration file this host controller is using"/>
     <metric property="domain-host-name" displayName="Domain Host Name"  dataType="trait" displayType="summary" defaultInterval="3600000"
             description="The name of the host in domain this host controller is using"/>
+    <metric property="domain-name" displayName="Domain Name"  dataType="trait" displayType="summary" defaultInterval="3600000"
+            description="The name of the managed domain this Host Controller belongs to."/>
+    <metric property="domain-temp-dir" dataType="trait" displayName="Temporary Directory" defaultInterval="600000"
+            defaultOn="true"
+            description="The temporary directory (usually 'domain/tmp'). May serve as deployment directory for handover bundles'"/>
 
     <event name="logEntry" description="an entry in a log file"/>
 
@@ -1124,6 +1147,7 @@
                       </c:list-property>
                   </c:group>
       -->
+      <c:simple-property name="name" displayName="Domain Name" required="true" description="Name of the managed domain. This value is same for all HostControllers in domain, but only DomainController resource is allowed to update it."/>
       <c:group name="children:system-property:name+" displayName="System-properties">
         <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
           <c:map-property name="*:name" displayName="Name" readOnly="true">
@@ -1177,6 +1201,22 @@
         <include path="welcome-content"/>
       </includes>
     </drift-definition>
+    <drift-definition name="Template-Configuration Files" description="Monitor server configuration directory for drift.">
+      <basedir>
+        <value-context>pluginConfiguration</value-context>
+        <value-name>configDir</value-name>
+      </basedir>
+      <excludes>
+        <exclude path="." pattern="*_history/**/*"/>
+      </excludes>
+    </drift-definition>
+
+    <bundle-target>
+      <destination-base-dir name="Temp Directory" description="The temporary directory for a host controller">
+        <value-context>measurementTrait</value-context>
+        <value-name>domain-temp-dir</value-name>
+      </destination-base-dir>
+    </bundle-target>
 
     <help>
       <![CDATA[
@@ -1322,7 +1362,7 @@
         <c:simple-property name="path" default="deployment" readOnly="true"/>
       </plugin-configuration>
 
-      <operation name="promote" displayName="Assign to Server-Group" description="Assigns this deployment to one or all server group(s)">
+      <operation name="promote" displayName="Assign to Server-Group" description="Deprecated: Use server-group property found in resource configuration instead">
         <parameters>
           <c:simple-property name="server-group" required="true" description="Server group to assign to" type="string">
             <c:property-options>
@@ -1399,14 +1439,68 @@
       <c:simple-property name="logDir" type="file" description="the directory where log files will be written for this server" displayName="Log Directory" readOnly="true" required="false"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
 
-      &startScriptPluginConfigGroup;
+      <c:group name="operations">
+        <c:simple-property name="startScript" displayName="Start Script Path" type="file" required="false">
+          <c:description>
+            The path to the script that the Start and Restart operations should use to start the server. If the path is
+            not absolute, it is resolved relative to the server home directory
+            (e.g. &quot;bin/standalone.sh&quot;, &quot;bin/domain.sh&quot;).
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="startScriptPrefix" type="string" required="false">
+          <c:description>
+            A prefix command line that should be prepended to the start script command line by the Start and Restart
+            operations; the prefix command must be an absolute path (e.g. &quot;/usr/bin/sudo&quot;). This property is
+            most commonly used to run the AS7 process as a different user than the RHQ Agent (e.g. &quot;sudo -u jboss
+            -g jboss&quot; could be used to run AS7 as user &quot;jboss&quot; and group &quot;jboss&quot;. It is also
+            possible to chain prefix commands (e.g. &quot;nohup sudo -u jboss&quot; could be used to make AS7 ignore HUP
+            signals and to run as user &quot;jboss&quot;).
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="startScriptEnv" displayName="Start Script Environment Variables" type="longString" required="false">
+          <c:description>
+            The variables that the Start and Restart operations will add to the environment of the server start script.
+            Each name=value pair should be on a new line. Variable values should *not* be enclosed in quotes (e.g.
+            PATH=/usr/bin:/bin). On UNIX systems, the typical minimum set of environment variables is:
+            PATH=/usr/bin:/bin . And on Windows the typical minimum set is: PATH=C:\Windows\System32;C:\Windows ,
+            OS=Windows_NT , SYSTEMROOT=C:\Windows . In addition, it is good practice to set JAVA_HOME to the absolute
+            path of the install directory of the JRE or JDK you wish to use to run the AS7 instance. However, if
+            JAVA_HOME is not specified, the start script will attempt to find java in the PATH. There is currently
+            a 2000 character limit for this value.
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="startScriptArgs" displayName="Start Script Arguments" type="longString" required="false">
+          <c:description>
+            The arguments that the Start and Restart operations will pass to the server
+            start script. Each argument should be on a new line - for example: --server-config=standalone-ha-full.xml.
+            As an exception, the value of a space-delimited option can optionally be on the same line as the option -
+            for example: -c standalone-ha-full.xml. There is currently a 2000 character limit for this value.
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="javaOptsAdditional" displayName="Additional JAVA_OPTS" type="string" required="false">
+          <c:description>
+            Property used to make persistent changes to JAVA_OPTS. 
+            !!!WARNING!!! Feature available only if standard configuration file is used (standalone.conf or standalone.conf.bat). 
+            Please do not update the configuration file manually after setting this property. If value not set 
+            then configuration specific values are used. Value not set does not imply that configuration 
+            file does not set JAVA_OPTS, it simply means that the value was not set via RHQ. !!!WARNING!!! 
+            Value will be persisted to standalone.conf or standalone.conf.bat config file (OS dependent). 
+            Use this option to make the JAVA_OPTS configuration available for restarts outside of RHQ. 
+            The value (e.g.: -Xms512M -Xmx1024M) will be persisted in the configuration file. 
+            To remove any modifications done to the config file unset this property. The server requires restart 
+            for these changes to take effect.
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="nativeHost" default="127.0.0.1" required="true" description="Native management API host"/>
+        <c:simple-property name="nativePort" type="integer" required="true" default="9999" description="Native management API port" />
+      </c:group>
+
       &logSources;
       &managementInterfaceSecureConnectionSettings;
 
     </plugin-configuration>
 
     <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>
-
 
     <operation name="reload" description="Make the server re-load the (changed) configuration. To load a different startup config use 'restart'" displayName="Reload">
       <results>
@@ -1459,7 +1553,10 @@
     <metric property="config-file" dataType="trait" displayName="Server Config File" displayType="summary" defaultInterval="3600000"
             description="The name of the server configuration file this server is using"/>
     <metric property="deployDir" dataType="trait" displayName="Deploy Directory" defaultInterval="600000" defaultOn="true"
-            description="The deployment directory for bundles (usually 'standalone/deployments'"/>
+            description="The deployment directory for file based bundles (usually 'standalone/deployments')"/>
+    <metric property="temp-dir" dataType="trait" displayName="Temporary Directory" defaultInterval="600000"
+            defaultOn="true"
+            description="The temporary directory (usually 'standalone/tmp'). May serve as deployment directory for handover only bundles'"/>
 
     <event name="logEntry" description="an entry in a log file"/>
 
@@ -1561,6 +1658,15 @@
         <value-name>deployDir</value-name>
       </basedir>
     </drift-definition>
+    <drift-definition name="Template-Configuration Files" description="Monitor server configuration directory for drift.">
+      <basedir>
+        <value-context>pluginConfiguration</value-context>
+        <value-name>configDir</value-name>
+      </basedir>
+      <excludes>
+        <exclude path="." pattern="*_history/**/*"/>
+      </excludes>
+    </drift-definition>
 
     <bundle-target>
       <destination-base-dir name="Install Directory" description="The top directory where the application server is installed. (i.e. the value found in the 'Home Directory' connection property)">
@@ -1575,6 +1681,18 @@
         <value-context>measurementTrait</value-context>
         <value-name>deployDir</value-name>
       </destination-base-dir>
+      <destination-base-dir name="Temp Directory" description="The temporary directory for a standalone server">
+        <value-context>measurementTrait</value-context>
+        <value-name>temp-dir</value-name>
+      </destination-base-dir>
+      <destination-definition name="Patches">
+        <accepts bundle-type="Wildfly Patch"/>
+        <description>Use this location to apply patches to the server</description>
+        <connection>STANDALONE</connection>
+        <referenced-configuration>
+          <all of="pluginConfiguration"/>
+        </referenced-configuration>
+      </destination-definition>
     </bundle-target>
 
     <help>
@@ -1926,10 +2044,10 @@
 
     <service name="ManagedServerDeployment"
              class="DeploymentComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedSubsystemDiscovery"
              createDeletePolicy="neither"
              supportsMissingAvailabilityType="true"
-             description="Deployed package on a managed server. Go to server groups to manipulate it">
+             description="Deployed package on a managed server. Go to corresponding DomainDeployment to manipulate it">
 
       <plugin-configuration>
         <c:simple-property name="path" default="deployment" readOnly="true"/>
@@ -2575,7 +2693,7 @@
 
       <service name="Connector (Managed Server)"
                discovery="SubsystemDiscovery"
-               class="WebConnectorComponent">
+               class="BaseComponent">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="connector"/>
@@ -2601,7 +2719,7 @@
           <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
           <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
           <c:simple-property name="executor" required="false" type="string" readOnly="true" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
-          <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="true" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used and the number of cpu cores (512*cores for HTTP, 32*cores for AJP)."/>
+          <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="true" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
           <c:simple-property name="max-post-size" required="false" type="integer" readOnly="true" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
           <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="true" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
@@ -5539,7 +5657,7 @@
 
       <service name="Connector (Profile)"
                discovery="SubsystemDiscovery"
-               class="WebConnectorComponent"
+               class="BaseComponent"
                createDeletePolicy="both">
 
         <plugin-configuration>
@@ -5560,7 +5678,7 @@
           <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
           <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
           <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
-          <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used and the number of cpu cores (512*cores for HTTP, 32*cores for AJP)."/>
+          <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
           <c:simple-property name="max-post-size" required="false" type="integer" readOnly="false" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
           <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="false" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
@@ -7575,7 +7693,7 @@
 
     <service name="Connector"
              discovery="SubsystemDiscovery"
-             class="WebConnectorComponent"
+             class="BaseComponent"
              createDeletePolicy="both">
 
       <plugin-configuration>
@@ -7604,7 +7722,7 @@
         <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
         <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
         <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
-        <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used and the number of cpu cores (512*cores for HTTP, 32*cores for AJP)."/>
+        <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
         <c:simple-property name="max-post-size" required="false" type="integer" readOnly="false" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
         <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="false" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
@@ -7788,6 +7906,8 @@
       <c:simple-property name="path" readOnly="true" default="subsystem=datasources"/>
     </plugin-configuration>
 
+    &datasourcesConfiguration;
+
     <!-- not needed for hot-deployed drivers - only for module ones, but I am not sure we want to support that
             <operation name="addDriver" displayName="Add a JDBC driver">
                 <parameters>
@@ -7906,6 +8026,8 @@
       <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
+    &datasourcesConfiguration;
+
     <service name="DataSource (Managed)"
              discovery="SubsystemDiscovery"
              class="DatasourceComponent"
@@ -7941,40 +8063,6 @@
     </service>
 
   </service>
-
-  <!-- TO BE ADDED to Datasource at a later time
-          <service name="JdbcDriver"
-                   discovery="SubsystemDiscovery"
-                   class="DatasourceComponent"
-                   singleton="true">
-
-              <plugin-configuration>
-                  <c:simple-property name="path" readOnly="true" default="jdbc-driver"/>
-              </plugin-configuration>
-
-
-              <resource-configuration>
-                  <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="The symbolic name of this driver used to reference it in the register"/>
-                  <c:simple-property name="deployment-name" required="false" type="string" readOnly="true" description="The name of the deployment unit from which the driver was loaded, if it was loaded from a deployment"/>
-                  <c:simple-property name="driver-module-name" required="false" type="string" readOnly="true" description="The name of the module from which the driver was loaded, if it was loaded from the module path"/>
-                  <c:simple-property name="module-slot" required="false" type="string" readOnly="true" description="The slot of the module from which the driver was loaded, if it was loaded from the module path"/>
-                  <c:simple-property name="driver-class-name" required="false" type="string" readOnly="true" description="The fully qualified class name of the driver's implementation of java.sql.Driver"/>
-                  <c:simple-property name="xa-data-source-class" required="false" type="string" readOnly="true" description="The fully qualified class name of the XA datasource implementation of javax.sql.XADataSource"/>
-                  <c:simple-property name="driver-major-version" required="false" type="integer" readOnly="true" description="The driver's major version number"/>
-                  <c:simple-property name="driver-minor-version" required="false" type="integer" readOnly="true" description="The driver's minor version number"/>
-                  <c:simple-property name="jdbc-compliant" required="false" type="boolean" readOnly="true" description="Whether or not the driver is JDBC compliant"/>
-  &lt;!&ndash;
-                  <c:template name="add" description="Add a jdbc driver"> &lt;!&ndash; See BZ 705713 TODO &ndash;&gt;
-                      <c:simple-property name="driver-name" required="true"/>
-                      <c:simple-property name="deployment-name" required="true">
-                          <c:option-source target="resource" expression="type=DomainDeployment"/> &lt;!&ndash; TODO filter ? &ndash;&gt;
-                      </c:simple-property>
-                      <c:simple-property name="driver-class-name" required="true"/>
-                  </c:template>
-  &ndash;&gt;
-              </resource-configuration>
-          </service>
-  -->
 
   <service name="JVM Definition (Host)"
            description="A JVM Definition on Host level, that can serve as templates for server groups and managed servers"
@@ -8987,7 +9075,7 @@
 
   <service name="Deployment"
            class="DeploymentComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedSubsystemDiscovery"
            createDeletePolicy="both"
            supportsMissingAvailabilityType="true"
            creationDataType="content">
@@ -9049,7 +9137,7 @@
 
   <service name="Subdeployment"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedSubsystemDiscovery"
            description="Runtime resources associated with a child deployment packaged inside another deployment; for example a war packaged inside an ear.">
 
     <runs-inside>
@@ -9062,6 +9150,47 @@
 
   </service>
 
+  <service name="Resource Adapters Runtime"
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           description="Configuration of the resource adapters subsystem."
+           singleton="true"
+           >
+
+    <runs-inside>
+      <parent-resource-type name="Deployment" plugin="&pluginName;"/>
+      <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
+      <parent-resource-type name="ManagedServerDeployment" plugin="&pluginName;"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="subsystem=resource-adapters"/>
+    </plugin-configuration>
+
+    <service name="Connection Definition Runtime"
+             discovery="SubsystemDiscovery"
+             class="RAConnectionDefinitionRuntimeComponent"
+             description="Specifies the connection definitions."
+             >
+      <plugin-configuration>
+       <c:simple-property name="path" readOnly="true" default="statistics=statistics/connection-definitions"/>
+      </plugin-configuration>
+
+      <metric property="ActiveCount" description="The active count"/>
+      <metric property="AvailableCount" description="The available count"/>
+      <metric property="AverageBlockingTime" description="The average time spent blocking for a connection"/>
+      <metric property="AverageCreationTime" description="The average time spent creating a physical connection"/>
+      <metric property="CreatedCount" description="The created count"/>
+      <metric property="DestroyedCount" description="The destroyed count"/>
+      <metric property="MaxCreationTime" description="The maximum time for creating a physical connection"/>
+      <metric property="MaxUsedCount" description="The maximum number of connections used"/>
+      <metric property="MaxWaitTime" description="The maximum wait time for a connection"/>
+      <metric property="TimedOut" description="The timed out count"/>
+      <metric property="TotalBlockingTime" description="The total blocking time"/>
+      <metric property="TotalCreationTime" description="The total time spent creating physical connections"/>
+
+    </service>
+  </service>
 
   <service name="Web Runtime"
            class="WebRuntimeComponent"
@@ -9115,7 +9244,7 @@
 
   <service name="Datasources Runtime"
            class="DatasourceComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedRuntimeDiscovery"
            description="Runtime resources exposed by data sources included in this deployment."
            singleton="true">
 
@@ -9131,7 +9260,7 @@
 
     <service name="XA Datasource Runtime"
              class="DatasourceComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="A JDBC XA data-source configuration">
 
       <plugin-configuration>
@@ -9252,7 +9381,7 @@
 
     <service name="Datasource Runtime"
              class="DatasourceComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="A JDBC data-source configuration">
 
       <runs-inside>
@@ -9367,7 +9496,7 @@
 
   <service name="Messaging Runtime"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedRuntimeDiscovery"
            description="Runtime resources exposed by messaging resources included in this deployment."
            singleton="true">
 
@@ -9383,7 +9512,7 @@
 
     <service name="HornetQ Server Runtime"
              class="BaseComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="A HornetQ server instance."
              createDeletePolicy="both">
 
@@ -9648,7 +9777,7 @@
 
       <service name="JMS Queue Runtime"
                class="BaseComponent"
-               discovery="SubsystemDiscovery"
+               discovery="VersionedRuntimeDiscovery"
                description="Defines a JMS queue.">
 
         <plugin-configuration>
@@ -9846,7 +9975,7 @@
 
       <service name="JMS Topic Runtime"
                class="BaseComponent"
-               discovery="SubsystemDiscovery"
+               discovery="VersionedRuntimeDiscovery"
                description="Defines a JMS queue.">
 
         <plugin-configuration>
@@ -9967,7 +10096,7 @@
 
   <service name="EJB3 Runtime"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedRuntimeDiscovery"
            description="Runtime resources exposed by EJBs components included in this deployment."
            singleton="true">
 
@@ -9983,7 +10112,7 @@
 
     <service name="Message Driven Bean Runtime"
              class="Ejb3BeanRuntimeComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="Bean component included in the deployment.">
 
       <plugin-configuration>
@@ -10029,7 +10158,7 @@
 
     <service name="Singleton Bean Runtime"
              class="Ejb3BeanRuntimeComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="Singleton bean component included in the deployment.">
 
       <plugin-configuration>
@@ -10070,7 +10199,7 @@
 
     <service name="Stateless Session Bean Runtime"
              class="Ejb3BeanRuntimeComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="Stateless session bean component included in the deployment.">
 
       <plugin-configuration>
@@ -10116,7 +10245,7 @@
 
     <service name="Entity Bean Runtime"
              class="Ejb3BeanRuntimeComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="Entity bean component included in the deployment.">
 
       <plugin-configuration>
@@ -10142,7 +10271,7 @@
 
     <service name="Stateful Session Bean Runtime"
              class="Ejb3BeanRuntimeComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="Stateful session bean component included in the deployment.">
 
       <plugin-configuration>
@@ -10166,7 +10295,7 @@
 
   <service name="Webservices Runtime"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedRuntimeDiscovery"
            description="Runtime resources exposed by web service components in the deployment."
            singleton="true">
 
@@ -10182,7 +10311,7 @@
 
     <service name="Endpoint Runtime"
              class="BaseComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="Webservice endpoint.">
 
       <plugin-configuration>
@@ -10211,7 +10340,7 @@
 
   <service name="JPA Runtime"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedRuntimeDiscovery"
            description="The configuration of the JPA subsystem."
            singleton="true">
 
@@ -10226,8 +10355,8 @@
     </plugin-configuration>
 
     <service name="Hibernate Persistence Unit"
-             class="BaseComponent"
-             discovery="SubsystemDiscovery"
+             class="HibernatePersistenceUnitComponent"
+             discovery="VersionedRuntimeDiscovery"
              description="Runtime information about JPA use in the deployment."
              singleton="true">
 
@@ -10250,6 +10379,46 @@
       <operation name="subsystem:summary" description="Log the statistics.">
         <results>
           <c:simple-property name="operationResult" description="Log the statistics."/>
+        </results>
+      </operation>
+
+      <operation name="viewQueries" description="View statistical information about queries executed by Hibernate">
+        <parameters>
+          <c:simple-property name="batchSize" required="true" type="integer" default="10"
+                             description="Sets the Query Cache resources read batch size. Defaults to 10.">
+            <c:constraint>
+              <c:integer-constraint minimum="1"/>
+            </c:constraint>
+          </c:simple-property>
+          <c:simple-property name="managementQueryTimeout" required="true" type="integer" default="60" units="seconds"
+                             description="In seconds. Sets the connection read timeout for queries sent to the server management interface. Defaults to 60 seconds.">
+            <c:constraint>
+              <c:integer-constraint minimum="1"/>
+            </c:constraint>
+          </c:simple-property>
+        </parameters>
+        <results>
+          <c:list-property name="queries">
+            <c:map-property name="query">
+              <c:simple-property name="query-name" description="Query name."/>
+              <c:simple-property name="query-execution-count" type="long"
+                                 description="Get number of times query has been executed."/>
+              <c:simple-property name="query-execution-row-count" type="long"
+                                 description="Get number of rows returned from executions of query."/>
+              <c:simple-property name="query-execution-min-time" type="long"
+                                 description="Get the minimum time in milliseconds of the query."/>
+              <c:simple-property name="query-execution-max-time" type="long"
+                                 description="Get the time in milliseconds of the query."/>
+              <c:simple-property name="query-execution-average-time" type="long"
+                                 description="Get the average time in milliseconds of the query."/>
+              <c:simple-property name="query-cache-hit-count" type="long"
+                                 description="Get the number of times query was retrieved from cache."/>
+              <c:simple-property name="query-cache-miss-count" type="long"
+                                 description="Get the number of times query was not found in cache."/>
+              <c:simple-property name="query-cache-put-count" type="long"
+                                 description="Get the number of times query was put in cache."/>
+            </c:map-property>
+          </c:list-property>
         </results>
       </operation>
 
@@ -10288,7 +10457,7 @@
 
       <service name="Entity Cache"
                class="BaseComponent"
-               discovery="SubsystemDiscovery"
+               discovery="VersionedRuntimeDiscovery"
                description="Statistics for a Hibernate Second Level Cache region."
                singleton="true">
 
@@ -10302,29 +10471,9 @@
         <metric property="put-count" description="Number of cacheable entities/collections put in the cache."/>
       </service>
 
-      <!--<service name="Query Cache"-->
-               <!--class="BaseComponent"-->
-               <!--discovery="QueryCacheDiscovery"-->
-               <!--description="Statistics for individual queries.">-->
-
-        <!--<plugin-configuration>-->
-          <!--<c:simple-property name="path" readOnly="true"/>-->
-        <!--</plugin-configuration>-->
-
-        <!--<metric property="query-cache-hit-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was retrieved from cache."/>-->
-        <!--<metric property="query-cache-miss-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was not found in cache."/>-->
-        <!--<metric property="query-cache-put-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was put in cache."/>-->
-        <!--<metric property="query-execution-average-time" description="Get the average time in milliseconds of the query."/>-->
-        <!--<metric property="query-execution-count" displayType="summary" measurementType="trendsup" description="Get number of times query has been executed."/>-->
-        <!--<metric property="query-execution-max-time" description="Get the time in milliseconds of the query."/>-->
-        <!--<metric property="query-execution-min-time" description="Get the minimum time in milliseconds of the query."/>-->
-        <!--<metric property="query-execution-row-count" displayType="summary" measurementType="trendsup" description="Get number of rows returned from executions of query."/>-->
-        <!--<metric property="query-name" dataType="trait" description="Query name."/>-->
-      <!--</service>-->
-
       <service name="Entity"
                class="BaseComponent"
-               discovery="SubsystemDiscovery"
+               discovery="VersionedRuntimeDiscovery"
                description="Statistics for individual entities.">
 
         <plugin-configuration>
@@ -10341,7 +10490,7 @@
 
       <service name="Collection"
                class="BaseComponent"
-               discovery="SubsystemDiscovery"
+               discovery="VersionedRuntimeDiscovery"
                description="Statistics for individual collections.">
 
         <plugin-configuration>
@@ -11185,7 +11334,7 @@
 
   <service name="EJB3"
            discovery="SubsystemDiscovery"
-           class="BaseComponent"
+           class="Ejb3Component"
            description="The configuration of the ejb3 subsystem."
            singleton="true"
            subCategory="Subsystems|Container">
@@ -13539,4 +13688,219 @@
     </resource-configuration>
   </service>
 
+
+  <service name="Wildfly/JBoss EAP Patch Handler"
+           discovery="PatchHandlerDiscoveryComponent"
+           class="PatchHandlerComponent"
+           singleton="true"
+           description="Handles installation of patches of Wildfly or JBoss EAP application servers and their variants">
+
+      <runs-inside>
+          <parent-resource-type name="Windows"  plugin="Platforms"/>
+          <parent-resource-type name="Linux"    plugin="Platforms"/>
+          <parent-resource-type name="Solaris"  plugin="Platforms"/>
+          <parent-resource-type name="HP-UX"    plugin="Platforms"/>
+          <parent-resource-type name="AIX"      plugin="Platforms"/>
+          <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
+          <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+      </runs-inside>
+
+      <bundle type="Wildfly Patch">
+          <targets>
+              <resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+          </targets>
+      </bundle>
+  </service>
+
+  <help >
+    <![CDATA[
+    <h3>Versioned Deployments (Since RHQ 4.12)</h3>
+    
+    This plugin supports Versioned Deployments.  A Deployment  (EAR, WAR, etc) can be a managed server deployment or
+    standalone deployment. This includes Versioned Subdeployments (WAR, EJB JAR inside an EAR, etc).  A Versioned
+    Deployment is one that incorporates a version into the artifact name.  For example, testapp-1.0.war.  By default
+    the plugin will strip the version from the artifact and create a resource named "testapp.war" with version "1.0".
+    The benefit to this approach is that when upgrading to testapp-2.0.war, for example, the logical "testapp.war"
+    resource remains in inventory and is reset to version "2.0".  In this way all historical data is maintained, and the
+    resource does not fall into a permanent "DOWN" state.  Without versioned deployments, after the upgrade there would
+    exist in inventory two resources: a permanently DOWN testapp-1.0.war resource as well as a new testapp-2.0.war
+    resource.
+
+    </p>
+    The version matching is designed to match "Maven-style" versions (see http://mojo.codehaus.org/versions-maven-plugin/version-rules.html).
+    The version stamp is delimited by a dash, and must minimally include a Major.Minor version.  This avoids confusion
+    with distinct but poorly named Deployments like app-1.war and app-2.war, or app1.war and app2.war.  In both of those
+    cases the version matcher would not match and all of the apps would be different resources.
+
+    <p/>
+    The default pattern is the following regular expression:<pre>^(.*?)-([0-9]+\\.[0-9].*)(\\..*)$</pre>
+
+    <p/>
+    There is a system property that can be set to alter the default behavior of the plugin.  Note that for the property
+    to have any effect it must be applied to every applicable RHQ Agent prior to its startup.  To disable versioned
+    Deployments and allow for version stamps to remain in the Deployment names set:
+    <pre>rhq.as7.VersionedSubsystemDiscovery.pattern=disable</pre>
+    To override the default pattern (not recommended) set:
+    <pre>rhq.as7.VersionedSubsystemDiscovery.pattern=YourPatternHere</pre>
+    Note that the custom regex pattern *must* capture three groups as does the default. Group1=name, Group2=version,
+    Group3=extension.  The single pattern is applied to all Deployments.
+
+    <h4>Upgrade Behavior</h4>
+    Earlier versions of RHQ may have Deployment resources in inventory that contain version stamps in their names.  This
+    plugin implements the ResourceUpgradeFacet, which will convert the existing resources on the first Agent startup
+    with the new updated plugin.  To avoid this the above system property must be set in advance.  Behavior can always
+    be changed.  If necessary update the system property as needed and, when desired, uninventory any
+    old resources that are no longer needed after the change.
+    
+    <h5>Multiple Versions of the Same Resource in Inventory</h5>
+    The new feature is designed for the use case where a single version of a given resource is in inventory under a
+    given parent.  When upgraded the logical resource is maintained and its version is updated.  For installations where
+    multiple versions already exist the resource upgrade may generate failures.  For example, if under some server I
+    have both app-1.0.war and app-2.0.war deployed, both will try to upgrade to the same logical resource: app.war.  To
+    avoid issues it is recommended to either, 1) disable this feature prior to upgrade or 2) uninventory resources leaving
+    only a single version of the resource.
+    
+    <h3>MISSING Resource Support (Since RHQ 4.12)</h3>
+    This plugin supports the MISSING Resource Policy feature introduced in RHQ 4.12.  Deployments and Domain Deployments
+    can be configured to be automatically uninventoried or ignored if they can no longer be found in the underlying
+    appication server.
+    
+    <h5>Interaction with Versioned Deployment Support</h5>
+    If utilizing versioned deployments as described above, it is recommended to leave the MISSING Policy as DOWN (the
+    default).  Otherwise, while updating versions it is possible during the update window to have the resource removed
+    or ignored.
+
+    <h3>Bundle Handover Support (Since RHQ 4.12)</h3>
+    <p>The <em>Standalone Server</em> and <em>Host Controller</em> resource types from this plugin support the Bundle
+    Content Handover feature introduced in RHQ 4.12. The following sections show example recipes for bundle deployments
+    with resources of these types as bundle targets. They also define the list of actions and parameters the resource
+    component understands.</p>
+
+    <h5>Standalone Server</h5>
+    This resource type supports the following actions:<br>
+    <br>
+    <strong>action = deployment: deploys the content to the server</strong><br>
+    Optional parameters:<br>
+    <ul>
+        <li>runtimeName: Runtime name of the uploaded file (e.g. 'my.war'); if not present, the file name is used</li>
+    </ul>
+    <br>
+    <strong>action = execute-script: executes a server CLI script</strong><br>
+    Optional parameters:<br>
+    <ul>
+        <li>waitTime (in seconds): how long to wait for completion; defaults to an hour</li>
+        <li>killOnTimeout (true/false): should the CLI process be killed if timeout is reached; defaults to false</li>
+    </ul>
+    <br>
+    <strong>action = patch: installs a patch on the server</strong><br>
+    Optional parameters:<br>
+    <ul>
+        <li>override: The value is a comma-separated list of the miscellaneous
+                      items in the patch that can be overridden on the server
+                      whether the item reports a conflict or not.</li>
+        <li>preserve: The value is a comma-separated list of the miscellaneous
+                      items that must be preserved and not modified by
+                      applying or rolling back a patch.</li>
+        <li>override-all: The argument does not expect any value and is
+                          optional. The default is 'false'.
+                          It signifies to bypass any content verification on the
+                          miscellaneous items changed by the patch.</li>
+        <li>override-modules: The argument does not expect any value and is
+                              optional. The default is 'false'.
+                              It signifies to bypass any content verification on the
+                              modules and OSGi bundles affected by the patch.</li>
+    </ul>
+    <br>
+    <p>Sample ANT bundle recipe</p>
+    <pre>
+    &lt;?xml version="1.0"?&gt;
+
+    &lt;project name="handover-bundle" default="main" xmlns:rhq="antlib:org.rhq.bundle"&gt;
+
+      &lt;rhq:bundle name="example.com (EAP 6)" version="1.1"
+                  description="example.com corporate website hosted on EAP 6"&gt;
+
+        &lt;rhq:input-property
+            name="myapp.runtime.name"
+            defaultValue="website.war"
+            required="true"/&gt;
+
+        &lt;rhq:deployment-unit name="example.com deployment unit" compliance="filesAndDirectories"&gt;
+          &lt;rhq:file name="prepareDatasource.cli"&gt;
+            &lt;rhq:handover action="execute-script" failonerror="false"/&gt;
+          &lt;/rhq:file&gt;
+          &lt;rhq:archive name="website.war"&gt;
+            &lt;rhq:handover action="deployment"&gt;
+              &lt;rhq:handover-param name="runtimeName" value="${myapp.runtime.name}"/&gt;
+            &lt;/rhq:handover&gt;
+          &lt;/rhq:archive&gt;
+        &lt;/rhq:deployment-unit&gt;
+
+      &lt;/rhq:bundle&gt;
+
+      &lt;target name="main"/&gt;
+
+    &lt;/project&gt;
+    </pre>
+
+    <h5>Host Controller</h5>
+    This component supports the following actions:<br>
+    <br>
+    <strong>action = deployment: deploys the content to a server group</strong><br>
+    Required parameters:<br>
+    <ul>
+        <li>serverGroup: The name of the server group this deployment should be deployed to; this is the EAP domain
+        server group, do not confuse it with RHQ's bundle destination resource group</li>
+    </ul>
+    Optional parameters:<br>
+    <ul>
+        <li>runtimeName: Runtime name of the uploaded file (e.g. 'my.war'); if not present, the file name is used</li>
+    </ul>
+    <br>
+    <strong>action = execute-script: executes a server CLI script</strong><br>
+    Optional parameters:<br>
+    <ul>
+        <li>waitTime (in seconds): how long to wait for completion; defaults to an hour</li>
+        <li>killOnTimeout (true/false): should the CLI process be killed if timeout is reached; defaults to false</li>
+    </ul>
+    <br>
+    <p>Sample ANT bundle recipe</p>
+    <pre>
+    &lt;?xml version="1.0"?&gt;
+
+    &lt;project name="handover-bundle" default="main" xmlns:rhq="antlib:org.rhq.bundle"&gt;
+
+      &lt;rhq:bundle name="example.com (EAP 6)" version="1.1"
+                  description="example.com corporate website hosted on EAP 6"&gt;
+
+        &lt;rhq:input-property
+            name="myapp.runtime.name"
+            defaultValue="website.war"
+            required="true"/&gt;
+        &lt;rhq:input-property
+            name="server.group"
+            defaultValue="main-server-group-01"
+            required="true"/&gt;
+
+        &lt;rhq:deployment-unit name="example.com deployment unit" compliance="filesAndDirectories"&gt;
+          &lt;rhq:file name="prepareDatasource.cli"&gt;
+            &lt;rhq:handover action="execute-script" failonerror="false"/&gt;
+          &lt;/rhq:file&gt;
+          &lt;rhq:archive name="website.war"&gt;
+            &lt;rhq:handover action="deployment"&gt;
+              &lt;rhq:handover-param name="runtimeName" value="${myapp.runtime.name}"/&gt;
+              &lt;rhq:handover-param name="serverGroup" value="${server.group}"/&gt;
+            &lt;/rhq:handover&gt;
+          &lt;/rhq:archive&gt;
+        &lt;/rhq:deployment-unit&gt;
+
+      &lt;/rhq:bundle&gt;
+
+      &lt;target name="main"/&gt;
+
+    &lt;/project&gt;
+    </pre>
+
+    ]]>
+  </help>
 </plugin>

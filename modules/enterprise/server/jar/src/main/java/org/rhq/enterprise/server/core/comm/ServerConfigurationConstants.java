@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.core.comm;
 
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences.Restricted;
+
 /**
  * These are the names of the known server configuration preferences. All configuration preferences are stored in flat
  * properties (there is no hierarchy - simply a set of name/value pairs).
@@ -45,6 +47,11 @@ public interface ServerConfigurationConstants {
      * The prefix that all server configuration property names start with.
      */
     String PROPERTY_NAME_PREFIX = "rhq.server.";
+
+    /**
+     * The prefix that all server configuration property names start with.
+     */
+    String COMMUNICATIONS_PROPERTY_NAME_PREFIX = "rhq.communications.";
 
     /**
      * The configuration schema version.
@@ -186,11 +193,13 @@ public interface ServerConfigurationConstants {
     /**
      * The password used to access the keystore file.
      */
+    @Restricted
     String CLIENT_SENDER_SECURITY_KEYSTORE_PASSWORD = PROPERTY_NAME_PREFIX + "client.security.keystore.password";
 
     /**
      * The password to gain access to the key found in the keystore.
      */
+    @Restricted
     String CLIENT_SENDER_SECURITY_KEYSTORE_KEY_PASSWORD = PROPERTY_NAME_PREFIX
         + "client.security.keystore.key-password";
 
@@ -212,6 +221,7 @@ public interface ServerConfigurationConstants {
     /**
      * The password used to access the truststore file.
      */
+    @Restricted
     String CLIENT_SENDER_SECURITY_TRUSTSTORE_PASSWORD = PROPERTY_NAME_PREFIX + "client.security.truststore.password";
 
     /**
@@ -225,4 +235,22 @@ public interface ServerConfigurationConstants {
      * If the client sender server auth mode is not specified, this is the default.
      */
     boolean DEFAULT_CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE = false;
+
+    /**
+     * Communications security keystore key password
+    */
+    @Restricted
+    String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_KEY_PASSWORD = COMMUNICATIONS_PROPERTY_NAME_PREFIX + "connector.security.keystore.key-password";
+
+    /**
+     * Communications security keystore password
+     */
+    @Restricted
+    String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_PASSWORD = COMMUNICATIONS_PROPERTY_NAME_PREFIX + "connector.security.keystore.password";
+
+    /**
+     * Communications security truststore password
+     */
+    @Restricted
+    String COMMUNICATIONS_CONNECTOR_SECURITY_TRUSTSTORE_PASSWORD = COMMUNICATIONS_PROPERTY_NAME_PREFIX + "connector.security.truststore.password";
 }

@@ -105,7 +105,7 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
         idDataField.setCanEdit(false);
         fields.add(idDataField);
 
-        DataSourceTextField usernameField = createTextField(Field.NAME, MSG.dataSource_users_field_name(), 3, 100, true);
+        DataSourceTextField usernameField = createTextField(Field.NAME, MSG.common_title_username(), 3, 100, true);
         // Don't allow characters that could be used in HTML intended for an XSS attack.
         RegExpValidator regExpValidator = new RegExpValidator("[^&<]*");
         usernameField.setValidators(regExpValidator);

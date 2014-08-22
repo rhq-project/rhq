@@ -69,7 +69,9 @@ import org.rhq.coregui.client.components.form.NumberWithUnitsValidator;
 import org.rhq.coregui.client.components.form.SortedSelectItem;
 import org.rhq.coregui.client.components.form.TimeUnit;
 import org.rhq.coregui.client.util.MeasurementConverterClient;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.measurement.MeasurementParser;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
@@ -114,6 +116,7 @@ public class ConditionEditor extends EnhancedVLayout {
     private static final String OPERATION_RESULTS_ITEMNAME = "operationResults";
     private static final String EVENT_SEVERITY_ITEMNAME = "eventSeverity";
     private static final String EVENT_REGEX_ITEMNAME = "eventRegex";
+    private static final String EVENT_SOURCE_PATH_REGEX_ITEMNAME = "eventSourcePathRegex";
     private static final String DRIFT_DEFNAME_REGEX_ITEMNAME = "driftDefNameRegex";
     private static final String DRIFT_PATHNAME_REGEX_ITEMNAME = "driftPathNameRegex";
     private static final String RANGE_METRIC_ITEMNAME = "rangeMetric";
@@ -184,15 +187,12 @@ public class ConditionEditor extends EnhancedVLayout {
         if (operationDefinitions != null && operationDefinitions.size() > 0) {
             this.supportsOperations = true;
         }
+    }
 
-        // initialize the form
-        form = new DynamicForm() {
-            @Override
-            protected void onInit() {
-                super.onInit();
-                onFormInit(this);
-            }
-        };
+    @Override
+    protected void onInit() {
+        super.onInit();
+        initForm();
 
         HLayout wrapper = new HLayout();
         wrapper.setLayoutMargin(20);
@@ -204,8 +204,7 @@ public class ConditionEditor extends EnhancedVLayout {
         addMember(buildToolStrip());
     }
 
-    private void onFormInit(final DynamicForm form) {
-
+    private void initForm() {
         conditionTypeSelectItem = new SortedSelectItem("conditionType",
             MSG.view_alert_definition_condition_editor_option_label());
         LinkedHashMap<String, String> condTypes = new LinkedHashMap<String, String>(7);
@@ -324,11 +323,12 @@ public class ConditionEditor extends EnhancedVLayout {
         formItems.add(0, conditionTypeSelectItem);
         formItems.add(spacer2);
 
-        form.setFields(formItems.toArray(new FormItem[formItems.size()]));
+        form = new DynamicForm();
+        form.setItems(formItems.toArray(new FormItem[formItems.size()]));
     }
 
     private ToolStrip buildToolStrip() {
-        IButton ok = new IButton(MSG.common_button_ok());
+        IButton ok = new EnhancedIButton(MSG.common_button_ok(), ButtonColor.BLUE);
         ok.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 if (form.validate(false)) {
@@ -339,7 +339,7 @@ public class ConditionEditor extends EnhancedVLayout {
             }
         });
 
-        IButton cancel = new IButton(MSG.common_button_cancel());
+        IButton cancel = new EnhancedIButton(MSG.common_button_cancel());
         cancel.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 closeFunction.run();
@@ -501,7 +501,10 @@ public class ConditionEditor extends EnhancedVLayout {
                 newCondition.setName(form.getValueAsString(EVENT_SEVERITY_ITEMNAME));
                 newCondition.setComparator(null);
                 newCondition.setThreshold(null);
-                newCondition.setOption(form.getValueAsString(EVENT_REGEX_ITEMNAME));
+                Object regex1 = form.getValue(EVENT_REGEX_ITEMNAME);
+                Object regex2 = form.getValue(EVENT_SOURCE_PATH_REGEX_ITEMNAME);
+                newCondition.setOption((regex1 == null ? "" : regex1) + AlertCondition.ADHOC_SEPARATOR
+                    + (regex2 == null ? "" : regex2));
                 newCondition.setMeasurementDefinition(null);
                 break;
             }
@@ -884,8 +887,11 @@ public class ConditionEditor extends EnhancedVLayout {
         SelectItem traitSelection = new SortedSelectItem(TRAIT_METRIC_ITEMNAME,
             MSG.view_alert_definition_condition_editor_metric_trait_change_value());
         traitSelection.setValueMap(traitsMap);
-        traitSelection.setDefaultValue(editMode ? String.valueOf(existingCondition.getMeasurementDefinition().getId())
-            : traitsMap.keySet().iterator().next()); // just use the first one if it is not in edit mode
+        if (editMode) {
+            traitSelection.setDefaultValue(String.valueOf(existingCondition.getMeasurementDefinition().getId()));
+        } else {
+            traitSelection.setDefaultToFirstOption(true);
+        }
         traitSelection.setWidth("*");
         traitSelection.setRedrawOnChange(true);
         traitSelection.setShowIfCondition(ifFunc);
@@ -995,8 +1001,11 @@ public class ConditionEditor extends EnhancedVLayout {
 
         SelectItem opSelection = new SortedSelectItem(OPERATION_NAME_ITEMNAME, MSG.common_title_value());
         opSelection.setValueMap(ops);
-        opSelection.setDefaultValue(editMode ? existingCondition.getName() : ops.keySet().iterator().next());
-        // just use the first one if it is not in edit mode
+        if (editMode) {
+            opSelection.setDefaultValue(existingCondition.getName());
+        } else {
+            opSelection.setDefaultToFirstOption(true);
+        }
 
         opSelection.setWidth("*");
         opSelection.setRedrawOnChange(true);
@@ -1041,18 +1050,46 @@ public class ConditionEditor extends EnhancedVLayout {
         eventSeveritySelection.setWrapTitle(false);
         eventSeveritySelection.setShowIfCondition(ifFunc);
         formItems.add(eventSeveritySelection);
-
-        TextItem eventRegex = new TextItem(EVENT_REGEX_ITEMNAME,
-            MSG.view_alert_definition_condition_editor_common_regex());
-        eventRegex.setRequired(false);
-        eventRegex.setTooltip(MSG.view_alert_definition_condition_editor_event_regexTooltip());
-        eventRegex.setHoverWidth(200);
-        eventRegex.setWrapTitle(false);
-        eventRegex.setShowIfCondition(ifFunc);
+        
+        String eventRegexValue = "", eventSourcePathRegexValue = "";
         if (editMode) {
-            eventRegex.setDefaultValue(existingCondition.getOption());
+            if (existingCondition.getOption().contains(AlertCondition.ADHOC_SEPARATOR)) {
+                String[] regexes = existingCondition.getOption().split(AlertCondition.ADHOC_SEPARATOR);
+                if (regexes.length > 0) {
+                    eventRegexValue = regexes[0];
+                    if (regexes.length > 1) {
+                        eventSourcePathRegexValue = regexes[1];
+                    }
+                }
+            } else {
+                eventRegexValue = existingCondition.getOption(); // old approach -> probably working with db before rhq 4.13
+            }
         }
-        formItems.add(eventRegex);
+
+        TextItem eventDetailsRegex = new TextItem(EVENT_REGEX_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_common_regex());
+        eventDetailsRegex.setRequired(false);
+        eventDetailsRegex.setTooltip(MSG.view_alert_definition_condition_editor_event_regexTooltip());
+        eventDetailsRegex.setHoverWidth(200);
+        eventDetailsRegex.setWrapTitle(false);
+        eventDetailsRegex.setShowIfCondition(ifFunc);
+        if (editMode) {
+            eventDetailsRegex.setDefaultValue(eventRegexValue);
+        }
+        formItems.add(eventDetailsRegex);
+        
+        TextItem eventSourcePathRegex = new TextItem(EVENT_SOURCE_PATH_REGEX_ITEMNAME,
+            MSG.view_inventory_eventHistory_sourceLocation() + " "
+                + MSG.view_alert_definition_condition_editor_common_regex());
+        eventSourcePathRegex.setRequired(false);
+        eventSourcePathRegex.setTooltip(MSG.view_alert_definition_condition_editor_common_regex_tooltip());
+        eventSourcePathRegex.setHoverWidth(200);
+        eventSourcePathRegex.setWrapTitle(false);
+        eventSourcePathRegex.setShowIfCondition(ifFunc);
+        if (editMode) {
+            eventSourcePathRegex.setDefaultValue(eventSourcePathRegexValue);
+        }
+        formItems.add(eventSourcePathRegex);
 
         return formItems;
     }
@@ -1145,8 +1182,11 @@ public class ConditionEditor extends EnhancedVLayout {
         SelectItem metricSelection = new SortedSelectItem(itemName,
             MSG.view_alert_definition_condition_editor_metric_threshold_name());
         metricSelection.setValueMap(metricsMap);
-        metricSelection.setDefaultValue(editMode ? String.valueOf(existingCondition.getMeasurementDefinition().getId())
-            : metricsMap.keySet().iterator().next()); // just use the first one if it is not in edit mode
+        if (editMode) {
+            metricSelection.setDefaultValue(String.valueOf(existingCondition.getMeasurementDefinition().getId()));
+        } else {
+            metricSelection.setDefaultToFirstOption(true);
+        }
         metricSelection.setWidth("*");
         metricSelection.setRedrawOnChange(true);
         metricSelection.setShowIfCondition(ifFunc);
@@ -1165,8 +1205,11 @@ public class ConditionEditor extends EnhancedVLayout {
         SelectItem metricSelection = new SortedSelectItem(itemName,
             MSG.view_alert_definition_condition_editor_metric_calltime_common_name());
         metricSelection.setValueMap(metricsMap);
-        metricSelection.setDefaultValue(editMode ? String.valueOf(existingCondition.getMeasurementDefinition().getId())
-            : metricsMap.keySet().iterator().next()); // just use the first one if it is not in edit mode
+        if (editMode) {
+            metricSelection.setDefaultValue(String.valueOf(existingCondition.getMeasurementDefinition().getId()));
+        } else {
+            metricSelection.setDefaultToFirstOption(true);
+        }
         metricSelection.setWidth("*");
         metricSelection.setRedrawOnChange(true);
         metricSelection.setShowIfCondition(ifFunc);
@@ -1239,24 +1282,21 @@ public class ConditionEditor extends EnhancedVLayout {
 
         metricDropDownMenu.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
-                MeasurementDefinition measDef = getMeasurementDefinition(form.getValueAsString(metricDropDownMenu
-                    .getName()));
+                MeasurementDefinition measDef = getMeasurementDefinition(metricDropDownMenu.getValueAsString());
                 baseUnitsItem.setValue(measDef.getUnits() == MeasurementUnits.NONE ? MSG
-                    .view_alert_definition_condition_editor_common_baseUnits_none()
-                    : measDef.getUnits() == MeasurementUnits.MILLISECONDS ? MeasurementUnits.SECONDS : measDef
-                        .getUnits());
+                    .view_alert_definition_condition_editor_common_baseUnits_none() : measDef.getUnits().toString());
                 List<MeasurementUnits> availableUnits = measDef.getUnits().getFamilyUnits();
                 baseUnitsItem.setTooltip(MSG.view_alert_definition_condition_editor_common_baseUnits_availableUnits()
                     + (availableUnits.isEmpty() || availableUnits.get(0) == MeasurementUnits.NONE ? MSG
                         .view_alert_definition_condition_editor_common_baseUnits_none() : availableUnits));
             }
         });
-        // initialize the field with proper value
-        MeasurementUnits units = editMode ? existingCondition.getMeasurementDefinition().getUnits()
-            : ConditionEditor.this.resourceType.getMetricDefinitions().iterator().next().getUnits();
+        // initialize the field, the default will be the first entry in the value map
+        MeasurementDefinition defaultMeasDef = getMeasurementDefinition((String) metricDropDownMenu
+            .getAttributeAsMap("valueMap").keySet().iterator().next());
+        MeasurementUnits units = defaultMeasDef.getUnits();
         baseUnitsItem.setValue(units == MeasurementUnits.NONE ? MSG
-            .view_alert_definition_condition_editor_common_baseUnits_none()
-            : units == MeasurementUnits.MILLISECONDS ? MeasurementUnits.SECONDS : units);
+            .view_alert_definition_condition_editor_common_baseUnits_none() : units.toString());
         List<MeasurementUnits> availableUnits = units.getFamilyUnits();
         baseUnitsItem.setTooltip(MSG.view_alert_definition_condition_editor_common_baseUnits_availableUnits()
             + (availableUnits.isEmpty() || availableUnits.get(0) == MeasurementUnits.NONE ? MSG

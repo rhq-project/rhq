@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.bundle.ant.type;
 
 import java.net.MalformedURLException;
@@ -33,7 +34,7 @@ import org.apache.tools.ant.BuildException;
  * @author Ian Springer
  * @author John Mazzitelli
  */
-public abstract class AbstractUrlFileType extends AbstractBundleType {
+public abstract class AbstractUrlFileType extends AbstractBundleType implements HasHandover {
     private String url;
     private URL source;
 
@@ -75,5 +76,4 @@ public abstract class AbstractUrlFileType extends AbstractBundleType {
                 + "] is malformed - it must be a valid URL.");
         }
     }
-
 }

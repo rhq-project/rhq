@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.smartgwt.client.types.MultipleAppearance;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.form.fields.PickerIcon;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;

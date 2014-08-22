@@ -59,9 +59,9 @@ import org.jetbrains.annotations.NotNull;
 public class PropertyList extends Property {
     private static final long serialVersionUID = 1L;
 
-    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance 
-    @Cascade( { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
-    @OneToMany(mappedBy = "parentList", targetEntity = Property.class, fetch = FetchType.EAGER)
+    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance
+    @Cascade({ CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
+    @OneToMany(mappedBy = "parentList", targetEntity = Property.class, fetch = FetchType.EAGER, orphanRemoval = true)
     // Order by primary key which will also put the list elements in chronological order.
     // Note, if we decide at some point to add support in the GUI for reordering list elements, we'll
     // need to add a new ORDER column and order by that.

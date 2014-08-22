@@ -1,0 +1,140 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
+        <version>4.13.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>rhq-serverplugin-wfly-patch-bundle</artifactId>
+    <packaging>jar</packaging>
+
+    <name>RHQ Wildfly Patch Bundle Server Plugin</name>
+    <description>Server side plugin that manages Wildfly patch files and exposes them as RHQ bundles</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-wfly-patch-parser</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                    <!--
+                       <argLine>${jacoco.unit-test.args} -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
+                    -->
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-rhq-plugins</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+
+                                <artifactItem>
+                                    <groupId>org.rhq</groupId>
+                                    <artifactId>rhq-wfly-patch-parser</artifactId>
+                                    <version>${project.version}</version>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+
+        <profile>
+            <id>dev</id>
+
+            <properties>
+                <rhq.rootDir>../../../../..</rhq.rootDir>
+                <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
+                <rhq.deploymentDir>${rhq.containerDir}/${rhq.serverPluginDir}</rhq.deploymentDir>
+            </properties>
+
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+
+                            <execution>
+                                <id>deploy</id>
+                                <phase>compile</phase>
+                                <configuration>
+                                    <target>
+                                        <mkdir dir="${rhq.deploymentDir}" />
+                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                                        <echo>*** Updating ${deployment.file}...</echo>
+                                        <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                            <execution>
+                                <id>undeploy</id>
+                                <phase>clean</phase>
+                                <configuration>
+                                    <target>
+                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                                        <echo>*** Deleting ${deployment.file}...</echo>
+                                        <delete file="${deployment.file}" />
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                            <execution>
+                                <id>deploy-jar-meta-inf</id>
+                                <phase>package</phase>
+                                <configuration>
+                                    <target>
+                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                                        <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
+                                        <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
+                                            <patternset>
+                                                <include name="META-INF/**" />
+                                            </patternset>
+                                        </unjar>
+                                        <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
+                                        </jar>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>

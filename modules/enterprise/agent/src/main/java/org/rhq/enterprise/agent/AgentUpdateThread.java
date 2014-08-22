@@ -37,8 +37,8 @@ import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
  * This is a thread that will attempt to update the agent to the latest
  * version. This will shutdown the currently running agent, so it is
  * "destructive" in the sense that if successful, the VM this thread is running
- * in will eventually die. 
- * 
+ * in will eventually die.
+ *
  * @author John Mazzitelli
  */
 public class AgentUpdateThread extends Thread {
@@ -55,7 +55,7 @@ public class AgentUpdateThread extends Thread {
      * This static method will immediately begin to update the agent.
      * Once you call this, there is no turning back - if all goes well,
      * the currently running agent (and the VM its running in) will soon exit.
-     * 
+     *
      * @param agent the running agent that is to be updated
      * @param wait if <code>true</code>, this will wait for the update thread
      *        to die. Note that if the agent update is successful, and you pass
@@ -103,7 +103,7 @@ public class AgentUpdateThread extends Thread {
     /**
      * This returns <code>true</code> if the agent is currently in the process of performing an update.
      * When this returns <code>true</code>, it should be assumed the agent's VM will die shortly.
-     * 
+     *
      * @return <code>true</code> if an update thread is running and the update is being performed
      */
     public static boolean isUpdatingNow() {
@@ -113,7 +113,7 @@ public class AgentUpdateThread extends Thread {
     /**
      * The constructor for the thread object. This is private, go through the
      * static factory method to instantiate (and start) the thread.
-     * 
+     *
      * @param agent
      */
     private AgentUpdateThread(AgentMain agent) {
@@ -157,15 +157,20 @@ public class AgentUpdateThread extends Thread {
                 // if threads still aren't dead yet, make sure we pause the update longer than our kill thread wait time
                 String javaExe = findJavaExe();
                 List<String> args = new ArrayList<String>();
+                // On windows extra time is needed to shut down the wrapper and for windows to release file locks,
+                // add another 100000ms (1' 40") to the pause prior to update to help avoid locking issues.
+                boolean isWindows = (File.separatorChar == '\\');
+                String alivePause = (isWindows) ? "180000" : "80000";
+                String pause = (isWindows) ? "120000" : "20000";
                 args.add("-jar");
                 args.add(aud.getAgentUpdateBinaryFile().getAbsolutePath());
-                args.add("--pause=" + ((numThreadsStillAlive > 0) ? "80000" : "20000"));
+                args.add("--pause=" + ((numThreadsStillAlive > 0) ? alivePause : pause));
                 args.add("--update=" + this.agent.getAgentHomeDirectory());
 
                 SystemInfo sysInfo = SystemInfoFactory.createSystemInfo();
                 ProcessExecution processExecution = new ProcessExecution(javaExe);
                 processExecution.setArguments(args);
-                //processExecution.setEnvironmentVariables(envvars); 
+                //processExecution.setEnvironmentVariables(envvars);
                 processExecution.setWorkingDirectory(new File(this.agent.getAgentHomeDirectory()).getParent());
                 processExecution.setCaptureOutput(false);
                 processExecution.setWaitForCompletion(0);
@@ -218,9 +223,9 @@ public class AgentUpdateThread extends Thread {
     /**
      * Tries to find the Java executable that launched this agent so we can use it to launch
      * the agent update binary.
-     * 
+     *
      * @return the path to the Java executable
-     * 
+     *
      * @throws Exception if the Java executable could not be found
      */
     private String findJavaExe() throws Exception {
@@ -284,7 +289,7 @@ public class AgentUpdateThread extends Thread {
      * Because this thread is performing very important and serious things, we will
      * both log the message and output it to the console, to give the user ample
      * notification of what is going on.
-     * 
+     *
      * @param msg
      * @param args
      */
@@ -297,7 +302,7 @@ public class AgentUpdateThread extends Thread {
      * Because this thread is performing very important and serious things, we will
      * both log the error message and output it to the console, to give the user ample
      * notification of what is going on.
-     * 
+     *
      * @param msg
      * @param args
      */
@@ -315,7 +320,7 @@ public class AgentUpdateThread extends Thread {
      * This will also log a generic failure message to tell the user that the agent
      * is in a really bad state now and manual intervention by an administrator is
      * probably needed.
-     * 
+     *
      * @param attempts number of times the update was tried
      */
     private void showFinalFailureMessage(int attempts) {

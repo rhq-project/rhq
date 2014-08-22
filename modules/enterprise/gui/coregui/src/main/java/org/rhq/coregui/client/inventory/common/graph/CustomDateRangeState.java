@@ -22,6 +22,7 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
@@ -44,6 +45,11 @@ public class CustomDateRangeState {
     private boolean isCustomDateRangeActive;
     private MeasurementUserPreferences measurementUserPreferences;
     private AbstractMeasurementRangeEditor.MetricRangePreferences prefs;
+    private volatile boolean persisted = true; 
+    
+    private Long cachedBegin = null;
+    private Long cachedEnd= null;
+    private Long cachedTimeRange= null;
 
     private CustomDateRangeState() {
         measurementUserPreferences = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
@@ -70,14 +76,34 @@ public class CustomDateRangeState {
     }
 
     public Long getStartTime() {
-        return measurementUserPreferences.getMetricRangePreferences().begin;
+        if (null == cachedBegin) {
+            cachedBegin = measurementUserPreferences.getMetricRangePreferences().begin;
+        }
+        return cachedBegin;
     }
 
     public Long getEndTime() {
-        return measurementUserPreferences.getMetricRangePreferences().end;
+        if (null == cachedEnd) {
+            cachedEnd = measurementUserPreferences.getMetricRangePreferences().end;
+        }
+        return cachedEnd;
     }
 
     public Long getTimeRange() {
+        if (cachedTimeRange != null) {
+            return cachedTimeRange;
+        }
+        
+//        if (!persisted && cachedTimeRange == null) {
+//            Long start = getStartTime();
+//            if (!persisted && cachedEnd == null) {
+//                Long end = getEndTime();
+//                return end - start;
+//            } else {
+//                // call the method again because saveDateRange has just finished - inconsistency
+//                return getTimeRange();
+//            }
+//        }
         return getEndTime() - getStartTime();
     }
 
@@ -93,20 +119,29 @@ public class CustomDateRangeState {
     /**
      * Whenever we make a change to the date range save it here so it gets propagated to
      * the correct places.
+     * 
+     * Method performs couple of async server calls and other methods could read inconsistent state in the meanwhile.
+     * Therefore there are the cachedValues.
      *
      * @param startTime double because JSNI doesn't support long
      * @param endTime   double because JSNI doesn't support long
      */
     public void saveDateRange(double startTime, double endTime, boolean allowPreferenceUpdateRefresh) {
+        persisted = false;
         prefs.explicitBeginEnd = true; // default to advanced
-        prefs.begin = (long) startTime;
-        prefs.end = (long) endTime;
         if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
             CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
         } else {
-            measurementUserPreferences.setMetricRangePreferences(prefs, allowPreferenceUpdateRefresh);
+            cachedBegin = prefs.begin = (long) startTime;
+            cachedEnd = prefs.end = (long) endTime;
+            cachedTimeRange = prefs.end - prefs.begin;
+            Command callback = new Command() {
+                public void execute() {
+                    persisted = true;
+                }
+            };
+            measurementUserPreferences.setMetricRangePreferences(prefs, allowPreferenceUpdateRefresh, callback);
         }
-
     }
-
+    
 }

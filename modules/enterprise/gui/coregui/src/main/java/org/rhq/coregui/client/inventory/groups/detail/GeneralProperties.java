@@ -43,8 +43,8 @@ import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.coregui.client.util.StringUtility;
-import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * A canvas that shows basic information/properties on a specific group.

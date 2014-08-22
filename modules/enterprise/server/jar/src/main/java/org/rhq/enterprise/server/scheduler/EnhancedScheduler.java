@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@ public interface EnhancedScheduler extends Scheduler {
      * Schedules the job such that it triggers immediately (following the initial delay time) and then repeats every
      * <code>interval</code> seconds.
      *
-     * <p>This is a convienence method to schedule jobs that need to run periodically. It schedules jobs with the given
+     * <p>This is a  method to schedule jobs that need to run periodically. It schedules jobs with the given
      * <code>groupName</code> and <code>name</code> and a given set of job data to be passed to the job when it is
      * executed. The schedule repeats without end.</p>
      *
@@ -69,7 +69,7 @@ public interface EnhancedScheduler extends Scheduler {
     /**
      * Schedules the job such that it triggers according to the given cron schedule.
      *
-     * <p>This is a convienence method to schedule jobs that need to run periodically. It schedules jobs with the given
+     * <p>This is a  method to schedule jobs that need to run periodically. It schedules jobs with the given
      * <code>groupName</code> and <code>name</code> and a given set of job data to be passed to the job when it is
      * executed. The schedule repeats without end.</p>
      *
@@ -93,7 +93,7 @@ public interface EnhancedScheduler extends Scheduler {
      *                            true</code>, when the scheduler is shutdown, the job's schedule is lost
      * @param  cronString         the actual schedule for when the job is triggered. See the Quartz documentation on
      *                            valid cron syntax.
-     *
+     *                                 *
      * @throws SchedulerException
      *
      * @see    SchedulerServiceMBean#scheduleJob(org.quartz.JobDetail, org.quartz.Trigger)
@@ -105,7 +105,7 @@ public interface EnhancedScheduler extends Scheduler {
      * Schedules the job such that it triggers immediately (following the initial delay time) and then repeats every
      * <code>interval</code> seconds.
      *
-     * <p>This is a convienence method to schedule simple jobs that need to run periodically. It schedules simple jobs -
+     * <p>This is a  method to schedule simple jobs that need to run periodically. It schedules simple jobs -
      * there is no {@link JobDataMap} associated with the job and the schedule repeats without end.</p>
      *
      * <p>This method delegates to
@@ -132,7 +132,7 @@ public interface EnhancedScheduler extends Scheduler {
     /**
      * Schedules the job such that it triggers according to the given cron schedule.
      *
-     * <p>This is a convienence method to schedule simple cron jobs that need to run periodically. It schedules simple
+     * <p>This is a convenience method to schedule simple cron jobs that need to run periodically. It schedules simple
      * jobs - there is no {@link JobDataMap} associated with the job and the schedule repeats without end.</p>
      *
      * <p>This method delegates to {@link #scheduleCronJob(String, String, JobDataMap, Class, boolean, boolean, String)}
@@ -147,19 +147,21 @@ public interface EnhancedScheduler extends Scheduler {
      *                            true</code>, when the scheduler is shutdown, the job's schedule is lost
      * @param  cronString         the actual schedule for when the job is triggered. See the Quartz documentation on
      *                            valid cron syntax.
+     * @param  misfireInstruction If null the trigger uses the default "smart" policy. Otherwise one of the predefined
+     *                            CronTrigger.MISFIRE_INSTRUCTION_XXX values.
      *
      * @throws SchedulerException
      *
      * @see    SchedulerServiceMBean#scheduleJob(org.quartz.JobDetail, org.quartz.Trigger)
      */
     public void scheduleSimpleCronJob(Class<? extends Job> jobClass, boolean rescheduleIfExists, boolean isVolatile,
-        String cronString) throws SchedulerException;
+        String cronString, Integer misfireInstruction) throws SchedulerException;
 
     /**
-     * Schedules the job with the given triggger.  If the trigger is null then the durable job is simply created,
+     * Schedules the job with the given trigger.  If the trigger is null then the durable job is simply created,
      * if necessary, and will await future triggers.
      *
-     * <p>This is a convienence method for adding a trigger to a job.  There is no job-level {@link JobDataMap} but
+     * <p>This is a  method for adding a trigger to a job.  There is no job-level {@link JobDataMap} but
      * each trigger may contain a trigger-specific {@link JobDataMap}.</p>
      *
      * <p>This method delegates to {@link #addJob(org.quartz.JobDetail, boolean)} where the <code>

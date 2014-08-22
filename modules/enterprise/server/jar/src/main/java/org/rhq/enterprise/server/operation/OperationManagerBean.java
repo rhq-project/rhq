@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.operation;
 
 import static javax.ejb.TransactionAttributeType.NEVER;
@@ -30,10 +31,12 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -47,6 +50,7 @@ import org.quartz.Trigger;
 
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.JobTrigger;
@@ -95,6 +99,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
+import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -384,7 +389,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Date next = scheduler.scheduleJob(jobDetail, trigger);
         GroupOperationSchedule newSchedule = getGroupOperationSchedule(subject, jobDetail);
 
-        LOG.debug("Scheduled group operation [" + newSchedule + "] - next fire time is [" + next + "]");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Scheduled group operation [" + newSchedule + "] - next fire time is [" + next + "]");
+        }
 
         return newSchedule;
     }
@@ -431,8 +438,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         } catch (Exception e) {
             throw new UnscheduleException(e);
         }
-
-        return;
     }
 
     @Override
@@ -479,8 +484,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         } catch (Exception e) {
             throw new UnscheduleException(e);
         }
-
-        return;
     }
 
     @Override
@@ -488,7 +491,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         try {
             OperationScheduleEntity doomed = findOperationScheduleEntity(jobId);
             if (doomed != null) {
-                LOG.debug("Deleting schedule entity: " + jobId);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Deleting schedule entity: " + jobId);
+                }
                 entityManager.remove(doomed);
             } else {
                 LOG.info("Asked to delete unknown schedule - ignoring: " + jobId);
@@ -496,8 +501,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         } catch (NoResultException nre) {
             LOG.info("Asked to delete unknown schedule - ignoring: " + jobId);
         }
-
-        return;
     }
 
     @Override
@@ -505,8 +508,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         // sched will be managed - just setting the property is enough for it to be committed
         OperationScheduleEntity sched = findOperationScheduleEntity(jobId);
         sched.setNextFireTime(nextFireTime);
-        LOG.debug("Scheduled job has a new next-fire-time: " + sched);
-        return;
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Scheduled job has a new next-fire-time: " + sched);
+        }
     }
 
     @Override
@@ -717,7 +721,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                     if (!executionOrder.contains(memberResource)) {
                         executionOrder.add(memberResource);
                     }
-                } else {
+                } else if (LOG.isDebugEnabled()) {
                     LOG.debug("Resource [" + resourceId
                         + "] looks like it was deleted and is no longer a member of group [" + group
                         + "] - ignoring it");
@@ -984,7 +988,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         // The history item may have been created already, so find it in the database and
         // set the new state from our input
-        if (history.getId() != 0) {
+        boolean isNewHistory = (0 == history.getId());
+        if (!isNewHistory) {
             OperationHistory existingHistoryItem = entityManager.find(OperationHistory.class, history.getId());
             if (null == existingHistoryItem) {
                 throw new IllegalArgumentException(
@@ -1029,8 +1034,24 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         if (history.getParameters() != null) {
             history.getParameters().getId(); // eagerly reload the parameters
         }
-        storageNodeOperationsHandler.handleOperationUpdateIfNecessary(history);
+
+        // we can even alert on In-Progress (an operation just being scheduled) so we need to check the
+        // condition manager
         notifyAlertConditionCacheManager("updateOperationHistory", history);
+
+        // if this is not the initial create (i.e schedule-time of the operation) it means the
+        // operation status has likely been updated.  Notify the storage node to see if it needs
+        // to do anything in response to a storage node operation completion.  Don't pass an
+        // attached entity to an Asynchronous SLSB method that runs in its own transaction. That
+        // can cause locking with the current transaction.  Note we can't pass in just the id, because
+        // the updates to the history are not yet committed and the async method needs to see the updated
+        // history.
+        if (!isNewHistory) {
+            entityManager.flush();
+            entityManager.detach(history);
+            storageNodeOperationsHandler.handleOperationUpdateIfNecessary(history);
+        }
+
         return history;
     }
 
@@ -1048,8 +1069,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         } else {
             cancelResourceOperation(subject, (ResourceOperationHistory) doomedHistory, ignoreAgentErrors);
         }
-
-        return;
     }
 
     /**
@@ -1103,8 +1122,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             doomedHistory.setStatus(OperationRequestStatus.CANCELED); // we expect doomedHistory to be jpa attached
             notifyAlertConditionCacheManager("cancelGroupOperation", doomedHistory);
         }
-
-        return;
     }
 
     /**
@@ -1160,8 +1177,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                     // "success" message is sent with guaranteed delivery - so the crash had to occur in just the right
                     // split second of time for that to occur.
 
-                    LOG.debug("Agent already finished the operation so it cannot be canceled. " + "agent=[" + agent
-                        + "], op=[" + doomedHistory + "]");
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Agent already finished the operation so it cannot be canceled. " + "agent=[" + agent
+                            + "], op=[" + doomedHistory + "]");
+                    }
                     break;
                 }
 
@@ -1170,8 +1189,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                     // got a chance to tell its plugin to execute the operation; it just dequeued and threw the op away.
                     // Therefore, we can really say it was canceled.
                     canceled = true;
-                    LOG.debug("Cancel successful. Agent dequeued the operation and will not invoke it. " + "agent=["
-                        + agent + "], op=[" + doomedHistory + "]");
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Cancel successful. Agent dequeued the operation and will not invoke it. "
+                            + "agent=[" + agent + "], op=[" + doomedHistory + "]");
+                    }
                     break;
                 }
 
@@ -1183,8 +1204,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                     // We still flag the operation as canceled to indicate that the agent did attempt to cancel it;
                     // hopefully, the plugin did the right thing.
                     canceled = true;
-                    LOG.debug("Agent attempted to cancel the operation - it interrupted the operation while it was running. "
-                        + "agent=[" + agent + "], op=[" + doomedHistory + "]");
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Agent attempted to cancel the operation - it interrupted the operation while it was running. "
+                            + "agent=[" + agent + "], op=[" + doomedHistory + "]");
+                    }
                     break;
                 }
 
@@ -1198,8 +1221,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                     // the operation.  In this case, we'll allow its state to be canceled since the most probably reason
                     // for this is the agent was recycled and has no idea what this operation is or was.
                     canceled = true;
-                    LOG.debug("Agent does not know about the operation. Nothing to cancel. " + "agent=[" + agent
-                        + "], op=[" + doomedHistory + "]");
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Agent does not know about the operation. Nothing to cancel. " + "agent=[" + agent
+                            + "], op=[" + doomedHistory + "]");
+                    }
                     break;
                 }
 
@@ -1265,8 +1290,57 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
 
         deleteOperationHistory_helper(doomedHistory.getId());
+    }
 
-        return;
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public int purgeOperationHistory(Date purgeBeforeTime) {
+        int totalPurged = 0;
+        int batchPurged = 0;
+        final int groupLimit = 1;
+        final int resourceLimit = 50;
+        long startTime = System.currentTimeMillis();
+
+        // first, purge group operations (one at a time, it could be a large group)
+        do {
+            batchPurged = operationManager.purgeOperationHistoryInNewTransaction(purgeBeforeTime, true, groupLimit);
+            totalPurged += batchPurged;
+
+        } while (batchPurged > 0);
+
+        // then, purge resource operations, we'll do 50 at a time since it is still pretty involved
+        do {
+            batchPurged = operationManager.purgeOperationHistoryInNewTransaction(purgeBeforeTime, false, resourceLimit);
+            totalPurged += batchPurged;
+
+        } while (batchPurged > 0);
+
+        MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
+        MeasurementMonitor.getMBean().setPurgedEvents(totalPurged);
+
+        return totalPurged;
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public int purgeOperationHistoryInNewTransaction(Date purgeBeforeTime, boolean isGroupPurge, int limit) {
+
+        String entity = isGroupPurge ? "GroupOperationHistory" : "ResourceOperationHistory";
+        String queryString = "SELECT h.id FROM " + entity + " h WHERE h.createdTime < :purgeBeforeTime";
+        TypedQuery<Integer> query = entityManager.createQuery(queryString, Integer.class);
+        query.setParameter("purgeBeforeTime", purgeBeforeTime.getTime());
+        query.setMaxResults(limit);
+
+        List<Integer> idList = query.getResultList();
+        for (Integer id : idList) {
+            if (isGroupPurge) {
+                deleteOperationHistory(subjectManager.getOverlord(), id, true);
+            } else {
+                deleteOperationHistory_helper(id);
+            }
+        }
+
+        return idList.size();
     }
 
     @SuppressWarnings("unchecked")
@@ -1290,8 +1364,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         allConfigurationIdsToDelete.addAll(historyArgumentConfigurationIds);
         allConfigurationIdsToDelete.addAll(historyResultConfigurationIds);
         configurationManager.deleteConfigurations(allConfigurationIdsToDelete);
-
-        return;
     }
 
     @Override
@@ -1421,10 +1493,14 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         } catch (PermissionException e) {
             // notice we caught this exception before propogating it up to the EJB layer, so
             // our transaction is not rolled back
-            LOG.debug("isOperationSupported: User cannot control resource: " + resourceId);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("isOperationSupported: User cannot control resource: " + resourceId);
+            }
             return false;
         } catch (Exception e) {
-            LOG.debug("isOperationSupported: Resource does not exist: " + resourceId);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("isOperationSupported: Resource does not exist: " + resourceId);
+            }
             return false;
         }
 
@@ -1443,17 +1519,23 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 return false;
             }
         } catch (ResourceGroupNotFoundException e) {
-            LOG.debug("isGroupOperationSupported: group does not exist: " + resourceGroupId);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("isGroupOperationSupported: group does not exist: " + resourceGroupId);
+            }
             return false;
         } catch (PermissionException pe) {
             // notice we caught this exception before propogating it up to the EJB layer, so
             // our transaction is not rolled back
-            LOG.debug("isGroupOperationSupported: User cannot view (and thus) control group: " + resourceGroupId);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("isGroupOperationSupported: User cannot view (and thus) control group: " + resourceGroupId);
+            }
             return false;
         }
 
         if (!authorizationManager.hasGroupPermission(subject, Permission.CONTROL, group.getId())) {
-            LOG.debug("isGroupOperationSupported: User cannot control group: " + group);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("isGroupOperationSupported: User cannot control group: " + group);
+            }
             return false;
         }
 
@@ -1468,8 +1550,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         LOG.debug("Begin scanning for timed out operation histories");
 
         if (!authorizationManager.isOverlord(subject)) {
-            LOG.debug("Unauthorized user " + subject + " tried to execute checkForTimedOutOperations: "
-                + "only the overlord may execute this system operation");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Unauthorized user " + subject + " tried to execute checkForTimedOutOperations: "
+                    + "only the overlord may execute this system operation");
+            }
             return;
         }
 
@@ -1873,8 +1957,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 notifyAlertConditionCacheManager("checkForCompletedGroupOperation", groupHistory);
             }
         }
-
-        return;
     }
 
     /**
@@ -2004,7 +2086,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     @Override
     @Nullable
     public ResourceOperationHistory getLatestCompletedResourceOperation(Subject subject, int resourceId) {
-        LOG.debug("Getting latest completed operation for resource [" + resourceId + "]");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Getting latest completed operation for resource [" + resourceId + "]");
+        }
 
         ResourceOperationHistory result;
 
@@ -2024,7 +2108,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     @Override
     @Nullable
     public ResourceOperationHistory getOldestInProgressResourceOperation(Subject subject, int resourceId) {
-        LOG.debug("Getting oldest in-progress operation for resource [" + resourceId + "]");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Getting oldest in-progress operation for resource [" + resourceId + "]");
+        }
 
         ResourceOperationHistory result;
 
@@ -2074,8 +2160,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
     private void notifyAlertConditionCacheManager(String callingMethod, OperationHistory operationHistory) {
         AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(operationHistory);
-
-        LOG.debug(callingMethod + ": " + stats.toString());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(callingMethod + ": " + stats.toString());
+        }
     }
 
     /**

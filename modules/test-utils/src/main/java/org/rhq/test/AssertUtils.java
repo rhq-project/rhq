@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,11 +25,13 @@ package org.rhq.test;
 
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class AssertUtils {
 
@@ -201,4 +203,45 @@ public class AssertUtils {
         assertTrue(result.isMatch(), msg + " -- " + result.getDetails());
     }
 
+    /**
+     * Asserts a condition evaluates to true before a timeout is reached.
+     *
+     * @param booleanCondition the condition to evaluare
+     * @param message the message to show if this assertion fails
+     * @param maxWait the maximum amount of time to wait before the condition evaluates to true
+     * @param maxWaitUnit the time unit for <code>maxWait</code>
+     * @param step the amount of time to make the executing thread sleep between condition evaluations
+     * @param stepUnit the time unit for <code>step</code>
+     *
+     * @throws AssertionError if the conditions does not evaluate to true before the timeout is reached
+     * @throws InterruptedException if the current thread is interrupted while waiting
+     */
+    public static void timedAssertion(BooleanCondition booleanCondition, String message, long maxWait,
+        TimeUnit maxWaitUnit, long step, TimeUnit stepUnit) throws InterruptedException {
+
+        assertNotNull(booleanCondition, "booleanCondition is null");
+        assertTrue(maxWait > 0, "maxWait must be positive");
+        assertNotNull(maxWaitUnit, "maxWaitUnit is null");
+        assertTrue(step > 0, "step must be positive");
+        assertNotNull(stepUnit, "stepUnit is null");
+
+        long start = System.currentTimeMillis();
+        long limit = start + maxWaitUnit.toMillis(maxWait);
+        for (;;) {
+            if (booleanCondition.eval()) {
+                return;
+            }
+            if (System.currentTimeMillis() >= limit) {
+                fail(message);
+            }
+            Thread.sleep(stepUnit.toMillis(step));
+        }
+    }
+
+    /**
+     * A condition which must evaluate to true or false.
+     */
+    public interface BooleanCondition {
+        boolean eval();
+    }
 }

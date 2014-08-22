@@ -49,7 +49,13 @@ public class ResourceOperationScheduleDataSource extends AbstractOperationSchedu
     @Override
     protected ResourceOperationSchedule createOperationSchedule() {
         ResourceOperationSchedule resourceOperationSchedule = new ResourceOperationSchedule();
-        resourceOperationSchedule.setResource(this.resourceComposite.getResource());
+        Resource fakeResource = new Resource();
+        fakeResource.setId(resourceComposite.getResource().getId());
+        resourceOperationSchedule.setResource(fakeResource);
+        
+//        resourceOperationSchedule.setResource(this.resourceComposite.getResource());
+//        this was causing the serialization issues in GWT 2.5.0 (bz1058318), however there is no need to send the 
+//        fully initialized resource instance over the wire, because the SLFB needs only the id
         return resourceOperationSchedule;
     }
 

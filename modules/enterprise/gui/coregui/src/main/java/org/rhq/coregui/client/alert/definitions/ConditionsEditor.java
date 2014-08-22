@@ -53,6 +53,7 @@ import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
 import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
@@ -176,14 +177,14 @@ public class ConditionsEditor extends EnhancedVLayout {
 
         @Override
         protected void configureTable() {
-            addTableAction(MSG.common_button_add(), null, new AbstractTableAction() {
+            addTableAction(MSG.common_button_add(), null, ButtonColor.BLUE, new AbstractTableAction() {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     showConditionEditor(null);
                 }
             });
 
             table.addTableAction(MSG.common_button_delete(), MSG
-                .view_alert_definition_condition_editor_delete_confirm(), new AbstractTableAction(
+                .view_alert_definition_condition_editor_delete_confirm(), ButtonColor.RED, new AbstractTableAction(
                 TableActionEnablement.ANY) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     for (ListGridRecord record : selection) {
@@ -196,7 +197,7 @@ public class ConditionsEditor extends EnhancedVLayout {
                 }
             });
 
-            table.addTableAction(MSG.view_alert_definition_editCondition(), null, new AbstractTableAction(TableActionEnablement.SINGLE) {
+            table.addTableAction(MSG.view_alert_definition_editCondition(), null, ButtonColor.GRAY, new AbstractTableAction(TableActionEnablement.SINGLE) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     AlertCondition condition = getDataSource().copyValues(selection[0]);
                     showConditionEditor(condition);

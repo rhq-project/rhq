@@ -66,6 +66,7 @@ import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * A tabular report that shows alert definitions on all resources in inventory.
@@ -109,7 +110,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
     }
 
     private void addExportAction() {
-        addTableAction("Export", MSG.common_button_reports_export(), new AbstractTableAction() {
+        addTableAction("Export", MSG.common_button_reports_export(), ButtonColor.BLUE, new AbstractTableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return enableIfRecordsExist(getListGrid());

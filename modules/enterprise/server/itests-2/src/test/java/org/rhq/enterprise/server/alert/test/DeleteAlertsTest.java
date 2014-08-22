@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.alert.test;
 
 import java.sql.Connection;
@@ -36,6 +37,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.purge.PurgeManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -45,12 +47,14 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Test(enabled = false)
 public class DeleteAlertsTest extends AbstractEJB3Test {
     private AlertManagerLocal alertManager;
+    private PurgeManagerLocal purgeManager;
     private Subject superuser;
     private Resource newResource;
 
     @Override
     protected void beforeMethod() throws Exception {
         alertManager = LookupUtil.getAlertManager();
+        purgeManager = LookupUtil.getPurgeManager();
         superuser = LookupUtil.getSubjectManager().getOverlord();
 
         Connection connection = null;
@@ -115,7 +119,8 @@ public class DeleteAlertsTest extends AbstractEJB3Test {
     }
 
     public void testAlertDeleteInRange() {
-        assert 2 == alertManager.deleteAlerts(0L, System.currentTimeMillis() + 600000L); // go out into the future to make sure we get our alert
+        // go out into the future to make sure we get our alert
+        assert 2 == purgeManager.deleteAlerts(0L, System.currentTimeMillis() + 600000L);
     }
 
 }

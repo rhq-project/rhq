@@ -81,6 +81,14 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             log.error("Path plugin config is null for ResourceType [" + context.getResourceType().getName() + "].");
             return details;
         }
+        // check for "/" which denotes lookup for child resources deeper in DMR tree
+        // default path can look like "subsystem=a,sub-sub-system=b/resource-type1|resource-type2"
+        String additionalParentPath = null;
+        int additionalParentIndex = confPath.indexOf("/");
+        if (additionalParentIndex > 0) {
+            additionalParentPath = confPath.substring(0, additionalParentIndex);
+            confPath = confPath.substring(additionalParentIndex + 1);
+        }
 
         boolean lookForChildren = false;
 
@@ -99,6 +107,9 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         String parentPath = parentComponent.getPath();
         if (parentPath == null || parentPath.isEmpty()) {
             parentPath = "";
+        }
+        if (additionalParentPath != null) {
+            parentPath += "," + additionalParentPath;
         }
         path = parentPath;
 
@@ -208,7 +219,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
      * @param confPath The subsystem that got fed into discovery. Directly return is not subsystem=infinispan
      * @return True if this subsystem should be skipped.
      */
-    private boolean shouldSkipEntryWrtIspn(ResourceDiscoveryContext<BaseComponent<?>> context, String confPath) {
+    protected boolean shouldSkipEntryWrtIspn(ResourceDiscoveryContext<BaseComponent<?>> context, String confPath) {
 
         // If this is not subsystem=infinispan, we should not skip it at all
         if (!"subsystem=infinispan".equals(confPath))

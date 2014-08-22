@@ -35,7 +35,6 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 
 import org.rhq.core.domain.auth.Subject;
@@ -80,7 +79,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
     private static final String COLLAPSED_TOOLTIP = MSG.view_portlet_inventory_tooltip_expand();
     private static final String EXPANDED_TOOLTIP = MSG.view_portlet_inventory_tooltip_collapse();
     private static final String PLUGIN_ERRORS_ICON = "[SKIN]/Dialog/warn.png";
-    private static final String LOADING_ICON = "ajax-loader.gif";
+    //private static final String LOADING_ICON = "[SKIN]/loading.gif";
 
     private Img expandCollapseArrow;
 
@@ -95,7 +94,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
     private EnhancedHLayout detailsForm;
     private OverviewForm detailsFormSummary;
     private Img pluginErrors;
-    private Img loading;
+  //  private Img loading;
     private final ResourceTreeView platformTree;
 
     private class AvailAndErrorRefresher implements AutoRefresh {
@@ -144,7 +143,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
             CountDownLatch latch = CountDownLatch.create(cnt, new Command() {
                 @Override
                 public void execute() {
-                    loading.setVisible(false);
+                    CoreGUI.showBusy(false);
                     markForRedraw();
 
                     //the checks at the start of the refresh() method above ensure that there is at most
@@ -160,8 +159,9 @@ public class ResourceTitleBar extends EnhancedVLayout {
                 }
             });
 
-            loading.setVisible(true);
-            loading.markForRedraw();
+            CoreGUI.showBusy(true);
+
+            //loading.markForRedraw();
 
             if (refreshingAvail) {
                 refreshAvailability(latch);
@@ -208,6 +208,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
         }
 
         private void refreshAvailability(final CountDownLatch latch) {
+
             final AvailabilityType currentAvail = resource.getCurrentAvailability().getAvailabilityType();
 
             GWTServiceLookup.getResourceService().getLiveResourceAvailability(resource.getId(),
@@ -215,8 +216,9 @@ public class ResourceTitleBar extends EnhancedVLayout {
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(currentAvail));
 
+                        availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(currentAvail));
+                        badge.setStyleName("resource-detail-" + currentAvail.getName());
                         if (!UserSessionManager.isLoggedOut()) {
                             CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resource_loadFailed(String.valueOf(resource.getId())), caught);
                         }
@@ -230,8 +232,9 @@ public class ResourceTitleBar extends EnhancedVLayout {
 
                     @Override
                     public void onSuccess(ResourceAvailability result) {
-                        availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(result.getAvailabilityType()));
+                        availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(currentAvail));
                         resource.setCurrentAvailability(result);
+                        badge.setStyleName("resource-detail-" + currentAvail.getName());
 
                         availabilityImage.markForRedraw();
                         if (latch != null) {
@@ -256,18 +259,14 @@ public class ResourceTitleBar extends EnhancedVLayout {
 
         //define two rows of content
         top = new EnhancedHLayout();
-        top.setPadding(0);
-        top.setMembersMargin(0);
-        top.setHeight(30);
-
         details = new EnhancedHLayout();
         details.setWidth100();
 
         //modify VLayout settings
         setWidth100();
         setHeight(30);
-        setMembersMargin(0);
         setPadding(5);
+        setMembersMargin(5);
     }
 
     public void update() {
@@ -277,7 +276,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
         }
 
         this.title = new HTMLFlow();
-        this.title.setWidth("*");
+        this.title.setWidth100();
 
         this.availabilityImage = new Img(ImageManager.getAvailabilityLargeIcon(null), 24, 24);
 
@@ -290,7 +289,8 @@ public class ResourceTitleBar extends EnhancedVLayout {
             }
         });
 
-        badge = new Img(ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE), 24, 24);
+        badge = new Img(ImageManager.getResourceTypeIcon(ResourceCategory.SERVICE), 24,24);
+        badge.setLayoutAlign(VerticalAlignment.CENTER);
 
         TagEditorView tagEditorView = new TagEditorView(resource.getTags(), !resourceComposite.getResourcePermission()
             .isInventory(), new TagsChangedCallback() {
@@ -316,7 +316,8 @@ public class ResourceTitleBar extends EnhancedVLayout {
         //add expand/collapse icon
         expandCollapseArrow = new Img(COLLAPSED_ICON, 16, 16);
         expandCollapseArrow.setTooltip(COLLAPSED_TOOLTIP);
-        expandCollapseArrow.setLayoutAlign(VerticalAlignment.BOTTOM);
+        expandCollapseArrow.setLayoutAlign(VerticalAlignment.CENTER);
+
         expandCollapseArrow.addClickHandler(new ClickHandler() {
             private boolean collapsed = true;
 
@@ -385,18 +386,21 @@ public class ResourceTitleBar extends EnhancedVLayout {
             }
         });
 
-        loading = new Img(LOADING_ICON, 16, 16);
-        loading.setVisible(false);
-        loading.setValign(VerticalAlignment.CENTER);
-
+        //loading = new Img(LOADING_ICON, 24, 24);
+        // loading.setVisible(false);
+        //loading.setAlign(Alignment.RIGHT);
+        //loading.setStyleName("spinner");
+        //loading.setStyleDependentName("hidden", true);
         //top information
         top.addMember(expandCollapseArrow);
         top.addMember(badge);
         top.addMember(title);
-        top.addMember(loading);
+
         top.addMember(pluginErrors);
+        //top.addMember(loading);
         top.addMember(availabilityImage);
         top.addMember(favoriteButton);
+        top.setStyleName("resourceSummary");
 
         detailsForm = new EnhancedHLayout();
         detailsForm.setWidth100();
@@ -405,8 +409,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
 
         detailsFormSummary = new OverviewForm(resourceComposite, this);
         detailsFormSummary.setWidth100();
-        detailsFormSummary.setPadding(3);
-        detailsFormSummary.setMargin(3);
+        detailsFormSummary.setStyleName("resourceSummaryDetails");
         detailsFormSummary.setLayoutAlign(Alignment.LEFT);
 
         //condense details for display
@@ -416,9 +419,9 @@ public class ResourceTitleBar extends EnhancedVLayout {
 
         SpacerItem widthSpace = new SpacerItem();
         widthSpace.setWidth(40);
-        DynamicForm wrappedSpacer = new DynamicForm();
-        wrappedSpacer.setFields(widthSpace);
-        detailsForm.addMember(wrappedSpacer);
+        //    DynamicForm wrappedSpacer = new DynamicForm();
+        //  wrappedSpacer.setFields(widthSpace);
+        // detailsForm.addMember(wrappedSpacer);
         details.addChild(detailsForm);
         details.hide();
 
@@ -475,7 +478,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
             this.availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(resource
                 .getCurrentAvailability().getAvailabilityType()));
 
-            badge.setSrc(ImageManager.getResourceLargeIcon(this.resource.getResourceType().getCategory()));
+            badge.setSrc(ImageManager.getResourceTypeIcon(this.resource.getResourceType().getCategory()));
 
             markForRedraw();
         }

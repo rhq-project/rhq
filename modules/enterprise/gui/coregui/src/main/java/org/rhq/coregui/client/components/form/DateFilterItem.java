@@ -18,16 +18,16 @@
  */
 package org.rhq.coregui.client.components.form;
 
+import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
+import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;
+import static com.smartgwt.client.types.RelativeDateRangePosition.END;
+import static com.smartgwt.client.types.RelativeDateRangePosition.START;
+
 import java.util.Date;
 
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.smartgwt.client.util.DateUtil;
 import com.smartgwt.client.widgets.form.fields.DateItem;
-
-import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
-import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;
-import static com.smartgwt.client.types.RelativeDateRangePosition.END;
-import static com.smartgwt.client.types.RelativeDateRangePosition.START;
 
 
 
@@ -66,6 +66,7 @@ public class DateFilterItem extends DateItem {
         this.setUseTextField(true);
         this.setEnforceDate(true);
         this.setEndDate(new Date());
+        this.setCellStyle("dateFilter");
 
     }
 

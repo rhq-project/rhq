@@ -109,9 +109,15 @@ class TopologyManager extends AbstractManager {
             gcGraceSeconds = 691200; // 8 days
         }
 
-        execute(new UpdateFile(Task.UpdateGCGrace.getFile()), "gc_grace_seconds", gcGraceSeconds + "");
-        log.info("Updated gc_grace_seconds to " + gcGraceSeconds);
+        for (Table table : Table.values()) {
+            updateGCGraceSeconds(table.getTableName(), gcGraceSeconds);
+        }
 
+        log.info("Updated gc_grace_seconds to " + gcGraceSeconds);
         log.info("Successfully executed " + Task.UpdateGCGrace + " task.");
+    }
+
+    private void updateGCGraceSeconds(String table, int gcGraceSeconds) {
+        execute("ALTER COLUMNFAMILY " + table + " WITH gc_grace_seconds = " + gcGraceSeconds);
     }
 }

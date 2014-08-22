@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.util;
 
 import java.lang.management.ManagementFactory;
@@ -148,9 +149,11 @@ import org.rhq.enterprise.server.measurement.MeasurementViewManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.plugin.ServerPluginsBean;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerBean;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
+import org.rhq.enterprise.server.purge.PurgeManagerBean;
+import org.rhq.enterprise.server.purge.PurgeManagerLocal;
 import org.rhq.enterprise.server.report.DataAccessManagerBean;
 import org.rhq.enterprise.server.report.DataAccessManagerLocal;
 import org.rhq.enterprise.server.resource.PlatformUtilizationManagerBean;
@@ -502,7 +505,7 @@ public final class LookupUtil {
     public static StorageNodeOperationsHandlerLocal getStorageNodeOperationsHandler() {
         return lookupLocal(StorageNodeOperationsHandlerBean.class);
     }
-    
+
     public static StorageClusterSettingsManagerLocal getStorageClusterSettingsManagerLocal() {
         return lookupLocal(StorageClusterSettingsManagerBean.class);
     }
@@ -595,8 +598,8 @@ public final class LookupUtil {
         return lookupLocal(StatusManagerBean.class);
     }
 
-    public static ServerPluginsLocal getServerPlugins() {
-        return lookupLocal(ServerPluginsBean.class);
+    public static ServerPluginManagerLocal getServerPluginManager() {
+        return lookupLocal(ServerPluginManagerBean.class);
     }
 
     public static TagManagerLocal getTagManager() {
@@ -629,6 +632,10 @@ public final class LookupUtil {
 
     public static SystemInfoManagerLocal getSystemInfoManager() {
         return lookupLocal(SystemInfoManagerBean.class);
+    }
+
+    public static PurgeManagerLocal getPurgeManager() {
+        return lookupLocal(PurgeManagerBean.class);
     }
 
     public static CoreServerMBean getCoreServer() {

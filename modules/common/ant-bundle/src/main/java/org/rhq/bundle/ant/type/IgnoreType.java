@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,14 +20,14 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.bundle.ant.type;
 
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.types.DataType;
+package org.rhq.bundle.ant.type;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.tools.ant.BuildException;
 
 /**
  * File(s) that should be ignored (e.g. server/default/work/**) by the enclosing rhq:deployment task. The files are
@@ -39,10 +39,12 @@ import java.util.List;
 public class IgnoreType extends AbstractBundleType {
     private List<FileSet> fileSets = new ArrayList<FileSet>();
 
+    @SuppressWarnings("unused")
     public void addConfigured(FileSet fileSet) {
         File dir = fileSet.getDir();
         if (dir != null && dir.isAbsolute()) {
-            throw new BuildException("The 'dir' attribute on the rhq:ignore type must be a relative path (relative to the ${rhq.deploy.dir}).");
+            throw new BuildException(
+                "The 'dir' attribute on the rhq:ignore type must be a relative path (relative to the ${rhq.deploy.dir}).");
         }
         this.fileSets.add(fileSet);
     }

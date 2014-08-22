@@ -34,6 +34,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StreamTokenizer;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -62,6 +64,14 @@ import java.util.prefs.Preferences;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.xml.stream.XMLEventFactory;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLEventWriter;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.DTD;
+import javax.xml.stream.events.XMLEvent;
 
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
@@ -1313,7 +1323,7 @@ public class AgentMain {
             Properties replacements = new Properties();
             replacements.putAll(System.getProperties());
             replacements.put("rhq.agent.preferences-node", m_agentPreferencesNodeName);
-            String new_config = StringPropertyReplacer.replaceProperties(raw_config_file.toString(), replacements);
+            String new_config = addMissingDoctypeDeclaration(StringPropertyReplacer.replaceProperties(raw_config_file.toString(), replacements));
 
             ByteArrayInputStream new_config_input_stream = new ByteArrayInputStream(new_config.getBytes());
             Preferences.importPreferences(new_config_input_stream);
@@ -1357,6 +1367,59 @@ public class AgentMain {
         m_configuration = agent_configuration;
 
         return m_configuration;
+    }
+
+    /**
+     * If the configuration file is missing DOCTYPE declaration (older agents), add missing DOCTYPE to allow
+     * importing agent configuration.
+     *
+     * @param input XML with or without DOCTYPE declaration
+     * @return XML with DOCTYPE declaration, or original XML in case of errors
+     */
+    private String addMissingDoctypeDeclaration(String input) {
+        XMLEventReader eventReader = null;
+        XMLEventWriter eventWriter = null;
+        String output = null;
+        StringWriter writer = new StringWriter();
+
+        try {
+            StringReader reader = new StringReader(input);
+            XMLInputFactory inputFactory = XMLInputFactory.newFactory();
+            XMLOutputFactory outputFactory = XMLOutputFactory.newFactory();
+            XMLEventFactory eventFactory = XMLEventFactory.newFactory();
+            eventReader = inputFactory.createXMLEventReader(reader);
+            eventWriter = outputFactory.createXMLEventWriter(writer);
+
+            boolean dtdWritten = false;
+
+            while(eventReader.hasNext()) {
+                XMLEvent xmlEvent = eventReader.nextEvent();
+                switch(xmlEvent.getEventType()) {
+                    case XMLEvent.DTD:
+                        dtdWritten = true;
+                        eventWriter.add(xmlEvent);
+                        break;
+                    case XMLEvent.START_ELEMENT:
+                        if(!dtdWritten) {
+                            DTD dtd = eventFactory.createDTD("DOCTYPE preferences SYSTEM \"http://java.sun.com/dtd/preferences.dtd\"");
+                            eventWriter.add(dtd);
+                            dtdWritten = true;
+                        }
+                        eventWriter.add(xmlEvent);
+                        break;
+                    default:
+                        eventWriter.add(xmlEvent);
+                        break;
+                }
+            }
+            eventReader.close();
+            eventWriter.close();
+            output = writer.toString();
+        } catch (XMLStreamException e) {
+            // Return input XML, we couldn't process it correctly
+            output = input;
+        }
+        return output;
     }
 
     /**
@@ -1419,9 +1482,7 @@ public class AgentMain {
                             String address = server_config.getConnectorBindAddress();
                             int port = server_config.getConnectorBindPort();
                             String remote_endpoint = server_config.getConnectorRemoteEndpoint();
-                            String version = Version.getProductVersion();
-                            String build = Version.getBuildNumber();
-                            AgentVersion agentVersion = new AgentVersion(version, build);
+                            AgentVersion agentVersion = getAgentVersion();
                             String installId = System.getProperty(AgentRegistrationRequest.SYSPROP_INSTALL_ID);
                             String installLocation = getAgentHomeDirectory();
                             if (installLocation != null && installLocation.trim().length() == 0) {
@@ -2190,6 +2251,25 @@ public class AgentMain {
 
             try {
                 ConnectAgentResults results = (ConnectAgentResults) connectResponse.getResults();
+
+                // BZ 1124614 - We know here the agent version is compatible with the server.  But it may not
+                // be the same version.  If the agent is configured to auto-update itself, and it is not the same
+                // version as the latest agent version as told to us by the server, then this agent should update now.
+                // Notice we will only check the build number (hash), the version may be the same but the
+                // build hashes will be different.
+                boolean agentUpdateEnabled = getConfiguration().isAgentUpdateEnabled();
+                if (agentUpdateEnabled) {
+                    AgentVersion latestVersion = results.getLatestAgentVersion();
+                    if (latestVersion != null && latestVersion.getBuild() != null) {
+                        AgentVersion ourVersion = getAgentVersion();
+                        if (!ourVersion.getBuild().equals(latestVersion.getBuild())) {
+                            throw new AgentNotSupportedException(MSG.getMsg(
+                                AgentI18NResourceKeys.AGENT_BUILD_DOES_NOT_MATCH_AUTO_UPDATE_NOW, ourVersion,
+                                latestVersion));
+                        }
+                    }
+                }
+
                 long serverTime = results.getServerTime();
                 serverClockNotification(serverTime);
 
@@ -2204,6 +2284,8 @@ public class AgentMain {
                         plugin_container.getInventoryManager().requestFullAvailabilityReport();
                     }
                 }
+            } catch (AgentNotSupportedException anse) {
+                throw anse; // bubble this up to the outer try-catch so we can update this agent now
             } catch (Throwable t) {
                 // should never happen, should always cast to non-null ConnectAgentResults
                 LOG.error(AgentI18NResourceKeys.TIME_UNKNOWN, ThrowableUtil.getAllMessages(t));
@@ -2228,11 +2310,24 @@ public class AgentMain {
         return;
     }
 
+    /**
+     * Returns this agent's version information.
+     *
+     * @return agent version POJO
+     */
+    private AgentVersion getAgentVersion() {
+        String version = Version.getProductVersion();
+        String build = Version.getBuildNumber();
+        AgentVersion agentVersion = new AgentVersion(version, build);
+        return agentVersion;
+    }
+
     private Command createConnectAgentCommand() throws Exception {
         AgentConfiguration config = getConfiguration();
         String agentName = config.getAgentName();
-        AgentVersion version = new AgentVersion(Version.getProductVersion(), Version.getBuildNumber());
-        ConnectAgentRequest request = new ConnectAgentRequest(agentName, version);
+        boolean agentUpdateEnabled = config.isAgentUpdateEnabled();
+        AgentVersion version = getAgentVersion();
+        ConnectAgentRequest request = new ConnectAgentRequest(agentName, version, agentUpdateEnabled);
 
         RemotePojoInvocationCommand connectCommand = new RemotePojoInvocationCommand();
         Method connectMethod = CoreServerService.class.getMethod("connectAgent", ConnectAgentRequest.class);

@@ -34,8 +34,12 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Future;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import org.apache.commons.cli.CommandLine;
@@ -48,6 +52,7 @@ import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.file.FileReverter;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.file.FileVisitor;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
@@ -62,11 +67,12 @@ import org.rhq.server.control.util.ExecutorAssist;
  */
 public abstract class AbstractInstall extends ControlCommand {
 
-    protected final String AGENT_CONFIG_OPTION = "agent-config";
-    protected final String START_OPTION = "start";
+    protected static final String AGENT_CONFIG_OPTION = "agent-config";
+    protected static final String FROM_AGENT_DIR_OPTION = "from-agent-dir";
+    protected static final String START_OPTION = "start";
 
-    protected final String AGENT_PREFERENCE = "agent-preference";
-    protected final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
+    protected static final String AGENT_PREFERENCE = "agent-preference";
+    protected static final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
 
     // some known agent preference setting names
     private static final String PREF_RHQ_AGENT_CONFIGURATION_SETUP_FLAG = "rhq.agent.configuration-setup-flag";
@@ -130,7 +136,7 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    protected void waitForRHQServerToInitialize() throws Exception {
+    protected void waitForRHQServerToInitialize(Future<Integer> installerExitCode) throws Exception {
         try {
             final long messageInterval = 30000L;
             final long problemMessageInterval = 120000L;
@@ -139,6 +145,11 @@ public abstract class AbstractInstall extends ControlCommand {
 
             while (!isRHQServerInitialized()) {
                 Long now = System.currentTimeMillis();
+
+                if(installerExitCode.isDone() && installerExitCode.get().intValue() != RHQControl.EXIT_CODE_OK) {
+                    stopServer();
+                    throw new RuntimeException("Installer failed with code " + installerExitCode.get().intValue() + ", shut down server");
+                }
 
                 if ((now - intervalStart) > messageInterval) {
                     long totalWait = (now - timerStart);
@@ -314,11 +325,8 @@ public abstract class AbstractInstall extends ControlCommand {
                 rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            String pid = getAgentPid();
-            if (pid != null) {
-                commandLine = getCommandLine("rhq-agent-wrapper", "kill");
-                rValue = Math.max(rValue, ExecutorAssist.execute(agentBinDir, commandLine));
-            }
+            commandLine = getCommandLine("rhq-agent-wrapper", "kill");
+            rValue = Math.max(rValue, ExecutorAssist.execute(agentBinDir, commandLine));
         }
         return rValue;
     }
@@ -333,18 +341,17 @@ public abstract class AbstractInstall extends ControlCommand {
         log.debug("Stopping RHQ server...");
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "stop");
 
-        int rValue = RHQControl.EXIT_CODE_OK;
-
+        int rValue;
         if (isWindows()) {
             try {
-                rValue = Math.max(rValue, ExecutorAssist.execute(serverBinDir, commandLine));
+                rValue = ExecutorAssist.execute(serverBinDir, commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to stop server service", e);
                 rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            rValue = Math.max(rValue, ExecutorAssist.execute(serverBinDir, commandLine));
+            rValue = ExecutorAssist.execute(serverBinDir, commandLine);
         }
         return rValue;
     }
@@ -353,6 +360,7 @@ public abstract class AbstractInstall extends ControlCommand {
         int rValue = RHQControl.EXIT_CODE_OK;
 
         try {
+            validateServerPropertiesFile();
             log.info("The RHQ Server must be started to complete its installation. Starting the RHQ server in preparation of running the server installer...");
 
             // when you unzip the distro, you are getting a fresh, unadulterated, out-of-box EAP installation, which by default listens
@@ -364,7 +372,7 @@ public abstract class AbstractInstall extends ControlCommand {
             }
 
             org.apache.commons.exec.CommandLine commandLine;
-            
+
             if (isWindows()) {
                 // For windows we will [re-]install the server as a windows service, then start the service.
 
@@ -383,7 +391,7 @@ public abstract class AbstractInstall extends ControlCommand {
             } else {
                 // For *nix, just start the server in the background
                 commandLine = getCommandLine("rhq-server", "start");
-                rValue = Math.max(rValue, ExecutorAssist.execute(getBinDir(), commandLine, true));
+                ExecutorAssist.executeAsync(getBinDir(), commandLine, null);
             }
 
             addUndoTaskToStopComponent("--server"); // if any errors occur after now, we need to stop the server
@@ -415,38 +423,29 @@ public abstract class AbstractInstall extends ControlCommand {
             log.error("An error occurred while starting the RHQ server: " + e.getMessage());
             throw e;
         }
-        
+
         return rValue;
     }
 
-    protected int runRHQServerInstaller() throws IOException {
-        try {
-            log.info("Installing RHQ server");
+    protected Future<Integer> runRHQServerInstaller() throws Exception {
+        log.info("Installing RHQ server");
 
-            // If the install fails, we will remove the install marker file allowing the installer to be able to run again.
-            // We also need to revert mgmt-users.properties
-            File mgmtUserPropertiesFile = new File(getBaseDir(),
+        // If the install fails, we will remove the install marker file allowing the installer to be able to run again.
+        // We also need to revert mgmt-users.properties
+        File mgmtUserPropertiesFile = new File(getBaseDir(),
                 "jbossas/standalone/configuration/mgmt-users.properties");
-            final FileReverter mgmtUserPropertiesReverter = new FileReverter(mgmtUserPropertiesFile);
-            addUndoTask(new ControlCommand.UndoTask("Removing server-installed marker file and management user") {
-                public void performUndoWork() throws Exception {
-                    getServerInstalledMarkerFile(getBaseDir()).delete();
-                    mgmtUserPropertiesReverter.revert();
-                }
-            });
+        final FileReverter mgmtUserPropertiesReverter = new FileReverter(mgmtUserPropertiesFile);
+        addUndoTask(new ControlCommand.UndoTask("Removing server-installed marker file and management user") {
+            public void performUndoWork() throws Exception {
+                getServerInstalledMarkerFile(getBaseDir()).delete();
+                mgmtUserPropertiesReverter.revert();
+            }
+        });
 
-            /**
-             * @TODO There's no way this could catch the resultValue..
-             */
-            
-            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
-            ExecutorAssist.execute(getBinDir(), commandLine, true);
-            log.info("The server installer is running");
-            return RHQControl.EXIT_CODE_OK; // the installer really didn't exit yet, so we don't know the result
-        } catch (Exception e) {
-            log.error("An error occurred while starting the server installer: " + e.getMessage());
-            return RHQControl.EXIT_CODE_NOT_INSTALLED;
-        }
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
+        Future<Integer> integerFuture = ExecutorAssist.executeAsync(getBinDir(), commandLine, null);
+        log.info("The server installer is running");
+        return integerFuture;
     }
 
     private class StorageDataDirectories {
@@ -623,6 +622,70 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
+    protected int updateAndMoveExistingAgent(final File agentBasedir, final File oldAgentDir,
+        final File agentInstallerJar) throws Exception {
+
+        // Make sure we use the appropriate java version, don't just fall back to PATH
+        String javaExeFilePath = System.getProperty("rhq.java-exe-file-path");
+
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(javaExeFilePath) //
+            .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath()) //
+            .addArgument("--update=" + oldAgentDir.getAbsolutePath()) //
+            .addArgument("--log=" + new File(getLogDir(), "rhq-agent-update.log")) //
+            .addArgument("--launch=false"); // we can't launch this copy - we still have to move it to the new location
+
+        int exitValue = ExecutorAssist.execute(getBaseDir(), commandLine);
+        log.info("The agent installer finished updating with exit value " + exitValue);
+
+        // We need to now move the new, updated agent over to the new agent location.
+        // renameTo() may fail if we are crossing file system boundaries, so try a true copy as a fallback.
+        if (!agentBasedir.equals(oldAgentDir)) {
+            // BZ 1118906 - we need to guard against the possibility that one or both of these are symlinks which aren't
+            // "equal" to each other but yet still point to the same location. If they point to the same location
+            // it is as if they are "equal" and we should do nothing.
+            if (!agentBasedir.getCanonicalPath().equals(oldAgentDir.getCanonicalPath())) {
+                FileUtil.purge(agentBasedir, true); // clear the way for the new upgraded agent
+                if (!oldAgentDir.renameTo(agentBasedir)) {
+                    FileUtil.copyDirectory(oldAgentDir, agentBasedir);
+
+                    // we need to retain the execute bits for the executable scripts and libraries
+                    FileVisitor visitor = new FileVisitor() {
+                        @Override
+                        public void visit(File file) {
+                            String filename = file.getName();
+                            if (filename.contains(".so") || filename.contains(".sl") || filename.contains(".dylib")) {
+                                file.setExecutable(true);
+                            } else if (filename.endsWith(".sh")) {
+                                file.setExecutable(true);
+                            }
+                        }
+                    };
+
+                    FileUtil.forEachFile(new File(agentBasedir, "bin"), visitor);
+                    FileUtil.forEachFile(new File(agentBasedir, "lib"), visitor);
+                }
+            }
+        }
+
+        return exitValue;
+    }
+
+    static protected File getFromAgentDir(CommandLine commandLine) {
+        return (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) ? new File(
+            commandLine.getOptionValue(FROM_AGENT_DIR_OPTION)) : null;
+    }
+
+    protected File getFileDownload(String directory, final String fileMatch) {
+        File downloadDir = new File(getBaseDir(),
+            "modules/org/rhq/server-startup/main/deployments/rhq.ear/rhq-downloads/" + directory);
+        return downloadDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.getName().contains(fileMatch);
+            }
+        })[0];
+    }
+
     private Preferences getAgentPreferences() {
         Preferences agentPrefs = Preferences.userRoot().node("rhq-agent/default");
         return agentPrefs;
@@ -696,8 +759,16 @@ public abstract class AbstractInstall extends ControlCommand {
             String setupPref = PREF_RHQ_AGENT_CONFIGURATION_SETUP_FLAG;
             preferencesNode.putBoolean(setupPref, true);
 
-            preferencesNode.flush();
-            preferencesNode.sync();
+            try {
+                preferencesNode.flush();
+                preferencesNode.sync();
+            } catch (BackingStoreException bse) {
+                log.error("Failed to store agent preferences, for Linux systems we require writable user.home ["
+                    + System.getProperty("user.home")
+                    + "]. You can also set different location for agent preferences by setting \"-Djava.util.prefs.userRoot=/some/path/\""
+                    + " java system property. You may need to put this property to RHQ_CONTROL_ADDIDIONAL_JAVA_OPTS and RHQ_AGENT_ADDIDIONAL_JAVA_OPTS env variables.");
+                throw bse;
+            }
 
             log.info("Finished configuring the agent");
         } catch (Exception e) {
@@ -814,6 +885,16 @@ public abstract class AbstractInstall extends ControlCommand {
         try {
             fis = new FileInputStream(new File("bin/rhq-storage.properties"));
             properties.load(fis);
+
+            // Ignore empty values
+            Iterator<Map.Entry<Object, Object>> iterator = properties.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<Object, Object> entry = iterator.next();
+                String value = (String) entry.getValue();
+                if (value == null || value.length() < 1) {
+                    iterator.remove();
+                }
+            }
         } finally {
             if (null != fis) {
                 fis.close();

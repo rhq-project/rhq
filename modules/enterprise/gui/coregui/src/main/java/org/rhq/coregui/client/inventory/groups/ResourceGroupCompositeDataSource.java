@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -145,7 +145,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
                 public void onSuccess(PageList<ResourceGroupComposite> result) {
                     PageList<ResourceGroupComposite> filteredResult = applyAvailabilitySearchFilter(result);
                     response.setData(buildRecords(filteredResult));
-                    response.setTotalRows(filteredResult.getTotalSize()); // for paging to work we have to specify size of full result set
+                    setPagingInfo(response, result);
                     processResponse(request.getRequestId(), response);
                 }
             });
@@ -248,7 +248,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         results.append("<table><tr>");
         if (0 == total) {
             results.append(getColumn(false,
-                "<img src=\"" + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(null)) + "\" /> 0"));
+                "<img height=\"12\" width=\"12\" src=\"" + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(null)) + "\" /> 0"));
             results.append(getColumn(true));
             results.append(getColumn(false));
 

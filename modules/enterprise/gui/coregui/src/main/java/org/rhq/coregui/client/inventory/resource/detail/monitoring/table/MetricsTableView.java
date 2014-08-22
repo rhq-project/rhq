@@ -19,6 +19,9 @@
 
 package org.rhq.coregui.client.inventory.resource.detail.monitoring.table;
 
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.METRIC_DEF_ID;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.RESOURCE_ID;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -74,8 +77,6 @@ import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.message.Message;
 
-import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.*;
-
 /**
  * Views a resource's metrics in a tabular view with sparkline graph and optional detailed d3 graph.
  *
@@ -99,6 +100,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
     public MetricsTableView(Resource resource, AbstractD3GraphListView abstractD3GraphListView,
         Set<Integer> expandedRows) {
         super();
+        setStyleName("metricsTableView");
         this.resource = resource;
         this.abstractD3GraphListView = abstractD3GraphListView;
         dashboardMenuMap = new LinkedHashMap<String, String>();
@@ -150,7 +152,8 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         toolStrip = new ToolStrip();
         toolStrip.setWidth(300);
         toolStrip.setMembersMargin(15);
-        toolStrip.setPadding(5);
+        toolStrip.setStyleName("footer");
+        //toolStrip.setPadding(5);
         toolStrip.addSpacer(10);
         addToDashboardButton = new IButton(MSG.chart_metrics_add_to_dashboard_button());
         addToDashboardButton.setWidth(80);

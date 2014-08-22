@@ -364,6 +364,17 @@ public class StorageClientManager implements StorageClientManagerMBean{
         persistStorageProperty(MetricsConstants.AGGREGATION_WORKERS, Integer.toString(numWorkers));
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public int getRawDataAgeLimit() {
+        return metricsServer.getRawDataAgeLimit();
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void setRawDataAgeLimit(int ageLimit) {
+        metricsServer.setRawDataAgeLimit(ageLimit);
+        persistStorageProperty(MetricsConstants.RAW_DATA_AGE_LIMIT, Integer.toString(ageLimit));
+    }
+
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public double getRequestLimit() {
@@ -557,7 +568,7 @@ public class StorageClientManager implements StorageClientManagerMBean{
     }
 
     private long getCacheActivationTime() {
-        SystemSettings settings = systemManager.getSystemSettings(subjectManager.getOverlord());
+        SystemSettings settings = systemManager.getObfuscatedSystemSettings(true);
         return Long.parseLong(settings.get(SystemSetting.METRICS_CACHE_ACTIVATION_TIME));
     }
 }

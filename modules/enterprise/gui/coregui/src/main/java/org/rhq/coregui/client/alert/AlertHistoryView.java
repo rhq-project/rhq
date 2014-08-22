@@ -56,6 +56,7 @@ import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -71,7 +72,7 @@ import org.rhq.coregui.client.util.message.Message;
  * @author Heiko W. Rupp
  * @author John Mazzitelli
  */
-public class AlertHistoryView extends TableSection<AlertDataSource> implements HasViewName {
+public class AlertHistoryView extends TableSection<AlertDataSource>  implements HasViewName {
 
     public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentAlerts", MSG.common_title_recent_alerts(),
         IconEnum.RECENT_ALERTS);
@@ -116,10 +117,10 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         setInitialCriteriaFixed(false);
         setDataSource(new AlertDataSource(context));
     }
-    
+
     public AlertHistoryView(String tableTitle, int[] resourceIds) {
         super(tableTitle, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
-        
+
         Criteria initialCriteria = new Criteria();
         AlertPriority[] priorityValues = AlertPriority.values();
         String[] priorityNames = new String[priorityValues.length];
@@ -181,7 +182,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
      * that only trim their views to the top N alerts can override this to
      * return false so they don't delete or acknowledge alerts that aren't displayed
      * to the user.
-     * 
+     *
      * @return this default implementation returns true
      */
     protected boolean canSupportDeleteAndAcknowledgeAll() {
@@ -189,26 +190,9 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
     }
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {
-
-        addTableAction(MSG.common_button_delete(), MSG.view_alerts_delete_confirm(), new ResourceAuthorizedTableAction(
-            AlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null : Permission.MANAGE_ALERTS),
-            new RecordExtractor<Integer>() {
-                public Collection<Integer> extract(Record[] records) {
-                    List<Integer> result = new ArrayList<Integer>(records.length);
-                    for (Record record : records) {
-                        result.add(record.getAttributeAsInt("resourceId"));
-                    }
-                    return result;
-                }
-            }) {
-
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                delete(selection);
-            }
-        });
-        addTableAction(MSG.common_button_ack(), MSG.view_alerts_ack_confirm(), new ResourceAuthorizedTableAction(
-            AlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null : Permission.MANAGE_ALERTS),
-            new RecordExtractor<Integer>() {
+        addTableAction(MSG.common_button_ack(), MSG.view_alerts_ack_confirm(), ButtonColor.BLUE,
+            new ResourceAuthorizedTableAction(AlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null
+                : Permission.MANAGE_ALERTS), new RecordExtractor<Integer>() {
                 public Collection<Integer> extract(Record[] records) {
                     List<Integer> result = new ArrayList<Integer>(records.length);
                     for (Record record : records) {
@@ -222,19 +206,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
                 acknowledge(selection);
             }
         });
-
         if (canSupportDeleteAndAcknowledgeAll()) {
-            addTableAction(MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(), new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    ListGrid grid = getListGrid();
-                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
-                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
-                }
-
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    deleteAll();
-                }
-            });
             addTableAction(MSG.common_button_ack_all(), MSG.view_alerts_ack_confirm_all(), new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     ListGrid grid = getListGrid();
@@ -247,8 +219,40 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
                 }
             });
         }
+
+        addTableAction(MSG.common_button_delete(), MSG.view_alerts_delete_confirm(), ButtonColor.RED,
+            new ResourceAuthorizedTableAction(AlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null
+                : Permission.MANAGE_ALERTS), new RecordExtractor<Integer>() {
+                public Collection<Integer> extract(Record[] records) {
+                    List<Integer> result = new ArrayList<Integer>(records.length);
+                    for (Record record : records) {
+                        result.add(record.getAttributeAsInt("resourceId"));
+                    }
+                    return result;
+                }
+            }) {
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                delete(selection);
+            }
+        });
+        if (canSupportDeleteAndAcknowledgeAll()) {
+            addTableAction(MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(), ButtonColor.RED,
+                new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    ListGrid grid = getListGrid();
+                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
+                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
+                }
+
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    deleteAll();
+                }
+            });
+        }
         if (!context.isSubsystemView() && showNewDefinitionButton) {
-            addTableAction(MSG.common_button_new() + " " + MSG.common_title_definition(), new TableAction() {
+            addTableAction(MSG.common_button_new() + " " + MSG.common_title_definition(), ButtonColor.BLUE,
+                new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     // todo: this.permissions.isAlert()
                     return hasWriteAccess;
@@ -256,7 +260,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     // CoreGUI.goToView(LinkManager.getEntityTabLink(context, "Alerts", "Definitions/0"));
-                    // the above doesn't work because EntityContext doesn't know if it is autogroup or not 
+                    // the above doesn't work because EntityContext doesn't know if it is autogroup or not
                     // -> using the relative URL hack
                     String oldurl = History.getToken();
                     String lastChunk = oldurl.substring(oldurl.lastIndexOf("/") + 1);
@@ -372,7 +376,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
     public ViewName getViewName() {
         return SUBSYSTEM_VIEW_ID;
     }
-    
+
     public void setShowNewDefinitionButton(boolean showNewDefinitionButton) {
         this.showNewDefinitionButton = showNewDefinitionButton;
     }

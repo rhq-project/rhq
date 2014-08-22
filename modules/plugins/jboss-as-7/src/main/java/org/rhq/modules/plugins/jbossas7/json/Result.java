@@ -47,6 +47,8 @@ public class Result {
     private boolean rolledBack = false;
     @JsonIgnore
     private Throwable rhqThrowable;
+    @JsonIgnore
+    private boolean timedout;
 
     /** Record throwables during low level processing */
     @JsonIgnore
@@ -107,6 +109,10 @@ public class Result {
         return success;
     }
 
+    public boolean isTimedout() {
+        return timedout;
+    }
+
     public Object getResult() {
         return result;
     }
@@ -121,6 +127,12 @@ public class Result {
 
     public void setFailureDescription(/*List<Map<String, String>>*/Object failureDescription) {
         this.failureDescription = failureDescription;
+
+        if (failureDescription.toString().contains("Read timed out")) {
+            this.timedout = true;
+        } else {
+            this.timedout = false;
+        }
     }
 
     public boolean isRolledBack() {

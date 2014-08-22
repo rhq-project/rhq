@@ -1,26 +1,20 @@
 /*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
  *
- *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
- *  * All rights reserved.
- *  *
- *  * This program is free software; you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License, version 2, as
- *  * published by the Free Software Foundation, and/or the GNU Lesser
- *  * General Public License, version 2.1, also as published by the Free
- *  * Software Foundation.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  * GNU General Public License and the GNU Lesser General Public License
- *  * for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * and the GNU Lesser General Public License along with this program;
- *  * if not, write to the Free Software Foundation, Inc.,
- *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.server.measurement;
@@ -32,9 +26,6 @@ import static org.rhq.core.domain.measurement.NumericType.DYNAMIC;
 import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,16 +45,14 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.util.jdbc.JDBCUtil;
-import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.Overlord;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
-import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 
 /**
@@ -95,7 +84,8 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
 
     private List<MeasurementSchedule> schedules;
 
-    @Inject @Overlord
+    @Inject
+    @Overlord
     private Subject overlord;
 
     @EJB
@@ -108,9 +98,7 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
     private MeasurementBaselineManagerLocal baselineManager;
 
     @EJB
-    StorageClientManager storageClientManager;
-
-    private MetricsDAO metricsDAO;
+    private StorageClientManager storageClientManager;
 
     @Override
     protected void beforeMethod() throws Exception {
@@ -122,7 +110,6 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
 
         measurementDefs = new ArrayList<MeasurementDefinition>();
         schedules = new ArrayList<MeasurementSchedule>();
-        metricsDAO = storageClientManager.getMetricsDAO();
         createInventory();
     }
 
@@ -145,16 +132,16 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
         DateTime currentHour = now().hourOfDay().roundFloorCopy();
         final DateTime lastHour = currentHour.minusHours(1);
 
-        insertBaselines(asList(
-            baseline(schedule1, 4.34, 5.2, 3.9),
-            baseline(schedule2, 7.43, 7.49, 7.38),
-            baseline(schedule3, 3.2, 3.6, 2.95)
+        insertBaselines(asList( //
+            baseline(schedule1, 4.34, 3.9, 5.2), //
+            baseline(schedule2, 7.43, 7.38, 7.49), //
+            baseline(schedule3, 3.2, 2.95, 3.6) //
         ));
 
-        List<AggregateNumericMetric>  metrics = asList(
-            new AggregateNumericMetric(schedule1.getId(), 3.8, 2.11, 4.6, lastHour.getMillis()),
-            new AggregateNumericMetric(schedule2.getId(), 9.492, 9.481, 9.53, lastHour.getMillis()),
-            new AggregateNumericMetric(schedule3.getId(), 3.15, 2.96, 3.59, lastHour.getMillis())
+        List<AggregateNumericMetric>  metrics = asList( //
+            new AggregateNumericMetric(schedule1.getId(), 3.8, 2.11, 4.6, lastHour.getMillis()), //
+            new AggregateNumericMetric(schedule2.getId(), 9.492, 9.481, 9.53, lastHour.getMillis()), //
+            new AggregateNumericMetric(schedule3.getId(), 3.15, 2.96, 3.59, lastHour.getMillis()) //
         );
 
         oobManager.computeOOBsForLastHour(overlord, metrics);
@@ -170,9 +157,9 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
                     actual.add(new TestMeasurementOOB(oob));
                 }
 
-                List<TestMeasurementOOB> expected = asList(
-                    new TestMeasurementOOB(schedule1.getId(), lastHour.getMillis(), 138),
-                    new TestMeasurementOOB(schedule2.getId(), lastHour.getMillis(), 1855)
+                List<TestMeasurementOOB> expected = asList( //
+                    new TestMeasurementOOB(schedule1.getId(), lastHour.getMillis(), 138), //
+                    new TestMeasurementOOB(schedule2.getId(), lastHour.getMillis(), 1855) //
                 );
 
                 assertCollectionEqualsNoOrder(expected, actual, "The OOBs do not match");
@@ -259,46 +246,23 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
         em.flush();
     }
 
-    public void purgeBaselines() {
+    private void purgeBaselines() {
         purgeTables("rhq_measurement_bline");
     }
 
-    public void purgeOOBs() {
+    private void purgeOOBs() {
         purgeTables("rhq_measurement_oob");
     }
 
-    private void purgeTables(String... tables) {
-        // This method was previous implemented using EntityManager.createNativeQuery
-        // and called from within a TransactionCallback. It was causing a
-        // TransactionRequiredException, and I am not clear why. I suspect it is a
-        // configuration issue in our testing environment, but I haven't figured it out
-        // yet. For now,  raw tables are purges in their own separate JDBC transaction.
-        //
-        // jsanda
-        Connection connection = null;
-
-        try {
-            connection = getConnection();
-            connection.setAutoCommit(false);
-            for (String table : tables) {
-                Statement statement = connection.createStatement();
-                try {
-                    statement.execute("delete from " + table);
-                } finally {
-                    JDBCUtil.safeClose(statement);
+    private void purgeTables(final String... tables) {
+        executeInTransaction(false, new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                for (String table : tables) {
+                    getEntityManager().createNativeQuery("delete from " + table).executeUpdate();
                 }
             }
-            connection.commit();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException e1) {
-                throw new RuntimeException("Failed to rollback transaction", e1);
-            }
-            throw new RuntimeException("Failed to purge data from " + tables, e);
-        } finally {
-            JDBCUtil.safeClose(connection);
-        }
+        });
     }
 
     private void insertBaselines(final List<MeasurementBaseline> baselines) {
@@ -313,10 +277,10 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
         });
     }
 
-    private MeasurementBaseline baseline(MeasurementSchedule schedule, double mean, double max, double min) {
+    private MeasurementBaseline baseline(MeasurementSchedule schedule, double avg, double min, double max) {
         MeasurementBaseline baseline = new MeasurementBaseline();
         baseline.setSchedule(schedule);
-        baseline.setMean(mean);
+        baseline.setMean(avg);
         baseline.setMax(max);
         baseline.setMin(min);
 

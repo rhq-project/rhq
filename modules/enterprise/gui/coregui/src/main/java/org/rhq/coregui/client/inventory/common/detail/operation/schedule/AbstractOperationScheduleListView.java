@@ -26,6 +26,7 @@ import org.rhq.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * @author Ian Springer
@@ -58,7 +59,7 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
 
         setListGridFields(true, idField, operationField, subjectField, nextFireTimeField, descriptionField);
 
-        addTableAction(MSG.common_button_new(), new TableAction() {
+        addTableAction(MSG.common_button_new(), ButtonColor.BLUE, new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return hasControlPermission();
             }
@@ -68,7 +69,7 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
             }
         });
 
-        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), new TableAction() {
+        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), ButtonColor.RED, new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 int count = selection.length;
                 return ((count >= 1) && hasControlPermission());

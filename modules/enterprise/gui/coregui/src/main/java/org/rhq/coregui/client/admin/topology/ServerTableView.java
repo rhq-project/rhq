@@ -51,6 +51,7 @@ import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -157,8 +158,8 @@ public class ServerTableView extends
         addChangeOperationModeAction(OperationMode.NORMAL, MSG.view_adminTopology_server_setNormal());
         addChangeOperationModeAction(OperationMode.MAINTENANCE, MSG.view_adminTopology_server_setMaintenance());
 
-        addTableAction(MSG.view_adminTopology_server_removeSelected(), null, new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.view_adminTopology_server_removeSelected(), null, ButtonColor.RED,
+            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 List<String> selectedNames = getSelectedNames(selections);
                 String message = MSG.view_adminTopology_message_removeServerConfirm(selectedNames.toString());
@@ -190,7 +191,7 @@ public class ServerTableView extends
     }
 
     private void addChangeOperationModeAction(final OperationMode mode, String label) {
-        addTableAction(label, null, new AuthorizedTableAction(this, TableActionEnablement.ANY,
+        addTableAction(label, null, ButtonColor.BLUE, new AuthorizedTableAction(this, TableActionEnablement.ANY,
             Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 List<String> selectedNames = getSelectedNames(selections);
@@ -228,7 +229,7 @@ public class ServerTableView extends
     }
 
     private void showUpdateMembersAction() {
-        addTableAction(MSG.view_groupInventoryMembers_button_updateMembership(),
+        addTableAction(MSG.view_groupInventoryMembers_button_updateMembership(), ButtonColor.BLUE,
             new AuthorizedTableAction(this, TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
                 public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                     AffinityGroupServersSelector.show(id, ServerTableView.this);

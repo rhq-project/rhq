@@ -23,6 +23,7 @@
 package org.rhq.core.domain.alert.composite;
 
 import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
@@ -33,9 +34,11 @@ public class AlertConditionResourceConfigurationCategoryComposite extends Abstra
     private final Integer resourceId;
     private final Configuration resourceConfiguration;
 
-    public AlertConditionResourceConfigurationCategoryComposite(AlertCondition condition, Integer resourceId,
+    public AlertConditionResourceConfigurationCategoryComposite(
+            int cid, AlertConditionCategory ccategory, String cname, String ccomparator, Double cthreshold, String coption, Integer triggerId,
+            Integer resourceId,
         Configuration currentResourceConfiguration) {
-        super(condition);
+        super(new AlertCondition(cid, ccategory, cname, ccomparator, cthreshold, coption, triggerId));
         this.resourceId = resourceId;
         this.resourceConfiguration = currentResourceConfiguration;
     }

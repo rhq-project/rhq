@@ -32,6 +32,7 @@ import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.MeasurementDataGWTServiceAsync;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * A view that displays a non-paginated table of {@link org.rhq.core.domain.measurement.MeasurementSchedule measurement
@@ -80,7 +81,7 @@ public abstract class AbstractSchedulesView extends Table<SchedulesDataSource> {
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {
 
-        addTableAction(MSG.common_button_enable(), null, new TableAction() {
+        addTableAction(MSG.common_button_enable(), null, ButtonColor.BLUE, new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return ((selection.length >= 1) && hasWriteAccess);
             }
@@ -89,7 +90,7 @@ public abstract class AbstractSchedulesView extends Table<SchedulesDataSource> {
                 enableSchedules();
             }
         });
-        addTableAction(MSG.common_button_disable(), null, new TableAction() {
+        addTableAction(MSG.common_button_disable(), null, ButtonColor.GRAY, new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return ((selection.length >= 1) && hasWriteAccess);
             }

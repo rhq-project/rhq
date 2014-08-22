@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.itest;
 
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.PLUGIN_NAME;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -149,6 +151,14 @@ public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
             null), new String[] { "collection-usage-threshold-count", "collection-usage-threshold", "collection-usage",
             "collection-usage-threshold-exceeded", "collection-usage:committed", "collection-usage:init",
             "collection-usage:max", "collection-usage:used", "usage-threshold-count", "usage-threshold-exceeded" });
+
+        //the max-connections will be 'undefined' if no specific value is set. This is AS's way of saying the value
+        //is connector specific
+        excludedMetricNamesByType.put(new ResourceType("Connector (Managed Server)", PLUGIN_NAME, ResourceCategory.SERVICE, null),
+            new String[] {"_expr:max-connections"});
+        excludedMetricNamesByType.put(new ResourceType("Connector", PLUGIN_NAME, ResourceCategory.SERVICE, null),
+            new String[] {"_expr:max-connections"});
+
         assertAllNumericMetricsAndTraitsHaveNonNullValues(excludedMetricNamesByType);
     }
 
@@ -219,6 +229,7 @@ public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
             new MeasurementDefinitionFilter() {
                 private final Set<DataType> acceptableDataTypes = EnumSet.of(DataType.MEASUREMENT, DataType.TRAIT);
 
+                @Override
                 public boolean accept(MeasurementDefinition metricDef) {
                     return acceptableDataTypes.contains(metricDef.getDataType());
                 }

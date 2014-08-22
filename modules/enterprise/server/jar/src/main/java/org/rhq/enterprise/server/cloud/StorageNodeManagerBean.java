@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -69,6 +70,7 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.StorageClusterSettings;
+import org.rhq.core.domain.cloud.StorageClusterSettings.RegularSnapshots;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
@@ -78,7 +80,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
@@ -138,6 +139,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     //metric names on Memory Subsystem resource
     private static final String METRIC_HEAP_COMMITED = "{HeapMemoryUsage.committed}",
         METRIC_HEAP_USED = "{HeapMemoryUsage.used}", METRIC_HEAP_USED_PERCENTAGE = "Calculated.HeapUsagePercentage";
+
+    private static final String REGULAR_SNAPSHOTS_SCHEDULE_DESCRIPTION = "Maintained by Storage Node cluster settings";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -783,32 +786,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void runClusterMaintenance(Subject subject) {
-        List<StorageNode> storageNodes = getClusterNodes();
-
-        for (StorageNode storageNode : storageNodes) {
-            Resource test = storageNode.getResource();
-
-            ResourceCriteria criteria = new ResourceCriteria();
-            criteria.addFilterParentResourceId(test.getId());
-            criteria.addFilterResourceTypeName("StorageService");
-            criteria.setPageControl(PageControl.getUnlimitedInstance());
-
-            PageList<Resource> resources = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(),
-                criteria);
-            if (resources.size() > 0) {
-                Resource storageServiceResource = resources.get(0);
-
-                ResourceOperationSchedule newSchedule = new ResourceOperationSchedule();
-                newSchedule.setJobTrigger(JobTrigger.createNowTrigger());
-                newSchedule.setResource(storageServiceResource);
-                newSchedule.setOperationName("takeSnapshot");
-                newSchedule.setDescription("Run by StorageNodeManagerBean");
-                newSchedule.setParameters(new Configuration());
-
-                storageNodeManager.scheduleOperationInNewTransaction(subjectManager.getOverlord(), newSchedule);
-            }
-        }
+        List<StorageNode> storageNodes = storageNodeManager.getClusterNodes();
 
         if (storageNodes.size() == 1) {
             log.info("Skipping scheduled repair since this is a single-node cluster");
@@ -1267,7 +1247,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         return successResultFound;
     }
-    
+
     private Stopwatch stopwatchStart() {
         if (log.isDebugEnabled()) {
             return new Stopwatch().start();
@@ -1279,6 +1259,67 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         if (stopwatch != null && log.isDebugEnabled()) {
             stopwatch.stop();
             log.debug(message + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+        }
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void scheduleSnapshotManagementOperationsForStorageNode(Subject subject, StorageNode node,
+        StorageClusterSettings settings) {
+        Resource test = node.getResource();
+        RegularSnapshots rs = settings.getRegularSnapshots();
+        // TODO switch to debug log
+        try {
+            List<ResourceOperationSchedule> schedules = operationManager.findScheduledResourceOperations(subject,
+                test.getId());
+            log.debug("Removing original scheduled operations on " + node);
+            for (ResourceOperationSchedule schedule : schedules) {
+                if (REGULAR_SNAPSHOTS_SCHEDULE_DESCRIPTION.equals(schedule.getDescription())) {
+                    log.info("Found operation schedule, unscheduling " + schedule);
+                    operationManager.unscheduleResourceOperation(subject, schedule.getJobId().toString(), test.getId());
+                    // delete history items that have been scheduled but not yet started 
+                    ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+                    criteria.setPageControl(PageControl.getUnlimitedInstance());
+                    criteria.addFilterJobId(schedule.getJobId());
+                    criteria.addFilterStatus(OperationRequestStatus.INPROGRESS);
+                    criteria.addFilterStartTime(Long.valueOf(0));
+                    PageList<ResourceOperationHistory> historyItems = operationManager
+                        .findResourceOperationHistoriesByCriteria(subject, criteria);
+                    Iterator<ResourceOperationHistory> iter = historyItems.iterator();
+                    if (iter.hasNext()) {
+                        log.debug("Wiping out " + historyItems.getTotalSize()
+                            + " scheduled but not yet started history items");
+                        while (iter.hasNext()) {
+                            operationManager.deleteOperationHistory(subject, iter.next().getId(), true);
+                        }
+                    }
+
+                }
+            }
+            if (rs.getEnabled().booleanValue()) {
+                Configuration parameters = Configuration.builder().addSimple("retentionStrategy", rs.getRetention())
+                    .addSimple("count", rs.getCount()).addSimple("deletionStrategy", rs.getDeletion())
+                    .addSimple("location", rs.getLocation()).build();
+
+                ResourceOperationSchedule schedule = operationManager.scheduleResourceOperationUsingCron(subject,
+                    test.getId(), "takeSnapshot",
+                    rs.getSchedule(), 0, parameters, REGULAR_SNAPSHOTS_SCHEDULE_DESCRIPTION);
+                log.debug("Created new " + schedule);
+            }
+
+        } catch (Exception e) {
+            // throw this way so it can get up to UI
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void scheduleSnapshotManagement(Subject subject, StorageClusterSettings clusterSettings) {
+        List<StorageNode> storageNodes = getClusterNodes();
+        log.info("Re-scheduling snapshot management operations on StorageNode cluster");
+        for (StorageNode storageNode : storageNodes) {
+            scheduleSnapshotManagementOperationsForStorageNode(subject, storageNode, clusterSettings);
         }
     }
 

@@ -21,6 +21,7 @@ package org.rhq.coregui.client.inventory.resource.selection;
 
 import com.smartgwt.client.types.SelectionStyle;
 
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
@@ -61,5 +62,12 @@ public class SingleResourceSelector extends ResourceSelector {
         if (assignedGrid.getTotalRows() == 0) {
             super.addSelectedRows();
         }
+    }
+    
+    public Resource getSelectedResource() {
+        if (assignedGrid.getTotalRows() != 0) {
+            return getDataSource().copyValues(assignedGrid.getRecord(0));
+        }
+        return null;
     }
 }

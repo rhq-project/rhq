@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<!--
+  ~ RHQ Management Platform
+  ~ Copyright (C) 2005-2014 Red Hat, Inc.
+  ~ All rights reserved.
+  ~
+  ~ This program is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation version 2 of the License.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program; if not, write to the Free Software Foundation, Inc.,
+  ~ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+  -->
+
+<differences>
+  <difference>
+    <className>org/rhq/core/domain/bundle/ResourceTypeBundleConfiguration$BundleDestinationBaseDirectory</className>
+    <differenceType>7004</differenceType><!-- number of args changed -->
+    <method>ResourceTypeBundleConfiguration$BundleDestinationBaseDirectory(java.lang.String, java.lang.String, java.lang.String, java.lang.String)</method>
+    <justification>This is not supposed to be called publicly.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/alert/AlertConditionLog</className>
+    <differenceType>6003</differenceType> <!-- Value of compile-time constant has changed -->
+    <field>MAX_LOG_LENGTH</field>
+    <justification>Increasing the length of db column and this constant depends on it.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/common/ProductInfo</className>
+    <differenceType>7002</differenceType> <!-- method removed -->
+    <method>java.lang.String getSupportedAgentVersions()</method>
+    <justification>Method renamed for build identifier.</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/common/ProductInfo</className>void setSupportedAgentVersions(java.lang.String)'
+    <differenceType>7002</differenceType> <!-- method removed -->
+    <method>void setSupportedAgentVersions(java.lang.String)</method>
+    <justification>Method renamed for build identifier.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/common/ProductInfo</className>
+    <differenceType>7012</differenceType><!-- method added -->
+    <method>java.lang.String getSupportedAgentBuilds()</method>
+    <justification>Method renamed for build identifier.</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/common/ProductInfo</className>
+    <differenceType>7012</differenceType><!-- method added -->
+    <method>void setSupportedAgentBuilds(java.lang.String)</method>
+    <justification>Method renamed for build identifier.</justification>
+  </difference>
+
+
+    <!--
+    Covers these cases:
+    [ERROR] 7004: org.rhq.core.domain.alert.composite.AlertConditionAvailabilityCategoryComposite:
+    In method 'public AlertConditionAvailabilityCategoryComposite(org.rhq.core.domain.alert.AlertCondition,
+    java.lang.Integer, java.lang.Integer, org.rhq.core.domain.measurement.AvailabilityType)' the number of arguments
+    has changed
+    -->
+  <difference>
+    <className>org/rhq/core/domain/alert/composite/*CategoryComposite</className>
+    <differenceType>7004</differenceType>
+    <method>*CategoryComposite(org.rhq.core.domain.alert.AlertCondition, *)</method>
+    <justification>BZ1032192: Hibernate query change to be more efficient</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/alert/composite/AlertConditionAvailabilityCategoryComposite</className>
+    <differenceType>7002</differenceType>
+    <method>AlertConditionAvailabilityCategoryComposite(org.rhq.core.domain.alert.AlertCondition, java.lang.Integer, org.rhq.core.domain.measurement.AvailabilityType)</method>
+    <justification>BZ1032192: Method was deprecated and couldn't create a valid object anyway</justification>
+  </difference>
+
+</differences>

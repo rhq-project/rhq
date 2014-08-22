@@ -42,16 +42,16 @@ public enum IconEnum {
 
     INVENTORY("global/Inventory_16.png","global/Inventory_24.png"),
     DISCOVERY_QUEUE("global/AutoDiscovery_16.png","global/AutoDiscovery_24.png"),
-    ALL_RESOURCES("resources/all_resources.png"),
-    PLATFORMS("types/Platform_up_16.png","types/Platform_up_24.png"),
-    SERVERS("types/Server_up_16.png", "types/Server_up_24.png"),
-    SERVICES("types/Service_up_16.png", "types/Service_up_24.png"),
+    ALL_RESOURCES("resources/all_resources.png","resources/all_resources.png"),
+    PLATFORMS("types/Platform_type_16.png","types/Platform_type_24.png"),
+    SERVERS("types/Server_type_16.png", "types/Server_type_24.png"),
+    SERVICES("types/Service_type_16.png", "types/Service_type_24.png"),
     UNAVAILABLE_SERVERS("types/Server_down_16.png", "types/Server_down_24.png"),
     // Groups Section
     DYNAGROUPS("types/GroupDefinition_16.png", "types/GroupDefinition_24.png"),
-    ALL_GROUPS("types/Group_up_16.png", "types/Group_up_24.png"),
-    COMPATIBLE_GROUPS("types/Cluster_up_16.png", "types/Cluster_up_24.png"),
-    MIXED_GROUPS("types/Group_up_16.png", "types/Group_up_24.png"),
+    ALL_GROUPS("types/Group_mixed_type_16.png", "types/Group_mixed_type_24.png"),
+    COMPATIBLE_GROUPS("types/Cluster_type_16.png", "types/Cluster_type_24.png"),
+    MIXED_GROUPS("types/Group_mixed_type_16.png", "types/Group_mixed_type_24.png"),
     PROBLEM_GROUPS("types/Group_down_16.png", "types/Group_down_24.png"),
 
     /////////////////////////////
@@ -87,7 +87,7 @@ public enum IconEnum {
     BUNDLE_DEPLOYMENT("subsystems/bundle/BundleDeployment_16.png", "subsystems/bundle/BundleDeployment_24.png"),
     BUNDLE_DESTINATION("subsystems/bundle/BundleDestination_16.png", "subsystems/bundle/BundleDestination_24.png"),
     BUNDLE_DESTINATION_DELETE("subsystems/bundle/BundleDestinationAction_Delete_16.png", "subsystems/bundle/BundleDestinationAction_Delete_24.png"),
-    BUNDLE_DESTINATION_PURGE("subsystems/bundle/BundleDestinationAction_Purge_16.png", "subsystems/bundle/BundleDestinationAction_Purge_24.png"),    
+    BUNDLE_DESTINATION_PURGE("subsystems/bundle/BundleDestinationAction_Purge_16.png", "subsystems/bundle/BundleDestinationAction_Purge_24.png"),
     BUNDLE_REVERT("subsystems/bundle/BundleAction_Revert_16.png", "subsystems/bundle/BundleAction_Revert_24.png"),
 
     /////////////////////////////
@@ -99,6 +99,7 @@ public enum IconEnum {
     ARROW_WHITE("search/menu_arrow.png"),
     ARROW_GRAY("search/menu_arrow_down.png"),
     TRASH("search/trash.png"),
+    QUERY("search/glass.png"),
 
     /////////////////////////////
     //  Administration Tab

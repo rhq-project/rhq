@@ -18,6 +18,11 @@
  */
 package org.rhq.coregui.client.dashboard.portlets.resource;
 
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Set;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -48,11 +53,6 @@ import org.rhq.coregui.client.inventory.resource.detail.monitoring.D3GraphListVi
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.coregui.client.util.Log;
-
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Set;
 
 /**This portlet allows the end user to customize the OOB display
  *

@@ -88,7 +88,7 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  * @author John Mazzitelli
  */
 @Stateless
-public class AgentManagerBean implements AgentManagerLocal {
+public class AgentManagerBean implements AgentManagerLocal, AgentManagerRemote {
     private static final Log LOG = LogFactory.getLog(AgentManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -121,7 +121,7 @@ public class AgentManagerBean implements AgentManagerLocal {
     private static final String RHQ_AGENT_LATEST_VERSION = "rhq-agent.latest.version";
     private static final String RHQ_AGENT_LATEST_BUILD_NUMBER = "rhq-agent.latest.build-number";
     private static final String RHQ_AGENT_LATEST_MD5 = "rhq-agent.latest.md5";
-    private static final String RHQ_AGENT_SUPPORTED_VERSIONS = "rhq-agent.supported.versions";
+    private static final String RHQ_AGENT_SUPPORTED_BUILDS = "rhq-agent.supported.builds";
 
     @ExcludeDefaultInterceptors
     public void createAgent(Agent agent) {
@@ -643,32 +643,34 @@ public class AgentManagerBean implements AgentManagerLocal {
     }
 
     @ExcludeDefaultInterceptors
-    public boolean isAgentVersionSupported(AgentVersion agentVersionInfo) {
+    public AgentVersionCheckResults isAgentVersionSupported(AgentVersion agentVersionInfo) {
         try {
             Properties properties = getAgentUpdateVersionFileContent();
 
-            String supportedAgentVersions = properties.getProperty(RHQ_AGENT_SUPPORTED_VERSIONS); // this is optional
+            String supportedAgentBuilds = properties.getProperty(RHQ_AGENT_SUPPORTED_BUILDS); // this is optional
             String latestAgentVersion = properties.getProperty(RHQ_AGENT_LATEST_VERSION);
+            String latestAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
             if (latestAgentVersion == null) {
                 throw new NullPointerException("no agent version in file");
             }
 
             boolean isSupported;
 
-            if (supportedAgentVersions == null || supportedAgentVersions.isEmpty()) {
+            //if no list of supportedBuilds provident then,
+            if (supportedAgentBuilds == null || supportedAgentBuilds.isEmpty()) {
                 // we weren't given a regex of supported versions, make a simple string equality test on latest agent version
                 ComparableVersion agent = new ComparableVersion(agentVersionInfo.getVersion());
                 ComparableVersion server = new ComparableVersion(latestAgentVersion);
                 isSupported = agent.equals(server);
             } else {
-                // we were given a regex of supported versions, check the agent version to see if it matches the regex
-                isSupported = agentVersionInfo.getVersion().matches(supportedAgentVersions);
+                // we were given a regex of supported builds, check the agent build to see if it matches the regex
+                isSupported = agentVersionInfo.getBuild().matches(supportedAgentBuilds);
             }
 
-            return isSupported;
+            return new AgentVersionCheckResults(isSupported, new AgentVersion(latestAgentVersion, latestAgentBuild));
         } catch (Exception e) {
             LOG.warn("Cannot determine if agent version [" + agentVersionInfo + "] is supported. Cause: " + e);
-            return false; // assume we can't talk to it
+            return new AgentVersionCheckResults(false, null); // assume we can't talk to it
         }
     }
 
@@ -688,9 +690,9 @@ public class AgentManagerBean implements AgentManagerLocal {
             serverVersionInfo.append(RHQ_SERVER_BUILD_NUMBER + '=').append(coreServer.getBuildNumber()).append('\n');
 
             // if there are supported agent versions, get it (this is a regex that is to match agent versions that are supported)
-            String supportedAgentVersions = coreServer.getProductInfo().getSupportedAgentVersions();
-            if (supportedAgentVersions != null && supportedAgentVersions.length() > 0) {
-                serverVersionInfo.append(RHQ_AGENT_SUPPORTED_VERSIONS + '=').append(supportedAgentVersions)
+            String supportedAgentBuilds = coreServer.getProductInfo().getSupportedAgentBuilds();
+            if (supportedAgentBuilds != null && supportedAgentBuilds.length() > 0) {
+                serverVersionInfo.append(RHQ_AGENT_SUPPORTED_BUILDS + '=').append(supportedAgentBuilds)
                     .append('\n');
             }
 
@@ -864,6 +866,11 @@ public class AgentManagerBean implements AgentManagerLocal {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<Agent> runner = new CriteriaQueryRunner<Agent>(criteria, generator, entityManager);
         return runner.execute();
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void deleteAgent(Subject subject, Agent agent) {
+        deleteAgent(agent);
     }
 
 }

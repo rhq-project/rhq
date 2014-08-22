@@ -32,8 +32,8 @@ import org.rhq.coregui.client.ViewPath;
 import org.rhq.coregui.client.components.buttons.BackButton;
 import org.rhq.coregui.client.components.table.AbstractTableSection;
 import org.rhq.coregui.client.util.Log;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Provides the typical carousel view with the additional ability of traversing to "details" views - a masters/detail 

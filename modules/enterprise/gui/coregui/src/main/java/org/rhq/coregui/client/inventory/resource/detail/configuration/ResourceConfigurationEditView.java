@@ -49,6 +49,7 @@ import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.Met
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.TypeLoadedCallback;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.MessageCenter;
 
@@ -96,7 +97,7 @@ public class ResourceConfigurationEditView extends EnhancedVLayout implements Pr
         buttonbar.setMembersMargin(5);
         buttonbar.setLayoutMargin(5);
 
-        this.saveButton = new EnhancedIButton(MSG.common_button_save());
+        this.saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();

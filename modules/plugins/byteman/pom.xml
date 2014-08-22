@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-plugins-parent</artifactId>
-      <version>4.12.0-SNAPSHOT</version>
+      <version>4.13.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -15,11 +15,15 @@
    <name>RHQ Byteman Plugin</name>
    <description>a plugin for managing VMs with a byteman agent installed</description>
 
+    <properties>
+        <byteman.version>1.5.2</byteman.version>
+    </properties>
+
    <dependencies>
       <dependency>
          <groupId>org.jboss.byteman</groupId>
          <artifactId>byteman</artifactId>
-         <version>1.2.1</version>
+         <version>${byteman.version}</version>
          <scope>provided</scope>
       </dependency>
    </dependencies>

@@ -18,8 +18,6 @@
  */
 package org.rhq.coregui.client.inventory.groups.detail;
 
-import static org.rhq.coregui.client.inventory.resource.detail.ResourceDetailView.Tab;
-
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -52,6 +50,7 @@ import org.rhq.coregui.client.alert.definitions.GroupAlertDefinitionsView;
 import org.rhq.coregui.client.components.tab.SubTab;
 import org.rhq.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.coregui.client.components.tab.TwoLevelTabSelectedEvent;
+import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.view.ViewFactory;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -70,6 +69,7 @@ import org.rhq.coregui.client.inventory.groups.detail.monitoring.traits.TraitsVi
 import org.rhq.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleListView;
 import org.rhq.coregui.client.inventory.groups.detail.summary.ActivityView;
+import org.rhq.coregui.client.inventory.resource.detail.ResourceDetailView.Tab;
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.CalltimeView;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.util.BrowserUtility;
@@ -138,6 +138,7 @@ public class ResourceGroupDetailView extends
 
     public ResourceGroupDetailView(String baseViewPath) {
         super(baseViewPath, createTitleBar(baseViewPath), createTabs());
+        addStyleName("groupDetail");
 
         summaryTab = getTabSet().getTabByName(Tab.Summary.NAME);
         summaryActivity = summaryTab.getSubTabByName(Tab.Summary.SubTab.ACTIVITY);
@@ -181,7 +182,7 @@ public class ResourceGroupDetailView extends
     @Override
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
         // if moving from members subtab then re-load the detail view as the membership and
-        // group type may have changed.        
+        // group type may have changed.
         if ((null != this.groupId) && this.inventoryTab.getName().equals(currentTabName)
             && this.inventoryMembers.getName().equals(currentSubTabName)) {
 
@@ -277,6 +278,11 @@ public class ResourceGroupDetailView extends
         return tabs.toArray(new TwoLevelTab[tabs.size()]);
     }
 
+    private final static Canvas viewWithoutHeader(Table t) {
+      t.setShowHeader(false);
+      return t;
+    }
+
     @Override
     protected void updateTabContent(ResourceGroupComposite groupComposite, boolean isRefresh) {
         super.updateTabContent(groupComposite, isRefresh);
@@ -339,7 +345,7 @@ public class ResourceGroupDetailView extends
 
             updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
 
-            // visible = same test as above           
+            // visible = same test as above
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
@@ -353,7 +359,7 @@ public class ResourceGroupDetailView extends
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new TraitsView(groupId);
+                    return viewWithoutHeader(new TraitsView(groupId));
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorTraits, visible, true, viewFactory);
@@ -362,7 +368,7 @@ public class ResourceGroupDetailView extends
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new ResourceGroupSchedulesView(groupComposite);
+                    return viewWithoutHeader(new ResourceGroupSchedulesView(groupComposite));
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorSched, visible, true, viewFactory);
@@ -371,7 +377,7 @@ public class ResourceGroupDetailView extends
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new CalltimeView(EntityContext.forGroup(groupComposite.getResourceGroup()));
+                    return viewWithoutHeader(new CalltimeView(EntityContext.forGroup(groupComposite.getResourceGroup())));
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorCallTime, visible, true, viewFactory);
@@ -386,7 +392,7 @@ public class ResourceGroupDetailView extends
         updateSubTab(this.inventoryTab, this.inventoryMembers, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new MembersView(groupComposite.getResourceGroup().getId(), canModifyMembers);
+                return viewWithoutHeader(new MembersView(groupComposite.getResourceGroup().getId(), canModifyMembers));
             }
         });
         updateSubTab(this.inventoryTab, this.inventoryConn, facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION),
@@ -411,13 +417,13 @@ public class ResourceGroupDetailView extends
             updateSubTab(this.operationsTab, this.operationsSchedules, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new GroupOperationScheduleListView(groupComposite);
+                    return viewWithoutHeader(new GroupOperationScheduleListView(groupComposite));
                 }
             });
             updateSubTab(this.operationsTab, this.operationsHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new GroupOperationHistoryListView(groupComposite);
+                    return viewWithoutHeader(new GroupOperationHistoryListView(groupComposite));
                 }
             });
         }
@@ -433,7 +439,7 @@ public class ResourceGroupDetailView extends
                     // hide the "new definition" button for mixed groups
                     GroupAlertHistoryView canvas = GroupAlertHistoryView.get(groupComposite);
                     canvas.setShowNewDefinitionButton(groupCategory == GroupCategory.COMPATIBLE);
-                    return canvas;
+                    return viewWithoutHeader(canvas);
                 }
             });
             // but alert definitions can only be created on compatible groups
@@ -441,7 +447,7 @@ public class ResourceGroupDetailView extends
             ViewFactory viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new GroupAlertDefinitionsView(groupComposite);
+                    return viewWithoutHeader(new GroupAlertDefinitionsView(groupComposite));
                 }
             };
             updateSubTab(this.alertsTab, this.alertDef, visible, true, viewFactory);
@@ -476,7 +482,7 @@ public class ResourceGroupDetailView extends
             updateSubTab(this.eventsTab, this.eventHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return EventCompositeHistoryView.get(groupComposite);
+                    return viewWithoutHeader(EventCompositeHistoryView.get(groupComposite));
                 }
             });
         }

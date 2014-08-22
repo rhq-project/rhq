@@ -19,10 +19,9 @@
     discovery="JBossAS7JMXDiscoveryComponent"
     class="JBossAS7JMXComponent"
     description="Container for RHQ Server subsystem JMX MBeans"
-    singleton="true"
-    classLoader="instance">
+    singleton="true">
 
-    <runs-inside>
+  <runs-inside>
       <parent-resource-type
         name="JBossAS7 Standalone Server"
         plugin="JBossAS7" />
@@ -57,7 +56,7 @@
         name="clientJarLocation"
         type="directory"
         required="true"
-        description="The directory where the AS client jar(s) are located. Whatever jars are located in here are placed in the plugin classloader." />
+        description="The directory where the CLI client jar is located."/>
     </plugin-configuration>
 
     <service
@@ -352,6 +351,14 @@
         description="Number of traits purged by the last purge job" />
 
       <resource-configuration>
+        <c:simple-property name="RawDataAgeLimit" type="integer" required="false"
+                           description="A limit, specified in days, on the age of raw data that is ingested. If raw data
+                           has a timestamp that is more than limit days old, then it is not stored. This prevents data
+                           that is for example a year old from being stored.">
+          <c:constraint>
+            <c:integer-constraint minimum="1"/>
+          </c:constraint>
+        </c:simple-property>
         <c:group name="Aggregation">
           <c:description>Settings for tuning performance of metrics aggregation that runs hourly.</c:description>
           <c:simple-property name="AggregationBatchSize" displayName="Batch Size" type="integer" required="false"

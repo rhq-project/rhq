@@ -35,6 +35,7 @@ import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * A table that lists all roles and provides the ability to view details of or delete those roles and to create new
@@ -74,8 +75,8 @@ public class RolesView extends TableSection<RolesDataSource> implements HasViewN
         List<ListGridField> fields = createFields();
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
-        addTableAction(MSG.common_button_new(), createNewAction());
-        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), createDeleteAction());
+        addTableAction(MSG.common_button_new(), ButtonColor.BLUE, createNewAction());
+        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), ButtonColor.RED, createDeleteAction());
 
         super.configureTable();
     }

@@ -36,8 +36,8 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * @author Jay Shaughnessy

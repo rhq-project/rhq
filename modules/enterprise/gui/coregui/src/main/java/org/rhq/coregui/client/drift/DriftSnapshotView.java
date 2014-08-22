@@ -64,6 +64,7 @@ import org.rhq.coregui.client.drift.wizard.DriftPinTemplateWizard;
 import org.rhq.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -199,7 +200,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         TableActionEnablement pinEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS
             : TableActionEnablement.NEVER;
 
-        addTableAction(MSG.view_drift_button_pinToDef(), MSG.view_drift_button_pinToDef_confirm(),
+        addTableAction(MSG.view_drift_button_pinToDef(), MSG.view_drift_button_pinToDef_confirm(), ButtonColor.BLUE,
             new AbstractTableAction(pinEnablement) {
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -213,7 +214,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
             });
 
         addTableAction(MSG.view_drift_button_pinToTemplate(), MSG.view_drift_button_pinToTemplate_confirm(),
-            new AbstractTableAction(pinEnablement) {
+            ButtonColor.BLUE, new AbstractTableAction(pinEnablement) {
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     pinToTemplate();

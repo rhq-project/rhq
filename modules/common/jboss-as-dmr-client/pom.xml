@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-common-parent</artifactId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>rhq-jboss-as-dmr-client</artifactId>
@@ -33,6 +33,13 @@
       <groupId>org.jboss.as</groupId>
       <artifactId>jboss-as-naming</artifactId>
       <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>rhq-core-util</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
     </dependency>
 
   </dependencies>

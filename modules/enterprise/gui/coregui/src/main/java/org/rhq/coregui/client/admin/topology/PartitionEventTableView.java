@@ -50,6 +50,7 @@ import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -71,16 +72,18 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
         PartitionEventCriteria.SORT_FIELD_CTIME, SortDirection.DESCENDING);
 
     private enum TableAction {
-        REMOVE_SELECTED(MSG.view_adminTopology_server_removeSelected(), TableActionEnablement.ANY), PURGE_ALL(MSG
-            .view_adminTopology_partitionEvents_purgeAll(), TableActionEnablement.ALWAYS), FORCE_REPARTITION(MSG
-            .view_adminTopology_partitionEvents_forceRepartition(), TableActionEnablement.ALWAYS);
+        REMOVE_SELECTED(MSG.view_adminTopology_server_removeSelected(), TableActionEnablement.ANY, ButtonColor.RED), PURGE_ALL(
+            MSG.view_adminTopology_partitionEvents_purgeAll(), TableActionEnablement.ALWAYS, ButtonColor.RED), FORCE_REPARTITION(
+            MSG.view_adminTopology_partitionEvents_forceRepartition(), TableActionEnablement.ALWAYS, ButtonColor.GRAY);
 
         private String title;
         private TableActionEnablement enablement;
+        private ButtonColor buttonColor;
 
-        private TableAction(String title, TableActionEnablement enablement) {
+        private TableAction(String title, TableActionEnablement enablement, ButtonColor buttonColor) {
             this.title = title;
             this.enablement = enablement;
+            this.buttonColor = buttonColor;
         }
     }
 
@@ -146,7 +149,7 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
     }
 
     private void addTableAction(final TableAction action) {
-        addTableAction(action.title, null, new AuthorizedTableAction(this, action.enablement,
+        addTableAction(action.title, null, action.buttonColor, new AuthorizedTableAction(this, action.enablement,
             Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 String eventTypes = getSelectedEventTypes(selections).toString();

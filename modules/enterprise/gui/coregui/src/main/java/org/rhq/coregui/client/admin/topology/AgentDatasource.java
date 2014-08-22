@@ -130,7 +130,7 @@ public class AgentDatasource extends RPCDataSource<Agent, AgentCriteria> {
         GWTServiceLookup.getTopologyService().findAgentsByCriteria(criteria, new AsyncCallback<PageList<Agent>>() {
             public void onSuccess(PageList<Agent> result) {
                 response.setData(buildRecords(result));
-                response.setTotalRows(result.size());
+                setPagingInfo(response, result);
                 processResponse(request.getRequestId(), response);
             }
 

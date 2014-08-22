@@ -61,11 +61,18 @@ import org.rhq.coregui.client.components.AboutModalWindow;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.dashboard.DashboardsView;
 import org.rhq.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
+import org.rhq.coregui.client.drift.DriftHistoryView;
 import org.rhq.coregui.client.footer.FavoritesButton;
 import org.rhq.coregui.client.help.HelpView;
+import org.rhq.coregui.client.help.RhAccessView;
 import org.rhq.coregui.client.inventory.InventoryView;
+import org.rhq.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import org.rhq.coregui.client.operation.OperationHistoryView;
+import org.rhq.coregui.client.report.AlertDefinitionReportView;
 import org.rhq.coregui.client.report.ReportTopView;
+import org.rhq.coregui.client.report.inventory.DriftComplianceReport;
+import org.rhq.coregui.client.report.inventory.ResourceInstallReport;
 import org.rhq.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.coregui.client.report.tag.TaggedView;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
@@ -79,11 +86,11 @@ import org.rhq.coregui.client.util.message.MessageCenterView;
  * @author Libor Zoubek
  */
 public class MenuBarView extends EnhancedVLayout {
-    
+
     public static final String MSG_CENTER_BTN_CONTENT = "<span class='fa fa-flag'> ";
     public static final String BTN_FAV_ID = "fav-btn";
     public static final String BTN_MSG_CENTER_ID = "msg-center-btn";
- 
+
     public static final MenuItem[] MENU_ITEMS = {
         new MenuItem(DashboardsView.VIEW_ID),
         new MenuItem(InventoryView.VIEW_ID)
@@ -106,20 +113,18 @@ public class MenuBarView extends EnhancedVLayout {
         ),
         new MenuItem(ReportTopView.VIEW_ID)
             .subItems(
+                new MenuItem(ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID, true),
+                new MenuItem(TaggedView.VIEW_ID,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
                 new MenuItem(MeasurementOOBView.VIEW_ID,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
+                new MenuItem(ResourceConfigurationHistoryListView.VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
+                new MenuItem(OperationHistoryView.SUBSYSTEM_VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
                 new MenuItem(AlertHistoryView.SUBSYSTEM_VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
+                new MenuItem(AlertDefinitionReportView.VIEW_ID,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
+                new MenuItem(DriftHistoryView.SUBSYSTEM_VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
+                new MenuItem(ReportTopView.SECTION_INVENTORY_VIEW_ID, true),
                 new MenuItem(PlatformSummaryPortlet.VIEW_ID,ReportTopView.VIEW_ID,ReportTopView.SECTION_INVENTORY_VIEW_ID),
-                new MenuItem(new ViewName(ReportTopView.VIEW_ID.getName(), "More ..."))
-                    //.subItems(
-                    //    new MenuItem(TaggedView.VIEW_ID,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),                
-                    //    new MenuItem(ResourceConfigurationHistoryListView.VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
-                    //    new MenuItem(OperationHistoryView.SUBSYSTEM_VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),                
-                    //    new MenuItem(AlertDefinitionReportView.VIEW_ID,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
-                    //    new MenuItem(DriftHistoryView.SUBSYSTEM_VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
-                    //    new MenuItem(ResourceInstallReport.VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_INVENTORY_VIEW_ID),                
-                    //    new MenuItem(DriftComplianceReport.VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_INVENTORY_VIEW_ID)
-                    //    )
-                
+                new MenuItem(ResourceInstallReport.VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_INVENTORY_VIEW_ID),
+                new MenuItem(DriftComplianceReport.VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_INVENTORY_VIEW_ID)
             ),
         new MenuItem(BundleTopView.VIEW_ID),
         new MenuItem(AdministrationView.VIEW_ID)
@@ -139,7 +144,7 @@ public class MenuBarView extends EnhancedVLayout {
                      ),
                 new MenuItem(AdministrationView.SECTION_CONFIGURATION_VIEW_ID,AdministrationView.VIEW_ID)
                     .subItems(
-                        new MenuItem(SystemSettingsView.VIEW_ID,Permission.MANAGE_SETTINGS, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),                        
+                        new MenuItem(SystemSettingsView.VIEW_ID,Permission.MANAGE_SETTINGS, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
                         new MenuItem(AlertDefinitionTemplateTypeView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
                         new MenuItem(DriftDefinitionTemplateTypeView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
                         new MenuItem(MetricTemplateTypeView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
@@ -158,10 +163,11 @@ public class MenuBarView extends EnhancedVLayout {
         new MenuItem(HelpView.VIEW_ID)
     };
 
+    public static final String LAST_MENU_ITEM_ID = "menu" + (MENU_ITEMS.length - 1);
+
     public static final ViewName LOGOUT_VIEW_ID = new ViewName("LogOut", MSG.view_menuBar_logout());
     private final ProductInfo productInfo = CoreGUI.get().getProductInfo();
     private String currentlySelectedSection = DashboardsView.VIEW_ID.getName();
-    private AboutModalWindow aboutModalWindow;
     private MessageBar messageBar;
     private MessageCenterView messageCenter;
     private FavoritesButton favoritesButton;
@@ -176,9 +182,11 @@ public class MenuBarView extends EnhancedVLayout {
     protected void onInit() {
         super.onInit();
         setZIndex(1);
-        aboutModalWindow = new AboutModalWindow(productInfo);
         messageCenter = new MessageCenterView();
         messageBar = new MessageBar();
+        // messageBar.setHeight(1);
+        // messageBar.setMaxHeight(1);
+        messageBar.setVisible(false);
         favoritesButton = new FavoritesButton();
         injectMenuFunctions(this);
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
@@ -199,14 +207,14 @@ public class MenuBarView extends EnhancedVLayout {
         if (item.getPermission() != null) {
             item.setHidden(!globalPermissions.contains(item.getPermission()));
         }
-        if (item.getView().equals(TaggedView.VIEW_ID)) { // Reports->Tags shown only for RHQ
+        if (TaggedView.VIEW_ID.getName().equals(item.getView().getName())) { // Reports->Tags shown only for RHQ
             item.setHidden(!CoreGUI.isTagsEnabledForUI());
         }
         for (MenuItem child : item.getSubItems()) {
             updateMenuVisibility(child);
         }
     }
-    
+
  // This is our JSNI method that will be called on form submit
     private native void injectMenuFunctions(MenuBarView view) /*-{
       $wnd.__gwt_showMessageCenter = $entry(function(){
@@ -234,7 +242,7 @@ public class MenuBarView extends EnhancedVLayout {
 
     // called via JSNI - RHQ on logo click
     public void showAboutBox() {
-        aboutModalWindow.show();
+        new AboutModalWindow(productInfo).show();
     }
 
     public MessageBar getMessageBar() {
@@ -254,7 +262,7 @@ public class MenuBarView extends EnhancedVLayout {
             this.setContents(createBarContent());
             History.addValueChangeHandler(this);
         }
-        
+
         @Override
         protected void onDraw() {
             updateActiveMenuItem(History.getToken());
@@ -269,6 +277,29 @@ public class MenuBarView extends EnhancedVLayout {
             $wnd.$('.navbar-btn-item').on('mouseleave', function() {$wnd.$(this).parent().parent().removeClass('navbar-btn-item-hover')});
         }-*/;
 
+        private String getViewLink(ViewName view) {
+            return "<a href='#" + view.getName() + "'>" + view.getTitle() + "</a>";
+        }
+
+        private String createCspButtonContent() {
+            if (CoreGUI.isRHQ()) {
+                return "";
+            }
+            MenuItem search = new MenuItem(RhAccessView.PAGE_SEARCH, RhAccessView.VIEW_ID);
+            MenuItem newCase = new MenuItem(RhAccessView.PAGE_NEW_CASE, RhAccessView.VIEW_ID);
+            MenuItem myCases = new MenuItem(RhAccessView.PAGE_MY_CASES, RhAccessView.VIEW_ID);
+
+            return "<li class='dropdown'>"
+                + "<a href='#' class='dropdown-toggle' data-toggle='dropdown'>"+RhAccessView.VIEW_ID.getTitle()+" <b class='caret'></b></a>"
+                + "<ul class='dropdown-menu'>"
+                + "<li>"+getViewLink(search.getView())+"</li>"
+                + "<li class='dropdown-submenu'><a href='#' tabindex='-1' data-toggle='dropdown'>Support</a>"
+                + "<ul class='dropdown-menu'>"
+                + "<li>"+getViewLink(newCase.getView())+"</li>"
+                + "<li>"+getViewLink(myCases.getView())+"</li>"
+                + "</ul></li></ul></li>";
+        }
+
         private String createBarContent() {
             Subject user = UserSessionManager.getSessionSubject();
             StringBuilder sb = new StringBuilder();
@@ -281,11 +312,14 @@ public class MenuBarView extends EnhancedVLayout {
            +"<span class='icon-bar'></span>"
          +"</button>"
          +"<a class='navbar-brand' href='#' onclick='__gwt_showAboutBox(); return false;'>"
-           +"<img class='navbar-logo' src='img/logo.png' />"
+                + "<img class='navbar-logo' src='img/"
+                + ("RHQ".equals(CoreGUI.get().getProductInfo().getShortName()) ? "logo" : "RH-JON-Login-Logo")
+                + ".png'/>"
          +"</a>"
        +"</div>"
        +"<div class='navbar-collapse navbar-collapse-1 collapse'>"
          +"<ul class='nav navbar-nav navbar-utility'>"
+                + createCspButtonContent()
            +"<li>"
              +"<a id='"+BTN_FAV_ID+"' onclick='__gwt_showFavoritesMenu(); return false;'><i class='fa fa-star'></i><b class='caret'></b></a>"
            +"</li>"
@@ -299,7 +333,7 @@ public class MenuBarView extends EnhancedVLayout {
              +"</a>"
              +"<ul class='dropdown-menu'>"
              + "<li><a href='#Administration/Security/Users/"+user.getId()+"'>Account Details</a></li>"
-             + "<li class='divider'></li>" 
+             + "<li class='divider'></li>"
                +"<li>"
                  +"<a href='#"+LOGOUT_VIEW_ID.getName()+"'>"+LOGOUT_VIEW_ID.getTitle()+"</a>"
                +"</li>"
@@ -313,7 +347,7 @@ public class MenuBarView extends EnhancedVLayout {
                 + "</nav>");
             return sb.toString();
         }
-        
+
         private String getMenuItems() {
             StringBuilder sb = new StringBuilder();
             int i = 0;
@@ -347,7 +381,7 @@ public class MenuBarView extends EnhancedVLayout {
                 if (level == 0) {
                     item.append("<div class='navbar-btn-group'>");
                     item.append("<a class='navbar-btn-item nbi-link' href='#"+sectionName.getName()+"'>" + sectionName.getTitle() + "</a>");
-                    item.append("<a class='navbar-btn-item nbi-caret' data-toggle='dropdown'><b class='caret'></b></a>");    
+                    item.append("<a class='navbar-btn-item nbi-caret' data-toggle='dropdown'><b class='caret'></b></a>");
                 } else {
                     item.append("<a href='#"+sectionName.getName()+"'>" + sectionName.getTitle() + "</a>");
                 }

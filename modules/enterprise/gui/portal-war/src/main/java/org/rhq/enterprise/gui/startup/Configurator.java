@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.gui.startup;
 
@@ -32,7 +32,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyDynamicType;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
+import org.rhq.enterprise.gui.configuration.DatabaseDynamicPropertyRetriever;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -49,7 +52,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * </ul>
  */
 public final class Configurator implements ServletContextListener {
-    private Log log = LogFactory.getLog(Configurator.class.getName());
+    private static final Log LOG = LogFactory.getLog(Configurator.class.getName());
 
     private static final String SERVER_INTERNALS_FILE = "/WEB-INF/rhq-server-internals.properties";
     private static final String DEFAULT_USER_PREFERENCES_FILE = "/WEB-INF/DefaultUserPreferences.properties";
@@ -69,6 +72,7 @@ public final class Configurator implements ServletContextListener {
     /**
      * @see javax.servlet.ServletContextListener#contextInitialized(javax.servlet.ServletContextEvent)
      */
+    @Override
     public void contextInitialized(ServletContextEvent sce) {
         ServletContext ctx = sce.getServletContext();
         loadConfig(ctx);
@@ -76,11 +80,13 @@ public final class Configurator implements ServletContextListener {
         loadTablePreferences(ctx);
         loadBuildVersion(ctx);
         loadJavaLoggingConfiguration();
+        registerDynamicPropertyRetrievers();
     }
 
     /**
      * @see javax.servlet.ServletContextListener#contextDestroyed(javax.servlet.ServletContextEvent)
      */
+    @Override
     public void contextDestroyed(ServletContextEvent sce) {
     }
 
@@ -94,12 +100,14 @@ public final class Configurator implements ServletContextListener {
         try {
             props = loadProperties(ctx, SERVER_INTERNALS_FILE);
         } catch (Exception e) {
-            log.error("unable to load server internals file [" + SERVER_INTERNALS_FILE + "]", e);
+            LOG.error("unable to load server internals file [" + SERVER_INTERNALS_FILE + "]", e);
             return;
         }
 
         if (props == null) {
-            log.debug("server internals file [" + SERVER_INTERNALS_FILE + "] does not exist");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("server internals file [" + SERVER_INTERNALS_FILE + "] does not exist");
+            }
             return;
         }
 
@@ -116,9 +124,9 @@ public final class Configurator implements ServletContextListener {
             }
         }
 
-        log.debug("loaded server internals [" + SERVER_INTERNALS_FILE + "]");
-
-        return;
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("loaded server internals [" + SERVER_INTERNALS_FILE + "]");
+        }
     }
 
     /**
@@ -138,7 +146,7 @@ public final class Configurator implements ServletContextListener {
 
             ctx.setAttribute(Constants.DEF_USER_PREFS, userPrefs);
         } catch (Exception e) {
-            log.error("failed to load user preferences at [" + DEFAULT_USER_PREFERENCES_FILE + "]: ", e);
+            LOG.error("failed to load user preferences at [" + DEFAULT_USER_PREFERENCES_FILE + "]: ", e);
         }
     }
 
@@ -150,7 +158,7 @@ public final class Configurator implements ServletContextListener {
             Properties tableProps = loadProperties(ctx, TAGLIB_PROPERTIES_FILE);
             ctx.setAttribute(Constants.PROPS_TAGLIB_NAME, tableProps);
         } catch (Exception e) {
-            log.error("failed to load the taglib properties at [" + TAGLIB_PROPERTIES_FILE + "]: ", e);
+            LOG.error("failed to load the taglib properties at [" + TAGLIB_PROPERTIES_FILE + "]: ", e);
         }
     }
 
@@ -190,8 +198,14 @@ public final class Configurator implements ServletContextListener {
             try {
                 LogManager.getLogManager().readConfiguration(loggingPropertiesStream);
             } catch (IOException e) {
-                log.error("Failed to load '" + LOGGING_PROPERTIES_RESOURCE + "' from webapp classloader.");
+                LOG.error("Failed to load '" + LOGGING_PROPERTIES_RESOURCE + "' from webapp classloader.");
             }
         }
+    }
+
+    private void registerDynamicPropertyRetrievers() {
+        // Configures the configuration rendering to be able to support database backed dynamic configuration properties
+        PropertyRenderingUtility.putDynamicPropertyRetriever(PropertyDynamicType.DATABASE,
+            new DatabaseDynamicPropertyRetriever());
     }
 }

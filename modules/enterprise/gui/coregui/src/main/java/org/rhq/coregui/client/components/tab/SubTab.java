@@ -28,7 +28,7 @@ import org.rhq.coregui.client.util.enhanced.Enhanced;
 
 /**
  * A SubTab associating a Button with a Canvas.  SubTabs for the same parent Tab must have different viewNames.
- *  
+ *
  * @author Jay Shaughnessy
  */
 public class SubTab implements Enhanced {
@@ -59,6 +59,7 @@ public class SubTab implements Enhanced {
     public Canvas getCanvas() {
         if (null == canvas && null != viewFactory) {
             canvas = viewFactory.createView();
+            canvas.addStyleName("subtab");
         }
         return canvas;
     }
@@ -100,7 +101,7 @@ public class SubTab implements Enhanced {
     }
 
     /**
-     * @return a unique identifier for the SubTab that combines the parent Tab viewName and the SubTab viewName. 
+     * @return a unique identifier for the SubTab that combines the parent Tab viewName and the SubTab viewName.
      */
     public String getId() {
         return id;

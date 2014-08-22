@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.measurement;
 
 import java.sql.Connection;
@@ -69,7 +70,6 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
  * @author Heiko W. Rupp
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
     private static final int BATCH_SIZE = 500;
@@ -78,7 +78,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource rhqDs;
 
     @EJB
@@ -103,6 +103,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * @param subject Subject of the caller
      * @param begin Start time of the 1h entries to look at
      */
+    @Override
     public void computeOOBsFromHourBeginingAt(Subject subject, long begin) {
 
         Connection conn = null;
@@ -112,7 +113,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         try {
             log.info("Calculating OOBs for hour starting at " + new Date(begin));
             conn = rhqDs.getConnection();
-            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+            DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
 
             long t0 = System.currentTimeMillis();
             long tstart = t0;
@@ -195,6 +196,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     @TransactionAttribute(value = TransactionAttributeType.NOT_SUPPORTED)
     public void computeOOBsForLastHour(Subject subject, Iterable<AggregateNumericMetric> metrics) {
@@ -249,6 +251,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     public int calculateOOB(AggregateNumericMetric metric,MeasurementBaseline baseline) {
@@ -319,6 +322,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * #computeOOBsFromHourBeginingAt
      * @param subject Caller
      */
+    @Override
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     public void computeOOBsFromLastHour(Subject subject) {
 
@@ -344,33 +348,18 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     }
 
     /**
-     * Remove OOBs for schedules that had their baselines calculated after
-     * a certain cutoff point. This is used to get rid of outdated OOB data for
-     * baselines that got recalculated, as the new baselines will be 'big' enough for
-     * what have been OOBs before and we don't have any baseline history.
-     * @param subject The caller
-     * @param cutoffTime The reference time to determine new baselines
-     */
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-    public void removeOutdatedOOBs(Subject subject, long cutoffTime) {
-
-        Query q = entityManager.createNamedQuery(MeasurementOOB.DELETE_OUTDATED);
-        q.setParameter("cutOff", cutoffTime);
-        int count = q.executeUpdate();
-        log.info("Removed [" + count + "] outdated OOBs");
-    }
-
-    /**
      * Resets the OOB data for the passed schedule
      * @param subject Caller
      * @param sched the schedule for which we want to clean out the data
      */
+    @Override
     public void removeOOBsForSchedule(Subject subject, MeasurementSchedule sched) {
         Query q = entityManager.createNamedQuery(MeasurementOOB.DELETE_FOR_SCHEDULE);
         q.setParameter("id", sched.getId());
         q.executeUpdate();
     }
 
+    @Override
     public void removeOOBsForGroupAndDefinition(Subject subject, int resourceGroupId, int measurementDefinitionId) {
         Query query = entityManager.createNamedQuery(MeasurementOOB.DELETE_FOR_GROUP_AND_DEFINITION);
         query.setParameter("groupId", resourceGroupId);
@@ -386,6 +375,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * @param parentNameFilter a parent resource name to filter for   @return List of schedules with the corresponing oob aggregates
      * @param pc PageControl to do pagination
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, String metricNameFilter,
         String resourceNameFilter, String parentNameFilter, PageControl pc) {
@@ -453,6 +443,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * @param n max number of entries wanted
      * @return
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<MeasurementOOBComposite> getHighestNOOBsForResource(Subject subject, int resourceId, int n) {
 
@@ -505,6 +496,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * @param n max number of entries wanted
      * @return
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<MeasurementOOBComposite> getHighestNOOBsForGroup(Subject subject, int groupId, int n) {
 

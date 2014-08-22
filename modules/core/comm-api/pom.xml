@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>4.12.0-SNAPSHOT</version>
+      <version>4.13.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -17,6 +17,10 @@
       Communications API containing annotations that can be applied to
       interfaces that do not necessarily have access to the full comm module
    </description>
+
+   <properties>
+      <rhq.internal>false</rhq.internal>
+   </properties>
 
    <profiles>
 

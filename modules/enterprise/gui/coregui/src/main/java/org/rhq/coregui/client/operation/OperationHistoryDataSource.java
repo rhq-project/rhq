@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -319,8 +319,7 @@ public class OperationHistoryDataSource extends
         // no need to disambiguate the history for a single resource
         case Resource:
             response.setData(buildRecords(result));
-            // for paging to work we have to specify size of full result set
-            response.setTotalRows(getTotalRows(result, response, request));
+            setPagingInfo(response, result);
             processResponse(request.getRequestId(), response);
             break;
 
@@ -354,8 +353,7 @@ public class OperationHistoryDataSource extends
                         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                     }
                     response.setData(records);
-                    // for paging to work we have to specify size of full result set
-                    response.setTotalRows(getTotalRows(result, response, request));
+                    setPagingInfo(response, result);
                     processResponse(request.getRequestId(), response);
                 }
             });

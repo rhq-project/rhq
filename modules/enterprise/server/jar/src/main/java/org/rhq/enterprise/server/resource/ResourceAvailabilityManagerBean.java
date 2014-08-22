@@ -57,7 +57,6 @@ import org.rhq.enterprise.server.authz.PermissionException;
  * @author Joseph Marques
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class ResourceAvailabilityManagerBean implements ResourceAvailabilityManagerLocal {
 
     private final Log log = LogFactory.getLog(ResourceAvailabilityManagerBean.class);
@@ -65,7 +64,7 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource rhqDs;
 
     private DatabaseType dbType;
@@ -75,21 +74,13 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
 
     @PostConstruct
     public void init() {
-        Connection conn = null;
-        try {
-            conn = rhqDs.getConnection();
-            dbType = DatabaseTypeFactory.getDatabaseType(conn);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            JDBCUtil.safeClose(conn);
-        }
+        dbType = DatabaseTypeFactory.getDefaultDatabaseType();
     }
 
     // This is rarely needed now that we get an entry in RHQ_RESOURCE_AVAIL when the resource is persisted. But
     // there are upgrade scenarios ( moving up to JON 3.1) where it can still get applied.  Once all customers
     // are on 3.1 I believe this can go away (jshaughn)
-    // 
+    //
     public void insertNeededAvailabilityForImportedResources(List<Integer> resourceIds) {
         // Hibernate didn't want to swallow ResourceAvailability.INSERT_BY_RESOURCE_IDS, so we had to go native.
         Connection conn = null;
@@ -144,7 +135,7 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
                 ps = conn.prepareStatement(transformedQuery);
                 JDBCUtil.bindNTimes(ps, resourceIdSubArray, 1);
                 ps.execute();
-
+                ps.close();
                 fromIndex = toIndex;
             }
         } catch (SQLException e) {

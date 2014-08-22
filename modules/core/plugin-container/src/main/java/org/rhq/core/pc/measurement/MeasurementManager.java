@@ -91,7 +91,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     private final ScheduledThreadPoolExecutor senderThreadPool;
 
     private final MeasurementSenderRunner measurementSenderRunner;
-    MeasurementCollectorRunner measurementCollectorRunner;
+    private final MeasurementCollectorRunner measurementCollectorRunner;
 
     private final PluginContainerConfiguration configuration;
 
@@ -117,9 +117,31 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     private final AtomicLong lateCollections = new AtomicLong(0);
     private final AtomicLong failedCollection = new AtomicLong(0);
 
-    public MeasurementManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter, InventoryManager inventoryManager) {
+    public MeasurementManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter,
+        InventoryManager inventoryManager) {
+
         super(MeasurementAgentService.class, streamRemoter);
+
         this.configuration = configuration;
+        this.inventoryManager = inventoryManager;
+
+        if (configuration.isInsideAgent()) {
+            int threadPoolSize = configuration.getMeasurementCollectionThreadPoolSize();
+            collectorThreadPool = new ScheduledThreadPoolExecutor(threadPoolSize, new LoggingThreadFactory(
+                COLLECTOR_THREAD_POOL_NAME, true));
+            senderThreadPool = new ScheduledThreadPoolExecutor(2, new LoggingThreadFactory(SENDER_THREAD_POOL_NAME,
+                true));
+            measurementSenderRunner = new MeasurementSenderRunner(this);
+            measurementCollectorRunner = new MeasurementCollectorRunner(this);
+        } else {
+            senderThreadPool = null;
+            collectorThreadPool = null;
+            measurementSenderRunner = null;
+            measurementCollectorRunner = null;
+        }
+    }
+
+    public void initialize() {
         LOG.info("Initializing Measurement Manager...");
 
         if (configuration.isStartManagementBean()) {
@@ -131,41 +153,24 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             }
         }
 
-        this.inventoryManager = inventoryManager;
-
-        int threadPoolSize = configuration.getMeasurementCollectionThreadPoolSize();
-        long collectionInitialDelaySecs = configuration.getMeasurementCollectionInitialDelay();
-
         if (configuration.isInsideAgent()) {
-            this.collectorThreadPool = new ScheduledThreadPoolExecutor(threadPoolSize, new LoggingThreadFactory(
-                COLLECTOR_THREAD_POOL_NAME, true));
-
-            this.senderThreadPool = new ScheduledThreadPoolExecutor(2, new LoggingThreadFactory(
-                SENDER_THREAD_POOL_NAME, true));
-
-            this.measurementSenderRunner = new MeasurementSenderRunner(this);
-            this.measurementCollectorRunner = new MeasurementCollectorRunner(this);
+            long collectionInitialDelaySecs = configuration.getMeasurementCollectionInitialDelay();
 
             // Schedule the measurement sender to send measurement reports periodically.
-            this.senderThreadPool.scheduleAtFixedRate(measurementSenderRunner, collectionInitialDelaySecs, 30,
+            senderThreadPool.scheduleAtFixedRate(measurementSenderRunner, collectionInitialDelaySecs, 30,
                 TimeUnit.SECONDS);
             // Schedule the measurement collector to collect metrics periodically, whenever there are one or more
             // metrics due to be collected.
-            this.collectorThreadPool.schedule(new MeasurementCollectionRequester(), collectionInitialDelaySecs,
+            collectorThreadPool.schedule(new MeasurementCollectionRequester(), collectionInitialDelaySecs,
                 TimeUnit.SECONDS);
 
             // Load persistent measurement schedules from the InventoryManager and reconstitute them.
-            Resource platform = this.inventoryManager.getPlatform();
-            if (platform == null)
+            Resource platform = inventoryManager.getPlatform();
+            if (platform == null) {
                 throw new IllegalStateException("null platform");
+            }
             reschedule(platform);
-        } else {
-            senderThreadPool = null;
-            collectorThreadPool = null;
-            measurementSenderRunner = null;
-            measurementCollectorRunner = null;
         }
-
 
         LOG.info("Measurement Manager initialized.");
     }

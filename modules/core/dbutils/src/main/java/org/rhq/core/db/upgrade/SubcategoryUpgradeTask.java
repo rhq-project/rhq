@@ -24,7 +24,7 @@ public class SubcategoryUpgradeTask implements DatabaseUpgradeTask {
         String sql = "SELECT RHQ_RESOURCE_TYPE.id, RHQ_RESOURCE_SUBCAT.name"
                    + " FROM RHQ_RESOURCE_TYPE "
                    + " LEFT JOIN RHQ_RESOURCE_SUBCAT "
-                   + " ON RHQ_RESOURCE_TYPE.subcategory_id = RHQ_RESOURCE_SUBCAT.id;";
+                   + " ON RHQ_RESOURCE_TYPE.subcategory_id = RHQ_RESOURCE_SUBCAT.id";
 
         log.debug(DbUtilsI18NResourceKeys.EXECUTING_SQL, sql);
         List<Object[]> results = databaseType.executeSelectSql(connection, sql);
@@ -32,7 +32,7 @@ public class SubcategoryUpgradeTask implements DatabaseUpgradeTask {
         Integer rowId;
         String subcategoryName;
         for (Object[] row : results) {
-            rowId = (Integer) row[0];
+            rowId = databaseType.getInteger(row[0]);
             subcategoryName = (String) row[1];
 
             if (subcategoryName != null && !subcategoryName.isEmpty()) {

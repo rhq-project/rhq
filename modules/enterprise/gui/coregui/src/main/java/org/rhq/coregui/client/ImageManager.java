@@ -18,10 +18,10 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite.Group
 
 /**
  * Provides an API to obtain links to images and icons, thus avoiding hardcoding image URLs throughout client code.
- * 
+ *
  * For each icon, there is typically a small and large version (16x16 and 24x24). To obtain the smaller icon,
  * you use the "getXXXIcon" methods and to obtain the larger icon you use the "getXXXLargeIcon" method.
- * 
+ *
  * @author John Mazzitelli
  *
  */
@@ -144,7 +144,7 @@ public class ImageManager {
      * should be one that indicates the file is "new" (presumably from
      * a coverage change set report - that is, its the first time the file
      * has been seen).
-     * 
+     *
      * @param category
      * @return path to icon
      */
@@ -197,7 +197,7 @@ public class ImageManager {
      * img tag's src attribute) pass in an image path to this {@link #getFullImagePath(String)}
      * method to obtain the full path.  The caller can optionally prepend {@link #IMAGES_DIR}
      * to any path returned by ImageManager, which is all this method really does.
-     * 
+     *
      * @param image a relative image path
      * @return a full image path
      */
@@ -245,6 +245,12 @@ public class ImageManager {
         }
 
         return "resources/" + categoryName + "_Group_16.png";
+    }
+
+    public static String getResourceTypeIcon(ResourceCategory category) {
+
+
+        return "types/" + category.getDisplayName() + "_type_24.png";
     }
 
     public static String getResourceIcon(ResourceCategory category) {
@@ -311,8 +317,8 @@ public class ImageManager {
      * allDown      = red
      * someDown     = yellow
      * someDisabled = orange
-     * otherwise    = green  
-     *   
+     * otherwise    = green
+     *
      * @param groupType the type of group
      * @return the group badge icon
      */
@@ -321,14 +327,14 @@ public class ImageManager {
     }
 
     /**
-     * @see #getGroupIcon(GroupCategory, GroupAvailabilityType) 
+     * @see #getGroupIcon(GroupCategory, GroupAvailabilityType)
      */
     public static String getGroupLargeIcon(GroupCategory groupType, GroupAvailabilityType groupAvailType) {
         return getGroupIcon(groupType, groupAvailType, "24");
     }
 
     /**
-     * @see #getGroupIcon(GroupCategory, GroupAvailabilityType) 
+     * @see #getGroupIcon(GroupCategory, GroupAvailabilityType)
      */
     private static String getGroupIcon(GroupCategory groupType, GroupAvailabilityType groupAvailType, String size) {
         String category = groupType == GroupCategory.COMPATIBLE ? "Cluster" : "Group";
@@ -401,8 +407,8 @@ public class ImageManager {
      * allDown      = red
      * someDown     = yellow
      * someDisabled = orange
-     * otherwise    = green  
-     *   
+     * otherwise    = green
+     *
      * @return the large avail icon
      */
     public static String getAvailabilityGroupLargeIcon(GroupAvailabilityType groupAvailType) {
@@ -554,7 +560,7 @@ public class ImageManager {
      * event icon. This is used if you have a table of events and the user knows they are
      * events so there is no need to show the event icon itself- showing a bigger badge
      * to indicate severity is more useful.
-     * 
+     *
      * @param severity
      * @return badge icon
      */

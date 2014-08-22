@@ -40,10 +40,11 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.coregui.client.util.message.Message;
-import org.rhq.coregui.client.util.message.Message.Severity;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * Shows the tags in a large HTML block, where the most used tags are shown in bigger fonts.
@@ -165,7 +166,6 @@ public class TagCloudView extends EnhancedVLayout {
             button.setIcon(REMOVE_ICON);
             button.setIconWidth(16);
             button.setIconHeight(16);
-            button.setTitle(MSG.view_tagCloud_deleteTag());
             button.setAutoFit(true);
             button.addClickHandler(new ClickHandler() {
                 @Override
@@ -211,7 +211,7 @@ public class TagCloudView extends EnhancedVLayout {
 
     class DeleteButton extends EnhancedIButton {
         public DeleteButton() {
-            super();
+            super(MSG.view_tagCloud_deleteTag(), ButtonColor.RED);
         }
 
         @Override

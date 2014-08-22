@@ -103,6 +103,14 @@ public class EmailManagerBean implements EmailManagerLocal {
 
         MimeMessage mimeMessage = new MimeMessage(mailSession);
         try {
+            String fromAddress = System.getProperty("rhq.server.email.from-address");
+            if (fromAddress!=null) {
+                InternetAddress from = new InternetAddress(fromAddress);
+                mimeMessage.setFrom(from);
+            } else {
+                LOG.warn("No email sender address set in rhq-server.properties [rhq.server.email.from-address]");
+            }
+
             mimeMessage.setSubject(messageSubject);
             mimeMessage.setContent(messageBody, "text/plain");
         } catch (MessagingException e) {

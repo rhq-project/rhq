@@ -72,8 +72,8 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     private static final String URL_OPTION = MSG.view_bundle_createWizard_urlOption();
     private static final String UPLOAD_OPTION = MSG.view_bundle_createWizard_uploadOption();
     private static final String RECIPE_OPTION = MSG.view_bundle_createWizard_recipeOption();
-    private static final String URL_OPTION_USERNAME = MSG.view_bundle_createWizard_urlUserName();
-    private static final String URL_OPTION_PASSWORD = MSG.view_bundle_createWizard_urlPassword();
+    private static final String URL_OPTION_USERNAME = MSG.common_title_username();
+    private static final String URL_OPTION_PASSWORD = MSG.common_title_password();
     private static final String URL_OPTION_TOOLTIP = MSG.view_bundle_createWizard_urlTooltip();
 
     public BundleUploadDistroFileStep(AbstractBundleCreateWizard bundleCreationWizard) {
@@ -159,6 +159,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         urlUserNameItem.setColSpan(1);
         urlUserNameItem.setAlign(Alignment.LEFT);
         urlPasswordItem = new PasswordItem("password", URL_OPTION_PASSWORD);
+        urlPasswordItem.setAttribute("autocomplete", "off");
         urlPasswordItem.setTooltip(URL_OPTION_TOOLTIP);
         urlPasswordItem.setRequired(false);
         urlPasswordItem.setShowTitle(true);
@@ -229,7 +230,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
         textFileRetrieverForm.addFormHandler(new DynamicFormHandler() {
             /*
-             * Helper method to unescape a string which has been escaped for inclusion in HTML tags 
+             * Helper method to unescape a string which has been escaped for inclusion in HTML tags
              */
             public String htmlUnescape(String escapedHtml) {
                 Element e = Document.get().createDivElement();
@@ -312,7 +313,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     }
 
     private void incrementStep() {
-        // before moving to the next step, get the assignable/assigned bundle groups for this new bundle version  
+        // before moving to the next step, get the assignable/assigned bundle groups for this new bundle version
         boolean isInitialVersion = this.wizard.getBundleVersion() == null
             || this.wizard.getBundleVersion().getVersionOrder() == 0;
         int bundleId = isInitialVersion ? 0 : this.wizard.getBundleVersion().getBundle().getId();

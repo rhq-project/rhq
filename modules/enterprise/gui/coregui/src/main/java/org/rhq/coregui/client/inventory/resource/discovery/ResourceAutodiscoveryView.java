@@ -62,6 +62,7 @@ import org.rhq.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.coregui.client.util.TableUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -147,8 +148,8 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
 
         addMember(footer);
 
-        final IButton importButton = new EnhancedIButton(MSG.common_button_import());
-        final IButton ignoreButton = new EnhancedIButton(MSG.view_autoDiscoveryQ_ignore());
+        final IButton importButton = new EnhancedIButton(MSG.common_button_import(), ButtonColor.BLUE);
+        final IButton ignoreButton = new EnhancedIButton(MSG.view_autoDiscoveryQ_ignore(), ButtonColor.RED);
         final IButton unignoreButton = new EnhancedIButton(MSG.view_autoDiscoveryQ_unignore());
 
         footer.addMember(importButton);

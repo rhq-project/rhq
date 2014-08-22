@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-parent</artifactId>
-        <version>4.12.0-SNAPSHOT</version>
+        <version>4.13.0-SNAPSHOT</version>
         <relativePath>../../../../pom.xml</relativePath>
     </parent>
 
@@ -21,8 +21,6 @@
         <rhq.rootDir>../../../..</rhq.rootDir>
 
         <rhq.dev.data.dir>${rhq.rootDir}/rhq-data</rhq.dev.data.dir>
-        <jgroups.initial.version>3.2.7.Final</jgroups.initial.version>
-        <jgroups.patch.version>3.2.10.Final</jgroups.patch.version>
     </properties>
 
     <dependencies>
@@ -77,12 +75,6 @@
             <artifactId>groovy-all</artifactId>
         </dependency>
         
-        <!-- Pull down the patched version of JGroups. See CVE 2013-4112 and BZ 984365 -->
-        <dependency>
-            <groupId>org.jgroups</groupId>
-            <artifactId>jgroups</artifactId>
-            <version>${jgroups.patch.version}</version>
-        </dependency>
     </dependencies>
 
     <build>
@@ -197,8 +189,6 @@
                                     <property name="rhq.server.http.port"               value="${rhq.server.http.port}" />
                                     <property name="rhq.server.https.port"              value="${rhq.server.https.port}" />
                                     <property name="rhq.sync.endpoint-address"          value="${rhq.sync.endpoint-address}" />
-                                    <property name="jgroups.initial.version"            value="${jgroups.initial.version}" />
-                                    <property name="jgroups.patch.version"              value="${jgroups.patch.version}" />
                                 </ant>
                             </target>
                         </configuration>

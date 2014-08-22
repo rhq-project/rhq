@@ -59,6 +59,7 @@ import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -104,7 +105,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                     public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                         return imgHTML(ImageManager
                             .getAvailabilityIconFromAvailType(value == null ? AvailabilityType.UNKNOWN
-                                : (AvailabilityType) value));
+                                : (AvailabilityType) value), 16,16);
                     }
                 });
             }
@@ -203,8 +204,12 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                     return new HTMLFlow(MSG.view_adminTopology_storageNodes_noLoad());
                 }
                 int id = record.getAttributeAsInt(FIELD_ID);
-                return new StorageNodeLoadComponent(id, null);
+                Log.debug("Expanding Storage Node [id=" + id + "] row");
+                StorageNodeLoadComponent component = new StorageNodeLoadComponent(id, null);
+                component.redraw();
+                return component;
             }
+
         };
         listGrid.setCanExpandRecords(true);
         return listGrid;
@@ -243,8 +248,8 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
             }
         };
 
-        addTableAction(MSG.view_adminTopology_storageNodes_run_undeploySelected(), null, new AuthorizedTableAction(
-            this, TableActionEnablement.SINGLE, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.view_adminTopology_storageNodes_run_undeploySelected(), null, ButtonColor.RED,
+            new AuthorizedTableAction(this, TableActionEnablement.SINGLE, Permission.MANAGE_SETTINGS) {
 
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
@@ -278,8 +283,8 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
             }
         };
 
-        addTableAction(MSG.view_adminTopology_storageNodes_run_deploySelected(), null, new AuthorizedTableAction(this,
-            TableActionEnablement.SINGLE, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.view_adminTopology_storageNodes_run_deploySelected(), null, ButtonColor.BLUE,
+            new AuthorizedTableAction(this, TableActionEnablement.SINGLE, Permission.MANAGE_SETTINGS) {
 
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
@@ -301,8 +306,8 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         operationsMap.put(MSG.view_adminTopology_storageNodes_run_disableDebug(), "stopRPCServer");
         operationsMap.put(MSG.view_adminTopology_storageNodes_run_enableDebug(), "startRPCServer");
 
-        addTableAction(MSG.common_title_operation(), null, operationsMap, new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.common_title_operation(), null, operationsMap, ButtonColor.GRAY, new AuthorizedTableAction(
+            this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
 
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {

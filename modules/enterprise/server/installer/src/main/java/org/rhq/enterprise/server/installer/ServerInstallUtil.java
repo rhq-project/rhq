@@ -60,6 +60,7 @@ import org.rhq.common.jbossas.client.controller.MessagingJBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.common.jbossas.client.controller.SocketBindingJBossASClient;
 import org.rhq.common.jbossas.client.controller.TransactionsJBossASClient;
+import org.rhq.common.jbossas.client.controller.VaultJBossASClient;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient.ConnectorConfiguration;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient.SSLConfiguration;
@@ -74,6 +75,8 @@ import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences.RestrictedFormat;
+import org.rhq.core.util.obfuscation.PropertyObfuscationVault;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 
@@ -157,7 +160,8 @@ public class ServerInstallUtil {
 
     private static final String RHQ_DATASOURCE_NAME_NOTX = "NoTxRHQDS";
     private static final String RHQ_DATASOURCE_NAME_XA = "RHQDS";
-    private static final String RHQ_DS_SECURITY_DOMAIN = "RHQDSSecurityDomain";
+    private static final String RHQ_DS_SECURITY_DOMAIN_NOTX = "RHQDSSecurityDomainNoTx";
+    private static final String RHQ_DS_SECURITY_DOMAIN_XA = "RHQDSSecurityDomainXa";
     private static final String RHQ_USER_SECURITY_DOMAIN = "RHQUserSecurityDomain";
     private static final String RHQ_REST_SECURITY_DOMAIN = "RHQRESTSecurityDomain";
     private static final String JDBC_LOGIN_MODULE_NAME = "org.rhq.enterprise.server.core.jaas.JDBCLoginModule";
@@ -170,7 +174,6 @@ public class ServerInstallUtil {
     private static final String RHQ_CACHE_CONTAINER = "rhq";
     private static final String RHQ_CACHE = "rhqCache";
     private static final String RHQ_MGMT_USER = "rhqadmin";
-    private static final String RHQ_MGMT_USER_PASSWORD = "rhq.server.management.password";
     private static final String XA_DATASOURCE_CLASS_POSTGRES = "org.postgresql.xa.PGXADataSource";
     private static final String XA_DATASOURCE_CLASS_ORACLE = "oracle.jdbc.xa.client.OracleXADataSource";
 
@@ -307,7 +310,18 @@ public class ServerInstallUtil {
         final String obfuscatedPassword = buildExpression(ServerProperties.PROP_DATABASE_PASSWORD, serverProperties,
             true);
         final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
-        final String securityDomain = RHQ_DS_SECURITY_DOMAIN;
+        String securityDomain = RHQ_DS_SECURITY_DOMAIN_XA;
+        if (!client.isSecurityDomain(securityDomain)) {
+            client.createNewSecureIdentitySecurityDomain72(securityDomain, dbUsername, obfuscatedPassword);
+            LOG.info("Security domain [" + securityDomain + "] created");
+        } else {
+            LOG.info("Security domain [" + securityDomain + "] already exists, skipping the creation request");
+            client.updateSecureIdentitySecurityDomainCredentials(securityDomain, dbUsername, obfuscatedPassword);
+            LOG.info("Credentials have been updated for security domain [" + securityDomain + "]");
+        }
+
+        // we need separate security domains per datasource due to BZ 1102332
+        securityDomain = RHQ_DS_SECURITY_DOMAIN_NOTX;
         if (!client.isSecurityDomain(securityDomain)) {
             client.createNewSecureIdentitySecurityDomain72(securityDomain, dbUsername, obfuscatedPassword);
             LOG.info("Security domain [" + securityDomain + "] created");
@@ -354,6 +368,31 @@ public class ServerInstallUtil {
 
         SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
         client.createNewSecurityDomain(RHQ_REST_SECURITY_DOMAIN, loginModuleRequest);
+    }
+
+    /**
+     * Creates the Vault required for RHQ property obfuscation.
+     *
+     * @param mcc the JBossAS management client
+     * @param serverProperties server properties
+     * @throws Exception
+     */
+    public static void createObfuscationVault(ModelControllerClient mcc, HashMap<String, String> serverProperties)
+        throws Exception {
+
+        final VaultJBossASClient client = new VaultJBossASClient(mcc);
+
+        if (!client.isVault()) {
+            ModelNode request = client.createNewVaultRequest(PropertyObfuscationVault.class.getName());
+            ModelNode results = client.execute(request);
+            if (!VaultJBossASClient.isSuccess(results)) {
+                throw new FailureException(results, "Failed to create the RHQ vault");
+            } else {
+                LOG.info("RHQ Vault created");
+            }
+        } else {
+            LOG.info("A vault already exists, skipping the creation request");
+        }
     }
 
     /**
@@ -591,7 +630,7 @@ public class ServerInstallUtil {
             noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
                 "${rhq.server.database.connection-url:jdbc:postgresql://127.0.0.1:5432/rhq}", JDBC_DRIVER_POSTGRES,
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, false, 2, 5, 75,
-                RHQ_DS_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
+                RHQ_DS_SECURITY_DOMAIN_NOTX, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", true, props);
             noTxDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
         } else {
@@ -607,7 +646,8 @@ public class ServerInstallUtil {
             xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_POSTGRES,
                 XA_DATASOURCE_CLASS_POSTGRES,
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, 5, 50, (Boolean) null,
-                (Boolean) null, 75, (String) null, RHQ_DS_SECURITY_DOMAIN, (String) null, "TRANSACTION_READ_COMMITTED",
+                (Boolean) null, 75, (String) null, RHQ_DS_SECURITY_DOMAIN_XA, (String) null,
+                "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
 
         } else {
@@ -636,7 +676,8 @@ public class ServerInstallUtil {
             noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
                 "${rhq.server.database.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:rhq}", JDBC_DRIVER_ORACLE,
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, false, 2, 5, 75,
-                RHQ_DS_SECURITY_DOMAIN, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
+                RHQ_DS_SECURITY_DOMAIN_NOTX,
+                "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
                 "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", true, props);
         } else {
@@ -648,9 +689,8 @@ public class ServerInstallUtil {
             props.put("URL", "${rhq.server.database.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:rhq}");
 
             xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_ORACLE,
-                XA_DATASOURCE_CLASS_ORACLE,
-                "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, 5, 50, (Boolean) null,
-                Boolean.TRUE, 75, (String) null, RHQ_DS_SECURITY_DOMAIN,
+                XA_DATASOURCE_CLASS_ORACLE, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15,
+                5, 50, (Boolean) null, Boolean.TRUE, 75, (String) null, RHQ_DS_SECURITY_DOMAIN_XA,
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
                 "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", props);
@@ -906,6 +946,65 @@ public class ServerInstallUtil {
     }
 
     /**
+     * @param serverProperties the server properties
+     * @param dbpassword clear text password to connect to the database
+     * @throws Exception
+     */
+    public static void persistAdminPasswordIfNecessary(HashMap<String, String> serverProperties, String dbpassword)
+        throws Exception {
+        DatabaseType db = null;
+        Connection connection = null;
+        Statement queryStatement = null;
+        Statement insertStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+            String userName = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+            connection = getDatabaseConnection(dbUrl, userName, dbpassword);
+            db = DatabaseTypeFactory.getDatabaseType(connection);
+
+            if (!(db instanceof PostgresqlDatabaseType || db instanceof OracleDatabaseType)) {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
+            }
+
+            queryStatement = connection.createStatement();
+            resultSet = queryStatement.executeQuery("SELECT count(*) FROM rhq_principal WHERE id=2");
+            resultSet.next();
+
+            if (resultSet.getInt(1) == 0) {
+                connection.setAutoCommit(false);
+
+                try {
+                    LOG.info("Persisting admin password to database for property [rhq.autoinstall.server.admin.password]");
+
+                    insertStatement = connection.createStatement();
+                    insertStatement.executeUpdate("INSERT INTO rhq_principal VALUES (2, 'rhqadmin', '"
+                        + serverProperties.get(ServerProperties.PROP_AUTOINSTALL_ADMIN_PASSWORD) + "')");
+
+                    connection.commit();
+                } catch (SQLException e) {
+                    LOG.error(
+                        "Failed to persist admin password to database for property [rhq.autoinstall.server.admin.password]. Transaction will be rolled back.",
+                        e);
+                    connection.rollback();
+                    throw e;
+                }
+            } else {
+                LOG.info("Admin user password is already set, property [rhq.autoinstall.server.admin.password] will be ignored.");
+            }
+
+        } finally {
+            if (db != null) {
+                db.closeResultSet(resultSet);
+                db.closeStatement(queryStatement);
+                db.closeStatement(insertStatement);
+                db.closeConnection(connection);
+            }
+        }
+    }
+
+    /**
      * Persists the storage nodes to the database only if no storage node entities already exist. This method is used
      * to persist storage nodes created from the rhq.storage.nodes server configuration property. The only time those
      * seed nodes should be created is during an initial server installation. After the initial installation storage
@@ -1041,7 +1140,7 @@ public class ServerInstallUtil {
                 while (resultSet.next()) {
                     String address = resultSet.getString(1);
 
-                    if(address != null && !address.trim().isEmpty()){
+                    if (address != null && !address.trim().isEmpty()) {
                         if (addressList.length() != 0) {
                             addressList.append(',');
                         }
@@ -1521,12 +1620,14 @@ public class ServerInstallUtil {
         // truststore
         ssl.setCaCertificateFile(buildExpression("rhq.server.tomcat.security.truststore.file", serverProperties, false));
         ssl.setCaCertificationPassword(buildExpression("rhq.server.tomcat.security.truststore.password",
-            serverProperties, true));
-        ssl.setTruststoreType(buildExpression("rhq.server.tomcat.security.truststore.type", serverProperties, true));
+            serverProperties, true, true, true));
+        ssl.setTruststoreType(buildExpression("rhq.server.tomcat.security.truststore.type", serverProperties, true,
+            true, false));
 
         // keystore
         ssl.setCertificateKeyFile(buildExpression("rhq.server.tomcat.security.keystore.file", serverProperties, false));
-        ssl.setPassword(buildExpression("rhq.server.tomcat.security.keystore.password", serverProperties, true));
+        ssl.setPassword(buildExpression("rhq.server.tomcat.security.keystore.password", serverProperties, true, true,
+            true));
         ssl.setKeyAlias(buildExpression("rhq.server.tomcat.security.keystore.alias", serverProperties, true));
         ssl.setKeystoreType(buildExpression("rhq.server.tomcat.security.keystore.type", serverProperties, true));
 
@@ -1573,6 +1674,11 @@ public class ServerInstallUtil {
         }
     }
 
+    private static String buildExpression(String propName, HashMap<String, String> defaultProperties,
+        boolean supportsExpression) {
+        return buildExpression(propName, defaultProperties, supportsExpression, false, false);
+    }
+
     /**
      * You would think this would be simple - just set a value to ${propName:defaultVal} but some
      * JBossAS attributes don't support expressions when you think they could or should. In this
@@ -1591,13 +1697,39 @@ public class ServerInstallUtil {
      * @return the attribute expression value (or real value if supportsExpression is false).
      */
     private static String buildExpression(String propName, HashMap<String, String> defaultProperties,
-        boolean supportsExpression) {
+        boolean supportsExpression, boolean vault, boolean restricted) {
 
         if (supportsExpression) {
-            if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
-                return "${" + propName + ":" + defaultProperties.get(propName) + "}";
+            String expressionFormat = null;
+
+            if (!vault) {
+                if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
+                    expressionFormat = "${%s:%s}";
+                } else {
+                    expressionFormat = "${%s}";
+                }
             } else {
-                return "${" + propName + "}";
+                String attributeType = "restricted";
+                if (!restricted) {
+                    attributeType = "open";
+                }
+                if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
+                    expressionFormat = "${VAULT::" + attributeType + "::%s::%s}";
+                } else {
+                    expressionFormat = "${VAULT::" + attributeType + "::%s:: }";
+                }
+            }
+
+            if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
+                String value = defaultProperties.get(propName);
+
+                if (RestrictedFormat.isRestrictedFormat(value)) {
+                    value = RestrictedFormat.retrieveValue(value);
+                }
+
+                return String.format(expressionFormat, propName, value);
+            } else {
+                return String.format(expressionFormat, propName);
             }
         } else {
             if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {

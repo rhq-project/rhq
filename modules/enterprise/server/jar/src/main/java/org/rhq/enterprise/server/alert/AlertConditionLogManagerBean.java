@@ -34,6 +34,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.exception.ConstraintViolationException;
 
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
@@ -98,6 +99,7 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
                  * "ctime" and "value" properties.
                  */
                 alertConditionLog.setCtime(ctime);
+                value = DatabaseTypeFactory.getDefaultDatabaseType().getString(value, AlertConditionLog.MAX_LOG_LENGTH);
                 alertConditionLog.setValue(value);
                 if (log.isDebugEnabled()) {
                     log.debug("Updating unmatched alert condition log: " + alertConditionLog);

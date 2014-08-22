@@ -26,9 +26,12 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.net.InetAddress;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -89,6 +92,10 @@ public class StorageNodeComponentITest {
 
     private InetAddress node1Address;
     private InetAddress node2Address;
+
+    private final static int TAKE_SNAPSHOTS = 5;
+    private final static String TAKE_SNAPSHOTS_DELETE_NAME = TAKE_SNAPSHOTS + 1 + "";
+    private final static String TAKE_SNAPSHOTS_MOVE_NAME = TAKE_SNAPSHOTS + 2 + "";
 
     @BeforeSuite
     public void deployStorageNodeAndPluginContainer() throws Exception {
@@ -154,7 +161,7 @@ public class StorageNodeComponentITest {
 
         String jvmOpts = properties.getProperty("JVM_OPTS");
         jvmOpts = jvmOpts.substring(0, jvmOpts.lastIndexOf("\""));
-        jvmOpts = jvmOpts + " -Dcassandra.ring_delay_ms=100\"";
+        jvmOpts = jvmOpts + " -Dcassandra.ring_delay_ms=2000\"";
         properties.setProperty("JVM_OPTS", jvmOpts);
 
         propertiesUpdater.update(properties);
@@ -235,7 +242,7 @@ public class StorageNodeComponentITest {
         OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
 
         long timeout = 1000 * 60;
-        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId());
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
         OperationServicesResult result = operationsService.invokeOperation(operationContext, "shutdown",
             new Configuration(), timeout);
 
@@ -255,7 +262,7 @@ public class StorageNodeComponentITest {
         OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
 
         long timeout = 1000 * 60;
-        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId());
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
         OperationServicesResult result = operationsService.invokeOperation(operationContext, "start",
             new Configuration(), timeout);
 
@@ -269,7 +276,166 @@ public class StorageNodeComponentITest {
         assertNodeIsUp("Expected " + storageNode + " to be up after restarting it.");
     }
 
-    @Test(dependsOnMethods = "restartStorageNode")
+    @Test(dependsOnMethods = "restartStorageNode", priority = 1)
+    public void takeSnaphots() throws Exception {
+        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
+        OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
+
+        long timeout = 1000 * 60;
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
+        Configuration params = new Configuration();
+        for (int i = 0; i < TAKE_SNAPSHOTS; i++) {
+            params = Configuration.builder().addSimple("snapshotName", "" + i).build();
+
+            OperationServicesResult result = operationsService.invokeOperation(operationContext, "takeSnapshot",
+                params, timeout);
+            assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The takeSnapshot operation try "
+                + i + " failed.");
+        }
+        assertSnaphotCount(getSnaphostDirs(), TAKE_SNAPSHOTS);
+    }
+
+    @Test(dependsOnMethods = "takeSnaphots", priority = 1)
+    public void takeSnapshotsKeepLastNAndDelete() {
+        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
+        OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
+
+        long timeout = 1000 * 60;
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
+
+        final int keepN = 3;
+
+        Configuration params = Configuration.builder().addSimple("retentionStrategy", "Keep Last N")
+            .addSimple("count", keepN)
+.addSimple("snapshotName", TAKE_SNAPSHOTS_DELETE_NAME)
+            .build();
+        OperationServicesResult result = operationsService.invokeOperation(operationContext, "takeSnapshot", params,
+            timeout);
+        assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The takeSnapshot operation failed.");
+
+        assertSnaphotCount(getSnaphostDirs(), keepN);
+        assertSnaphotsContain(getSnaphostDirs(), TAKE_SNAPSHOTS_DELETE_NAME);
+    }
+
+    @Test(dependsOnMethods = "takeSnaphots", priority = 2)
+    public void takeSnapshotsKeepLastNAndMove() {
+        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
+        OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
+
+        long timeout = 1000 * 60;
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
+
+        final int keepN = 1;
+
+        File moveLocation = new File(basedir, TAKE_SNAPSHOTS_MOVE_NAME);
+
+        Configuration params = Configuration.builder().addSimple("retentionStrategy", "Keep Last N")
+            .addSimple("count", keepN)
+.addSimple("snapshotName", TAKE_SNAPSHOTS_MOVE_NAME)
+            .addSimple("deletionStrategy", "Move")
+            .addSimple("location", moveLocation.getAbsolutePath())
+            .build();
+        OperationServicesResult result = operationsService.invokeOperation(operationContext, "takeSnapshot", params,
+            timeout);
+        assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The takeSnapshot operation failed.");
+
+        assertSnaphotCount(getSnaphostDirs(), keepN);
+        assertSnaphotsContain(getSnaphostDirs(), TAKE_SNAPSHOTS_MOVE_NAME);
+
+        // assert moved snaphots
+        // takeSnapshotsKeepLastNAndDelete test left 3 snaphosts, new one was generated so 3 had to be moved
+        assertSnaphotCount(getMovedSnapshotDirs(moveLocation), 3);
+
+        // snaphost that has not been moved must not be in moved location
+        for (File snapDir : getMovedSnapshotDirs(moveLocation)) {
+            int size = snapDir.listFiles(createDirFilter(TAKE_SNAPSHOTS_MOVE_NAME)).length;
+            assertEquals(size, 0);
+        }
+
+        // but we must be able to find snapshot created by takeSnapshotsKeepLastNAndDelete test
+        assertSnaphotsContain(getMovedSnapshotDirs(moveLocation), TAKE_SNAPSHOTS_DELETE_NAME);
+    }
+
+    @Test(dependsOnMethods = "takeSnapshotsKeepLastNAndMove", priority = 3)
+    public void takeSnapshotsDeleteOlderThanN() {
+        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
+        OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
+
+        long timeout = 1000 * 60;
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId(), operationManager);
+
+        // mark snaphosts left by takeSnapshotsKeepLastNAndMove test as 2 days old
+        for (File parent : getSnaphostDirs()) {
+            File snapshot = new File(parent, TAKE_SNAPSHOTS_MOVE_NAME);
+            snapshot.setLastModified(System.currentTimeMillis() - (2 * 86400L * 1000L));
+        }
+
+        int delOlderThan = 3;
+
+        Configuration params = Configuration.builder()
+            .addSimple("retentionStrategy", "Delete Older Than N days")
+            .addSimple("count", delOlderThan)
+            .build();
+        OperationServicesResult result = operationsService.invokeOperation(operationContext, "takeSnapshot", params,
+            timeout);
+        assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The takeSnapshot operation failed.");
+        // takeSnapshotsKeepLastNAndMove left 1 snapshot so now there has to be 2 of them
+        assertSnaphotCount(getSnaphostDirs(), 2);
+
+        File moveLocation = new File(basedir, "snaphosts-moved-2");
+        delOlderThan = 1;
+        params = Configuration.builder()
+            .addSimple("retentionStrategy", "Delete Older Than N days")
+            .addSimple("count", delOlderThan)
+            .addSimple("deletionStrategy", "Move")
+            .addSimple("location", moveLocation.getAbsolutePath())
+            .build();
+        result = operationsService.invokeOperation(operationContext, "takeSnapshot", params,
+            timeout);
+        assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The takeSnapshot operation failed.");
+        // 2 snapshots left 1 created, but 1 moved
+        assertSnaphotCount(getSnaphostDirs(), 2);
+        assertSnaphotsContain(getMovedSnapshotDirs(moveLocation), TAKE_SNAPSHOTS_MOVE_NAME);
+    }
+
+    private List<File> getMovedSnapshotDirs(File parent) {
+        return Arrays.asList(
+            new File(parent, "system/schema_keyspaces/snapshots"),
+            new File(parent,"rhq/schema_version/snapshots")
+            );
+    }
+
+    private List<File> getSnaphostDirs() {
+        return Arrays.asList(
+            new File(basedir, "data/system/schema_keyspaces/snapshots"),
+            new File(basedir, "data/rhq/schema_version/snapshots")
+            );
+    }
+
+    private void assertSnaphotCount(List<File> snapshotDirs, int count) {
+        for (File snapDir : snapshotDirs) {
+            int size = snapDir.listFiles(createDirFilter(null)).length;
+            assertEquals(size, count, "Dirs found : " + Arrays.toString(snapDir.list()));
+        }
+    }
+
+    private void assertSnaphotsContain(List<File> snapshotDirs, final String snapshotName) {
+        for (File snapDir : snapshotDirs) {
+            int size = snapDir.listFiles(createDirFilter(snapshotName)).length;
+            assertEquals(size, 1, "Dirs found : " + Arrays.toString(snapDir.list()));
+        }
+    }
+
+    private FileFilter createDirFilter(final String dirName) {
+        return new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.isDirectory() && dirName == null ? true : pathname.getName().equals(dirName);
+            }
+        };
+    }
+
+    @Test(dependsOnMethods = "restartStorageNode", priority = 100)
     public void prepareForBootstrap() throws Exception {
         File node2Basedir = new File(basedir.getParentFile(), "rhq-storage-2");
 
@@ -320,7 +486,7 @@ public class StorageNodeComponentITest {
             OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
 
             long timeout = 1000 * 60;
-            OperationContextImpl operationContext = new OperationContextImpl(newStorageNode.getId());
+            OperationContextImpl operationContext = new OperationContextImpl(newStorageNode.getId(), operationManager);
             OperationServicesResult result = operationsService.invokeOperation(operationContext, "prepareForBootstrap",
                 params, timeout);
 

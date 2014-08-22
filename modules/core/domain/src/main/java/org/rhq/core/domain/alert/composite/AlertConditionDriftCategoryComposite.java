@@ -23,13 +23,16 @@
 package org.rhq.core.domain.alert.composite;
 
 import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
 
 public class AlertConditionDriftCategoryComposite extends AbstractAlertConditionCategoryComposite {
 
     private final Integer resourceId;
 
-    public AlertConditionDriftCategoryComposite(AlertCondition condition, Integer resourceId) {
-        super(condition);
+    public AlertConditionDriftCategoryComposite(
+            int cid, AlertConditionCategory ccategory, String cname, String ccomparator, Double cthreshold, String coption, Integer triggerId,
+            Integer resourceId) {
+        super(new AlertCondition(cid, ccategory, cname, ccomparator, cthreshold, coption, triggerId));
         this.resourceId = resourceId;
     }
 

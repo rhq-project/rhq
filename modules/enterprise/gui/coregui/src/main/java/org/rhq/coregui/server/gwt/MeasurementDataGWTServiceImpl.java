@@ -27,7 +27,12 @@ import org.rhq.core.domain.criteria.CallTimeDataCriteria;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
-import org.rhq.core.domain.measurement.*;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementBaseline;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
@@ -37,7 +42,12 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.gwt.MeasurementDataGWTService;
 import org.rhq.coregui.server.util.SerialUtility;
-import org.rhq.enterprise.server.measurement.*;
+import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -88,10 +98,12 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             throw getExceptionToThrowToClient(t);
         }
     }
-    
-    public Set<MeasurementData> findLiveDataForGroup(int groupId, int resourceId[], int[] definitionIds) throws RuntimeException {
+
+    public Set<MeasurementData> findLiveDataForGroup(int groupId, int resourceId[], int[] definitionIds)
+        throws RuntimeException {
         try {
-            return SerialUtility.prepare(dataManager.findLiveDataForGroup(getSessionSubject(), groupId, resourceId, definitionIds),
+            return SerialUtility.prepare(
+                dataManager.findLiveDataForGroup(getSessionSubject(), groupId, resourceId, definitionIds),
                 "MeasurementDataService.findLiveDataForGroup");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -107,9 +119,9 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             throw getExceptionToThrowToClient(t);
         }
     }
-    
-    public List<List<MeasurementDataNumericHighLowComposite>> findDataForResourceForLast(int resourceId, int[] definitionIds,
-        int lastN, int unit, int numPoints) throws RuntimeException {
+
+    public List<List<MeasurementDataNumericHighLowComposite>> findDataForResourceForLast(int resourceId,
+        int[] definitionIds, int lastN, int unit, int numPoints) throws RuntimeException {
         List<Long> beginEnd = MeasurementUtils.calculateTimeFrame(lastN, unit);
         return findDataForResource(resourceId, definitionIds, beginEnd.get(0), beginEnd.get(1), numPoints);
     }
@@ -128,13 +140,13 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             throw getExceptionToThrowToClient(t);
         }
     }
-    
+
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroupForLast(int groupId,
         int[] definitionIds, int lastN, int unit, int numPoints) throws RuntimeException {
         List<Long> beginEnd = MeasurementUtils.calculateTimeFrame(lastN, unit);
         return findDataForCompatibleGroup(groupId, definitionIds, beginEnd.get(0), beginEnd.get(1), numPoints);
     }
-    
+
     public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria)
         throws RuntimeException {
         try {
@@ -308,9 +320,11 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     }
 
     @Override
-    public MeasurementBaseline getBaselineForResourceAndSchedule(int resourceId, int definitionId)  throws RuntimeException {
+    public MeasurementBaseline getBaselineForResourceAndSchedule(int resourceId, int definitionId)
+        throws RuntimeException {
         try {
-            MeasurementSchedule scheduleWithBaseline = scheduleManager.getSchedule(getSessionSubject(), resourceId, definitionId, true);
+            MeasurementSchedule scheduleWithBaseline = scheduleManager.getSchedule(getSessionSubject(), resourceId,
+                definitionId, true);
 
             return SerialUtility.prepare(scheduleWithBaseline.getBaseline(), "MeasurementSchedule.getSchedule");
         } catch (Throwable t) {
@@ -319,20 +333,29 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     }
 
     @Override
-    public void setUserBaselineMax(int resourceId, int definitionId, Double maxBaseline)  throws RuntimeException {
+    public void setUserBaselineMax(int resourceId, int definitionId, Double maxBaseline) throws RuntimeException {
         try {
-            MeasurementSchedule scheduleWithBaseline = scheduleManager.getSchedule(getSessionSubject(), resourceId, definitionId, true);
-            MeasurementBaseline measurementBaseline = scheduleWithBaseline.getBaseline();
-            if(null != maxBaseline && maxBaseline >= measurementBaseline.getMin()){
-
-                MeasurementBaseline newMeasurementBaseline = scheduleWithBaseline.getBaseline();
-                newMeasurementBaseline.setSchedule(scheduleWithBaseline);
-                newMeasurementBaseline.setUserEntered(true);
-                newMeasurementBaseline.setMax(maxBaseline);
-                scheduleManager.updateSchedule(getSessionSubject(),scheduleWithBaseline);
-            }else{
-                throw new IllegalArgumentException("One of the params to MeasurementDataGWTServiceImpl.setUserBaselineMax is null");
+            if (null == maxBaseline || maxBaseline.isNaN()) {
+                throw new IllegalArgumentException("Invalid baseline value, must not be null or NaN.");
             }
+
+            MeasurementSchedule scheduleWithBaseline = scheduleManager.getSchedule(getSessionSubject(), resourceId,
+                definitionId, true);
+            if (null == scheduleWithBaseline || null == scheduleWithBaseline.getBaseline()) {
+                throw new IllegalStateException(
+                    "A baseline has not yet been generated for this metric. It must exist before a manual override can be set.  An initial baseline is typically generated within a few hours after metric data begins for the metric.");
+            }
+
+            MeasurementBaseline measurementBaseline = scheduleWithBaseline.getBaseline();
+            if (maxBaseline < measurementBaseline.getMin()) {
+                throw new IllegalArgumentException("Invalid baselineMax value, must not be less than baselineMin.");
+            }
+
+            MeasurementBaseline newMeasurementBaseline = scheduleWithBaseline.getBaseline();
+            newMeasurementBaseline.setSchedule(scheduleWithBaseline);
+            newMeasurementBaseline.setUserEntered(true);
+            newMeasurementBaseline.setMax(maxBaseline);
+            scheduleManager.updateSchedule(getSessionSubject(), scheduleWithBaseline);
 
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -340,20 +363,29 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     }
 
     @Override
-    public void setUserBaselineMin(int resourceId, int definitionId, Double minBaseline)  throws RuntimeException {
+    public void setUserBaselineMin(int resourceId, int definitionId, Double minBaseline) throws RuntimeException {
         try {
-            MeasurementSchedule scheduleWithBaseline = scheduleManager.getSchedule(getSessionSubject(), resourceId, definitionId, true);
-            MeasurementBaseline measurementBaseline = scheduleWithBaseline.getBaseline();
-            if(null != minBaseline && minBaseline <= measurementBaseline.getMax()){
-
-                MeasurementBaseline newMeasurementBaseline = scheduleWithBaseline.getBaseline();
-                newMeasurementBaseline.setSchedule(scheduleWithBaseline);
-                newMeasurementBaseline.setUserEntered(true);
-                newMeasurementBaseline.setMin(minBaseline);
-                scheduleManager.updateSchedule(getSessionSubject(), scheduleWithBaseline);
-            }else{
-                throw new IllegalArgumentException("One of the params to MeasurementDataGWTServiceImpl.setUserBaselineMin is null");
+            if (null == minBaseline || minBaseline.isNaN()) {
+                throw new IllegalArgumentException("Invalid baseline value, must not be null or NaN.");
             }
+
+            MeasurementSchedule scheduleWithBaseline = scheduleManager.getSchedule(getSessionSubject(), resourceId,
+                definitionId, true);
+            if (null == scheduleWithBaseline || null == scheduleWithBaseline.getBaseline()) {
+                throw new IllegalStateException(
+                    "A baseline has not yet been generated for this metric. It must exist before a manual override can be set.  An initial baseline is typically generated within a few hours after metric data begins for the metric.");
+            }
+
+            MeasurementBaseline measurementBaseline = scheduleWithBaseline.getBaseline();
+            if (minBaseline > measurementBaseline.getMax()) {
+                throw new IllegalArgumentException("Invalid baseline value, must not be greater than baselineMax.");
+            }
+
+            MeasurementBaseline newMeasurementBaseline = scheduleWithBaseline.getBaseline();
+            newMeasurementBaseline.setSchedule(scheduleWithBaseline);
+            newMeasurementBaseline.setUserEntered(true);
+            newMeasurementBaseline.setMin(minBaseline);
+            scheduleManager.updateSchedule(getSessionSubject(), scheduleWithBaseline);
 
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -361,28 +393,42 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     }
 
     @Override
-    public void setUserBaselineMean(int resourceId, int definitionId, Double meanBaseline)  throws RuntimeException {
+    public void setUserBaselineMean(int resourceId, int definitionId, Double meanBaseline) throws RuntimeException {
         try {
-            MeasurementSchedule scheduleWithBaseline = scheduleManager.getSchedule(getSessionSubject(), resourceId, definitionId, true);
-            boolean noNulls = null != meanBaseline && null != scheduleWithBaseline && null != scheduleWithBaseline.getBaseline();
-            if(noNulls){
-                MeasurementBaseline newMeasurementBaseline = scheduleWithBaseline.getBaseline();
-                newMeasurementBaseline.setSchedule(scheduleWithBaseline);
-                newMeasurementBaseline.setUserEntered(true);
-                newMeasurementBaseline.setMean(meanBaseline);
-                scheduleManager.updateSchedule(getSessionSubject(),scheduleWithBaseline);
-            }else{
-                throw new IllegalArgumentException("One of the params to MeasurementDataGWTServiceImpl.setUserBaselineMean is null");
+            if (null == meanBaseline || meanBaseline.isNaN()) {
+                throw new IllegalArgumentException("Invalid baseline value, must not be null or NaN.");
             }
+
+            MeasurementSchedule scheduleWithBaseline = scheduleManager.getSchedule(getSessionSubject(), resourceId,
+                definitionId, true);
+            if (null == scheduleWithBaseline || null == scheduleWithBaseline.getBaseline()) {
+                throw new IllegalStateException(
+                    "A baseline has not yet been generated for this metric. It must exist before a manual override can be set.  An initial baseline is typically generated within a few hours after metric data begins for the metric.");
+            }
+
+            MeasurementBaseline measurementBaseline = scheduleWithBaseline.getBaseline();
+            if (meanBaseline < measurementBaseline.getMin() || meanBaseline > measurementBaseline.getMax()) {
+                throw new IllegalArgumentException(
+                    "Invalid baseline value, must not be less than baselineMin or greater than baselineMax.");
+            }
+
+            MeasurementBaseline newMeasurementBaseline = scheduleWithBaseline.getBaseline();
+            newMeasurementBaseline.setSchedule(scheduleWithBaseline);
+            newMeasurementBaseline.setUserEntered(true);
+            newMeasurementBaseline.setMean(meanBaseline);
+            scheduleManager.updateSchedule(getSessionSubject(), scheduleWithBaseline);
 
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
-    public MeasurementBaseline calcBaselineForDateRange(Integer measurementScheduleId, long startDate, long endDate) throws RuntimeException {
+    public MeasurementBaseline calcBaselineForDateRange(Integer measurementScheduleId, long startDate, long endDate)
+        throws RuntimeException {
         try {
-            return SerialUtility.prepare(measurementBaselineManager.calculateAutoBaselineInNewTransaction(getSessionSubject(),measurementScheduleId,  startDate, endDate, false ),"MeasurementDataService.calcBaselineForDateRange");
+            return SerialUtility.prepare(measurementBaselineManager.calculateAutoBaselineInNewTransaction(
+                getSessionSubject(), measurementScheduleId, startDate, endDate, false),
+                "MeasurementDataService.calcBaselineForDateRange");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

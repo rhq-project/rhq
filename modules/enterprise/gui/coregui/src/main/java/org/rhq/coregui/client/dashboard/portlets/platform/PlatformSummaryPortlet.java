@@ -49,6 +49,7 @@ import org.rhq.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.coregui.client.dashboard.PortletWindow;
 import org.rhq.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.coregui.client.util.MeasurementConverterClient;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 
 public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> implements Portlet, HasViewName {
@@ -119,7 +120,7 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
     }
 
     private void addExportAction() {
-        addTableAction("Export", MSG.common_button_reports_export(), new AbstractTableAction() {
+        addTableAction("Export", MSG.common_button_reports_export(), ButtonColor.BLUE, new AbstractTableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return enableIfRecordsExist(getListGrid());

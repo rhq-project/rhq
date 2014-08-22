@@ -39,6 +39,7 @@ import org.rhq.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
@@ -79,7 +80,7 @@ public class PluginConfigurationEditView extends EnhancedVLayout implements Prop
         toolStrip.setMembersMargin(3);
         toolStrip.setPadding(3);
 
-        this.saveButton = new EnhancedIButton(MSG.common_button_save());
+        this.saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();

@@ -34,6 +34,7 @@ import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * The content pane for the group Inventory>Members subtab.
@@ -59,8 +60,8 @@ public class MembersView extends ResourceSearchView {
 
         Log.debug("MembersView canModifyMembers: " + canModifyMembers);
         if (canModifyMembers) {
-            addTableAction(MSG.view_groupInventoryMembers_button_updateMembership(), new AbstractTableAction(
-                TableActionEnablement.ALWAYS) {
+            addTableAction(MSG.view_groupInventoryMembers_button_updateMembership(), ButtonColor.BLUE,
+                new AbstractTableAction(                TableActionEnablement.ALWAYS) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     final Window winModal = new Window();

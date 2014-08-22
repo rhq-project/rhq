@@ -35,7 +35,7 @@ public class RHQConstants {
     public static final String PERSISTENCE_UNIT_NAME = "rhqpu";
     public static final String TRANSACTION_MANAGER_JNDI_NAME = "java:jboss/TransactionManager";
 
-    // JAAS settings      
+    // JAAS settings
     @Deprecated public static final String JAASProvider = SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName();
     // These are values that are actually stored in the DB for the JAASProvider system prop, though
     // SystemSetting.LDAP_BASED_JAAS_PROVIDER is represented as a boolean (false->"JDBC", true->"LDAP").
@@ -50,7 +50,7 @@ public class RHQConstants {
     // SystemSetting.USE_SSL_FOR_LDAP is represented as a boolean (false->"", true->"ssl").
     public static final String LDAP_PROTOCOL_UNSECURED = "";
     public static final String LDAP_PROTOCOL_SECURED = "ssl";
-    
+
     @Deprecated public static final String LDAPLoginProperty = SystemSetting.LDAP_LOGIN_PROPERTY.getInternalName();
     @Deprecated public static final String LDAPFilter = SystemSetting.LDAP_FILTER.getInternalName();
     @Deprecated public static final String LDAPGroupFilter = SystemSetting.LDAP_GROUP_FILTER.getInternalName();
@@ -110,6 +110,10 @@ public class RHQConstants {
     // How long do we keep availability data
     @Deprecated public static final String AvailabilityPurge = SystemSetting.AVAILABILITY_PURGE_PERIOD.getInternalName();
 
+    // How long do we keep operation history data
+    @Deprecated
+    public static final String OperationHistoryPurge = SystemSetting.OPERATION_HISTORY_PURGE_PERIOD.getInternalName();
+
     // Baseline config options
     // The frequency to run auto-baselines, if 0, never auto-calculate baselines
     @Deprecated public static final String BaselineFrequency = SystemSetting.BASE_LINE_FREQUENCY.getInternalName();
@@ -120,6 +124,23 @@ public class RHQConstants {
     //allow plugin initiated resource name & description upgrades (resource key is always upgradable)
     @Deprecated public static final String AllowResourceGenericPropertiesUpgrade = SystemSetting.ALLOW_RESOURCE_GENERIC_PROPERTIES_UPGRADE.getInternalName();
 
+    @Deprecated
+    public static final String StorageRegularSnapshots = SystemSetting.STORAGE_REGULAR_SNAPSHOTS.getInternalName();
+    @Deprecated
+    public static final String StorageRegularSnapshotsSchedule = SystemSetting.STORAGE_REGULAR_SNAPSHOTS_SCHEDULE
+        .getInternalName();
+    @Deprecated
+    public static final String StorageRegularSnapshotsRetention = SystemSetting.STORAGE_REGULAR_SNAPSHOTS_RETENTION
+        .getInternalName();
+    @Deprecated
+    public static final String StorageRegularSnapshotsRetentionCount = SystemSetting.STORAGE_REGULAR_SNAPSHOTS_RETENTION_COUNT
+        .getInternalName();
+    @Deprecated
+    public static final String StorageRegularSnapshotsDeletion = SystemSetting.STORAGE_REGULAR_SNAPSHOTS_DELETION
+        .getInternalName();
+    @Deprecated
+    public static final String StorageRegularSnapshotsDeletionLocation = SystemSetting.STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION
+        .getInternalName();
     /////////////////////////////////////////////////////
     // the settings below are not used today and can probably be removed at some point
 

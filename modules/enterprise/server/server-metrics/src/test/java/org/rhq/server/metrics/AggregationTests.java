@@ -69,6 +69,8 @@ public class AggregationTests extends MetricsTest {
         metricsServer.init();
 
         aggregationTasks = metricsServer.getAggregationWorkers();
+
+        configuration.setIndexPageSize(5);
     }
 
     @Test
@@ -890,11 +892,13 @@ public class AggregationTests extends MetricsTest {
     private class AggregationManagerTestStub extends AggregationManager {
 
         public AggregationManagerTestStub(DateTime startTime) {
-            super(aggregationTasks, dao, dateTimeService, startTime, BATCH_SIZE, 4, PARTITION_SIZE);
+            super(aggregationTasks, dao, dateTimeService, startTime, BATCH_SIZE, 4, PARTITION_SIZE,
+                configuration.getIndexPageSize());
         }
 
         public AggregationManagerTestStub(DateTime startTime, MetricsDAO dao) {
-            super(aggregationTasks, dao, dateTimeService, startTime, BATCH_SIZE, 4, PARTITION_SIZE);
+            super(aggregationTasks, dao, dateTimeService, startTime, BATCH_SIZE, 4, PARTITION_SIZE,
+                configuration.getIndexPageSize());
         }
 
     }

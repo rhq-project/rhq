@@ -468,15 +468,20 @@
                   <c:simple-property name="sql"/>
                   <c:simple-property name="type" default="query">
                       <c:property-options>
-                          <c:option value="query" name="query"/>
-                          <c:option value="update" name="update"/>
-
+                          <c:option value="query" name="Query"/>
+                          <c:option value="update" name="Update"/>
+                      </c:property-options>
+                  </c:simple-property>
+                  <c:simple-property name="outputFormat" default="html" description="Defaults to HTML.">
+                      <c:property-options>
+                          <c:option value="html" name="HTML"/>
+                          <c:option value="formattedText" name="Formatted Text"/>
                       </c:property-options>
                   </c:simple-property>
               </parameters>
               <results>
                   <c:simple-property name="result"/>
-                  <c:simple-property name="contents"/>
+                  <c:simple-property name="contents" type="longString"/>
               </results>
           </operation>
 

@@ -19,7 +19,23 @@
 
 package org.rhq.modules.integrationTests.restApi;
 
+import static com.jayway.restassured.RestAssured.delete;
+import static com.jayway.restassured.RestAssured.expect;
+import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.emptyIterable;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.iterableWithSize;
+
 import java.util.List;
+import java.util.Map;
 
 import com.jayway.restassured.config.RedirectConfig;
 import com.jayway.restassured.config.RestAssuredConfig;
@@ -36,21 +52,6 @@ import org.rhq.modules.integrationTests.restApi.d.AlertDefinition;
 import org.rhq.modules.integrationTests.restApi.d.AlertNotification;
 import org.rhq.modules.integrationTests.restApi.d.Availability;
 import org.rhq.modules.integrationTests.restApi.d.Group;
-
-import static com.jayway.restassured.RestAssured.delete;
-import static com.jayway.restassured.RestAssured.expect;
-import static com.jayway.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.endsWith;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.emptyIterable;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.iterableWithSize;
 
 /**
  * Testing of the Alerting part of the rest-api
@@ -1043,6 +1044,79 @@ public class AlertTest extends AbstractBase {
 
             int size = updatedDefinition.getNotifications().size();
             assert size ==1 : "Did not find 1 notification, but " + size;
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWith1NotificationExtraConfig() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        // find operation definition ID for discovery operation
+        int discoveryDefinitionId = -1;
+        Response r =
+            given()
+                .header(acceptJson)
+                .queryParam("resourceId",_platformId)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+            .when()
+                .get("/operation/definitions");
+
+            discoveryDefinitionId = -1;
+            List<Map<String,Object>> list = r.as(List.class);
+            for (Map<String,Object> map : list) {
+                String name = (String) map.get("name");
+                Integer id = (Integer) map.get("id");
+                if (name.equals("discovery")) {
+                    discoveryDefinitionId = id;
+                }
+            }
+         assert discoveryDefinitionId !=-1 : "No discovery operation found";
+
+        // Now add a condition
+        try {
+
+            AlertNotification notification = new AlertNotification("Resource Operations"); // short-name from server plugin descriptor
+            notification.getConfig().put("selection-mode", "SELF");
+            notification.getConfig().put("operation-definition-id", discoveryDefinitionId);
+            notification.getExtraConfig().put("detailedDiscovery", false);
+
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(notification)
+                .pathParam("defId", definitionId)
+                .log().everything()
+            .expect()
+                .statusCode(201)
+                .log().everything()
+            .when()
+                .post("/alert/definition/{defId}/notifications");
+
+            // Retrieve the definition with the added condition
+            AlertDefinition updatedDefinition =
+            given()
+                .pathParam("id",definitionId)
+                .queryParam("full",true)
+            .expect()
+                .statusCode(200)
+                .log().everything()
+            .when()
+                .get("/alert/definition/{id}")
+                .as(AlertDefinition.class);
+
+            int size = updatedDefinition.getNotifications().size();
+            assert size ==1 : "Did not find 1 notification, but " + size;
+            AlertNotification newNotification = updatedDefinition.getNotifications().get(0);
+            assert newNotification.getExtraConfig().size() == 1;
+            assert (Boolean) newNotification.getExtraConfig().get("detailedDiscovery") == false;
         }
 
         finally {

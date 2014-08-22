@@ -33,6 +33,9 @@
         <column name="DAMPENING_VALUE_UNITS" type="SMALLINT"/>
         <column name="DAMPENING_PERIOD" type="INTEGER"/>
         <column name="DAMPENING_PERIOD_UNITS" type="SMALLINT"/>
+        <index name="RHQ_ADEF_RESOURCE_TYPE_IDX">
+            <field ref="RESOURCE_TYPE_ID"/>
+        </index>
     </table>
 
     <table name="RHQ_ALERT_DAMPEN_EVENT">
@@ -105,7 +108,7 @@
         <column name="CTIME" required="true" type="LONG"/>
         <column name="ALERT_ID" required="false" type="INTEGER" references="RHQ_ALERT(ID)"/>
         <column name="CONDITION_ID" required="true" type="INTEGER" references="RHQ_ALERT_CONDITION(ID)"/>
-        <column name="VALUE" required="true" size="250" type="VARCHAR2"/>
+        <column name="VALUE" required="true" size="4000" type="VARCHAR2"/>
         <index name="RHQ_ALERT_COND_LOG_IDX_TIME">
             <field ref="CTIME" />
         </index>

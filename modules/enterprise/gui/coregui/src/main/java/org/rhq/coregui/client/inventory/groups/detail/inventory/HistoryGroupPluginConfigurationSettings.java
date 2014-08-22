@@ -41,9 +41,9 @@ import org.rhq.coregui.client.components.configuration.GroupConfigurationEditor;
 import org.rhq.coregui.client.components.configuration.GroupMemberConfiguration;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Read only view that shows group plugin configuration properties. These are properties

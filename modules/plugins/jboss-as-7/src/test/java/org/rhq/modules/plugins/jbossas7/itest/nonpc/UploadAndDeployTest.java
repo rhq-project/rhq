@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.itest.nonpc;
+
+import static org.rhq.modules.plugins.jbossas7.test.util.ASConnectionFactory.getDomainControllerASConnection;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -62,7 +65,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
 
     protected static final boolean isEnabled = true;
 
-    @Test(timeOut = 60*1000L, enabled=isEnabled)
+    @Test(timeOut = 60 * 1000L, enabled = isEnabled)
     public void testUploadOnly() throws Exception {
         String bytes_value = uploadToAs(TEST_WAR_PATH);
 
@@ -72,7 +75,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         assert bytes_value.equals("7jgpMVmynfxpqp8UDleKLmtgbrA=");
     }
 
-    @Test(timeOut = 60*1000L, enabled=isEnabled)
+    @Test(timeOut = 60 * 1000L, enabled = isEnabled)
     public void testDoubleUploadOnly() throws Exception {
         String bytes_value = uploadToAs(TEST_WAR_PATH);
         String bytes_value2 = uploadToAs(TEST_WAR_PATH);
@@ -84,22 +87,22 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         assert bytes_value.equals("7jgpMVmynfxpqp8UDleKLmtgbrA=");
     }
 
-    @Test(timeOut = 60*1000L, enabled=isEnabled)
+    @Test(timeOut = 60 * 1000L, enabled = isEnabled)
     public void testUploadIndividualSteps() throws Exception {
         String bytes_value = uploadToAs(TEST_WAR_PATH);
 
         System.out.println("sha: " + bytes_value);
 
         System.out.println();
-        ASConnection connection = getASConnection();
+        ASConnection connection = getDomainControllerASConnection();
 
         Address deploymentsAddress = new Address("deployment", TEST_WAR_FILE_NAME);
-        Operation op = new Operation("add",deploymentsAddress);
+        Operation op = new Operation("add", deploymentsAddress);
         List<Object> content = new ArrayList<Object>(1);
-        Map<String,Object> contentValues = new HashMap<String,Object>();
-        contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE",bytes_value));
+        Map<String, Object> contentValues = new HashMap<String, Object>();
+        contentValues.put("hash", new PROPERTY_VALUE("BYTES_VALUE", bytes_value));
         content.add(contentValues);
-        op.addAdditionalProperty("content",content);
+        op.addAdditionalProperty("content", content);
         op.addAdditionalProperty("name", TEST_WAR_FILE_NAME); // this needs to be unique per upload
         op.addAdditionalProperty("runtime-name", TEST_WAR_FILE_NAME);
         System.out.flush();
@@ -113,8 +116,8 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         serverGroupAddress.add("server-group", "main-server-group");
         serverGroupAddress.add("deployment", TEST_WAR_FILE_NAME);
 
-        Operation attach = new Operation("add",serverGroupAddress);//,"enabled","true");
-//        deploy.addAdditionalProperty("runtime-name", TEST_WAR);
+        Operation attach = new Operation("add", serverGroupAddress);//,"enabled","true");
+        //        deploy.addAdditionalProperty("runtime-name", TEST_WAR);
         System.out.flush();
         ret = connection.executeRaw(attach);
         System.out.println("Add to server group done: " + ret);
@@ -123,60 +126,49 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         assert ret.has("outcome") : "Ret not valid " + ret.toString();
         assert ret.get("outcome").getTextValue().equals("success") : "add to sg was no success " + ret.getTextValue();
 
-        Operation deploy = new Operation("deploy",serverGroupAddress);
+        Operation deploy = new Operation("deploy", serverGroupAddress);
         Result depRes = connection.execute(deploy);
 
         assert depRes.isSuccess() : "Deploy went wrong: " + depRes.getFailureDescription();
 
         Thread.sleep(500);
 
-        Operation undeploy = new Operation("undeploy",serverGroupAddress);
+        Operation undeploy = new Operation("undeploy", serverGroupAddress);
         depRes = connection.execute(undeploy);
 
         assert depRes.isSuccess() : "Undeploy went wrong: " + depRes.getFailureDescription();
 
         // Now tear down stuff again
 
-        Operation unattach = new Operation("remove",serverGroupAddress);
+        Operation unattach = new Operation("remove", serverGroupAddress);
         ret = connection.executeRaw(unattach);
 
         assert ret.has("outcome") : "Ret not valid " + ret.toString();
-        assert ret.get("outcome").getTextValue().equals("success") : "remove from sg was no success " + ret.getTextValue();
+        assert ret.get("outcome").getTextValue().equals("success") : "remove from sg was no success "
+            + ret.getTextValue();
 
         // remove from domain
 
-        Operation remove = new Operation("remove",deploymentsAddress);
+        Operation remove = new Operation("remove", deploymentsAddress);
         ret = connection.executeRaw(remove);
 
         assert ret.has("outcome") : "Ret not valid " + ret.toString();
-        assert ret.get("outcome").getTextValue().equals("success") : "remove from domain was no success " + ret.getTextValue();
+        assert ret.get("outcome").getTextValue().equals("success") : "remove from domain was no success "
+            + ret.getTextValue();
 
         System.out.flush();
     }
 
     // Test for AS7-853
-    @Test(timeOut = 60*1000L, enabled = isEnabled)
+    @Test(timeOut = 60 * 1000L, enabled = isEnabled)
     public void testUploadIndividualSteps2() throws Exception {
         String bytes_value = uploadToAs(TEST_WAR_PATH);
 
         System.out.println("sha: " + bytes_value);
 
         System.out.println();
-        ASConnection connection = getASConnection();
+        ASConnection connection = getDomainControllerASConnection();
 
-/*
-        Address deploymentsAddress = new Address();
-        deploymentsAddress.add("deployment", TEST_WAR);
-        Operation op = new Operation("add",deploymentsAddress);
-        List<Object> content = new ArrayList<Object>(1);
-        Map<String,Object> contentValues = new HashMap<String,Object>();
-        contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE",bytes_value));
-        content.add(contentValues);
-        op.addAdditionalProperty("content",content);
-        op.addAdditionalProperty("name", TEST_WAR); // this needs to be unique per upload
-        op.addAdditionalProperty("runtime-name", TEST_WAR);
-        System.out.flush();
-*/
         Operation op = addDeployment(TEST_WAR_FILE_NAME, bytes_value);
         JsonNode ret = connection.executeRaw(op);
 
@@ -189,8 +181,8 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         serverGroupAddress.add("server-group", "main-server-group");
         serverGroupAddress.add("deployment", TEST_WAR_FILE_NAME);
 
-        Operation attach = new Operation("add",serverGroupAddress);
-        attach.addAdditionalProperty("enabled",true);
+        Operation attach = new Operation("add", serverGroupAddress);
+        attach.addAdditionalProperty("enabled", true);
         System.out.flush();
         ret = connection.executeRaw(attach);
         System.out.println("Add to server group done: " + ret);
@@ -203,7 +195,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
 
         Thread.sleep(500);
 
-        Operation undeploy = new Operation("undeploy",serverGroupAddress);
+        Operation undeploy = new Operation("undeploy", serverGroupAddress);
         depRes = connection.execute(undeploy);
 
         assert depRes.isSuccess() : "Undeploy went wrong: " + depRes.getFailureDescription();
@@ -214,7 +206,8 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         ret = connection.executeRaw(unattach);
 
         assert ret.has("outcome") : "Ret not valid " + ret.toString();
-        assert ret.get("outcome").getTextValue().equals("success") : "remove from sg was no success " + ret.getTextValue();
+        assert ret.get("outcome").getTextValue().equals("success") : "remove from sg was no success "
+            + ret.getTextValue();
 
         // remove from domain
 
@@ -222,12 +215,13 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         ret = connection.executeRaw(remove);
 
         assert ret.has("outcome") : "Ret not valid " + ret.toString();
-        assert ret.get("outcome").getTextValue().equals("success") : "remove from domain was no success " + ret.getTextValue();
+        assert ret.get("outcome").getTextValue().equals("success") : "remove from domain was no success "
+            + ret.getTextValue();
 
         System.out.flush();
     }
 
-    @Test(timeOut = 60*1000L, enabled = isEnabled)
+    @Test(timeOut = 60 * 1000L, enabled = isEnabled)
     public void testUploadComposite() throws Exception {
         String bytes_value = uploadToAs(TEST_WAR_PATH);
 
@@ -236,37 +230,38 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
 
         Address deploymentsAddress = new Address();
         deploymentsAddress.add("deployment", TEST_WAR_FILE_NAME);
-        Operation step1 = new Operation("add",deploymentsAddress);
+        Operation step1 = new Operation("add", deploymentsAddress);
         List<Object> content = new ArrayList<Object>(1);
-        Map<String,Object> contentValues = new HashMap<String,Object>();
-        contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE",bytes_value));
+        Map<String, Object> contentValues = new HashMap<String, Object>();
+        contentValues.put("hash", new PROPERTY_VALUE("BYTES_VALUE", bytes_value));
         content.add(contentValues);
         step1.addAdditionalProperty("content", content);
         step1.addAdditionalProperty("name", TEST_WAR_FILE_NAME); // this needs to be unique per upload
 
         Address serverGroupAddress = new Address();
-        serverGroupAddress.add("server-group","main-server-group");
+        serverGroupAddress.add("server-group", "main-server-group");
         serverGroupAddress.add("deployment", TEST_WAR_FILE_NAME);
-        Operation step2 = new Operation("add",serverGroupAddress);// ,"enabled","true");
-        Operation step2a = new Operation("deploy",serverGroupAddress);
+        Operation step2 = new Operation("add", serverGroupAddress);// ,"enabled","true");
+        Operation step2a = new Operation("deploy", serverGroupAddress);
 
-        Operation step3 = new Operation("undeploy",serverGroupAddress);
-        Operation step3a = new Operation("remove",serverGroupAddress);
+        Operation step3 = new Operation("undeploy", serverGroupAddress);
+        Operation step3a = new Operation("remove", serverGroupAddress);
 
-        Operation step4 = new Operation("remove",deploymentsAddress);
+        Operation step4 = new Operation("remove", deploymentsAddress);
 
         CompositeOperation cop = new CompositeOperation();
         cop.addStep(step1);
         cop.addStep(step2);
         cop.addStep(step2a);
 
-        ASConnection connection = getASConnection();
+        ASConnection connection = getDomainControllerASConnection();
         JsonNode ret = connection.executeRaw(cop);
         System.out.println(ret);
         System.out.flush();
 
         assert ret.has("outcome") : "Ret not valid " + ret.toString();
-        assert ret.get("outcome").getTextValue().equals("success") : "Composite deploy was no success " + ret.getTextValue();
+        assert ret.get("outcome").getTextValue().equals("success") : "Composite deploy was no success "
+            + ret.getTextValue();
 
         Thread.sleep(1000);
 
@@ -280,14 +275,15 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         System.out.flush();
 
         assert ret.has("outcome") : "Ret not valid " + ret.toString();
-        assert ret.get("outcome").getTextValue().equals("success") : "Composite remove was no success " + ret.getTextValue();
+        assert ret.get("outcome").getTextValue().equals("success") : "Composite remove was no success "
+            + ret.getTextValue();
     }
 
     /**
      * Test uploading to domain only, but not to a server group
      * @throws Exception if anything goes wrong.
      */
-    @Test(timeOut = 60*1000L, enabled = isEnabled)
+    @Test(timeOut = 60 * 1000L, enabled = isEnabled)
     public void testUploadComposite2() throws Exception {
         String bytes_value = uploadToAs(TEST_WAR_PATH);
 
@@ -295,10 +291,10 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         System.out.flush();
 
         Address deploymentsAddress = new Address("deployment", TEST_WAR_FILE_NAME);
-        Operation step1 = new Operation("add",deploymentsAddress);
+        Operation step1 = new Operation("add", deploymentsAddress);
         List<Object> content = new ArrayList<Object>(1);
-        Map<String,Object> contentValues = new HashMap<String,Object>();
-        contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE",bytes_value));
+        Map<String, Object> contentValues = new HashMap<String, Object>();
+        contentValues.put("hash", new PROPERTY_VALUE("BYTES_VALUE", bytes_value));
         content.add(contentValues);
         step1.addAdditionalProperty("content", content);
         step1.addAdditionalProperty("name", TEST_WAR_FILE_NAME); // this needs to be unique per upload
@@ -306,13 +302,14 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         CompositeOperation cop = new CompositeOperation();
         cop.addStep(step1);
 
-        ASConnection connection = getASConnection();
+        ASConnection connection = getDomainControllerASConnection();
         JsonNode ret = connection.executeRaw(cop);
         System.out.println(ret);
         System.out.flush();
 
         assert ret.has("outcome") : "Ret not valid " + ret.toString();
-        assert ret.get("outcome").getTextValue().equals("success") : "Composite deploy was no success " + ret.getTextValue();
+        assert ret.get("outcome").getTextValue().equals("success") : "Composite deploy was no success "
+            + ret.getTextValue();
 
         // Wait for AS to settle
         Thread.sleep(1000);
@@ -320,7 +317,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         // Now undeploy again to clean up
 
         cop = new CompositeOperation();
-        Operation step4 = new Operation("remove",deploymentsAddress);
+        Operation step4 = new Operation("remove", deploymentsAddress);
 
         cop.addStep(step4);
         ret = connection.executeRaw(cop);
@@ -329,7 +326,8 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         System.out.flush();
 
         assert ret.has("outcome") : "Ret not valid " + ret.toString();
-        assert ret.get("outcome").getTextValue().equals("success") : "Composite remove was no success " + ret.getTextValue();
+        assert ret.get("outcome").getTextValue().equals("success") : "Composite remove was no success "
+            + ret.getTextValue();
     }
 
     /**
@@ -341,29 +339,32 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         bc.setPath("");
         ResourceType rt = new ResourceType();
         rt.setName("Deployment");
-        Resource resource = new Resource("deployment="+TEST_WAR_FILE_NAME, TEST_WAR_FILE_NAME, rt); // TODO resource key?
+        Resource resource = new Resource("deployment=" + TEST_WAR_FILE_NAME, TEST_WAR_FILE_NAME, rt); // TODO resource key?
         resource.setUuid(UUID.randomUUID().toString());
         StandaloneASComponent parentComponent = new StandaloneASComponent();
-        parentComponent.setConnection(getASConnection());
+        parentComponent.setConnection(getDomainControllerASConnection());
         ResourceContext context = new ResourceContext(resource, parentComponent, null, null, null, null, null, null,
             null, null, null, null, null, null);
         bc.start(context);
 
         String bytes_value = uploadToAs(TEST_WAR_PATH);
 
-        ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(TEST_WAR_FILE_NAME,"1.0","deployment","all"));
-        CreateResourceReport report = new CreateResourceReport(TEST_WAR_FILE_NAME,rt,new Configuration(), new Configuration(),details);
+        ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(TEST_WAR_FILE_NAME, "1.0",
+            "deployment", "all"));
+        CreateResourceReport report = new CreateResourceReport(TEST_WAR_FILE_NAME, rt, new Configuration(),
+            new Configuration(), details);
         try {
-            report = bc.runDeploymentMagicOnServer(report,TEST_WAR_FILE_NAME,TEST_WAR_FILE_NAME,bytes_value);
+            report = bc.runDeploymentMagicOnServer(report, TEST_WAR_FILE_NAME, TEST_WAR_FILE_NAME, bytes_value);
             assert report != null;
-            assert report.getErrorMessage()==null: "Report contained an unexpected error: " + report.getErrorMessage();
-            assert report.getStatus()!=null : "Report did not contain a status";
-            assert report.getStatus()== CreateResourceStatus.SUCCESS : "Status was no success";
+            assert report.getErrorMessage() == null : "Report contained an unexpected error: "
+                + report.getErrorMessage();
+            assert report.getStatus() != null : "Report did not contain a status";
+            assert report.getStatus() == CreateResourceStatus.SUCCESS : "Status was no success";
             assert report.getResourceName().equals(TEST_WAR_FILE_NAME);
             assert report.getResourceKey().equals("deployment=" + TEST_WAR_FILE_NAME);
         } finally {
             Remove r = new Remove("deployment", TEST_WAR_FILE_NAME);
-            getASConnection().execute(r);
+            getDomainControllerASConnection().execute(r);
         }
     }
 
@@ -376,33 +377,36 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         bc.setPath("server-group=main-server-group");
         ResourceType rt = new ResourceType();
         rt.setName("Deployment");
-        Resource resource = new Resource("server-group=main-server-group",TEST_WAR_FILE_NAME,rt);
+        Resource resource = new Resource("server-group=main-server-group", TEST_WAR_FILE_NAME, rt);
         resource.setUuid(UUID.randomUUID().toString());
         StandaloneASComponent parentComponent = new StandaloneASComponent();
-        parentComponent.setConnection(getASConnection());
+        parentComponent.setConnection(getDomainControllerASConnection());
         ResourceContext context = new ResourceContext(resource, parentComponent, null, null, null, null, null, null,
             null, null, null, null, null, null);
         bc.start(context);
 
         String bytes_value = uploadToAs(TEST_WAR_PATH);
 
-        ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(TEST_WAR_FILE_NAME,"1.0","deployment","all"));
-        CreateResourceReport report = new CreateResourceReport(TEST_WAR_FILE_NAME,rt,new Configuration(), new Configuration(),details);
+        ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(TEST_WAR_FILE_NAME, "1.0",
+            "deployment", "all"));
+        CreateResourceReport report = new CreateResourceReport(TEST_WAR_FILE_NAME, rt, new Configuration(),
+            new Configuration(), details);
         try {
-            report = bc.runDeploymentMagicOnServer(report,TEST_WAR_FILE_NAME,TEST_WAR_FILE_NAME,bytes_value);
+            report = bc.runDeploymentMagicOnServer(report, TEST_WAR_FILE_NAME, TEST_WAR_FILE_NAME, bytes_value);
             assert report != null;
-            assert report.getErrorMessage()==null: "Report contained an unexpected error: " + report.getErrorMessage();
-            assert report.getStatus()!=null : "Report did not contain a status";
-            assert report.getStatus()== CreateResourceStatus.SUCCESS : "Status was no success";
+            assert report.getErrorMessage() == null : "Report contained an unexpected error: "
+                + report.getErrorMessage();
+            assert report.getStatus() != null : "Report did not contain a status";
+            assert report.getStatus() == CreateResourceStatus.SUCCESS : "Status was no success";
             assert report.getResourceName().equals(TEST_WAR_FILE_NAME);
             assert report.getResourceKey().equals("server-group=main-server-group,deployment=" + TEST_WAR_FILE_NAME) : "Resource key was wrong";
         } finally {
-            Address sgd = new Address("server-group","main-server-group");
+            Address sgd = new Address("server-group", "main-server-group");
             sgd.add("deployment", TEST_WAR_FILE_NAME);
-            Remove r =new Remove(sgd);
-            getASConnection().execute(r);
-            r = new Remove("deployment",TEST_WAR_FILE_NAME);
-            getASConnection().execute(r);
+            Remove r = new Remove(sgd);
+            getDomainControllerASConnection().execute(r);
+            r = new Remove("deployment", TEST_WAR_FILE_NAME);
+            getDomainControllerASConnection().execute(r);
         }
     }
 

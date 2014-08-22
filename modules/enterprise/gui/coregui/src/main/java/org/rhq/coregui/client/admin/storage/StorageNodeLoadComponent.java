@@ -18,27 +18,23 @@
  */
 package org.rhq.coregui.client.admin.storage;
 
-import static org.rhq.coregui.client.admin.storage.StorageNodeDatasource.DONT_MISS_ME_COLOR;
-import static org.rhq.coregui.client.admin.storage.StorageNodeDatasource.OK_COLOR;
-import static org.rhq.coregui.client.admin.storage.StorageNodeDatasource.WARN_COLOR;
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasource.DONT_MISS_ME_CLASS;
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasource.OK_CLASS;
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasource.WARN_CLASS;
 
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.user.client.Random;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Autofit;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.admin.storage.StorageNodeDatasource.StorageNodeLoadCompositeDatasource;
 import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
@@ -56,32 +52,31 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
         Map<String, List<MeasurementDataNumericHighLowComposite>> sparkLineData) {
         super(5);
         setPadding(5);
-        setBackgroundColor("#ffffff");
         this.sparkLineData = sparkLineData;
         final boolean showSparkLine = sparkLineData != null && !sparkLineData.isEmpty();
         loadGrid = new ListGrid() {
             @Override
             protected String getCellCSSText(ListGridRecord record, int rowNum, int colNum) {
-                if ("avg".equals(getFieldName(colNum)) 
+                if ("avg".equals(getFieldName(colNum))
                     && (StorageNodeLoadCompositeDatasource.KEY_HEAP_PERCENTAGE.equals(record.getAttribute("id")) ||
                         StorageNodeLoadCompositeDatasource.KEY_DATA_DISK_SPACE_PERCENTAGE.equals(record.getAttribute("id")) ||
                         StorageNodeLoadCompositeDatasource.KEY_TOTAL_DISK_SPACE_PERCENTAGE.equals(record.getAttribute("id")))) {
                     if (record.getAttributeAsFloat("avgFloat") > .85) {
-                        return DONT_MISS_ME_COLOR;
+                        return DONT_MISS_ME_CLASS;
                     } else if (record.getAttributeAsFloat("avgFloat") > .7) {
-                        return WARN_COLOR;
+                        return WARN_CLASS;
                     } else {
-                        return OK_COLOR;
+                        return OK_CLASS;
                     }
                 } else if ("max".equals(getFieldName(colNum))
                     && StorageNodeLoadCompositeDatasource.KEY_FREE_DISK_TO_DATA_SIZE_RATIO.equals(record
                         .getAttribute("id"))) {
                     if (record.getAttributeAsFloat("avgFloat") < .7) {
-                        return DONT_MISS_ME_COLOR;
+                        return DONT_MISS_ME_CLASS;
                     } else if (record.getAttributeAsFloat("avgFloat") < 1.5) {
-                        return WARN_COLOR;
+                        return WARN_CLASS;
                     } else {
-                        return OK_COLOR;
+                        return OK_CLASS;
                     }
                 }
                 else {
@@ -89,6 +84,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
                 }
             }
         };
+        loadGrid.setID(this.getClass().getName() + storageNodeId + "-" + Random.nextDouble());
         loadGrid.setWidth100();
         loadGrid.setHeight(200);
         loadGrid.setAutoFitData(Autofit.VERTICAL);
@@ -98,38 +94,21 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
             fields.add(0, new ListGridField("sparkline", MSG.view_adminTopology_storageNodes_detail_chart(), 75));
         }
         loadGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
-        loadGrid.setAutoFetchData(true);
         loadGrid.setHoverWidth(300);
-
-        ToolStrip toolStrip = new ToolStrip();
-        IButton settingsButton = new IButton(MSG.common_title_settings());
-        settingsButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                CoreGUI.goToView(StorageNodeAdminView.VIEW_PATH + "/" + storageNodeId + "/Config");
-            }
-        });
-        settingsButton.setExtraSpace(5);
-        toolStrip.addMember(settingsButton);
-        
-        IButton refreshButton = new IButton(MSG.common_button_refresh());
-        refreshButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                loadGrid.fetchData();
-            }
-        });
-        refreshButton.setExtraSpace(5);
-        toolStrip.addMember(refreshButton);
         loadGrid.setDataSource(datasource);
+        loadGrid.setAutoFetchData(true);
+//        loadGrid.fetchData();
         if (showSparkLine) {
             loadGrid.addDataArrivedHandler(new DataArrivedHandler() {
                 @Override
                 public void onDataArrived(DataArrivedEvent event) {
                     showSparkLineGraphs();
+                    loadGrid.redraw();
                 }
             });
         }
         addMember(loadGrid);
-        
+
     }
 
     private void showSparkLineGraphs() {
@@ -153,7 +132,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
             }
             // if graph content returned
             someChartedData = lastValue != -1;
-            
+
             // collapse the data into comma delimited list for consumption by third party javascript library (jquery.sparkline)
             StringBuilder commaDelimitedList = new StringBuilder();
             for (MeasurementDataNumericHighLowComposite d : data) {

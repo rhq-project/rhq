@@ -49,6 +49,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility.SerializationType;
+import org.rhq.enterprise.server.util.BatchIterator;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -71,6 +72,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
     @EJB
     private SubjectManagerLocal subjectManager;
 
+    @Override
     @SuppressWarnings("unchecked")
     @Deprecated
     // remove along with portal war
@@ -99,21 +101,45 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         return query.getResultList();
     }
 
+    @Override
     public int removeGroupAlertDefinitions(Subject subject, Integer[] groupAlertDefinitionIds) {
-        if (groupAlertDefinitionIds == null || groupAlertDefinitionIds.length == 0) {
+        if (null == groupAlertDefinitionIds || groupAlertDefinitionIds.length == 0) {
             return 0;
         }
+
         int modified = 0;
         List<Integer> allChildDefinitionIds = new ArrayList<Integer>();
-        Subject overlord = subjectManager.getOverlord();
         for (Integer groupAlertDefinitionId : groupAlertDefinitionIds) {
-            List<Integer> childDefinitions = getChildrenAlertDefinitionIds(groupAlertDefinitionId);
-            allChildDefinitionIds.addAll(childDefinitions);
-            modified += alertDefinitionManager.removeAlertDefinitions(subject, new int[] { groupAlertDefinitionId });
-            alertDefinitionManager.removeAlertDefinitions(overlord, ArrayUtils.unwrapCollection(childDefinitions));
+            AlertDefinition groupAlertDefinition = entityManager.find(AlertDefinition.class, groupAlertDefinitionId);
+            if (null == groupAlertDefinition) {
+                continue;
+            }
+
+            // remove the group def
+            groupAlertDefinition.setDeleted(true);
+            groupAlertDefinition.setGroup(null); // break bonds so corresponding ResourceGroup can be purged
+            ++modified;
+
+            // remove the child resource-level defs
+            Subject overlord = subjectManager.getOverlord();
+            List<Integer> childDefinitionIds = getChildrenAlertDefinitionIds(groupAlertDefinitionId);
+            if (childDefinitionIds.isEmpty()) {
+                continue;
+            }
+            allChildDefinitionIds.addAll(childDefinitionIds);
+            alertDefinitionManager.removeResourceAlertDefinitions(overlord,
+                ArrayUtils.unwrapCollection(childDefinitionIds));
+
+            // finally, detach protected alert defs
+            Query query = entityManager
+                .createNamedQuery(AlertDefinition.QUERY_UPDATE_DETACH_PROTECTED_BY_GROUP_ALERT_DEFINITION_ID);
+            query.setParameter("groupAlertDefinitionId", groupAlertDefinitionId);
+            int numDetached = query.executeUpdate();
         }
 
-        breakLinks(allChildDefinitionIds);
+        if (!allChildDefinitionIds.isEmpty()) {
+            breakLinks(allChildDefinitionIds);
+        }
 
         return modified;
     }
@@ -124,12 +150,10 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
          * children alertDefinitions so that the async deletion mechanism can delete without FK violations
          */
         Query breakLinksQuery = entityManager.createNamedQuery(AlertDefinition.QUERY_UPDATE_SET_PARENTS_NULL);
-        while (!ids.isEmpty()) {
-            // Split the update as Oracle does not accept IN clauses with a thousand or more items
-            List<Integer> subList = ids.subList(0, Math.min(500, ids.size()));
-            breakLinksQuery.setParameter("childrenDefinitionIds", subList);
+        BatchIterator<Integer> batchIterator = new BatchIterator<Integer>(ids, 500);
+        for (List<Integer> nextBatch : batchIterator) {
+            breakLinksQuery.setParameter("childrenDefinitionIds", nextBatch);
             breakLinksQuery.executeUpdate();
-            subList.clear();
         }
     }
 
@@ -193,38 +217,69 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
 
     }
 
+    @Override
     public int disableGroupAlertDefinitions(Subject subject, Integer[] groupAlertDefinitionIds) {
-        if (groupAlertDefinitionIds == null || groupAlertDefinitionIds.length == 0) {
+        if (null == groupAlertDefinitionIds || groupAlertDefinitionIds.length == 0) {
             return 0;
         }
 
         int modified = 0;
-        Subject overlord = subjectManager.getOverlord();
-        for (Integer groupAlertDefinitionId : groupAlertDefinitionIds) {
-            List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(groupAlertDefinitionId);
 
-            modified += alertDefinitionManager.disableAlertDefinitions(subject, new int[] { groupAlertDefinitionId });
-            alertDefinitionManager.disableAlertDefinitions(overlord, ArrayUtils.unwrapCollection(alertDefinitions));
+        for (Integer groupAlertDefinitionId : groupAlertDefinitionIds) {
+            AlertDefinition groupAlertDefinition = entityManager.find(AlertDefinition.class, groupAlertDefinitionId);
+            if (null == groupAlertDefinition || !groupAlertDefinition.getEnabled() || groupAlertDefinition.getDeleted()) {
+                continue;
+            }
+
+            // enable the template
+            groupAlertDefinition.setEnabled(false);
+            ++modified;
+
+            // enable the child resource-level defs
+            List<Integer> childDefinitionIds = getChildrenAlertDefinitionIds(groupAlertDefinitionId);
+            if (childDefinitionIds.isEmpty()) {
+                continue;
+            }
+            Subject overlord = subjectManager.getOverlord();
+            alertDefinitionManager.disableResourceAlertDefinitions(overlord,
+                ArrayUtils.unwrapCollection(childDefinitionIds));
         }
+
         return modified;
     }
 
+    @Override
     public int enableGroupAlertDefinitions(Subject subject, Integer[] groupAlertDefinitionIds) {
-        if (groupAlertDefinitionIds == null || groupAlertDefinitionIds.length == 0) {
+        if (null == groupAlertDefinitionIds || groupAlertDefinitionIds.length == 0) {
             return 0;
         }
 
         int modified = 0;
-        Subject overlord = subjectManager.getOverlord();
-        for (Integer groupAlertDefinitionId : groupAlertDefinitionIds) {
-            List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(groupAlertDefinitionId);
 
-            modified += alertDefinitionManager.enableAlertDefinitions(subject, new int[] { groupAlertDefinitionId });
-            alertDefinitionManager.enableAlertDefinitions(overlord, ArrayUtils.unwrapCollection(alertDefinitions));
+        for (Integer groupAlertDefinitionId : groupAlertDefinitionIds) {
+            AlertDefinition groupAlertDefinition = entityManager.find(AlertDefinition.class, groupAlertDefinitionId);
+            if (null == groupAlertDefinition || groupAlertDefinition.getEnabled() || groupAlertDefinition.getDeleted()) {
+                continue;
+            }
+
+            // enable the template
+            groupAlertDefinition.setEnabled(true);
+            ++modified;
+
+            // enable the child resource-level defs
+            List<Integer> childDefinitionIds = getChildrenAlertDefinitionIds(groupAlertDefinitionId);
+            if (childDefinitionIds.isEmpty()) {
+                continue;
+            }
+            Subject overlord = subjectManager.getOverlord();
+            alertDefinitionManager.enableResourceAlertDefinitions(overlord,
+                ArrayUtils.unwrapCollection(childDefinitionIds));
         }
+
         return modified;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public AlertDefinition updateGroupAlertDefinitions(Subject subject, AlertDefinition groupAlertDefinition,
         boolean resetMatching) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
@@ -290,10 +345,11 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         if (firstThrowable != null) {
             StringBuilder error = new StringBuilder();
             if (alertDefinitionIdsInError.size() != 0) {
-                error.append("Failed to update child AlertDefinitions " + alertDefinitionIdsInError + " ; ");
+                error.append("Failed to update child AlertDefinitions ").append(alertDefinitionIdsInError)
+                    .append(" ; ");
             }
             if (resourceIdsInError.size() != 0) {
-                error.append("Failed to re-create child AlertDefinition for Resources " + resourceIdsInError + "; ");
+                error.append("Failed to re-create child AlertDefinition for Resources ").append(resourceIdsInError).append("; ");
             }
             throw new AlertDefinitionUpdateException(error.toString(), firstThrowable);
         }
@@ -301,6 +357,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         return updated;
     }
 
+    @Override
     public void addGroupMemberAlertDefinitions(Subject subject, int resourceGroupId, int[] addedResourceIds)
         throws AlertDefinitionCreationException {
         if (addedResourceIds == null || addedResourceIds.length == 0) {
@@ -311,7 +368,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         Throwable firstThrowable = null;
 
         // We want to copy the group level AlertDefinitions, so fetch them with the relevant lazy fields, so we
-        // have everything we need when calling the copy constructor, minimizing 
+        // have everything we need when calling the copy constructor, minimizing
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
         criteria.addFilterResourceGroupIds(resourceGroupId);
         criteria.fetchGroupAlertDefinition(false);
@@ -332,7 +389,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
 
                     // groupAlertDefinition is an attached entity. It is dangerous to pass attached entities (with
                     // Hibernate proxies for the current session) across sessions. Since the call to create the new
-                    // AlertDefinition is performed in a new transaction, make sure not to pass the attached entity. 
+                    // AlertDefinition is performed in a new transaction, make sure not to pass the attached entity.
                     // Just use a simple stand-in to create the link to the group alert definition.
                     AlertDefinition groupAlertDefinitionPojo = new AlertDefinition();
                     groupAlertDefinitionPojo.setId(groupAlertDefinition.getId());
@@ -361,6 +418,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         }
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void purgeAllGroupAlertDefinitions(Subject subject, int resourceGroupId) {
         Integer[] groupAlertDefinitionIdsForResourceGroup = findGroupAlertDefinitionIds(resourceGroupId);
@@ -382,6 +440,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         return results;
     }
 
+    @Override
     public void removeGroupMemberAlertDefinitions(Subject subject, int resourceGroupId, Integer[] removedResourceIds) {
         if (removedResourceIds == null || removedResourceIds.length == 0) {
             return;

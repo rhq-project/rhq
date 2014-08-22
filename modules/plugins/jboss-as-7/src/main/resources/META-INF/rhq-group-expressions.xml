@@ -7,7 +7,7 @@
     <recalcInMinutes>10</recalcInMinutes>
     <recursive>false</recursive>
     <description>JBoss AS7 Managed servers in server in domains</description>
-    <expression>groupby resource.resourceConfiguration[hostname]</expression>
+    <expression>groupby resource.parent.trait[domain-name]</expression>
     <expression>resource.type.plugin = JBossAS7</expression>
     <expression>resource.type.name = Managed Server</expression>
   </definition>
@@ -18,21 +18,21 @@
     <recalcInMinutes>10</recalcInMinutes>
     <recursive>false</recursive>
     <description>JBoss AS7 Managed servers in server in server-groups</description>
+    <expression>groupby resource.parent.trait[domain-name]</expression>
     <expression>groupby resource.resourceConfiguration[group]</expression>
     <expression>resource.type.plugin = JBossAS7</expression>
     <expression>resource.type.name = Managed Server</expression>
   </definition>
   <definition>
-    <id>Enabled deployments in server-group</id>
-    <name>Enabled deployments in server-group</name>
+    <id>Deployments in server-group</id>
+    <name>Deployments in server-group</name>
     <createByDefault>false</createByDefault>
     <recalcInMinutes>10</recalcInMinutes>
     <recursive>false</recursive>
     <description>JBoss AS7 Deployments in server-groups</description>
-    <expression>groupby resource.parent.name</expression>
+    <expression>groupby resource.grandParent.trait[domain-name]</expression>
+    <expression>groupby resource.parent.resourceConfiguration[group]</expression>
     <expression>resource.type.plugin = JBossAS7</expression>
-    <expression>resource.type.name = Deployment</expression>
-    <expression>resource.parent.type.name.contains = ServerGroup</expression>
-    <expression>resource.resourceConfiguration[enabled] = true</expression>
+    <expression>resource.type.name = ManagedServerDeployment</expression>
   </definition>
 </expressions>

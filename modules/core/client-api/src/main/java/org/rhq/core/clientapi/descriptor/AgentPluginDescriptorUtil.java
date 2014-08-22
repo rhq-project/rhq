@@ -45,7 +45,6 @@ import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
@@ -55,9 +54,11 @@ import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph.PluginDependency;
 import org.rhq.core.clientapi.descriptor.group.expressions.CannedGroupExpressions;
+import org.rhq.core.clientapi.descriptor.plugin.Bundle;
 import org.rhq.core.clientapi.descriptor.plugin.ParentResourceType;
 import org.rhq.core.clientapi.descriptor.plugin.PlatformDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ResourceDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
@@ -233,6 +234,8 @@ public abstract class AgentPluginDescriptorUtil {
         }
 
         addOptionalDependency(platform.getRunsInside(), dependencies);
+
+        addOptionalBundleDependency(platform, dependencies);
         return;
     }
 
@@ -247,6 +250,9 @@ public abstract class AgentPluginDescriptorUtil {
 
         addOptionalDependency(server.getRunsInside(), dependencies);
         addOptionalDependency(server.getSourcePlugin(), dependencies);
+
+
+        addOptionalBundleDependency(server, dependencies);
         return;
     }
 
@@ -258,7 +264,8 @@ public abstract class AgentPluginDescriptorUtil {
 
         addOptionalDependency(service.getRunsInside(), dependencies);
         addOptionalDependency(service.getSourcePlugin(), dependencies);
-        return;
+
+        addOptionalBundleDependency(service, dependencies);
     }
 
     private static void addOptionalDependency(RunsInsideType runsInside,
@@ -271,6 +278,14 @@ public abstract class AgentPluginDescriptorUtil {
             }
         }
         return;
+    }
+
+    private static void addOptionalBundleDependency(ResourceDescriptor resource, List<PluginDependency> dependencies) {
+        if (resource.getBundle() != null && resource.getBundle().getTargets() != null) {
+            for (Bundle.Targets.ResourceType t : resource.getBundle().getTargets().getResourceType()) {
+                addOptionalDependency(t.getPlugin(), dependencies);
+            }
+        }
     }
 
     private static void addOptionalDependency(String pluginName,
@@ -291,7 +306,6 @@ public abstract class AgentPluginDescriptorUtil {
     /**
      * Retrieves file content as string from given jar
      * @param pluginJarFileUrl  URL to a plugin jar file
-     * @param additionPath addition file path within JAR (eg. META-INF/mydescriptor.xml)
      * @return content of additionPath file as String, or null if file does not exist in JAR
      * @throws PluginContainerException if we fail to read content
      */

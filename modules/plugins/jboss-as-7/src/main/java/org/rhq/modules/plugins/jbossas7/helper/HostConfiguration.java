@@ -377,6 +377,9 @@ public class HostConfiguration {
         return realm;
     }
 
+    /**
+     * @Deprecated use {@link HostConfiguration#getSecurityPropertyFile(ServerPluginConfiguration, String)} instead
+     */
     public File getSecurityPropertyFile(File baseDir, AS7Mode mode, String realm) {
         String fileName = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm
             + "']/authentication/properties/@path");
@@ -398,6 +401,24 @@ public class HostConfiguration {
         File securityPropertyFile = new File(configDir, fileName);
 
         return securityPropertyFile;
+    }
+
+    public File getSecurityPropertyFile(ServerPluginConfiguration configuration, String realm) {
+        String fileName = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm
+            + "']/authentication/properties/@path");
+        String relDir = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm
+            + "']/authentication/properties/@relative-to");
+
+        if (relDir == null || relDir.isEmpty()) {
+            return new File(fileName);
+        }
+        File relativeDir = configuration.getPath(relDir);
+        if (relativeDir != null) {
+            return new File(relativeDir, fileName);
+        } else {
+            log.warn("Cannot resolve security property file based on path=" + fileName + " relative-to=" + relDir);
+            return new File(fileName);
+        }
     }
 
     public String getDomainApiVersion() {
@@ -459,7 +480,6 @@ public class HostConfiguration {
         } else {
             expression = value;
         }
-
         String resolvedValue = null;
         if (expression.equals(BIND_ADDRESS_MANAGEMENT_SYSPROP)) {
             // special case: mgmt address can be specified via either -bmanagement= or -Djboss.bind.address.management=

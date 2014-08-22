@@ -22,8 +22,6 @@
  */
 package org.rhq.coregui.client.gwt;
 
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.cloud.AffinityGroup;
@@ -55,7 +53,7 @@ public interface TopologyGWTService extends RemoteService {
      * @return a list of all available servers (the servers in <code>MAINTENANCE</code> or <code>DOWN</code> mode are included as well)
      * @throws RuntimeException
      */
-    List<ServerWithAgentCountComposite> getServers(PageControl pageControl) throws RuntimeException;
+    PageList<ServerWithAgentCountComposite> getServers(PageControl pageControl) throws RuntimeException;
 
     /**
      * Deletes the servers with provided ids.
@@ -90,7 +88,7 @@ public interface TopologyGWTService extends RemoteService {
      * @return a list of <code>FailoverListDetails</code> instances
      * @throws RuntimeException
      */
-    List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pageControl) throws RuntimeException;;
+    PageList<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pageControl) throws RuntimeException;;
 
     /**
      * Finder for <code>PartitionEvent</code> instances

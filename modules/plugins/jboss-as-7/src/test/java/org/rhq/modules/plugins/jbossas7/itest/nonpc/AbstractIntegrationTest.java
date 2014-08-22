@@ -19,6 +19,11 @@
 
 package org.rhq.modules.plugins.jbossas7.itest.nonpc;
 
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DC_HOST;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.DC_HTTP_PORT;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.MANAGEMENT_PASSWORD;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.MANAGEMENT_USERNAME;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -48,11 +53,9 @@ import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.modules.plugins.jbossas7.ASConnection;
 import org.rhq.modules.plugins.jbossas7.ASConnectionParams;
 import org.rhq.modules.plugins.jbossas7.ASConnectionParamsBuilder;
 import org.rhq.modules.plugins.jbossas7.ASUploadConnection;
-import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -65,27 +68,16 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 @Test(groups = { "integration", "nonpc" }, dependsOnGroups = "discovery")
 public abstract class AbstractIntegrationTest {
 
-    protected static final String PLUGIN_NAME = "JBossAS7";
-
-    protected static final String DC_HOST = System.getProperty("jboss.domain.bindAddress");
-    protected static final int DC_HTTP_PORT = Integer.valueOf(System.getProperty("jboss.domain.httpManagementPort"));
-    protected static final String DC_USER = AbstractJBossAS7PluginTest.MANAGEMENT_USERNAME;
-    protected static final String DC_PASS = AbstractJBossAS7PluginTest.MANAGEMENT_PASSWORD;
-    protected static final String MAVEN_REPO_LOCAL = System.getProperty("settings.localRepository");
-
     String uploadToAs(String deploymentPath) throws IOException {
         String fileName = new File(deploymentPath).getName();
         ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
             .setHost(DC_HOST) //
             .setPort(DC_HTTP_PORT) //
-            .setUsername(DC_USER) //
-            .setPassword(DC_PASS) //
+            .setUsername(MANAGEMENT_USERNAME) //
+            .setPassword(MANAGEMENT_PASSWORD) //
             .createASConnectionParams();
         ASUploadConnection conn = new ASUploadConnection(asConnectionParams, fileName);
         OutputStream os = conn.getOutputStream();
-
-        //        URL url = getClass().getClassLoader().getResource(".");
-        //        System.out.println(url);
 
         InputStream fis = getClass().getClassLoader().getResourceAsStream(deploymentPath);
         if (fis == null) {
@@ -113,16 +105,6 @@ public abstract class AbstractIntegrationTest {
 
         JsonNode resultNode = node.get("result");
         return resultNode.get("BYTES_VALUE").getTextValue();
-    }
-
-    ASConnection getASConnection() {
-        ASConnectionParams asConnectionParams = new ASConnectionParamsBuilder() //
-            .setHost(DC_HOST) //
-            .setPort(DC_HTTP_PORT) //
-            .setUsername(DC_USER) //
-            .setPassword(DC_PASS) //
-            .createASConnectionParams();
-        return new ASConnection(asConnectionParams);
     }
 
     Operation addDeployment(String deploymentName, String bytes_value) {

@@ -40,6 +40,7 @@ import org.rhq.coregui.client.components.configuration.ConfigurationComparisonVi
 import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -94,8 +95,8 @@ public abstract class AbstractConfigurationHistoryListView<T extends AbstractCon
         List<ListGridField> fields = getDataSource().getListGridFields(this.resourceId == null);
         setListGridFields(true, fields.toArray(new ListGridField[fields.size()])); // true = always show the ID field
 
-        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AbstractTableAction(
-            hasWritePerm ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
+        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), ButtonColor.RED,
+            new AbstractTableAction(hasWritePerm ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 if (selection != null && selection.length > 0) {
                     int[] doomedIds = new int[selection.length];
@@ -120,7 +121,8 @@ public abstract class AbstractConfigurationHistoryListView<T extends AbstractCon
             }
         });
 
-        addTableAction(MSG.common_button_compare(), null, new AbstractTableAction(TableActionEnablement.MULTIPLE) {
+        addTableAction(MSG.common_button_compare(), null, ButtonColor.BLUE, new AbstractTableAction(
+            TableActionEnablement.MULTIPLE) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 // The config updates do not have their Configurations fetched, so we need to reload the selected
                 // config updates, specifying that their Configurations should be fetched, in order to compare the
@@ -156,7 +158,7 @@ public abstract class AbstractConfigurationHistoryListView<T extends AbstractCon
         });
 
         if (getResourceId() != null) {
-            addTableAction(MSG.view_configurationHistoryList_rollback(), MSG.common_msg_areYouSure(),
+            addTableAction(MSG.view_configurationHistoryList_rollback(), MSG.common_msg_areYouSure(), ButtonColor.RED,
                 new AbstractTableAction(hasWritePerm ? TableActionEnablement.SINGLE : TableActionEnablement.NEVER) {
                     public void executeAction(ListGridRecord[] selection, Object actionValue) {
                         if (selection != null && selection.length == 1) {

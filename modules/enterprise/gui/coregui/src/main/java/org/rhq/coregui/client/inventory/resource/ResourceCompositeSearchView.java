@@ -54,6 +54,7 @@ import org.rhq.coregui.client.inventory.resource.factory.ResourceFactoryImportWi
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.TableUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -163,7 +164,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
     @Override
     protected void configureTable() {
-        addTableAction(MSG.common_button_delete(), MSG.view_inventory_resources_deleteConfirm(),
+        addTableAction(MSG.common_button_delete(), MSG.view_inventory_resources_deleteConfirm(), ButtonColor.RED,
             new AbstractTableAction(TableActionEnablement.ANY) {
 
                 // only enabled if all selected are a deletable type and if the user has delete permission
@@ -244,7 +245,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                 if (override) {
                     updateTableAction(MSG.common_button_create_child(), createTypeValueMap, createAction);
                 } else {
-                    addTableAction(MSG.common_button_create_child(), null, createTypeValueMap, createAction);
+                    addTableAction(MSG.common_button_create_child(), null, createTypeValueMap, ButtonColor.BLUE, createAction);
                 }
             }
 
@@ -264,20 +265,22 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                 if (override) {
                     updateTableAction(MSG.common_button_import(), importTypeValueMap, importAction);
                 } else {
-                    addTableAction(MSG.common_button_import(), null, importTypeValueMap, importAction);
+                    addTableAction(MSG.common_button_import(), null, importTypeValueMap, ButtonColor.BLUE, importAction);
                 }
             }
 
         } else if (!override) {
             if (!canCreate && hasCreatableTypes) {
-                addTableAction(MSG.common_button_create_child(), new AbstractTableAction(TableActionEnablement.NEVER) {
+                addTableAction(MSG.common_button_create_child(), ButtonColor.BLUE, new AbstractTableAction(
+                    TableActionEnablement.NEVER) {
                     public void executeAction(ListGridRecord[] selection, Object actionValue) {
                         // never called
                     }
                 });
             }
             if (!canCreate && hasImportableTypes) {
-                addTableAction(MSG.common_button_import(), new AbstractTableAction(TableActionEnablement.NEVER) {
+                addTableAction(MSG.common_button_import(), ButtonColor.BLUE, new AbstractTableAction(
+                    TableActionEnablement.NEVER) {
                     public void executeAction(ListGridRecord[] selection, Object actionValue) {
                         // never called
                     }

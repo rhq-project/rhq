@@ -53,37 +53,4 @@ public class GroupAlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl i
             throw getExceptionToThrowToClient(t);
         }
     }
-
-    @Override
-    public int enableGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws RuntimeException {
-        try {
-            int results = groupAlertDefManager
-                .enableGroupAlertDefinitions(getSessionSubject(), groupAlertDefinitionIds);
-            return results;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public int disableGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws RuntimeException {
-        try {
-            int results = groupAlertDefManager.disableGroupAlertDefinitions(getSessionSubject(),
-                groupAlertDefinitionIds);
-            return results;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public int removeGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws RuntimeException {
-        try {
-            int results = groupAlertDefManager
-                .removeGroupAlertDefinitions(getSessionSubject(), groupAlertDefinitionIds);
-            return results;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
 }

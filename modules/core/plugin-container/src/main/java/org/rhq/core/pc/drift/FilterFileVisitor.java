@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FilenameUtils;
 
 import org.rhq.core.domain.drift.Filter;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.file.FileVisitor;
 import org.rhq.core.util.file.PathFilter;
 
@@ -123,6 +124,10 @@ public class FilterFileVisitor implements FileVisitor {
             filterPattern = filter.getPattern();
         }
 
+        // Calling getAbsolutePath will ensure the filterPath has the native file separator characters. But
+        // it is also important that the pattern use native separators because the ultimate matching will be
+        // against native file paths.
+        filterPattern = FileUtil.useNativeSlash(filterPattern);
         return new PathFilter(FilenameUtils.normalize(filterPath.getAbsolutePath()), filterPattern);
     }
 

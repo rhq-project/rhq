@@ -19,23 +19,29 @@
 
 package org.rhq.modules.plugins.jbossas7;
 
+import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.EXECUTION;
+import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.INVALID_PARAMETER;
 import static org.rhq.modules.plugins.jbossas7.JBossProductType.AS;
 import static org.rhq.modules.plugins.jbossas7.JBossProductType.WILDFLY8;
+import static org.rhq.modules.plugins.jbossas7.util.ProcessExecutionLogger.logExecutionResults;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.concurrent.TimeoutException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -53,20 +59,21 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.bundle.BundleHandoverFacet;
+import org.rhq.core.pluginapi.bundle.BundleHandoverRequest;
+import org.rhq.core.pluginapi.bundle.BundleHandoverResponse;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
-import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
-import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
@@ -85,12 +92,12 @@ import org.rhq.modules.plugins.jbossas7.json.ResultFailedException;
  * @author Ian Springer
  */
 public abstract class BaseServerComponent<T extends ResourceComponent<?>> extends BaseComponent<T> implements
-    MeasurementFacet {
+    MeasurementFacet, BundleHandoverFacet {
 
-    private static final String SEPARATOR = "\n-----------------------\n";
+    private static final Log LOG = LogFactory.getLog(BaseServerComponent.class);
 
-    final Log log = LogFactory.getLog(BaseServerComponent.class);
-    private static final long MAX_PROCESS_WAIT_TIME = 3600000L;
+    protected static final long MAX_TIMEOUT_FAILURE_WAIT = 5 * 60 * 1000L;
+
     private ASConnection connection;
     private LogFileEventResourceComponentHelper logFileEventDelegate;
     private StartScriptConfiguration startScriptConfig;
@@ -99,6 +106,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private String releaseVersion;
     private String aSHostName;
     private DocumentBuilderFactory docBuilderFactory;
+    private long lastManagementInterfaceReply = 0;
 
     @Override
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
@@ -125,29 +133,44 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     public AvailabilityType getAvailability() {
         AvailabilityType availabilityType;
         try {
-            readAttribute(getHostAddress(), "name");
-            availabilityType = UP;
-        }
-        catch (ResultFailedException e) {
-            log.warn("Domain host name seems to be changed, re-reading from  "+getServerPluginConfiguration().getHostConfigFile());
-            setASHostName(findASDomainHostName());
-            log.info("Detected domain host name ["+getASHostName()+"]");
             try {
-                readAttribute(getHostAddress(), "name");
+                readAttribute(getHostAddress(), "name", AVAIL_OP_TIMEOUT_SECONDS);
                 availabilityType = UP;
-            } catch (Exception ex) {
-                if (log.isDebugEnabled()) {
-                    log.debug(getResourceDescription() + ": exception while checking availability", e);
+                lastManagementInterfaceReply = new Date().getTime();
+            } catch (ResultFailedException e) {
+                LOG.warn("Domain host name seems to be changed, re-reading from  "
+                    + getServerPluginConfiguration().getHostConfigFile());
+                setASHostName(findASDomainHostName());
+                LOG.info("Detected domain host name [" + getASHostName() + "]");
+                try {
+                    readAttribute(getHostAddress(), "name");
+                    availabilityType = UP;
+                } catch (Exception ex) {
+                    throw ex;
                 }
-                availabilityType = DOWN;
+            } catch (Exception ex) {
+                throw ex;
             }
-        }
-        catch (Exception e) {
-            if (log.isDebugEnabled()) {
-                log.debug(getResourceDescription() + ": exception while checking availability", e);
+        } catch (TimeoutException e) {
+            long now = new Date().getTime();
+
+            if (now - lastManagementInterfaceReply > MAX_TIMEOUT_FAILURE_WAIT) {
+                availabilityType = DOWN;
+            } else {
+                ProcessInfo processInfo = context.getNativeProcess();
+                if (processInfo != null && processInfo.priorSnaphot().isRunning()) {
+                    availabilityType = previousAvailabilityType;
+                } else {
+                    availabilityType = DOWN;
+                }
+            }
+        } catch (Exception e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(getResourceDescription() + ": exception while checking availability", e);
             }
             availabilityType = DOWN;
         }
+
         if (availabilityType == DOWN) {
             releaseVersion = null;
         } else if (previousAvailabilityType != UP) {
@@ -163,8 +186,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
      */
     protected void onAvailGoesUp() {
         validateServerAttributes();
-        if (log.isDebugEnabled()) {
-            log.debug(getResourceDescription() + " has just come UP.");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(getResourceDescription() + " has just come UP.");
         }
     }
 
@@ -183,7 +206,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         } catch (Exception e) {
             runtimeBaseDir = null;
             baseDir = null;
-            log.error("Failed to validate base dir for " + getResourceDescription() + ".", e);
+            LOG.error("Failed to validate base dir for " + getResourceDescription() + ".", e);
         }
         if ((runtimeBaseDir != null) && (baseDir != null)) {
             if (!runtimeBaseDir.equals(baseDir)) {
@@ -201,7 +224,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             runtimeMode = readAttribute("launch-type");
         } catch (Exception e) {
             runtimeMode = null;
-            log.error("Failed to validate mode for " + getResourceDescription() + ".", e);
+            LOG.error("Failed to validate mode for " + getResourceDescription() + ".", e);
         }
         if (runtimeMode != null) {
             String mode = getMode().name();
@@ -235,9 +258,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             }
         }
         if (!runtimeProductName.equals(expectedRuntimeProductName)) {
-            throw new InvalidPluginConfigurationException(
-                    "The original product type discovered for this server was " + expectedRuntimeProductName
-                            + ", but the server is now reporting its product type is [" + runtimeProductName + "]");
+            throw new InvalidPluginConfigurationException("The original product type discovered for this server was "
+                + expectedRuntimeProductName + ", but the server is now reporting its product type is ["
+                + runtimeProductName + "]");
         }
     }
 
@@ -329,7 +352,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         if (hostPort.isLocal) {
             // lets be paranoid here
-            for (ProcessInfo processInfo = context.getNativeProcess(); ; processInfo = context.getNativeProcess()) {
+            for (ProcessInfo processInfo = context.getNativeProcess();; processInfo = context.getNativeProcess()) {
                 if (processInfo == null) {
                     // Process not found, so it died, that's fine
                     break;
@@ -366,43 +389,11 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             return operationResult;
         }
 
-        String startScriptPrefix = startScriptConfig.getStartScriptPrefix();
-        File startScriptFile = getStartScriptFile();
-        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(startScriptPrefix,
-            startScriptFile);
-
-        List<String> arguments = processExecution.getArguments();
-        if (arguments == null) {
-            arguments = new ArrayList<String>();
-            processExecution.setArguments(arguments);
-        }
-
-        List<String> startScriptArgs = startScriptConfig.getStartScriptArgs();
-        for (String startScriptArg : startScriptArgs) {
-            startScriptArg = replacePropertyPatterns(startScriptArg);
-            arguments.add(startScriptArg);
-        }
-
-        Map<String, String> startScriptEnv = startScriptConfig.getStartScriptEnv();
-        for (String envVarName : startScriptEnv.keySet()) {
-            String envVarValue = startScriptEnv.get(envVarName);
-            envVarValue = replacePropertyPatterns(envVarValue);
-            startScriptEnv.put(envVarName, envVarValue);
-        }
-        processExecution.setEnvironmentVariables(startScriptEnv);
-
-        // When running on Windows 9x, standalone.bat and domain.bat need the cwd to be the AS bin dir in order to find
-        // standalone.bat.conf and domain.bat.conf respectively.
-        processExecution.setWorkingDirectory(startScriptFile.getParent());
-        processExecution.setCaptureOutput(true);
-        processExecution.setWaitForCompletion(0);
-
-        if (log.isDebugEnabled()) {
-            log.debug("About to execute the following process: [" + processExecution + "]");
-        }
-        SystemInfo systemInfo = context.getSystemInformation();
-        ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
+        ProcessExecutionResults results = ServerControl
+            .onServer(context.getPluginConfiguration(), getMode(), context.getSystemInformation())
+            .lifecycle().startServer();
         logExecutionResults(results);
+
         if (results.getError() != null) {
             operationResult.setErrorMessage(results.getError().getMessage());
         } else if (results.getExitCode() != null && results.getExitCode() != 0) {
@@ -421,6 +412,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         return operationResult;
     }
+
     /**
      * runs jboss-cli executable and returns its output
      * @param parameters input configuration (either commands or file sipmle-property is expected)
@@ -429,88 +421,48 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
      */
     protected OperationResult runCliCommand(Configuration parameters) throws InterruptedException {
         OperationResult result = new OperationResult();
+
         if (isManuallyAddedServer(result, "Executing jboss-cli")) {
             return result;
         }
 
-        File homeDir = serverPluginConfig.getHomeDir();
-        File startScriptFile = new File(new File(homeDir, "bin"), getMode().getCliScriptFileName());
-
-        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(null,
-            startScriptFile);
-
-        List<String> arguments = processExecution.getArguments();
-        if (arguments == null) {
-            arguments = new ArrayList<String>();
-            processExecution.setArguments(arguments);
+        long waitTime = Integer.parseInt(parameters.getSimpleValue("waitTime", "3600"));
+        if (waitTime <= 0) {
+            result.setErrorMessage("waitTime parameter must be positive integer");
+            return result;
         }
-        String commandArg;
-        String command = parameters.getSimpleValue("commands");
-        if (command!=null) {
-            commandArg = "--commands="+command;
+        ServerControl.Cli cli = ServerControl.onServer(context.getPluginConfiguration(), getMode(),
+            context.getSystemInformation()).waitingFor(waitTime * 1000)
+            .killingOnTimeout(Boolean.parseBoolean(parameters.getSimpleValue("killOnTimeout", "false"))).cli();
+
+        ProcessExecutionResults results;
+        String commands = parameters.getSimpleValue("commands");
+        if (commands != null) {
+            results = cli.executeCliCommand(commands);
         } else {
             File script = new File(parameters.getSimpleValue("file"));
             if (!script.isAbsolute()) {
-                script = new File(homeDir,parameters.getSimpleValue("file"));
+                script = new File(serverPluginConfig.getHomeDir(), script.getPath());
             }
-            commandArg="--file="+script.getAbsolutePath();
-        }
-        arguments.add("-c");
-        arguments.add(commandArg);
-        arguments.add("--user="+serverPluginConfig.getUser());
-        arguments.add("--password="+serverPluginConfig.getPassword());
-        arguments.add("--controller="+serverPluginConfig.getNativeHost()+":"+serverPluginConfig.getNativePort());
 
-        Map<String, String> startScriptEnv = startScriptConfig.getStartScriptEnv();
-        for (String envVarName : startScriptEnv.keySet()) {
-            String envVarValue = startScriptEnv.get(envVarName);
-            envVarValue = replacePropertyPatterns(envVarValue);
-            startScriptEnv.put(envVarName, envVarValue);
+            results = cli.executeCliScript(script);
         }
-        processExecution.setEnvironmentVariables(startScriptEnv);
-
-        // When running on Windows 9x, standalone.bat and domain.bat need the cwd to be the AS bin dir in order to find
-        // standalone.bat.conf and domain.bat.conf respectively.
-        processExecution.setWorkingDirectory(startScriptFile.getParent());
-        processExecution.setCaptureOutput(true);
-        processExecution.setWaitForCompletion(MAX_PROCESS_WAIT_TIME);
-        processExecution.setKillOnTimeout(false);
-
-        PropertySimple waitTimeProp = parameters.getSimple("waitTime");
-        if (waitTimeProp != null && waitTimeProp.getLongValue() != null) {
-            long waitTime = waitTimeProp.getLongValue() * 1000L;
-            if (waitTime <= 0) {
-                result.setErrorMessage("waitTime parameter must be positive number");
-                return result;
-            }
-            processExecution.setWaitForCompletion(waitTime);
-        }
-        if (Boolean.parseBoolean(parameters.getSimpleValue("killOnTimeout", "false"))) {
-            processExecution.setKillOnTimeout(true);
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug("About to execute the following process: [" + processExecution + "]");
-        }
-        SystemInfo systemInfo = context.getSystemInformation();
-        ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
         logExecutionResults(results);
+
         if (results.getError() != null) {
             result.setErrorMessage(results.getError().getMessage());
         } else if (results.getExitCode() == null) {
-            result.setErrorMessage("jboss-cli execution timed out, captured output:\n"+results.getCapturedOutput());
+            result.setErrorMessage("jboss-cli execution timed out, captured output:\n" + results.getCapturedOutput());
             return result;
-        }
-        else if (results.getExitCode() != null && results.getExitCode() != 0) {
+        } else if (results.getExitCode() != 0) {
             result.setErrorMessage("jboss-cli execution failed with error code " + results.getExitCode() + ":\n"
                 + results.getCapturedOutput());
-        }
-        else {
-               result.setSimpleResult(results.getCapturedOutput());
+        } else {
+            result.setSimpleResult(results.getCapturedOutput());
         }
         if (result.getErrorMessage() == null) {
             PropertySimple avail = parameters.getSimple("triggerAvailability");
-            if (avail !=null && avail.getBooleanValue()) {
+            if (avail != null && avail.getBooleanValue()) {
                 context.getAvailabilityContext().requestAvailabilityCheck();
             }
             PropertySimple disc = parameters.getSimple("triggerDiscovery");
@@ -613,12 +565,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         return up;
     }
 
-    private void logExecutionResults(ProcessExecutionResults results) {
-        // Always log the output at info level. On Unix we could switch depending on a exitCode being !=0, but ...
-        log.info("Exit code from process execution: " + results.getExitCode());
-        log.info("Output from process execution: " + SEPARATOR + results.getCapturedOutput() + SEPARATOR);
-    }
-
     /**
      * Do some post processing of the Result - especially the 'shutdown' operation needs a special
      * treatment.
@@ -640,12 +586,12 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
              */
             if (!res.isSuccess()) {
                 if (StringUtil.isNotBlank(res.getFailureDescription())
-                        && res.getFailureDescription().startsWith(ASConnection.FAILURE_NO_RESPONSE)) {
+                    && res.getFailureDescription().startsWith(ASConnection.FAILURE_NO_RESPONSE)) {
                     operationResult.setSimpleResult("Success");
-                    if (log.isDebugEnabled()) {
-                        log.debug("Got no response for operation '" + name + "'. "
-                                + "This is considered ok, as the remote server sometimes closes the communications "
-                                + "channel before sending a reply");
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Got no response for operation '" + name + "'. "
+                            + "This is considered ok, as the remote server sometimes closes the communications "
+                            + "channel before sending a reply");
                     }
                 } else {
                     operationResult.setErrorMessage(res.getFailureDescription());
@@ -692,7 +638,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         HostConfiguration hostConfig = getHostConfig();
         String realm = pluginConfig.getSimpleValue("realm", "ManagementRealm");
-        File propertiesFile = hostConfig.getSecurityPropertyFile(baseDir, getMode(), realm);
+        File propertiesFile = hostConfig.getSecurityPropertyFile(serverPluginConfig, realm);
         if (!propertiesFile.canWrite()) {
             result.setErrorMessage("Management users properties file [" + propertiesFile + "] is not writable.");
             return result;
@@ -716,7 +662,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         String verb = (userAlreadyExisted) ? "updated" : "added";
         result.setSimpleResult("Management user [" + user + "] " + verb + ".");
-        log.info("Management user [" + user + "] " + verb + " for " + context.getResourceType().getName()
+        LOG.info("Management user [" + user + "] " + verb + " for " + context.getResourceType().getName()
             + " server with key [" + context.getResourceKey() + "].");
 
         context.getAvailabilityContext().requestAvailabilityCheck();
@@ -736,14 +682,19 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
         Set<MeasurementScheduleRequest> skmRequests = new HashSet<MeasurementScheduleRequest>(requests.size());
         Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
+        String tempDirAttributeName = getTempDirAttributeName();
         for (MeasurementScheduleRequest request : requests) {
             String requestName = request.getName();
             if (requestName.equals("startTime")) {
                 collectStartTimeTrait(report, request);
-            } else if (requestName.startsWith("_skm:")) { // handled below
-                skmRequests.add(request);
             } else {
-                leftovers.add(request); // handled below
+                if (tempDirAttributeName != null && requestName.equals(tempDirAttributeName)) {
+                    collectEnvironmentTrait(report, request);
+                } else if (requestName.startsWith("_skm:")) { // handled below
+                    skmRequests.add(request);
+                } else {
+                    leftovers.add(request); // handled below
+                }
             }
         }
 
@@ -785,6 +736,55 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         }
     }
 
+    protected BundleHandoverResponse handleExecuteScript(BundleHandoverRequest handoverRequest) throws IOException {
+        Map<String, String> params = handoverRequest.getParams();
+
+        long waitTime;
+        String waitTimeParam = params.get("waitTime");
+        if (waitTimeParam != null) {
+            try {
+                waitTime = Long.parseLong(waitTimeParam);
+                if (waitTime <= 0) {
+                    return BundleHandoverResponse.failure(INVALID_PARAMETER, "waitTime must greater than 0");
+                }
+            } catch (NumberFormatException e) {
+                return BundleHandoverResponse.failure(INVALID_PARAMETER, "waitTime is not a number");
+            }
+        } else {
+            waitTime = HOURS.toMillis(1);
+        }
+
+        boolean killOnTimeout = Boolean.parseBoolean(params.get("killOnTimeout"));
+
+        File scriptFile = null;
+        try {
+            scriptFile = File.createTempFile(handoverRequest.getFilename(), ".tmp", context.getTemporaryDirectory());
+            FileUtil.writeFile(handoverRequest.getContent(), scriptFile);
+
+            ProcessExecutionResults results = ServerControl.onServer(
+                getServerPluginConfiguration().getPluginConfig(), getMode(), context.getSystemInformation())
+                .waitingFor(waitTime).killingOnTimeout(killOnTimeout).cli().executeCliScript(scriptFile);
+
+            Throwable error = results.getError();
+            if (error != null) {
+                return BundleHandoverResponse.failure(EXECUTION, error.getMessage(), error);
+            }
+            Integer exitCode = results.getExitCode();
+            if (exitCode == null) {
+                return BundleHandoverResponse.failure(EXECUTION, "Timeout waiting for completion of the CLI process");
+            }
+            if (exitCode != 0) {
+                return BundleHandoverResponse.failure(EXECUTION, "CLI process exit code is " + exitCode);
+            }
+            return BundleHandoverResponse.success();
+
+        } finally {
+            if (scriptFile != null) {
+                scriptFile.delete();
+            }
+        }
+    }
+
     @NotNull
     protected abstract Address getEnvironmentAddress();
 
@@ -794,29 +794,51 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     @NotNull
     protected abstract String getBaseDirAttributeName();
 
-    protected void collectConfigTrait(MeasurementReport report, MeasurementScheduleRequest request) {
-        String config;
-        try {
-            config = readAttribute(getEnvironmentAddress(), request.getName(), String.class);
-        } catch (Exception e) {
-            log.error("Failed to read attribute [" + request.getName() + "]: " + e, e);
-            config = null;
-        }
+    /**
+     * Default implentation. Override in concrete subclasses and return the the temporary directory attribute name,
+     * found on the node at {@link #getEnvironmentAddress()}.
+     *
+     * @return the temp dir attribute name or null if no such attribute exists
+     */
+    protected String getTempDirAttributeName() {
+        return null;
+    }
 
-        if (config != null) {
-            MeasurementDataTrait data = new MeasurementDataTrait(request, new File(config).getName());
+    protected void collectConfigTrait(MeasurementReport report, MeasurementScheduleRequest request) {
+        String value = readEnvironmentAttribute(request);
+        if (value != null) {
+            MeasurementDataTrait data = new MeasurementDataTrait(request, new File(value).getName());
             report.addData(data);
         }
     }
+
+    protected void collectEnvironmentTrait(MeasurementReport report, MeasurementScheduleRequest request) {
+        String value = readEnvironmentAttribute(request);
+        if (value != null) {
+            MeasurementDataTrait data = new MeasurementDataTrait(request, value);
+            report.addData(data);
+        }
+    }
+
+    private String readEnvironmentAttribute(MeasurementScheduleRequest request) {
+        try {
+            return readAttribute(getEnvironmentAddress(), request.getName(), String.class);
+        } catch (Exception e) {
+            LOG.error("Failed to read attribute [" + request.getName() + "]: " + e, e);
+            return null;
+        }
+    }
+
     private synchronized void setASHostName(String aSHostName) {
         this.aSHostName = aSHostName;
     }
+
     /**
      * gets AS domain host name (defult is master for HC) null for standalone;
      * @return AS domain host name
      */
     protected synchronized String getASHostName() {
-           return aSHostName;
+        return aSHostName;
     }
 
     /**
@@ -825,8 +847,11 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
      * @return name attribute from host.xml file
      */
     protected String findASDomainHostName() {
+        if (getMode().equals(AS7Mode.STANDALONE)) {
+            return null;
+        }
         File hostXmlFile = getServerPluginConfiguration().getHostConfigFile();
-        if (hostXmlFile==null) {
+        if (hostXmlFile == null) {
             return null;
         }
         String hostName = null;
@@ -840,10 +865,32 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 is.close();
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            LOG.error(e.getMessage());
         }
-        if (hostName == null)
-            hostName = "local"; // Fallback to the installation default
+        if (hostName == null || hostName.equals("")) {
+            LOG.warn("Failed to read domain host name from [" + hostXmlFile + "] auto-detecting...");
+            String qualifiedHostName = System.getenv("HOSTNAME");
+            if (qualifiedHostName == null) {
+                qualifiedHostName = System.getenv("COMPUTERNAME");
+            }
+            if (qualifiedHostName == null) {
+                try {
+                    qualifiedHostName = InetAddress.getLocalHost().getHostName();
+                    if (qualifiedHostName != null && qualifiedHostName.matches("^\\d+\\.\\d+\\.\\d+\\.\\d+$|:")) {
+                        // IP address is not acceptable
+                        qualifiedHostName = null;
+                    }
+                } catch (UnknownHostException e) {
+                    qualifiedHostName = null;
+                }
+            }
+            if (qualifiedHostName == null) {
+                qualifiedHostName = "unknown-host.unknown-domain";
+            }
+            final int idx = qualifiedHostName.indexOf('.');
+            hostName = idx == -1 ? qualifiedHostName : qualifiedHostName.substring(0, idx);
+            LOG.info("Domain host name was detected as [" + hostName + "]");
+        }
         return hostName;
     }
 
@@ -875,8 +922,10 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
     private void collectServerKindTraits(MeasurementReport report, Set<MeasurementScheduleRequest> skmRequests) {
         Address address = new Address();
+
         ReadResource op = new ReadResource(address);
         op.includeRuntime(true);
+
         ComplexResult res = getASConnection().executeComplex(op);
         if (res.isSuccess()) {
             Map<String, Object> props = res.getResult();
@@ -894,34 +943,15 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                         val = "JBoss AS";
                     else if (realName.equals("product-version"))
                         val = getStringValue(props.get("release-version"));
-                    else
-                        log.debug("Value for " + realName + " was 'null' and no replacement found");
+                    else if (LOG.isDebugEnabled()) {
+                        LOG.debug("Value for " + realName + " was 'null' and no replacement found");
+                    }
                 }
                 MeasurementDataTrait data = new MeasurementDataTrait(request, val);
                 report.addData(data);
             }
-        } else {
-            log.debug("getSKMRequests failed: " + res.getFailureDescription());
+        } else if (LOG.isDebugEnabled()) {
+            LOG.debug("getSKMRequests failed: " + res.getFailureDescription());
         }
     }
-
-    // Replace any "%xxx%" substrings with the values of plugin config props "xxx".
-    private String replacePropertyPatterns(String value) {
-        Pattern pattern = Pattern.compile("(%([^%]*)%)");
-        Matcher matcher = pattern.matcher(value);
-        Configuration pluginConfig = context.getPluginConfiguration();
-        StringBuffer buffer = new StringBuffer();
-        while (matcher.find()) {
-            String propName = matcher.group(2);
-            PropertySimple prop = pluginConfig.getSimple(propName);
-            String propValue = ((prop != null) && (prop.getStringValue() != null)) ? prop.getStringValue() : "";
-            String propPattern = matcher.group(1);
-            String replacement = (prop != null) ? propValue : propPattern;
-            matcher.appendReplacement(buffer, Matcher.quoteReplacement(replacement));
-        }
-
-        matcher.appendTail(buffer);
-        return buffer.toString();
-    }
-
 }

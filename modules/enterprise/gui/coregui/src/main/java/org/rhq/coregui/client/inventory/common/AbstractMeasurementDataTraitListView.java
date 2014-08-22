@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 /**
  * A view that displays a non-paginated table of {@link org.rhq.core.domain.measurement.MeasurementDataTrait trait}s,
@@ -76,7 +77,7 @@ public abstract class AbstractMeasurementDataTraitListView extends TableSection<
         ListGridField displayNameField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME);
         displayNameField.setWidth("20%");
 
-        addTableAction(MSG.view_measureTable_getLive(), getLiveValueAction());
+        addTableAction(MSG.view_measureTable_getLive(), ButtonColor.BLUE, getLiveValueAction());
     }
 
     protected abstract TableAction getLiveValueAction();

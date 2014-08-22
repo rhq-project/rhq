@@ -308,7 +308,57 @@ case "$1" in
            RHQ_AGENT_START_COMMAND="${_START_SCRIPT}"
         fi
 
-        RHQ_AGENT_CMDLINE_OPTS="--cleanconfig --nostart --daemon --setup --advanced"
+
+        if [ -z "$2" ]; then
+           RHQ_AGENT_CMDLINE_OPTS="--cleanconfig --nostart --daemon --setup --advanced"
+           export RHQ_AGENT_CMDLINE_OPTS
+        else
+           if [ ! -f "$2" ]; then
+              echo "ERROR! Cannot find config file"
+              echo "Not found: $2"
+              exit 1
+           fi
+
+           RHQ_AGENT_CMDLINE_OPTS="--cleanconfig --nostart --daemon --config=\"$2\""
+           export RHQ_AGENT_CMDLINE_OPTS
+        fi
+
+        # start the agent now!
+        if [ -n "$RHQ_AGENT_DEBUG" ] && [ "$RHQ_AGENT_DEBUG" != "false" ]; then
+           debug_wrapper_msg "Executing agent with command: ${RHQ_AGENT_START_COMMAND} ${RHQ_AGENT_CMDLINE_OPTS}"
+        fi
+
+        . $RHQ_AGENT_START_COMMAND
+
+        ;;
+
+'cleanconfig')
+        prepare_pid_dir
+
+        if [ "$_RUNNING" = "1" ]; then
+           echo "Cannot run config - please stop the agent before running config"
+           echo $_STATUS
+           exit 0
+        fi
+
+        echo "Configure RHQ Agent..."
+
+        # Determine the command to execute when starting the agent
+        if [ -z "$RHQ_AGENT_START_COMMAND" ]; then
+           # Find out where the agent start script is located
+           _START_SCRIPT="${RHQ_AGENT_HOME}/bin/rhq-agent.sh"
+
+           if [ ! -f "$_START_SCRIPT" ]; then
+              echo "ERROR! Cannot find the RHQ Agent start script"
+              echo "Not found: $_START_SCRIPT"
+              exit 1
+           fi
+           debug_wrapper_msg "Start script found here: $_START_SCRIPT"
+
+           RHQ_AGENT_START_COMMAND="${_START_SCRIPT}"
+        fi
+
+        RHQ_AGENT_CMDLINE_OPTS="--cleanconfig --nostart --daemon"
         export RHQ_AGENT_CMDLINE_OPTS
 
         # start the agent now!
@@ -407,7 +457,7 @@ case "$1" in
         exit $?
         ;;
 *)
-        echo "Usage: $0 { start | stop | kill | restart | status | config }"
+        echo "Usage: $0 { start | stop | kill | restart | status | config | cleanconfig | quiet-restart}"
         exit 1
         ;;
 esac

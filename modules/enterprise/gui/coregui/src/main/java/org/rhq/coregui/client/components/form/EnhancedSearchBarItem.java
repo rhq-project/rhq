@@ -35,7 +35,6 @@ public class EnhancedSearchBarItem extends CanvasItem {
     public EnhancedSearchBarItem(String name, SearchSubsystem subsystem, String initialSearchText) {
         super(name, null);
         setShowTitle(false);
-
         searchBar = new EnhancedSearchBar(subsystem, initialSearchText);
         setCanvas(searchBar);
     }

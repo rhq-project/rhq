@@ -23,61 +23,54 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 
-import javax.persistence.Query;
-
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.common.composite.SystemSetting;
-import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.resource.group.LdapGroupManagerBean;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerPluginService;
-import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.ldap.FakeLdapCtxFactory;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Integration tests for methods and operations performed by {@link LdapGroupManagerBean}. 
+ * Integration tests for methods and operations performed by {@link LdapGroupManagerBean}.
  * which require an LDAP server.
- * 
- * When executing these tests, the LDAP source can be changed using the following 
+ *
+ * When executing these tests, the LDAP source can be changed using the following
  * system properties:
- * 
+ *
  * <table>
  * <tr><th align="left">Property</th><th align="left">Desc</th><th align="left">Default</th></tr>
  * <tr>
  * <td valign="top">rhq.test.ldap.url</td><td>The URL to use for an LDAP connection.</td><td valign="top">ldap://localhost:389</td>
  * </tr>
  * <tr>
- * <td valign="top">rhq.test.ldap.LDAPFactory</td><td>The ContextFactory class that will create the initial 
- * DirContext object for running the tests. This allows a mock or fake directory context to be 
- * created by another test class helper. For example, this could be {@link FakeLdapCtxFactory} 
- * or if you want to use a real LDAP server, you could specify com.sun.jndi.ldap.LdapCtxFactory 
+ * <td valign="top">rhq.test.ldap.LDAPFactory</td><td>The ContextFactory class that will create the initial
+ * DirContext object for running the tests. This allows a mock or fake directory context to be
+ * created by another test class helper. For example, this could be {@link FakeLdapCtxFactory}
+ * or if you want to use a real LDAP server, you could specify com.sun.jndi.ldap.LdapCtxFactory
  * which would then perform real LDAP operations with an LDAP server.</td><td valign="top">{@link FakeLdapCtxFactory}</td>
  * </tr>
  * </table>
- * 
+ *
  * @author loleary
  *
  */
-@SuppressWarnings("deprecation")
 public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
 
     /**
-     * The property name that represents the LDAP URL to use. If using a real 
-     * LDAP instance, this property's value should be the complete URL of the 
+     * The property name that represents the LDAP URL to use. If using a real
+     * LDAP instance, this property's value should be the complete URL of the
      * LDAP server to use for these integration tests.
      */
     public static String RHQ_TEST_LDAP_URL_PROPERTY = "rhq.test.ldap.url";
     /**
-     * The property name that represents the LDAP Context Factory to use. If 
-     * testing against a real LDAP instance, this property's value should be 
-     * a valid context factory name as provided by a JNDI implementation. 
-     * 
-     * If no value is specified for this property, {@link #RHQ_TEST_LDAP_DEFAULT_CONTEXT_FACTORY} 
+     * The property name that represents the LDAP Context Factory to use. If
+     * testing against a real LDAP instance, this property's value should be
+     * a valid context factory name as provided by a JNDI implementation.
+     *
+     * If no value is specified for this property, {@link #RHQ_TEST_LDAP_DEFAULT_CONTEXT_FACTORY}
      * is used.
      */
     public static String RHQ_TEST_LDAP_LDAPFACTORY_PROPERTY = "rhq.test.ldap.LDAPFactory";
@@ -147,11 +140,11 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
      * using a user who does not exist in the test LDAP instance.
-     * 
+     *
      * The test verifies that no groups are returned for the non-existent user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -161,11 +154,11 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
      * using a user who has a no special characters in their cn attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -179,11 +172,11 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
      * using a user who has a comma (,) in their cn attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -197,11 +190,11 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
      * using a user who has a backslash (\) in their cn attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -215,11 +208,11 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
      * using a user who has a hash or pound sign (#) in their cn attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -233,11 +226,11 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
      * using a user who has a plus sign (+) in their cn attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -251,12 +244,12 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
-     * using a user who has a less-than and greater-than sign (<>) in their cn 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
+     * using a user who has a less-than and greater-than sign (<>) in their cn
      * attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -270,11 +263,11 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
      * using a user who has a semicolon (;) in their cn attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -288,11 +281,11 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
      * using a user who has a quote (") in their cn attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -306,11 +299,11 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
      * using a user who has a equal sign (=) in their cn attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -324,12 +317,12 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
-     * using a user who has a leading and trailing space (cn= My User ) in their 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
+     * using a user who has a leading and trailing space (cn= My User ) in their
      * cn attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -343,12 +336,12 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
-     * using a user who has slash or forward slash (/) in their cn attribute 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
+     * using a user who has slash or forward slash (/) in their cn attribute
      * value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -362,11 +355,11 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
      * using a user who has a hyphen or dash (-) in their cn attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -380,11 +373,11 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
      * using a user who has an asterisk or star (*) in their cn attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -398,12 +391,12 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
-     * using a user who has a open and close parenthesis () in their cn 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
+     * using a user who has a open and close parenthesis () in their cn
      * attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -417,12 +410,12 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
-     * using a user who has an extended ASCII or non 7-bit ASCII character in 
+     * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method
+     * using a user who has an extended ASCII or non 7-bit ASCII character in
      * their cn attribute value.
-     * 
+     *
      * The test verifies that an expected group list is returned for each user.
-     * 
+     *
      * @throws Throwable
      */
     @Test(groups = "integration.session")
@@ -438,64 +431,44 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     /*---------------
      * Helper methods
      ---------------*/
-    private void setSystemConfigProperty(final String name, final String value) throws Exception {
-        Properties sysConfig = systemManager.getSystemConfiguration(LookupUtil.getSubjectManager().getOverlord());
-        sysConfig.setProperty(name, value);
-        systemManager.setSystemConfiguration(LookupUtil.getSubjectManager().getOverlord(), sysConfig, true);
+    private void setSystemSetting(final SystemSetting setting, final String value) throws Exception {
+        systemManager.setAnySystemSetting(setting, value);
     }
 
     private void setLdapGroupFilter(String filter) throws Exception {
-        setSystemConfigProperty(RHQConstants.LDAPGroupFilter, filter);
+        setSystemSetting(SystemSetting.LDAP_GROUP_FILTER, filter);
     }
 
     private void setLdapGroupMemberAttribute(String attributeName) throws Exception {
-        setSystemConfigProperty(RHQConstants.LDAPGroupMember, attributeName);
+        setSystemSetting(SystemSetting.LDAP_GROUP_MEMBER, attributeName);
     }
 
     private void setLdapBaseDN(String dn) throws Exception {
-        setSystemConfigProperty(RHQConstants.LDAPBaseDN, dn);
+        setSystemSetting(SystemSetting.LDAP_BASE_DN, dn);
     }
 
     private void setLdapLoginAttribute(String attributeName) throws Exception {
-        setSystemConfigProperty(RHQConstants.LDAPLoginProperty, attributeName);
+        setSystemSetting(SystemSetting.LDAP_LOGIN_PROPERTY, attributeName);
     }
 
     private void setLdapBindDN(String dn) throws Exception {
-        setSystemConfigProperty(RHQConstants.LDAPBindDN, dn);
+        setSystemSetting(SystemSetting.LDAP_BIND_DN, dn);
     }
 
     private void setLdapBindPassword(String password) throws Exception {
-        setSystemConfigProperty(RHQConstants.LDAPBindPW, password);
+        setSystemSetting(SystemSetting.LDAP_BIND_PW, password);
     }
 
     private void setLdapUserFilter(String filter) throws Exception {
-        setSystemConfigProperty(RHQConstants.LDAPFilter, filter);
+        setSystemSetting(SystemSetting.LDAP_FILTER, filter);
     }
 
     private void setLdapUrl(String url) throws Exception {
-        setSystemConfigProperty(RHQConstants.LDAPUrl, url);
+        setSystemSetting(SystemSetting.LDAP_NAMING_PROVIDER_URL, url);
     }
 
     private void setLdapCtxFactory(final String name) throws Exception {
-        //this is a readonly system property that we are trying to override, so we
-        //need to be a little bit more persuasive...
-        executeInTransaction(false, new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                Query q = getEntityManager().createNamedQuery(SystemConfiguration.FIND_PROPERTY_BY_KEY);
-                q.setParameter("key", SystemSetting.LDAP_NAMING_FACTORY.getInternalName());
-
-                SystemConfiguration config = (SystemConfiguration) q.getSingleResult();
-                config.setPropertyValue(name);
-
-                getEntityManager().merge(config);
-
-                getEntityManager().flush();
-            }
-        });
-
-        //reload the system settings cache so that the new value is reflected there immediately
-        systemManager.loadSystemConfigurationCache();
+        setSystemSetting(SystemSetting.LDAP_NAMING_FACTORY, name);
     }
 
 }

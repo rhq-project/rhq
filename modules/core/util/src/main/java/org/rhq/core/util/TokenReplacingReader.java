@@ -32,7 +32,15 @@ import java.util.Map;
 /**
  * Copied from http://tutorials.jenkov.com/java-howto/replace-strings-in-streams-arrays-files.html
  * with fixes to {@link #read(char[], int, int)} and added support for escaping.
- *
+ * <p/>
+ * Since RHQ 4.13, this class has been enhanced to be in line with the formats supported by the
+ * {@link StringPropertyReplacer}. The following constructs have been added:
+ * <ul>
+ *     <li>{@code ${p:v}} if token {@code p} is not found in the backing map, the provided value {@code v} is used
+ *     instead of keeping the literal "${p}" in the output.</li>
+ *     <li>{@code ${p1,p2:v}} if token {@code p1} is not found in the backing map, the expression is replaced by the
+ *     value of token {@code p2} or value {@code v} if {@code p2} is not present either.</li>
+ * </ul>
  * @author Lukas Krejci
  */
 public class TokenReplacingReader extends Reader {
@@ -81,11 +89,25 @@ public class TokenReplacingReader extends Reader {
             escaping = false;
             return data;
         }
-        
+
+        //only escape the ${ sequence.
+        //I.e. \${ is escaped as ${, but \$ is transferred literally
         if (data == '\\') {
-            escaping = true;
-            return pushbackReader.read();
-//            return data;
+            data = pushbackReader.read();
+            if (data != '$') {
+                pushbackReader.unread(data);
+                return '\\';
+            } else {
+                data = pushbackReader.read();
+                pushbackReader.unread(data);
+                if (data != '{') {
+                    pushbackReader.unread('$');
+                    return '\\';
+                } else {
+                    escaping = true;
+                    return '$';
+                }
+            }
         }
 
         if (data != '$')
@@ -98,20 +120,97 @@ public class TokenReplacingReader extends Reader {
         }
         this.tokenNameBuffer.delete(0, this.tokenNameBuffer.length());
 
-        data = this.pushbackReader.read();
-        while (data != '}') {
-            this.tokenNameBuffer.append((char) data);
+        String tokenName;
+
+        boolean skipUntilExpressionEnd = false;
+        boolean nameIsValue = false;
+        boolean cont = true;
+
+        //0 - reading name
+        //1 - reading value
+        //2 - escape in value
+        int state = 0;
+        while (cont) {
             data = this.pushbackReader.read();
+            switch (state) {
+            case 0: //reading name
+                switch (data) {
+                case ',':
+                    if (skipUntilExpressionEnd) {
+                        break;
+                    }
+                    //we've read the name, try if it is available.
+                    //if yes, skip everything else until '}' and start outputting the value
+                    //if not, try the name specified after the ','
+                    tokenName = tokenNameBuffer.toString();
+                    if (tokens.containsKey(tokenName)) {
+                        skipUntilExpressionEnd = true;
+                    } else {
+                        //let's try the next token
+                        tokenNameBuffer.delete(0, tokenNameBuffer.length());
+                    }
+                    break;
+                case ':':
+                    if (skipUntilExpressionEnd) {
+                        state = 1; //reading value
+                        break;
+                    }
+
+                    if (tokenNameBuffer.length() == 0) {
+                        //leading : is considered a part of the name
+                        tokenNameBuffer.append((char) data);
+                    } else {
+                        state = 1; //reading value
+                        tokenName = tokenNameBuffer.toString();
+                        if (tokens.containsKey(tokenName)) {
+                            skipUntilExpressionEnd = true;
+                        } else {
+                            tokenNameBuffer.delete(0, tokenNameBuffer.length());
+                            nameIsValue = true;
+                        }
+                    }
+                    break;
+                case '}':
+                    cont = false;
+                    break;
+                default:
+                    this.tokenNameBuffer.append((char) data);
+                }
+                break;
+            case 1: //reading value
+                switch (data) {
+                case '\\':
+                    data = pushbackReader.read();
+                    if (data != '}') {
+                        pushbackReader.unread(data);
+                        data = '\\';
+                    }
+
+                    if (nameIsValue) {
+                        tokenNameBuffer.append((char) data);
+                    }
+                    break;
+                case '}':
+                    cont = false;
+                    break;
+                default:
+                    if (nameIsValue) {
+                        tokenNameBuffer.append((char) data);
+                    }
+                }
+            }
         }
 
-        String tokenName = tokenNameBuffer.toString();
-        
-        if (resolvedTokens.containsKey(tokenName)) {
-            tokenValue = resolvedTokens.get(tokenName);
+        tokenName = tokenNameBuffer.toString();
+
+        if (nameIsValue) {
+            TokenReplacingReader childReader = new TokenReplacingReader(tokenName, tokens, activeTokens,
+                resolvedTokens);
+            tokenValue = readAll(childReader);
         } else {
             tokenValue = resolveToken(tokenName);
         }
-        
+
         tokenValueIndex = 0;
         
         if (!this.tokenValue.isEmpty()) {
@@ -175,6 +274,10 @@ public class TokenReplacingReader extends Reader {
     }
     
     private String resolveToken(String tokenName) throws IOException {
+        if (resolvedTokens.containsKey(tokenName)) {
+            return resolvedTokens.get(tokenName);
+        }
+
         if (activeTokens.contains(tokenName)) {
             throw new IllegalArgumentException("Token '" + tokenName + "' (indirectly) contains reference to itself in its value.");
         }

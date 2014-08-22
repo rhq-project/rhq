@@ -177,48 +177,47 @@ public class PopulateCacheIndex implements Step {
     @Override
     public void execute() {
         // dbConnectionFactory can be null in test environments which is fine because we start tests with a brand
-        // new schema and cluster. In this case, we do not need to do anything since it is not an ugprade scenario.
+        // new schema and cluster. In this case, we do not need to do anything since it is not an upgrade scenario.
         if (dbConnectionFactory == null) {
-            log.info("The relational database connection factory is not set. Skipping execution.");
-            return;
-        }
+            log.info("The relational database connection factory is not set. No data migration necessary");
+        } else {
+            tasks = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(3, new SchemaUpdateThreadFactory()));
 
-        tasks = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(3, new SchemaUpdateThreadFactory()));
+            initPreparedStatements();
 
-        initPreparedStatements();
+            Date mostRecent1HourTimeSlice = findMostRecentRawDataSinceLastShutdown();
 
-        Date mostRecent1HourTimeSlice = findMostRecentRawDataSinceLastShutdown();
+            try {
+                if (mostRecent1HourTimeSlice == null) {
+                    log.info("The " + CACHE_INDEX_TABLE + " table will not be updated. No raw data was found.");
+                } else {
+                    log.debug("The most recent hour with raw data is " + mostRecent1HourTimeSlice);
 
-        try {
-            if (mostRecent1HourTimeSlice == null) {
-                log.info("The " + CACHE_INDEX_TABLE + " table will not be updated. No raw data was found.");
-            } else {
-                log.debug("The most recent hour with raw data is " + mostRecent1HourTimeSlice);
+                    Date mostRecent6HourTimeSlice = get6HourTimeSlice(mostRecent1HourTimeSlice).toDate();
+                    Date mostRecent24HourTimeSlice = get24HourTimeSlice(mostRecent1HourTimeSlice).toDate();
+                    Date day = mostRecent24HourTimeSlice;
 
-                Date mostRecent6HourTimeSlice = get6HourTimeSlice(mostRecent1HourTimeSlice).toDate();
-                Date mostRecent24HourTimeSlice = get24HourTimeSlice(mostRecent1HourTimeSlice).toDate();
-                Date day = mostRecent24HourTimeSlice;
+                    updateCacheIndex(fetchRawIndexEntries(mostRecent1HourTimeSlice), Bucket.RAW, day,
+                        current1HourTimeSlice().toDate());
+                    updateCacheIndex(fetch1HourIndexEntries(mostRecent6HourTimeSlice), Bucket.ONE_HOUR, day,
+                        mostRecent6HourTimeSlice);
+                    updateCacheIndex(fetch6HourIndexEntries(mostRecent24HourTimeSlice), Bucket.SIX_HOUR, day,
+                        mostRecent24HourTimeSlice);
 
-                updateCacheIndex(fetchRawIndexEntries(mostRecent1HourTimeSlice), Bucket.RAW, day,
-                    current1HourTimeSlice().toDate());
-                updateCacheIndex(fetch1HourIndexEntries(mostRecent6HourTimeSlice), Bucket.ONE_HOUR, day,
-                    mostRecent6HourTimeSlice);
-                updateCacheIndex(fetch6HourIndexEntries(mostRecent24HourTimeSlice), Bucket.SIX_HOUR, day,
-                    mostRecent24HourTimeSlice);
+                    if (failedUpdates.get() > 0) {
+                        throw new RuntimeException("Cannot complete upgrade step due to previous errors. There were " +
+                            failedUpdates.get() + " failed updates.");
+                    }
 
-                if (failedUpdates.get() > 0) {
-                    throw new RuntimeException("Cannot complete upgrade step due to previous errors. There were " +
-                        failedUpdates.get() + " failed updates.");
+                    deactivateCacheIfNecessary(mostRecent24HourTimeSlice);
                 }
-
-                dropIndex();
-
-                deactivateCacheIfNecessary(mostRecent24HourTimeSlice);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("The " + CACHE_INDEX_TABLE + " updates have not completed due to an " +
+                    "interrupt. The schema upgrade will have to be run again to complete the updates.", e);
             }
-        } catch (InterruptedException e) {
-            throw new RuntimeException("The " + CACHE_INDEX_TABLE + " updates have not completed due to an " +
-                "interrupt. The schema upgrade will have to be run again to complete the updates.", e);
         }
+
+        dropIndex();
     }
 
     private void initPreparedStatements() {

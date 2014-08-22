@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.performance.test;
 
 import java.lang.reflect.Method;
@@ -41,6 +42,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
+import org.rhq.enterprise.server.purge.PurgeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3PerformanceTest;
@@ -64,6 +66,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     ResourceManagerLocal resourceManager;
     AvailabilityManagerLocal availabilityManager;
+    PurgeManagerLocal purgeManager;
     AgentManagerLocal agentManager;
     SystemManagerLocal systemManager;
     AlertDefinitionManagerLocal alertDefinitionManager;
@@ -80,6 +83,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
         Date now = new Date();
         try {
             this.availabilityManager = LookupUtil.getAvailabilityManager();
+            this.purgeManager = LookupUtil.getPurgeManager();
             this.resourceManager = LookupUtil.getResourceManager();
             this.agentManager = LookupUtil.getAgentManager();
             this.systemManager = LookupUtil.getSystemManager();
@@ -142,10 +146,10 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
             // merge is over. Now lets purge in two steps
             startTiming(String.format(PURGE__FORMAT, MULTI));
-            availabilityManager.purgeAvailabilities(t1 + (MULTI / 2) * MILLIS_APART);
+            purgeManager.purgeAvailabilities(t1 + (MULTI / 2) * MILLIS_APART);
             endTiming(String.format(PURGE__FORMAT, MULTI));
             startTiming(String.format(PURGE__FORMAT, MULTI));
-            availabilityManager.purgeAvailabilities(t1);
+            purgeManager.purgeAvailabilities(t1);
             endTiming(String.format(PURGE__FORMAT, MULTI));
             // Vacuum the db
             overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -208,10 +212,10 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
             // merge is over. Now lets purge in two steps
             startTiming(String.format(PURGE__FORMAT, MULTI));
-            availabilityManager.purgeAvailabilities(t1 + (MULTI / 2) * MILLIS_APART);
+            purgeManager.purgeAvailabilities(t1 + (MULTI / 2) * MILLIS_APART);
             endTiming(String.format(PURGE__FORMAT, MULTI));
             startTiming(String.format(PURGE__FORMAT, MULTI));
-            availabilityManager.purgeAvailabilities(t1);
+            purgeManager.purgeAvailabilities(t1);
             endTiming(String.format(PURGE__FORMAT, MULTI));
             // Vacuum the db
             overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -273,10 +277,10 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
             // merge is over. Now lets purge in two steps
             startTiming(String.format(PURGE__FORMAT, MULTI));
-            availabilityManager.purgeAvailabilities(t1 + (MULTI / 2) * MILLIS_APART);
+            purgeManager.purgeAvailabilities(t1 + (MULTI / 2) * MILLIS_APART);
             endTiming(String.format(PURGE__FORMAT, MULTI));
             startTiming(String.format(PURGE__FORMAT, MULTI));
-            availabilityManager.purgeAvailabilities(t1);
+            purgeManager.purgeAvailabilities(t1);
             endTiming(String.format(PURGE__FORMAT, MULTI));
             // Vacuum the db
             overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -363,10 +367,10 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
             // merge is over. Now lets purge in two steps
             startTiming(String.format(PURGE__FORMAT, MULTI));
-            availabilityManager.purgeAvailabilities(t1 + (MULTI / 2) * MILLIS_APART);
+            purgeManager.purgeAvailabilities(t1 + (MULTI / 2) * MILLIS_APART);
             endTiming(String.format(PURGE__FORMAT, MULTI));
             startTiming(String.format(PURGE__FORMAT, MULTI));
-            availabilityManager.purgeAvailabilities(t1);
+            purgeManager.purgeAvailabilities(t1);
             endTiming(String.format(PURGE__FORMAT, MULTI));
             // Vacuum the db
             overlord = LookupUtil.getSubjectManager().getOverlord();

@@ -21,10 +21,12 @@ package org.rhq.core.pluginapi.bundle;
 
 import java.io.File;
 import java.io.Serializable;
+import java.net.URI;
 import java.util.Map;
 
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageVersion;
 
 /**
@@ -34,7 +36,7 @@ import org.rhq.core.domain.content.PackageVersion;
  * @author John Mazzitelli
  */
 public class BundleDeployRequest implements Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private BundleResourceDeployment resourceDeployment;
     private BundleManagerProvider bundleManagerProvider;
@@ -42,7 +44,8 @@ public class BundleDeployRequest implements Serializable {
     private Map<PackageVersion, File> packageVersionFiles;
     private boolean isCleanDeployment = false;
     private boolean isRevert = false;
-    private File absDestDir;
+    private URI destinationTarget;
+    private Configuration referencedConfiguration;
 
     public BundleDeployRequest() {
     }
@@ -52,13 +55,55 @@ public class BundleDeployRequest implements Serializable {
      * where the bundle should be deployed. This is the bundle destination's
      * {@link BundleDestination#getDeployDir() relative destination directory} under the
      * {@link BundleDestination#getDestinationBaseDirectoryName() destination base directory}.
+     *
+     * @deprecated since 4.13, use {@link #getDestinationTarget()} instead.
      */
+    @Deprecated
     public File getAbsoluteDestinationDirectory() {
-        return this.absDestDir;
+        if (destinationTarget == null) {
+            return null;
+        }
+
+        if (!"file".equals(destinationTarget.getScheme())) {
+            return null;
+        } else {
+            return new File(destinationTarget.getPath());
+        }
     }
 
+    /**
+     * @param absoluteDestDir the absolute directory where the bundle should be deployed
+     *
+     * @deprecated since 4.13, use {@link #setDestinationTarget(java.net.URI)} instead.
+     */
+    @Deprecated
     public void setAbsoluteDestinationDirectory(File absoluteDestDir) {
-        this.absDestDir = absoluteDestDir;
+        destinationTarget = absoluteDestDir.toURI();
+    }
+
+    /**
+     * For filesystem-bound bundle destinations, this URI will have the {@code file} scheme and will be the absolute
+     * directory as found on the local machine's file system where the bundle should be deployed. In another words,
+     * for the filesystem-bound bundle destinations, this is the bundle destination's
+     * {@link BundleDestination#getDeployDir() relative destination directory} under the
+     * {@link BundleDestination#getDestinationBaseDirectoryName() destination base directory}.
+     * <p/>
+     * For bundle destinations defined using the bundle definitions (which are just generalized expressions that should
+     * form a valid URI), the URI will be processed from the connection string expression provided in the bundle
+     * target of the resource's type.
+     *
+     * @since 4.13
+     */
+    public URI getDestinationTarget() {
+        return destinationTarget;
+    }
+
+    /**
+     * @see #getDestinationTarget()
+     * @since 4.13
+     */
+    public void setDestinationTarget(URI destinationTarget) {
+        this.destinationTarget = destinationTarget;
     }
 
     /**
@@ -131,11 +176,32 @@ public class BundleDeployRequest implements Serializable {
         this.isRevert = isRevert;
     }
 
+    /**
+     * The destination specification can pass over some info to the bundle handler by using references to configuration
+     * or metric data. A destination using this approach should usually be dedicated to a single bundle handler (as of
+     * now, there is no enforcement/validation in place that would ensure that only a bundle handler a destination spec
+     * is dedicated for will be used to install data to the destination).
+     *
+     * @return a configuration object containing data from the resource that is required by the bundle handler.
+     * @since 4.13
+     */
+    public Configuration getReferencedConfiguration() {
+        return referencedConfiguration;
+    }
+
+    /**
+     * @see #getReferencedConfiguration()
+     * @since 4.13
+     */
+    public void setReferencedConfiguration(Configuration referencedConfiguration) {
+        this.referencedConfiguration = referencedConfiguration;
+    }
+
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder(this.getClass() + ": ");
         str.append("deployment=[").append(resourceDeployment.toString()).append("], ");
-        str.append("full-deploy-directory=[").append(absDestDir.toString()).append("], ");
+        str.append("target=[").append(destinationTarget.toString()).append("], ");
         str.append("clean=[").append(isCleanDeployment).append("], ");
         str.append("revert=[").append(isRevert).append("]");
         return str.toString();

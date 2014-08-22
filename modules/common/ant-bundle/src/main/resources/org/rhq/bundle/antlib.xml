@@ -3,23 +3,27 @@
 <!-- Ant library for the RHQ bundle tasks -->
 <antlib>
 
-    <!-- bundle task -->
-    <taskdef name="bundle" classname="org.rhq.bundle.ant.task.BundleTask"/>
+  <!-- bundle task -->
+  <taskdef name="bundle" classname="org.rhq.bundle.ant.task.BundleTask"/>
 
-    <!-- bundle task's child types -->
-    <typedef name="input-property" classname="org.rhq.bundle.ant.type.InputPropertyType"/>
-    <typedef name="deployment-unit" classname="org.rhq.bundle.ant.type.DeploymentUnitType"/>
+  <taskdef name="property" classname="org.rhq.bundle.ant.task.PropertyTask"/>
 
-    <!-- deployment type's child types -->
-    <typedef name="file" classname="org.rhq.bundle.ant.type.FileType"/>
-    <typedef name="archive" classname="org.rhq.bundle.ant.type.ArchiveType"/>
-    <typedef name="url-file" classname="org.rhq.bundle.ant.type.UrlFileType"/>
-    <typedef name="url-archive" classname="org.rhq.bundle.ant.type.UrlArchiveType"/>
-    <typedef name="replace" classname="org.rhq.bundle.ant.type.ReplaceType"/>
-    <typedef name="ignore" classname="org.rhq.bundle.ant.type.IgnoreType"/>
-    <typedef name="fileset" classname="org.rhq.bundle.ant.type.FileSet"/>
-    <typedef name="system-service" classname="org.rhq.bundle.ant.type.SystemServiceType"/>
+  <!-- bundle task's child types -->
+  <typedef name="input-property" classname="org.rhq.bundle.ant.type.InputPropertyType"/>
+  <typedef name="deployment-unit" classname="org.rhq.bundle.ant.type.DeploymentUnitType"/>
 
-    <!-- audit task used to send custom audit messages to server -->
-    <taskdef name="audit" classname="org.rhq.bundle.ant.task.AuditTask"/>
+  <!-- deployment type's child types -->
+  <typedef name="file" classname="org.rhq.bundle.ant.type.FileType"/>
+  <typedef name="archive" classname="org.rhq.bundle.ant.type.ArchiveType"/>
+  <typedef name="url-file" classname="org.rhq.bundle.ant.type.UrlFileType"/>
+  <typedef name="url-archive" classname="org.rhq.bundle.ant.type.UrlArchiveType"/>
+  <typedef name="replace" classname="org.rhq.bundle.ant.type.ReplaceType"/>
+  <typedef name="ignore" classname="org.rhq.bundle.ant.type.IgnoreType"/>
+  <typedef name="fileset" classname="org.rhq.bundle.ant.type.FileSet"/>
+  <typedef name="system-service" classname="org.rhq.bundle.ant.type.SystemServiceType"/>
+  <typedef name="handover" classname="org.rhq.bundle.ant.type.Handover"/>
+  <typedef name="handover-param" classname="org.rhq.bundle.ant.type.HandoverParam"/>
+
+  <!-- audit task used to send custom audit messages to server -->
+  <taskdef name="audit" classname="org.rhq.bundle.ant.task.AuditTask"/>
 </antlib>

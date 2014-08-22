@@ -60,12 +60,6 @@ public interface PluginManagerLocal extends PluginManagerRemote {
 
     List<PluginStats> getPluginStats(List<Integer> pluginIds);
 
-    void enablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
-
-    void disablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
-
-    void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
-
     /**
      * Not to be called outside of the PluginManagerBean implementation. Used for transaction demarcation.
      */
@@ -90,6 +84,9 @@ public interface PluginManagerLocal extends PluginManagerRemote {
      */
     void purgePlugins(List<Plugin> plugins);
 
+    /**
+     * Sets if a plugin is enabled or not.
+     */
     void setPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception;
 
     /**
@@ -110,16 +107,12 @@ public interface PluginManagerLocal extends PluginManagerRemote {
     void registerPlugin(Plugin plugin, PluginDescriptor metadata, File pluginFile, boolean forceUpdate)
         throws Exception;
 
-    /** Exists only to for transactional boundary reasons. Not for general consumption. */
-    boolean registerPluginTypes(String newPluginName, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
-        boolean forceUpdate) throws Exception;
-
     /** Exists only for transactional boundary reasons. Not for general consumption. */
     boolean installPluginJar(Plugin newPlugin, PluginDescriptor pluginDescriptor, File pluginFile) throws Exception;
 
     /**
      * Returns the directory where plugins can be dropped for inclusion into the system.
-     * 
+     *
      * @return directory where the plugin dropbox is located
      */
     File getPluginDropboxDirectory();

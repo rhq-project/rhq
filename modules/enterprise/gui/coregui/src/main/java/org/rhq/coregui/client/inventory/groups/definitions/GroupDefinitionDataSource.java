@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -112,6 +112,7 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, Re
             }
 
             public void onSuccess(PageList<GroupDefinition> result) {
+                setPagingInfo(response, result);
                 sendSuccessResponse(request, response, result);
             }
         });

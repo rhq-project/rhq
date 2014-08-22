@@ -60,6 +60,7 @@ import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -306,9 +307,9 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
         // and "Acknowledge All" doesn't work correctly for table with using grouping. Also adding additional
         // button for enabling / disabling the alerts grouping. 
 
-        addTableAction(MSG.common_button_delete(), MSG.view_alerts_delete_confirm(), new ResourceAuthorizedTableAction(
-            StorageNodeAlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null
-                : Permission.MANAGE_ALERTS), new RecordExtractor<Integer>() {
+        addTableAction(MSG.common_button_delete(), MSG.view_alerts_delete_confirm(), ButtonColor.RED,
+            new ResourceAuthorizedTableAction(StorageNodeAlertHistoryView.this, TableActionEnablement.ANY,
+                (hasWriteAccess ? null : Permission.MANAGE_ALERTS), new RecordExtractor<Integer>() {
                 public Collection<Integer> extract(Record[] records) {
                     List<Integer> result = new ArrayList<Integer>(records.length);
                     for (Record record : records) {
@@ -322,9 +323,9 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                 delete(selection);
             }
         });
-        addTableAction(MSG.common_button_ack(), MSG.view_alerts_ack_confirm(), new ResourceAuthorizedTableAction(
-            StorageNodeAlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null
-                : Permission.MANAGE_ALERTS), new RecordExtractor<Integer>() {
+        addTableAction(MSG.common_button_ack(), MSG.view_alerts_ack_confirm(), ButtonColor.BLUE,
+            new ResourceAuthorizedTableAction(StorageNodeAlertHistoryView.this, TableActionEnablement.ANY,
+                (hasWriteAccess ? null                : Permission.MANAGE_ALERTS), new RecordExtractor<Integer>() {
                 public Collection<Integer> extract(Record[] records) {
                     List<Integer> result = new ArrayList<Integer>(records.length);
                     for (Record record : records) {
@@ -338,7 +339,8 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                 acknowledge(selection);
             }
         });
-        addTableAction(MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(), new TableAction() {
+        addTableAction(MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(), ButtonColor.RED,
+            new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 ListGrid grid = getListGrid();
                 ListGridRecord[] records = (null != grid) ? grid.getRecords() : null;
@@ -365,8 +367,8 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
         Map<String, Object> items = new LinkedHashMap<String, Object>(2);
         items.put("On", true);
         items.put("Off", false);
-        addTableAction(MSG.view_adminTopology_storageNodes_groupAlerts(), null, items, new AbstractTableAction(
-            TableActionEnablement.ALWAYS) {
+        addTableAction(MSG.view_adminTopology_storageNodes_groupAlerts(), null, items, ButtonColor.GRAY,
+            new AbstractTableAction(TableActionEnablement.ALWAYS) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 setGrouping((Boolean) actionValue);
             }

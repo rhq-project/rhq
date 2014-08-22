@@ -22,9 +22,14 @@ package org.rhq.coregui.client.util.preferences;
 import java.util.Arrays;
 import java.util.List;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor.MetricRangePreferences;
 import org.rhq.coregui.client.util.MeasurementUtility;
 import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.async.Command;
+import org.rhq.coregui.client.util.async.CountDownLatch;
 
 /**
  * This wraps a UserPreferences object to obtain measurement specific preferences.
@@ -64,7 +69,7 @@ public class MeasurementUserPreferences {
         prefs.explicitBeginEnd = Boolean.valueOf(
             userPrefs.getPreferenceEmptyStringIsDefault(PREF_METRIC_RANGE_BEGIN_END_FLAG, DEFAULT_VALUE_RANGE_RO))
             .booleanValue();
-        if (prefs.explicitBeginEnd == false) {
+        if (!prefs.explicitBeginEnd) {
             prefs.lastN = Integer.valueOf(userPrefs.getPreferenceEmptyStringIsDefault(PREF_METRIC_RANGE_LASTN,
                 DEFAULT_VALUE_RANGE_LASTN.toString()));
             prefs.unit = Integer.valueOf(userPrefs.getPreferenceEmptyStringIsDefault(PREF_METRIC_RANGE_UNIT,
@@ -101,7 +106,7 @@ public class MeasurementUserPreferences {
      * @param prefs
      */
     public void setMetricRangePreferences(MetricRangePreferences prefs) {
-        setMetricRangePreferences(prefs, true);
+        setMetricRangePreferences(prefs, true, null);
     }
 
     /**
@@ -109,7 +114,7 @@ public class MeasurementUserPreferences {
      * @param prefs
      */
     public void setMetricRangePreferencesNoRefresh(MetricRangePreferences prefs) {
-        setMetricRangePreferences(prefs, false);
+        setMetricRangePreferences(prefs, false, null);
     }
 
     /**
@@ -118,14 +123,30 @@ public class MeasurementUserPreferences {
      * default a preference change will call for a refresh, so the current view can have the change applied. In
      * situations where refresh is being handled by the caller, this can be used to avoid a redundant refresh.
      */
-    public void setMetricRangePreferences(MetricRangePreferences prefs, boolean allowRefresh) {
-        userPrefs.setPreference(PREF_METRIC_RANGE_BEGIN_END_FLAG, String.valueOf(prefs.explicitBeginEnd), allowRefresh);
+    public void setMetricRangePreferences(MetricRangePreferences prefs, boolean allowRefresh, Command callback) {
+        AsyncCallback<Subject> persistCallback = null;
+        if (null != callback) {
+            // there are either 2 or 3 setPreference calls depending on prefs.explicitBeginEnd
+            final CountDownLatch latch = CountDownLatch.create(prefs.explicitBeginEnd ? 2 : 3, callback);
+            persistCallback = new AsyncCallback<Subject>() {
+                @Override
+                public void onFailure(Throwable arg0) {
+                    latch.countDown();
+                }
+
+                @Override
+                public void onSuccess(Subject arg0) {
+                    latch.countDown();
+                }
+            };
+        }
+        userPrefs.setPreference(PREF_METRIC_RANGE_BEGIN_END_FLAG, String.valueOf(prefs.explicitBeginEnd), allowRefresh, persistCallback);
         if (prefs.explicitBeginEnd) {
             // persist advanced mode
-            userPrefs.setPreference(PREF_METRIC_RANGE, Arrays.asList(prefs.begin, prefs.end), allowRefresh);
+            userPrefs.setPreference(PREF_METRIC_RANGE, Arrays.asList(prefs.begin, prefs.end), allowRefresh, persistCallback);
         } else {
-            userPrefs.setPreference(PREF_METRIC_RANGE_LASTN, String.valueOf(prefs.lastN), allowRefresh);
-            userPrefs.setPreference(PREF_METRIC_RANGE_UNIT, String.valueOf(prefs.unit), allowRefresh);
+            userPrefs.setPreference(PREF_METRIC_RANGE_LASTN, String.valueOf(prefs.lastN), allowRefresh, persistCallback);
+            userPrefs.setPreference(PREF_METRIC_RANGE_UNIT, String.valueOf(prefs.unit), allowRefresh, persistCallback);
         }
     }
 

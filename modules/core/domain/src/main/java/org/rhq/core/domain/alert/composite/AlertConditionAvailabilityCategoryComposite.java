@@ -23,12 +23,13 @@
 package org.rhq.core.domain.alert.composite;
 
 import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.measurement.AvailabilityType;
 
 /**
  * This composite serves both AVAILABILITY and AVAIL_DURATION alert categories as they both
  * require the same information from the composite.
- *  
+ *
  * @author Joseph Marques
  */
 public class AlertConditionAvailabilityCategoryComposite extends AbstractAlertConditionCategoryComposite {
@@ -37,27 +38,17 @@ public class AlertConditionAvailabilityCategoryComposite extends AbstractAlertCo
     private final Integer resourceId;
     private final AvailabilityType availabilityType;
 
-    public AlertConditionAvailabilityCategoryComposite(AlertCondition condition, Integer alertDefinitionId,
+    public AlertConditionAvailabilityCategoryComposite(
+            int cid, AlertConditionCategory ccategory, String cname, String ccomparator, Double cthreshold, String coption, Integer triggerId,
+            Integer alertDefinitionId,
         Integer resourceId,
         AvailabilityType availabilityType) {
 
-        super(condition);
-
+        super(new AlertCondition(cid, ccategory, cname, ccomparator, cthreshold, coption, triggerId));
         this.alertDefinitionId = alertDefinitionId;
         this.resourceId = resourceId;
         // For a resource with no Availability records we initialize to UNKNOWN
         this.availabilityType = (null != availabilityType) ? availabilityType : AvailabilityType.UNKNOWN;
-    }
-
-    /**
-     * @deprecated This constructor will NOT produce a valid instance of this class, because it cannot specify
-     * the required alert definition id. Use {@link #AlertConditionAvailabilityCategoryComposite(
-     * org.rhq.core.domain.alert.AlertCondition, Integer, Integer, org.rhq.core.domain.measurement.AvailabilityType)}
-     * instead.
-     */
-    @Deprecated
-    public AlertConditionAvailabilityCategoryComposite(AlertCondition condition, Integer resourceId, AvailabilityType availabilityType) {
-        this(condition, null, resourceId, availabilityType);
     }
 
     public Integer getAlertDefinitionId() {

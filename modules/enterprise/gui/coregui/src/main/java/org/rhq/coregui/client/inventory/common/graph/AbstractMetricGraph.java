@@ -27,12 +27,8 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
-import org.rhq.coregui.client.UserSessionManager;
-import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
 import org.rhq.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.coregui.client.util.Log;
-import org.rhq.coregui.client.util.message.Message;
-import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * Common Metric Graph capability used across multiple metric rendering graphs.
@@ -228,34 +224,6 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
         this.graphListView = graphListView;
     }
 
-    /**
-     * Whenever we make a change to the date range save it here so it gets propagated to
-     * the correct places.
-     *
-     * @param startTime double because JSNI doesn't support long
-     * @param endTime   double because JSNI doesn't support long
-     */
-    private void saveDateRange(double startTime, double endTime, boolean refresh) {
-        MeasurementUserPreferences measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
-
-        Log.debug("Saving Date range: "+new Date((long)startTime) +  " - "+ new Date((long)endTime));
-        final boolean advanced = true;
-        AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPrefs.getMetricRangePreferences();
-        prefs.explicitBeginEnd = advanced;
-        prefs.begin = (long) startTime;
-        prefs.end = (long) endTime;
-        if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
-            CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
-        } else {
-            if(refresh){
-                measurementUserPrefs.setMetricRangePreferences(prefs);
-            }else {
-                measurementUserPrefs.setMetricRangePreferencesNoRefresh(prefs);
-            }
-        }
-
-    }
-
     public void dragSelectionRefresh(double startTime, double endTime){
         Log.debug("DragSelectionRefresh");
         // Single graph views each have their own buttonBarDateTimeRangeEditor
@@ -280,13 +248,26 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
     }
 
 
+    /**
+     * Whenever we make a change to the date range save it here so it gets propagated to
+     * the correct places.
+     *
+     * @param startTime double because JSNI doesn't support long
+     * @param endTime   double because JSNI doesn't support long
+     */
     public void saveDateRangeAndRefresh(double startTime, double endTime) {
         // there is an implicit refresh in this save
-        saveDateRange(startTime, endTime, true);
+        if (Log.isDebugEnabled()) {
+            Log.debug("Saving Date range: "+new Date((long)startTime) +  " - "+ new Date((long)endTime));
+        }
+        CustomDateRangeState.getInstance().saveDateRange(startTime, endTime, true);
     }
 
     public void saveDateRangeNoRefresh(double startTime, double endTime) {
-        saveDateRange(startTime, endTime, false);
+        if (Log.isDebugEnabled()) {
+            Log.debug("Saving Date range: " + new Date((long) startTime) + " - " + new Date((long) endTime));
+        }
+        CustomDateRangeState.getInstance().saveDateRange(startTime, endTime, false);
     }
 
     public void redrawGraphs(){

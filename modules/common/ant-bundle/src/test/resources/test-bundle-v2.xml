@@ -2,7 +2,7 @@
 
 <!--
   ~ RHQ Management Platform
-  ~ Copyright (C) 2013 Red Hat, Inc.
+  ~ Copyright (C) 2005-2014 Red Hat, Inc.
   ~ All rights reserved.
   ~
   ~ This program is free software; you can redistribute it and/or modify
@@ -15,50 +15,55 @@
   ~ GNU General Public License for more details.
   ~
   ~ You should have received a copy of the GNU General Public License
-  ~ along with this program; if not, write to the Free Software
-  ~ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  ~ along with this program; if not, write to the Free Software Foundation, Inc.,
+  ~ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
   -->
 
 <project name="test-bundle" default="main" xmlns:rhq="antlib:org.rhq.bundle">
 
-    <rhq:bundle name="example.com (JBoss EAP 4.3)" version="2.5"
-                description="updated bundle">
+  <rhq:bundle name="example.com (JBoss EAP 4.3)" version="2.5"
+              description="updated bundle">
 
-        <rhq:input-property
-                name="listener.port"
-                description="This is where the product will listen for incoming messages"
-                required="true"
-                defaultValue="9090"
-                type="integer"/>
+    <rhq:input-property
+        name="listener.port"
+        description="This is where the product will listen for incoming messages"
+        required="true"
+        defaultValue="9090"
+        type="integer"/>
 
-        <rhq:deployment-unit name="appserver" preinstallTarget="preinstall" postinstallTarget="postinstall" compliance="full">
-            <rhq:system-service name="foo" scriptFile="foo-script"
-                         configFile="foo-config" overwriteScript="true"
-                         startLevels="3,4,5" startPriority="80" stopPriority="20" root="root"/>
-            <rhq:file name="test-v2.properties" destinationFile="subdir/test.properties" replace="true"/>
-            <rhq:archive name="file.zip">
-                <rhq:replace>
-                    <rhq:fileset includes="**/*.properties"/>
-                </rhq:replace>
-            </rhq:archive>
-            <!-- the files that should be ignored during upgrades -->
-            <rhq:ignore>
-                <rhq:fileset includes="*.log"/>
-            </rhq:ignore>
-        </rhq:deployment-unit>
+    <rhq:deployment-unit name="appserver" preinstallTarget="preinstall" postinstallTarget="postinstall"
+                         compliance="full">
+      <rhq:system-service name="foo" scriptFile="foo-script"
+                          configFile="foo-config" overwriteScript="true"
+                          startLevels="3,4,5" startPriority="80" stopPriority="20" root="root"/>
+      <rhq:file name="test-v2.properties" destinationFile="subdir/test.properties" replace="true"/>
+      <rhq:archive name="file.zip">
+        <rhq:replace>
+          <rhq:fileset includes="**/*.properties"/>
+        </rhq:replace>
+      </rhq:archive>
+      <!-- Just here to check that we can mix content to handover with content to be deployed without messing around in the deployer -->
+      <rhq:archive name="fileToHandover.zip">
+        <rhq:handover action="deployment"/>
+      </rhq:archive>
+      <!-- the files that should be ignored during upgrades -->
+      <rhq:ignore>
+        <rhq:fileset includes="*.log"/>
+      </rhq:ignore>
+    </rhq:deployment-unit>
 
-    </rhq:bundle>
+  </rhq:bundle>
 
-    <target name="main"/>
+  <target name="main"/>
 
-    <target name="preinstall">
-        <echo>Deploying Test Bundle v2.5 to ${rhq.deploy.dir}...</echo>
-        <property name="preinstallTargetExecuted" value="2a"/>
-    </target>
+  <target name="preinstall">
+    <echo>Deploying Test Bundle v2.5 to ${rhq.deploy.dir}...</echo>
+    <property name="preinstallTargetExecuted" value="2a"/>
+  </target>
 
-    <target name="postinstall">
-        <echo>Done deploying Test Bundle v2.5 to ${rhq.deploy.dir}.</echo>
-        <property name="postinstallTargetExecuted" value="2b"/>
-    </target>
+  <target name="postinstall">
+    <echo>Done deploying Test Bundle v2.5 to ${rhq.deploy.dir}.</echo>
+    <property name="postinstallTargetExecuted" value="2b"/>
+  </target>
 
 </project>

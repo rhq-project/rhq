@@ -36,16 +36,13 @@ import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdateJob;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 
 /**
@@ -469,9 +466,11 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
 
     /**
      * Dedicated method for supporting resource upgrade of plugin configuration. Similar to
-     * {@link #updatePluginConfiguration(Subject, int, Configuration) but does not inform the agent for
+     * {@link #updatePluginConfiguration(Subject, int, Configuration)} but does not inform the agent for
      * two reasons: first, the agent is already updated (it initiates the update and two, callingback into
-     * the agent would lock the plugin container, as this is during PC initialization.
+     * the agent would lock the plugin container, as this is during PC initialization. Also, it does not
+     * validate the newConfiguration because the agent is allowed to update read-only properties during an
+     * upgrade.
      *
      * @param  subject          The logged in user's subject.
      * @param  resourceId       a {@link Resource} id

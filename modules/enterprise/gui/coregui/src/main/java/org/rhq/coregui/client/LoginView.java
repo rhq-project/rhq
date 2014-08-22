@@ -87,7 +87,7 @@ public class LoginView extends Canvas {
     private static boolean loginShowing = false;
 
     private static final Messages MSG = CoreGUI.getMessages();
-    
+
     private static final String LOGIN_VIEW = "login";
 
     private Window window;
@@ -111,7 +111,7 @@ public class LoginView extends Canvas {
     private static final String DEPARTMENT = "department";
     private static final String SESSIONID = "ldap.sessionid";
     static final String PASSWORD = "ldap.password";
-    
+
     // html login form
     private static final String LOGINFORM_ID = "loginForm";
     private static final String LOGINBUTTON_ID = "loginSubmit";
@@ -123,7 +123,7 @@ public class LoginView extends Canvas {
     private static final String HTML_ID = "htmlId";
     private String errorMessage;
     private static volatile boolean isLoginView = true;
-    
+
     private ProductInfo productInfo;
 
     public void showLoginDialog(String message) {
@@ -139,7 +139,7 @@ public class LoginView extends Canvas {
             setLoginError(message);
         }
     }
-    
+
     public void showLoginDialog() {
         if (!loginShowing) {
             UserSessionManager.logout();
@@ -237,9 +237,9 @@ public class LoginView extends Canvas {
         }
     }
 
-    /** Duplicate modal Login mechanism to now show last registration screen before launching 
+    /** Duplicate modal Login mechanism to now show last registration screen before launching
      *  core gui.
-     * 
+     *
      * @param user prepopulate username field for LDAP registration
      * @param sessionId pass in valid session id for LDAP registration steps.
      * @param callback pass in callback reference to indicate success and launch of coreGUI
@@ -274,9 +274,9 @@ public class LoginView extends Canvas {
         }
     }
 
-    /** Duplicate modal Login mechanism to now show last registration screen before launching 
+    /** Duplicate modal Login mechanism to now show last registration screen before launching
      *  core gui.
-     * 
+     *
      * @param user prepopulate username field for LDAP registration
      * @param sessionId pass in valid session id for LDAP registration steps.
      * @param callback pass in callback reference to indicate success and launch of coreGUI
@@ -305,7 +305,7 @@ public class LoginView extends Canvas {
         last.setWrapTitle(false);
         last.setWidth(fieldWidth);
         last.setRequired(true);
-        final TextItem username = new TextItem(USERNAME, MSG.dataSource_users_field_name());
+        final TextItem username = new TextItem(USERNAME, MSG.common_title_username());
         username.setValue(user);
         username.setDisabled(true);
         username.setWidth(fieldWidth);
@@ -428,7 +428,7 @@ public class LoginView extends Canvas {
 
         window = new Window();
         window.setWidth(670);
-        window.setHeight(330);
+        window.setHeight(370);
         window.setTitle(MSG.view_login_registerUser());
 
         // forced focused, static size, can't close / dismiss
@@ -454,7 +454,7 @@ public class LoginView extends Canvas {
     }
 
     /**Uses the information from the populated form to create the Subject for the new LDAP user.
-     * 
+     *
      * @param populatedForm - validated data
      * @param callback
      */
@@ -512,10 +512,10 @@ public class LoginView extends Canvas {
                 PropertySimple simple = new PropertySimple("isNewUser", null);
                 newSubject.getUserConfiguration().put(simple);
             }
-            
+
             Set<String> prefsChanges = new HashSet<String>();
             prefsChanges.add("isNewUser");
-            
+
             GWTServiceLookup.getSubjectService().updateSubjectAndPreferences(newSubject, prefsChanges, new AsyncCallback<Subject>() {
                 public void onFailure(Throwable caught) {
                     Log.error("Failed to register LDAP subject '" + newSubject.getName() + "' " + caught.getMessage(),
@@ -623,7 +623,7 @@ public class LoginView extends Canvas {
         }
         loginButton.setDisabled(false);
     }
-    
+
     /**
      * Call this method to find out if the login dialog is shown
      * @return true if it is shown
@@ -656,7 +656,7 @@ public class LoginView extends Canvas {
     private void setUsername(String username) {
         ((InputElement) Document.get().getElementById(USERNAME_ID)).setValue(username);
     }
-    
+
     private void setLoginError(String error) {
         Element errorDiv = DOM.getElementById(LOGIN_ERROR_DIV_ID);
         Element feedbackDiv = DOM.getElementById(ERROR_FEEDBACK_DIV_ID);
@@ -672,11 +672,11 @@ public class LoginView extends Canvas {
         view.@org.rhq.coregui.client.LoginView::doLogin()();
       });
     }-*/;
-    
+
     public static boolean isLoginView() {
         return isLoginView && com.google.gwt.user.client.Window.Location.getHref().contains(LOGIN_VIEW);
     }
-    
+
     public static void redirectTo(String path) {
         if (path != null && !("/coregui/" + path).equals(com.google.gwt.user.client.Window.Location.getPath())) {
             if (path.isEmpty()) {

@@ -30,7 +30,6 @@ import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.core.PingRequest;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
@@ -43,7 +42,7 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
  * @author John Mazzitelli
  */
 @Local
-public interface AgentManagerLocal {
+public interface AgentManagerLocal extends AgentManagerRemote {
 
     /**
      * Persists install information on a new agent. If the agent install record doesn't exist, a new one will be created.
@@ -272,11 +271,12 @@ public interface AgentManagerLocal {
      *
      * @param agentVersion the version of the agent to verify
      *
-     * @return <code>true</code> if this server can support an agent with the given version; if the server
+     * @return POJO whose isSupported is <code>true</code> if this server can support an agent with the given version; if the server
      *         knows it cannot communicate successfully with an agent of that version, <code>false</code>
-     *         will be returned
+     *         will be in the POJO's isSupported attribute. The POJO also contains agent version information on the latest
+     *         known agent available.
      */
-    boolean isAgentVersionSupported(AgentVersion agentVersion);
+    AgentVersionCheckResults isAgentVersionSupported(AgentVersion agentVersion);
 
     /**
      * Returns the path on the server's file system where the agent update version file is found.
@@ -356,15 +356,4 @@ public interface AgentManagerLocal {
      * @return The updated request object.
      */
     public PingRequest handlePingRequest(PingRequest request);
-
-    /**
-     * Fetches the agents based on provided criteria.
-     *
-     * Subject needs MANAGE_SETTINGS and MANAGE_INVENTORY permissions.
-     *
-     * @param subject caller
-     * @param criteria the criteria
-     * @return list of agents
-     */
-    PageList<Agent> findAgentsByCriteria(Subject subject, AgentCriteria criteria);
 }

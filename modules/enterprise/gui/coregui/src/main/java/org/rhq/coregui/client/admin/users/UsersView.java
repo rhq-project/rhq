@@ -40,6 +40,7 @@ import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.SubjectGWTServiceAsync;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -83,8 +84,8 @@ public class UsersView extends TableSection<UsersDataSource> implements HasViewN
         List<ListGridField> fields = createFields();
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
-        addTableAction(MSG.common_button_new(), createNewAction());
-        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), createDeleteAction());
+        addTableAction(MSG.common_button_new(), ButtonColor.BLUE, createNewAction());
+        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), ButtonColor.RED, createDeleteAction());
 
         super.configureTable();
     }
@@ -107,7 +108,8 @@ public class UsersView extends TableSection<UsersDataSource> implements HasViewN
     private List<ListGridField> createFields() {
         List<ListGridField> fields = new ArrayList<ListGridField>();
 
-        ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 150);
+        ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME);
+        nameField.setWidth("*");
         fields.add(nameField);
 
         ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);

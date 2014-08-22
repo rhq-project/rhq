@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.bundle.ant.type;
 
 import java.io.File;
@@ -31,21 +32,9 @@ import org.apache.tools.ant.BuildException;
  *
  * @author Ian Springer
  */
-public abstract class AbstractFileType extends AbstractBundleType {
+public abstract class AbstractFileType extends AbstractBundleType implements HasHandover {
     private String name;
     private File source;
-
-    // TODO: We currently do not call this method. Do we want to or should we just let the Deployer utility handle
-    //       validation of specified files?
-    public void init() throws BuildException {
-        if (!this.source.exists()) {
-            throw new BuildException("File path specified by 'name' attribute (" + this.source + ") does not exist.");
-        }
-        if (this.source.isDirectory()) {
-            throw new BuildException("File path specified by 'name' attribute (" + this.source
-                + ") is a directory - it must be a regular file.");
-        }
-    }
 
     public File getSource() {
         return this.source;
@@ -64,5 +53,4 @@ public abstract class AbstractFileType extends AbstractBundleType {
         }
         this.source = getProject().resolveFile(name);
     }
-
 }

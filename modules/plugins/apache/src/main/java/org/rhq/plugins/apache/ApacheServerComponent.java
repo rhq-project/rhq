@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -505,13 +506,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             String serverName = vhostResourceConfig.getSimpleValue(
                 ApacheVirtualHostServiceComponent.SERVER_NAME_CONFIG_PROP, null);
 
-            //determine the resource key
-            String resourceKey = vhostDef;
-            if (serverName != null) {
-                resourceKey = serverName + "|" + resourceKey;
-            }
-
             String[] vhostDefs = vhostDef.split(" ");
+
             HttpdAddressUtility.Address addr;
             try {
                 ApacheDirectiveTree parserTree = parseRuntimeConfiguration(true);
@@ -529,11 +525,14 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                 return report;
             }
 
+            String resourceKey = vhostDef;
             String resourceName;
+
             if (serverName != null) {
-                resourceName = addr.host + ":" + addr.port;
-            } else {
+                resourceKey = ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(serverName, Arrays.asList(vhostDefs));
                 resourceName = resourceKey;
+            } else {
+                resourceName = ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(addr.host + ":" + addr.port, Arrays.asList(vhostDefs));
             }
 
             report.setResourceKey(resourceKey);

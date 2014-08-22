@@ -20,8 +20,6 @@
 package org.rhq.core.pc.inventory;
 
 import static org.rhq.core.util.StringUtil.isNotBlank;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.io.File;
 import java.net.URL;
@@ -49,6 +47,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +62,7 @@ import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.ResourceTypeNotEnabledException;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
+import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
@@ -68,6 +70,7 @@ import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults.ResourceTypeFlyweight;
@@ -235,21 +238,27 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private final ResourceUpgradeDelegate resourceUpgradeDelegate = new ResourceUpgradeDelegate(this);
     private final PluginComponentFactory pluginFactory;
     private final EventManager eventManager;
-    private MeasurementManager measurementManager;
+    private final OperationManager operationManager;
+    private final MeasurementManager measurementManager;
+    private final ContentManager contentManager;
 
     /**
      * Constructs a new instance.
      * Call {@link #initialize()} once constructed.
      */
     public InventoryManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter,
-        PluginManager pluginManager, EventManager eventManager) {
+        PluginManager pluginManager) {
         super(DiscoveryAgentService.class, streamRemoter);
         this.configuration = configuration;
-        if (pluginManager == null)
+        if (pluginManager == null) {
             throw new NullPointerException("pluginManager is null");
+        }
         this.pluginManager = pluginManager;
-        this.pluginFactory = new PluginComponentFactory(this, pluginManager);
-        this.eventManager = eventManager;
+        pluginFactory = new PluginComponentFactory(this, pluginManager);
+        eventManager = new EventManager(configuration);
+        operationManager = new OperationManager(configuration, getStreamRemoter());
+        measurementManager = new MeasurementManager(configuration, getStreamRemoter(), this);
+        contentManager = new ContentManager(configuration, getStreamRemoter(), this);
         availabilityExecutor = new AvailabilityExecutor(this);
         serviceScanExecutor = new RuntimeDiscoveryExecutor(this, configuration);
         serverScanExecutor = new AutoDiscoveryExecutor(null, this);
@@ -281,9 +290,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             // Discover the platform first thing.
             executePlatformScan();
-
-            // Initialize measurement manager
-            measurementManager = new MeasurementManager(configuration, getStreamRemoter(), this);
 
             //try the resource upgrade before we have any schedulers set up
             //so that we don't get any interventions from concurrently running
@@ -1460,8 +1466,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.error("Cannot re-register with the agent, something bad is happening", e);
             }
         }
-
-        return;
     }
 
     /**
@@ -1514,7 +1518,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
             return;
         }
-        boolean scan = removeResourceAndIndicateIfScanIsNeeded(resourceContainer.getResource());
+        boolean scan = removeResourceAndIndicateIfScanIsNeeded(resourceContainer.getResource(), true);
 
         //only actually schedule the scanning when we are finished with resource upgrade. The resource upgrade
         //happens before any scanning infrastructure is established.
@@ -1530,7 +1534,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param resource the Resource to be removed
      * @return true if this method deleted things that requires a scan.
      */
-    boolean removeResourceAndIndicateIfScanIsNeeded(Resource resource) {
+    boolean removeResourceAndIndicateIfScanIsNeeded(Resource resource, boolean isRoot) {
         boolean scanIsNeeded = false;
 
         this.inventoryLock.writeLock().lock();
@@ -1539,25 +1543,27 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.debug("Removing [" + resource + "] from local inventory...");
             }
 
-            // this will deactivate the resource starting bottom-up - so this ends up as a no-op if we are being called
-            // recursively, but we need to do this now to ensure everything is stopped prior to removing them from inventory
-            deactivateResource(resource);
+            // deactivateResource recursively deactivates the resource and its children. No need to do this
+            // if we are recursing as well.
+            if (isRoot) {
+                deactivateResource(resource);
+            }
 
+            Set<Resource> children = getContainerChildren(resource);
             // see BZ 801432
             if (log.isDebugEnabled()) {
-                if (!resource.getChildResources().getClass().getName().contains("Collections$SetFromMap")) {
+                if ((children.size() > 0) && (!(children instanceof CopyOnWriteArraySet))) {
                     Exception e = new Exception(
-                        "Unexpected child set - if you see this, please notify support or log it in bugzilla"
-                            + resource.getChildResources().getClass().getName() + ":" + resource.getId() + ":"
-                            + resource.getName());
+                        "Unexpected child set - if you see this, please notify support or log it in bugzilla. "
+                            + children.getClass().getName() + ":" + resource.getId() + ":" + resource.getName()
+                            + ":numChildResources=" + children.size());
                     log.debug("[BZ 801432]", e);
                 }
             }
 
-            Set<Resource> children = getContainerChildren(resource);
             Set<Resource> tmp = new HashSet<Resource>(children);
             for (Resource child : tmp) {
-                scanIsNeeded |= removeResourceAndIndicateIfScanIsNeeded(child);
+                scanIsNeeded |= removeResourceAndIndicateIfScanIsNeeded(child, false);
             }
 
             Resource parent = resource.getParentResource();
@@ -1692,16 +1698,18 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 String resourceKey = upgradeResponse.getUpgradedResourceKey();
                 String name = upgradeResponse.getUpgradedResourceName();
                 String description = upgradeResponse.getUpgradedResourceDescription();
+                String version = upgradeResponse.getUpgradedResourceVersion();
                 Configuration pluginConfig = upgradeResponse.getUpgradedResourcePluginConfiguration();
 
                 //only bother if there's something to upgrade at all on this resource.
-                if (resourceKey != null || name != null || description != null || pluginConfig != null) {
+                if (resourceKey != null || name != null || version != null || description != null
+                    || pluginConfig != null) {
                     ResourceContainer existingResourceContainer = getResourceContainer(upgradeResponse.getResourceId());
                     if (existingResourceContainer != null) {
                         Resource existingResource = existingResourceContainer.getResource();
 
                         StringBuilder logMessage = new StringBuilder("Resource [").append(existingResource.toString())
-                            .append("] upgraded its ");
+                            .append("] upgraded [");
 
                         if (resourceKey != null) {
                             existingResource.setResourceKey(resourceKey);
@@ -1711,6 +1719,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         if (name != null) {
                             existingResource.setName(name);
                             logMessage.append("name, ");
+                        }
+
+                        if (version != null) {
+                            existingResource.setVersion(version);
+                            logMessage.append("version, ");
                         }
 
                         if (description != null) {
@@ -1723,7 +1736,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                             logMessage.append("pluginConfiguration, ");
                         }
 
-                        logMessage.replace(logMessage.length() - 1, logMessage.length(), "to become [")
+                        logMessage.replace(logMessage.length() - 1, logMessage.length(), "] to become [")
                             .append(existingResource.toString()).append("]");
 
                         log.info(logMessage.toString());
@@ -1737,11 +1750,21 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     public Resource mergeResourceFromDiscovery(Resource resource, Resource parent) throws PluginContainerException {
-        // If the Resource is already in inventory, make sure its version is up-to-date, then simply return the
-        // existing Resource.
+        // If the Resource is already in inventory, make sure its version is up to date. If the version
+        // has been updated make sure the plugin config is up-to-date.  Then simply return the existing Resource.
         Resource existingResource = findMatchingChildResource(resource, parent);
         if (existingResource != null) {
-            updateResourceVersion(existingResource, resource.getVersion());
+            if (mergeExistingResource(existingResource, resource)) {
+                try {
+                    refreshResourceComponentState(getResourceContainer(existingResource), true);
+                } catch (Exception e) {
+                    log.warn(
+                        "Failed to refresh resource component after version change. Resource="
+                            + existingResource
+                            + ". Will continue with old container. The resource may not perform as expected until after a plugin container restart.",
+                        e);
+                }
+            }
             return existingResource;
         }
 
@@ -1805,6 +1828,130 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     /**
+     * @param existingResource    Current resource for reskey X
+     * @param discoveredResource  Discovered resource for reskey X
+     * @return true if the version (and possibly pluginConfig) have been updated in the existing resource. Otherwise false.
+     */
+    private boolean mergeExistingResource(Resource existingResource, Resource discoveredResource) {
+        String existingVersion = existingResource.getVersion();
+        String discoveredVersion = discoveredResource.getVersion();
+        boolean versionChanged = (existingVersion != null) ? !existingVersion.equals(discoveredVersion)
+            : discoveredVersion != null && !discoveredVersion.isEmpty();
+        if (versionChanged) {
+            if (log.isDebugEnabled()) {
+                log.debug("Discovery reported that version of [" + existingResource + "] changed from ["
+                    + existingVersion + "] to [" + discoveredVersion + "]");
+            }
+
+            boolean versionUpdated = existingResource.getInventoryStatus() != InventoryStatus.COMMITTED
+                || mergeExistingResourceVersionOnServer(existingResource, discoveredVersion);
+
+            // If the version has been updated make sure we also update the plugin config if it has been updated.
+            if (versionUpdated) {
+                Configuration mergedPluginConfiguration = mergeExistingResourcePluginConfiguration(existingResource,
+                    discoveredResource.getPluginConfiguration());
+
+                // Only update the version in local inventory if the server syncs succeeded, otherwise we won't know
+                // to try again the next time this method is called.
+                // TODO: It would be safer to combine the two possible server syncs into one server/transaction
+                if (null != mergedPluginConfiguration) {
+                    existingResource.setVersion(discoveredVersion);
+                    existingResource.setPluginConfiguration(mergedPluginConfiguration);
+                    log.info("Version of [" + existingResource + "] changed from [" + existingVersion + "] to ["
+                        + discoveredVersion + "]");
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean mergeExistingResourceVersionOnServer(Resource resource, String newVersion) {
+        boolean versionUpdated = false;
+        ServerServices serverServices = this.configuration.getServerServices();
+        if (serverServices != null) {
+            try {
+                DiscoveryServerService discoveryServerService = serverServices.getDiscoveryServerService();
+                discoveryServerService.updateResourceVersion(resource.getId(), newVersion);
+                // Only update the version in local inventory if the server sync succeeded, otherwise we won't know
+                // to try again the next time this method is called.
+                versionUpdated = true;
+                if (log.isDebugEnabled()) {
+                    log.debug("New version for [" + resource + "] (" + newVersion
+                        + ") was successfully synced to the Server.");
+                }
+            } catch (Exception e) {
+                log.error("Failed to sync-to-Server new version for [" + resource + "]");
+            }
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Sync-to-Server of new version for [" + resource
+                    + "] cannot be done, because Plugin Container is not connected to Server.");
+            }
+        }
+        return versionUpdated;
+    }
+
+    private Configuration mergeExistingResourcePluginConfiguration(Resource resource, Configuration pluginConfig) {
+
+        // If there is no update necessary just return the current plugin config of the existing resource
+        Configuration result = resource.getPluginConfiguration();
+
+        ConfigurationDefinition configDef = resource.getResourceType().getPluginConfigurationDefinition();
+        if (null == configDef) {
+            return result;
+        }
+
+        Configuration existingPluginConfig = resource.getPluginConfiguration().deepCopy(false);
+        Configuration defaultPluginConfig = ConfigurationUtility.createDefaultConfiguration(configDef);
+        boolean configChanged = false;
+
+        // for each property, update the existing plugin config if discovery has set a non-default value
+        for (String propertyName : pluginConfig.getAllProperties().keySet()) {
+            Property discoveredProp = pluginConfig.get(propertyName);
+            Property defaultProp = defaultPluginConfig.get(propertyName);
+            if (!discoveredProp.equals(defaultProp)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Discovery reported a new version of " + resource + ". Updating value of config property"
+                        + " from [" + existingPluginConfig.get(propertyName) + "] to [" + discoveredProp + "].");
+                }
+                existingPluginConfig.put(discoveredProp);
+                configChanged = true;
+            }
+        }
+
+        if (configChanged) {
+            result = mergeExistingResourcePluginConfigurationOnServer(resource, existingPluginConfig);
+        }
+
+        return result;
+    }
+
+    private Configuration mergeExistingResourcePluginConfigurationOnServer(Resource resource,
+        Configuration updatedPluginConfig) {
+
+        Configuration result = null;
+        ServerServices serverServices = this.configuration.getServerServices();
+
+        if (serverServices != null) {
+            try {
+                ConfigurationServerService configServerService = serverServices.getConfigurationServerService();
+                result = configServerService.persistUpdatedPluginConfiguration(resource.getId(), updatedPluginConfig);
+            } catch (Exception e) {
+                log.error("Failed to sync-to-Server new plugin configuration for [" + resource + "]");
+            }
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Sync-to-Server of new plugin configuration for [" + resource
+                    + "] cannot be done, because Plugin Container is not connected to Server.");
+            }
+        }
+        return result;
+    }
+
+    /**
      * During initialization time, the inventory manager will active resources after loading them
      * from disk. Any other manager that starts up and is initialized after the Inventory Manager
      * is initialized will miss the activation notifications. This method is here so those managers
@@ -1834,8 +1981,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             this.inventoryLock.readLock().unlock();
             activatedResources.clear();
         }
-
-        return;
     }
 
     private ResourceContainer initResourceContainer(Resource resource) {
@@ -2291,12 +2436,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 inventoryFile.loadInventory();
 
                 this.platform = inventoryFile.getPlatform();
+                practiceSafeSets(this.platform);
                 this.resourceContainersByUUID.clear();
                 this.resourceContainerByResourceId.clear();
                 for (String uuid : inventoryFile.getResourceContainers().keySet()) {
                     ResourceContainer resourceContainer = inventoryFile.getResourceContainers().get(uuid);
                     this.resourceContainersByUUID.put(uuid, resourceContainer);
                     Resource resource = resourceContainer.getResource();
+                    practiceSafeSets(resource);
                     this.resourceContainerByResourceId.put(resource.getId(), resourceContainer);
                     compactResource(resource);
                 }
@@ -2316,6 +2463,20 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     + "it will resync its inventory once it can reconnect with a server.", e);
         } finally {
             this.inventoryLock.writeLock().unlock();
+        }
+    }
+
+    // Make sure the child resources are in our desired Set impl
+    private void practiceSafeSets(final Resource resource) {
+        Set<Resource> children = resource.getChildResources();
+        if (null == children) {
+            resource.setChildResources(new CopyOnWriteArraySet<Resource>());
+        } else if (!(children instanceof CopyOnWriteArraySet)) {
+            if (log.isDebugEnabled()) {
+                log.debug("Converting persisted childResources to CopyOnWriteArraySet from ["
+                    + children.getClass().getSimpleName() + "] for [" + resource.getName() + "]");
+            }
+            resource.setChildResources(new CopyOnWriteArraySet<Resource>(children));
         }
     }
 
@@ -2476,7 +2637,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (this.platform != null && this.platform.getResourceType() == type) {
             return this.platform;
         }
-        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
+        Set<Resource> childResources = new CopyOnWriteArraySet<Resource>(
+            Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>()));
         Resource platform = new Resource(childResources);
         platform.setResourceKey("testkey" + configuration.getContainerName());
         platform.setName("testplatform");
@@ -2626,9 +2788,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     @Override
     public void requestFullAvailabilityReport() {
-        if (null != availabilityExecutor) {
-            availabilityExecutor.sendFullReportNextTime();
-        }
+        availabilityExecutor.sendFullReportNextTime();
     }
 
     /**
@@ -2719,7 +2879,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.error("Error while invoking resource activated event on listener", t);
             }
         }
-        return;
     }
 
     private void fireResourceDeactivated(Resource resource) {
@@ -2743,7 +2902,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.error("Error while invoking resource deactivated event on listener", t);
             }
         }
-        return;
     }
 
     /**
@@ -2882,9 +3040,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.info("Resource ID is 0! Operation features will not work until the resource is synced with server");
         }
 
-        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
-        OperationContext operationContext = new OperationContextImpl(resource.getId(), operationManager);
-        return operationContext;
+        return new OperationContextImpl(resource.getId(), operationManager);
     }
 
     private ContentContext getContentContext(Resource resource) {
@@ -2907,9 +3063,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (resource.getId() == 0) {
             log.info("Resource ID is 0! Content features will not work until the resource is synced with server");
         }
-        ContentManager contentManager = PluginContainer.getInstance().getContentManager();
-        ContentContext contentContext = new ContentContextImpl(resource.getId(), contentManager);
-        return contentContext;
+
+        return new ContentContextImpl(resource.getId(), contentManager);
     }
 
     private AvailabilityContext getAvailabilityContext(Resource resource) {
@@ -2931,54 +3086,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (null == resource.getUuid() || resource.getUuid().isEmpty()) {
             log.error("RESOURCE UUID IS NOT SET! Inventory features may not work!");
         }
-
-        InventoryContext inventoryContext = new InventoryContextImpl(resource);
-        return inventoryContext;
-    }
-
-    private void updateResourceVersion(Resource resource, String version) {
-        String existingVersion = resource.getVersion();
-        boolean versionChanged = (existingVersion != null) ? !existingVersion.equals(version) : version != null
-            && !version.isEmpty();
-        if (versionChanged) {
-            if (log.isDebugEnabled()) {
-                log.debug("Discovery reported that version of [" + resource + "] changed from [" + existingVersion
-                    + "] to [" + version + "]");
-            }
-            boolean versionShouldBeUpdated = resource.getInventoryStatus() != InventoryStatus.COMMITTED
-                || updateResourceVersionOnServer(resource, version);
-            if (versionShouldBeUpdated) {
-                resource.setVersion(version);
-                log.info("Version of [" + resource + "] changed from [" + existingVersion + "] to [" + version + "]");
-            }
-        }
-    }
-
-    private boolean updateResourceVersionOnServer(Resource resource, String newVersion) {
-        boolean versionUpdated = false;
-        ServerServices serverServices = this.configuration.getServerServices();
-        if (serverServices != null) {
-            try {
-                DiscoveryServerService discoveryServerService = serverServices.getDiscoveryServerService();
-                discoveryServerService.updateResourceVersion(resource.getId(), newVersion);
-                // Only update the version in local inventory if the server sync succeeded, otherwise we won't know
-                // to try again the next time this method is called.
-                versionUpdated = true;
-                if (log.isDebugEnabled()) {
-                    log.debug("New version for [" + resource + "] (" + newVersion
-                        + ") was successfully synced to the Server.");
-                }
-            } catch (Exception e) {
-                log.error("Failed to sync-to-Server new version for [" + resource + "]");
-            }
-            // TODO: It would be cool to publish a Resource-version-changed Event here. (ips, 02/29/08)
-        } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Sync-to-Server of new version for [" + resource
-                    + "] cannot be done, because Plugin Container is not connected to Server.");
-            }
-        }
-        return versionUpdated;
+        return new InventoryContextImpl(resource, this);
     }
 
     private void processSyncInfo(Collection<ResourceSyncInfo> syncInfos, Set<Resource> syncedResources,
@@ -3126,7 +3234,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private Set<Resource> mergeModifiedResources(Set<Integer> modifiedResourceIds) {
         if (null == modifiedResourceIds || modifiedResourceIds.isEmpty()) {
-            return Collections.<Resource> emptySet();
+            return Collections.emptySet();
         }
 
         if (log.isDebugEnabled()) {
@@ -3148,7 +3256,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private Set<Resource> mergeUnknownResources(Set<ResourceSyncInfo> unknownResourceSyncInfos) {
         if (null == unknownResourceSyncInfos || unknownResourceSyncInfos.isEmpty()) {
-            return Collections.<Resource> emptySet();
+            return Collections.emptySet();
         }
 
         if (log.isDebugEnabled()) {
@@ -3250,7 +3358,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             for (Resource r : resourceBatch) {
                 //  protect against childResources notNull assumptions downstream
                 if (null == r.getChildResources()) {
-                    r.setChildResources(Collections.EMPTY_SET); // this will actually initialize to an empty Set
+                    r.setChildResources(new CopyOnWriteArraySet()); // this will actually initialize to an empty Set
                 }
                 compactResource(r);
                 resourceMap.put(r.getId(), r);
@@ -3465,10 +3573,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private void purgeObsoleteResources(Set<String> allUuids) {
         // Remove previously synchronized Resources that no longer exist in the Server's inventory...
         log.debug("Purging obsolete Resources...");
-        if (this.resourceContainersByUUID == null) {
-            log.debug("No containers present, immediately returning ..");
-            return;
-        }
         this.inventoryLock.writeLock().lock();
         try {
             int removedResources = 0;
@@ -3647,7 +3751,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return pluginManager;
     }
 
+    public EventManager getEventManager() {
+        return eventManager;
+    }
+
+    public OperationManager getOperationManager() {
+        return operationManager;
+    }
+
     public MeasurementManager getMeasurementManager() {
         return measurementManager;
+    }
+
+    public ContentManager getContentManager() {
+        return contentManager;
     }
 }

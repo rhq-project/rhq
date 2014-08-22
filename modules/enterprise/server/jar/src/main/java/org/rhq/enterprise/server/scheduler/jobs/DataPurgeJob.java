@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,58 +13,50 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.scheduler.jobs;
 
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.SimpleTrigger;
-import org.quartz.StatefulJob;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
-import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
-import org.rhq.enterprise.server.event.EventManagerLocal;
-import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
-import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
+import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.purge.PurgeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.TimingVoodoo;
-import org.rhq.server.metrics.MetricsServer;
-import org.rhq.server.metrics.domain.AggregateNumericMetric;
 
 /**
- * This implements {@link StatefulJob} (as opposed to {@link Job}) because we do not need nor want this job triggered
- * concurrently. That is, we don't want multiple data purge jobs performing the data purge at the same time.
+ * This implements {@link org.quartz.StatefulJob} (as opposed to {@link org.quartz.Job}) because we do not need nor want
+ * this job triggered concurrently. That is, we don't want multiple data purge jobs performing the data purge at the
+ * same time.
+ *
+ * Note, some of the work previously performed in this job has been moved to {@link DataCalcJob}.
  */
 public class DataPurgeJob extends AbstractStatefulJob {
     private static final Log LOG = LogFactory.getLog(DataPurgeJob.class);
 
-    private static long HOUR = 60 * 60 * 1000L;
+    private static final long HOUR = 60 * 60 * 1000L;
 
     /**
      * Schedules a purge job to trigger right now. This will not block - it schedules the job to trigger but immediately
      * returns. This method will ensure that no two data purge jobs will execute at the same time (Quartz will ensure
-     * this since {@link DataPurgeJob} is an implementation of {@link StatefulJob}).
+     * this since {@link DataPurgeJob} is an implementation of {@link org.quartz.StatefulJob}).
      *
      * @throws Exception if failed to schedule the data purge for immediate execution
      */
@@ -89,11 +81,8 @@ public class DataPurgeJob extends AbstractStatefulJob {
         try {
             Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
                 LookupUtil.getSubjectManager().getOverlord());
-            Iterable<AggregateNumericMetric> oneHourAggregates = compressMeasurementData();
             purgeEverything(systemConfig);
             performDatabaseMaintenance(LookupUtil.getSystemManager(), systemConfig);
-            calculateAutoBaselines(LookupUtil.getMeasurementBaselineManager());
-            calculateOOBs(oneHourAggregates);
         } catch (Exception e) {
             LOG.error("Data Purge Job FAILED TO COMPLETE. Cause: " + e);
         } finally {
@@ -102,36 +91,21 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private Iterable<AggregateNumericMetric> compressMeasurementData() {
-        long timeStart = System.currentTimeMillis();
-        LOG.info("Measurement data compression starting at " + new Date(timeStart));
-
-        try {
-            StorageClientManager storageClientManager = LookupUtil.getStorageClientManager();
-            MetricsServer metricsServer = storageClientManager.getMetricsServer();
-            return metricsServer.calculateAggregates();
-        } catch (Exception e) {
-            LOG.error("Failed to compress measurement data. Cause: " + e, e);
-            return Collections.emptyList();
-        } finally {
-            long duration = System.currentTimeMillis() - timeStart;
-            LOG.info("Measurement data compression completed in [" + duration + "]ms");
-        }
-    }
-
     private void purgeEverything(Properties systemConfig) {
-        purgeCallTimeData(LookupUtil.getCallTimeDataManager(), systemConfig);
-        purgeEventData(LookupUtil.getEventManager(), systemConfig);
-        purgeAlertData(LookupUtil.getAlertManager(), systemConfig);
+        PurgeManagerLocal purgeManager = LookupUtil.getPurgeManager();
+        purgeCallTimeData(purgeManager, systemConfig);
+        purgeEventData(purgeManager, systemConfig);
+        purgeAlertData(purgeManager, systemConfig);
         purgeUnusedAlertDefinitions(LookupUtil.getAlertDefinitionManager());
         purgeOrphanedAlertConditions(LookupUtil.getAlertConditionManager());
         purgeOrphanedAlertNotifications(LookupUtil.getAlertNotificationManager());
-        purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
-        purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
+        purgeMeasurementTraitData(purgeManager, systemConfig);
+        purgeAvailabilityData(purgeManager, systemConfig);
         purgeOrphanedDriftFiles(LookupUtil.getDriftManager(), systemConfig);
+        purgeOperationHistoryData(LookupUtil.getOperationManager(), systemConfig);
     }
 
-    private void purgeMeasurementTraitData(MeasurementDataManagerLocal measurementDataManager, Properties systemConfig) {
+    private void purgeMeasurementTraitData(PurgeManagerLocal purgeManager, Properties systemConfig) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Trait data purge starting at " + new Date(timeStart));
         int traitsPurged = 0;
@@ -147,7 +121,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
             }
 
             LOG.info("Purging traits that are older than " + new Date(threshold));
-            traitsPurged = measurementDataManager.purgeTraits(threshold);
+            traitsPurged = purgeManager.purgeTraits(threshold);
         } catch (Exception e) {
             LOG.error("Failed to purge trait data. Cause: " + e, e);
         } finally {
@@ -156,7 +130,34 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeAvailabilityData(AvailabilityManagerLocal availabilityManager, Properties systemConfig) {
+    private void purgeOperationHistoryData(OperationManagerLocal operationManager, Properties systemConfig) {
+        long timeStart = System.currentTimeMillis();
+        int purgeCount = 0;
+
+        try {
+            String purgeThresholdStr = systemConfig.getProperty(RHQConstants.OperationHistoryPurge, "0");
+            long purgeThreshold = Long.parseLong(purgeThresholdStr);
+            if (purgeThreshold <= 0) {
+                LOG.info("Operation History threshold set to 0, skipping purge of operation history data.");
+                return;
+            }
+
+            LOG.info("Operation History data purge starting at " + new Date(timeStart));
+            long threshold = timeStart - purgeThreshold;
+
+            Date purgeBeforeTime = new Date(threshold);
+            LOG.info("Purging operation history older than " + purgeBeforeTime);
+            purgeCount = operationManager.purgeOperationHistory(purgeBeforeTime);
+
+        } catch (Exception e) {
+            LOG.error("Failed to purge operation history data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Operation history data purged [" + purgeCount + "] - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void purgeAvailabilityData(PurgeManagerLocal purgeManager, Properties systemConfig) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Availability data purge starting at " + new Date(timeStart));
         int availsPurged = 0;
@@ -171,7 +172,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
                 threshold = timeStart - Long.parseLong(availPurgeThresholdStr);
             }
             LOG.info("Purging availablities that are older than " + new Date(threshold));
-            availsPurged = availabilityManager.purgeAvailabilities(threshold);
+            availsPurged = purgeManager.purgeAvailabilities(threshold);
         } catch (Exception e) {
             LOG.error("Failed to purge availability data. Cause: " + e, e);
         } finally {
@@ -180,7 +181,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeCallTimeData(CallTimeDataManagerLocal callTimeDataManager, Properties systemConfig) {
+    private void purgeCallTimeData(PurgeManagerLocal purgeManager, Properties systemConfig) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Measurement calltime data purge starting at " + new Date(timeStart));
         int calltimePurged = 0;
@@ -188,7 +189,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         try {
             long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.RtDataPurge));
             LOG.info("Purging calltime data that is older than " + new Date(threshold));
-            calltimePurged = callTimeDataManager.purgeCallTimeData(new Date(threshold));
+            calltimePurged = purgeManager.purgeCallTimeData(threshold);
         } catch (Exception e) {
             LOG.error("Failed to purge calltime data. Cause: " + e, e);
         } finally {
@@ -197,7 +198,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeEventData(EventManagerLocal eventManager, Properties systemConfig) {
+    private void purgeEventData(PurgeManagerLocal purgeManager, Properties systemConfig) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Event data purge starting at " + new Date(timeStart));
         int eventsPurged = 0;
@@ -205,7 +206,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         try {
             long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.EventPurge));
             LOG.info("Purging event data older than " + new Date(threshold));
-            eventsPurged = eventManager.purgeEventData(new Date(threshold));
+            eventsPurged = purgeManager.purgeEventData(threshold);
         } catch (Exception e) {
             LOG.error("Failed to purge event data. Cause: " + e, e);
         } finally {
@@ -214,7 +215,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeAlertData(AlertManagerLocal alertManager, Properties systemConfig) {
+    private void purgeAlertData(PurgeManagerLocal purgeManager, Properties systemConfig) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Alert data purge starting at " + new Date(timeStart));
         int alertsPurged = 0;
@@ -222,7 +223,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         try {
             long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.AlertPurge));
             LOG.info("Purging alert data older than " + new Date(threshold));
-            alertsPurged = alertManager.deleteAlerts(0, threshold);
+            alertsPurged = purgeManager.deleteAlerts(0, threshold);
         } catch (Exception e) {
             LOG.error("Failed to purge alert data. Cause: " + e, e);
         } finally {
@@ -342,45 +343,5 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
 
         return;
-    }
-
-    private void calculateAutoBaselines(MeasurementBaselineManagerLocal measurementBaselineManager) {
-        long timeStart = System.currentTimeMillis();
-        LOG.info("Auto-calculation of baselines starting at " + new Date(timeStart));
-
-        try {
-            measurementBaselineManager.calculateAutoBaselines();
-        } catch (Exception e) {
-            LOG.error("Failed to auto-calculate baselines. Cause: " + e, e);
-        } finally {
-            long duration = System.currentTimeMillis() - timeStart;
-            LOG.info("Auto-calculation of baselines completed in [" + duration + "]ms");
-        }
-    }
-
-    /**
-     * Calculate the OOB values for the last hour.
-     * This also removes outdated ones due to recalculated baselines.
-     */
-    public void calculateOOBs(Iterable<AggregateNumericMetric> oneHourAggregates) {
-
-        long timeStart = System.currentTimeMillis();
-        LOG.info("Auto-calculation of OOBs starting");
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        MeasurementOOBManagerLocal manager = LookupUtil.getOOBManager();
-        // purge oobs whose baseline just got recalculated
-        // For now just assume that our system is fast, so a cutoff of 30mins is ok,
-        // as the calculate baseline job runs hourly
-        long cutOff = System.currentTimeMillis() - (30L * 60L * 1000L);
-        manager.removeOutdatedOOBs(overlord, cutOff);
-
-        // clean up
-        LookupUtil.getSystemManager().vacuum(overlord, new String[] { "RHQ_MEASUREMENT_OOB" });
-
-        // Now caclulate the fresh OOBs
-        manager.computeOOBsForLastHour(overlord, oneHourAggregates);
-
-        long duration = System.currentTimeMillis() - timeStart;
-        LOG.info("Auto-calculation of OOBs completed in [" + duration + "]ms");
     }
 }

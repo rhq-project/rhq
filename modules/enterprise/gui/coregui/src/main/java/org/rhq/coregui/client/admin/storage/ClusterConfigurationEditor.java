@@ -21,8 +21,10 @@ package org.rhq.coregui.client.admin.storage;
 import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -33,10 +35,15 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.IntegerItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IsIntegerValidator;
 import com.smartgwt.client.widgets.form.validator.MatchesFieldValidator;
 import com.smartgwt.client.widgets.form.validator.Validator;
@@ -50,6 +57,7 @@ import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.coregui.client.components.form.StringLengthValidator;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
@@ -64,6 +72,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
     private EnhancedDynamicForm clusterForm;
     private EnhancedDynamicForm deploymentForm;
     private EnhancedDynamicForm credentialsForm;
+    private EnhancedDynamicForm regularSnapshotsForm;
     private EnhancedIButton saveButton;
     private StorageClusterSettings settings;
     private final boolean readOnly;
@@ -73,6 +82,12 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
     private static String FIELD_USERNAME = "username";
     private static String FIELD_PASSWORD = "password";
     private static String FIELD_PASSWORD_VERIFY = "verify_password";
+    private static String FIELD_SNAPSHOTS_ENABLED = "snapshots_enabled";
+    private static String FIELD_SNAPSHOTS_SCHEDULE = "snapshots_schedule";
+    private static String FIELD_SNAPSHOTS_RETENTION = "snapshots_retention";
+    private static String FIELD_SNAPSHOTS_COUNT = "snapshots_count";
+    private static String FIELD_SNAPSHOTS_DELETION = "snapshots_deletion";
+    private static String FIELD_SNAPSHOTS_LOCATION = "snapshots_location";
 
     public ClusterConfigurationEditor(boolean readOnly) {
         super();
@@ -136,7 +151,6 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         form.setColWidths(190, 220, "*");
         form.setIsGroup(true);
         form.setGroupTitle(groupTitle);
-        form.setBorder("1px solid #AAA");
         form.setWidth100();
         form.setOverflow(Overflow.VISIBLE);
         form.setExtraSpace(15);
@@ -151,12 +165,12 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
 
     private void prepareForms() {
         setWidth100();
-        clusterForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'>"
-            + "<b>" + MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings() + "</b></span><br/>"
+        clusterForm = buildForm("<div align='left' class='storageConfig'><div>"
+            + MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings() + "</div><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings_desc() + "</div>");
 
         List<FormItem> items = buildHeaderItems();
-        IsIntegerValidator validator = new IsIntegerValidator();
+        Validator validator = new IsIntegerValidator();
 
         // cql port field
         FormItemBuilder builder = new FormItemBuilder();
@@ -176,10 +190,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         items.addAll(gossipPortItems);
         clusterForm.setFields(items.toArray(new FormItem[items.size()]));
 
-        deploymentForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'>"
-            + "<b>"
-            + MSG.view_adminTopology_storageNodes_clusterSettings_deployments()
-            + "</b></span><br/>"
+        deploymentForm = buildForm("<div align='left' class='storageConfig'><div>"
+            + MSG.view_adminTopology_storageNodes_clusterSettings_deployments() + "</div><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_deployments_desc() + "</div>");
         FormItemBuilder.resetOddRow();
         items = buildHeaderItems();
@@ -201,10 +213,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         items.addAll(automaticDeploymentItems);
         deploymentForm.setFields(items.toArray(new FormItem[items.size()]));
 
-        credentialsForm = buildForm("<div align='left'><span style='text-align: left; font-family: Arial, Verdana, sans-serif !important;'>"
-            + "<b>"
-            + MSG.view_adminTopology_storageNodes_clusterSettings_credentials()
-            + "</b></span><br/>"
+        credentialsForm = buildForm("<div align='left' class='storageConfig'><div>"
+            + MSG.view_adminTopology_storageNodes_clusterSettings_credentials() + "</div><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_credentials_desc() + "</div>");
         FormItemBuilder.resetOddRow();
         items = buildHeaderItems();
@@ -212,8 +222,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         // username field
         StringLengthValidator usernameValidator = new StringLengthValidator(4, 100, false);
         builder = new FormItemBuilder();
-        List<FormItem> usernameItems = builder.withName(FIELD_USERNAME)
-            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_username_title())
+        List<FormItem> usernameItems = builder.withName(FIELD_USERNAME).withTitle(MSG.common_title_username())
             .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_username())
             .withValue(settings.getUsername()).withReadOnlySetTo(true).withValidators(usernameValidator).build();
         items.addAll(usernameItems);
@@ -224,11 +233,10 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         // due to SmartGWT bug that changes focus after each input (https://code.google.com/p/smartgwt/issues/detail?id=309)
         passwordValidator1.setValidateOnChange(false);
         builder = new FormItemBuilder();
-        List<FormItem> passwordItems = builder.withName(FIELD_PASSWORD)
-            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_password_title())
+        List<FormItem> passwordItems = builder.withName(FIELD_PASSWORD).withTitle(MSG.common_title_password())
             .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_password())
             .withValue(settings.getPasswordHash()).withReadOnlySetTo(readOnly).withValidators(passwordValidator1)
-            .build((FormItem) GWT.create(PasswordItem.class));
+            .withAttribute("autocomplete", "off").build((FormItem) GWT.create(PasswordItem.class));
         items.addAll(passwordItems);
 
         // password_verify field
@@ -246,19 +254,105 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             .withValue(settings.getPasswordHash())
             .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_verify())
             .withReadOnlySetTo(readOnly).withValidators(passwordValidator1, passwordValidator2)
-            .build((FormItem) GWT.create(PasswordItem.class));
+            .withAttribute("autocomplete", "off").build((FormItem) GWT.create(PasswordItem.class));
 
         items.addAll(passwordVerifyItems);
         credentialsForm.setFields(items.toArray(new FormItem[items.size()]));
+
+        validator = new IntegerRangeValidator();
+        ((IntegerRangeValidator) validator).setMin(0);
+
+        regularSnapshotsForm = buildForm("<div align='left' class='storageConfig'><div>"
+            + MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement() + "</div><div>"
+            + MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_desc() + "</div>");
+        FormItemBuilder.resetOddRow();
+        items = buildHeaderItems();
+
+        builder = new FormItemBuilder();
+        List<FormItem> snapshotsEnabledFormItems = builder.withName(FIELD_SNAPSHOTS_ENABLED)
+            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_enabled_title())
+            .withValue(Boolean.toString(settings.getRegularSnapshots().getEnabled()))
+            .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_enabled_desc())
+            .build((FormItem) GWT.create(RadioGroupItem.class));
+        RadioGroupItem snapshotsEnabledRadio = (RadioGroupItem) snapshotsEnabledFormItems.get(1);
+        snapshotsEnabledRadio.setVertical(false);
+        values = new LinkedHashMap<String, String>(2);
+        values.put("true", "On");
+        values.put("false", "Off");
+        snapshotsEnabledRadio.setValueMap(values);
+        snapshotsEnabledRadio.setValue(settings.getRegularSnapshots().getEnabled());
+        items.addAll(snapshotsEnabledFormItems);
+
+        List<FormItem> snapshotsScheduleFormItems = builder.withName(FIELD_SNAPSHOTS_SCHEDULE)
+            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_schedule_title())
+            .withValue(settings.getRegularSnapshots().getSchedule())
+            .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_schedule_desc())
+            .build();
+        items.addAll(snapshotsScheduleFormItems);
+
+        List<FormItem> snapshotsRetentionFormItems = new FormItemBuilder().withName(FIELD_SNAPSHOTS_RETENTION)
+            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_retention_title())
+            .withValue(settings.getRegularSnapshots().getRetention())
+            .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_retention_desc())
+            .build(new SelectItem());
+        SelectItem snapshotsRetentionSelect = (SelectItem) snapshotsRetentionFormItems.get(1);
+        snapshotsRetentionSelect.setValueMap("Keep All", "Keep Last N", "Delete Older Than N days");
+        items.addAll(snapshotsRetentionFormItems);
+
+        List<FormItem> snapshotsCountFormItems = new FormItemBuilder().withName(FIELD_SNAPSHOTS_COUNT)
+            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_count_title())
+            .withValue(String.valueOf(settings.getRegularSnapshots().getCount()))
+            .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_count_desc())
+            .withReadOnlySetTo("Keep All".equals(settings.getRegularSnapshots().getRetention()))
+            .withValidators(validator).build(new IntegerItem());
+        items.addAll(snapshotsCountFormItems);
+
+        final FormItem snapshotsCountNumber = snapshotsCountFormItems.get(1);
+
+        snapshotsRetentionSelect.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                snapshotsCountNumber.setDisabled("Keep All".equals(event.getValue()));
+            }
+        });
+
+        List<FormItem> snapshotsDeletionFormItems = new FormItemBuilder().withName(FIELD_SNAPSHOTS_DELETION)
+            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_deletion_title())
+            .withValue(settings.getRegularSnapshots().getDeletion())
+            .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_deletion_desc())
+            .build(new SelectItem());
+        SelectItem snapshotsDeletionSelect = (SelectItem) snapshotsDeletionFormItems.get(1);
+        snapshotsDeletionSelect.setValueMap("Delete", "Move");
+        items.addAll(snapshotsDeletionFormItems);
+
+        List<FormItem> snapshotsLocationFormItems = new FormItemBuilder().withName(FIELD_SNAPSHOTS_LOCATION)
+            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_location_title())
+            .withValue(settings.getRegularSnapshots().getLocation())
+            .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_snapshotManagement_location_desc())
+            .withRequiredSetTo(false)
+            .withReadOnlySetTo("Delete".equals(settings.getRegularSnapshots().getDeletion()))
+            .build();
+        items.addAll(snapshotsLocationFormItems);
+        final FormItem snapshotsLocationText = snapshotsLocationFormItems.get(1);
+
+        snapshotsDeletionSelect.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                snapshotsLocationText.setDisabled("Delete".equals(event.getValue()));
+            }
+        });
+
+        regularSnapshotsForm.setFields(items.toArray(new FormItem[items.size()]));
 
         LayoutSpacer spacer = new LayoutSpacer();
         spacer.setWidth100();
 
         ToolStrip toolStrip = buildToolStrip();
-        setMembers(clusterForm, deploymentForm, credentialsForm, spacer, toolStrip);
+        setMembers(clusterForm, deploymentForm, credentialsForm, regularSnapshotsForm, spacer, toolStrip);
         clusterForm.validate();
         deploymentForm.validate();
         credentialsForm.validate();
+        regularSnapshotsForm.validate();
         markForRedraw();
     }
 
@@ -268,10 +362,11 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
     }
 
     private EnhancedToolStrip buildToolStrip() {
-        saveButton = new EnhancedIButton(MSG.common_button_save());
+        saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                if (clusterForm.validate() && deploymentForm.validate() && credentialsForm.validate()) {
+                if (clusterForm.validate() && deploymentForm.validate() && credentialsForm.validate()
+                    && regularSnapshotsForm.validate()) {
                     SC.ask(MSG.view_adminTopology_storageNodes_clusterSettings_message_confirmation(),
                         new BooleanCallback() {
                             @Override
@@ -306,6 +401,15 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         settings.setUsername(wannabeUsername.equals(settings.getUsername()) ? null : wannabeUsername);
         String wannabePassword = credentialsForm.getValueAsString(FIELD_PASSWORD);
         settings.setPasswordHash(wannabePassword.equals(settings.getPasswordHash()) ? null : wannabePassword);
+
+        settings.getRegularSnapshots().setEnabled(
+            Boolean.parseBoolean(regularSnapshotsForm.getValueAsString(FIELD_SNAPSHOTS_ENABLED)));
+        settings.getRegularSnapshots().setSchedule(regularSnapshotsForm.getValueAsString(FIELD_SNAPSHOTS_SCHEDULE));
+        settings.getRegularSnapshots().setRetention(regularSnapshotsForm.getValueAsString(FIELD_SNAPSHOTS_RETENTION));
+        settings.getRegularSnapshots().setCount(
+            Integer.parseInt(regularSnapshotsForm.getValueAsString(FIELD_SNAPSHOTS_COUNT)));
+        settings.getRegularSnapshots().setDeletion(regularSnapshotsForm.getValueAsString(FIELD_SNAPSHOTS_DELETION));
+        settings.getRegularSnapshots().setLocation(regularSnapshotsForm.getValueAsString(FIELD_SNAPSHOTS_LOCATION));
         return settings;
     }
 
@@ -316,11 +420,23 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         private String description;
         private Validator[] validators;
         private boolean readOnly;
+        private boolean required = true;
+        private Map<String, Object> attributes = new HashMap<String, Object>();
 
         private static boolean oddRow = true;
 
         public static void resetOddRow() {
             oddRow = true;
+        }
+
+        public FormItemBuilder withAttribute(String name, Object value) {
+            attributes.put(name, value);
+            return this;
+        }
+
+        public FormItemBuilder withRequiredSetTo(boolean required) {
+            this.required = required;
+            return this;
         }
 
         public FormItemBuilder withName(String name) {
@@ -376,7 +492,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             valueItem.setValidateOnChange(true);
             valueItem.setAlign(Alignment.CENTER);
             valueItem.setShowTitle(false);
-            valueItem.setRequired(true);
+            valueItem.setRequired(required);
             valueItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
             valueItem.setDisabled(readOnly);
             fields.add(valueItem);
@@ -389,6 +505,9 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             fields.add(descriptionItem);
 
             oddRow = !oddRow;
+            for (Map.Entry<String, Object> e : attributes.entrySet()) {
+                valueItem.setAttribute(e.getKey(), e.getValue());
+            }
             return fields;
         }
 

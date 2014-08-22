@@ -60,6 +60,7 @@ import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -161,8 +162,8 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
 
     private Canvas getActionLayout() {
         EnhancedVLayout actionLayout = new EnhancedVLayout(10);
-        IButton deleteButton = new EnhancedIButton(MSG.common_button_delete());
-        deleteButton.setIcon("subsystems/bundle/BundleVersionAction_Delete_16.png");
+        IButton deleteButton = new EnhancedIButton(MSG.common_button_delete(), ButtonColor.RED);
+        //deleteButton.setIcon("subsystems/bundle/BundleVersionAction_Delete_16.png");
         deleteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 SC.ask(MSG.view_bundle_version_deleteConfirm(), new BooleanCallback() {

@@ -103,6 +103,7 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
     public static final String PLUGIN_CONFIG_START_SCRIPT = "startScript";
     public static final String START_WAIT_MAX_PROP = "startWaitMax";
     public static final String STOP_WAIT_MAX_PROP = "stopWaitMax";
+    public static final String PLUGIN_CONFIG_SERVICE_NAME="serviceName";
 
     private Log log = LogFactory.getLog(this.getClass());
 
@@ -427,6 +428,12 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
         String script = pluginConfig.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, "");
         File scriptFile = resolvePathRelativeToHomeDir(script);
         return scriptFile;
+    }
+
+    public String getServiceName() {
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        String servicename = pluginConfig.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_SERVICE_NAME, null);
+        return servicename;
     }
 
     private File resolvePathRelativeToHomeDir(@NotNull

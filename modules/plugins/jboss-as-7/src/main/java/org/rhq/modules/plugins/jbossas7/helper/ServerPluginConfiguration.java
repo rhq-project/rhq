@@ -19,6 +19,8 @@
 
 package org.rhq.modules.plugins.jbossas7.helper;
 
+import static org.rhq.modules.plugins.jbossas7.util.SecurityUtil.loadKeystore;
+
 import java.io.File;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -68,6 +70,32 @@ public class ServerPluginConfiguration {
 
     public ServerPluginConfiguration(Configuration pluginConfig) {
         this.pluginConfig = pluginConfig;
+    }
+
+    public Configuration getPluginConfig() {
+        return pluginConfig;
+    }
+
+    /**
+     * returns detected path based on given path name 
+     * @see <a href="https://docs.jboss.org/author/display/AS7/Admin+Guide#AdminGuide-Paths">https://docs.jboss.org/author/display/AS7/Admin+Guide#AdminGuide-Paths</a>
+     * @param pathName - is path name defined in AS7 config xml file
+     * @return File representing absolute path, return null if given pathName is not known
+     */
+    public File getPath(String pathName) {
+        if ("jboss.home.dir".equals(pathName)) {
+            return getHomeDir();
+        }
+        if ("jboss.server.base.dir".equals(pathName) || "jboss.domain.base.dir".equals(pathName)) {
+            return getBaseDir();
+        }
+        if ("jboss.server.config.dir".equals(pathName) || "jboss.domain.config.dir".equals(pathName)) {
+            return getConfigDir();
+        }
+        if ("jboss.server.log.dir".equals(pathName) || "jboss.domain.log.dir".equals(pathName)) {
+            return getLogDir();
+        }
+        return null;
     }
 
     public String getHostname() {
@@ -185,8 +213,8 @@ public class ServerPluginConfiguration {
     }
 
     public void setHostConfigFile(File hostConfigFile) {
-        this.pluginConfig.setSimpleValue(Property.HOST_CONFIG_FILE, (hostConfigFile != null) ?
-                hostConfigFile.toString() : null);
+        this.pluginConfig.setSimpleValue(Property.HOST_CONFIG_FILE,
+            (hostConfigFile != null) ? hostConfigFile.toString() : null);
     }
 
     @Deprecated
@@ -199,11 +227,11 @@ public class ServerPluginConfiguration {
     }
 
     public TrustStrategy getTrustStrategy() {
-        return TrustStrategy.findByName(pluginConfig.getSimpleValue(Property.TRUST_STRATEGY));
+        return TrustStrategy.findByName(pluginConfig.getSimpleValue(Property.TRUST_STRATEGY, TrustStrategy.STANDARD.name));
     }
 
     public HostnameVerification getHostnameVerification() {
-        return HostnameVerification.findByName(pluginConfig.getSimpleValue(Property.HOSTNAME_VERIFICATION));
+        return HostnameVerification.findByName(pluginConfig.getSimpleValue(Property.HOSTNAME_VERIFICATION, HostnameVerification.STRICT.name));
     }
 
     public String getTruststoreType() {
@@ -245,6 +273,10 @@ public class ServerPluginConfiguration {
      * @throws InvalidPluginConfigurationException if settings are incorrect
      */
     public void validate() {
+        if (getPort() == null || getPort() <= 0) {
+            throw new InvalidPluginConfigurationException(
+                "Unable to detect management port. Please enable management HTTP interface on and then set correct port number in Connection Settings of this resource");
+        }
         if (isSecure()) {
             String truststore = getTruststore();
             if (truststore != null) {
@@ -259,7 +291,12 @@ public class ServerPluginConfiguration {
                 try {
                     KeyStore.getInstance(truststoreType);
                 } catch (KeyStoreException e) {
-                    throw new InvalidPluginConfigurationException("Truststore type not supported: " + e.getMessage(), e);
+                    throw new InvalidPluginConfigurationException("Truststore type not supported: " + e.getMessage());
+                }
+                try {
+                    loadKeystore(truststoreType, truststore, getTruststorePassword());
+                } catch (Exception e) {
+                    throw new InvalidPluginConfigurationException("Cannot read the truststore: " + e.getMessage());
                 }
             }
             if (isClientcertAuthentication()) {
@@ -279,7 +316,12 @@ public class ServerPluginConfiguration {
                 try {
                     KeyStore.getInstance(keystoreType);
                 } catch (KeyStoreException e) {
-                    throw new InvalidPluginConfigurationException("Keystore type not supported: " + e.getMessage(), e);
+                    throw new InvalidPluginConfigurationException("Keystore type not supported: " + e.getMessage());
+                }
+                try {
+                    loadKeystore(keystoreType, keystore, getKeystorePassword());
+                } catch (Exception e) {
+                    throw new InvalidPluginConfigurationException("Cannot read the keystore: " + e.getMessage());
                 }
             }
         }

@@ -135,6 +135,15 @@
                     <c:simple-property name="value" />
                 </c:map-property>
             </c:list-property>
+
+            <c:simple-property
+               name="serviceName"
+               displayName="Service name"
+               type="string"
+               required="false"
+               description="In case of multiple tomcat installations in the same box it is possible
+                            to do have several service files like tomcat1, tomcat2 etc.
+                            Put here the name you are using."/>
          </c:group>
 
          <c:group
@@ -517,11 +526,6 @@
                      name="compilerClasspath"
                      type="string"
                      description="The compiler classpath to use"
-                     required="false" />
-                  <c:simple-property
-                     name="configFile"
-                     type="string"
-                     description="The location of the context.xml resource or file Note: Does not exist in Tomcat 7 (return type changed to URL)" 
                      required="false" />
                   <c:simple-property
                      name="crossContext"

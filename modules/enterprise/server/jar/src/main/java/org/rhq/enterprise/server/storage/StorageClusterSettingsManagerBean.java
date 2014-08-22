@@ -6,10 +6,12 @@ import javax.ejb.Stateless;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.StorageClusterSettings;
+import org.rhq.core.domain.cloud.StorageClusterSettings.RegularSnapshots;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.server.metrics.StorageSession;
 
 /**
@@ -65,6 +67,18 @@ public class StorageClusterSettingsManagerBean implements StorageClusterSettings
             clusterSettings.setPasswordHash(settings.get(SystemSetting.STORAGE_PASSWORD));
         }
 
+        if (!settings.containsKey(SystemSetting.STORAGE_REGULAR_SNAPSHOTS)) {
+            return null; // why?
+        } else {
+            RegularSnapshots rs = new RegularSnapshots();
+            clusterSettings.setRegularSnapshots(rs);
+            rs.setEnabled(Boolean.parseBoolean(settings.get(SystemSetting.STORAGE_REGULAR_SNAPSHOTS)));
+            rs.setSchedule(settings.get(SystemSetting.STORAGE_REGULAR_SNAPSHOTS_SCHEDULE));
+            rs.setRetention(settings.get(SystemSetting.STORAGE_REGULAR_SNAPSHOTS_RETENTION));
+            rs.setCount(Integer.parseInt(settings.get(SystemSetting.STORAGE_REGULAR_SNAPSHOTS_RETENTION_COUNT)));
+            rs.setDeletion(settings.get(SystemSetting.STORAGE_REGULAR_SNAPSHOTS_DELETION));
+            rs.setLocation(settings.get(SystemSetting.STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION));
+        }
         return clusterSettings;
     }
 
@@ -85,7 +99,18 @@ public class StorageClusterSettingsManagerBean implements StorageClusterSettings
             this.updateStorageClusterCredentials(clusterSettings);
             settings.put(SystemSetting.STORAGE_PASSWORD, clusterSettings.getPasswordHash());
         }
+        if (clusterSettings.getRegularSnapshots() != null) {
+            RegularSnapshots rs = clusterSettings.getRegularSnapshots();
+            settings.put(SystemSetting.STORAGE_REGULAR_SNAPSHOTS, Boolean.toString(rs.getEnabled()));
+            settings.put(SystemSetting.STORAGE_REGULAR_SNAPSHOTS_SCHEDULE, rs.getSchedule());
+            settings.put(SystemSetting.STORAGE_REGULAR_SNAPSHOTS_RETENTION, rs.getRetention());
+            settings.put(SystemSetting.STORAGE_REGULAR_SNAPSHOTS_RETENTION_COUNT, Integer.toString(rs.getCount()));
+            settings.put(SystemSetting.STORAGE_REGULAR_SNAPSHOTS_DELETION, rs.getDeletion());
+            settings.put(SystemSetting.STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION, rs.getLocation());
+        }
         systemManager.setStorageClusterSettings(subject, settings);
+        LookupUtil.getStorageNodeManager().scheduleSnapshotManagement(subject, clusterSettings);
+
     }
 
     private void updateStorageClusterCredentials(StorageClusterSettings newClusterSettings) {

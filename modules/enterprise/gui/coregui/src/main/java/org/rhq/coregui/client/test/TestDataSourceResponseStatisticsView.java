@@ -46,6 +46,7 @@ import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.rpc.DataSourceResponseStatistics;
 
 /**
@@ -148,7 +149,7 @@ public class TestDataSourceResponseStatisticsView extends Table {
         getListGrid().setFields(timestamp, reqId, status, totalRows, startRow, endRow);
         refresh();
 
-        addTableAction("Toggle On/Off", MSG.common_msg_areYouSure(), new AbstractTableAction(
+        addTableAction("Toggle On/Off", MSG.common_msg_areYouSure(), ButtonColor.BLUE, new AbstractTableAction(
             TableActionEnablement.ALWAYS) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -170,7 +171,7 @@ public class TestDataSourceResponseStatisticsView extends Table {
             }
         });
 
-        addTableAction(MSG.common_button_delete_all(), MSG.common_msg_areYouSure(), new AbstractTableAction(
+        addTableAction(MSG.common_button_delete_all(), MSG.common_msg_areYouSure(), ButtonColor.RED, new AbstractTableAction(
             TableActionEnablement.ALWAYS) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -233,7 +234,8 @@ public class TestDataSourceResponseStatisticsView extends Table {
                 }
             });
 
-            addTableAction("Refresh Timer", null, timerValues, new AbstractTableAction(TableActionEnablement.ALWAYS) {
+            addTableAction("Refresh Timer", null, timerValues, ButtonColor.GRAY, new AbstractTableAction(
+                TableActionEnablement.ALWAYS) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
 

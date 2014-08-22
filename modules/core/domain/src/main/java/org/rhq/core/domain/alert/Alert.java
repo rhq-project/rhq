@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.core.domain.alert;
 
 import java.io.Serializable;
@@ -215,6 +216,10 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 @Table(name = "RHQ_ALERT")
 public class Alert implements Serializable {
     public static final String QUERY_FIND_BY_MEASUREMENT_DEFINITION_ID = "Alert.findByMeasurementDefinitionId";
+    /**
+     * @deprecated as of RHQ 4.13, no longer used
+     */
+    @Deprecated
     public static final String QUERY_DELETE_BY_CTIME = "Alert.deleteByCTime";
     public static final String QUERY_RETURN_EXISTING_IDS = "Alert.returnExistingIds";
     public static final String QUERY_CHECK_PERMISSION_BY_IDS = "Alert.checkPermissionByIds";
@@ -233,6 +238,10 @@ public class Alert implements Serializable {
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCE = "Alert.findByMeasDefIdAndResource";
     public static final String QUERY_GET_ALERT_COUNT_FOR_SCHEDULES = "Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES";
 
+    /**
+     * @deprecated as of RHQ 4.13, no longer used
+     */
+    @Deprecated
     public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT";
 
     // for subsystem view
@@ -253,7 +262,7 @@ public class Alert implements Serializable {
     @ManyToOne
     private AlertDefinition alertDefinition;
 
-    @OneToMany(mappedBy = "alert", cascade = CascadeType.ALL, orphanRemoval=true)
+    @OneToMany(mappedBy = "alert", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy
     // primary key
     private Set<AlertConditionLog> conditionLogs = new LinkedHashSet<AlertConditionLog>();

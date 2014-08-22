@@ -641,6 +641,20 @@ public class SetupPromptCommand implements AgentPromptCommand {
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONTENTDISCOVERYTHREADCOUNT_HELP)));
 
         instr.add(new DefaultSetupInstruction(
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_DEFAULT,
+            new LongSetupValidityChecker(1L, null), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_PROMPT),
+            SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_HELP)));
+
+        instr.add(new DefaultSetupInstruction(
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINTERVAL_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINTERVAL_DEFAULT,
+            new LongSetupValidityChecker(0L, null), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINTERVAL_PROMPT),
+            SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINTERVAL_HELP)));
+
+        instr.add(new DefaultSetupInstruction(
             AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYPERIOD_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYPERIOD_DEFAULT,
             new LongSetupValidityChecker(0L, null), SETUPMSG
@@ -648,11 +662,11 @@ public class SetupPromptCommand implements AgentPromptCommand {
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYPERIOD_HELP)));
 
         instr.add(new DefaultSetupInstruction(
-            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_PREF,
-            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_DEFAULT,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYLIMIT_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYLIMIT_DEFAULT,
             new LongSetupValidityChecker(1L, null), SETUPMSG
-                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_PROMPT),
-            SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_HELP)));
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYLIMIT_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYLIMIT_HELP)));
 
         instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTSENDERPERIOD_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTSENDERPERIOD_DEFAULT, new LongSetupValidityChecker(

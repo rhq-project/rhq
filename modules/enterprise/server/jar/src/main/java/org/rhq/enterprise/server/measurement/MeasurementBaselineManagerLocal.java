@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,8 @@
  */
 package org.rhq.enterprise.server.measurement;
 
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.Local;
 
@@ -66,35 +67,34 @@ public interface MeasurementBaselineManagerLocal extends MeasurementBaselineMana
     /**
      * <strong>Note</strong> This method exists only for transaction demarcation.
      *
-     * @return A list of schedules that do not have baselines. This list is not assumed
-     * to be an exhaustive list of schedules that lack a baseline. As such, this method
-     * will be called repeatedly during baseline calculations to get all of the necessary
-     * schedules.
+     * @return The Set of of enabled, numeric, schedules that do not have baselines.
      */
-    List<Integer> getSchedulesWithoutBaselines();
+    Set<Integer> getSchedulesWithoutBaselines();
 
     /**
-     * Given a list of schedules, this method calculates and stores baselines using the
+     * Given a list of scheduleIds, this method calculates and stores baselines using the
      * amount of 1 hr data specified and older than the time specified.
      * <br/><br/>
      * <strong>Note</strong> This method exists only for transaction demarcation.
      *
-     * @param schedules The schedules that do not yet have baselines
+     * @param scheduleIds The schedules that do not yet have baselines
      * @param olderThan Use 1 hr data prior to this time
      * @param amountOfData  The amount of data to use for calculating baselines. This value
      *                      is treated as a duration. For example, a value of 259200000
      *                      would be treated as 3 days.
      */
-    void calculateBaselines(List<Integer> schedules, long olderThan, long amountOfData);
+    void calculateBaselines(Set<Integer> scheduleIds, long olderThan, long amountOfData);
 
     /**
      * Persists the newly calculated baselines.
      * <br/><br/>
      * <strong>Note</strong> This method exists only for transaction demarcation.
      *
-     * @param baselines The baselines to persist.
+     * @param scheduleIds the scheduleIds for whom we want to persist baselines (a subset of baselines.keyset,
+     * we may not save them all in one call to this method)
+     * @param baselines Map of scheduleIds to The baselines to persist.
      */
-    void saveNewBaselines(List<MeasurementBaseline> baselines);
+    void saveNewBaselines(Set<Integer> scheduleIds, Map<Integer, MeasurementBaseline> baselines);
 
     MeasurementBaseline getBaselineIfEqual(Subject subject, int groupId, int definitionId);
 

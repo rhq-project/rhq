@@ -87,7 +87,7 @@
                   <rich:columnGroup>
                      <rich:column colspan="#{param.debug ? 4 : 3}" width="100%">
 
-                        <ui:include src="/rhq/resource/include/pagination.xhtml">
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml">
                            <ui:param name="paginationDataTableName" value="resourcePackageVersionsDataTable"/>
                            <ui:param name="paginationDataModel" value="#{resourcePackageVersionsDataModel}"/>
                            <ui:param name="paginationPageControl" value="#{PageControl.ResourcePackageVersionsList}"/>

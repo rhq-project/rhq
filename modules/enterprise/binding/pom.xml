@@ -3,10 +3,10 @@
     <parent>
         <artifactId>rhq-enterprise-parent</artifactId>
         <groupId>org.rhq</groupId>
-        <version>4.12.0-SNAPSHOT</version>
+        <version>4.13.0-SNAPSHOT</version>
     </parent>
     <artifactId>rhq-script-bindings</artifactId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
     <name>RHQ Script Bindings</name>
     <description>Abstraction of different facilities and default configurations for script bindings</description>
 
@@ -93,8 +93,8 @@
                     <artifactId>dom4j</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>gnu-getopt</groupId>
-                    <artifactId>getopt</artifactId>
+                    <groupId>gnu.getopt</groupId>
+                    <artifactId>java-getopt</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>jboss</groupId>

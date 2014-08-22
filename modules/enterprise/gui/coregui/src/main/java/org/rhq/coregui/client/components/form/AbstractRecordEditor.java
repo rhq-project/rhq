@@ -48,11 +48,12 @@ import org.rhq.coregui.client.ViewPath;
 import org.rhq.coregui.client.components.TitleBar;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.RPCDataSource;
-import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * An editor for a SmartGWT {@link Record} backed by an {@link RPCDataSource}.
@@ -454,7 +455,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Enh
             hLayout.setMembersMargin(10);
             vLayout.addMember(hLayout);
 
-            saveButton = new EnhancedIButton(MSG.common_button_save());
+            saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
             saveButton.setDisabled(true);
             saveButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {

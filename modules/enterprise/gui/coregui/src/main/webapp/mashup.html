@@ -1,0 +1,108 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Mashup</title>
+<link rel="stylesheet" href="css/patternfly.min.css" />
+<style>
+body { padding-left: 10px;}
+h3.title, h4.title {padding-left: 8px;}
+ul {margin-left: -4px;}
+.panel-title a {
+  font-size: 11px;
+}
+.bottom-border {
+  margin-bottom: 14px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid #ccc;
+}
+:focus {
+  outline: 0px !important; /* removing the dotted outline globally */
+}
+.scroll-pane {
+  width: 100%;
+  height: 257px;
+  overflow: auto;
+}
+</style>
+
+<!-- styles needed by jScrollPane -->
+<link type="text/css" href="css/jquery.jscrollpane.css" rel="stylesheet" media="all" />
+</head>
+<body>
+<script src="js/jquery-1.7.2.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<!-- the mousewheel plugin - optional to provide mousewheel support -->
+<script type="text/javascript" src="js/jquery.mousewheel.js"></script>
+<!-- the jScrollPane script -->
+<script type="text/javascript" src="js/jquery.jscrollpane.min.js"></script>
+<div class="scroll-pane">
+<h3 class="title">RHQ</h3>
+<div class="bottom-border"></div>
+<ul>
+  <li><a target="_blank" href="http://rhq.jboss.org/">Project Landing Page</a></li>
+  <li><a target="_blank" href="https://docs.jboss.org/author/display/RHQ/User+Documentation">Project Documentation</a></li>
+  <li><a target="_blank" href="https://docs.jboss.org/author/display/RHQ/Release+Notes+4.13">Release Notes</a></li>
+</ul>
+<h4 class="title">What's new?</h4>
+<div class="panel-group" id="accordion-markup">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a data-toggle="collapse" data-parent="#accordion-markup" href="#collapseOne" class="collapsed">
+          Versioned Deployments
+        </a>
+      </h4>
+    </div>
+    <div id="collapseOne" class="panel-collapse collapse">
+      <div class="panel-body">
+        AS7/EAP6/WildFly plugin now supports Versioned Deployments. A Deployment (EAR, WAR, etc) can be a managed server deployment or standalone deployment. This includes Versioned Subdeployments (WAR, EJB JAR inside an EAR, etc). A Versioned Deployment is one that incorporates a version into the artifact name. See <a target="_blank" href="https://docs.jboss.org/author/display/RHQ/Release+Notes+4.12#ReleaseNotes4.12-VersionedDeployments">more..</a>
+      </div>
+    </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a data-toggle="collapse" data-parent="#accordion-markup" href="#collapseTwo" class="collapsed">
+          Enhanced Remote Agent Installation
+        </a>
+      </h4>
+    </div>
+    <div id="collapseTwo" class="panel-collapse collapse">
+      <div class="panel-body">
+        The Administration&gt;Agent GUI page now provides a way to install new agents on remote machines over SSH. It also now provides a way to start, stop and even uninstall an agent on a remote machine over SSH
+      </div>
+    </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a data-toggle="collapse" data-parent="#accordion-markup" href="#collapseThree" class="collapsed">
+          Bundle support for AS7/EAP6 domain mode
+        </a>
+      </h4>
+    </div>
+    <div id="collapseThree" class="panel-collapse collapse">
+      <div class="panel-body">
+        The bundle <a target="_blank" href="https://docs.jboss.org/author/display/RHQ/Bundle+content+handover">content handover feature</a> has been added and it purpose is to let the bundle target resource component participate in the bundle deployment. This new feature opened the door to <a target="_blank" href="https://docs.jboss.org/author/display/RHQ/Developing+a+bundle+for+AS7+or+EAP6+in+Domain+Mode">bundle support of AS7 / EAP6 domain mode</a>.
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script type="text/javascript" language="javascript">
+<!--
+$(document).ready(function() {
+  $('.scroll-pane').jScrollPane({showArrows: true});
+  $('#accordion-markup').click(function(event) {
+    /* the recalculation of the scrollbar needs to be posponed because of the animation effect of the bootstrap accordion */
+    setTimeout(function(){
+      $('.scroll-pane').jScrollPane({showArrows: true}).reinitialise();
+    }, 200);
+  });
+});
+// -->
+</script>
+
+</body>
+</html>

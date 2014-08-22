@@ -31,7 +31,6 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;

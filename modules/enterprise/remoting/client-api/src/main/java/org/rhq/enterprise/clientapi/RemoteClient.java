@@ -351,6 +351,15 @@ public class RemoteClient extends AbstractRhqFacade {
     }
 
     /**
+     * If the client is connected, this is update version of the server that the client is talking to. Ex. Update 02
+     *
+     * @return remote server version
+     */
+    public String getServerVersionUpdate() {
+        return (this.serverInfo != null) ? this.serverInfo.getVersionUpdate() : null;
+    }
+
+    /**
      * If the client is connected, this is build number of the server that the client is talking to.
      *
      * @return remote server build number

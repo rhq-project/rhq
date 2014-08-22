@@ -69,33 +69,9 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
         textFile.setEndRow(false);
         textFile.setWrapTitle(false);
 
-        // this intercepts an enable request and only allows it if there is a file selected
-        class EnableInterceptingButtonItem extends ButtonItem {
-            EnableInterceptingButtonItem(String name) {
-                super(name);
-            }
-
-            @Override
-            public void enable() {
-                String selectedFile = textFile.getValueAsString();
-                if (selectedFile != null && selectedFile.length() > 0) {
-                    super.enable();
-                }
-            }
-        }
-
-        uploadButton = new EnableInterceptingButtonItem(MSG.view_upload_upload());
+        uploadButton = new ButtonItem(MSG.view_upload_upload());
         uploadButton.setIcon(ImageManager.getUploadIcon());
         uploadButton.setStartRow(false);
-        uploadButton.setDisabled(true);
-
-        textFile.addChangeHandler(new ChangeHandler() {
-            @Override
-            public void onChange(ChangeEvent changeEvent) {
-                uploadButton.setDisabled(false);
-                uploadButton.setShowIcons(false);
-            }
-        });
 
         uploadButton.addClickHandler(new ClickHandler() {
             @Override

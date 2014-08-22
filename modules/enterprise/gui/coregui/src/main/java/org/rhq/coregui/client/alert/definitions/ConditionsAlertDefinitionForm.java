@@ -40,9 +40,9 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author John Mazzitelli

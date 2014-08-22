@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
     <relativePath>../../../pom.xml</relativePath>
   </parent>
 
@@ -49,8 +49,8 @@
     </dependency>
 
     <dependency>
-      <groupId>gnu-getopt</groupId>
-      <artifactId>getopt</artifactId>
+      <groupId>gnu.getopt</groupId>
+      <artifactId>java-getopt</artifactId>
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
 
@@ -95,7 +95,7 @@ rhq-agent.latest.build-number=${buildNumber}
                   <include name="log4j/log4j/${log4j.version}/log4j-${log4j.version}.jar" />
                   <include name="commons-logging/commons-logging/${commons-logging.version}/commons-logging-${commons-logging.version}.jar" />
                   -->
-                  <include name="gnu-getopt/getopt/${getopt.version}/getopt-${getopt.version}.jar" />
+                  <include name="gnu/getopt/java-getopt/${getopt.version}/java-getopt-${getopt.version}.jar" />
                   <include name="org/apache/ant/ant/${ant.version}/ant-${ant.version}.jar" />
                   <include name="org/apache/ant/ant-launcher/${ant.version}/ant-launcher-${ant.version}.jar" />
                 </fileset>

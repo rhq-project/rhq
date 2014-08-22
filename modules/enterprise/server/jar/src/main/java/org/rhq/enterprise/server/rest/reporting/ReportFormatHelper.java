@@ -35,6 +35,22 @@ public class ReportFormatHelper {
     }
 
     /**
+     * Quote column if there are delimiter characters in the data
+     * @param input Original column data to be written to the CSV
+     * @return String Quoted if necessary
+     */
+    public static String quoteIfInvalidCharacters(String input) {
+        if (input == null) {
+            return " ";
+        } else if(input.contains(CsvWriter.DELIMITER)) {
+            StringBuilder quoted = new StringBuilder();
+            quoted.append("\"").append(input).append("\"");
+            return quoted.toString();
+        }
+        return input;
+    }
+
+    /**
      * Strip out any invalid characters from CSV data.
      * @param input
      * @return Cleaned String suitable for inclusion in CSV file

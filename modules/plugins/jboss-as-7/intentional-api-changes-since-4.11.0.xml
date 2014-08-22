@@ -18,4 +18,9 @@
         <method> java.lang.String buildDefaultResourceName(org.rhq.modules.plugins.jbossas7.helper.HostPort, org.rhq.modules.plugins.jbossas7.helper.HostPort, org.rhq.modules.plugins.jbossas7.JBossProductType)</method>
         <justification>Functionality enhancements due to [BZ 1080552], old method is still present but deprecated.</justification>
    </difference>
+   <difference>
+        <className>org/rhq/modules/plugins/jbossas7/QueryCacheDiscovery</className>
+        <differenceType>8001</differenceType>
+        <justification>See [BZ 1033130], this resource component class was never used.</justification>
+    </difference>
 </differences>

@@ -3,13 +3,13 @@
     <parent>
         <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
         <groupId>org.rhq</groupId>
-        <version>4.12.0-SNAPSHOT</version>
+        <version>4.13.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.rhq</groupId>
     <artifactId>alert-snmp</artifactId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
 
     <name>RHQ Enterprise Server SNMP Alert Plugin</name>
 
@@ -35,7 +35,6 @@
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
         <scope>test</scope>
-        <version>1.9.5</version>
       </dependency>
 
     </dependencies>

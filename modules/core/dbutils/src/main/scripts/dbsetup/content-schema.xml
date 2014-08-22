@@ -547,7 +547,7 @@
         <column name="MTIME" type="LONG" required="true"/>
         <column name="BUNDLE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE"/>        
         <column name="GROUP_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_GROUP"/>        
-        <column name="DEPLOY_DIR" size="256" type="VARCHAR2" required="true"/>
+        <column name="DEPLOY_DIR" size="256" type="VARCHAR2"/>
         <column name="DEST_BASE_DIR_NAME" size="200" type="VARCHAR2" required="true"/>
 
         <!--  This index is for constraint, not performance -->
@@ -776,5 +776,11 @@
         </constraint>
     </table>
 
+    <!-- Many to many mapping between resource type and bundle type -
+         which bundle types target which resource types? -->
+    <table name="RHQ_BUNDLE_TYPE_TARGET_MAP">
+        <column name="BUNDLE_TYPE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_TYPE"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
+    </table>
 </dbsetup>
 

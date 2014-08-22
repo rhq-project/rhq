@@ -54,6 +54,7 @@ import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.ErrorHandler;
 import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -137,8 +138,8 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
         if (this.globalPermissions != null) {
             boolean hasGlobalDelete = globalPermissions.contains(Permission.DELETE_BUNDLES);
 
-            addTableAction(MSG.common_button_new(), null, new RoleAuthorizedTableAction(BundlesListView.this,
-                Permission.CREATE_BUNDLES, Permission.CREATE_BUNDLES_IN_GROUP) {
+            addTableAction(MSG.common_button_new(), null, ButtonColor.BLUE, new RoleAuthorizedTableAction(
+                BundlesListView.this, Permission.CREATE_BUNDLES, Permission.CREATE_BUNDLES_IN_GROUP) {
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     new BundleCreateWizard(globalPermissions).startWizard();
@@ -148,7 +149,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
                 }
             });
 
-            addTableAction(MSG.common_button_delete(), MSG.view_bundle_list_deleteConfirm(),
+            addTableAction(MSG.common_button_delete(), MSG.view_bundle_list_deleteConfirm(), ButtonColor.RED,
                 new BundleAuthorizedTableAction(BundlesListView.this, TableActionEnablement.ANY,
                     (hasGlobalDelete ? null : Permission.DELETE_BUNDLES_FROM_GROUP), new RecordExtractor<Integer>() {
                         public Collection<Integer> extract(Record[] records) {
@@ -195,8 +196,9 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
                     }
                 });
 
-            addTableAction(MSG.view_bundle_deploy(), null, new RoleAuthorizedTableAction(BundlesListView.this,
-                TableActionEnablement.SINGLE, Permission.DEPLOY_BUNDLES, Permission.DEPLOY_BUNDLES_TO_GROUP) {
+            addTableAction(MSG.view_bundle_deploy(), null, ButtonColor.GRAY, new RoleAuthorizedTableAction(
+                BundlesListView.this, TableActionEnablement.SINGLE, Permission.DEPLOY_BUNDLES,
+                Permission.DEPLOY_BUNDLES_TO_GROUP) {
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
@@ -217,7 +219,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
                                         Severity.Error));
                                 return;
                             }
-                            new BundleDeployWizard(result.get(0).getId()).startWizard();
+                            new BundleDeployWizard(result.get(0)).startWizard();
                             // we can refresh the table buttons immediately since the wizard is a dialog, the
                             // user can't access enabled buttons anyway.
                             BundlesListView.this.refreshTableInfo();

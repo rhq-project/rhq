@@ -51,7 +51,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
@@ -79,7 +79,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     @EJB
     private SubjectManagerLocal subjectManager;
     @EJB
-    private ServerPluginsLocal serverPluginsBean;
+    private ServerPluginManagerLocal serverPluginsBean;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;

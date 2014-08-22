@@ -40,7 +40,7 @@
       </plugin-configuration>
 
       <process-scan query="process|basename|match=^ORACLE.*"/>
-
+      <process-scan query="process|basename|match=^xe_.+_XE$" name="Oracle XE on Linux"/>
 
       <metric property="totalSize" displayType="summary" units="bytes"/>
       <metric property="logons cumulative" />
@@ -655,6 +655,22 @@
          <metric property="compatibility" displayName="Compatibility" description="Minimum software version required for an ASM instance to mount this disk group" dataType="trait"/>
          <metric property="databaseCompatibility" displayName="Database Compatibility" description="Minimum software version required for a database instance to use files in this disk group" dataType="trait"/>
       </service>
+
+     <service name="Query"
+              class="org.rhq.plugins.database.CustomTableComponent"
+              discovery="org.rhq.plugins.database.CustomTableDiscoveryComponent"
+              supportsManualAdd="true">
+
+       <plugin-configuration>
+         <c:simple-property name="table" description="The table to discover and to be queried on for metric data"/>
+         <c:simple-property name="name" required="false" description="Initial name of the resource when manually added. This is also part of the resource key - make this unique if you want two Query resources based on the same table."/>
+         <c:simple-property name="description" required="false" description="Initial description of resource when manually added"/>
+         <c:simple-property name="metricQuery" required="false" description="The query that will gather metric data. This must return two columns, a string column whose value is 'metricColumn' and then a numeric column whose value is the metric to be collected."/>
+       </plugin-configuration>
+
+       <metric property="metricColumn" displayName="Metric Value" displayType="summary" description="The metric value for this Query. If Metric Query is not specified, this is not collected."/>
+
+     </service>
 
    </server>
 

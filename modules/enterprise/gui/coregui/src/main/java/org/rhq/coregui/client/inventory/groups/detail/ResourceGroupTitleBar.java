@@ -92,6 +92,8 @@ public class ResourceGroupTitleBar extends EnhancedVLayout {
         }
 
         final EnhancedHLayout hlayout = new EnhancedHLayout();
+        hlayout.setStyleName("resourceSummary");
+
         addMember(hlayout);
 
         this.title = new HTMLFlow();
@@ -116,7 +118,7 @@ public class ResourceGroupTitleBar extends EnhancedVLayout {
 
         expandCollapseArrow = new Img("[SKIN]/ListGrid/row_collapsed.png", 16, 16);
         expandCollapseArrow.setTooltip(COLLAPSED_TOOLTIP);
-        expandCollapseArrow.setLayoutAlign(VerticalAlignment.BOTTOM);
+        expandCollapseArrow.setLayoutAlign(VerticalAlignment.CENTER);
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(this.group.getId());
         // for autoclusters and autogroups we need to add more criteria
@@ -180,6 +182,8 @@ public class ResourceGroupTitleBar extends EnhancedVLayout {
             });
 
         badge = new Img(ImageManager.getGroupLargeIcon(GroupCategory.MIXED), 24, 24);
+        badge.setLayoutAlign(VerticalAlignment.CENTER);
+
 
         TagEditorView tagEditorView = new TagEditorView(group.getTags(), false, new TagsChangedCallback() {
             public void tagsChanged(final HashSet<Tag> tags) {
@@ -211,6 +215,7 @@ public class ResourceGroupTitleBar extends EnhancedVLayout {
         if (this.supportsFavorite) {
             hlayout.addMember(favoriteButton);
         }
+
         //conditionally add tags. Defaults to true, not available in JON builds.
         if (CoreGUI.isTagsEnabledForUI()) {
             addMember(tagEditorView);

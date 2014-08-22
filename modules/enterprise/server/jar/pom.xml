@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
     <relativePath>../../../../pom.xml</relativePath>
   </parent>
 
@@ -289,8 +289,8 @@
     </dependency>
 
     <dependency>
-      <groupId>gnu-getopt</groupId>
-      <artifactId>getopt</artifactId>
+      <groupId>gnu.getopt</groupId>
+      <artifactId>java-getopt</artifactId>
     </dependency>
 
     <dependency>

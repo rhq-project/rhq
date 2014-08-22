@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.user.client.Random;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -76,9 +77,9 @@ import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
  * @author Jirka Kremser
  */
 public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposite, StorageNodeCriteria> {
-    public static final String OK_COLOR = "color: #26aa26;";
-    public static final String WARN_COLOR = "color: #ed9b26;";
-    public static final String DONT_MISS_ME_COLOR = "font-weight: bold; color: #d64949;";
+    public static final String OK_CLASS = "storageNodeOk";
+    public static final String WARN_CLASS = "storageNodeWarn";
+    public static final String DONT_MISS_ME_CLASS = "storageNodeProblem";
 
     // filters
     public static final String FILTER_ADDRESS = FIELD_ADDRESS.propertyName();
@@ -145,7 +146,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 if (listGridRecord.getAttribute(FIELD_ERROR_MESSAGE.propertyName()) != null
                     || listGridRecord.getAttribute(FIELD_FAILED_OPERATION.propertyName()) != null) {
-                    return "<span style='" + DONT_MISS_ME_COLOR + "'>" + value.toString() + "</span>";
+                    return "<span class='" + DONT_MISS_ME_CLASS + "'>" + value.toString() + "</span>";
                 } else
                     return value.toString();
             }
@@ -192,7 +193,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             new AsyncCallback<PageList<StorageNodeLoadComposite>>() {
                 public void onSuccess(PageList<StorageNodeLoadComposite> result) {
                     response.setData(buildRecords(result));
-                    response.setTotalRows(result.size());
+                    setPagingInfo(response, result);
                     processResponse(request.getRequestId(), response);
                 }
 
@@ -274,16 +275,16 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             if (from.getFreeDiskToDataSizeRatio().getMax() < 0.7) {
                 record.setAttribute(
                     FIELD_DISK.propertyName(),
-                    "<span style='" + DONT_MISS_ME_COLOR + "'>"
+                    "<span class='" + DONT_MISS_ME_CLASS + "'>"
                         + MSG.view_adminTopology_storageNodes_diskInsufficient() + "</span>");
             } else if (from.getFreeDiskToDataSizeRatio().getMax() < 1.5) {
                 record
                     .setAttribute(FIELD_DISK.propertyName(),
-                        "<span style='" + WARN_COLOR + "'>" + MSG.view_adminTopology_storageNodes_diskWarning()
+                        "<span class='" + WARN_CLASS + "'>" + MSG.view_adminTopology_storageNodes_diskWarning()
                             + "</span>");
             } else {
                 record.setAttribute(FIELD_DISK.propertyName(),
-                    "<span style='" + OK_COLOR + "'>" + MSG.view_adminTopology_storageNodes_diskSufficient()
+                    "<span class='" + OK_CLASS + "'>" + MSG.view_adminTopology_storageNodes_diskSufficient()
                         + "</span>");
             }
         }
@@ -319,18 +320,17 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         public static final String KEY_OWNERSHIP = "Ownership";
         public static final String KEY_TOKENS = "Tokens";
 
-        private int id;
+        private int storageNodeId;
 
-        public static StorageNodeLoadCompositeDatasource getInstance(int id) {
-            return new StorageNodeLoadCompositeDatasource(id);
+        public static StorageNodeLoadCompositeDatasource getInstance(int storageNodeId) {
+            return new StorageNodeLoadCompositeDatasource(storageNodeId);
         }
 
-        public StorageNodeLoadCompositeDatasource(int id) {
-            super();
-            this.id = id;
-            setID("storageNodeLoad");
+        public StorageNodeLoadCompositeDatasource(int storageNodeId) {
+            super("storageNodeLoad" + storageNodeId + "-" + Random.nextDouble());
+            this.storageNodeId = storageNodeId;
             List<DataSourceField> fields = addDataSourceFields();
-            addFields(fields);
+            super.addFields(fields);
         }
 
         @Override
@@ -377,9 +377,13 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response, StorageNodeCriteria criteria) {
             final StorageNode node = new StorageNode();
-            node.setId(id);
+            node.setId(storageNodeId);
+            // set dummy address because StorageNode.equals method ignores id field
+            node.setAddress(String.valueOf(storageNodeId));
+            Log.debug("Executing fetch for storage node [id=" + storageNodeId + "]");
             executeFetch(node, new AsyncCallback<StorageNodeLoadComposite>() {
                 public void onSuccess(final StorageNodeLoadComposite loadComposite) {
+                    Log.debug("Data for storage node [id=" + storageNodeId + "] arrived: " + loadComposite);
                     ListGridRecord[] records = makeListGridRecords(loadComposite);
                     response.setData(records);
                     response.setTotalRows(records.length);
@@ -388,6 +392,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
 
                 @Override
                 public void onFailure(Throwable caught) {
+                    Log.warn("Failed to execute fetch for storage node [id=" + storageNodeId + "]");
                     CoreGUI.getErrorHandler().handleError(MSG.view_adminTopology_storageNodes_fetchFail(), caught);
                     response.setStatus(DSResponse.STATUS_FAILURE);
                     StorageNodeLoadCompositeDatasource.this.processResponse(request.getRequestId(), response);
@@ -395,7 +400,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             });
         }
 
-        private static void executeFetch(final StorageNode node, final AsyncCallback<StorageNodeLoadComposite> callback) {
+        private void executeFetch(final StorageNode node, final AsyncCallback<StorageNodeLoadComposite> callback) {
             GWTServiceLookup.getStorageService().getLoad(node, AGGREGATE_FOR_LAST_N_HOURS, MeasurementUtils.UNIT_HOURS,
                 callback);
         }

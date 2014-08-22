@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,13 +13,11 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
-package org.rhq.enterprise.server.measurement;
 
-import java.util.List;
-import java.util.Map;
+package org.rhq.enterprise.server.measurement;
 
 import javax.ejb.Local;
 
@@ -90,16 +88,6 @@ public interface MeasurementOOBManagerLocal {
      * @param subject caller
      */
     void computeOOBsFromLastHour(Subject subject);
-
-    /**
-     * Remove OOBs for schedules that had their baselines calculated after
-     * a certain cutoff point. This is used to get rid of outdated OOB data for
-     * baselines that got recalculated, as the new baselines will be 'big' enough for
-     * what have been OOBs before and we don't have any baseline history.
-     * @param subject The caller
-     * @param cutoffTime The reference time to determine new baselines
-     */
-    void removeOutdatedOOBs(Subject subject, long cutoffTime);
 
     /**
      * Remove all OOB data for the passed schedule

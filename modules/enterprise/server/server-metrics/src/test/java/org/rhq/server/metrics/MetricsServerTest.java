@@ -197,12 +197,6 @@ public class MetricsServerTest extends MetricsTest {
             newRawCacheIndexEntry(yesterday().plusHours(19), startScheduleId(scheduleId1), hour(5), scheduleId1),
             newRawCacheIndexEntry(yesterday().plusHours(19), startScheduleId(scheduleId2), hour(5), scheduleId2)
         ));
-
-        // TODO I think the query used in this assert only handles a single collection time slice
-//        assertRawCacheIndexEquals(today(), partition, asList(
-//            newRawCacheIndexEntry(today(), startScheduleId(scheduleId4), hour(4), ImmutableSet.of(scheduleId4)),
-//            newRawCacheIndexEntry(today(), startScheduleId(scheduleId3), hour(5))
-//        ));
     }
 
     @Test(enabled = ENABLED)
@@ -210,7 +204,7 @@ public class MetricsServerTest extends MetricsTest {
         int scheduleId = 123;
         int partition = 0;
         Set<MeasurementDataNumeric> data = ImmutableSet.of(new MeasurementDataNumeric(
-            hour(5).minusHours(25).getMillis(), scheduleId, 3.14));
+            today().minusDays(4).plusHours(5).minusHours(25).getMillis(), scheduleId, 3.14));
         WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
 
         dateTimeService.setNow(hour(5).plusMinutes(2));
@@ -807,17 +801,10 @@ public class MetricsServerTest extends MetricsTest {
         assertEquals(actualData.size(), buckets.getNumDataPoints(), "Expected to get back 60 data points.");
 
         MeasurementDataNumericHighLowComposite expectedBucket0 = new MeasurementDataNumericHighLowComposite(
-            buckets.get(0).getStartTime(), divide(3.0 + 5.0, 2), 6.0, 1.0);
+            buckets.get(0).getStartTime(), 5.0, 6.0, 4.0);
 
         assertPropertiesMatch("The data for bucket 0 does not match expected values", expectedBucket0,
             actualData.get(0), TEST_PRECISION);
-
-        // make sure the max for the invalid metric was updated
-        List<AggregateNumericMetric> updatedMetrics = Lists.newArrayList(dao.findSixHourMetrics(scheduleId,
-            bucket0Time.getMillis(), bucket0Time.plusSeconds(10).getMillis()));
-
-        assertEquals(updatedMetrics.size(), 1, "Expected to get back 1 updated metric");
-        assertEquals(updatedMetrics.get(0).getMax(), 3.0, "Failed to update the max for invalid metric");
     }
 
     @Test

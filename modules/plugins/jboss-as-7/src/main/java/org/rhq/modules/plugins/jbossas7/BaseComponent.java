@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -93,6 +94,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     static final String EXPRESSION = "_expr:";
     static final int EXPRESSION_SIZE = EXPRESSION.length();
     static final String EXPRESSION_VALUE_KEY = "EXPRESSION_VALUE";
+    static final int AVAIL_OP_TIMEOUT_SECONDS = 60;
 
     public static final String MANAGED_SERVER = "Managed Server";
 
@@ -139,7 +141,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
     @Override
     public void stop() {
-        return;
     }
 
     /**
@@ -148,9 +149,23 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
      */
     @Override
     public AvailabilityType getAvailability() {
-        ReadResource op = new ReadResource(address);
-        Result res = getASConnection().execute(op);
-        return (res != null && res.isSuccess()) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        ReadResource readResourceOperation = new ReadResource(address);
+        /*
+         * Make the operation return minimum information. We just want to make sure we can read the resource. There's no
+         * need to read the children names, evaluate defaults, and retrieve runtime attributes.
+         */
+        readResourceOperation.attributesOnly(true);
+        readResourceOperation.includeDefaults(false);
+        readResourceOperation.includeRuntime(false);
+
+        Result res = getASConnection().execute(readResourceOperation, AVAIL_OP_TIMEOUT_SECONDS);
+        if (res != null && res.isSuccess()) {
+            return AvailabilityType.UP;
+        }
+        if (res != null && res.isTimedout()) {
+            return AvailabilityType.UNKNOWN;
+        }
+        return AvailabilityType.DOWN;
     }
 
     protected String getResourceDescription() {
@@ -188,7 +203,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
      * @param explicitExpressions set of metric names that could be represented by expression instead of value on AS7 (can be null)
      * @return ReadMetricResult value that if different from 'Success' determines why we failed to read metric
      */
-    protected ReadMetricResult getMetricValue(MeasurementReport report, MeasurementScheduleRequest req, Set<String> explicitExpressions) {
+    protected ReadMetricResult getMetricValue(MeasurementReport report, MeasurementScheduleRequest req,
+        Set<String> explicitExpressions) {
         if (req.getName().startsWith(INTERNAL))
             processPluginStats(req, report);
         else {
@@ -199,7 +215,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             if (reqName.startsWith(EXPRESSION)) {
                 resolveExpression = true;
                 reqName = reqName.substring(EXPRESSION_SIZE);
-            } else if (explicitExpressions!=null && explicitExpressions.contains(reqName)) {
+            } else if (explicitExpressions != null && explicitExpressions.contains(reqName)) {
                 resolveExpression = true;
             }
 
@@ -214,8 +230,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
             Result res = getASConnection().execute(op);
             if (!res.isSuccess()) {
-                getLog().warn("Getting metric [" + req.getName() + "] at [ " + address + "] failed: "
-                    + res.getFailureDescription());
+                getLog().warn(
+                    "Getting metric [" + req.getName() + "] at [ " + address + "] failed: "
+                        + res.getFailureDescription());
                 return ReadMetricResult.RequestFailed;
             }
 
@@ -250,9 +267,10 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                     Result result = getASConnection().execute(resolveExpressionOperation);
                     if (!result.isSuccess()) {
                         if (getLog().isWarnEnabled()) {
-                            getLog().warn("Skipping trait [" + req.getName()
-                                + "] in measurement report. Could not resolve expression [" + expression
-                                + "], failureDescription:" + result.getFailureDescription());
+                            getLog().warn(
+                                "Skipping trait [" + req.getName()
+                                    + "] in measurement report. Could not resolve expression [" + expression
+                                    + "], failureDescription:" + result.getFailureDescription());
                             return ReadMetricResult.ResolveFailed;
                         }
                     }
@@ -275,9 +293,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             Result result = getASConnection().execute(resolveExpressionOperation);
             if (!result.isSuccess()) {
                 if (getLog().isWarnEnabled()) {
-                    getLog().warn("Skipping metric [" + req.getName()
-                        + "] in measurement report. Could not resolve expression [" + expression
-                        + "], failureDescription:" + result.getFailureDescription());
+                    getLog().warn(
+                        "Skipping metric [" + req.getName() + "] in measurement report. Could not resolve expression ["
+                            + expression + "], failureDescription:" + result.getFailureDescription());
                     return;
                 }
             }
@@ -482,8 +500,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
         long size = 0L;
         try {
-            size = contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(),
-                out);
+            size = contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
         } catch (Exception e) {
             uploadConnection.cancelUpload();
             report.setStatus(CreateResourceStatus.FAILURE);
@@ -539,11 +556,13 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         String deploymentName, String hash) {
 
         boolean toServerGroup = context.getResourceKey().contains("server-group=");
-        getLog().info("Deploying [" + runtimeName + "] (toDomainOnly=" + !toServerGroup + ")...");
+        getLog().info(
+            "Deploying [" + deploymentName + " (runtimeName=" + runtimeName + ")] (toDomainOnly=" + !toServerGroup
+                + ")...");
 
         ASConnection connection = getASConnection();
 
-        Operation step1 = new Operation("add", "deployment", runtimeName);
+        Operation step1 = new Operation("add", "deployment", deploymentName);
         //        step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
         List<Object> content = new ArrayList<Object>(1);
         Map<String, Object> contentValues = new HashMap<String, Object>();
@@ -842,18 +861,35 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         return readAttribute(getAddress(), name);
     }
 
+    protected String readAttribute(String name, int timeoutSec) throws Exception {
+        return readAttribute(getAddress(), name, timeoutSec);
+    }
+
     protected String readAttribute(Address address, String name) throws Exception {
         return readAttribute(address, name, String.class);
     }
 
+    protected String readAttribute(Address address, String name, int timeoutSec) throws Exception {
+        return readAttribute(address, name, String.class, timeoutSec);
+    }
+
     protected <T> T readAttribute(Address address, String name, Class<T> resultType) throws Exception {
+        return readAttribute(address, name, resultType, 10);
+    }
+
+    protected <T> T readAttribute(Address address, String name, Class<T> resultType, int timeoutSec) throws Exception {
         Operation op = new ReadAttribute(address, name);
-        Result res = getASConnection().execute(op);
+        Result res = getASConnection().execute(op, timeoutSec);
         if (!res.isSuccess()) {
-            if (res.isRolledBack()) { // this means we've connected, authenticated, but still failed
+            if (res.isTimedout()) {
+                throw new TimeoutException("Read attribute operation timed out");
+            }
+
+            if (res.isRolledBack() && !res.getFailureDescription().startsWith("JBAS015135")) { // this means we've connected, authenticated, but still failed
                 throw new ResultFailedException("Failed to read attribute [" + name + "] of address ["
                     + getAddress().getPath() + "] - response: " + res);
             }
+
             throw new Exception("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
                 + "] - response: " + res);
         }
@@ -913,8 +949,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                                 if (defaultValue != null) {
                                     multicastHost = defaultValue;
                                 } else {
-                                    getLog().error("Failed to resolve expression value [" + expressionValue
-                                        + "] of 'multicast-address' attribute.");
+                                    getLog().error(
+                                        "Failed to resolve expression value [" + expressionValue
+                                            + "] of 'multicast-address' attribute.");
                                 }
                             }
                         }

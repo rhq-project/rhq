@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,12 +13,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.PLUGIN_NAME;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_TYPE;
 
 import org.testng.annotations.Test;
 
@@ -36,42 +39,41 @@ import org.rhq.test.arquillian.RunDiscovery;
  * This could actually also run for domain mode
  * @author Heiko W. Rupp
  */
-@Test(groups = {"integration", "pc", "standalone"}, singleThreaded = true)
+@Test(groups = { "integration", "pc", "standalone" }, singleThreaded = true)
 public class NamingTest extends AbstractJBossAS7PluginTest {
 
-    public static final ResourceType RESOURCE_TYPE = new ResourceType("Naming", PLUGIN_NAME, ResourceCategory.SERVICE, null);
+    public static final ResourceType RESOURCE_TYPE = new ResourceType("Naming", PLUGIN_NAME, ResourceCategory.SERVICE,
+        null);
     private static final String RESOURCE_KEY = "subsystem=naming";
 
-    private Resource platform;
-    private Resource serverResource;
     private Resource naming;
 
     @Test(priority = 10)
     @RunDiscovery
     public void initialDiscoveryTest() throws Exception {
-        platform = validatePlatform();
-        serverResource = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
+        Resource platform = validatePlatform();
+        Resource serverResource = waitForResourceByTypeAndKey(platform, platform, STANDALONE_RESOURCE_TYPE,
+            STANDALONE_RESOURCE_KEY);
         naming = waitForResourceByTypeAndKey(platform, serverResource, RESOURCE_TYPE, RESOURCE_KEY);
     }
 
     @Test(priority = 11)
     public void runJndiView() throws Exception {
-        OperationResult result = invokeOperationAndAssertSuccess(getResource(),"jndi-view",null);
+        OperationResult result = invokeOperationAndAssertSuccess(getResource(), "jndi-view", null);
         Configuration configuration = result.getComplexResults();
         assert configuration != null;
         assert !configuration.getProperties().isEmpty();
-        assert configuration.getProperties().size()==2 : "Expected 2 groups, but got " + configuration.getProperties().size();
+        assert configuration.getProperties().size() == 2 : "Expected 2 groups, but got "
+            + configuration.getProperties().size();
         PropertyList javaProps = configuration.getList("java-contexts");
         assert javaProps != null;
         assert !javaProps.getList().isEmpty();
 
         // That property is probably empty, as by default no application should be shipped
         PropertyList appProps = configuration.getList("applications");
-        assert appProps !=null;
+        assert appProps != null;
 
     }
-
 
     private Resource getResource() {
         return naming;

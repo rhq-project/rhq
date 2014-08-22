@@ -247,7 +247,8 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUP_COMPOSITE_ADMIN, query = "" //
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "    FROM Resource res JOIN res.currentAvailability a JOIN res.resourceType rt "
-        + "   WHERE res.id = :id " + "GROUP BY res.parentResource, rt"),
+        + "   WHERE res.id = :id "
+        + "GROUP BY res.parentResource, rt"),
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUPS_COMPOSITE_ADMIN, query = "" //
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "    FROM Resource res JOIN res.currentAvailability a JOIN res.resourceType rt "
@@ -1169,8 +1170,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Dashboard> dashboards = null;
 
-    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
-    @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
+    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.ALL }, orphanRemoval = true)
     private Set<DriftDefinition> driftDefinitions = null;
 
     @Transient
@@ -1296,6 +1296,8 @@ public class Resource implements Comparable<Resource>, Serializable {
         }
 
         // protect against the *very* unlikely case that this value is too big for the db
+        // (jshaughn) this may not work for oracle's 4000 *byte* limit, but the chances are super-small
+        //            that this will be a problem.  If it ever is we'll have to check the byte count.
         if (ancestry.length() < 4000) {
             this.setAncestry(ancestry.toString());
         }
@@ -1453,7 +1455,8 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public void addChildResource(Resource childResource) {
         childResource.setParentResource(this);
-        if (null == this.childResources || this.childResources.equals(Collections.emptySet())) {
+        if (null == this.childResources
+            || (!customChildResourcesCollection && this.childResources.equals(Collections.emptySet()))) {
             this.childResources = new HashSet<Resource>(1);
         }
         this.childResources.add(childResource);
@@ -1461,9 +1464,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public void addChildResourceWithoutAncestry(Resource childResource) {
         childResource.setParentResourceWithoutAncestry(this);
-        if (null == this.childResources || childResources.equals(Collections.emptySet())) {
-            this.childResources = new HashSet<Resource>(1);
-        }
+        addChildResource(childResource);
         this.childResources.add(childResource);
     }
 
@@ -1476,7 +1477,12 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void setChildResources(Set<Resource> children) {
-        this.childResources = children;
+        if (customChildResourcesCollection) {
+            this.childResources.clear();
+            this.childResources.addAll(children);
+        } else {
+            this.childResources = children;
+        }
     }
 
     public Resource getParentResource() {
@@ -1954,7 +1960,18 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void setDriftDefinitions(Set<DriftDefinition> driftDefinitions) {
-        this.driftDefinitions = driftDefinitions;
+        if (this.driftDefinitions == driftDefinitions) {
+            return;
+        }
+        // Don't replace the possible Hibernate proxy when orphanRemoval=true. It can cause
+        // "collection with cascade=all-delete-orphan was no longer referenced" exceptions.
+        this.driftDefinitions = getDriftDefinitions();
+        this.driftDefinitions.clear();
+        if (null != driftDefinitions) {
+            for (DriftDefinition dd : driftDefinitions) {
+                addDriftDefinition(dd);
+            }
+        }
     }
 
     public void addDriftDefinition(DriftDefinition driftDefinition) {

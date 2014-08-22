@@ -260,6 +260,7 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
             boolean resetMatching = isResetMatching();
             saveAlertDefinition();
             setAlertDefinition(getAlertDefinition()); // loads data into static fields
+            editButton.disable();
             makeViewOnly();
 
             alertDefView.commitAlertDefinition(getAlertDefinition(), resetMatching,
@@ -268,12 +269,14 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
                     public void onSuccess(final AlertDefinition alertDef) {
                         setAlertDefinition(alertDef);
                         unregisterHandler();
+                        editButton.enable();
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
                         unregisterHandler();
                         // no error handling, the notification is done in the subclasses of AbstractAlertDefinitionsView
+                        editButton.enable();
                     }
                 });
         } else {
@@ -296,7 +299,8 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         if (handlerRegistration != null) {
             handlerRegistration.removeHandler();
             handlerRegistration = null;
-            if (needsCleanup) destroy();
+            if (needsCleanup)
+                destroy();
         }
     }
 }

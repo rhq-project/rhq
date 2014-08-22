@@ -81,7 +81,6 @@ public class TagEditorView extends EnhancedLayout {
     public TagEditorView(Set<Tag> tags, boolean readOnly, TagsChangedCallback callback, boolean vertical) {
 
         super();
-
         setVertical(vertical);
         setAutoWidth();
         if (!vertical) {
@@ -164,8 +163,7 @@ public class TagEditorView extends EnhancedLayout {
 
         for (final Tag tag : tags) {
             EnhancedHLayout tagLayout = new EnhancedHLayout();
-            tagLayout.setHeight(18);
-            tagLayout.setHeight(16);
+            tagLayout.setHeight(20);
 
             HTMLFlow tagString = new HTMLFlow("<nobr><a href=\"" + LinkManager.getTagLink(tag.toString()) + "\">"
                 + tag.toString() + "</a></nobr>");
@@ -231,7 +229,7 @@ public class TagEditorView extends EnhancedLayout {
         });
 
         tagInputDialog.show();
-        tagInputDialog.place(addImg);
+        tagInputDialog.place(tagTitleLabel);
         markForRedraw();
     }
 
@@ -245,18 +243,18 @@ public class TagEditorView extends EnhancedLayout {
 
         public TagInputDialog() {
             super();
-
+            setStyleName("tagDialog");
             setIsModal(true);
             setShowHeader(false);
             setShowEdges(false);
-            setEdgeSize(10);
+            setEdgeSize(0);
             setWidth(200);
-            setHeight(30);
+            setHeight(40);
             setShowToolbar(false);
             setDismissOnEscape(true);
             setDismissOnOutsideClick(true);
             Map<String, Integer> bodyDefaults = new HashMap<String, Integer>(2);
-            bodyDefaults.put("layoutLeftMargin", 5);
+            bodyDefaults.put("layoutLeftMargin", 15);
             bodyDefaults.put("membersMargin", 10);
             setBodyDefaults(bodyDefaults);
 

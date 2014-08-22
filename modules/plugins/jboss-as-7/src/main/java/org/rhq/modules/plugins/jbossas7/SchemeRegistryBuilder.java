@@ -24,8 +24,8 @@ import static org.apache.http.conn.ssl.SSLSocketFactory.BROWSER_COMPATIBLE_HOSTN
 import static org.apache.http.conn.ssl.SSLSocketFactory.STRICT_HOSTNAME_VERIFIER;
 import static org.rhq.modules.plugins.jbossas7.ASConnection.HTTPS_SCHEME;
 import static org.rhq.modules.plugins.jbossas7.ASConnection.HTTP_SCHEME;
+import static org.rhq.modules.plugins.jbossas7.util.SecurityUtil.loadKeystore;
 
-import java.io.FileInputStream;
 import java.security.KeyStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -60,8 +60,11 @@ class SchemeRegistryBuilder {
             try {
                 KeyStore truststore = null;
                 if (asConnectionParams.getTruststore() != null) {
-                    truststore = loadKeystore(asConnectionParams.getTruststoreType(),
-                        asConnectionParams.getTruststore(), asConnectionParams.getTruststorePassword());
+                    truststore = loadKeystore( //
+                        asConnectionParams.getTruststoreType(), //
+                        asConnectionParams.getTruststore(), //
+                        asConnectionParams.getTruststorePassword() //
+                    );
                 }
                 KeyStore keystore = null;
                 String keyPassword = null;
@@ -92,21 +95,6 @@ class SchemeRegistryBuilder {
                 .getSocketFactory()));
         }
         return schemeRegistry;
-    }
-
-    private KeyStore loadKeystore(String keystoreType, String keystore, String keystorePassword) throws Exception {
-        KeyStore ks = KeyStore.getInstance(keystoreType);
-        char[] password = keystorePassword.toCharArray();
-        FileInputStream fileInputStream = null;
-        try {
-            fileInputStream = new FileInputStream(keystore);
-            ks.load(fileInputStream, password);
-            return ks;
-        } finally {
-            if (fileInputStream != null) {
-                fileInputStream.close();
-            }
-        }
     }
 
     private TrustStrategy getTrustStrategy() {

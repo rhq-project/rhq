@@ -5,6 +5,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.coregui.client.components.ReportExporter;
 import org.rhq.coregui.client.components.table.AbstractTableAction;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 
 public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 
@@ -19,7 +20,7 @@ public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
     }
 
     private void addExportAction() {
-        addTableAction("Export", MSG.common_button_reports_export(), new AbstractTableAction() {
+        addTableAction("Export", MSG.common_button_reports_export(), ButtonColor.BLUE, new AbstractTableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return enableIfRecordsExist(getListGrid());

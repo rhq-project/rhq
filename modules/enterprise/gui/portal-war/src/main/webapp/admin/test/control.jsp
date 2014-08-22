@@ -17,6 +17,7 @@
 <%@ page import="org.rhq.enterprise.server.support.SupportManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob"%>
+<%@ page import="org.rhq.enterprise.server.scheduler.jobs.DataCalcJob"%>
 
 <%@ page import="javax.naming.NamingException" %>
 
@@ -60,9 +61,6 @@
       }
       else if ("calculateOOBs".equals(mode))
       {
-          //DataPurgeJob dpj = new DataPurgeJob();
-          //dpj.calculateOOBs();
-          //result = "Calculate OOBs done";
           result = "Cannot calculate OOBs currently";
       }
       else if ("checkForSuspectAgents".equals(mode))
@@ -74,6 +72,11 @@
       {
          DataPurgeJob.purgeNow();
          result = "Data purge done";
+      }
+      else if ("dataCalcJob".equals(mode))
+      {
+         DataCalcJob.calcNow();
+         result = "Data calc done";
       }
       else if ("dbMaintenance".equals(mode))
       {
@@ -110,13 +113,13 @@
       }
       else if ("enableHibernateStats".equals(mode))
       {
-    	  coreTestBean.enableHibernateStatistics();
-    	  result = "Started Hibernate statistics collection";
+          coreTestBean.enableHibernateStatistics();
+          result = "Started Hibernate statistics collection";
       }
       else if ("disableHibernateStats".equals(mode))
       {
-    	  coreTestBean.disableHibernateStatistics();    	  
-    	  result = "Stopped Hibernate statistics collection";
+          coreTestBean.disableHibernateStatistics();
+          result = "Stopped Hibernate statistics collection";
       }
    }
    catch (Exception e)
@@ -159,6 +162,8 @@
       <a href="<c:out value="${url}"/>">Check For Suspect Agents</a></li>
   <li><c:url var="url" value="/admin/test/control.jsp?mode=dataPurgeJob"/>
       <a href="<c:out value="${url}"/>">Perform Data Purge</a></li>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=dataCalcJob"/>
+      <a href="<c:out value="${url}"/>">Perform Data Calc</a></li>
   <li><c:url var="url" value="/admin/test/control.jsp?mode=calculateOOBs"/>
       <a href="<c:out value="${url}"/>">Calculate OOBs</a></li>
   <li><c:url var="url" value="/admin/test/control.jsp?mode=errorCorrectSchedules"/>

@@ -46,6 +46,7 @@ import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.coregui.client.util.TableUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -75,7 +76,7 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
                 if (value!=null) {
                     icon = "global/Plugin_16.png";
                 }
-                return "<img src=\"" + ImageManager.getFullImagePath(icon) + "\" />";
+                return "<img class='tableImage' src=\"" + ImageManager.getFullImagePath(icon) + "\" />";
             }
         });
         originField.setShowHover(true);
@@ -149,7 +150,7 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
         setListGridFields(idField, originField, nameField, descriptionField, expressionField, lastCalculationTimeField,
             nextCalculationTimeField);
 
-        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AbstractTableAction(
+        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), ButtonColor.RED, new AbstractTableAction(
             TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 final int[] groupDefinitionIds = TableUtility.getIds(selection);
@@ -171,13 +172,13 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
             }
         });
 
-        addTableAction(MSG.common_button_new(), null, new AbstractTableAction() {
+        addTableAction(MSG.common_button_new(), null, ButtonColor.BLUE, new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
         });
 
-        addTableAction(MSG.view_dynagroup_recalculate(), null, new AbstractTableAction(TableActionEnablement.ANY) {
+        addTableAction(MSG.view_dynagroup_recalculate(), null, ButtonColor.GRAY, new AbstractTableAction(TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 final int[] groupDefinitionIds = TableUtility.getIds(selection);
                 ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();

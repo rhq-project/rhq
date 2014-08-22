@@ -62,10 +62,13 @@ public class Buckets {
             if (count == 0) {
                 this.min = min;
                 this.max = max;
-            } else if (min < this.min) {
-                this.min = min;
-            } else if (max > this.max) {
-                this.max = max;
+            } else {
+                if (min < this.min) {
+                    this.min = min;
+                }
+                if (max > this.max) {
+                    this.max = max;
+                }
             }
             count++;
             return this;

@@ -62,6 +62,7 @@ import org.rhq.coregui.client.drift.wizard.DriftAddDefinitionWizard;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -147,13 +148,13 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
         TableActionEnablement deleteEnablement = hasWriteAccess ? TableActionEnablement.ANY
             : TableActionEnablement.NEVER;
 
-        addTableAction(MSG.common_button_new(), new AbstractTableAction(addEnablement) {
+        addTableAction(MSG.common_button_new(), ButtonColor.BLUE, new AbstractTableAction(addEnablement) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 add();
             }
         });
 
-        addTableAction(MSG.common_button_delete(), MSG.view_drift_confirm_deleteTemplate(), new AbstractTableAction(
+        addTableAction(MSG.common_button_delete(), MSG.view_drift_confirm_deleteTemplate(), ButtonColor.RED, new AbstractTableAction(
             deleteEnablement) {
 
             boolean result = false;

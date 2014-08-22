@@ -26,7 +26,6 @@ package org.rhq.server.control.command;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
@@ -34,6 +33,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Future;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -42,7 +42,6 @@ import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileReverter;
 import org.rhq.core.util.file.FileUtil;
-import org.rhq.core.util.file.FileVisitor;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
@@ -56,7 +55,6 @@ import org.rhq.server.control.util.ExecutorAssist;
  */
 public class Upgrade extends AbstractInstall {
 
-    private static final String FROM_AGENT_DIR_OPTION = "from-agent-dir";
     private static final String FROM_SERVER_DIR_OPTION = "from-server-dir";
     private static final String USE_REMOTE_STORAGE_NODE = "use-remote-storage-node";
     private static final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
@@ -71,7 +69,7 @@ public class Upgrade extends AbstractInstall {
                 FROM_AGENT_DIR_OPTION,
                 true,
                 "Full path to install directory of the RHQ Agent to be upgraded. Required only if an existing agent "
-                    + "exists and is not installed in the default location: <from-server-dir>/../rhq-agent")
+                    + "exists and is not installed in the default location: <server-dir>/../rhq-agent")
             .addOption(null, FROM_SERVER_DIR_OPTION, true,
                 "Full path to install directory of the RHQ Server to be upgraded. Required.")
             .addOption(
@@ -142,13 +140,6 @@ public class Upgrade extends AbstractInstall {
             // really shouldn't be running anyway. This is just an attempt to avoid upgrade problems.
             log.info("Stopping any running RHQ components...");
 
-            // If using non-default agent location then save it so it will be applied to all subsequent rhqctl commands.
-            boolean hasFromAgentOption = commandLine.hasOption(FROM_AGENT_DIR_OPTION);
-            if (hasFromAgentOption) {
-                File agentBasedir = getFromAgentDir(commandLine);
-                setAgentBasedir(agentBasedir);
-            }
-
             // If storage or server appear to be installed already then don't perform an upgrade.  It's OK
             // if the agent already exists in the default location, it may be there from a prior install.
             if (isStorageInstalled() || isServerInstalled()) {
@@ -161,7 +152,7 @@ public class Upgrade extends AbstractInstall {
             log.info("Stopping any running RHQ components...");
 
             // Stop the agent, if running.
-            if (hasFromAgentOption) {
+            if (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
                 rValue = Math.max(rValue, killAgent(getFromAgentDir(commandLine))); // this validates the path as well
             }
 
@@ -181,7 +172,7 @@ public class Upgrade extends AbstractInstall {
                 return exitValue;
             }
 
-            // If any failures occur during upgrade, we know we need to reset rhq-server.properties.
+            // If any failures occur during upgrade, we know we need to reset rhq-server.properties
             final File serverPropsFile = getServerPropertiesFile();
             final FileReverter serverPropFileReverter = new FileReverter(serverPropsFile);
             addUndoTask(new ControlCommand.UndoTask("Reverting server properties file") {
@@ -348,12 +339,10 @@ public class Upgrade extends AbstractInstall {
 
         // start the server, then invoke the installer and wait for the server to be completely installed
         rValue = Math.max(rValue, startRHQServerForInstallation());
-        int installerStatusCode = runRHQServerInstaller();
-        rValue = Math.max(rValue, installerStatusCode);
-        if (installerStatusCode == RHQControl.EXIT_CODE_OK) {
-            waitForRHQServerToInitialize();
-        }
+        Future<Integer> integerFuture = runRHQServerInstaller();
+        waitForRHQServerToInitialize(integerFuture);
 
+        rValue = Math.max(rValue, integerFuture.get());
         return rValue;
     }
 
@@ -445,6 +434,18 @@ public class Upgrade extends AbstractInstall {
                 File newServerEnvFile = new File(getBaseDir(), envFile);
                 File newServerEnvFileBackup = new File(getBaseDir(), (envFile + ".default"));
                 try {
+                    // If any failures occur during upgrade reset the env file to the default
+                    final FileReverter serverEnvFileReverter = new FileReverter(newServerEnvFile);
+                    addUndoTask(new ControlCommand.UndoTask("Reverting server environment file") {
+                        public void performUndoWork() throws Exception {
+                            try {
+                                serverEnvFileReverter.revert();
+                            } catch (Exception e) {
+                                throw new Exception("Cannot reset rhq-server-env.sh|bat - revert manually", e);
+                            }
+                        }
+                    });
+
                     FileUtil.copyFile(newServerEnvFile, newServerEnvFileBackup);
                     newServerEnvFile.delete();
                     FileUtil.copyFile(oldServerEnvFile, newServerEnvFile);
@@ -687,42 +688,7 @@ public class Upgrade extends AbstractInstall {
             final File agentBasedir = getAgentBasedir();
             File agentInstallerJar = getFileDownload("rhq-agent", "rhq-enterprise-agent");
 
-            // Make sure we use the appropriate java version, don't just fall back to PATH
-            String javaExeFilePath = System.getProperty("rhq.java-exe-file-path");
-
-            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(javaExeFilePath) //
-                .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath()) //
-                .addArgument("--update=" + oldAgentDir.getAbsolutePath()) //
-                .addArgument("--log=" + new File(getLogDir(), "rhq-agent-update.log")) //
-                .addArgument("--launch=false"); // we can't launch this copy - we still have to move it to the new location
-
-            int exitValue = ExecutorAssist.execute(getBaseDir(), commandLine);
-            log.info("The agent installer finished upgrading with exit value " + exitValue);
-
-            // We need to now move the new, updated agent over to the new agent location.
-            // renameTo() may fail if we are crossing file system boundaries, so try a true copy as a fallback.
-            if (!agentBasedir.equals(oldAgentDir)) {
-                FileUtil.purge(agentBasedir, true); // clear the way for the new upgraded agent
-                if (!oldAgentDir.renameTo(agentBasedir)) {
-                    FileUtil.copyDirectory(oldAgentDir, agentBasedir);
-
-                    // we need to retain the execute bits for the executable scripts and libraries
-                    FileVisitor visitor = new FileVisitor() {
-                        @Override
-                        public void visit(File file) {
-                            String filename = file.getName();
-                            if (filename.contains(".so") || filename.contains(".sl") || filename.contains(".dylib")) {
-                                file.setExecutable(true);
-                            } else if (filename.endsWith(".sh")) {
-                                file.setExecutable(true);
-                            }
-                        }
-                    };
-
-                    FileUtil.forEachFile(new File(agentBasedir, "bin"), visitor);
-                    FileUtil.forEachFile(new File(agentBasedir, "lib"), visitor);
-                }
-            }
+            int exitValue = updateAndMoveExistingAgent(agentBasedir, oldAgentDir, agentInstallerJar);
 
             addUndoTask(new ControlCommand.UndoTask("Removing agent install directory") {
                 public void performUndoWork() {
@@ -737,17 +703,6 @@ public class Upgrade extends AbstractInstall {
             log.error("An error occurred while upgrading the agent: " + e.getMessage());
             throw e;
         }
-    }
-
-    private File getFileDownload(String directory, final String fileMatch) {
-        File downloadDir = new File(getBaseDir(),
-            "modules/org/rhq/server-startup/main/deployments/rhq.ear/rhq-downloads/" + directory);
-        return downloadDir.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                return file.getName().contains(fileMatch);
-            }
-        })[0];
     }
 
     private List<String> validateOptions(CommandLine commandLine) {
@@ -800,11 +755,6 @@ public class Upgrade extends AbstractInstall {
         }
 
         return errors;
-    }
-
-    static public File getFromAgentDir(CommandLine commandLine) {
-        return (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) ? new File(
-            commandLine.getOptionValue(FROM_AGENT_DIR_OPTION)) : null;
     }
 
     static public File getFromServerDir(CommandLine commandLine) {

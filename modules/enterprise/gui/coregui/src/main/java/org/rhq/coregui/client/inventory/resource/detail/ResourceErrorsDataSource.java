@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -74,6 +74,7 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError, Crite
 
             public void onSuccess(List<ResourceError> result) {
                 response.setData(buildRecords(result));
+                response.setTotalRows(result.size());
                 processResponse(request.getRequestId(), response);
             }
         });

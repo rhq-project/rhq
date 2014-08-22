@@ -35,7 +35,7 @@ import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainerConfiguration;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.State;
@@ -104,7 +104,7 @@ public class GenericServerPluginTest extends AbstractEJB3Test {
                 .getDigestString(jar), descriptor.getVersion(), descriptor.getApiVersion(), null, null, type
                 .stringify(), System.currentTimeMillis(), System.currentTimeMillis());
 
-        ServerPluginsLocal serverPluginsLocal = LookupUtil.getServerPlugins();
+        ServerPluginManagerLocal serverPluginsLocal = LookupUtil.getServerPluginManager();
         Map<ServerPluginType, List<PluginKey>> original = serverPluginsLocal.getInstalledServerPluginsGroupedByType();
         serverPluginsLocal.registerServerPlugin(LookupUtil.getSubjectManager().getOverlord(), plugin, jar);
 

@@ -19,6 +19,9 @@
 
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_KEY;
+import static org.rhq.modules.plugins.jbossas7.test.util.Constants.STANDALONE_RESOURCE_TYPE;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,15 +37,13 @@ import org.rhq.test.arquillian.RunDiscovery;
  */
 @Test(groups = { "integration", "pc", "standalone" }, singleThreaded = true)
 public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest {
-    private Resource platform;
     private Resource server;
 
     @Test(priority = 10, groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
     public void initialDiscoveryTest() throws Exception {
-        platform = validatePlatform();
-        server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
+        Resource platform = validatePlatform();
+        server = waitForResourceByTypeAndKey(platform, platform, STANDALONE_RESOURCE_TYPE, STANDALONE_RESOURCE_KEY);
         waitForAsyncDiscoveryToStabilize(server);
     }
 
@@ -90,6 +91,9 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest {
 
         // Datasources need a complex workflow, cannot be tested like this
         ignoredResources.add("DataSource (Standalone)");
+
+        // These should not be tested as datasource
+        ignoredResources.add("Datasources (Standalone)");
 
         if (System.getProperty("as7.version").equals("6.1.0.Alpha")) {
             // HornetQ resource is broken on 6.1.0.Alpha. Operation fails with:

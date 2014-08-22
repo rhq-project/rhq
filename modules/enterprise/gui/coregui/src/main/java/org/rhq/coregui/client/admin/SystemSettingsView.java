@@ -53,6 +53,7 @@ import org.rhq.coregui.client.components.configuration.PropertyValueChangeListen
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
@@ -126,6 +127,9 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 prop = config.getSimple(SystemSetting.DRIFT_FILE_PURGE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
+                prop = config.getSimple(SystemSetting.OPERATION_HISTORY_PURGE_PERIOD.getInternalName());
+                prop.setStringValue(convertMillisToDays(prop.getStringValue()));
+
                 prop = config.getSimple(SystemSetting.BASE_LINE_FREQUENCY.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
@@ -142,7 +146,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 toolStrip.setMembersMargin(5);
                 toolStrip.setLayoutMargin(5);
 
-                saveButton = new EnhancedIButton(MSG.common_button_save());
+                saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
                 saveButton.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
                         save();
@@ -203,6 +207,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                     || SystemSetting.RT_DATA_PURGE_PERIOD.getInternalName().equals(simple.getName())
                     || SystemSetting.EVENT_PURGE_PERIOD.getInternalName().equals(simple.getName())
                     || SystemSetting.DRIFT_FILE_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemSetting.OPERATION_HISTORY_PURGE_PERIOD.getInternalName().equals(simple.getName())
                     || SystemSetting.BASE_LINE_FREQUENCY.getInternalName().equals(simple.getName())
                     || SystemSetting.BASE_LINE_DATASET.getInternalName().equals(simple.getName())) {
                     value = convertDaysToMillis(value);
@@ -310,6 +315,11 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
         driftGroup.setDisplayName(MSG.view_admin_systemSettings_group_drift());
         driftGroup.setOrder(4);
         driftGroup.setDefaultHidden(false);
+
+        PropertyGroupDefinition proxyGroup = new PropertyGroupDefinition("proxy");
+        proxyGroup.setDisplayName(MSG.view_admin_systemSettings_group_HttpProxy());
+        proxyGroup.setOrder(5);
+        proxyGroup.setDefaultHidden(false);
 
         for (SystemSetting prop : SystemSetting.values()) {
 
@@ -444,11 +454,19 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 pd.setDefaultValue("31");
                 break;
 
+            case OPERATION_HISTORY_PURGE_PERIOD:
+                pd.setDescription(MSG.view_admin_systemSettings_OperationHistoryPurge_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_OperationHistoryPurge_name());
+                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(0), null));
+                pd.setDefaultValue("0");
+                break;
+
             case DATA_REINDEX_NIGHTLY:
                 pd.setDescription(MSG.view_admin_systemSettings_DataReindex_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_DataReindex_name());
                 pd.setPropertyGroupDefinition(dataManagerGroup);
-                pd.setDefaultValue("true");
+                pd.setDefaultValue("false");
                 break;
 
             //////////////////////////////////////////////
@@ -553,16 +571,23 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
 
             case LDAP_BIND_DN:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPBindDN_desc());
-                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPBindDN_name());
+                pd.setDisplayName(MSG.common_title_username());
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("");
                 break;
 
             case LDAP_BIND_PW:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPBindPW_desc());
-                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPBindPW_name());
+                pd.setDisplayName(MSG.common_title_password());
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("");
+                break;
+
+            case LDAP_FOLLOW_REFERRALS:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPFollowReferrals_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPFollowReferrals_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("false");
                 break;
 
             ///////////////////////////////////////////
@@ -581,7 +606,41 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
 
                 pd.setEnumeratedValues(options, false);
                 break;
+            /*
+             * Proxy Server Settings
+             */
+            case HTTP_PROXY_SERVER_HOST:
+                pd.setDescription(MSG.view_admin_systemSettings_HttpProxyHost_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_HttpProxyHost_name());
+                pd.setPropertyGroupDefinition(proxyGroup);
+                pd.setDefaultValue(null);
+                break;
+
+            case HTTP_PROXY_SERVER_PORT:
+                pd.setDescription(MSG.view_admin_systemSettings_HttpProxyPort_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_HttpProxyPort_name());
+                pd.setPropertyGroupDefinition(proxyGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(0), Long.valueOf(65535)));
+                pd.setDefaultValue("0");
+                break;
+
+            case HTTP_PROXY_SERVER_USERNAME:
+                pd.setDescription(MSG.view_admin_systemSettings_HttpProxyUsername_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_HttpProxyUsername_name());
+                pd.setPropertyGroupDefinition(proxyGroup);
+                pd.setDefaultValue(null);
+                break;
+
+            case HTTP_PROXY_SERVER_PASSWORD:
+                pd.setDescription(MSG.view_admin_systemSettings_HttpProxyPassword_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_HttpProxyPassword_name());
+                pd.setPropertyGroupDefinition(proxyGroup);
+                pd.setDefaultValue(null);
+                break;
+
             }
+
+
         }
 
         //
@@ -657,8 +716,9 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 ProductInfo productInfo = result.getProductInfo();
                 form.setValue(productName.getName(), productInfo.getName());
                 form.setValue(productVersion.getName(), productInfo.getVersion());
-                form.setValue(productBuildNumber.getName(), productInfo.getBuildNumber());
-
+                form.setValue(productBuildNumber.getName(), productInfo.getBuildNumber()
+                    + (CoreGUI.isRHQ() ? " (<a target='_blank' href='https://github.com/rhq-project/rhq/commit/"
+                        + productInfo.getBuildNumber() + "'>GitHub</a>)" : ""));
                 Map<Detail, String> details = result.getDetails();
                 form.setValue(serverName.getName(), details.get(ServerDetails.Detail.SERVER_IDENTITY));
                 form.setValue(serverTimezone.getName(), details.get(ServerDetails.Detail.SERVER_TIMEZONE));

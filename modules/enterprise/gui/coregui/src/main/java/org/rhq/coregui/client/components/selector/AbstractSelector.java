@@ -355,30 +355,15 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
                 try {
                     availableRecords = new ArrayList<Record>();
                     Record[] allRecords = response.getData();
-                    ListGridRecord[] assignedRecords = assignedGrid.getRecords();
-                    if (assignedRecords.length != 0) {
-                        Set<String> selectedRecordIds = new HashSet<String>(assignedRecords.length);
-                        for (Record record : assignedRecords) {
-                            String id = record.getAttribute(getSelectorKey());
-                            selectedRecordIds.add(id);
-                        }
-                        for (Record record : allRecords) {
-                            String id = record.getAttribute(getSelectorKey());
-                            if (!selectedRecordIds.contains(id)) {
-                                availableRecords.add(record);
-                            }
-                        }
-                    } else {
-                        availableRecords.addAll(Arrays.asList(allRecords));
-                    }
+                    int assignedNumber = doPostPopulateAvailableGrid(allRecords);
                     int totalRecords = (response.getTotalRows() != null) ? response.getTotalRows() : allRecords.length;
-                    int totalAvailableRecords = totalRecords - assignedRecords.length;
+                    int totalAvailableRecords = totalRecords - assignedNumber;
                     if (availableRecords.size() < totalAvailableRecords) {
-                        // TODO: i18n
-                        messageLayout.setContents(imgHTML(ImageManager.getAvailabilityYellowIcon()) + " Only "
-                            + availableRecords.size() + " out of " + totalAvailableRecords + " available "
-                            + getItemTitle() + " are listed. Use the search fields below to find the " + getItemTitle()
-                            + " you want.");
+                        messageLayout.setContents(imgHTML(ImageManager.getAvailabilityYellowIcon())
+                            + " "
+                            + MSG.view_selector_availableLessThanTotalAvailable(
+                                String.valueOf(availableRecords.size()), String.valueOf(totalAvailableRecords),
+                                getItemTitle(), getItemTitle()));
                     } else {
                         // Clear the warning message, if any, from the previous fetch.
                         // Note, surprisingly, setContents(null) doesn't work.
@@ -391,6 +376,26 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
                 }
             }
         }, requestProperties);
+    }
+    
+    protected int doPostPopulateAvailableGrid(Record[] allRecords) {
+        ListGridRecord[] assignedRecords = assignedGrid.getRecords();
+        if (assignedRecords.length != 0) {
+            Set<String> selectedRecordIds = new HashSet<String>(assignedRecords.length);
+            for (Record record : assignedRecords) {
+                String id = record.getAttribute(getSelectorKey());
+                selectedRecordIds.add(id);
+            }
+            for (Record record : allRecords) {
+                String id = record.getAttribute(getSelectorKey());
+                if (!selectedRecordIds.contains(id)) {
+                    availableRecords.add(record);
+                }
+            }
+        } else {
+            availableRecords.addAll(Arrays.asList(allRecords));
+        }
+        return assignedRecords.length;
     }
 
     private VStack buildButtonStack() {

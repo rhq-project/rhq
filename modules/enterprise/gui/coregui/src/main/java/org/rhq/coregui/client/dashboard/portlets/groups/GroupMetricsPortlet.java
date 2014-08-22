@@ -452,7 +452,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 }
                 DynamicForm row = new DynamicForm();
                 row.setNumCols(3);
-                row.setColWidths(65, "*", 100);
+                row.setColWidths(65, 250, "*" );
                 row.setWidth100();
                 row.setAutoHeight();
                 row.setOverflow(Overflow.VISIBLE);
@@ -476,8 +476,8 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 link.setTitleVAlign(VerticalAlignment.TOP);
                 link.setAlign(Alignment.LEFT);
                 link.setClipValue(true);
-                link.setWrap(true);
-                link.setHeight(26);
+                link.setWrap(false);
+                link.setWidth(250);
                 if (!BrowserUtility.isBrowserPreIE9()) {
 
                     link.addClickHandler(new ClickHandler() {
@@ -494,6 +494,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 String convertedValue = AbstractActivityView.convertLastValueForDisplay(lastValue, md);
                 StaticTextItem value = AbstractActivityView.newTextItem(convertedValue);
                 value.setVAlign(VerticalAlignment.TOP);
+                value.setAlign(Alignment.RIGHT);
                 value.setWidth("100%");
 
                 row.setItems(graphContainer, link, value);

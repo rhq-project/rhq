@@ -180,7 +180,7 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
     }
 
     private void setLabelEmpty() {
-        content.setContents(NON_BREAKING_SPACE);
+        content.setContents("");
     }
 
     private String messageContent(String message, Severity severity) {
@@ -190,18 +190,18 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
         StringBuilder sb = new StringBuilder();
         switch (severity) {
             case Blank: {
-                sb.append("<div class='alert alert-success'>");
+            sb.append("<div class='alert alert-success' style='float:right;'>");
                 sb.append("<span class='pficon pficon-ok'></span>");
                 break;
             }
             case Info: {
-                sb.append("<div class='alert alert-info'>");
+            sb.append("<div class='alert alert-info' style='float:right;'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon pficon-info'></span>");
                 break;
             }
             case Warning: {
-                sb.append("<div class='alert alert-warning'>");
+            sb.append("<div class='alert alert-warning' style='float:right;'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon-layered'>");
                 sb.append("  <span class='pficon pficon-warning-triangle'></span>");
@@ -210,7 +210,7 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
                 break;
             }
             case Error: {
-                sb.append("<div class='alert alert-danger'>");
+            sb.append("<div class='alert alert-danger' style='float:right;'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon-layered'>");
                 sb.append("  <span class='pficon pficon-error-octagon'></span>");
@@ -250,10 +250,14 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
         } else {
             contents = message.getDetailedMessage();
         }
-        content.setWidth("300px");
+
         content.setContents(messageContent(contents, message.getSeverity()));
-        content.setLeft(DOM.getElementById(MenuBarView.BTN_FAV_ID).getAbsoluteLeft() - 115);
-        content.setTop("32px");
+        int left = DOM.getElementById(MenuBarView.LAST_MENU_ITEM_ID).getAbsoluteLeft()
+            + DOM.getElementById(MenuBarView.LAST_MENU_ITEM_ID).getClientWidth() + 10;
+        int ulWidth = DOM.getElementById(MenuBarView.LAST_MENU_ITEM_ID).getParentElement().getClientWidth();
+        content.setLeft(left);
+        content.setWidth((ulWidth - left - 10) + "px");
+        content.setTop("34px");
         setZIndex(999999);
         content.redraw();
         content.show();

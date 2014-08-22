@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas.test;
 
 import java.io.File;
@@ -71,7 +71,8 @@ public class JBossASPluginTest {
             PluginContainer.getInstance().setConfiguration(pcConfig);
             PluginContainer.getInstance().initialize();
             System.out.println("Plugin container started with the following plugins:");
-            Set<String> pluginNames = PluginContainer.getInstance().getPluginManager().getMetadataManager().getPluginNames();
+            Set<String> pluginNames = PluginContainer.getInstance().getPluginManager().getMetadataManager()
+                .getPluginNames();
             for (String pluginName : pluginNames) {
                 System.out.println("\t* " + pluginName);
             }
@@ -321,11 +322,14 @@ public class JBossASPluginTest {
             lastResult = response;
         }
 
-      public void persistUpdatedResourceConfiguration(int resourceId,
-               Configuration resourceConfiguration)
-      {
-         // TODO Auto-generated method stub
+        public void persistUpdatedResourceConfiguration(int resourceId, Configuration resourceConfiguration) {
+            // TODO Auto-generated method stub
+        }
 
-      }
+        @Override
+        public Configuration persistUpdatedPluginConfiguration(int resourceId, Configuration pluginConfiguration) {
+            // TODO Auto-generated method stub
+            return null;
+        }
     }
 }

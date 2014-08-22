@@ -120,7 +120,7 @@ public class AffinityGroupWithCountsDatasource extends RPCDataSource<AffinityGro
             new AsyncCallback<PageList<AffinityGroupCountComposite>>() {
                 public void onSuccess(PageList<AffinityGroupCountComposite> result) {
                     response.setData(buildRecords(result));
-                    response.setTotalRows(result.size());
+                    setPagingInfo(response, result);
                     processResponse(request.getRequestId(), response);
                 }
 

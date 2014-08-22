@@ -37,8 +37,9 @@ public class ProductInfo implements Serializable {
     private String salesEmail;
     private String supportEmail;
     private String version;
+    private String versionUpdate;
     private String buildNumber;
-    private String supportedAgentVersions;
+    private String supportedAgentBuilds;
     private String helpDocRoot;
     private HashMap<String, String> helpViewContent;
 
@@ -106,6 +107,14 @@ public class ProductInfo implements Serializable {
         this.version = version;
     }
 
+    public String getVersionUpdate() {
+        return versionUpdate;
+    }
+
+    public void setVersionUpdate(String versionUpdate) {
+        this.versionUpdate = versionUpdate;
+    }
+
     public String getBuildNumber() {
         return buildNumber;
     }
@@ -114,12 +123,12 @@ public class ProductInfo implements Serializable {
         this.buildNumber = buildNumber;
     }
 
-    public String getSupportedAgentVersions() {
-        return supportedAgentVersions;
+    public String getSupportedAgentBuilds() {
+        return supportedAgentBuilds;
     }
 
-    public void setSupportedAgentVersions(String supportedAgentVersions) {
-        this.supportedAgentVersions = supportedAgentVersions;
+    public void setSupportedAgentBuilds(String supportedAgentBuilds) {
+        this.supportedAgentBuilds = supportedAgentBuilds;
     }
 
     public String getHelpDocRoot() {

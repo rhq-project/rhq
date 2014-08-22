@@ -16,8 +16,18 @@ public class StorageClusterSettings implements Serializable {
     private Boolean automaticDeployment;
     
     private String username;
-    
+
     private String passwordHash;
+
+    private RegularSnapshots regularSnapshots;
+
+    public void setRegularSnapshots(RegularSnapshots regularSnapshots) {
+        this.regularSnapshots = regularSnapshots;
+    }
+
+    public RegularSnapshots getRegularSnapshots() {
+        return regularSnapshots;
+    }
 
     public int getCqlPort() {
         return cqlPort;
@@ -71,6 +81,10 @@ public class StorageClusterSettings implements Serializable {
         if (automaticDeployment != that.automaticDeployment) return false;
         if (username != that.username) return false;
         if (passwordHash != that.passwordHash) return false;
+        if (regularSnapshots != null && !regularSnapshots.equals(that.regularSnapshots))
+            return false;
+        if (regularSnapshots == null && that.regularSnapshots != null)
+            return false;
 
         return true;
     }
@@ -82,12 +96,118 @@ public class StorageClusterSettings implements Serializable {
         result = 29 * result + (automaticDeployment ? 1231 : 1237);
         result = 29 * result + (username == null ? 0 : username.hashCode());
         result = 29 * result + (passwordHash == null ? 0 : passwordHash.hashCode());
+        result = 29 * result + (regularSnapshots == null ? 0 : regularSnapshots.hashCode());
         return result;
     }
+
 
     @Override
     public String toString() {
         return "StorageClusterSettings[cqlPort=" + cqlPort + ", gossipPort=" + gossipPort + ", automaticDeployment="
-            + automaticDeployment + ", username (read-only)=" + username + ", passwordHash=********]";
+            + automaticDeployment + ", username (read-only)=" + username + ", passwordHash=********, regularSnapshots="
+            + regularSnapshots + "]";
+    }
+
+    public static class RegularSnapshots implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+        private Boolean enabled;
+        private String schedule;
+        private String retention;
+        private int count;
+        private String deletion;
+        private String location;
+
+        @Override
+        public int hashCode() {
+            int result = count;
+            result = 29 * result + (enabled ? 1231 : 1237);
+            result = 29 * result + (schedule == null ? 0 : schedule.hashCode());
+            result = 29 * result + (retention == null ? 0 : retention.hashCode());
+            result = 29 * result + (deletion == null ? 0 : deletion.hashCode());
+            result = 29 * result + (location == null ? 0 : location.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+
+            RegularSnapshots that = (RegularSnapshots) o;
+
+            if (enabled != that.enabled)
+                return false;
+            if (schedule != that.schedule)
+                return false;
+            if (retention != that.retention)
+                return false;
+            if (count != that.count)
+                return false;
+            if (deletion != that.deletion)
+                return false;
+            if (location != that.location)
+                return false;
+
+            return true;
+        }
+
+        public Boolean getEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(Boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getSchedule() {
+            return schedule;
+        }
+
+        public void setSchedule(String schedule) {
+            this.schedule = schedule;
+        }
+
+        public String getRetention() {
+            return retention;
+        }
+
+        public void setRetention(String retention) {
+            this.retention = retention;
+        }
+
+        public int getCount() {
+            return count;
+        }
+
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        public String getDeletion() {
+            return deletion;
+        }
+
+        public void setDeletion(String deletion) {
+            this.deletion = deletion;
+        }
+
+        public String getLocation() {
+            return location;
+        }
+
+        public void setLocation(String location) {
+            this.location = location;
+        }
+
+        @Override
+        public String toString() {
+            return new StringBuilder("RegularSnapshots[enabled=" + enabled)
+                .append(", schedule=" + schedule).append(", retention=" + retention)
+                .append(", count=" + count).append(", deletion=" + deletion).append(", location=" + location)
+                .toString();
+        }
     }
 }

@@ -57,6 +57,7 @@ import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.coregui.client.inventory.groups.wizard.GroupCreateWizard;
 import org.rhq.coregui.client.inventory.resource.detail.inventory.ResourceResourceGroupsView;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -76,6 +77,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
 
     public ResourceGroupListView() {
         this(DEFAULT_TITLE);
+
     }
 
     public ResourceGroupListView(String title) {
@@ -83,21 +85,15 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
     }
 
     public ResourceGroupListView(Criteria criteria, String title, String headerIcon) {
-        super(title, criteria);
-
-        if (headerIcon != null) {
-            setTitleIcon(headerIcon);
-        }
+        super(title, criteria, headerIcon);
 
         final ResourceGroupCompositeDataSource datasource = ResourceGroupCompositeDataSource.getInstance();
         setDataSource(datasource);
+      //  setStyleName("resourcegrouplist");
     }
 
     public ResourceGroupListView(Criteria criteria) {
-        super(null, criteria);
-
-        final ResourceGroupCompositeDataSource datasource = ResourceGroupCompositeDataSource.getInstance();
-        setDataSource(datasource);
+        this(criteria, null, null);
     }
 
     public void setShowDeleteButton(boolean showDeleteButton) {
@@ -119,7 +115,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                 String categoryName = (String) value;
                 GroupCategory category = GroupCategory.valueOf(categoryName);
                 String icon = ImageManager.getGroupIcon(category);
-                return "<img src=\"" + ImageManager.getFullImagePath(icon) + "\" />";
+                return "<img class='tableImage' src=\"" + ImageManager.getFullImagePath(icon) + "\" />";
             }
         });
         categoryField.setShowHover(true);
@@ -180,7 +176,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
             availabilityChildrenField, availabilityDescendantsField);
 
         if (this.showDeleteButton) {
-            addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AuthorizedTableAction(this,
+            addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), ButtonColor.RED, new AuthorizedTableAction(this,
                 TableActionEnablement.ANY, Permission.MANAGE_INVENTORY) {
                 public void executeAction(ListGridRecord[] selections, Object actionValue) {
                     int[] groupIds = new int[selections.length];
@@ -207,7 +203,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         }
 
         if (this.showNewButton) {
-            addTableAction(MSG.common_button_new(), new AuthorizedTableAction(this, Permission.MANAGE_INVENTORY) {
+            addTableAction(MSG.common_button_new(), ButtonColor.BLUE, new AuthorizedTableAction(this, Permission.MANAGE_INVENTORY) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     GroupCategory category = null;
                     String categoryString = getInitialCriteria() == null ? null : getInitialCriteria().getAttribute(

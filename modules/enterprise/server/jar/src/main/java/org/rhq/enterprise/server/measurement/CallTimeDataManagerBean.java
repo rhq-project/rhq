@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -40,8 +39,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
-import org.jboss.ejb3.annotation.TransactionTimeout;
-
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.H2DatabaseType;
@@ -55,6 +52,7 @@ import org.rhq.core.domain.criteria.CallTimeDataCriteria;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
+import org.rhq.core.domain.measurement.calltime.CallTimeDataKey;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
@@ -76,7 +74,6 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  * @author Ian Springer
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTimeDataManagerRemote {
     private static final String DATA_VALUE_TABLE_NAME = "RHQ_CALLTIME_DATA_VALUE";
     private static final String DATA_KEY_TABLE_NAME = "RHQ_CALLTIME_DATA_KEY";
@@ -98,15 +95,12 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         + "(key_id, begin_time, end_time, minimum, maximum, total, count) SELECT key.id, ?, ?, ?, ?, ?, ? FROM "
         + DATA_KEY_TABLE_NAME + " key WHERE key.schedule_id = ? AND key.call_destination = ?";
 
-    private static final String CALLTIME_VALUE_PURGE_STATEMENT = "DELETE FROM " + DATA_VALUE_TABLE_NAME
-        + " WHERE end_time < ?";
-
     private final Log log = LogFactory.getLog(CallTimeDataManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource rhqDs;
 
     @EJB
@@ -118,8 +112,10 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void addCallTimeData(@NotNull Set<CallTimeData> callTimeDataSet) {
+    public void addCallTimeData(@NotNull
+    Set<CallTimeData> callTimeDataSet) {
         if (callTimeDataSet.isEmpty()) {
             return;
         }
@@ -136,8 +132,9 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
 
     }
 
-    public PageList<CallTimeDataComposite> findCallTimeDataRawForResource(Subject subject, int scheduleId, long beginTime,
-        long endTime, PageControl pageControl) {
+    @Override
+    public PageList<CallTimeDataComposite> findCallTimeDataRawForResource(Subject subject, int scheduleId,
+        long beginTime, long endTime, PageControl pageControl) {
         pageControl.initDefaultOrderingField("value.beginTime", PageOrdering.ASC);
         MeasurementSchedule schedule = entityManager.find(MeasurementSchedule.class, scheduleId);
         int resourceId = schedule.getResource().getId();
@@ -161,11 +158,12 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
 
         @SuppressWarnings("unchecked")
         List<CallTimeDataComposite> results = queryWithOrderBy.getResultList();
-        long count = (Long)queryCount.getSingleResult();
+        long count = (Long) queryCount.getSingleResult();
 
         return new PageList<CallTimeDataComposite>(results, (int) count, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
         long endTime, PageControl pageControl) {
@@ -202,18 +200,21 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         return new PageList<CallTimeDataComposite>(results, (int) count, pageControl);
     }
 
+    @Override
     public PageList<CallTimeDataComposite> findCallTimeDataForCompatibleGroup(Subject subject, int groupId,
         long beginTime, long endTime, PageControl pageControl) {
         return findCallTimeDataForContext(subject, EntityContext.forGroup(groupId), beginTime, endTime, null,
             pageControl);
     }
 
+    @Override
     public PageList<CallTimeDataComposite> findCallTimeDataForAutoGroup(Subject subject, int parentResourceId,
         int childResourceTypeId, long beginTime, long endTime, PageControl pageControl) {
         return findCallTimeDataForContext(subject, EntityContext.forAutoGroup(parentResourceId, childResourceTypeId),
             beginTime, endTime, null, pageControl);
     }
 
+    @Override
     public PageList<CallTimeDataComposite> findCallTimeDataForContext(Subject subject, EntityContext context,
         long beginTime, long endTime, String destination, PageControl pageControl) {
 
@@ -229,6 +230,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         return findCallTimeDataForContext(subject, context, criteria);
     }
 
+    @Override
     public PageList<CallTimeDataComposite> findCallTimeDataForContext(Subject subject, EntityContext context,
         CallTimeDataCriteria criteria) {
 
@@ -275,42 +277,10 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         return results;
     }
 
-    /**
-     * Deletes call-time data older than the specified time.
-     *
-     * @param deleteUpToTime call-time data older than this time will be deleted
-     */
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(6 * 60 * 60)
-    public int purgeCallTimeData(Date deleteUpToTime) throws SQLException {
-        // NOTE: Apparently, Hibernate does not support DML JPQL queries, so we're stuck using JDBC.
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        try {
-            conn = rhqDs.getConnection();
-
-            // Purge old rows from RHQ_CALLTIME_DATA_VALUE.
-            stmt = conn.prepareStatement(CALLTIME_VALUE_PURGE_STATEMENT);
-            stmt.setLong(1, deleteUpToTime.getTime());
-
-            long startTime = System.currentTimeMillis();
-            int deletedRowCount = stmt.executeUpdate();
-            MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
-            MeasurementMonitor.getMBean().setPurgedCallTimeData(deletedRowCount);
-            return deletedRowCount;
-
-            // NOTE: We do not purge unreferenced rows from RHQ_CALLTIME_DATA_KEY, because this can cause issues
-            //       (see http://jira.jboss.com/jira/browse/JBNADM-1606). Once we limit the number of keys per
-            //       resource at insertion time (see http://jira.jboss.com/jira/browse/JBNADM-2618), the key
-            //       table will not require truncation.
-        } finally {
-            JDBCUtil.safeClose(conn, stmt, null);
-        }
-    }
-
     /*
      * internal method, do not expose to the remote API
      */
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void insertCallTimeDataKeys(Set<CallTimeData> callTimeDataSet) {
 
@@ -321,7 +291,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
 
         try {
             conn = rhqDs.getConnection();
-            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+            DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
 
             if (dbType instanceof Postgresql83DatabaseType) {
                 Statement st = null;
@@ -350,8 +320,11 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                 ps.setInt(3, callTimeData.getScheduleId());
                 Set<String> callDestinations = callTimeData.getValues().keySet();
                 for (String callDestination : callDestinations) {
-                    ps.setString(2, callDestination);
-                    ps.setString(4, callDestination);
+                    // make sure the destination string is safe for storage, clip as needed
+                    String safeCallDestination = dbType.getString(callDestination,
+                        CallTimeDataKey.DESTINATION_MAX_LENGTH);
+                    ps.setString(2, safeCallDestination);
+                    ps.setString(4, safeCallDestination);
                     ps.addBatch();
                 }
             }
@@ -383,6 +356,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     /*
      * internal method, do not expose to the remote API
      */
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void insertCallTimeDataValues(Set<CallTimeData> callTimeDataSet) {
         int[] results;
@@ -427,7 +401,10 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                     ps.setDouble(4, callTimeDataValue.getMaximum());
                     ps.setDouble(5, callTimeDataValue.getTotal());
                     ps.setLong(6, callTimeDataValue.getCount());
-                    ps.setString(8, callDestination);
+                    // make sure the destination string is safe for storage, clip as needed
+                    String safeCallDestination = dbType.getString(callDestination,
+                        CallTimeDataKey.DESTINATION_MAX_LENGTH);
+                    ps.setString(8, safeCallDestination);
                     ps.addBatch();
                 }
             }
@@ -445,8 +422,8 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                 insertedRowCount += results[i] == -2 ? 1 : results[i]; // If Oracle returns -2, just count 1 row;
             }
 
-            notifyAlertConditionCacheManager("insertCallTimeDataValues", callTimeDataSet
-                .toArray(new CallTimeData[callTimeDataSet.size()]));
+            notifyAlertConditionCacheManager("insertCallTimeDataValues",
+                callTimeDataSet.toArray(new CallTimeData[callTimeDataSet.size()]));
 
             if (insertedRowCount > 0) {
                 MeasurementMonitor.getMBean().incrementCalltimeValuesInserted(insertedRowCount);

@@ -19,6 +19,7 @@
 
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -35,6 +36,10 @@ import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.support.SnapshotReportRequest;
+import org.rhq.core.pluginapi.support.SnapshotReportResults;
+import org.rhq.core.pluginapi.support.SupportFacet;
+import org.rhq.modules.plugins.jbossas7.helper.JdrReportRunner;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -48,7 +53,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Heiko W. Rupp
  */
 @SuppressWarnings("unused")
-public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>> {
+public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>> implements SupportFacet {
     private static final String MANAGED_SERVER_TYPE_NAME = "Managed Server";
 
     private LogFileEventResourceComponentHelper logFileEventDelegate;
@@ -83,13 +88,19 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
             Operation getStatus = new ReadAttribute(theAddress, "status");
             Result result;
             try {
-                result = getASConnection().execute(getStatus);
+                result = getASConnection().execute(getStatus, AVAIL_OP_TIMEOUT_SECONDS);
             } catch (Exception e) {
                 getLog().warn(e.getMessage());
                 return AvailabilityType.DOWN;
             }
-            if (!result.isSuccess())
+
+            if (!result.isSuccess()) {
+                if (result.isTimedout()) {
+                    return AvailabilityType.UNKNOWN;
+                }
+
                 return AvailabilityType.DOWN;
+            }
 
             String msg = result.getResult().toString();
             if (msg.contains("STARTED"))
@@ -276,4 +287,15 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
         return opRes;
     }
 
+    @Override
+    public SnapshotReportResults getSnapshotReport(SnapshotReportRequest request) throws Exception {
+        if (AvailabilityType.UP.equals(getAvailability())) {
+            if ("jdr".equals(request.getName())) {
+                InputStream is = new JdrReportRunner(getServerAddress(), getASConnection()).getReport();
+                return new SnapshotReportResults(is);
+            }
+            return null;
+        }
+        throw new Exception("Cannot obtain report, resource is not UP");
+    }
 }

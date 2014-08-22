@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.bundle.ant.type;
 
 import java.io.File;
@@ -39,6 +40,11 @@ public class ArchiveType extends AbstractFileType {
     private File destinationDir;
     private Pattern replacePattern;
     private String exploded;
+    private HandoverHolder handoverHolder;
+
+    public ArchiveType() {
+        handoverHolder = new HandoverHolder();
+    }
 
     public File getDestinationDir() {
         return this.destinationDir;
@@ -47,8 +53,10 @@ public class ArchiveType extends AbstractFileType {
     // Pass in a String, rather than a File, since we don't want Ant to resolve the path relative to basedir if it's relative.
     public void setDestinationDir(String destinationDir) {
         this.destinationDir = new File(destinationDir);
+        ensureHandoverOrDestinationIsConfigured();
     }
 
+    @SuppressWarnings("unused")
     public void addConfigured(ReplaceType replace) {
         List<FileSet> fileSets = replace.getFileSets();
         this.replacePattern = getPattern(fileSets);
@@ -72,5 +80,30 @@ public class ArchiveType extends AbstractFileType {
                     + destinationDir);
         }
         this.exploded = exploded;
+        ensureHandoverOrExplodedIsConfigured();
+    }
+
+    @Override
+    public void addConfigured(Handover handover) {
+        handoverHolder.addConfigured(handover);
+        ensureHandoverOrDestinationIsConfigured();
+        ensureHandoverOrExplodedIsConfigured();
+    }
+
+    @Override
+    public Handover getHandover() {
+        return handoverHolder.getHandover();
+    }
+
+    private void ensureHandoverOrDestinationIsConfigured() {
+        if (handoverHolder.getHandover() != null && destinationDir != null) {
+            throw new BuildException("Configure either handover or destination");
+        }
+    }
+
+    private void ensureHandoverOrExplodedIsConfigured() {
+        if (handoverHolder.getHandover() != null && exploded != null) {
+            throw new BuildException("Configure either handover or exploded");
+        }
     }
 }

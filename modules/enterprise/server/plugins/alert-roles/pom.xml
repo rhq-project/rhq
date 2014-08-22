@@ -3,25 +3,15 @@
     <parent>
         <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
         <groupId>org.rhq</groupId>
-        <version>4.12.0-SNAPSHOT</version>
+        <version>4.13.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.rhq</groupId>
     <artifactId>alert-roles</artifactId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
 
     <name>RHQ Enterprise Server Roles Alert Plugin</name>
-
-    <dependencies>
-
-        <dependency>
-            <groupId>jboss.jboss-embeddable-ejb3</groupId>
-            <artifactId>jboss-ejb3-all</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-    </dependencies>
 
     <build>
         <plugins>

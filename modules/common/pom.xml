@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.12.0-SNAPSHOT</version>
+      <version>4.13.0-SNAPSHOT</version>
       <relativePath>../../pom.xml</relativePath>
    </parent>
 
@@ -29,5 +29,6 @@
       <module>cassandra-schema</module>
       <module>cassandra-ccm</module>
       <module>cassandra-installer</module>
+      <module>wfly-patch-parser</module>
    </modules>
 </project>

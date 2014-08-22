@@ -23,6 +23,7 @@
 package org.rhq.core.domain.alert.composite;
 
 import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.measurement.DataType;
 
 /**
@@ -35,6 +36,14 @@ public class AlertConditionScheduleCategoryComposite extends AbstractAlertCondit
 
     public AlertConditionScheduleCategoryComposite(AlertCondition condition, Integer scheduleId, DataType dataType) {
         super(condition);
+        this.scheduleId = scheduleId;
+        this.dataType = dataType;
+    }
+
+    public AlertConditionScheduleCategoryComposite(
+            int cid, AlertConditionCategory ccategory, String cname, String ccomparator, Double cthreshold, String coption, Integer triggerId,
+            Integer scheduleId, DataType dataType) {
+        super(new AlertCondition(cid, ccategory, cname, ccomparator, cthreshold, coption, triggerId));
         this.scheduleId = scheduleId;
         this.dataType = dataType;
     }

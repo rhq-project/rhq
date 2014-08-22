@@ -51,6 +51,7 @@ import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
@@ -273,7 +274,7 @@ public class NotificationsAlertDefinitionForm extends EnhancedVLayout implements
                 }
             });
 
-            addTableAction(MSG.common_button_add(), null, new AbstractTableAction() {
+            addTableAction(MSG.common_button_add(), null, ButtonColor.BLUE, new AbstractTableAction() {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     popupNotificationEditor(null);
@@ -281,7 +282,7 @@ public class NotificationsAlertDefinitionForm extends EnhancedVLayout implements
             });
 
             addTableAction(MSG.common_button_delete(), MSG.view_alert_definition_notification_editor_delete_confirm(),
-                new AbstractTableAction(TableActionEnablement.ANY) {
+                ButtonColor.RED, new AbstractTableAction(TableActionEnablement.ANY) {
                     @Override
                     public void executeAction(ListGridRecord[] selection, Object actionValue) {
                         for (ListGridRecord record : selection) {

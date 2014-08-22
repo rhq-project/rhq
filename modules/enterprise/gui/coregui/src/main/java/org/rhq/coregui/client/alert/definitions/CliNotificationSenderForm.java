@@ -91,10 +91,10 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         /*
          * This is a counter to keep track if all the async
          * loading of the above data has finished.
-         * 
+         *
          * In principle, this should be AtomicInteger but GWT didn't like it.
-         * 
-         * The reason why it still works as a normal integer even though it 
+         *
+         * The reason why it still works as a normal integer even though it
          * is being updated from within the AsyncCallbacks is that the javascript
          * engines in the browsers are single threaded and therefore, even though
          * the data is loaded in the background, it is processed (and this variable
@@ -532,8 +532,9 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     private DynamicForm createAnotherUserForm() {
         DynamicForm form = new DynamicForm();
         form.setTitleOrientation(TitleOrientation.TOP);
-        anotherUserName = new TextItem("userName", MSG.dataSource_users_field_name());
+        anotherUserName = new TextItem("userName", MSG.common_title_username());
         anotherUserPassword = new PasswordItem("password", MSG.common_title_password());
+        anotherUserPassword.setAttribute("autocomplete", "off");
         verifyUserButton = new ButtonItem("verify",
             MSG.view_alert_definition_notification_cliScript_editor_verifyAuthentication());
 
@@ -726,7 +727,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                                                                                                 var re = new RegExp(osgiRegex);
                                                                                                 var groupRef = '$' + groupIdx;
                                                                                                 version = version.replace(re, groupRef);
-                                                                                                
+
                                                                                                 return version;
                                                                                                 }-*/;
 

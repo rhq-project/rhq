@@ -31,6 +31,7 @@ import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
@@ -145,6 +146,8 @@ public class Start extends ControlCommand {
         env.put("JAVA_HOME", javaHome);
 
         if (isWindows()) {
+            // Force CASSANDRA_HOME to prevent starting wrong instance of Cassandra (BZ 1069855)
+            env.put("CASSANDRA_HOME", getStorageBasedir().getAbsolutePath());
             commandLine = getCommandLine("rhq-storage", "start");
             rValue = ExecutorAssist.execute(getBinDir(), commandLine, env);
             if(rValue != RHQControl.EXIT_CODE_OK) {
@@ -161,6 +164,8 @@ public class Start extends ControlCommand {
                 System.out.println("RHQ storage node (pid " + pid + ") is running");
                 rValue = RHQControl.EXIT_CODE_OK;
             } else {
+                // Force CASSANDRA_INCLUDE to prevent starting wrong instance of Cassandra (BZ 1069855)
+                env.put("CASSANDRA_INCLUDE", storageBinDir + File.separator + "cassandra.in.sh");
                 commandLine = getCommandLine(false, "cassandra", "-p", pidFile.getAbsolutePath());
                 rValue = ExecutorAssist.execute(storageBinDir, commandLine, env);
             }
@@ -170,7 +175,7 @@ public class Start extends ControlCommand {
 
     private int startRHQServer() throws Exception {
         log.debug("Starting RHQ server");
-
+        validateServerPropertiesFile();
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "start");
 
         int rValue;

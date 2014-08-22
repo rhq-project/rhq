@@ -251,7 +251,6 @@ public class MetricsGroupViewDataSource extends RPCDataSource<MetricDisplaySumma
                     if (null != measurementDataList && !measurementDataList.isEmpty()) {
                         metricsDataList = measurementDataList;
                         response.setData(buildRecords(metricDisplaySummaries));
-                        processResponse(request.getRequestId(), response);
                         new Timer() {
                             @Override
                             public void run() {
@@ -259,6 +258,7 @@ public class MetricsGroupViewDataSource extends RPCDataSource<MetricDisplaySumma
                             }
                         }.schedule(150);
                     }
+                    processResponse(request.getRequestId(), response);
                 }
             });
 

@@ -1,7 +1,7 @@
 /*
  *
  *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
+ *  * Copyright (C) 2005-2014 Red Hat, Inc.
  *  * All rights reserved.
  *  *
  *  * This program is free software; you can redistribute it and/or modify
@@ -80,6 +80,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
@@ -97,6 +98,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.cloud.util.StorageNodeConfigurationUtil;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -121,7 +123,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     private final Log log = LogFactory.getLog(StorageNodeManagerBean.class);
 
-    private static final String RHQ_STORAGE_JMX_PORT_PROPERTY = "jmxPort";
     private static final String RHQ_STORAGE_ADDRESS_PROPERTY = "host";
 
     //private static final int OPERATION_QUERY_TIMEOUT = 20000;
@@ -977,8 +978,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public StorageNodeConfigurationComposite retrieveConfiguration(Subject subject, StorageNode storageNode) {
-        StorageNodeConfigurationComposite configuration = new StorageNodeConfigurationComposite(storageNode);
-
         if (storageNode != null && storageNode.getResource() != null) {
             Resource storageNodeResource = storageNode.getResource();
             ResourceConfigurationUpdate configurationUpdate = configurationManager
@@ -987,16 +986,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
             Configuration storageNodePluginConfiguration = configurationManager.getPluginConfiguration(subject,
                 storageNodeResource.getId());
-            if (configurationUpdate != null) {
-                configuration.setHeapSize(storageNodeConfiguration.getSimpleValue("maxHeapSize"));
-                configuration.setHeapNewSize(storageNodeConfiguration.getSimpleValue("heapNewSize"));
-                configuration.setThreadStackSize(storageNodeConfiguration.getSimpleValue("threadStackSize"));
-            }
-            configuration.setJmxPort(Integer.parseInt(storageNodePluginConfiguration
-                .getSimpleValue(RHQ_STORAGE_JMX_PORT_PROPERTY)));
-        }
 
-        return configuration;
+            if (configurationUpdate != null) {
+                return StorageNodeConfigurationUtil.createCompositeConfiguration(storageNodeConfiguration, storageNodePluginConfiguration, storageNode);
+            }
+        }
+        return new StorageNodeConfigurationComposite(storageNode);
     }
 
     @Override
@@ -1008,46 +1003,34 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration) {
-        StorageNode storageNode = findStorageNodeByAddress(storageNodeConfiguration.getStorageNode().getAddress());
-        if (storageNode == null || storageNode.getResource() == null || !storageNodeConfiguration.validate())
+    public boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite newStorageNodeConfigurationComposite) {
+        StorageNode storageNode = findStorageNodeByAddress(newStorageNodeConfigurationComposite.getStorageNode().getAddress());
+        if (storageNode == null || storageNode.getResource() == null || !newStorageNodeConfigurationComposite.validate())
             return false;
 
         // 1. upgrade the resource configuration if there was a change
         Resource storageNodeResource = storageNode.getResource();
+
+        // StorageNodeResourceConfig
         Configuration storageNodeResourceConfig = configurationManager.getResourceConfiguration(subject,
             storageNodeResource.getId());
-        String existingHeapSize = storageNodeResourceConfig.getSimpleValue("maxHeapSize");
-        String newHeapSize = storageNodeConfiguration.getHeapSize();
-        String existingHeapNewSize = storageNodeResourceConfig.getSimpleValue("heapNewSize");
-        String newHeapNewSize = storageNodeConfiguration.getHeapNewSize();
-        String existingThreadStackSize = storageNodeResourceConfig.getSimpleValue("threadStackSize");
-        String newThreadStackSize = storageNodeConfiguration.getThreadStackSize();
 
+        // StorageNodePluginConfig
         Configuration storageNodePluginConfig = configurationManager.getPluginConfiguration(subject,
-            storageNodeResource.getId());
-        String existingJMXPort = storageNodePluginConfig.getSimpleValue("jmxPort");
-        String newJMXPort = storageNodeConfiguration.getJmxPort() + "";
+                storageNodeResource.getId());
 
-        boolean resourceConfigNeedsUpdate = !existingHeapSize.equals(newHeapSize)
-            || !existingHeapNewSize.equals(newHeapNewSize) || !existingThreadStackSize.equals(newThreadStackSize)
-            || !existingJMXPort.equals(newJMXPort);
+        StorageNodeConfigurationComposite existingStorageNodeConfigurationComposite = StorageNodeConfigurationUtil.createCompositeConfiguration(storageNodeResourceConfig, storageNodePluginConfig, storageNode);
+        StorageNodeConfigurationUtil.syncConfigs(newStorageNodeConfigurationComposite, existingStorageNodeConfigurationComposite);
 
-        ResourceConfigurationUpdate resourceUpdate = null;
-        if (resourceConfigNeedsUpdate) {
-            storageNodeResourceConfig.setSimpleValue("jmxPort", storageNodeConfiguration.getJmxPort() + "");
-            if (storageNodeConfiguration.getHeapSize() != null) {
-                storageNodeResourceConfig.setSimpleValue("maxHeapSize", newHeapSize + "");
-                storageNodeResourceConfig.setSimpleValue("minHeapSize", newHeapSize + "");
-            }
-            if (storageNodeConfiguration.getHeapNewSize() != null) {
-                storageNodeResourceConfig.setSimpleValue("heapNewSize", newHeapNewSize + "");
-            }
-            if (storageNodeConfiguration.getThreadStackSize() != null) {
-                storageNodeResourceConfig.setSimpleValue("threadStackSize", newThreadStackSize + "");
+        if(!existingStorageNodeConfigurationComposite.equals(newStorageNodeConfigurationComposite)) {
+            // Now we need an update
+            StorageNodeConfigurationUtil.updateValuesToConfiguration(newStorageNodeConfigurationComposite, storageNodeResourceConfig);
+
+            if(!existingStorageNodeConfigurationComposite.isDirectoriesEqual(newStorageNodeConfigurationComposite)) {
+                storageNodeResourceConfig.setSimpleValue(StorageNodeConfigurationUtil.RHQ_STORAGE_NOTIFY_DIR_CHANGE_PROPERTY, Boolean.TRUE.toString());
             }
 
-            resourceUpdate = configurationManager.updateResourceConfiguration(subject, storageNodeResource.getId(),
+            ResourceConfigurationUpdate resourceUpdate = configurationManager.updateResourceConfiguration(subject, storageNodeResource.getId(),
                 storageNodeResourceConfig);
 
             // initial waiting before the first check
@@ -1061,25 +1044,27 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             criteria.addFilterId(resourceUpdate.getId());
             criteria.addFilterStartTime(System.currentTimeMillis() - (5 * 60 * 1000));
             boolean updateSuccess = waitForConfigurationUpdateToFinish(subject, criteria, 10);
+
             // restart the storage node and wait for it
             boolean restartSuccess = runOperationAndWaitForResult(subject, storageNodeResource, RESTART_OPERATION,
-                null, 5000, 15);
+                    null, 5000, 15);
+
             if (!updateSuccess || !restartSuccess)
                 return false;
         }
 
-        if (existingJMXPort.equals(newJMXPort)) {
-            // no need for plugin config update, we are done
-            return true;
-        }
-        // 2. upgrade the plugin configuration if there was a change
-        storageNodePluginConfig.setSimpleValue("jmxPort", newJMXPort);
-        String existingConnectionURL = storageNodePluginConfig.getSimpleValue("connectorAddress");
-        String newConnectionURL = existingConnectionURL.replace(":" + existingJMXPort + "/", ":"
-            + storageNodeConfiguration.getJmxPort() + "/");
-        storageNodePluginConfig.setSimpleValue("connectorAddress", newConnectionURL);
+        if (existingStorageNodeConfigurationComposite.getJmxPort() != newStorageNodeConfigurationComposite.getJmxPort()) {
+            String newJMXPort = Integer.toString(newStorageNodeConfigurationComposite.getJmxPort());
+            String existingJMXPort = Integer.toString(existingStorageNodeConfigurationComposite.getJmxPort());
+            // 2. upgrade the plugin configuration if there was a change
+            storageNodePluginConfig.setSimpleValue(StorageNodeConfigurationUtil.RHQ_STORAGE_JMX_PORT_PROPERTY, newJMXPort);
+            String existingConnectionURL = storageNodePluginConfig.getSimpleValue(StorageNodeConfigurationUtil.RHQ_STORAGE_CONNECTOR_PROPERTY);
+            String newConnectionURL = existingConnectionURL.replace(":" + existingJMXPort + "/", ":"
+                    + newStorageNodeConfigurationComposite.getJmxPort() + "/");
+            storageNodePluginConfig.setSimpleValue(StorageNodeConfigurationUtil.RHQ_STORAGE_CONNECTOR_PROPERTY, newConnectionURL);
 
-        configurationManager.updatePluginConfiguration(subject, storageNodeResource.getId(), storageNodePluginConfig);
+            configurationManager.updatePluginConfiguration(subject, storageNodeResource.getId(), storageNodePluginConfig);
+        }
         return true;
     }
 

@@ -207,4 +207,8 @@ public class ConfigEditor {
         }
     }
 
+    public File getConfigFile() {
+        return configFile;
+    }
+
 }

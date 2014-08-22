@@ -80,4 +80,68 @@
     <justification>BZ1032192: Method was deprecated and couldn't create a valid object anyway</justification>
   </difference>
 
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>java.lang.String getCommitLogLocation()</method>
+    <justification>
+      Add new updateable information to the composite model. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>void setCommitLogLocation(java.lang.String)</method>
+    <justification>
+      Add new updateable information to the composite model. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>java.lang.String getSavedCachesLocation()</method>
+    <justification>
+      Add new updateable information to the composite model. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>void setSavedCachesLocation(java.lang.String)</method>
+    <justification>
+      Add new updateable information to the composite model. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>java.util.List getDataLocations()</method>
+    <justification>
+      Add new updateable information to the composite model. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>void setDataLocations(java.util.List)</method>
+    <justification>
+      Add new updateable information to the composite model. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>void isDirectoriesEqual(org.rhq.core.domain.cloud.StorageNodeConfigurationComposite)</method>
+    <justification>
+      Add new method to verify equality of only storage directories. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
 </differences>

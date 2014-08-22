@@ -356,15 +356,14 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
                     availableRecords = new ArrayList<Record>();
                     Record[] allRecords = response.getData();
                     int assignedNumber = doPostPopulateAvailableGrid(allRecords);
-
                     int totalRecords = (response.getTotalRows() != null) ? response.getTotalRows() : allRecords.length;
                     int totalAvailableRecords = totalRecords - assignedNumber;
                     if (availableRecords.size() < totalAvailableRecords) {
-                        // TODO: i18n
-                        messageLayout.setContents(imgHTML(ImageManager.getAvailabilityYellowIcon()) + " Only "
-                            + availableRecords.size() + " out of " + totalAvailableRecords + " available "
-                            + getItemTitle() + " are listed. Use the search fields below to find the " + getItemTitle()
-                            + " you want.");
+                        messageLayout.setContents(imgHTML(ImageManager.getAvailabilityYellowIcon())
+                            + " "
+                            + MSG.view_selector_availableLessThanTotalAvailable(
+                                String.valueOf(availableRecords.size()), String.valueOf(totalAvailableRecords),
+                                getItemTitle(), getItemTitle()));
                     } else {
                         // Clear the warning message, if any, from the previous fetch.
                         // Note, surprisingly, setContents(null) doesn't work.
@@ -372,8 +371,6 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
                     }
                     messageLayout.markForRedraw();
                     availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
-                    
-                    doPostPopulateAvailableGrid(allRecords);
                 } finally {
                     updateButtonEnablement();
                 }
@@ -381,7 +378,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
         }, requestProperties);
     }
     
-    public int doPostPopulateAvailableGrid(Record[] allRecords) {
+    protected int doPostPopulateAvailableGrid(Record[] allRecords) {
         ListGridRecord[] assignedRecords = assignedGrid.getRecords();
         if (assignedRecords.length != 0) {
             Set<String> selectedRecordIds = new HashSet<String>(assignedRecords.length);

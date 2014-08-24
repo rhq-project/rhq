@@ -38,7 +38,6 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.util.StringUtil;
 import org.rhq.plugins.apache.parser.ApacheDirective;
-import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 
 /**
@@ -104,7 +103,9 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
                 }
                 ifModuleIndex.put(moduleName, index);
                 String ifModuleKey = IFMODULE_DIRECTIVE_NAME + "|" + moduleName + "|" + index + ";" + parentKey;
-                discoverResources(context, discoveredResources, directive, ifModuleKey);
+                Set<DiscoveredResourceDetails> discoveredSubResources = new LinkedHashSet<DiscoveredResourceDetails>();
+                discoverResources(context, discoveredSubResources, directive, ifModuleKey);
+                discoveredResources.addAll(discoveredSubResources);
             }
         }
         return discoveredResources;

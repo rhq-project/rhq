@@ -250,16 +250,20 @@ public class GroupOobsPortlet extends EnhancedVLayout implements CustomSettingsP
                                         public void onSuccess(PageList<MeasurementOOBComposite> result) {
                                             VLayout column = new VLayout();
                                             column.setHeight(10);
+                                            column.setWidth100();
                                             if (!result.isEmpty()) {
                                                 for (final MeasurementOOBComposite oob : result) {
                                                     DynamicForm row = new DynamicForm();
+                                                    row.setWidth100();
                                                     row.setNumCols(2);
+                                                    row.setColWidths("*", 100);
 
                                                     final String title = oob.getScheduleName();
                                                     LinkItem link = new LinkItem();
                                                     link.setLinkTitle(title);
-                                                    link.setTitle(title);
                                                     link.setShowTitle(false);
+                                                    link.setClipValue(false);
+                                                    link.setWrap(true);
                                                     link.addClickHandler(new ClickHandler() {
                                                         @Override
                                                         public void onClick(ClickEvent event) {

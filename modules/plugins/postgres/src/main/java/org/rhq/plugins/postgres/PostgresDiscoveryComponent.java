@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -77,10 +77,12 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
     private static final String POSTGRES_DEFAULT_DATABASE_NAME = "postgres";
     private static final Pattern VERSION_FROM_COMMANDLINE = Pattern.compile("\\d+(?:\\.\\d+)*");
 
+    @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
         Set<DiscoveredResourceDetails> servers = new LinkedHashSet<DiscoveredResourceDetails>();
 
         // Process any auto-discovered resources.
+        @SuppressWarnings("unchecked")
         List<ProcessScanResult> autoDiscoveryResults = context.getAutoDiscoveredProcesses();
         for (ProcessScanResult result : autoDiscoveryResults) {
             LOG.info("Discovered a postgres process: " + result);
@@ -90,8 +92,8 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
             String pgDataPath = getDataDirPath(procInfo);
             if (pgDataPath == null) {
                 LOG.error("Unable to obtain data directory for postgres process with pid " + procInfo.getPid()
-                        + " (tried checking both -D command line argument, as well as " + PGDATA_ENV_VAR
-                        + " environment variable).");
+                    + " (tried checking both -D command line argument, as well as " + PGDATA_ENV_VAR
+                    + " environment variable).");
                 continue;
             }
 
@@ -100,10 +102,12 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
             PostgresqlConfFile confFile = null;
 
             if (!pgData.exists()) {
-                LOG.warn("PostgreSQL data directory ("
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("PostgreSQL data directory ("
                         + pgData
                         + ") does not exist or is not readable. "
                         + "Make sure the user the RHQ Agent is running as has read permissions on the directory and its parent directory.");
+                }
             } else {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("PostgreSQL data directory: " + pgData);
@@ -161,17 +165,14 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
          */
     }
 
+    @Override
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
         ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException {
-        ProcessInfo processInfo = null;
-        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig, processInfo,
-            true);
-        return resourceDetails;
+        return createResourceDetails(discoveryContext, pluginConfig, null, true);
     }
 
     protected static DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
-        Configuration pluginConfiguration, @Nullable
-        ProcessInfo processInfo, boolean logConnectionFailure) {
+        Configuration pluginConfiguration, @Nullable ProcessInfo processInfo, boolean logConnectionFailure) {
         String key = buildUrl(pluginConfiguration);
         Connection conn = null;
         try {
@@ -179,7 +180,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
             String name = getServerResourceName(pluginConfiguration, conn);
             String version = getVersion(processInfo, discoveryContext.getSystemInformation(), conn);
             return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version,
-                    DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
+                DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
         } finally {
             DatabasePluginUtil.safeClose(conn);
         }
@@ -189,8 +190,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         String host = config.getSimple(HOST_CONFIGURATION_PROPERTY).getStringValue();
         String port = config.getSimple(PORT_CONFIGURATION_PROPERTY).getStringValue();
         String db = config.getSimple(DB_CONFIGURATION_PROPERTY).getStringValue();
-        String url = "jdbc:postgresql://" + host + ":" + port + "/" + db;
-        return url;
+        return "jdbc:postgresql://" + host + ":" + port + "/" + db;
     }
 
     protected static String getVersion(ProcessInfo processInfo, SystemInfo systemInfo, Connection conn) {
@@ -207,7 +207,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         //now try to extract the version information by asking the server executable itself
         if (version == null && processInfo != null) {
             try {
-                ProcExe executable = processInfo.getExecutable();
+                ProcExe executable = processInfo.priorSnaphot().getExecutable();
                 if (executable != null) {
                     String postgresExe = executable.getName();
                     ProcessExecution execution = new ProcessExecution(postgresExe);
@@ -259,8 +259,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
     }
 
     @Nullable
-    protected static String getDataDirPath(@NotNull
-    ProcessInfo procInfo) {
+    protected static String getDataDirPath(@NotNull ProcessInfo procInfo) {
         String dataDirPath = null;
         String[] cmdLine = procInfo.getCommandLine();
         for (int i = 0; i < cmdLine.length; i++) {
@@ -278,15 +277,11 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
             dataDirPath = procInfo.getEnvironmentVariable(PGDATA_ENV_VAR);
         }
 
-        if (dataDirPath == null) {
-        }
-
         return dataDirPath;
     }
 
     @Nullable
-    private static String getConfigFilePath(@NotNull
-    ProcessInfo procInfo) {
+    private static String getConfigFilePath(@NotNull ProcessInfo procInfo) {
         String configFilePath = null;
         String[] cmdLine = procInfo.getCommandLine();
         for (int i = 0; i < cmdLine.length; i++) {
@@ -296,7 +291,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
                     int equalsIndex = paramString.indexOf('=');
                     if (equalsIndex == -1) {
                         LOG.error("Invalid value '" + paramString + "' for -c option on postgres command line: "
-                                + Arrays.asList(cmdLine));
+                            + Arrays.asList(cmdLine));
                         continue;
                     }
 

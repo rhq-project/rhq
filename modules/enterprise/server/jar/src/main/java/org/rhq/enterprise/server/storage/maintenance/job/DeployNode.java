@@ -18,15 +18,12 @@
  */
 package org.rhq.enterprise.server.storage.maintenance.job;
 
-import static org.rhq.core.domain.storage.MaintenanceStep.JobType.FAILED_ANNOUNCE;
-
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
-import com.google.common.collect.ImmutableSet;
 
 import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
@@ -37,7 +34,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
 import org.rhq.enterprise.server.storage.maintenance.JobProperties;
 import org.rhq.enterprise.server.storage.maintenance.MaintenanceJobFactory;
-import org.rhq.enterprise.server.storage.maintenance.StepFailureStrategy;
 import org.rhq.enterprise.server.storage.maintenance.StorageMaintenanceJob;
 import org.rhq.enterprise.server.storage.maintenance.step.AnnounceStorageNode;
 import org.rhq.enterprise.server.storage.maintenance.step.BootstrapNode;
@@ -71,11 +67,6 @@ public class DeployNode implements MaintenanceJobFactory {
 
     @Override
     public StorageMaintenanceJob calculateSteps(StorageMaintenanceJob job) {
-        if (job.getJobType() == FAILED_ANNOUNCE) {
-            addFailedAnnounceSteps(job);
-            return job;
-        }
-
         Set<String> clusterSnapshot = job.getClusterSnapshot();
         String newNodeAddress = job.getTarget();
 
@@ -163,24 +154,6 @@ public class DeployNode implements MaintenanceJobFactory {
         job.addStep(updateStatus);
 
         return job;
-    }
-
-    private void addFailedAnnounceSteps(StorageMaintenanceJob job) {
-        String targetAddress = job.getTarget();
-        String newNodeAddress = job.getConfiguration().getSimpleValue("newNodeAddress");
-
-        job.addStep(new MaintenanceStep()
-            .setName(AnnounceStorageNode.class.getName())
-            .setDescription("Announce " + newNodeAddress + " to " + targetAddress)
-            .setConfiguration(new Configuration.Builder()
-                .addSimple(JobProperties.TARGET, targetAddress)
-                .addSimple(JobProperties.FAILURE_STRATEGY, StepFailureStrategy.ABORT.toString())
-                .openMap(JobProperties.PARAMETERS)
-                    .addSimple("address", newNodeAddress)
-                .closeMap()
-                .build()));
-        addRepairSteps(job, SystemDAO.Keyspace.SYSTEM_AUTH, ImmutableSet.of(targetAddress));
-        addRepairSteps(job, SystemDAO.Keyspace.RHQ, ImmutableSet.of(targetAddress));
     }
 
     protected void addRepairSteps(StorageMaintenanceJob job, SystemDAO.Keyspace keyspace, Set<String> addresses) {

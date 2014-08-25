@@ -15,7 +15,7 @@ public class DefaultCalculatorLookup implements CalculatorLookup {
 
     @Override
     public MaintenanceJobFactory lookup(MaintenanceStep.JobType jobType) {
-        if (jobType == MaintenanceStep.JobType.DEPLOY || jobType == MaintenanceStep.JobType.FAILED_ANNOUNCE) {
+        if (jobType == MaintenanceStep.JobType.DEPLOY) {
             DeployNode calculator = new DeployNode();
             calculator.setClusterSettingsManager(LookupUtil.getStorageClusterSettingsManagerLocal());
             calculator.setSubjectManager(LookupUtil.getSubjectManager());

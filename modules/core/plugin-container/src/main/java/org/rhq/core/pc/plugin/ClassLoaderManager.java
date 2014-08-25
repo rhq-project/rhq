@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.core.pc.plugin;
 
 import java.io.File;
@@ -136,31 +137,35 @@ public class ClassLoaderManager {
      * Cleans up this object and all classloaders it has created.
      */
     public void destroy() {
+        Set<PluginClassLoader> toDestroyClassLoaders = new HashSet<PluginClassLoader>();
+
         // destroy any resource classloaders we've created
         for (ClassLoader doomedCL : getUniqueResourceClassLoaders()) {
             if (doomedCL instanceof PluginClassLoader) {
-                ((PluginClassLoader) doomedCL).destroy();
+                toDestroyClassLoaders.add((PluginClassLoader) doomedCL);
             }
         }
-        this.resourceClassLoaders.clear();
+        resourceClassLoaders.clear();
 
         // destroy any discovery classloaders we've created
         for (ClassLoader doomedCL : getUniqueDiscoveryClassLoaders()) {
             if (doomedCL instanceof PluginClassLoader) {
-                ((PluginClassLoader) doomedCL).destroy();
+                toDestroyClassLoaders.add((PluginClassLoader) doomedCL);
             }
         }
-        this.discoveryClassLoaders.clear();
+        discoveryClassLoaders.clear();
 
         // destroy any plugin classloaders we've created
         for (ClassLoader doomedCL : getUniquePluginClassLoaders()) {
             if (doomedCL instanceof PluginClassLoader) {
-                ((PluginClassLoader) doomedCL).destroy();
+                toDestroyClassLoaders.add((PluginClassLoader) doomedCL);
             }
         }
-        this.pluginClassLoaders.clear();
+        pluginClassLoaders.clear();
 
-        return;
+        for (PluginClassLoader pluginClassLoader : toDestroyClassLoaders) {
+            pluginClassLoader.destroy();
+        }
     }
 
     @Override
@@ -480,18 +485,15 @@ public class ClassLoaderManager {
     }
 
     private Set<ClassLoader> getUniquePluginClassLoaders() {
-        HashSet<ClassLoader> uniqueClassLoaders = new HashSet<ClassLoader>(this.pluginClassLoaders.values());
-        return uniqueClassLoaders;
+        return new HashSet<ClassLoader>(this.pluginClassLoaders.values());
     }
 
     private Set<ClassLoader> getUniqueDiscoveryClassLoaders() {
-        HashSet<ClassLoader> uniqueClassLoaders = new HashSet<ClassLoader>(this.discoveryClassLoaders.values());
-        return uniqueClassLoaders;
+        return new HashSet<ClassLoader>(this.discoveryClassLoaders.values());
     }
 
     private Set<ClassLoader> getUniqueResourceClassLoaders() {
-        HashSet<ClassLoader> uniqueClassLoaders = new HashSet<ClassLoader>(this.resourceClassLoaders.values());
-        return uniqueClassLoaders;
+        return new HashSet<ClassLoader>(this.resourceClassLoaders.values());
     }
 
     private ClassLoader createClassLoader(URL mainJarUrl, List<URL> additionalJars, ClassLoader parentClassLoader)

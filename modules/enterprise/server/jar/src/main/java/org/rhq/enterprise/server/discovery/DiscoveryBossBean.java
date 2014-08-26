@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.discovery;
 
 import static org.rhq.core.domain.resource.CreateResourceStatus.SUCCESS;
@@ -80,6 +81,8 @@ import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.CreateResourceHistory;
+import org.rhq.core.domain.resource.ImportResourceRequest;
+import org.rhq.core.domain.resource.ImportResourceResponse;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ProductVersion;
 import org.rhq.core.domain.resource.Resource;
@@ -170,6 +173,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private ConfigurationManagerLocal configurationManager;
 
     // Do not start in a transaction.  A single transaction may timeout if the report size is too large
+    @Override
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public MergeInventoryReportResults mergeInventoryReport(InventoryReport report)
         throws InvalidInventoryReportException {
@@ -345,8 +349,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     public Collection<ResourceSyncInfo> getResourceSyncInfo(int resourceId) {
         // [PERF] this is an expensive query that can return a large collection.  But it's faster than the old way of
         // letting hibernate grab the whole hierarchy via eager fetch of children...
-        Query query = null;
-        Collection<ResourceSyncInfo> result = null;
+        Query query;
+        Collection<ResourceSyncInfo> result;
         boolean isNative = true;
 
         DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
@@ -380,11 +384,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return result;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, PageControl pc) {
         return getQueuedPlatformsAndServers(user, EnumSet.of(InventoryStatus.NEW), pc);
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, EnumSet<InventoryStatus> statuses,
         PageControl pc) {
@@ -404,6 +410,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return queuedResources;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @SuppressWarnings("unchecked")
     public PageList<Resource> getQueuedPlatforms(Subject user, EnumSet<InventoryStatus> statuses, PageControl pc) {
@@ -428,6 +435,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return new PageList<Resource>(results, (int) count, pc);
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<Resource> getQueuedPlatformChildServers(Subject user, InventoryStatus status, Resource platform) {
         PageList<Resource> childServers = resourceManager.findChildResourcesByCategoryAndInventoryStatus(user,
@@ -436,6 +444,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return childServers;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void updateInventoryStatus(Subject user, List<Resource> platforms, List<Resource> servers,
         InventoryStatus status) {
@@ -568,6 +577,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
     }
 
+    @Override
     public void updateAgentInventoryStatus(String platformsCsvList, String serversCsvList) {
         List<Resource> platforms = new ArrayList<Resource>();
         AgentInventoryStatusUpdateJob.internalizeJobValues(entityManager, platformsCsvList, platforms);
@@ -583,6 +593,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * knowing what you do. See {@link #updateInventoryStatus(Subject, List, List, InventoryStatus)} for the "public"
      * version.
      */
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateInventoryStatusInNewTransaction(Subject user, List<Resource> platforms, List<Resource> servers,
         InventoryStatus status) {
@@ -605,29 +616,32 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
     }
 
+    @Override
     public Resource manuallyAddResource(Subject subject, int resourceTypeId, int parentResourceId,
         Configuration pluginConfiguration) throws Exception {
 
-        Resource result = null;
-
-        ResourceType resourceType = this.resourceTypeManager.getResourceTypeById(subject, resourceTypeId);
-        // the subsequent call to manuallyAddResource requires a detached ResourceType param so clear
-        entityManager.clear();
-        MergeResourceResponse response = manuallyAddResource(subject, resourceType, parentResourceId,
-            pluginConfiguration);
-        result = this.resourceManager.getResourceById(subject, response.getResourceId());
-
-        return result;
+        return manuallyAddResource(subject,
+            new ImportResourceRequest(resourceTypeId, parentResourceId, pluginConfiguration)).getResource();
     }
 
-    public MergeResourceResponse manuallyAddResource(Subject user, ResourceType resourceType, int parentResourceId,
-        Configuration pluginConfiguration) throws InvalidPluginConfigurationClientException, PluginContainerException {
-        if (!this.authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, parentResourceId)) {
+    @Override
+    public ImportResourceResponse manuallyAddResource(Subject subject, ImportResourceRequest importResourceRequest)
+        throws InvalidPluginConfigurationClientException, PluginContainerException {
+
+        int parentResourceId = importResourceRequest.getParentResourceId();
+
+        if (!this.authorizationManager.hasResourcePermission(subject, Permission.CREATE_CHILD_RESOURCES,
+            parentResourceId)) {
             throw new PermissionException("You do not have permission on resource with id " + parentResourceId
                 + " to manually add child resources.");
         }
 
-        Resource parentResource = this.resourceManager.getResourceById(user, parentResourceId);
+        ResourceType resourceType = this.resourceTypeManager.getResourceTypeById(subject,
+            importResourceRequest.getResourceTypeId());
+        // the subsequent code requires a detached ResourceType param so clear
+        entityManager.clear();
+
+        Resource parentResource = this.resourceManager.getResourceById(subject, parentResourceId);
 
         if (!resourceType.isSupportsManualAdd()) {
             throw new RuntimeException("Cannot manually add " + resourceType + " child Resource under parent "
@@ -641,7 +655,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             AgentClient agentClient = this.agentManager.getAgentClient(parentResource.getAgent());
             DiscoveryAgentService discoveryAgentService = agentClient.getDiscoveryAgentService();
             mergeResourceResponse = discoveryAgentService.manuallyAddResource(resourceType, parentResourceId,
-                pluginConfiguration, user.getId());
+                importResourceRequest.getPluginConfiguration(), subject.getId());
         } catch (CannotConnectException e) {
             throw new CannotConnectToAgentException("Error adding [" + resourceType + "] Resource to inventory as "
                 + "a child of " + parentResource + " - cause: " + e.getMessage(), e);
@@ -650,9 +664,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 + parentResource + " - cause: " + e, e);
         }
 
-        return mergeResourceResponse;
+        Resource resource = resourceManager.getResourceById(subject, mergeResourceResponse.getResourceId());
+        boolean resourceAlreadyExisted = mergeResourceResponse.resourceAlreadyExisted();
+
+        return new ImportResourceResponse(resource, resourceAlreadyExisted);
     }
 
+    @Override
     public MergeResourceResponse addResource(Resource resource, int creatorSubjectId) {
         MergeResourceResponse mergeResourceResponse;
         try {
@@ -699,6 +717,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return mergeResourceResponse;
     }
 
+    @Override
     public boolean updateResourceVersion(int resourceId, String version) {
         Resource existingResource = this.entityManager.find(Resource.class, resourceId);
         if (existingResource != null) {
@@ -712,6 +731,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
     }
 
+    @Override
     @SuppressWarnings("deprecation")
     public Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests) {
         Set<ResourceUpgradeResponse> result = new HashSet<ResourceUpgradeResponse>();
@@ -899,7 +919,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     enum PostMergeAction {
         LINK_STORAGE_NODE
-    };
+    }
 
     /**
      * <p>Should Not Be Called With Existing Transaction !!!</p>
@@ -954,8 +974,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             LOG.debug("Resource and children merged: resource/millis=" + resource.getName() + '/'
                 + (System.currentTimeMillis() - start));
         }
-
-        return;
     }
 
     private void performPostMergeActions(Map<Resource, Set<PostMergeAction>> postMergeActions) {
@@ -1008,7 +1026,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         Map<Integer, Resource> parentMap = new HashMap<Integer, Resource>();
 
         for (Resource resource : resourceBatch) {
-            Resource existingResource = null;
+            Resource existingResource;
             long start = System.currentTimeMillis();
 
             existingResource = findExistingResource(resource, parentMap);
@@ -1264,8 +1282,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             existingResource.setPluginConfiguration(updatedResource.getPluginConfiguration());
             existingResource.setAgentSynchronizationNeeded();
         }
-
-        return;
     }
 
     private boolean initResourceTypes(Resource resource) {
@@ -1455,8 +1471,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // otherwise, set NEW
         resource.setInventoryStatus(InventoryStatus.NEW);
-
-        return;
     }
 
     private void addPostMergeAction(Map<Resource, Set<PostMergeAction>> postMergeActions, Resource resource,
@@ -1468,6 +1482,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
     }
 
+    @Override
     public void importResources(Subject subject, int[] resourceIds) {
         if (resourceIds == null || resourceIds.length == 0) {
             return;
@@ -1475,6 +1490,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         checkStatus(subject, resourceIds, InventoryStatus.COMMITTED, EnumSet.of(InventoryStatus.NEW));
     }
 
+    @Override
     public void ignoreResources(Subject subject, int[] resourceIds) {
         if (resourceIds == null || resourceIds.length == 0) {
             return;
@@ -1499,10 +1515,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             LOG.error("Failed to reset availabilities for resources being ignored: " + ThrowableUtil.getAllMessages(e));
         }
         */
-
-        return;
     }
 
+    @Override
     public void unignoreResources(Subject subject, int[] resourceIds) {
         if (resourceIds == null || resourceIds.length == 0) {
             return;
@@ -1510,6 +1525,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         checkStatus(subject, resourceIds, InventoryStatus.NEW, EnumSet.of(InventoryStatus.IGNORED));
     }
 
+    @Override
     public void unignoreAndImportResources(Subject subject, int[] resourceIds) {
         if (resourceIds == null || resourceIds.length == 0) {
             return;

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.discovery;
 
 import java.util.Collection;
@@ -26,8 +27,6 @@ import java.util.Set;
 
 import javax.ejb.Local;
 
-import org.jetbrains.annotations.NotNull;
-
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
@@ -35,16 +34,15 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.ImportResourceRequest;
+import org.rhq.core.domain.resource.ImportResourceResponse;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceError;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean.PostMergeAction;
@@ -72,8 +70,8 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      *
      * Merge In the provided batch of resources.  The list of resources must provide a parent before its child.
      *
-     * @param resourceBatch
-     * @param agent
+     * @param resourceBatch a batch of resources
+     * @param agent the agent managing the resources
      * @param postMergeActions a series of actions to perform on newly committed resources.
      *
      * @throws InvalidInventoryReportException
@@ -91,7 +89,7 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
     PlatformSyncInfo getPlatformSyncInfo(Agent knownAgent);
 
     /**
-     * @param resourceid the root resourceId on which we want to sync
+     * @param resourceId the root resourceId on which we want to sync
      * @return null if resource not found, otherwise the entire tree rooted at the specified resource, as an
      * unordered collection.  Although not strictly a Set (to save on computation) this collection should not
      * contain duplicates.
@@ -177,27 +175,23 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
         InventoryStatus status);
 
     /**
-     * Manually add the resource of the specified type to inventory using the specified plugin configuration (i.e.
-     * connection properties). This will not only create a new resource, but it will also ensure the resource component
-     * is activated (and thus connects to the managed resource). If an error occurs, but the caller can still process
-     * the results, the returned object will contain a ResourceError that is associated with the new resource (this
-     * occurs when the new resource was created but its component could not be activated).
+     * Manually Add the resource to inventory using the type and plugin configuration (i.e. connection properties)
+     * specified in <code>importResourceRequest</code>. This will not only create a new resource, but it will also
+     * ensure the resource component is activated (and thus connects to the managed resource).
      *
-     * @param  user                the user that wants to add the resource
-     * @param  resourceType        the type of resource to be manually discovered
-     * @param  parentResourceId    the id of the resource that will be the parent of the manually discovered resource
-     * @param  pluginConfiguration the properties that should be used to connect to the underlying managed resource
      *
-     * @return NotNull the newly discovered resource with any associated {@link ResourceError} that might have occurred during
-     *         the activation of the resource
+     * @param  subject              the user making the request
+     * @param importResourceRequest the request
+     *
+     * @return The response. Note that the resource may have existed already if given the provided pluginConfiguration
+     *         leads to a previously defined resource.
      *
      * @throws InvalidPluginConfigurationClientException if connecting to the underlying managed resource failed due to
      *                                                   an invalid plugin configuration
      * @throws PluginContainerException                  if the manual discovery fails for any other reason
      */
-    @NotNull
-    MergeResourceResponse manuallyAddResource(Subject user, ResourceType resourceType, int parentResourceId,
-        Configuration pluginConfiguration) throws InvalidPluginConfigurationClientException, PluginContainerException;
+    ImportResourceResponse manuallyAddResource(Subject subject, ImportResourceRequest importResourceRequest)
+        throws InvalidPluginConfigurationClientException, PluginContainerException;
 
     /**
      * Adds the specified resource to inventory, *auto-committing it*.

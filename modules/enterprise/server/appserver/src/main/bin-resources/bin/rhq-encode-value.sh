@@ -43,4 +43,4 @@ fi
 # internal scripts assume they are running in the current working directory
 cd "$_SCRIPT_DIR/internal"
 
-./rhq-installer.sh --encodepassword
+./rhq-installer.sh --encodevalue

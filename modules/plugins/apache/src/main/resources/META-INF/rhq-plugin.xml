@@ -278,9 +278,11 @@
                                 to the Apache server's SNMP agent. Note that SSL certificate validation is disabled
                                 during availability checks if this is an HTTPS URL."/>
          <c:simple-property name="snmpAgentHost" displayName="SNMP Agent Host" default="127.0.0.1"
+                            required="false"
                             description="the host name or IP address of the Apache SNMP agent (typically '127.0.0.1')"/>
 
          <c:simple-property name="snmpAgentPort" displayName="SNMP Agent Port" type="integer" default="1610"
+                            required="false"
                             description="the UDP port of the Apache SNMP agent (typically '1610')">
            <c:constraint>
              <c:integer-constraint minimum="1" maximum="65535"/>
@@ -288,6 +290,7 @@
          </c:simple-property>
 
          <c:simple-property name="snmpAgentCommunity" displayName="SNMP Agent Community" default="public"
+                            required="false"
                             description="the SNMP community of the Apache SNMP agent (typically 'public')"/>
 
          <c:simple-property name="snmpRequestTimeout" displayName="SNMP Request Timeout" type="long" default="2000" required="false"

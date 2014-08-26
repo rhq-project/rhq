@@ -17,6 +17,6 @@ if exist "%_SCRIPT_DIR%\rhq-server-env.bat" (
 cd "%_SCRIPT_DIR%\internal"
 
 rem internal scripts assume they are running in the current working directory
-rhq-installer --encodepassword
+rhq-installer --encodevalue
 
 endlocal

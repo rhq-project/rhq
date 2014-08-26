@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.server.gwt;
 
 import java.util.ArrayList;
@@ -38,6 +39,8 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
+import org.rhq.core.domain.resource.ImportResourceRequest;
+import org.rhq.core.domain.resource.ImportResourceResponse;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceAncestryFormat;
@@ -124,6 +127,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     public ResourceGWTServiceImpl() {
     }
 
+    @Override
     public ResourceAvailabilitySummary getResourceAvailabilitySummary(int resourceId) throws RuntimeException {
         try {
             ResourceAvailabilitySummary result;
@@ -144,6 +148,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria) throws RuntimeException {
         try {
             PageList<Resource> result = resourceManager.findResourcesByCriteria(getSessionSubject(), criteria);
@@ -156,6 +161,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public List<Resource> findResourcesByCriteriaBounded(ResourceCriteria criteria, int maxResources,
         int maxResourcesByType) throws RuntimeException {
         try {
@@ -170,6 +176,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria)
         throws RuntimeException {
         try {
@@ -189,6 +196,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public List<ResourceInstallCount> findResourceComplianceCounts() throws RuntimeException {
         try {
             List<ResourceInstallCount> result = resourceManager.findResourceComplianceCounts(getSessionSubject());
@@ -198,6 +206,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public List<ResourceInstallCount> findResourceInstallCounts(boolean groupByVersions) throws RuntimeException {
         try {
             List<ResourceInstallCount> result = resourceManager.findResourceInstallCounts(getSessionSubject(),
@@ -211,6 +220,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     /** Locate ProblemResourcesComposites and generate the disambiguation reports for them.
      *  Criteria passed in not currently used.
      */
+    @Override
     public PageList<ProblemResourceComposite> findProblemResources(long ctime, int maxItems) throws RuntimeException {
         try {
             MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
@@ -223,6 +233,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId) throws RuntimeException {
         try {
             return SerialUtility.prepare(
@@ -234,6 +245,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public Map<Integer, String> getResourcesAncestry(Integer[] resourceIds, ResourceAncestryFormat format)
         throws RuntimeException {
         try {
@@ -243,6 +255,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems)
         throws RuntimeException {
         try {
@@ -261,6 +274,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public void uninventoryAllResourcesByAgent(Agent[] agents) throws RuntimeException {
         try {
             if (agents != null && agents.length > 0) {
@@ -270,12 +284,12 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
                     resourceManager.uninventoryAllResourcesByAgent(getSessionSubject(), agent);
                 }
             }
-            return;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
+    @Override
     public List<Integer> uninventoryResources(int[] resourceIds) throws RuntimeException {
         try {
             return resourceManager.uninventoryResources(getSessionSubject(), resourceIds);
@@ -284,6 +298,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public void updateResource(Resource resource) throws RuntimeException {
         try {
             resourceManager.updateResource(getSessionSubject(), resource);
@@ -292,6 +307,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
         Configuration newResourceConfiguration, Integer timeout) throws RuntimeException {
         try {
@@ -314,6 +330,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
         Configuration deploymentTimeConfiguration, int packageVersionId, Integer timeout) throws RuntimeException {
         try {
@@ -340,6 +357,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public List<DeleteResourceHistory> deleteResources(int[] resourceIds) throws RuntimeException {
         try {
             return SerialUtility.prepare(resourceFactoryManager.deleteResources(getSessionSubject(), resourceIds),
@@ -352,6 +370,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public List<Integer> disableResources(int[] resourceIds) throws RuntimeException {
         try {
             return resourceManager.disableResources(getSessionSubject(), resourceIds);
@@ -360,6 +379,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public List<Integer> enableResources(int[] resourceIds) throws RuntimeException {
         try {
             return resourceManager.enableResources(getSessionSubject(), resourceIds);
@@ -368,6 +388,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentId, Long beginDate, Long endDate,
         PageControl pc) throws RuntimeException {
         try {
@@ -378,6 +399,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public PageList<DeleteResourceHistory> findDeleteChildResourceHistory(int parentId, Long beginDate, Long endDate,
         PageControl pc) throws RuntimeException {
         try {
@@ -388,6 +410,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public PageList<Resource> getQueuedPlatforms(ArrayList<InventoryStatus> statuses, PageControl pc)
         throws RuntimeException {
         try {
@@ -399,6 +422,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public void importResources(int[] resourceIds) throws RuntimeException {
         try {
             discoveryBoss.importResources(getSessionSubject(), resourceIds);
@@ -407,6 +431,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public void ignoreResources(int[] resourceIds) throws RuntimeException {
         try {
             discoveryBoss.ignoreResources(getSessionSubject(), resourceIds);
@@ -415,6 +440,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public void unignoreResources(int[] resourceIds) throws RuntimeException {
         try {
             discoveryBoss.unignoreResources(getSessionSubject(), resourceIds);
@@ -423,6 +449,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public void unignoreAndImportResources(int[] resourceIds) throws RuntimeException {
         try {
             discoveryBoss.unignoreAndImportResources(getSessionSubject(), resourceIds);
@@ -431,6 +458,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public List<ResourceError> findResourceErrors(int resourceId) throws RuntimeException {
         try {
             return SerialUtility.prepare(resourceManager.findResourceErrors(getSessionSubject(), resourceId),
@@ -440,6 +468,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    @Override
     public void deleteResourceErrors(int[] resourceErrorIds) throws RuntimeException {
         try {
             for (int doomedId : resourceErrorIds) {
@@ -450,11 +479,10 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
-    public Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration)
-        throws RuntimeException {
+    @Override
+    public ImportResourceResponse manuallyAddResource(ImportResourceRequest request) throws RuntimeException {
         try {
-            Resource result = discoveryBoss.manuallyAddResource(getSessionSubject(), resourceTypeId, parentResourceId,
-                pluginConfiguration);
+            ImportResourceResponse result = discoveryBoss.manuallyAddResource(getSessionSubject(), request);
             return SerialUtility.prepare(result, "ResourceService.manuallyAddResource");
         } catch (Throwable t) {
             if (t instanceof CannotConnectToAgentException) {

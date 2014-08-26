@@ -269,7 +269,7 @@ public class GroupOobsPortlet extends EnhancedVLayout implements CustomSettingsP
                                                         public void onClick(ClickEvent event) {
                                                             ChartViewWindow window = new ChartViewWindow(title);
                                                             D3GroupGraphListView graphView = new D3GroupGraphListView
-                                                                    (groupComposite.getResourceGroup(), false);
+                                                                    (groupComposite.getResourceGroup(), oob.getDefinitionId(), true);
 
                                                             window.addItem(graphView);
                                                             window.show();

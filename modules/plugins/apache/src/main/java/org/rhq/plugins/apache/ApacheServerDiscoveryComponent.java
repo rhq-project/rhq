@@ -367,7 +367,10 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SNMP_AGENT_PORT, port));
         } else {
             /* try mod_bmx VirtualHost and Location */
-            snmpAddresses = findBMXAddresses(serverConfig, new File(serverRoot));
+            String bmxURL = findBMXURL(serverConfig);
+            if (bmxURL != null) {
+                pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_BMX_URL, bmxURL));
+            }
         }
 
         return createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(), binaryInfo);
@@ -810,17 +813,99 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         return ret;
     }
 
-    /* TODO: try to find the VirtualHost containing something like:
+    /* Try to find the VirtualHost containing something like:
      *   <Location /bmx>
      *      SetHandler bmx-handler
      *   </Location>
      */
-    private static List<InetSocketAddress> findBMXAddresses(ApacheDirectiveTree tree, File serverRoot) {
-        List<InetSocketAddress> ret = new ArrayList<InetSocketAddress>();
+    private static String findBMXURL(ApacheDirectiveTree tree) {
+        List<ApacheDirective> virtualhosts = tree.getRootNode().getChildByName("<VirtualHost");
+        if (!virtualhosts.isEmpty()) {
+            log.debug("findBMXURL: Looking in VirtualHosts");
+            for (ApacheDirective virtualhost : virtualhosts) {
+                List<ApacheDirective> locations = virtualhost.getChildByName("<Location");
+                if (!locations.isEmpty()) {
+                    for (ApacheDirective location : locations) {
+                        List<ApacheDirective> handlers = location.getChildByName("SetHandler");
+                        if (!handlers.isEmpty()) {
+                            for (ApacheDirective handler : handlers) {
+                                for (String val : handler.getValues()) {
+                                    if ("bmx-handler".equalsIgnoreCase(val)) {
+                                        /* We have found it */
+                                        String servername = null;
+                                        String port = null;
+                                        port = virtualhost.getValues().get(0);
+                                        if (port.startsWith("*:"))
+                                            port = port.substring(2);
+                                        else {
+                                            int index = port.lastIndexOf(':');
+                                            servername = port.substring(0, index);
+                                            port = port.substring(index+1);
+                                        }
+                                        if (!virtualhost.getChildByName("ServerName").isEmpty()) {
+                                            servername = virtualhost.getChildByName("ServerName").get(0).getValues().get(0);
+                                            int index = servername.lastIndexOf(':');
+                                            if (index >0) {
+                                                // name:port.
+                                                servername = servername.substring(0, index);
+                                            }
+                                        }
+                                        if (servername == null)
+                                            servername = "localhost";
+                                        return "http://" + servername + ":" + port + location.getValues().get(0);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        /* the location isn't in a VirtualHost */
+        List<ApacheDirective> locations = tree.getRootNode().getChildByName("<Location");
+        if (!locations.isEmpty()) {
+            log.debug("findBMXURL: Looking outside VirtualHosts");
+            for (ApacheDirective location : locations) {
+                List<ApacheDirective> handlers = location.getChildByName("SetHandler");
+                if (!handlers.isEmpty()) {
+                    for (ApacheDirective handler : handlers) {
+                        for (String val : handler.getValues()) {
+                            if ("bmx-handler".equalsIgnoreCase(val)) {
+                                /* We have found it */
+                                String servername = null;
+                                String port = null;
+                                List<ApacheDirective> ports = tree.getRootNode().getChildByName("Listen");
+                                if (ports.isEmpty()) {
+                                   log.error("findBMXURL: Can't find Listen directive");
+                                   return null;
+                                }
+                                port = ports.get(0).getValues().get(0); // Use the first one.
+                                int index = port.lastIndexOf(':');
+                                if (index >0) {
+                                    // Use IP:port.
+                                    servername = port.substring(0, index);
+                                    port = port.substring(index+1);
+                                }
+                                if (!tree.getRootNode().getChildByName("ServerName").isEmpty()) {
+                                    servername = tree.getRootNode().getChildByName("ServerName").get(0).getValues().get(0);
+                                    index = servername.lastIndexOf(':');
+                                    if (index >0) {
+                                        // name:port.
+                                        servername = servername.substring(0, index);
+                                    }
+                                }
+                                if (servername == null)
+                                    servername = "localhost";
+                                return "http://" + servername + ":" + port + location.getValues().get(0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-        return ret;
+        return null;
     }
-    /* TODO: We need also the Location */
 
     private static String findSNMPAgentAddressConfigLine(File snmpdConf) throws IOException {
         BufferedReader rdr = new BufferedReader(new FileReader(snmpdConf));

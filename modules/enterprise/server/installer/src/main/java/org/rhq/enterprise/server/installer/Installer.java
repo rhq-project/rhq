@@ -235,7 +235,7 @@ public class Installer {
                 // could get captured in command history.
                 Console console = System.console();
                 if (null != console) {
-                    passwordToEncode = String.valueOf(console.readLine("%s", "Password: "));
+                    passwordToEncode = String.valueOf(console.readLine("%s", "Password/Value: "));
                     associatedProperty = "rhq.autoinstall.server.admin.password";
                     if (!confirm(console, "Property " + associatedProperty)) {
                         associatedProperty = "rhq.server.database.password";
@@ -284,32 +284,33 @@ public class Installer {
             }
 
             if ("rhq.server.database.password".equals(associatedProperty)
-                || "rhq.autoinstall.server.admin.password".equals(associatedProperty)) {
+                || "rhq.autoinstall.server.admin.password".equals(associatedProperty)
+                || "rhq.storage.password".equals(associatedProperty)) {
                 LOG.info("*** Encoded password for rhq-server.properties:");
                 LOG.info("***     " + associatedProperty + "=" + encodedPassword);
                 LOG.info("***     ");
-                LOG.info("*** Encoded password for standalone.xml with vault with default:");
-                LOG.info("***     NOT APPLICABLE");
-                LOG.info("***     ");
-                LOG.info("*** Encoded password for standalone.xml with vault without default:");
-                LOG.info("***     NOT APPLICABLE");
-                LOG.info("***     ");
-                LOG.info("*** Encoded password for agent-configuration.xml:");
-                LOG.info("***     NOT APPLICABLE");
             } else {
+                LOG.info("*** !!! WARNING !!!");
+                LOG.info("*** Both standalone-full.xml and rhq-server.properties need to be updated if a property from rhq-server.properties is used in standalone-full.xml");
+                LOG.info("*** !!! WARNING !!!");
+                LOG.info("***     ");
+                LOG.info("***     ");
                 LOG.info("*** Encoded password for rhq-server.properties:");
                 LOG.info("***     " + associatedProperty + "=RESTRICTED::" + encodedPassword);
                 LOG.info("***     ");
-                LOG.info("*** Encoded password for standalone.xml with vault with default:");
+                LOG.info("*** Encoded password for standalone-full.xml with vault with password as default value:");
                 LOG.info("***     ${VAULT::restricted::" + associatedProperty + "::" + encodedPassword + "}");
                 LOG.info("***     ");
-                LOG.info("*** Encoded password for standalone.xml with vault without default:");
+                LOG.info("*** Encoded password for standalone-full.xml with vault without default:");
                 LOG.info("***     ${VAULT::restricted::" + associatedProperty + ":: }");
                 LOG.info("***     ");
                 LOG.info("*** Encoded password for agent-configuration.xml:");
                 LOG.info("***     <entry key=\"" + associatedProperty + "\" value=\"RESTRICTED::" + encodedPassword
                     + "\" />");
+                LOG.info("***     ");
             }
+
+            LOG.info("*** Please consult the documentation for additional help.");
 
             return new WhatToDo[] { WhatToDo.DO_NOTHING };
         }

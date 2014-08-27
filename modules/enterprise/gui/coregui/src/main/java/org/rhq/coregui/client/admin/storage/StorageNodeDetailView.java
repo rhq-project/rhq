@@ -262,7 +262,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                 if (isInitialized()) {
                     if (null != detailsAndLoadLayout) {
                         LayoutSpacer spacer = new LayoutSpacer();
-                        spacer.setWidth(30);
+                        spacer.setWidth("2%");
                         detailsAndLoadLayout.setMembers(detailsLayout, spacer, loadLayout);
                         detailsAndLoadLayout.setHeight(220);
                         detailsAndLoadSection = new SectionStackSection(
@@ -309,7 +309,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 
         operationModeItem.setValue(storageNode.getOperationMode());
         final StaticTextItem clusterStatusItem = new StaticTextItem(FIELD_STATUS.propertyName(), FIELD_STATUS.title());
-        clusterStatusItem.setValue(storageNode.getStatus());
+        clusterStatusItem.setValue(storageNode.getStatus().toString());
 
         final StaticTextItem availabilityItem = new StaticTextItem(FIELD_AVAILABILITY.propertyName(),
             FIELD_AVAILABILITY.title());
@@ -377,7 +377,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         if (isOk) {
             message.append(MSG.view_adminTopology_storageNodes_detail_ok());
         }
-        messageItem.setValue(message);
+        messageItem.setValue(message.toString());
 
         StaticTextItem lastOperation = null;
         boolean isOperationFailed = storageNode.getFailedOperation() != null
@@ -395,16 +395,18 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 
         List<FormItem> formItems = new ArrayList<FormItem>(6);
         formItems.addAll(Arrays.asList(nameItem, resourceItem, availabilityItem, cqlPortItem, jmxPortItem));
-        if (!CoreGUI.isDebugMode())
+        if (!CoreGUI.isDebugMode()) {
             formItems.add(operationModeItem); // debug mode fails if this item is added
+        }
         formItems.addAll(Arrays
             .asList(clusterStatusItem, installationDateItem, lastUpdateItem, alertsItem, messageItem));
-        if (isOperationFailed)
+        if (isOperationFailed) {
             formItems.add(lastOperation);
-        form.setItems(formItems.toArray(new FormItem[] {}));
+        }
+        form.setItems(formItems.toArray(new FormItem[formItems.size()]));
 
         detailsLayout = new EnhancedVLayout();
-        detailsLayout.setWidth(450);
+        detailsLayout.setWidth("35%");
         detailsLayout.addMember(form);
         if (detailsAndLoadLayout == null) {
             detailsAndLoadLayout = new EnhancedHLayout(0);
@@ -417,7 +419,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         StorageNodeLoadComponent loadDataComponent = new StorageNodeLoadComponent(storageNode.getId(), sparkLineData);
         loadDataComponent.setExtraSpace(5);
         loadLayout = new EnhancedVLayout();
-        loadLayout.setWidth100();
+        loadLayout.setWidth("*");
         LayoutSpacer spacer = new LayoutSpacer();
         spacer.setHeight(10);
         HTMLFlow loadLabel = new HTMLFlow(MSG.view_adminTopology_storageNodes_detail_status());

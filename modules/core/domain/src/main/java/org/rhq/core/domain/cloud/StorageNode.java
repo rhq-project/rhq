@@ -58,16 +58,12 @@ import org.rhq.core.domain.resource.Resource;
         + "           FROM StorageNode s " //
         + "LEFT JOIN FETCH s.resource r " //
         + "          WHERE s.address = :address"),
-    @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODE, query =
-        "SELECT s FROM StorageNode s WHERE s.operationMode = :operationMode"),
-    @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODES, query =
-        "SELECT s FROM StorageNode s WHERE s.operationMode IN (:operationModes)"),
-    @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODE_EXCLUDING, query =
-        "SELECT s FROM StorageNode s WHERE s.operationMode = :operationMode AND s <> :storageNode"),
+    @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODE, query = "SELECT s FROM StorageNode s WHERE s.operationMode = :operationMode"),
+    @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODES, query = "SELECT s FROM StorageNode s WHERE s.operationMode IN (:operationModes)"),
+    @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODE_EXCLUDING, query = "SELECT s FROM StorageNode s WHERE s.operationMode = :operationMode AND s <> :storageNode"),
     @NamedQuery(name = StorageNode.QUERY_FIND_ALL_NOT_INSTALLED, query = "SELECT s FROM StorageNode s WHERE NOT s.operationMode = 'INSTALLED'"),
     @NamedQuery(name = StorageNode.QUERY_FIND_ALL_NORMAL, query = "SELECT s FROM StorageNode s WHERE s.operationMode = 'NORMAL'"),
-    @NamedQuery(name = StorageNode.QUERY_DELETE_BY_ID, query = "" //
-        + "DELETE FROM StorageNode s WHERE s.id = :storageNodeId "),
+    @NamedQuery(name = StorageNode.QUERY_DELETE_BY_ID, query = "DELETE FROM StorageNode s WHERE s.id = :storageNodeId "),
     @NamedQuery(name = StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, query = "" //
         + "   SELECT def.name, def.id, ms.id, res.id  FROM MeasurementSchedule ms   " //
         + "     JOIN ms.definition def " //
@@ -75,8 +71,7 @@ import org.rhq.core.domain.resource.Resource;
         + "    WHERE ms.definition = def    " //
         + "      AND res.parentResource.id = :parrentId    " //
         + "      AND ms.enabled = true" //
-        + "      AND def.name IN (:metricNames)"), //
-
+        + "      AND def.name IN (:metricNames)"),
     @NamedQuery(name = StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, query = "" //
         + "   SELECT def.name, def.id, ms.id, res.id  FROM MeasurementSchedule ms   " //
         + "     JOIN ms.definition def " //
@@ -89,14 +84,14 @@ import org.rhq.core.domain.resource.Resource;
         + "   UPDATE StorageNode s " //
         + "      SET s.resource = NULL  " //
         + "    WHERE s.resource.id in (:resourceIds)"),
-    @NamedQuery(name = StorageNode.QUERY_UPDATE_OPERATION_MODE, query =
-        "UPDATE StorageNode s SET s.operationMode = :newOperationMode WHERE s.operationMode = :oldOperationMode"),
-    @NamedQuery(name = StorageNode.QUERY_FIND_UNACKED_ALERTS_COUNTS, query =
-          " SELECT resource.id, COUNT(alert.id)"
-        + " FROM Alert alert JOIN alert.alertDefinition alertDef JOIN alertDef.resource resource"
-        + " WHERE alert.acknowledgeTime = -1 AND resource.resourceType.plugin = 'RHQStorage'"
-        + " GROUP BY resource.id")
-})
+    @NamedQuery(name = StorageNode.QUERY_UPDATE_OPERATION_MODE, query = "UPDATE StorageNode s SET s.operationMode = :newOperationMode WHERE s.operationMode = :oldOperationMode"),
+    @NamedQuery(name = StorageNode.QUERY_FIND_UNACKED_ALERTS_COUNTS, query = "" //
+        + " SELECT resource.id, COUNT(alert.id) "
+        + "   FROM Alert alert JOIN alert.alertDefinition alertDef JOIN alertDef.resource resource" //
+        + "  WHERE resource.inventoryStatus = 'COMMITTED' " //
+        + "    AND alert.acknowledgeTime = -1 " //
+        + "    AND resource.resourceType.plugin = 'RHQStorage' " //
+        + "  GROUP BY resource.id") })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_STORAGE_NODE_ID_SEQ", sequenceName = "RHQ_STORAGE_NODE_ID_SEQ")
 @Table(name = "RHQ_STORAGE_NODE")
 public class StorageNode implements Serializable {
@@ -153,7 +148,7 @@ public class StorageNode implements Serializable {
     private Resource resource;
 
     @JoinColumn(name = "RESOURCE_OP_HIST_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(optional = true, cascade = {CascadeType.REMOVE})
+    @OneToOne(optional = true, cascade = { CascadeType.REMOVE })
     private ResourceOperationHistory failedOperation;
 
     // required for JPA
@@ -244,16 +239,16 @@ public class StorageNode implements Serializable {
         if (operationMode == OperationMode.INSTALLED) {
             return Status.INSTALLED;
         }
-        if (operationMode == OperationMode.ANNOUNCE || operationMode == OperationMode.BOOTSTRAP ||
-            operationMode == OperationMode.ADD_MAINTENANCE) {
+        if (operationMode == OperationMode.ANNOUNCE || operationMode == OperationMode.BOOTSTRAP
+            || operationMode == OperationMode.ADD_MAINTENANCE) {
             if (errorMessage == null && failedOperation == null) {
                 return Status.JOINING;
             } else {
                 return Status.DOWN;
             }
         }
-        if (operationMode == OperationMode.DECOMMISSION || operationMode == OperationMode.UNANNOUNCE ||
-            operationMode == OperationMode.REMOVE_MAINTENANCE || operationMode == OperationMode.UNINSTALL) {
+        if (operationMode == OperationMode.DECOMMISSION || operationMode == OperationMode.UNANNOUNCE
+            || operationMode == OperationMode.REMOVE_MAINTENANCE || operationMode == OperationMode.UNINSTALL) {
             if (errorMessage == null && failedOperation == null) {
                 return Status.LEAVING;
             } else {
@@ -267,22 +262,21 @@ public class StorageNode implements Serializable {
     }
 
     public enum OperationMode {
-        DECOMMISSION("Remove the storage node from service"),
-        DOWN("This storage node is down"), //
+        DECOMMISSION("Remove the storage node from service"), DOWN("This storage node is down"), //
         INSTALLED("This storage node is newly installed but not yet operational"), //
         MAINTENANCE("This storage node is in maintenance mode"), //
-        NORMAL("This storage node is running normally"),
-        ANNOUNCE("The storage node is installed but not yet part of the cluster. It is being announced so that it " +
-            "can join the cluster."),
-        UNANNOUNCE("The storage node has been decommissioned and the cluster is being notified to stop accepting " +
-            "gossip from its IP address."),
-        BOOTSTRAP("The storage is installed but not yet part of the cluster. It is getting bootstrapped into the " +
-            "cluster"),
-        ADD_MAINTENANCE("The storage node is running and is preparing to undergo routine maintenance that is " +
-            "necessary when a new node joins the cluster."),
-        REMOVE_MAINTENANCE("The storage node is no longer part of the cluster. Remaining storage node are " +
-            "undergoing cluster maintenance due to the topology change."),
-        UNINSTALL("The storage node is being removed from inventory and its bits on disk are getting purged.");
+        NORMAL("This storage node is running normally"), ANNOUNCE(
+            "The storage node is installed but not yet part of the cluster. It is being announced so that it "
+                + "can join the cluster."), UNANNOUNCE(
+            "The storage node has been decommissioned and the cluster is being notified to stop accepting "
+                + "gossip from its IP address."), BOOTSTRAP(
+            "The storage is installed but not yet part of the cluster. It is getting bootstrapped into the "
+                + "cluster"), ADD_MAINTENANCE(
+            "The storage node is running and is preparing to undergo routine maintenance that is "
+                + "necessary when a new node joins the cluster."), REMOVE_MAINTENANCE(
+            "The storage node is no longer part of the cluster. Remaining storage node are "
+                + "undergoing cluster maintenance due to the topology change."), UNINSTALL(
+            "The storage node is being removed from inventory and its bits on disk are getting purged.");
 
         public final String message;
 
@@ -296,17 +290,13 @@ public class StorageNode implements Serializable {
     }
 
     public enum Status {
-        INSTALLED,
-        DOWN,
-        NORMAL,
-        JOINING,
-        LEAVING
+        INSTALLED, DOWN, NORMAL, JOINING, LEAVING
     }
 
     @Override
     public String toString() {
-        return "StorageNode[id=" + id + ", address=" + address + ", cqlPort=" + cqlPort
-            + ", operationMode=" + operationMode + ", mtime=" + mtime + "]";
+        return "StorageNode[id=" + id + ", address=" + address + ", cqlPort=" + cqlPort + ", operationMode="
+            + operationMode + ", mtime=" + mtime + "]";
     }
 
     @PrePersist

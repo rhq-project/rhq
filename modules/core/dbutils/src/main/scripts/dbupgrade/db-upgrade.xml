@@ -2512,7 +2512,7 @@
                 </schema-directSQL>
             </schemaSpec>
 
-            <schemaSpec version="2.159">
+            <schemaSpec version="2.158">
                 <schema-directSQL ignoreError="true">
                     <statement desc="Repair RHQ_MEASUREMENT_BLINE by removing duplicates prior to creating the unique index.">
                         DELETE FROM rhq_measurement_bline WHERE (id, schedule_id) NOT IN
@@ -2528,7 +2528,7 @@
                 </schema-directSQL>
             </schemaSpec>
 
-            <schemaSpec version="2.160">
+            <schemaSpec version="2.159">
               <!-- BZ 1070257 + 911432 -->
               <schema-alterColumn table="RHQ_ALERT_CONDITION_LOG" column="VALUE" columnType="VARCHAR2" precision="4000" />
             </schemaSpec>

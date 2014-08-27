@@ -37,6 +37,7 @@ import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.coregui.client.admin.storage.StorageNodeDatasource.StorageNodeLoadCompositeDatasource;
 import org.rhq.coregui.client.util.BrowserUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
@@ -58,9 +59,10 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
             @Override
             protected String getCellCSSText(ListGridRecord record, int rowNum, int colNum) {
                 if ("avg".equals(getFieldName(colNum))
-                    && (StorageNodeLoadCompositeDatasource.KEY_HEAP_PERCENTAGE.equals(record.getAttribute("id")) ||
-                        StorageNodeLoadCompositeDatasource.KEY_DATA_DISK_SPACE_PERCENTAGE.equals(record.getAttribute("id")) ||
-                        StorageNodeLoadCompositeDatasource.KEY_TOTAL_DISK_SPACE_PERCENTAGE.equals(record.getAttribute("id")))) {
+                    && (StorageNodeLoadCompositeDatasource.KEY_HEAP_PERCENTAGE.equals(record.getAttribute("id"))
+                        || StorageNodeLoadCompositeDatasource.KEY_DATA_DISK_SPACE_PERCENTAGE.equals(record
+                            .getAttribute("id")) || StorageNodeLoadCompositeDatasource.KEY_TOTAL_DISK_SPACE_PERCENTAGE
+                            .equals(record.getAttribute("id")))) {
                     if (record.getAttributeAsFloat("avgFloat") > .85) {
                         return DONT_MISS_ME_CLASS;
                     } else if (record.getAttributeAsFloat("avgFloat") > .7) {
@@ -78,13 +80,13 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
                     } else {
                         return OK_CLASS;
                     }
-                }
-                else {
+                } else {
                     return super.getCellCSSText(record, rowNum, colNum);
                 }
             }
         };
-        loadGrid.setID(this.getClass().getName() + storageNodeId + "-" + Random.nextDouble());
+        loadGrid
+            .setID(EnhancedUtility.getSafeId(this.getClass().getName() + storageNodeId + "_" + Random.nextDouble()));
         loadGrid.setWidth100();
         loadGrid.setHeight(200);
         loadGrid.setAutoFitData(Autofit.VERTICAL);
@@ -97,7 +99,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
         loadGrid.setHoverWidth(300);
         loadGrid.setDataSource(datasource);
         loadGrid.setAutoFetchData(true);
-//        loadGrid.fetchData();
+        //        loadGrid.fetchData();
         if (showSparkLine) {
             loadGrid.addDataArrivedHandler(new DataArrivedHandler() {
                 @Override
@@ -136,8 +138,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
             // collapse the data into comma delimited list for consumption by third party javascript library (jquery.sparkline)
             StringBuilder commaDelimitedList = new StringBuilder();
             for (MeasurementDataNumericHighLowComposite d : data) {
-                if ((!Double.isNaN(d.getValue()))
-                    && (!String.valueOf(d.getValue()).contains("NaN"))) {
+                if ((!Double.isNaN(d.getValue())) && (!String.valueOf(d.getValue()).contains("NaN"))) {
                     commaDelimitedList.append(d.getValue()).append(",");
                 }
             }
@@ -145,7 +146,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
                 commaDelimitedList = commaDelimitedList.deleteCharAt(commaDelimitedList.length() - 1);
             }
             if (!commaDelimitedList.toString().contains(",")) {
-             // prepend another value just so we have 2 values and it will graph
+                // prepend another value just so we have 2 values and it will graph
                 commaDelimitedList.insert(0, "0,");
             }
 

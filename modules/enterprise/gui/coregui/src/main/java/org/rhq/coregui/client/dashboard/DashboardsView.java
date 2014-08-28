@@ -198,7 +198,8 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
         newDashboardButton.setAutoFit(true);
         newDashboardButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                addNewDashboard();
+                newDashboardButton.disable();
+                addNewDashboard(newDashboardButton);
             }
         });
 
@@ -336,7 +337,7 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
         return (!this.dashboardsByName.containsKey(name));
     }
 
-    public void addNewDashboard() {
+    public void addNewDashboard(final IButton newDashboardButton) {
         int i = 0;
         String availableDashboardName = null;
         while (availableDashboardName == null) {
@@ -356,6 +357,7 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
         dashboardService.storeDashboard(dashboard, new AsyncCallback<Dashboard>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error1(), caught);
+                newDashboardButton.enable();
             }
 
             public void onSuccess(Dashboard result) {
@@ -371,6 +373,8 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
 
                 tabSet.addTab(tab);
                 tabSet.selectTab(tab);
+
+                newDashboardButton.enable();
             }
         });
     }

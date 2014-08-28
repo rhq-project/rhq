@@ -386,12 +386,22 @@ public class ServerInstallUtil {
             ModelNode request = client.createNewVaultRequest(PropertyObfuscationVault.class.getName());
             ModelNode results = client.execute(request);
             if (!VaultJBossASClient.isSuccess(results)) {
-                throw new FailureException(results, "Failed to create the RHQ vault");
+                String vaultClass = client.getVaultClass();
+                if (PropertyObfuscationVault.class.getName().equals(vaultClass)) {
+                    LOG.info("RHQ Vault already configured, vault detected on the second read attempt");
+                } else {
+                    throw new FailureException(results, "Failed to create the RHQ vault");
+                }
             } else {
                 LOG.info("RHQ Vault created");
             }
         } else {
-            LOG.info("A vault already exists, skipping the creation request");
+            String vaultClass = client.getVaultClass();
+            if (PropertyObfuscationVault.class.getName().equals(vaultClass)) {
+                LOG.info("RHQ vault already configured, skipping the creation process");
+            } else {
+                throw new FailureException("Failed to create the RHQ vault; a different vault is already configured");
+            }
         }
     }
 

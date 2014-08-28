@@ -29,7 +29,6 @@ import static java.util.Arrays.asList;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -48,7 +47,6 @@ import com.google.common.util.concurrent.Futures;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
-import org.joda.time.Hours;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -57,8 +55,10 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.CacheIndexEntryMapper;
+import org.rhq.server.metrics.domain.IndexEntry;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
@@ -91,10 +91,9 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @BeforeMethod
     public void resetDB() throws Exception {
+        session.execute("TRUNCATE " + MetricsTable.INDEX);
         session.execute("TRUNCATE " + MetricsTable.RAW);
-        session.execute("TRUNCATE " + MetricsTable.ONE_HOUR);
-        session.execute("TRUNCATE " + MetricsTable.SIX_HOUR);
-        session.execute("TRUNCATE " + MetricsTable.TWENTY_FOUR_HOUR);
+        session.execute("TRUNCATE " + MetricsTable.AGGREGATE);
         session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE);
         session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE_INDEX);
     }
@@ -151,7 +150,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         assertEquals(actual, expected, "Failed to find latest raw metric");
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void findRawDataAsync() throws Exception {
         DateTime hour0 = hour0();
         DateTime currentTime = hour0.plusHours(4).plusMinutes(44);
@@ -228,99 +227,75 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     }
 
     @Test(enabled = ENABLED)
-    public void insertAndFindAllOneHourMetrics() {
-        int scheduleId = 1;
-        DateTime hour0 = hour0();
+    public void insertAndFind1HourMetrics() {
+        int scheduleId = 100;
+        AggregateNumericMetric metric1 = new AggregateNumericMetric(scheduleId, Bucket.ONE_HOUR, 3.0, 1.0, 8.0,
+            hour(0).getMillis());
+        AggregateNumericMetric metric2 = new AggregateNumericMetric(scheduleId, Bucket.ONE_HOUR, 4.0, 2.0, 10.0,
+            hour(0).plusMinutes(5).getMillis());
+        AggregateNumericMetric metric3 = new AggregateNumericMetric(scheduleId + 1, Bucket.ONE_HOUR, 2.0, 2.0, 2.0,
+            hour(0).getMillis());
 
-        List<AggregateNumericMetric> metrics = asList(
-            new AggregateNumericMetric(scheduleId, 3.0, 1.0, 8.0, hour0.getMillis()),
-            new AggregateNumericMetric(scheduleId, 4.0, 2.0, 10.0, hour0.plusHours(1).getMillis()),
-            new AggregateNumericMetric(456, 2.0, 2.0, 2.0, hour0.getMillis())
-        );
+        dao.insert1HourData(metric1).get();
+        dao.insert1HourData(metric2).get();
+        dao.insert1HourData(metric3).get();
 
-        for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
-        }
+        List<AggregateNumericMetric> expected = asList(metric1, metric2);
+        List<AggregateNumericMetric> actual = dao.findAggregateMetrics(scheduleId, Bucket.ONE_HOUR, hour0().getMillis(),
+            hour(1).getMillis());
 
-        List<AggregateNumericMetric> expected = asList(
-            new AggregateNumericMetric(scheduleId, 3.0, 1.0, 8.0, hour0.getMillis()),
-            new AggregateNumericMetric(scheduleId, 4.0, 2.0, 10.0, hour0.plusHours(1).getMillis())
-        );
-
-        List<AggregateNumericMetric> actual = Lists.newArrayList(findAggregateMetrics(MetricsTable.ONE_HOUR,
-            scheduleId));
-        assertEquals(actual, expected, "Failed to find one hour metrics");
-
-        // verify that the TTL is set
-        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(
-            findAggregateMetricsWithMetadata(MetricsTable.ONE_HOUR, scheduleId, hour0.getMillis(), hour0()
-                .plusHours(1).plusSeconds(1).getMillis()));
-        assertAggregateTTLSet(actualMetricsWithMetadata);
+        assertEquals(actual, expected, "Failed to find 1 hour metrics");
     }
 
     @Test(enabled = ENABLED)
-    public void findOneHourMetricsForMultipleSchedules() {
-        int schedule1 = 1;
-        int schedule2 = 2;
-        int schedule3 = 3;
+    public void insertAndFind6HourMetrics() {
+        int scheduleId = 100;
+        AggregateNumericMetric metric1 = new AggregateNumericMetric(scheduleId, Bucket.SIX_HOUR, 3.0, 3.0, 3.0,
+            hour(0).getMillis());
+        AggregateNumericMetric metric2 = new AggregateNumericMetric(scheduleId, Bucket.SIX_HOUR, 4.0, 4.0, 4.0,
+            hour(6).getMillis());
+        AggregateNumericMetric metric3 = new AggregateNumericMetric(scheduleId, Bucket.SIX_HOUR, 5.0, 5.0, 5.0,
+            hour(12).getMillis());
+        AggregateNumericMetric metric4 = new AggregateNumericMetric(scheduleId + 1, Bucket.SIX_HOUR, 5.0, 5.0, 5.0,
+            hour(6).getMillis());
 
-        List<AggregateNumericMetric> metrics = asList(
-            new AggregateNumericMetric(schedule1, 1.1, 1.1, 1.1, hour0().getMillis()),
-            new AggregateNumericMetric(schedule2, 1.2, 1.2, 1.2, hour0().getMillis()),
-            new AggregateNumericMetric(schedule1, 2.1, 2.1, 2.1, hour0().plusHours(1).getMillis()),
-            new AggregateNumericMetric(schedule2, 2.2, 2.2, 2.2, hour0().plusHours(1).getMillis()),
-            new AggregateNumericMetric(schedule3, 3.2, 3.2, 3.2, hour0().plusHours(1).getMillis())
-        );
+        dao.insert6HourData(metric1).get();
+        dao.insert6HourData(metric2).get();
+        dao.insert6HourData(metric3).get();
+        dao.insert6HourData(metric4).get();
 
-        for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
-        }
+        List<AggregateNumericMetric> expected = asList(metric2, metric3);
+        List<AggregateNumericMetric> actual = dao.findAggregateMetrics(scheduleId, Bucket.SIX_HOUR, hour(6).getMillis(),
+            hour(18).getMillis());
 
-        List<AggregateNumericMetric> actual = Lists.newArrayList(dao.findOneHourMetrics(asList(schedule1, schedule2),
-            hour0().plusHours(1).getMillis(), hour0().plusHours(2).getMillis()));
-        List<AggregateNumericMetric> expected = asList(
-            new AggregateNumericMetric(schedule1, 2.1, 2.1, 2.1, hour0().plusHours(1).getMillis()),
-            new AggregateNumericMetric(schedule2, 2.2, 2.2, 2.2, hour0().plusHours(1).getMillis())
-        );
-
-        assertEquals(actual, expected, "Failed to find one hour metrics for multiple schedules");
+        assertEquals(actual, expected, "Failed to find 6 hour metrics");
     }
 
     @Test(enabled = ENABLED)
-    public void findRangeOfOneHourMetrics() {
-        int scheduledId = 1;
-        int nextScheduleId = 2;
-        DateTime hour0 = hour0();
+    public void insertAndFind24HourMetrics() {
+        int scheduleId = 100;
+        AggregateNumericMetric metric1 = new AggregateNumericMetric(scheduleId, Bucket.TWENTY_FOUR_HOUR, 3.0, 3.0, 3.0,
+            hour(0).getMillis());
+        AggregateNumericMetric metric2 = new AggregateNumericMetric(scheduleId, Bucket.TWENTY_FOUR_HOUR, 4.0, 4.0, 4.0,
+            hour(0).plusDays(2).getMillis());
+        AggregateNumericMetric metric3 = new AggregateNumericMetric(scheduleId, Bucket.TWENTY_FOUR_HOUR, 5.0, 5.0, 5.0,
+            hour(0).plusDays(3).getMillis());
+        AggregateNumericMetric metric4 = new AggregateNumericMetric(scheduleId, Bucket.TWENTY_FOUR_HOUR, 6.0, 6.0, 6.0,
+            hour(0).plusDays(4).getMillis());
+        AggregateNumericMetric metric5 = new AggregateNumericMetric(scheduleId + 1, Bucket.TWENTY_FOUR_HOUR, 4.0, 4.0,
+            4.0, hour(0).plusDays(2).getMillis());
 
-        List<AggregateNumericMetric> metrics = asList(
-            new AggregateNumericMetric(scheduledId, 2.0, 2.0, 2.0, hour0.getMillis()),
-            new AggregateNumericMetric(scheduledId, 3.0, 3.0, 3.0, hour0.plusHours(1).getMillis()),
-            new AggregateNumericMetric(scheduledId, 4.0, 4.0, 4.0, hour0.plusHours(2).getMillis()),
-            new AggregateNumericMetric(scheduledId, 5.0, 5.0, 5.0, hour0.plusHours(3).getMillis()),
-            new AggregateNumericMetric(nextScheduleId, 1.0, 1.0, 1.0, hour0.plusHours(1).getMillis())
-        );
+        dao.insert24HourData(metric1).get();
+        dao.insert24HourData(metric2).get();
+        dao.insert24HourData(metric3).get();
+        dao.insert24HourData(metric4).get();
+        dao.insert24HourData(metric5).get();
 
-        for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
-        }
+        List<AggregateNumericMetric> expected = asList(metric2, metric3);
+        List<AggregateNumericMetric> actual = dao.findAggregateMetrics(scheduleId, Bucket.TWENTY_FOUR_HOUR,
+            hour(0).plusDays(2).getMillis(), hour(0).plusDays(4).getMillis());
 
-        DateTime startTime = hour0.plusHours(1);
-        DateTime endTime = hour0.plusHours(3);
-        List<AggregateNumericMetric> expected = asList(
-            new AggregateNumericMetric(scheduledId, 3.0, 3.0, 3.0, hour0.plusHours(1).getMillis()),
-            new AggregateNumericMetric(scheduledId, 4.0, 4.0, 4.0, hour0.plusHours(2).getMillis())
-        );
-
-        List<AggregateNumericMetric> actual = Lists.newArrayList(dao.findOneHourMetrics(scheduledId,
-            startTime.getMillis(), endTime.getMillis()));
-
-        assertEquals(actual, expected, "Failed to find one hour metrics for date range");
+        assertEquals(actual, expected, "Failed to find 24 hour metrics");
     }
 
     @Test(enabled = ENABLED)
@@ -396,6 +371,28 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         assertEquals(actual, expected, "The raw cache entries do not match");
     }
 
+    @Test(enabled = ENABLED)
+    public void insertAndFindIndexEntries() {
+        IndexEntry entry1 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 100);
+        IndexEntry entry2 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 101);
+        IndexEntry entry3 = new IndexEntry(MetricsTable.RAW, 1, hour(2).getMillis(), 102);
+        IndexEntry entry4 = new IndexEntry(MetricsTable.RAW, 0, hour(3).getMillis(), 101);
+
+        dao.insertIndexEntry(entry1).get();
+        dao.insertIndexEntry(entry2).get();
+        dao.insertIndexEntry(entry3).get();
+        dao.insertIndexEntry(entry4).get();
+
+        List<IndexEntry> expected = asList(entry1, entry2);
+        List<IndexEntry> actual = new ArrayList<IndexEntry>();
+
+        ResultSet resultSet = dao.findIndexEntries(MetricsTable.RAW, 0, hour(2).getMillis()).get();
+        for (Row row : resultSet) {
+            actual.add(new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), row.getInt(0)));
+        }
+
+        assertEquals(actual, expected, "The index entries do not match");
+    }
 
     @Test(enabled = ENABLED)
     public void deleteRawCacheEntries() {
@@ -516,23 +513,17 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         int scheduleId = 123;
         int numberOfAggregatedMetrics = 250;
-        int ttl = Hours.TWO.toStandardSeconds().getSeconds();
-
 
         metrics = this.generateRandomAggregatedMetrics(scheduleId, numberOfAggregatedMetrics, startTime);
         for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            metric.setBucket(Bucket.ONE_HOUR);
+            dao.insert1HourData(metric).get();
+
         }
-        double expectedMinSum = 0;
-        double expectedMaxSum = 0;
         double expectedAverageSum = 0;
 
         for (AggregateNumericMetric aggregatedMetric : metrics) {
             expectedAverageSum += aggregatedMetric.getAvg();
-            expectedMaxSum += aggregatedMetric.getMax();
-            expectedMinSum += aggregatedMetric.getMin();
         }
 
         int alternateScheduleId = 321;
@@ -540,14 +531,13 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         metrics = this.generateRandomAggregatedMetrics(alternateScheduleId, alternateNumberOfAggregatedMetrics,
             startTime);
         for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            metric.setBucket(Bucket.ONE_HOUR);
+            dao.insert1HourData(metric).get();
         }
 
         List<AggregateSimpleNumericMetric> retrievedItems = Lists.newArrayList(dao.findAggregatedSimpleOneHourMetric(
             scheduleId, startTime, endTime));
-        assertEquals(numberOfAggregatedMetrics * 3, retrievedItems.size());
+        assertEquals(numberOfAggregatedMetrics, retrievedItems.size());
         double actualAverageSum = 0;
         double actualMinSum = 0;
         double actualMaxSum = 0;
@@ -562,205 +552,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         }
 
         assertEquals(expectedAverageSum, actualAverageSum);
-        assertEquals(expectedMaxSum, actualMaxSum);
-        assertEquals(expectedMinSum, actualMinSum);
-    }
-
-    @Test(enabled = ENABLED)
-    public void randomizedInsertAndFindMetrics() {
-
-        long startTime = System.currentTimeMillis();
-        long endTime = startTime + 2 * HOUR;
-
-        int scheduleId = 1;
-        int alternateScheduleId = 2;
-        int ttl = Hours.TWO.toStandardSeconds().getSeconds();
-
-        //insert data
-        List<AggregateNumericMetric> firstHourMetrics = this.generateRandomAggregatedMetrics(scheduleId, 234,
-            startTime);
-        for (AggregateNumericMetric metric : firstHourMetrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
-        }
-
-        List<AggregateNumericMetric> secondHourMetrics = this.generateRandomAggregatedMetrics(scheduleId, 234,
-            startTime + HOUR);
-        for (AggregateNumericMetric metric : secondHourMetrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
-        }
-
-        List<AggregateNumericMetric> alternateScheduleIdMetrics = this.generateRandomAggregatedMetrics(
-            alternateScheduleId, 159, startTime);
-        for (AggregateNumericMetric metric : alternateScheduleIdMetrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
-        }
-
-        //verify data can be retrieved
-        List<AggregateNumericMetric> combinedList = new ArrayList<AggregateNumericMetric>();
-        combinedList.addAll(firstHourMetrics);
-        combinedList.addAll(secondHourMetrics);
-
-        List<AggregateNumericMetric> actualCombined = Lists.newArrayList(findAggregateMetrics(MetricsTable.ONE_HOUR,
-            scheduleId));
-        assertEquals(actualCombined, combinedList, "Failed to find one hour metrics");
-
-        List<AggregateNumericMetric> actualFirstHour = Lists.newArrayList(dao.findOneHourMetrics(scheduleId,
-            startTime, startTime + HOUR - 1));
-        assertEquals(actualFirstHour, firstHourMetrics, "Failed to find one hour metrics");
-
-        List<AggregateNumericMetric> actualSecondHour = Lists.newArrayList(dao.findOneHourMetrics(scheduleId,
-            startTime + HOUR, endTime));
-        assertEquals(actualSecondHour, secondHourMetrics, "Failed to find one hour metrics");
-
-        List<AggregateNumericMetric> actualAlternateScheduleIdMetrics = Lists.newArrayList(findAggregateMetrics(
-            MetricsTable.ONE_HOUR, alternateScheduleId));
-        assertEquals(actualAlternateScheduleIdMetrics, alternateScheduleIdMetrics, "Failed to find one hour metrics");
-
-        // verify that the TTL is set
-        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(findAggregateMetricsWithMetadata(
-            MetricsTable.ONE_HOUR, scheduleId, startTime, endTime));
-        assertAggregateTTLSet(actualMetricsWithMetadata);
-
-        actualMetricsWithMetadata = Lists.newArrayList(findAggregateMetricsWithMetadata(MetricsTable.ONE_HOUR,
-            alternateScheduleId, startTime, endTime));
-        assertAggregateTTLSet(actualMetricsWithMetadata);
-    }
-
-    @Test(enabled = ENABLED)
-    public void randomizedSimpleInsertAndFindMetrics() {
-
-        long startTime = System.currentTimeMillis();
-        long endTime = startTime + 2 * HOUR;
-
-        int scheduleId = 1;
-        int alternateScheduleId = 2;
-
-        MetricsTable[] tablesToTest = new MetricsTable[] { MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR,
-            MetricsTable.TWENTY_FOUR_HOUR };
-
-        for (MetricsTable table : tablesToTest) {
-            switch (table) {
-                case ONE_HOUR:
-                    testRandomOneHourData(scheduleId, alternateScheduleId, startTime, endTime);
-                    break;
-                case SIX_HOUR:
-                    testRandomSixHourData(scheduleId, alternateScheduleId, startTime, endTime);
-                    break;
-                default: // 24 hour
-                    testRandomTwentyFourHourData(scheduleId, alternateScheduleId, startTime, endTime);
-            }
-        }
-    }
-
-    private void testRandomOneHourData(int scheduleId, int alternateScheduleId, long startTime, long endTime) {
-        //insert data
-        List<AggregateNumericMetric> metrics = this.generateRandomAggregatedMetrics(scheduleId, 2, startTime);
-        for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
-        }
-
-        List<AggregateNumericMetric> alternateMetrics = this.generateRandomAggregatedMetrics(alternateScheduleId,
-            3, startTime);
-        for (AggregateNumericMetric metric : alternateMetrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
-        }
-
-        //verify data can be retrieve
-        List<AggregateNumericMetric> actualMetrics = Lists.newArrayList(findAggregateMetrics(MetricsTable.ONE_HOUR,
-            scheduleId));
-        assertEquals(actualMetrics, metrics, "Failed to find metrics in " + MetricsTable.ONE_HOUR + " table.");
-
-        List<AggregateNumericMetric> actualAlternateMetrics = Lists.newArrayList(findAggregateMetrics(
-            MetricsTable.ONE_HOUR, alternateScheduleId));
-        assertEquals(actualAlternateMetrics, alternateMetrics, "Failed to find metrics in " + MetricsTable.ONE_HOUR +
-            " table.");
-
-        // verify that the TTL is set
-        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(
-            findAggregateMetricsWithMetadata(MetricsTable.ONE_HOUR, scheduleId, startTime, endTime));
-        assertAggregateTTLSet(actualMetricsWithMetadata);
-    }
-
-    private void testRandomSixHourData(int scheduleId, int alternateScheduleId, long startTime, long endTime) {
-        //insert data
-        List<AggregateNumericMetric> metrics = this.generateRandomAggregatedMetrics(scheduleId, 2, startTime);
-        for (AggregateNumericMetric metric : metrics) {
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
-        }
-
-        List<AggregateNumericMetric> alternateMetrics = this.generateRandomAggregatedMetrics(alternateScheduleId,
-            3, startTime);
-        for (AggregateNumericMetric metric : alternateMetrics) {
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
-        }
-
-        //verify data can be retrieve
-        List<AggregateNumericMetric> actualMetrics = Lists.newArrayList(findAggregateMetrics(MetricsTable.SIX_HOUR,
-            scheduleId));
-        assertEquals(actualMetrics, metrics, "Failed to find metrics in " + MetricsTable.SIX_HOUR + " table.");
-
-        List<AggregateNumericMetric> actualAlternateMetrics = Lists.newArrayList(findAggregateMetrics(
-            MetricsTable.SIX_HOUR, alternateScheduleId));
-        assertEquals(actualAlternateMetrics, alternateMetrics, "Failed to find metrics in " + MetricsTable.SIX_HOUR +
-            " table.");
-
-        // verify that the TTL is set
-        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(
-            findAggregateMetricsWithMetadata(MetricsTable.SIX_HOUR, scheduleId, startTime, endTime));
-        assertAggregateTTLSet(actualMetricsWithMetadata);
-    }
-
-    private void testRandomTwentyFourHourData(int scheduleId, int alternateScheduleId, long startTime, long endTime) {
-        //insert data
-        List<AggregateNumericMetric> metrics = this.generateRandomAggregatedMetrics(scheduleId, 2, startTime);
-        for (AggregateNumericMetric metric : metrics) {
-            dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN,
-                metric.getMin());
-            dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX,
-                metric.getMax());
-            dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG,
-                metric.getAvg());
-        }
-
-        List<AggregateNumericMetric> alternateMetrics = this.generateRandomAggregatedMetrics(alternateScheduleId,
-            3, startTime);
-        for (AggregateNumericMetric metric : alternateMetrics) {
-            dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN,
-                metric.getMin());
-            dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX,
-                metric.getMax());
-            dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG,
-                metric.getAvg());
-        }
-
-        //verify data can be retrieve
-        List<AggregateNumericMetric> actualMetrics = Lists.newArrayList(findAggregateMetrics(
-            MetricsTable.TWENTY_FOUR_HOUR, scheduleId));
-        assertEquals(actualMetrics, metrics, "Failed to find metrics in " + MetricsTable.TWENTY_FOUR_HOUR + " table.");
-
-        List<AggregateNumericMetric> actualAlternateMetrics = Lists.newArrayList(findAggregateMetrics(
-            MetricsTable.TWENTY_FOUR_HOUR, alternateScheduleId));
-        assertEquals(actualAlternateMetrics, alternateMetrics, "Failed to find metrics in " +
-            MetricsTable.TWENTY_FOUR_HOUR + " table.");
-
-        // verify that the TTL is set
-        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(
-            findAggregateMetricsWithMetadata(MetricsTable.TWENTY_FOUR_HOUR, scheduleId, startTime, endTime));
-        assertAggregateTTLSet(actualMetricsWithMetadata);
+        assertEquals(actualMaxSum, 0.0);
+        assertEquals(actualMinSum, 0.0);
     }
 
     /**
@@ -807,31 +600,6 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         }
 
         return generatedMetrics;
-    }
-
-    private void assertRawTTLSet(List<RawNumericMetric> metrics) {
-        for (RawNumericMetric metric : metrics) {
-            assertNotNull(metric.getColumnMetadata(), metric + " does not contain column meta data. The meta data " +
-                " must be loaded in order to verify that the TTL is set correctly.");
-            assertNotNull(metric.getColumnMetadata().getTtl(), "The TTL for " + metric + " is not set.");
-        }
-    }
-
-    private void assertAggregateTTLSet(List<AggregateNumericMetric> metrics) {
-        for (AggregateNumericMetric metric : metrics) {
-            assertNotNull(metric.getAvgColumnMetadata(), metric + " does not contain column meta data for its " +
-                " average value. The meta data must be loaded in order to verify that the TTL is set correctly.");
-            assertNotNull(metric.getAvgColumnMetadata().getTtl(), "The TTL for average column of " + metric +
-                " is not set.");
-            assertNotNull(metric.getMinColumnMetadata(), metric + " does not contain column meta data for its " +
-                " minimum value. The meta data must be loaded in order to verify that the TTL is set correctly.");
-            assertNotNull(metric.getMinColumnMetadata().getTtl(), "The TTL for minimum column of " + metric +
-                " is not set.");
-            assertNotNull(metric.getMaxColumnMetadata(), metric + " does not contain column meta data for its " +
-                " maximum value. The meta data must be loaded in order to verify that the TTL is set correctly.");
-            assertNotNull(metric.getMaxColumnMetadata().getTtl(), "The TTL for maximum column of " + metric +
-                " is not set.");
-        }
     }
 
     private List<RawNumericMetric> map(List<MeasurementDataNumeric> data) {

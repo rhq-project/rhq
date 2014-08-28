@@ -122,6 +122,10 @@ public class CassandraIntegrationTest {
         return dateTimeService.hour0();
     }
 
+    protected DateTime hour(int hours) {
+        return dateTimeService.hour0().plusHours(hours);
+    }
+
     protected Iterable<AggregateNumericMetric> findAggregateMetrics(MetricsTable table, int scheduleId) {
         String cql =
             "SELECT schedule_id, time, type, value " +

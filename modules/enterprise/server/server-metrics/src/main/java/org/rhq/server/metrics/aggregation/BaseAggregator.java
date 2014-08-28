@@ -25,6 +25,7 @@ import org.rhq.server.metrics.CacheMapper;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.NumericMetric;
 import org.rhq.server.metrics.domain.ResultSetMapper;
@@ -274,25 +275,28 @@ abstract class BaseAggregator {
     }
 
     protected <T extends NumericMetric> Function<Iterable<List<T>>, List<AggregateNumericMetric>> computeAggregates(
-        final long timeSlice, Class<T> type) {
+        final long timeSlice, Class<T> type, final Bucket bucket) {
 
         return new Function<Iterable<List<T>>, List<AggregateNumericMetric>>() {
             @Override
             public List<AggregateNumericMetric> apply(Iterable<List<T>> values) {
                 List<AggregateNumericMetric> aggregates = new ArrayList<AggregateNumericMetric>(BATCH_SIZE);
                 for (List<T> metricList : values) {
-                    aggregates.add(computeAggregate(metricList, timeSlice));
+                    aggregates.add(computeAggregate(metricList, timeSlice, bucket));
                 }
                 return aggregates;
             }
         };
     }
 
-    private <T extends NumericMetric> AggregateNumericMetric computeAggregate(List<T> metrics, long timeSlice) {
+    private <T extends NumericMetric> AggregateNumericMetric computeAggregate(List<T> metrics, long timeSlice,
+        Bucket bucket) {
         Double min = Double.NaN;
         Double max = Double.NaN;
         ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
         int scheduleId = 0;
+
+        // TODO handle when metrics is empty to avoid NaN metrics
 
         for (T metric : metrics) {
             mean.add(metric.getAvg());
@@ -309,7 +313,7 @@ abstract class BaseAggregator {
                 }
             }
         }
-        return new AggregateNumericMetric(scheduleId, mean.getArithmeticMean(), min, max, timeSlice);
+        return new AggregateNumericMetric(scheduleId, bucket, mean.getArithmeticMean(), min, max, timeSlice);
     }
 
     /**

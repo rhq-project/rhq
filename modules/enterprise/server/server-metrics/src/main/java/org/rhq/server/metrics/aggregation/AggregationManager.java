@@ -20,6 +20,7 @@ import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
 
 /**
@@ -57,6 +58,8 @@ public class AggregationManager {
 
     private int indexPageSize;
 
+    private boolean cacheActive = true;
+
     public AggregationManager(ListeningExecutorService aggregationTasks, MetricsDAO dao, DateTimeService dtService,
         DateTime startTime, int batchSize, int parallelism, int cacheBatchSize, int indexPageSize) {
 
@@ -89,6 +92,10 @@ public class AggregationManager {
         this.cacheActivationTime = cacheActivationTime;
     }
 
+    public void setCacheActive(boolean cacheActive) {
+        this.cacheActive = cacheActive;
+    }
+
     public Set<AggregateNumericMetric> run() {
         log.info("Starting aggregation for time slice " + startTime);
         Stopwatch stopwatch = new Stopwatch().start();
@@ -113,6 +120,10 @@ public class AggregationManager {
             if (is24HourTimeSliceFinished()) {
                 counts = create6HourAggregator(persistFunctions).execute();
                 num6Hour += counts.get(AggregationType.SIX_HOUR);
+            }
+
+            for (AggregateNumericMetric metric : oneHourData) {
+                metric.setBucket(Bucket.ONE_HOUR);
             }
 
             return oneHourData;
@@ -206,7 +217,8 @@ public class AggregationManager {
     }
 
     private boolean isCacheActive() {
-        return startTime.getMillis() >= cacheActivationTime;
+//        return cacheActive && startTime.getMillis() >= cacheActivationTime;
+        return false;
     }
 
 }

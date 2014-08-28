@@ -24,7 +24,9 @@ import org.testng.annotations.BeforeClass;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.CacheIndexEntryMapper;
 import org.rhq.server.metrics.domain.MetricsTable;
@@ -48,6 +50,7 @@ public class MetricsTest extends CassandraIntegrationTest {
     private AggregateCacheMapper aggregateCacheMapper = new AggregateCacheMapper();
     private CacheIndexEntryMapper cacheIndexEntryMapper = new CacheIndexEntryMapper();
     private RawNumericMetricMapper rawMapper = new RawNumericMetricMapper();
+    private AggregateNumericMetricMapper aggregateMapper = new AggregateNumericMetricMapper();
 
     @BeforeClass
     public void initClass() throws Exception {
@@ -86,10 +89,9 @@ public class MetricsTest extends CassandraIntegrationTest {
     }
 
     protected void purgeDB() {
+        session.execute("TRUNCATE " + MetricsTable.INDEX);
         session.execute("TRUNCATE " + MetricsTable.RAW);
-        session.execute("TRUNCATE " + MetricsTable.ONE_HOUR);
-        session.execute("TRUNCATE " + MetricsTable.SIX_HOUR);
-        session.execute("TRUNCATE " + MetricsTable.TWENTY_FOUR_HOUR);
+        session.execute("TRUNCATE " + MetricsTable.AGGREGATE);
         session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE);
         session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE_INDEX);
     }
@@ -180,13 +182,27 @@ public class MetricsTest extends CassandraIntegrationTest {
             " does not match expected values", expected, actual, TEST_PRECISION);
     }
 
+    protected void assertMetricDataEquals(int scheduleId, Bucket bucket, AggregateNumericMetric... expected) {
+        assertMetricDataEquals(scheduleId, bucket, asList(expected));
+    }
+
+    protected void assertMetricDataEquals(int scheduleId, Bucket bucket, List<AggregateNumericMetric> expected) {
+        ResultSet resultSet = session.execute(
+            "select schedule_id, bucket, time, avg, max, min " +
+            "from " + MetricsTable.AGGREGATE + " " +
+            "where schedule_id = " + scheduleId + " and bucket = '" + bucket + "'");
+        List<AggregateNumericMetric> actual = aggregateMapper.mapAll(resultSet);
+        assertCollectionMatchesNoOrder("Metric data for schedule id " + scheduleId + " in bucket " + bucket +
+            " does not match expected values", expected, actual, TEST_PRECISION);
+    }
+
     /**
      * Verifies that the 6 hour data table is empty for the specified schedule id.
      *
      * @param scheduleId The schedule id to query
      */
     protected void assert6HourDataEmpty(int scheduleId) {
-        assertMetricDataEmpty(scheduleId, MetricsTable.SIX_HOUR);
+        assertMetricDataEmpty(scheduleId, Bucket.SIX_HOUR);
     }
 
     /**
@@ -206,7 +222,7 @@ public class MetricsTest extends CassandraIntegrationTest {
      * @param scheduleId The schedule id to query
      */
     protected void assert24HourDataEmpty(int scheduleId) {
-        assertMetricDataEmpty(scheduleId, MetricsTable.TWENTY_FOUR_HOUR);
+        assertMetricDataEmpty(scheduleId, Bucket.TWENTY_FOUR_HOUR);
     }
 
     /**
@@ -220,9 +236,14 @@ public class MetricsTest extends CassandraIntegrationTest {
         }
     }
 
-    private void assertMetricDataEmpty(int scheduleId, MetricsTable columnFamily) {
-        List<AggregateNumericMetric> metrics = Lists.newArrayList(findAggregateMetrics(columnFamily, scheduleId));
-        assertEquals(metrics.size(), 0, "Expected " + columnFamily + " to be empty for schedule id " + scheduleId +
+    private void assertMetricDataEmpty(int scheduleId, Bucket bucket) {
+        ResultSet resultSet = session.execute(
+            "select schedule_id, bucket, time, avg, max, min " +
+            "from " + MetricsTable.AGGREGATE + " " +
+            "where schedule_id = " + scheduleId + " and bucket = '" + bucket + "'");
+        List<AggregateNumericMetric> metrics = aggregateMapper.mapAll(resultSet);
+
+        assertEquals(metrics.size(), 0, "Expected " + bucket + " to be empty for schedule id " + scheduleId +
             " but found " + metrics);
     }
 

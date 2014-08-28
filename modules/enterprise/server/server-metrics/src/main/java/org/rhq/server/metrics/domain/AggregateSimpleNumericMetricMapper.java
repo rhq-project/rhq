@@ -64,6 +64,6 @@ public class AggregateSimpleNumericMetricMapper implements ResultSetMapper<Aggre
 
     @Override
     public AggregateSimpleNumericMetric map(Row row) {
-        return new AggregateSimpleNumericMetric(row.getInt(0), row.getDouble(3), AggregateType.valueOf(row.getInt(2)));
+        return new AggregateSimpleNumericMetric(row.getInt(0), row.getDouble(3), AggregateType.AVG);
     }
-};
+}

@@ -35,6 +35,8 @@ public class AggregateNumericMetric implements NumericMetric {
 
     private int scheduleId;
 
+    private Bucket bucket;
+
     private Double min = Double.NaN;
 
     private Double max = Double.NaN;
@@ -60,6 +62,15 @@ public class AggregateNumericMetric implements NumericMetric {
         this.timestamp = timestamp;
     }
 
+    public AggregateNumericMetric(int scheduleId, Bucket bucket, Double avg, Double min, Double max, long timestamp) {
+        this.scheduleId = scheduleId;
+        this.bucket = bucket;
+        this.avg = avg;
+        this.min = min;
+        this.max = max;
+        this.timestamp = timestamp;
+    }
+
     public AggregateNumericMetric(int scheduleId, long timestamp, Map<Integer, Double> values) {
         this.scheduleId = scheduleId;
         this.timestamp = timestamp;
@@ -74,6 +85,14 @@ public class AggregateNumericMetric implements NumericMetric {
 
     public void setScheduleId(int scheduleId) {
         this.scheduleId = scheduleId;
+    }
+
+    public Bucket getBucket() {
+        return bucket;
+    }
+
+    public void setBucket(Bucket bucket) {
+        this.bucket = bucket;
     }
 
     public Double getMin() {
@@ -143,8 +162,8 @@ public class AggregateNumericMetric implements NumericMetric {
     @Override
     public String toString() {
         if (avgColumnMetadata == null && minColumnMetadata == null && maxColumnMetadata == null) {
-            return "AggregatedNumericMetric[scheduleId=" + scheduleId + ", avg=" + avg + ", min=" + min + ", max="
-                + max + ", timestamp=" + timestamp + "]";
+            return "AggregatedNumericMetric[scheduleId=" + scheduleId + ", bucket=" + bucket + ", avg=" + avg +
+                ", min=" + min + ", max=" + max + ", timestamp=" + timestamp + "]";
         }
         return "AggregatedNumericMetric[scheduleId=" + scheduleId + ", avg=" + avg + ", min=" + min + ", max="
             + max + " timestamp=" + timestamp + ", avgColumnMetadata=" + avgColumnMetadata + ", minColumnMetadata=" +
@@ -159,6 +178,7 @@ public class AggregateNumericMetric implements NumericMetric {
         AggregateNumericMetric metric = (AggregateNumericMetric) o;
 
         if (scheduleId != metric.scheduleId) return false;
+        if (bucket != metric.bucket) return false;
         if (timestamp != metric.timestamp) return false;
         if (!avg.equals(metric.avg)) return false;
         if (!max.equals(metric.max)) return false;
@@ -170,6 +190,7 @@ public class AggregateNumericMetric implements NumericMetric {
     @Override
     public int hashCode() {
         int result = scheduleId;
+        result = 31 * result + bucket.hashCode();
         result = 31 * result + min.hashCode();
         result = 31 * result + max.hashCode();
         result = 31 * result + avg.hashCode();

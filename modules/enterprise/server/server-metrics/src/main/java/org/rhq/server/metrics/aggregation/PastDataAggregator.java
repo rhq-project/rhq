@@ -22,6 +22,7 @@ import org.joda.time.DateTime;
 
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
@@ -242,7 +243,8 @@ class PastDataAggregator extends BaseAggregator {
             toIterable(new RawNumericMetricMapper()), aggregationTasks);
 
         ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
-            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class), aggregationTasks);
+            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class, Bucket.ONE_HOUR),
+            aggregationTasks);
 
         ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(metricsFuture,
             indexAggregatesPair(indexEntry));
@@ -319,7 +321,8 @@ class PastDataAggregator extends BaseAggregator {
             toIterable(aggregationType.getCacheMapper()), aggregationTasks);
 
         ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
-            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class), aggregationTasks);
+            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class, Bucket.ONE_HOUR),
+            aggregationTasks);
 
         ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(metricsFuture,
             indexAggregatesPair(indexEntry));
@@ -433,7 +436,8 @@ class PastDataAggregator extends BaseAggregator {
             toIterable(), aggregationTasks);
 
         ListenableFuture<List<AggregateNumericMetric>> sixHourMetricsFuture = Futures.transform(iterableFuture,
-            computeAggregates(sixHourTimeSlice.getMillis(), AggregateNumericMetric.class), aggregationTasks);
+            computeAggregates(sixHourTimeSlice.getMillis(), AggregateNumericMetric.class, Bucket.SIX_HOUR),
+            aggregationTasks);
 
         ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(sixHourMetricsFuture,
             indexAggregatesPair(indexEntry));
@@ -465,7 +469,8 @@ class PastDataAggregator extends BaseAggregator {
             toIterable(), aggregationTasks);
 
         ListenableFuture<List<AggregateNumericMetric>> twentyFourHourMetricsFuture = Futures.transform(iterableFuture,
-            computeAggregates(timeSlice.getMillis(), AggregateNumericMetric.class), aggregationTasks);
+            computeAggregates(timeSlice.getMillis(), AggregateNumericMetric.class, Bucket.TWENTY_FOUR_HOUR),
+            aggregationTasks);
 
         ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(twentyFourHourMetricsFuture,
             indexAggregatesPair(indexEntry));
@@ -518,8 +523,8 @@ class PastDataAggregator extends BaseAggregator {
                     new ArrayList<ListenableFuture<CombinedMetricsPair>>();
 
                 for (AggregateNumericMetric metric : metrics) {
-                    StorageResultSetFuture queryFuture = dao.findOneHourMetricsAsync(metric.getScheduleId(),
-                        timeSliceStart.getMillis(), timeSliceEnd.getMillis());
+                    StorageResultSetFuture queryFuture = dao.findAggregateMetricsAsync(metric.getScheduleId(),
+                        Bucket.ONE_HOUR, timeSliceStart.getMillis(), timeSliceEnd.getMillis());
                     ListenableFuture<CombinedMetricsPair> pairFuture = Futures.transform(queryFuture,
                         combineMetrics(metric));
                     pairFutures.add(pairFuture);
@@ -543,8 +548,8 @@ class PastDataAggregator extends BaseAggregator {
                     new ArrayList<ListenableFuture<CombinedMetricsPair>>();
 
                 for (AggregateNumericMetric metric : metrics) {
-                    StorageResultSetFuture queryFuture = dao.findSixHourMetricsAsync(metric.getScheduleId(),
-                        timeSliceStart.getMillis(), timeSliceEnd.getMillis());
+                    StorageResultSetFuture queryFuture = dao.findAggregateMetricsAsync(metric.getScheduleId(),
+                        Bucket.SIX_HOUR, timeSliceStart.getMillis(), timeSliceEnd.getMillis());
                     ListenableFuture<CombinedMetricsPair> pairFuture = Futures.transform(queryFuture,
                         combineMetrics(metric));
                     pairFutures.add(pairFuture);

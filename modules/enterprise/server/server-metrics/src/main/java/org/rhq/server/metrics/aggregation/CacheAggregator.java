@@ -10,7 +10,6 @@ import com.datastax.driver.core.ResultSet;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -20,6 +19,7 @@ import org.joda.time.DateTime;
 
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.ResultSetMapper;
@@ -120,7 +120,8 @@ class CacheAggregator extends BaseAggregator {
                     StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
                         startTime.getMillis(), indexEntry.getStartScheduleId());
 
-                    processCacheBlock(indexEntry, cacheFuture, persistMetrics);
+                    throw new RuntimeException("Cache aggregation is disabled!");
+//                    processCacheBlock(indexEntry, cacheFuture, persistMetrics);
                 } else {
                     switch (aggregationType) {
                         case RAW:
@@ -143,12 +144,12 @@ class CacheAggregator extends BaseAggregator {
         for (Integer scheduleId : indexEntry.getScheduleIds()) {
             queryFutures.add(dao.findRawMetricsAsync(scheduleId, indexEntry.getCollectionTimeSlice(), endTime));
             if (queryFutures.size() == BATCH_SIZE) {
-                processBatch(queryFutures, indexEntry);
+                processBatch(queryFutures, indexEntry, Bucket.ONE_HOUR);
                 queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
             }
         }
         if (!queryFutures.isEmpty()) {
-            processBatch(queryFutures, indexEntry);
+            processBatch(queryFutures, indexEntry, Bucket.ONE_HOUR);
         }
     }
 
@@ -156,14 +157,15 @@ class CacheAggregator extends BaseAggregator {
         List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
         long endTime = dateTimeService.get6HourTimeSliceEnd(new DateTime(startTime)).getMillis();
         for (Integer scheduleId : indexEntry.getScheduleIds()) {
-            queryFutures.add(dao.findOneHourMetricsAsync(scheduleId, indexEntry.getCollectionTimeSlice(), endTime));
+            queryFutures.add(dao.findAggregateMetricsAsync(scheduleId, Bucket.ONE_HOUR,
+                indexEntry.getCollectionTimeSlice(), endTime));
             if (queryFutures.size() == BATCH_SIZE) {
-                processBatch(queryFutures, indexEntry);
+                processBatch(queryFutures, indexEntry, Bucket.SIX_HOUR);
                 queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
             }
         }
         if (!queryFutures.isEmpty()) {
-            processBatch(queryFutures, indexEntry);
+            processBatch(queryFutures, indexEntry, Bucket.SIX_HOUR);
         }
     }
 
@@ -171,14 +173,15 @@ class CacheAggregator extends BaseAggregator {
         List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
         long endTime = dateTimeService.get24HourTimeSliceEnd(new DateTime(startTime)).getMillis();
         for (Integer scheduleId : indexEntry.getScheduleIds()) {
-            queryFutures.add(dao.findSixHourMetricsAsync(scheduleId, indexEntry.getCollectionTimeSlice(), endTime));
+            queryFutures.add(dao.findAggregateMetricsAsync(scheduleId, Bucket.SIX_HOUR,
+                indexEntry.getCollectionTimeSlice(), endTime));
             if (queryFutures.size() == BATCH_SIZE) {
-                processBatch(queryFutures, indexEntry);
+                processBatch(queryFutures, indexEntry, Bucket.TWENTY_FOUR_HOUR);
                 queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
             }
         }
         if (!queryFutures.isEmpty()) {
-            processBatch(queryFutures, indexEntry);
+            processBatch(queryFutures, indexEntry, Bucket.TWENTY_FOUR_HOUR);
         }
     }
 
@@ -213,40 +216,40 @@ class CacheAggregator extends BaseAggregator {
      * @param cacheFuture A future of the cache query result set
      * @param persistMetricsFn The function that will be used to persist the aggregate metrics
      */
+//    @SuppressWarnings("unchecked")
+//    protected void processCacheBlock(CacheIndexEntry indexEntry,
+//        StorageResultSetFuture cacheFuture, AsyncFunction<IndexAggregatesPair, List<ResultSet>> persistMetricsFn) {
+//
+//        ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(cacheFuture,
+//            toIterable(aggregationType.getCacheMapper()), aggregationTasks);
+//
+//        ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
+//            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class), aggregationTasks);
+//
+//        ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(metricsFuture,
+//            indexAggregatesPair(indexEntry));
+//
+//        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(pairFuture, persistMetricsFn,
+//            aggregationTasks);
+//
+//        ListenableFuture<ResultSet> deleteCacheFuture = Futures.transform(insertsFuture,
+//            deleteCacheEntry(indexEntry), aggregationTasks);
+//
+//        ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
+//            deleteCacheIndexEntry(indexEntry), aggregationTasks);
+//
+//        aggregationTaskFinished(deleteCacheIndexFuture, pairFuture);
+//    }
+
     @SuppressWarnings("unchecked")
-    protected void processCacheBlock(CacheIndexEntry indexEntry,
-        StorageResultSetFuture cacheFuture, AsyncFunction<IndexAggregatesPair, List<ResultSet>> persistMetricsFn) {
-
-        ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(cacheFuture,
-            toIterable(aggregationType.getCacheMapper()), aggregationTasks);
-
-        ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
-            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class), aggregationTasks);
-
-        ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(metricsFuture,
-            indexAggregatesPair(indexEntry));
-
-        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(pairFuture, persistMetricsFn,
-            aggregationTasks);
-
-        ListenableFuture<ResultSet> deleteCacheFuture = Futures.transform(insertsFuture,
-            deleteCacheEntry(indexEntry), aggregationTasks);
-
-        ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
-            deleteCacheIndexEntry(indexEntry), aggregationTasks);
-
-        aggregationTaskFinished(deleteCacheIndexFuture, pairFuture);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void processBatch(List<StorageResultSetFuture> queryFutures, CacheIndexEntry indexEntry) {
+    private void processBatch(List<StorageResultSetFuture> queryFutures, CacheIndexEntry indexEntry, Bucket bucket) {
         ListenableFuture<List<ResultSet>> queriesFuture = Futures.allAsList(queryFutures);
 
         ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(queriesFuture,
             toIterable(resultSetMapper), aggregationTasks);
 
         ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
-            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class), aggregationTasks);
+            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class, bucket), aggregationTasks);
 
         ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(metricsFuture,
             indexAggregatesPair(indexEntry));

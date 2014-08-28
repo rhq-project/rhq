@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ package org.rhq.enterprise.server.install.remote;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -36,6 +37,7 @@ import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
+import org.rhq.core.domain.install.remote.AgentInstallStep;
 import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 import org.rhq.core.domain.install.remote.SSHSecurityException;
@@ -206,6 +208,15 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
             SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
             try {
                 AgentInstallInfo info = sshUtil.installAgent(customData, String.valueOf(ai.getId()));
+
+                List<AgentInstallStep> steps = info.getSteps();
+                AgentInstallStep lastInstallStep = steps.get(steps.size() - 1);
+
+                // At the moment, SSHInstallUtility might throw RuntimeException as well if it fails. Lets unify this for now.
+                if(lastInstallStep.getResultCode() != 0) {
+                    throw new RuntimeException(lastInstallStep.getDescription() + " failed, " + lastInstallStep.getResult());
+                }
+
                 return info;
             } finally {
                 sshUtil.disconnect();

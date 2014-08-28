@@ -1,6 +1,5 @@
 package org.rhq.server.metrics;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -15,15 +14,13 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
 public class AggregateCacheMapper implements CacheMapper<AggregateNumericMetric> {
 
     public AggregateNumericMetric map(Row row) {
-        return new AggregateNumericMetric(getScheduleId(row), getTimestamp(row), getValues(row));
+        // This class will be going away when we remove the metrics_cache table
+        throw new UnsupportedOperationException();
     }
 
     public List<AggregateNumericMetric> map(ResultSet resultSet) {
-        List<AggregateNumericMetric> metrics = new ArrayList<AggregateNumericMetric>();
-        for (Row row : resultSet) {
-            metrics.add(map(row));
-        }
-        return metrics;
+        // This class will be going away when we remove the metrics_cache table
+        throw new UnsupportedOperationException();
     }
 
     private int getScheduleId(Row row) {

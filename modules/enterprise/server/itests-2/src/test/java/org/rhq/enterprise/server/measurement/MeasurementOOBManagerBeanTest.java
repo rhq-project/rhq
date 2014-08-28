@@ -65,6 +65,7 @@ import org.rhq.enterprise.server.util.Overlord;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.Bucket;
 
 /**
  * @author John Sanda

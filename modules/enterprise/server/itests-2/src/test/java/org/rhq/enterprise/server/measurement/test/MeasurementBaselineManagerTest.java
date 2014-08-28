@@ -348,17 +348,17 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             insertMeasurementDataNumeric1H(youngest, measSched2, 1500.0, 500.0, 2500.0);
 
             List<AggregateNumericMetric> aggregates = asList(
-                new AggregateNumericMetric(measSched.getId(), 0.0, 0.0, 0.0, 0),
-                new AggregateNumericMetric(measSched.getId(), 30.0, 20.0, 40.0, eldest),
-                new AggregateNumericMetric(measSched.getId(), 5.0, 2.0, 8.0, elder),
-                new AggregateNumericMetric(measSched.getId(), 6.0, 3.0, 9.0, young),
-                new AggregateNumericMetric(measSched.getId(), 40.0, 30.0, 50.0, youngest),
+                new AggregateNumericMetric(measSched.getId(), Bucket.ONE_HOUR, 0.0, 0.0, 0.0, 0),
+                new AggregateNumericMetric(measSched.getId(), Bucket.ONE_HOUR, 30.0, 20.0, 40.0, eldest),
+                new AggregateNumericMetric(measSched.getId(), Bucket.ONE_HOUR, 5.0, 2.0, 8.0, elder),
+                new AggregateNumericMetric(measSched.getId(), Bucket.ONE_HOUR, 6.0, 3.0, 9.0, young),
+                new AggregateNumericMetric(measSched.getId(), Bucket.ONE_HOUR, 40.0, 30.0, 50.0, youngest),
 
-                new AggregateNumericMetric(measSched2.getId(), 40.0, 0.0, 0.0, 0),
-                new AggregateNumericMetric(measSched2.getId(), 5000.0, 3500.0, 6500.0, eldest),
-                new AggregateNumericMetric(measSched2.getId(), 5000.0, 3000.0, 7000.0, elder),
-                new AggregateNumericMetric(measSched2.getId(), 2000.0, 1000.0, 3000.0, young),
-                new AggregateNumericMetric(measSched2.getId(), 1500.0, 500.0, 2500.0, youngest)
+                new AggregateNumericMetric(measSched2.getId(), Bucket.ONE_HOUR, 40.0, 0.0, 0.0, 0),
+                new AggregateNumericMetric(measSched2.getId(), Bucket.ONE_HOUR, 5000.0, 3500.0, 6500.0, eldest),
+                new AggregateNumericMetric(measSched2.getId(), Bucket.ONE_HOUR, 5000.0, 3000.0, 7000.0, elder),
+                new AggregateNumericMetric(measSched2.getId(), Bucket.ONE_HOUR, 2000.0, 1000.0, 3000.0, young),
+                new AggregateNumericMetric(measSched2.getId(), Bucket.ONE_HOUR, 1500.0, 500.0, 2500.0, youngest)
             );
 
             commit();

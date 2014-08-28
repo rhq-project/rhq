@@ -54,14 +54,6 @@ public class AggregateNumericMetric implements NumericMetric {
     public AggregateNumericMetric() {
     }
 
-    public AggregateNumericMetric(int scheduleId, Double avg, Double min, Double max, long timestamp) {
-        this.scheduleId = scheduleId;
-        this.avg = avg;
-        this.min = min;
-        this.max = max;
-        this.timestamp = timestamp;
-    }
-
     public AggregateNumericMetric(int scheduleId, Bucket bucket, Double avg, Double min, Double max, long timestamp) {
         this.scheduleId = scheduleId;
         this.bucket = bucket;
@@ -69,14 +61,6 @@ public class AggregateNumericMetric implements NumericMetric {
         this.min = min;
         this.max = max;
         this.timestamp = timestamp;
-    }
-
-    public AggregateNumericMetric(int scheduleId, long timestamp, Map<Integer, Double> values) {
-        this.scheduleId = scheduleId;
-        this.timestamp = timestamp;
-        min = values.get(AggregateType.MIN.ordinal());
-        avg = values.get(AggregateType.AVG.ordinal());
-        max = values.get(AggregateType.MAX.ordinal());
     }
 
     public int getScheduleId() {

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.datastax.driver.core.ResultSet;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -17,8 +16,6 @@ import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.AggregateType;
-import org.rhq.server.metrics.domain.NumericMetric;
 
 /**
  * This is a utility class of functions for persisting aggregate metrics.
@@ -51,10 +48,10 @@ class PersistFunctions {
         persist1HourMetrics = new AsyncFunction<IndexAggregatesPair, List<ResultSet>>() {
             @Override
             public ListenableFuture<List<ResultSet>> apply(IndexAggregatesPair pair) {
-                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(pair.metrics.size() * 3);
+                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(pair.metrics.size());
 
                 for (AggregateNumericMetric metric : pair.metrics) {
-                    futures.addAll(persist1HourMetric(metric));
+                    futures.add(persist1HourMetric(metric));
                 }
                 return Futures.allAsList(futures);
             }
@@ -63,12 +60,12 @@ class PersistFunctions {
         persist1HourMetricsAndUpdateCache = new AsyncFunction<IndexAggregatesPair, List<ResultSet>>() {
             @Override
             public ListenableFuture<List<ResultSet>> apply(IndexAggregatesPair pair) {
-                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(pair.metrics.size() * 5);
+                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>();
                 long start6HourTimeSlice = dateTimeService.get6HourTimeSlice(pair.cacheIndexEntry.
                     getCollectionTimeSlice()).getMillis();
 
                 for (AggregateNumericMetric metric : pair.metrics) {
-                    futures.addAll(persist1HourMetric(metric));
+                    futures.add(persist1HourMetric(metric));
                     futures.add(dao.updateMetricsCache(ONE_HOUR, start6HourTimeSlice,
                         pair.cacheIndexEntry.getStartScheduleId(), metric.getScheduleId(), metric.getTimestamp(),
                         metric.toMap()));
@@ -83,9 +80,9 @@ class PersistFunctions {
         persist6HourMetrics = new AsyncFunction<IndexAggregatesPair, List<ResultSet>>() {
             @Override
             public ListenableFuture<List<ResultSet>> apply(IndexAggregatesPair pair) {
-                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(pair.metrics.size() * 3);
+                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>();
                 for (AggregateNumericMetric metric : pair.metrics) {
-                    futures.addAll(persist6HourMetric(metric));
+                    futures.add(persist6HourMetric(metric));
                 }
                 return Futures.allAsList(futures);
             }
@@ -94,12 +91,12 @@ class PersistFunctions {
         persist6HourMetricsAndUpdateCache = new AsyncFunction<IndexAggregatesPair, List<ResultSet>>() {
             @Override
             public ListenableFuture<List<ResultSet>> apply(IndexAggregatesPair pair) {
-                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(pair.metrics.size() * 5);
+                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>();
                 long start24HourTimeSlice = dateTimeService.get24HourTimeSlice(pair.cacheIndexEntry
                     .getCollectionTimeSlice()).getMillis();
 
                 for (AggregateNumericMetric metric : pair.metrics) {
-                    futures.addAll(persist6HourMetric(metric));
+                    futures.add(persist6HourMetric(metric));
                     futures.add(dao.updateMetricsCache(SIX_HOUR, start24HourTimeSlice,
                         pair.cacheIndexEntry.getStartScheduleId(), metric.getScheduleId(), metric.getTimestamp(),
                         metric.toMap()));
@@ -114,40 +111,21 @@ class PersistFunctions {
         persist24HourMetrics = new AsyncFunction<IndexAggregatesPair, List<ResultSet>>() {
             @Override
             public ListenableFuture<List<ResultSet>> apply(IndexAggregatesPair pair) {
-                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(pair.metrics.size() * 3);
-                for (NumericMetric metric : pair.metrics) {
-                    futures.add(dao.insertTwentyFourHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.MAX, metric.getMax()));
-                    futures.add(dao.insertTwentyFourHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.MIN, metric.getMin()));
-                    futures.add(dao.insertTwentyFourHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.AVG, metric.getAvg()));
+                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(pair.metrics.size());
+                for (AggregateNumericMetric metric : pair.metrics) {
+                    futures.add(dao.insert24HourData(metric));
                 }
                 return Futures.allAsList(futures);
             }
         };
     }
 
-    private List<StorageResultSetFuture> persist1HourMetric(AggregateNumericMetric metric) {
-        return ImmutableList.of(
-            dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX,
-                metric.getMax()),
-            dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN,
-                metric.getMin()),
-            dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG,
-                metric.getAvg())
-        );
+    private StorageResultSetFuture persist1HourMetric(AggregateNumericMetric metric) {
+        return dao.insert1HourData(metric);
     }
 
-    private List<StorageResultSetFuture> persist6HourMetric(AggregateNumericMetric metric) {
-        return ImmutableList.of(
-            dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX,
-                metric.getMax()),
-            dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN,
-                metric.getMin()),
-            dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                AggregateType.AVG, metric.getAvg())
-        );
+    private StorageResultSetFuture persist6HourMetric(AggregateNumericMetric metric) {
+        return dao.insert6HourData(metric);
     }
 
     /**

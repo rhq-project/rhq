@@ -54,7 +54,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageSession;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.MetricsTable;
 
 @Test
@@ -629,24 +629,12 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
     private void insertMeasurementDataNumeric1H(long timeStamp, MeasurementSchedule schedule, double value, double min,
         double max) {
-        AggregateNumericMetric metric = new AggregateNumericMetric(schedule.getId(), value, min, max, timeStamp);
-        metricsDAO.insertOneHourData(schedule.getId(), timeStamp, AggregateType.MIN, min);
-        metricsDAO.insertOneHourData(schedule.getId(), timeStamp, AggregateType.MAX, max);
-        metricsDAO.insertOneHourData(schedule.getId(), timeStamp, AggregateType.AVG, value);
-
-//        String sql = "INSERT INTO RHQ_measurement_data_num_1h "
-//            + "(time_stamp, schedule_id, value, minvalue, maxvalue) " + "VALUES (" + timeStamp + "," + schedule.getId()
-//            + "," + value + "," + min + "," + max + ")";
-//
-//        Query q = em.createNativeQuery(sql);
-//        assert q.executeUpdate() == 1;
+        AggregateNumericMetric metric = new AggregateNumericMetric(schedule.getId(), Bucket.ONE_HOUR, value, min, max,
+            timeStamp);
+        metricsDAO.insert1HourData(metric);
     }
 
     private void deleteMeasurementDataNumeric1H(MeasurementSchedule schedule) {
-//        String sql = "DELETE FROM RHQ_measurement_data_num_1h WHERE schedule_id = " + schedule.getId();
-//
-//        Query q = em.createNativeQuery(sql);
-//        q.executeUpdate();
         try {
             StorageSession session = storageClientManager.getSession();
             session.execute("DELETE FROM " + MetricsTable.ONE_HOUR.getTableName() + " WHERE schedule_id = " +

@@ -12,6 +12,7 @@ import com.google.common.collect.TreeBasedTable;
 import org.joda.time.DateTime;
 
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.NumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 
@@ -74,32 +75,34 @@ public class InMemoryMetricsDB {
     }
 
     public void aggregateRawData(DateTime startTime, DateTime endTime) {
-        aggregateData(startTime, endTime, rawData, oneHourData);
+        aggregateData(startTime, endTime, rawData, oneHourData, Bucket.ONE_HOUR);
     }
 
     public void aggregate1HourData(DateTime startTime, DateTime endTime) {
-        aggregateData(startTime, endTime, oneHourData, sixHourData);
+        aggregateData(startTime, endTime, oneHourData, sixHourData, Bucket.SIX_HOUR);
     }
 
     public void aggregate6HourData(DateTime startTime, DateTime endTime) {
-        aggregateData(startTime, endTime, sixHourData, twentyFourHourData);
+        aggregateData(startTime, endTime, sixHourData, twentyFourHourData, Bucket.TWENTY_FOUR_HOUR);
     }
 
     private void aggregateData(DateTime startTime, DateTime endTime,
         TreeBasedTable<Integer, DateTime, ? extends NumericMetric> from,
-        TreeBasedTable<Integer, DateTime, AggregateNumericMetric> to) {
+        TreeBasedTable<Integer, DateTime, AggregateNumericMetric> to, Bucket bucket) {
 
         for (Integer scheduleId : from.rowKeySet()) {
             SortedMap<DateTime, ? extends NumericMetric> row = from.row(scheduleId);
             Collection<? extends NumericMetric> dataForTimeSlice = row.subMap(startTime, endTime).values();
             if (!dataForTimeSlice.isEmpty()) {
-                AggregateNumericMetric aggregate = computeAggregate(startTime, row.subMap(startTime, endTime).values());
+                AggregateNumericMetric aggregate = computeAggregate(startTime, row.subMap(startTime, endTime).values(),
+                    bucket);
                 to.put(scheduleId, startTime, aggregate);
             }
         }
     }
 
-    private AggregateNumericMetric computeAggregate(DateTime timestamp, Collection<? extends NumericMetric> values) {
+    private AggregateNumericMetric computeAggregate(DateTime timestamp, Collection<? extends NumericMetric> values,
+        Bucket bucket) {
         Double min = Double.NaN;
         Double max = Double.NaN;
         ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
@@ -120,7 +123,8 @@ public class InMemoryMetricsDB {
                 }
             }
         }
-        return new AggregateNumericMetric(scheduleId, mean.getArithmeticMean(), min, max, timestamp.getMillis());
+        return new AggregateNumericMetric(scheduleId, bucket, mean.getArithmeticMean(), min, max,
+            timestamp.getMillis());
     }
 
 }

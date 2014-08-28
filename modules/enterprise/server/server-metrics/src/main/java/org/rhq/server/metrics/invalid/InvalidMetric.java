@@ -8,7 +8,6 @@ import com.google.common.base.Objects;
 import org.joda.time.DateTime;
 
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
  * A wrapper around an {@link org.rhq.server.metrics.domain.AggregateNumericMetric} that
@@ -26,7 +25,7 @@ class InvalidMetric implements Delayed {
 
     public DateTime day;
 
-    public MetricsTable type;
+//    public MetricsTable type;
 
     public AggregateNumericMetric metric;
 
@@ -34,9 +33,8 @@ class InvalidMetric implements Delayed {
 
     private long ctime;
 
-    public InvalidMetric(DateTime day, MetricsTable type, AggregateNumericMetric metric, long delay) {
+    public InvalidMetric(DateTime day, AggregateNumericMetric metric, long delay) {
         this.day = day;
-        this.type = type;
         this.metric = metric;
         this.delay = delay;
         this.ctime = System.currentTimeMillis();
@@ -93,7 +91,7 @@ class InvalidMetric implements Delayed {
     @Override
     public String toString() {
         return Objects.toStringHelper(getClass())
-            .add("type", getType())
+            .add("type", getDisplayType())
             .add("scheduleId", metric.getScheduleId())
             .add("timestamp", metric.getTimestamp())
             .add("max", metric.getMax())
@@ -102,13 +100,11 @@ class InvalidMetric implements Delayed {
             .toString();
     }
 
-    private String getType() {
-        switch (type) {
-        case RAW: return "raw";
-        case ONE_HOUR: return "1 hour";
-        case SIX_HOUR: return "6 hour";
-        case TWENTY_FOUR_HOUR: return "24 hour";
-        default: throw new IllegalArgumentException(type + " is not an expected value");
+    private String getDisplayType() {
+        switch (metric.getBucket()) {
+            case ONE_HOUR: return "1 hour";
+            case SIX_HOUR: return "6 hour";
+            default: return "24 hour";
         }
     }
 }

@@ -26,7 +26,6 @@
 package org.rhq.server.metrics;
 
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +43,8 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetricMapper;
-import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.Bucket;
+import org.rhq.server.metrics.domain.IndexEntry;
 import org.rhq.server.metrics.domain.ListPagedResult;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
@@ -59,8 +59,6 @@ public class MetricsDAO {
 
     private final Log log = LogFactory.getLog(MetricsDAO.class);
 
-    private static final Set<Integer> EMPTY_SCHEDULE_IDS = Collections.emptySet();
-
     private StorageSession storageSession;
 
     private MetricsConfiguration configuration;
@@ -73,12 +71,11 @@ public class MetricsDAO {
     private PreparedStatement insertTwentyFourHourData;
     private PreparedStatement findLatestRawMetric;
     private PreparedStatement findRawMetrics;
-    private PreparedStatement findOneHourMetricsByDateRange;
-    private PreparedStatement findSixHourMetricsByDateRange;
-    private PreparedStatement findTwentyFourHourMetricsByDateRange;
+    private PreparedStatement findAggregateMetricsByDateRange;
     private PreparedStatement findCacheEntries;
-    private PreparedStatement findCacheTimeSlice;
     private PreparedStatement deleteCacheEntries;
+    private PreparedStatement insertIndexEntry;
+    private PreparedStatement findIndexEntries;
     private PreparedStatement updateCacheIndex;
     private PreparedStatement findCacheIndexEntriesByDay;
     private PreparedStatement findPastCacheIndexEntriesBeforeToday;
@@ -87,10 +84,7 @@ public class MetricsDAO {
     private PreparedStatement findCurrentCacheIndexEntriesFromOffset;
     private PreparedStatement deleteCacheIndexEntry;
     private PreparedStatement deleteCacheIndexEntries;
-
-    private PreparedStatement delete6HourMetric;
-    private PreparedStatement delete1HourMetric;
-    private PreparedStatement delete24HourMetric;
+    private PreparedStatement deleteAggregate;
 
     public MetricsDAO(StorageSession session, MetricsConfiguration configuration) {
         this.storageSession = session;
@@ -117,14 +111,20 @@ public class MetricsDAO {
         rawMetricsQuery = storageSession.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
             " WHERE schedule_id = ? AND time >= ? AND time < ? ORDER BY time");
 
-        insertOneHourData = storageSession.prepare("INSERT INTO " + MetricsTable.ONE_HOUR + "(schedule_id, time, " +
-            "type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getOneHourTTL());
+        insertOneHourData = storageSession.prepare(
+            "INSERT INTO " + MetricsTable.AGGREGATE + "(schedule_id, bucket, time, avg, max, min) " +
+            "VALUES (?, '" + Bucket.ONE_HOUR + "', ?, ?, ?, ?) " +
+            "USING TTL " + configuration.getOneHourTTL());
 
-        insertSixHourData = storageSession.prepare("INSERT INTO " + MetricsTable.SIX_HOUR + "(schedule_id, time, " +
-            "type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getSixHourTTL());
+        insertSixHourData = storageSession.prepare(
+            "INSERT INTO " + MetricsTable.AGGREGATE + "(schedule_id, bucket, time, avg, max, min) " +
+            "VALUES (?, '" + Bucket.SIX_HOUR + "', ?, ?, ?, ?) " +
+            "USING TTL " + configuration.getSixHourTTL());
 
-        insertTwentyFourHourData = storageSession.prepare("INSERT INTO " + MetricsTable.TWENTY_FOUR_HOUR + "(schedule_id, " +
-            "time, type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getTwentyFourHourTTL());
+        insertTwentyFourHourData = storageSession.prepare(
+            "INSERT INTO " + MetricsTable.AGGREGATE + "(schedule_id, bucket, time, avg, max, min) " +
+            "VALUES (?, '" + Bucket.TWENTY_FOUR_HOUR + "', ?, ?, ?, ?) " +
+            "USING TTL " + configuration.getTwentyFourHourTTL());
 
         insertCacheEntry = storageSession.prepare("INSERT INTO " + MetricsTable.METRICS_CACHE +
             " (bucket, time_slice, start_schedule_id, schedule_id, time, value) VALUES (?, ?, ?, ?, ?, ?)");
@@ -135,28 +135,26 @@ public class MetricsDAO {
         findRawMetrics = storageSession.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
             " WHERE schedule_id = ? AND time >= ? AND time <= ?");
 
-        findOneHourMetricsByDateRange = storageSession.prepare("SELECT schedule_id, time, type, value FROM " +
-            MetricsTable.ONE_HOUR + " WHERE schedule_id = ? AND time >= ? AND time < ?");
-
-        findSixHourMetricsByDateRange = storageSession.prepare("SELECT schedule_id, time, type, value FROM "
-            + MetricsTable.SIX_HOUR + " WHERE schedule_id = ? AND time >= ? AND time < ?");
-
-        findTwentyFourHourMetricsByDateRange = storageSession.prepare("SELECT schedule_id, time, type, value FROM " +
-            MetricsTable.TWENTY_FOUR_HOUR + " WHERE schedule_id = ? AND time >= ? AND time < ?");
+        findAggregateMetricsByDateRange = storageSession.prepare(
+            "SELECT schedule_id, bucket, time, avg, max, min " +
+            "FROM " + MetricsTable.AGGREGATE + " " +
+            "WHERE schedule_id = ? AND bucket = ? AND time >= ? AND time < ?");
 
         findCacheEntries = storageSession.prepare(
             "SELECT schedule_id, time, value " +
             "FROM " + MetricsTable.METRICS_CACHE + " " +
             "WHERE bucket = ? AND time_slice = ? AND start_schedule_id = ?");
 
-        findCacheTimeSlice = storageSession.prepare(
-            "SELECT time_slice " +
-            "FROM " + MetricsTable.METRICS_CACHE + " " +
-            " WHERE bucket = ? AND time_slice = ? AND start_schedule_id = ?");
-
         deleteCacheEntries = storageSession.prepare(
             "DELETE FROM " + MetricsTable.METRICS_CACHE + " " +
             "WHERE bucket = ? AND time_slice = ? AND start_schedule_id = ?");
+
+        insertIndexEntry = storageSession.prepare(
+            "INSERT INTO " + MetricsTable.INDEX + " (bucket, partition, time, schedule_id) " +
+            "VALUES (?, ?, ?, ?) ");
+
+        findIndexEntries = storageSession.prepare(
+            "SELECT schedule_id FROM " + MetricsTable.INDEX + " WHERE bucket = ? AND partition = ? AND time = ?");
 
         updateCacheIndex = storageSession.prepare(
             "UPDATE " + MetricsTable.METRICS_CACHE_INDEX + " " +
@@ -202,14 +200,9 @@ public class MetricsDAO {
             "DELETE FROM " + MetricsTable.METRICS_CACHE_INDEX + " " +
             "WHERE bucket = ? AND day = ? AND partition = ? AND collection_time_slice = ? AND start_schedule_id = ?");
 
-        delete6HourMetric = storageSession.prepare("DELETE FROM " + MetricsTable.SIX_HOUR +
-            " WHERE schedule_id = ? AND time = ?");
-
-        delete1HourMetric = storageSession.prepare("DELETE FROM " + MetricsTable.ONE_HOUR +
-            " WHERE schedule_id = ? AND time = ?");
-
-        delete24HourMetric = storageSession.prepare("DELETE FROM " + MetricsTable.TWENTY_FOUR_HOUR +
-            " WHERE schedule_id = ? AND time = ?");
+        deleteAggregate = storageSession.prepare(
+            "DELETE FROM " + MetricsTable.AGGREGATE + " " +
+            "WHERE schedule_id = ? AND bucket = ? AND time = ?");
 
         long endTime = System.currentTimeMillis();
         log.info("Finished initializing prepared statements in " + (endTime - startTime) + " ms");
@@ -225,38 +218,21 @@ public class MetricsDAO {
         return storageSession.executeAsync(statement);
     }
 
-    public ResultSet insertOneHourData(int scheduleId, long timestamp, AggregateType type, double value) {
-        BoundStatement statement = insertOneHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
-        return storageSession.execute(statement);
-    }
-
-    public StorageResultSetFuture insertOneHourDataAsync(int scheduleId, long timestamp, AggregateType type,
-        double value) {
-        BoundStatement statement = insertOneHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
+    public StorageResultSetFuture insert1HourData(AggregateNumericMetric metric) {
+        BoundStatement statement = insertOneHourData.bind(metric.getScheduleId(), new Date(metric.getTimestamp()),
+            metric.getAvg(), metric.getMax(), metric.getMin());
         return storageSession.executeAsync(statement);
     }
 
-    public ResultSet insertSixHourData(int scheduleId, long timestamp, AggregateType type, double value) {
-        BoundStatement statement = insertSixHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
-        return storageSession.execute(statement);
-    }
-
-    public StorageResultSetFuture insertSixHourDataAsync(int scheduleId, long timestamp, AggregateType type,
-        double value) {
-        BoundStatement statement = insertSixHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
+    public StorageResultSetFuture insert6HourData(AggregateNumericMetric metric) {
+        BoundStatement statement = insertSixHourData.bind(metric.getScheduleId(), new Date(metric.getTimestamp()),
+            metric.getAvg(), metric.getMax(), metric.getMin());
         return storageSession.executeAsync(statement);
     }
 
-    public ResultSet insertTwentyFourHourData(int scheduleId, long timestamp, AggregateType type, double value) {
-        BoundStatement statement = insertTwentyFourHourData.bind(scheduleId, new Date(timestamp), type.ordinal(),
-            value);
-        return storageSession.execute(statement);
-    }
-
-    public StorageResultSetFuture insertTwentyFourHourDataAsync(int scheduleId, long timestamp, AggregateType type,
-        double value) {
-        BoundStatement statement = insertTwentyFourHourData.bind(scheduleId, new Date(timestamp), type.ordinal(),
-            value);
+    public StorageResultSetFuture insert24HourData(AggregateNumericMetric metric) {
+        BoundStatement statement = insertTwentyFourHourData.bind(metric.getScheduleId(),
+            new Date(metric.getTimestamp()), metric.getAvg(), metric.getMax(), metric.getMin());
         return storageSession.executeAsync(statement);
     }
 
@@ -291,85 +267,34 @@ public class MetricsDAO {
             new RawNumericMetricMapper(), storageSession);
     }
 
-    public List<AggregateNumericMetric> findOneHourMetrics(int scheduleId, long startTime, long endTime) {
-        AggregateNumericMetricMapper mapper = new AggregateNumericMetricMapper();
-        BoundStatement statement = findOneHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
-            new Date(endTime));
+    public List<AggregateNumericMetric> findAggregateMetrics(int scheduleId, Bucket bucket, long startTime,
+        long endTime) {
+        BoundStatement statement = findAggregateMetricsByDateRange.bind(scheduleId, bucket.toString(),
+            new Date(startTime), new Date(endTime));
         ResultSet resultSet = storageSession.execute(statement);
-
+        AggregateNumericMetricMapper mapper = new AggregateNumericMetricMapper();
         return mapper.mapAll(resultSet);
     }
 
-    public StorageResultSetFuture findOneHourMetricsAsync(int scheduleId, long startTime, long endTime) {
-        BoundStatement statement = findOneHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
-            new Date(endTime));
-        return storageSession.executeAsync(statement);
-    }
-
-    public List<AggregateNumericMetric> findSixHourMetrics(int scheduleId, long startTime, long endTime) {
-        AggregateNumericMetricMapper mapper = new AggregateNumericMetricMapper();
-        BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
-            new Date(endTime));
-        ResultSet resultSet = storageSession.execute(statement);
-
-        return mapper.mapAll(resultSet);
-    }
-
-    public StorageResultSetFuture findSixHourMetricsAsync(int scheduleId, long startTime, long endTime) {
-        BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
-        return storageSession.executeAsync(statement);
-    }
-
-    public List<AggregateNumericMetric> findTwentyFourHourMetrics(int scheduleId, long startTime, long endTime) {
-        AggregateNumericMetricMapper mapper = new AggregateNumericMetricMapper();
-        BoundStatement statement = findTwentyFourHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
-            new Date(endTime));
-        ResultSet resultSet = storageSession.execute(statement);
-
-        return mapper.mapAll(resultSet);
-    }
-
-    public StorageResultSetFuture findTwentyFourHourMetricsAsync(int scheduleId, long startTime, long endTime) {
-        BoundStatement statement = findTwentyFourHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
-            new Date(endTime));
+    public StorageResultSetFuture findAggregateMetricsAsync(int scheduleId, Bucket bucket, long startTime,
+        long endTime) {
+        BoundStatement statement = findAggregateMetricsByDateRange.bind(scheduleId, bucket.toString(),
+            new Date(startTime), new Date(endTime));
         return storageSession.executeAsync(statement);
     }
 
     public Iterable<AggregateSimpleNumericMetric> findAggregatedSimpleOneHourMetric(int scheduleId, long startTime,
         long endTime) {
-        BoundStatement statement = findOneHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
-            new Date(endTime));
+        BoundStatement statement = findAggregateMetricsByDateRange.bind(scheduleId, Bucket.ONE_HOUR.toString(),
+            new Date(startTime), new Date(endTime));
         return new SimplePagedResult<AggregateSimpleNumericMetric>(statement, new AggregateSimpleNumericMetricMapper(),
             storageSession);
-    }
-
-    public Iterable<AggregateNumericMetric> findOneHourMetrics(List<Integer> scheduleIds, long startTime,
-        long endTime) {
-        return new ListPagedResult<AggregateNumericMetric>(findOneHourMetricsByDateRange, scheduleIds, startTime, endTime,
-            new AggregateNumericMetricMapper(), storageSession);
-    }
-
-    public Iterable<AggregateNumericMetric> findSixHourMetrics(List<Integer> scheduleIds, long startTime,
-        long endTime) {
-        return new ListPagedResult<AggregateNumericMetric>(findSixHourMetricsByDateRange, scheduleIds, startTime, endTime,
-            new AggregateNumericMetricMapper(), storageSession);
-    }
-
-    public Iterable<AggregateNumericMetric> findTwentyFourHourMetrics(List<Integer> scheduleIds, long startTime,
-        long endTime) {
-        return new ListPagedResult<AggregateNumericMetric>(findTwentyFourHourMetricsByDateRange, scheduleIds, startTime, endTime,
-            new AggregateNumericMetricMapper(), storageSession);
     }
 
     public StorageResultSetFuture findCacheEntriesAsync(MetricsTable table, long timeSlice,
         int startScheduleId) {
         BoundStatement statement = findCacheEntries.bind(table.toString(), new Date(timeSlice), startScheduleId);
         return storageSession.executeAsync(statement);
-    }
-
-    public ResultSet findCacheTimeSlice(MetricsTable table, long timestamp, int startScheduleId) {
-        BoundStatement statement = findCacheTimeSlice.bind(table.toString(), new Date(timestamp), startScheduleId);
-        return storageSession.execute(statement);
     }
 
     public StorageResultSetFuture updateMetricsCache(MetricsTable table, long timeSlice, int startScheduleId,
@@ -382,6 +307,17 @@ public class MetricsDAO {
     public StorageResultSetFuture deleteCacheEntries(MetricsTable table, long timestamp,
         int startScheduleId) {
         BoundStatement statement = deleteCacheEntries.bind(table.getTableName(), new Date(timestamp), startScheduleId);
+        return storageSession.executeAsync(statement);
+    }
+
+    public StorageResultSetFuture findIndexEntries(MetricsTable bucket, int partition, long timestamp) {
+        BoundStatement statement = findIndexEntries.bind(bucket.toString(), partition, new Date(timestamp));
+        return storageSession.executeAsync(statement);
+    }
+
+    public StorageResultSetFuture insertIndexEntry(IndexEntry indexEntry) {
+        BoundStatement statement = insertIndexEntry.bind(indexEntry.getBucket().toString(), indexEntry.getPartition(),
+            new Date(indexEntry.getTimestamp()), indexEntry.getScheduleId());
         return storageSession.executeAsync(statement);
     }
 
@@ -442,18 +378,9 @@ public class MetricsDAO {
         return storageSession.executeAsync(statement);
     }
 
-    public void delete1HourMetric(int scheduleId, long timestamp) {
-        BoundStatement statement = delete1HourMetric.bind(scheduleId, new Date(timestamp));
-        storageSession.execute(statement);
-    }
-
-    public void delete6HourMetric(int scheduleId, long timestamp) {
-        BoundStatement statement = delete6HourMetric.bind(scheduleId, new Date(timestamp));
-        storageSession.execute(statement);
-    }
-
-    public void delete24HourMetric(int scheduleId, long timestamp) {
-        BoundStatement statement = delete24HourMetric.bind(scheduleId, new Date(timestamp));
+    public void deleteAggregate(AggregateNumericMetric metric) {
+        BoundStatement statement = deleteAggregate.bind(metric.getScheduleId(), metric.getBucket().toString(),
+            new Date(metric.getTimestamp()));
         storageSession.execute(statement);
     }
 

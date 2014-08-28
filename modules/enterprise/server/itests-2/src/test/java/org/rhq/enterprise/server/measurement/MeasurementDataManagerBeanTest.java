@@ -89,7 +89,7 @@ import org.rhq.enterprise.server.util.ResourceTreeHelper;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageSession;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.test.AssertUtils;
 
@@ -530,12 +530,8 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     private void insert1HourData(List<AggregateTestData> data) {
         List<AggregateNumericMetric> metrics = new ArrayList<AggregateNumericMetric>(data.size());
         for (AggregateTestData datum : data) {
-            metricsDAO.insertOneHourData(datum.getScheduleId(), datum.getTimestamp(), AggregateType.MIN,
-                datum.getMin());
-            metricsDAO.insertOneHourData(datum.getScheduleId(), datum.getTimestamp(), AggregateType.AVG,
-                datum.getAvg());
-            metricsDAO.insertOneHourData(datum.getScheduleId(), datum.getTimestamp(), AggregateType.MAX,
-                datum.getMax());
+            metricsDAO.insert1HourData(new AggregateNumericMetric(datum.getScheduleId(), Bucket.ONE_HOUR,
+                datum.getAvg(), datum.getMin(), datum.getMax(), datum.getTimestamp()));
         }
     }
 

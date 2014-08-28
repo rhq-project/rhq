@@ -47,8 +47,8 @@ import org.rhq.enterprise.server.plugin.pc.bundle.UnknownRecipeException;
 public class WildflyPatchBundleServerPluginComponent implements ServerPluginComponent, BundleServerPluginFacet {
 
     @Override
-    public RecipeParseResults parseRecipe(String recipe) throws Exception {
-        throw new Exception(
+    public RecipeParseResults parseRecipe(String recipe) throws UnknownRecipeException {
+        throw new UnknownRecipeException(
             "The Wildfly patches cannot be dealt with using only recipes - the whole distribution file is needed.");
     }
 

@@ -1,4 +1,4 @@
-/*! redhat_access_angular_ui - v0.0.0 - 2014-07-31
+/*! redhat_access_angular_ui - v0.9.9 - 2014-08-26
  * Copyright (c) 2014 ;
  * Licensed 
  */
@@ -3270,9 +3270,7 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
 (function (root, factory) {
     'use strict';
     if (typeof define === 'function' && define.amd) {
-        define('strata', ['jquery', 'jsUri'], function($, uri){
-            root.strata = factory($, uri);
-        });
+        define('strata', ['jquery', 'jsUri'], factory);
     } else {
         root.strata = factory(root.$, root.Uri);
     }
@@ -3329,7 +3327,7 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
         authHostname,
         fetchAccountUsers;
 
-    strata.version = "1.0.27";
+    strata.version = "1.0.32";
     redhatClientID = "stratajs-" + strata.version;
 
     if (window.portal && window.portal.host) {
@@ -3340,6 +3338,10 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
     } else {
         portalHostname = 'access.redhat.com';
         authHostname = portalHostname;
+    }
+
+    if(localStorage && localStorage.getItem('portalHostname')) {
+        portalHostname = localStorage.getItem('portalHostname');
     }
 
     strataHostname = new Uri('https://api.' + portalHostname);
@@ -3651,7 +3653,7 @@ this.MarkdownExtra_Parser = MarkdownExtra_Parser;
             method: 'POST',
             contentType: 'text/plain',
             success: function (response) {
-                if (response.source_or_link_or_problem[2].source_or_link !== undefined) {
+                if (response.source_or_link_or_problem[2] !== undefined && response.source_or_link_or_problem[2].source_or_link !== undefined) {
                     //Gets the array of solutions
                     var suggestedSolutions = response.source_or_link_or_problem[2].source_or_link;
                     onSuccess(suggestedSolutions);
@@ -13972,7 +13974,7 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
 
       // Enable watching of the options dataset if in use
       if (tElm.is('select')) {
-        repeatOption = tElm.find('option[ng-repeat], option[data-ng-repeat]');
+        repeatOption = tElm.find( 'optgroup[ng-repeat], optgroup[data-ng-repeat], option[ng-repeat], option[data-ng-repeat]');
 
         if (repeatOption.length) {
           repeatAttr = repeatOption.attr('ng-repeat') || repeatOption.attr('data-ng-repeat');
@@ -13985,8 +13987,8 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
         var opts = angular.extend({}, options, scope.$eval(attrs.uiSelect2));
 
         /*
-        Convert from Select2 view-model to Angular view-model.
-        */
+         Convert from Select2 view-model to Angular view-model.
+         */
         var convertToAngularModel = function(select2_data) {
           var model;
           if (opts.simple_tags) {
@@ -14001,8 +14003,8 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
         };
 
         /*
-        Convert from Angular view-model to Select2 view-model.
-        */
+         Convert from Angular view-model to Select2 view-model.
+         */
         var convertToSelect2Model = function(angular_data) {
           var model = [];
           if (!angular_data) {
@@ -14032,7 +14034,7 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
 
         if (controller) {
           // Watch the model for programmatic changes
-           scope.$watch(tAttrs.ngModel, function(current, old) {
+          scope.$watch(tAttrs.ngModel, function(current, old) {
             if (!current) {
               return;
             }
@@ -14074,7 +14076,7 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
               $timeout(function () {
                 elm.select2('val', controller.$viewValue);
                 // Refresh angular to remove the superfluous option
-                elm.trigger('change');
+                controller.$render();
                 if(newVal && !oldVal && controller.$setPristine) {
                   controller.$setPristine(true);
                 }
@@ -14099,7 +14101,7 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
             // Set the view and model value and update the angular template manually for the ajax/multiple select2.
             elm.bind("change", function (e) {
               e.stopImmediatePropagation();
-              
+
               if (scope.$$phase || scope.$root.$$phase) {
                 return;
               }
@@ -14113,8 +14115,13 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
               var initSelection = opts.initSelection;
               opts.initSelection = function (element, callback) {
                 initSelection(element, function (value) {
+                  var isPristine = controller.$pristine;
                   controller.$setViewValue(convertToAngularModel(value));
                   callback(value);
+                  if (isPristine) {
+                    controller.$setPristine();
+                  }
+                  elm.prev().toggleClass('ng-pristine', controller.$pristine);
                 });
               };
             }
@@ -14145,15 +14152,21 @@ angular.module('ui.select2', []).value('uiSelect2Config', {}).directive('uiSelec
           elm.select2(opts);
 
           // Set initial value - I'm not sure about this but it seems to need to be there
-          elm.val(controller.$viewValue);
+          elm.select2('data', controller.$modelValue);
           // important!
           controller.$render();
 
           // Not sure if I should just check for !isSelect OR if I should check for 'tags' key
           if (!opts.initSelection && !isSelect) {
+            var isPristine = controller.$pristine;
+            controller.$pristine = false;
             controller.$setViewValue(
               convertToAngularModel(elm.select2('data'))
             );
+            if (isPristine) {
+              controller.$setPristine();
+            }
+            elm.prev().toggleClass('ng-pristine', controller.$pristine);
           }
         });
       };
@@ -17646,11 +17659,6 @@ angular.module('RedhatAccess.cases', [
 // chatIframeHackUrlPrefix - 'https://qa-rogsstest.cs9.force.com/chatHidden'
 
 })
-.constant('ENTITLEMENTS', {
-  standard: 'STANDARD',
-  premium: 'PREMIUM',
-  defaults: 'DEFAULT'
-})
 .constant('STATUS', {
   open: 'open',
   closed: 'closed',
@@ -17965,14 +17973,13 @@ app.service('RHAUtils',
     this.isEmpty = function(object) {
       if (object === undefined || object === null || object === '' || object.length === 0 || object === {}) {
         return true;
-      } else {
-        return false
       }
-    }
+      return false;
+    };
 
     this.isNotEmpty = function(object) {
       return !this.isEmpty(object);
-    }
+    };
   }
 );
 
@@ -18031,7 +18038,7 @@ app.factory('TreeViewSelectorData', ['$http', '$q', 'TreeViewSelectorUtils',
         var defer = $q.defer();
         var tmpUrl = dataUrl;
         if(sessionId){
-          tmpUrl = tmpUrl + '?sessionId=' + encodeURIComponent(sessionId)
+          tmpUrl = tmpUrl + '?sessionId=' + encodeURIComponent(sessionId);
         }
         $http({
           method: 'GET',
@@ -18222,9 +18229,9 @@ angular.module('RedhatAccess.logViewer',
 	[ 'angularTreeview', 'ui.bootstrap', 'RedhatAccess.search', 'RedhatAccess.header'])
 .config([ '$stateProvider', function($stateProvider) {
 	$stateProvider.state('logviewer', {
-		url : "/logviewer",
+		url : '/logviewer',
 		templateUrl : 'log_viewer/views/log_viewer.html'
-	})
+	});
 }])
 .constant('LOGVIEWER_EVENTS', {
     allTabsClosed: 'allTabsClosed'
@@ -18232,35 +18239,35 @@ angular.module('RedhatAccess.logViewer',
 .value('hideMachinesDropdown', {value:false});
 
 function parseList(tree, data) {
-	var files = data.split("\n");
+	var files = data.split('\n');
 	for ( var i in files) {
 		var file = files[i];
-		var splitPath = file.split("/");
+		var splitPath = file.split('/');
 		returnNode(splitPath, tree, file);
 	}
 }
 
 function returnNode(splitPath, tree, fullFilePath) {
 	if (splitPath[0] != null) {
-		if (splitPath[0] != "") {
+		if (splitPath[0] != '') {
 			var node = splitPath[0];
 			var match = false;
 			var index = 0;
 			for ( var i in tree) {
-				if (tree[i].roleName == node) {
+				if (tree[i].roleName === node) {
 					match = true;
 					index = i;
 					break;
 				}
 			}
 			if (!match) {
-				var object = new Object();
+				var object = {};
 				object.roleName = node;
 				object.roleId = node;
-				if (splitPath.length == 1) {
+				if (splitPath.length === 1) {
 					object.fullPath = fullFilePath;
 				}
-				object.children = new Array();
+				object.children = [];
 				tree.push(object);
 				index = tree.length - 1;
 			}
@@ -18273,6 +18280,7 @@ function returnNode(splitPath, tree, fullFilePath) {
 		}
 	}
 }
+
 /*jshint camelcase: false */
 'use strict';
 /*global strata */
@@ -18321,345 +18329,8 @@ angular.module('RedhatAccess.search', [
 
       });
     }
-  ])
-  .controller('SearchController', ['$scope',
-    '$location', 'SearchResultsService', 'SEARCH_CONFIG', 'securityService', 'AlertService',
-    function ($scope, $location, SearchResultsService, SEARCH_CONFIG, securityService, AlertService) {
-      $scope.results = SearchResultsService.results;
-      $scope.selectedSolution = SearchResultsService.currentSelection;
-      $scope.searchInProgress = SearchResultsService.searchInProgress;
-      $scope.currentSearchData = SearchResultsService.currentSearchData;
-
-
-
-      $scope.getOpenCaseRef = function () {
-        if (SEARCH_CONFIG.openCaseRef !== null) {
-          //TODO data may be complex type - need to normalize to string in future
-          return SEARCH_CONFIG.openCaseRef + '?data=' + SearchResultsService.currentSearchData.data;
-        } else {
-          return '#/case/new?data=' + SearchResultsService.currentSearchData.data;
-        }
-      };
-
-      $scope.solutionSelected = function (index) {
-        var response = $scope.results[index];
-        SearchResultsService.setSelected(response, index);
-
-      };
-
-      $scope.search = function (searchStr, limit) {
-
-        SearchResultsService.search(searchStr, limit);
-
-      };
-
-      $scope.diagnose = function (data, limit) {
-
-        SearchResultsService.diagnose(data, limit);
-      };
-
-      $scope.triggerAnalytics = function($event) {
-        if(this.isopen && window.portal && $location.path() === '/case/new'){
-          chrometwo_require(['analytics/main'], function (analytics) {
-             analytics.trigger('OpenSupportCaseRecommendationClick', $event);
-          });
-        }
-      };
-      $scope.$watch(function () {
-          return SearchResultsService.currentSelection;
-        },
-        function (newVal) {
-          $scope.selectedSolution = newVal;
-        }
-      );
-
-    }
-  ])
-  .directive('rhaAccordionsearchresults', ['SEARCH_CONFIG',
-    function (SEARCH_CONFIG) {
-      return {
-        restrict: 'AE',
-        scope: false,
-        templateUrl: 'search/views/accordion_search_results.html',
-        link: function (scope, element, attr) {
-          scope.showOpenCaseBtn = function () {
-            if (SEARCH_CONFIG.showOpenCaseBtn && (attr && attr.opencase === 'true')) {
-              return true;
-            } else {
-              return false;
-            }
-          };
-        }
-      };
-    }
-  ])
-  .directive('rhaListsearchresults', function () {
-    return {
-      restrict: 'AE',
-      scope: false,
-      templateUrl: 'search/views/list_search_results.html'
-    };
-  })
-  .directive('rhaSearchform', function () {
-    return {
-      restrict: 'AE',
-      scope: false,
-      templateUrl: 'search/views/search_form.html'
-    };
-  })
-  .directive('rhaStandardsearch', function () {
-    return {
-      restrict: 'AE',
-      scope: false,
-      templateUrl: 'search/views/standard_search.html'
-    };
-  })
-  .directive('rhaResultdetaildisplay', ['RESOURCE_TYPES',
-    function (RESOURCE_TYPES) {
-      return {
-        restrict: 'AE',
-        scope: {
-          result: '='
-        },
-        link: function (scope, element, attr) {
-          scope.isSolution = function () {
-            if (scope.result !== undefined && scope.result.resource_type !== undefined) {
-              if (scope.result.resource_type === RESOURCE_TYPES.solution) {
-                return true;
-              } else {
-                return false;
-              }
-            }
-            return false;
-          };
-          scope.isArticle = function () {
-            if (scope.result !== undefined && scope.result.resource_type !== undefined) {
-              if (scope.result.resource_type === RESOURCE_TYPES.article) {
-                return true;
-              } else {
-                return false;
-              }
-            }
-            return false;
-          };
-          scope.getSolutionResolution = function () {
-            var resolution_html = '';
-            if (scope.result.resolution !== undefined) {
-              resolution_html = scope.result.resolution.html;
-            }
-            return resolution_html;
-          };
-
-          scope.getArticleHtml = function () {
-            if (scope.result === undefined) {
-              return '';
-            }
-            if (scope.result.body !== undefined) {
-              if (scope.result.body.html !== undefined) {
-                //this is for newer version of strata
-                return scope.result.body.html;
-              } else {
-                //handle old markdown format
-                return scope.result.body;
-              }
-            } else {
-              return '';
-            }
-          };
-
-        },
-        templateUrl: 'search/views/resultDetail.html'
-      };
-    }
-  ])
-  .factory('SearchResultsService', ['$q', '$rootScope', 'AUTH_EVENTS', 'RESOURCE_TYPES', 'SEARCH_PARAMS', 'AlertService', 'securityService',
-
-    function ($q, $rootScope, AUTH_EVENTS, RESOURCE_TYPES, SEARCH_PARAMS, AlertService, securityService) {
-      var searchArticlesOrSolutions = function (searchString, limit) {
-        //var that = this;
-        if ((limit === undefined) || (limit < 1)) {
-          limit = SEARCH_PARAMS.limit;
-        }
-        service.clear();
-        AlertService.clearAlerts();
-
-        service.setCurrentSearchData(searchString, 'search');
-        var deferreds = [];
-        strata.search(
-          searchString,
-          function (entries) {
-            //retrieve details for each solution
-            if (entries !== undefined) {
-              if (entries.length === 0) {
-                AlertService.addSuccessMessage('No recommendations found.');
-              }
-              entries.forEach(function (entry) {
-                var deferred = $q.defer();
-                deferreds.push(deferred.promise);
-                strata.utils.getURI(
-                  entry.uri,
-                  entry.resource_type,
-                  function (type, info) {
-                    if (info !== undefined) {
-                      info.resource_type = type;
-                    }
-                    deferred.resolve(info);
-                  },
-                  function (error) {
-                    deferred.resolve();
-                  });
-              });
-            } else {
-              AlertService.addSuccessMessage('No recommendations found.');
-            }
-            $q.all(deferreds).then(
-              function (results) {
-                results.forEach(function (result) {
-                  if (result !== undefined) {
-                    service.add(result);
-                  }
-                });
-                service.searchInProgress.value = false;
-              },
-              function (error) {
-                service.searchInProgress.value = false;
-              }
-            );
-          },
-          function (error) {
-            $rootScope.$apply(function () {
-              service.searchInProgress.value = false;
-              AlertService.addDangerMessage(error);
-            });
-          },
-          limit,
-          false
-        );
-      };
-      var searchProblems = function (data, limit) {
-        if ((limit === undefined) || (limit < 1)) {
-          limit = SEARCH_PARAMS.limit;
-        }
-        service.clear();
-        AlertService.clearAlerts();
-        var deferreds = [];
-        service.searchInProgress.value = true;
-        service.setCurrentSearchData(data, 'diagnose');
-        strata.problems(
-          data,
-          function (solutions) {
-            //retrieve details for each solution
-            if (solutions !== undefined) {
-              if (solutions.length === 0) {
-                AlertService.addSuccessMessage('No solutions found.');
-              }
-
-              solutions.forEach(function (solution) {
-                var deferred = $q.defer();
-                deferreds.push(deferred.promise);
-                strata.solutions.get(
-                  solution.uri,
-                  function (solution) {
-                    deferred.resolve(solution);
-                  },
-                  function (error) {
-                    deferred.resolve();
-                  });
-              });
-            } else {
-              AlertService.addSuccessMessage('No solutions found.');
-            }
-            $q.all(deferreds).then(
-              function (solutions) {
-                solutions.forEach(function (solution) {
-                  if (solution !== undefined) {
-                    solution.resource_type = RESOURCE_TYPES.solution;
-                    service.add(solution);
-                  }
-                });
-                service.searchInProgress.value = false;
-              },
-              function (error) {
-                service.searchInProgress.value = false;
-              }
-            );
-          },
-
-          function (error) {
-            $rootScope.$apply(function () {
-              service.searchInProgress.value = false;
-              AlertService.addDangerMessage(error);
-            });
-          },
-          limit
-        );
-      };
-      var service = {
-        results: [],
-        currentSelection: {
-          data: {},
-          index: -1
-        },
-        searchInProgress: {
-          value: false
-        },
-        currentSearchData: {
-          data: '',
-          method: ''
-        },
-
-        add: function (result) {
-          this.results.push(result);
-        },
-        clear: function () {
-          this.results.length = 0;
-          this.setSelected({}, -1);
-          this.setCurrentSearchData('', '');
-
-        },
-        setSelected: function (selection, index) {
-          this.currentSelection.data = selection;
-          this.currentSelection.index = index;
-        },
-        setCurrentSearchData: function (data, method) {
-          this.currentSearchData.data = data;
-          this.currentSearchData.method = method;
-        },
-        search: function (searchString, limit) {
-          this.searchInProgress.value = true;
-          var that = this;
-          securityService.validateLogin(true).then(
-            function (authedUser) {
-              searchArticlesOrSolutions(searchString, limit);
-            },
-            function (error) {
-              that.searchInProgress.value = false;
-              AlertService.addDangerMessage('You must be logged in to use this functionality.');
-            });
-
-        },
-        diagnose: function (data, limit) {
-          this.searchInProgress.value = true;
-          var that = this;
-          securityService.validateLogin(true).then(
-            function (authedUser) {
-              searchProblems(data, limit);
-            },
-            function (error) {
-              that.searchInProgress.value = false;
-              AlertService.addDangerMessage('You must be logged in to use this functionality.');
-            });
-
-        }
-      };
-
-      $rootScope.$on(AUTH_EVENTS.logoutSuccess, function () {
-        service.clear.apply(service);
-      });
-
-      return service;
-    }
   ]);
+
 'use strict';
 /*global strata,$*/
 /*jshint unused:vars */
@@ -18674,25 +18345,6 @@ angular.module('RedhatAccess.security', ['ui.bootstrap', 'RedhatAccess.template'
     notAuthorized: 'auth-not-authorized',
     sessionIdChanged: 'sid-changed'
   })
-  .directive('rhaLoginstatus', function () {
-    return {
-      restrict: 'AE',
-      scope: false,
-      templateUrl: 'security/login_status.html'
-    };
-  })
-  .controller('SecurityController', ['$scope', '$rootScope', 'securityService', 'SECURITY_CONFIG',
-    function ($scope, $rootScope, securityService, SECURITY_CONFIG) {
-      $scope.securityService = securityService;
-      if (SECURITY_CONFIG.autoCheckLogin) {
-        securityService.validateLogin(SECURITY_CONFIG.forceLogin);
-      }
-      $scope.displayLoginStatus = function () {
-        return SECURITY_CONFIG.displayLoginStatus;
-
-      };
-    }
-  ])
   .value('LOGIN_VIEW_CONFIG', {
     verbose: true,
   })
@@ -18703,321 +18355,7 @@ angular.module('RedhatAccess.security', ['ui.bootstrap', 'RedhatAccess.template'
     logoutURL: '',
     forceLogin: false,
 
-  })
-  .service('securityService', [
-    '$rootScope',
-    '$modal',
-    'AUTH_EVENTS',
-    '$q',
-    'LOGIN_VIEW_CONFIG',
-    'SECURITY_CONFIG',
-    'strataService',
-    'AlertService',
-    'RHAUtils',
-    function (
-      $rootScope,
-      $modal,
-      AUTH_EVENTS,
-      $q,
-      LOGIN_VIEW_CONFIG,
-      SECURITY_CONFIG,
-      strataService,
-      AlertService,
-      RHAUtils) {
-
-      this.loginStatus = {
-        isLoggedIn: false,
-        loggedInUser: '',
-        verifying: false,
-        isInternal: false,
-        orgAdmin: false,
-        hasChat: false,
-        sessionId: '',
-        canAddAttachments: false,
-        ssoName: ''
-      };
-
-      this.loginURL = SECURITY_CONFIG.loginURL;
-      this.logoutURL = SECURITY_CONFIG.logoutURL;
-
-      this.setLoginStatus = function (
-        isLoggedIn,
-        userName,
-        verifying,
-        isInternal,
-        orgAdmin,
-        hasChat,
-        sessionId,
-        canAddAttachments,
-        ssoName) {
-        this.loginStatus.isLoggedIn = isLoggedIn;
-        this.loginStatus.loggedInUser = userName;
-        this.loginStatus.verifying = verifying;
-        this.loginStatus.isInternal = isInternal;
-        this.loginStatus.orgAdmin = orgAdmin;
-        this.loginStatus.hasChat = hasChat;
-        this.loginStatus.sessionId = sessionId;
-        this.loginStatus.canAddAttachments = canAddAttachments;
-        this.loginStatus.ssoName = ssoName;
-      };
-
-      this.clearLoginStatus = function () {
-        this.loginStatus.isLoggedIn = false;
-        this.loginStatus.loggedInUser = '';
-        this.loginStatus.verifying = false;
-        this.loginStatus.isInternal = false;
-        this.loginStatus.orgAdmin = false;
-        this.loginStatus.hasChat = false;
-        this.loginStatus.sessionId = '';
-        this.loginStatus.canAddAttachments = false;
-        this.loginStatus.account = {};
-        this.loginStatus.ssoName = '';
-
-      };
-
-      this.setAccount = function (accountJSON) {
-        this.loginStatus.account = accountJSON;
-      };
-
-      var modalDefaults = {
-        backdrop: 'static',
-        keyboard: true,
-        modalFade: true,
-        templateUrl: 'security/login_form.html',
-        windowClass: 'rha-login-modal'
-      };
-
-      var modalOptions = {
-        closeButtonText: 'Close',
-        actionButtonText: 'OK',
-        headerText: 'Proceed?',
-        bodyText: 'Perform this action?',
-        backdrop: 'static'
-
-      };
-
-
-
-      this.userAllowedToManageEmailNotifications = function (user) {
-        if ((RHAUtils.isNotEmpty(this.loginStatus.account) && RHAUtils.isNotEmpty(this.loginStatus.account)) &&
-          ((this.loginStatus.orgAdmin))) {
-          return true;
-        } else {
-          return false;
-        }
-      };
-
-      this.userAllowedToManageGroups = function (user) {
-        if ((RHAUtils.isNotEmpty(this.loginStatus.account) && RHAUtils.isNotEmpty(this.loginStatus.account)) &&
-          ((!this.loginStatus.account.has_group_acls || this.loginStatus.account.has_group_acls && this.loginStatus.orgAdmin))) {
-          return true;
-        } else {
-          return false;
-        }
-      };
-
-      this.getBasicAuthToken = function () {
-        var defer = $q.defer();
-        var token = localStorage.getItem('rhAuthToken');
-        if (token !== undefined && token !== '') {
-          defer.resolve(token);
-          return defer.promise;
-        } else {
-          this.login().then(
-            function (authedUser) {
-              defer.resolve(localStorage.getItem('rhAuthToken'));
-            },
-            function (error) {
-              defer.resolve(error);
-            });
-          return defer.promise;
-        }
-      };
-
-      this.loggingIn = false;
-
-      this.initLoginStatus = function () {
-        this.loggingIn = true;
-
-        var defer = $q.defer();
-        var that = this;
-        var wasLoggedIn = this.loginStatus.isLoggedIn;
-        var currentSid = this.loginStatus.sessionId;
-        this.loginStatus.verifying = true;
-        strata.checkLogin(
-          angular.bind(this, function (result, authedUser) {
-            if (result) {
-              var sidChanged = (currentSid !== authedUser.session_id);
-              strataService.accounts.list().then(
-                angular.bind(this, function (accountNumber) {
-                  strataService.accounts.get(accountNumber).then(
-                    angular.bind(this, function (account) {
-                      that.setAccount(account);
-                      that.setLoginStatus(
-                        true,
-                        authedUser.name,
-                        false,
-                        authedUser.is_internal,
-                        authedUser.org_admin,
-                        authedUser.has_chat,
-                        authedUser.session_id,
-                        authedUser.can_add_attachments,
-                        authedUser.login);
-                      //console.log(that.loginStatus);
-                      //console.log(authedUser);
-                      this.loggingIn = false;
-                      //We don't want to resend the AUTH_EVENTS.loginSuccess if we are already logged in
-                      if (wasLoggedIn === false) {
-                        $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
-                      }
-                      if (sidChanged) {
-                        $rootScope.$broadcast(AUTH_EVENTS.sessionIdChanged);
-                      }
-                      defer.resolve(authedUser.name);
-                    })
-                  );
-                }),
-                angular.bind(this, function (error) {
-                  AlertService.addStrataErrorMessage(error);
-                  this.loggingIn = false;
-                  defer.resolve(authedUser.name);
-                })
-              );
-            } else {
-              this.loggingIn = false;
-              that.clearLoginStatus();
-              defer.reject('');
-            }
-          })
-        );
-        return defer.promise;
-      };
-
-      this.validateLogin = function (forceLogin) {
-        var defer = $q.defer();
-        var that = this;
-        if (!forceLogin) {
-          this.initLoginStatus().then(
-            function (username) {
-              defer.resolve(username);
-            },
-            function (error) {
-              defer.reject(error);
-            }
-          );
-          return defer.promise;
-        } else {
-          this.initLoginStatus().then(
-            function (username) {
-              defer.resolve(username);
-            },
-            function (error) {
-              that.login().then(
-                function (authedUser) {
-                  defer.resolve(authedUser.name);
-                },
-                function (error) {
-                  defer.reject(error);
-                });
-            }
-          );
-          return defer.promise;
-        }
-      };
-
-      this.login = function () {
-        var that = this;
-        var result = this.showLogin(modalDefaults, modalOptions);
-        result.then(
-          function (authedUser) {
-            that.setLoginStatus(true, authedUser.name, false, authedUser.is_internal);
-          },
-          function (error) {
-            that.clearLoginStatus();
-          });
-        return result; // pass on the promise
-      };
-
-      this.logout = function () {
-        strata.clearCredentials();
-        this.clearLoginStatus();
-        $rootScope.$broadcast(AUTH_EVENTS.logoutSuccess);
-      };
-
-      this.getLoggedInUserName = function () {
-        return strata.getAuthInfo().name;
-      };
-
-      this.showLogin = function (customModalDefaults, customModalOptions) {
-        var that = this;
-        //Create temp objects to work with since we're in a singleton service
-        var tempModalDefaults = {};
-        var tempModalOptions = {};
-        //Map angular-ui modal custom defaults to modal defaults defined in service
-        angular.extend(tempModalDefaults, modalDefaults, customModalDefaults);
-        //Map modal.html $scope custom properties to defaults defined in service
-        angular.extend(tempModalOptions, modalOptions, customModalOptions);
-        if (!tempModalDefaults.controller) {
-          tempModalDefaults.controller = ['$scope', '$modalInstance',
-            function ($scope, $modalInstance) {
-              $scope.user = {
-                user: null,
-                password: null
-              };
-              $scope.useVerboseLoginView = LOGIN_VIEW_CONFIG.verbose;
-              $scope.modalOptions = tempModalOptions;
-              $scope.modalOptions.ok = function (result) {
-                //Hack below is needed to handle autofill issues
-                //@see https://github.com/angular/angular.js/issues/1460
-                //BEGIN HACK
-                $scope.user.user = $('#rha-login-user-id').val();
-                $scope.user.password = $('#rha-login-password').val();
-                //END HACK
-                strata.setCredentials($scope.user.user, $scope.user.password,
-                  function (passed, authedUser) {
-                    if (passed) {
-                      $scope.user.password = '';
-                      $scope.authError = null;
-                      try {
-                        $modalInstance.close(authedUser);
-                      } catch (err) {}
-                      that.setLoginStatus(
-                        true,
-                        authedUser.name,
-                        false,
-                        authedUser.is_internal,
-                        authedUser.org_admin,
-                        authedUser.has_chat,
-                        authedUser.session_id,
-                        authedUser.can_add_attachments,
-                        authedUser.login);
-                      $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
-                    } else {
-                      // alert("Login failed!");
-                      $rootScope.$broadcast(AUTH_EVENTS.loginFailed);
-                      if ($scope.$root.$$phase != '$apply' && $scope.$root.$$phase != '$digest') {
-                        $scope.$apply(function () {
-                          $scope.authError = 'Login Failed!';
-                        });
-                      } else {
-                        $scope.authError = 'Login Failed!';
-                      }
-                    }
-                  });
-
-              };
-              $scope.modalOptions.close = function () {
-                $modalInstance.dismiss();
-              };
-            }
-          ];
-        }
-
-        return $modal.open(tempModalDefaults).result;
-      };
-
-    }
-  ]);
+  });
 'use strict';
 /*global strata*/
 /*jshint camelcase: false */
@@ -19062,7 +18400,7 @@ angular.module('RedhatAccess.common')
               ssoUserName
             );
 
-            return deferred.promise; 
+            return deferred.promise;
           }
         },
         problems: function (data, max) {
@@ -19104,14 +18442,15 @@ angular.module('RedhatAccess.common')
         },
         products: {
           //products.list
-          list: function () {
+          list: function (ssoUserName) {
             var deferred = $q.defer();
 
             strata.products.list(
               function (response) {
                 deferred.resolve(response);
               },
-              angular.bind(deferred, errorHandler)
+              angular.bind(deferred, errorHandler),
+              ssoUserName
             );
 
             return deferred.promise;
@@ -19300,7 +18639,7 @@ angular.module('RedhatAccess.common')
               var deferred = $q.defer();
 
               strata.cases.comments.post(
-                case_number, 
+                case_number,
                 {
                   'text': text,
                   'draft': isDraft === true ? 'true' : 'false'
@@ -19477,6 +18816,790 @@ angular.module('RedhatAccess.common')
   ]);
 
 'use strict';
+/*global strata,$*/
+/*jshint unused:vars */
+/*jshint camelcase: false */
+angular.module('RedhatAccess.security')
+  .controller('SecurityController', ['$scope', '$rootScope', 'securityService', 'SECURITY_CONFIG',
+    function ($scope, $rootScope, securityService, SECURITY_CONFIG) {
+      $scope.securityService = securityService;
+      if (SECURITY_CONFIG.autoCheckLogin) {
+        securityService.validateLogin(SECURITY_CONFIG.forceLogin);
+      }
+      $scope.displayLoginStatus = function () {
+        return SECURITY_CONFIG.displayLoginStatus;
+      };
+    }
+  ]);
+
+'use strict';
+angular.module('RedhatAccess.security')
+  .directive('rhaLoginstatus', function () {
+    return {
+      restrict: 'AE',
+      scope: false,
+      templateUrl: 'security/views/login_status.html'
+    };
+  });
+
+'use strict';
+/*global strata,$*/
+/*jshint unused:vars */
+/*jshint camelcase: false */
+angular.module('RedhatAccess.security')
+  .service('securityService', [
+    '$rootScope',
+    '$modal',
+    'AUTH_EVENTS',
+    '$q',
+    'LOGIN_VIEW_CONFIG',
+    'SECURITY_CONFIG',
+    'strataService',
+    'AlertService',
+    'RHAUtils',
+    function (
+      $rootScope,
+      $modal,
+      AUTH_EVENTS,
+      $q,
+      LOGIN_VIEW_CONFIG,
+      SECURITY_CONFIG,
+      strataService,
+      AlertService,
+      RHAUtils) {
+
+      this.loginStatus = {
+        isLoggedIn: false,
+        loggedInUser: '',
+        verifying: false,
+        isInternal: false,
+        orgAdmin: false,
+        hasChat: false,
+        sessionId: '',
+        canAddAttachments: false,
+        ssoName: ''
+      };
+
+      this.loginURL = SECURITY_CONFIG.loginURL;
+      this.logoutURL = SECURITY_CONFIG.logoutURL;
+
+      this.setLoginStatus = function (
+        isLoggedIn,
+        userName,
+        verifying,
+        isInternal,
+        orgAdmin,
+        hasChat,
+        sessionId,
+        canAddAttachments,
+        ssoName) {
+        this.loginStatus.isLoggedIn = isLoggedIn;
+        this.loginStatus.loggedInUser = userName;
+        this.loginStatus.verifying = verifying;
+        this.loginStatus.isInternal = isInternal;
+        if (orgAdmin != null) {
+          this.loginStatus.orgAdmin = orgAdmin;
+        }
+        if (hasChat != null) {
+          this.loginStatus.hasChat = hasChat;
+        }
+        if (sessionId != null) {
+          this.loginStatus.sessionId = sessionId;
+        }
+        if (canAddAttachments != null) {
+          this.loginStatus.canAddAttachments = canAddAttachments;
+        }
+        if (ssoName != null) {
+          this.loginStatus.ssoName = ssoName;
+        }
+      };
+
+      this.clearLoginStatus = function () {
+        this.loginStatus.isLoggedIn = false;
+        this.loginStatus.loggedInUser = '';
+        this.loginStatus.verifying = false;
+        this.loginStatus.isInternal = false;
+        this.loginStatus.orgAdmin = false;
+        this.loginStatus.hasChat = false;
+        this.loginStatus.sessionId = '';
+        this.loginStatus.canAddAttachments = false;
+        this.loginStatus.account = {};
+        this.loginStatus.ssoName = '';
+
+      };
+
+      this.setAccount = function (accountJSON) {
+        this.loginStatus.account = accountJSON;
+      };
+
+      var modalDefaults = {
+        backdrop: 'static',
+        keyboard: true,
+        modalFade: true,
+        templateUrl: 'security/views/login_form.html',
+        windowClass: 'rha-login-modal'
+      };
+
+      var modalOptions = {
+        closeButtonText: 'Close',
+        actionButtonText: 'OK',
+        headerText: 'Proceed?',
+        bodyText: 'Perform this action?',
+        backdrop: 'static'
+
+      };
+
+
+
+      this.userAllowedToManageEmailNotifications = function (user) {
+        if ((RHAUtils.isNotEmpty(this.loginStatus.account) && RHAUtils.isNotEmpty(this.loginStatus.account)) &&
+          ((this.loginStatus.orgAdmin))) {
+          return true;
+        } else {
+          return false;
+        }
+      };
+
+      this.userAllowedToManageGroups = function (user) {
+        if ((RHAUtils.isNotEmpty(this.loginStatus.account) && RHAUtils.isNotEmpty(this.loginStatus.account)) &&
+          ((!this.loginStatus.account.has_group_acls || this.loginStatus.account.has_group_acls && this.loginStatus.orgAdmin))) {
+          return true;
+        } else {
+          return false;
+        }
+      };
+
+      this.getBasicAuthToken = function () {
+        var defer = $q.defer();
+        var token = localStorage.getItem('rhAuthToken');
+        if (token !== undefined && token !== '') {
+          defer.resolve(token);
+          return defer.promise;
+        } else {
+          this.login().then(
+            function (authedUser) {
+              defer.resolve(localStorage.getItem('rhAuthToken'));
+            },
+            function (error) {
+              defer.resolve(error);
+            });
+          return defer.promise;
+        }
+      };
+
+      this.loggingIn = false;
+
+      this.initLoginStatus = function () {
+        this.loggingIn = true;
+
+        var defer = $q.defer();
+        var that = this;
+        var wasLoggedIn = this.loginStatus.isLoggedIn;
+        var currentSid = this.loginStatus.sessionId;
+        this.loginStatus.verifying = true;
+        strata.checkLogin(
+          angular.bind(this, function (result, authedUser) {
+            if (result) {
+              var sidChanged = (currentSid !== authedUser.session_id);
+              strataService.accounts.list().then(
+                angular.bind(this, function (accountNumber) {
+                  strataService.accounts.get(accountNumber).then(
+                    angular.bind(this, function (account) {
+                      that.setAccount(account);
+                      that.setLoginStatus(
+                        true,
+                        authedUser.name,
+                        false,
+                        authedUser.is_internal,
+                        authedUser.org_admin,
+                        authedUser.has_chat,
+                        authedUser.session_id,
+                        authedUser.can_add_attachments,
+                        authedUser.login);
+                      //console.log(that.loginStatus);
+                      //console.log(authedUser);
+                      this.loggingIn = false;
+                      //We don't want to resend the AUTH_EVENTS.loginSuccess if we are already logged in
+                      if (wasLoggedIn === false) {
+                        $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
+                      }
+                      if (sidChanged) {
+                        $rootScope.$broadcast(AUTH_EVENTS.sessionIdChanged);
+                      }
+                      defer.resolve(authedUser.name);
+                    })
+                  );
+                }),
+                angular.bind(this, function (error) {
+                  AlertService.addStrataErrorMessage(error);
+                  this.loggingIn = false;
+                  defer.resolve(authedUser.name);
+                })
+              );
+            } else {
+              this.loggingIn = false;
+              that.clearLoginStatus();
+              defer.reject('');
+            }
+          })
+        );
+        return defer.promise;
+      };
+
+      this.validateLogin = function (forceLogin) {
+        var defer = $q.defer();
+        var that = this;
+        if (!forceLogin) {
+          this.initLoginStatus().then(
+            function (username) {
+              defer.resolve(username);
+            },
+            function (error) {
+              defer.reject(error);
+            }
+          );
+          return defer.promise;
+        } else {
+          this.initLoginStatus().then(
+            function (username) {
+              defer.resolve(username);
+            },
+            function (error) {
+              that.login().then(
+                function (authedUser) {
+                  defer.resolve(authedUser.name);
+                },
+                function (error) {
+                  defer.reject(error);
+                });
+            }
+          );
+          return defer.promise;
+        }
+      };
+
+      this.login = function () {
+        var that = this;
+        var result = this.showLogin(modalDefaults, modalOptions);
+        result.then(
+          function (authedUser) {
+            //that.setLoginStatus(true, authedUser.name, false, authedUser.is_internal);
+            that.initLoginStatus();
+          },
+          function (error) {
+            that.clearLoginStatus();
+          });
+        return result; // pass on the promise
+      };
+
+      this.logout = function () {
+        strata.clearCredentials();
+        this.clearLoginStatus();
+        $rootScope.$broadcast(AUTH_EVENTS.logoutSuccess);
+      };
+
+      this.getLoggedInUserName = function () {
+        return strata.getAuthInfo().name;
+      };
+
+      this.showLogin = function (customModalDefaults, customModalOptions) {
+        var that = this;
+        //Create temp objects to work with since we're in a singleton service
+        var tempModalDefaults = {};
+        var tempModalOptions = {};
+        //Map angular-ui modal custom defaults to modal defaults defined in service
+        angular.extend(tempModalDefaults, modalDefaults, customModalDefaults);
+        //Map modal.html $scope custom properties to defaults defined in service
+        angular.extend(tempModalOptions, modalOptions, customModalOptions);
+        if (!tempModalDefaults.controller) {
+          tempModalDefaults.controller = ['$scope', '$modalInstance',
+            function ($scope, $modalInstance) {
+              $scope.user = {
+                user: null,
+                password: null
+              };
+              $scope.useVerboseLoginView = LOGIN_VIEW_CONFIG.verbose;
+              $scope.modalOptions = tempModalOptions;
+              $scope.modalOptions.ok = function (result) {
+                //Hack below is needed to handle autofill issues
+                //@see https://github.com/angular/angular.js/issues/1460
+                //BEGIN HACK
+                $scope.user.user = $('#rha-login-user-id').val();
+                $scope.user.password = $('#rha-login-password').val();
+                //END HACK
+                strata.setCredentials($scope.user.user, $scope.user.password,
+                  function (passed, authedUser) {
+                    if (passed) {
+                      $scope.user.password = '';
+                      $scope.authError = null;
+                      try {
+                        $modalInstance.close(authedUser);
+                      } catch (err) {}
+                      that.setLoginStatus(
+                        true,
+                        authedUser.name,
+                        false,
+                        authedUser.is_internal,
+                        authedUser.org_admin,
+                        authedUser.has_chat,
+                        authedUser.session_id,
+                        authedUser.can_add_attachments,
+                        authedUser.login);
+                      $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
+                    } else {
+                      // alert("Login failed!");
+                      $rootScope.$broadcast(AUTH_EVENTS.loginFailed);
+                      if ($scope.$root.$$phase != '$apply' && $scope.$root.$$phase != '$digest') {
+                        $scope.$apply(function () {
+                          $scope.authError = 'Login Failed!';
+                        });
+                      } else {
+                        $scope.authError = 'Login Failed!';
+                      }
+                    }
+                  });
+
+              };
+              $scope.modalOptions.close = function () {
+                $modalInstance.dismiss();
+              };
+            }
+          ];
+        }
+
+        return $modal.open(tempModalDefaults).result;
+      };
+
+    }
+  ]);
+'use strict';
+/*global strata */
+/*jshint unused:vars */
+
+/**
+ * @ngdoc module
+ * @name
+ *
+ * @description
+ *
+ */
+angular.module('RedhatAccess.search')
+  .controller('SearchController', ['$scope',
+    '$location', 'SearchResultsService', 'SEARCH_CONFIG', 'securityService', 'AlertService',
+    function ($scope, $location, SearchResultsService, SEARCH_CONFIG, securityService, AlertService) {
+      $scope.results = SearchResultsService.results;
+      $scope.selectedSolution = SearchResultsService.currentSelection;
+      $scope.searchInProgress = SearchResultsService.searchInProgress;
+      $scope.currentSearchData = SearchResultsService.currentSearchData;
+
+
+
+      $scope.getOpenCaseRef = function () {
+        if (SEARCH_CONFIG.openCaseRef !== null) {
+          //TODO data may be complex type - need to normalize to string in future
+          return SEARCH_CONFIG.openCaseRef + '?data=' + SearchResultsService.currentSearchData.data;
+        } else {
+          return '#/case/new?data=' + SearchResultsService.currentSearchData.data;
+        }
+      };
+
+      $scope.solutionSelected = function (index) {
+        var response = $scope.results[index];
+        SearchResultsService.setSelected(response, index);
+
+      };
+
+      $scope.search = function (searchStr, limit) {
+
+        SearchResultsService.search(searchStr, limit);
+
+      };
+
+      $scope.diagnose = function (data, limit) {
+
+        SearchResultsService.diagnose(data, limit);
+      };
+
+      $scope.triggerAnalytics = function($event) {
+        if(this.isopen && window.chrometwo_require != null && $location.path() === '/case/new'){
+          chrometwo_require(['analytics/main'], function (analytics) {
+             analytics.trigger('OpenSupportCaseRecommendationClick', $event);
+          });
+        }
+      };
+      $scope.$watch(function () {
+          return SearchResultsService.currentSelection;
+        },
+        function (newVal) {
+          $scope.selectedSolution = newVal;
+        }
+      );
+
+    }
+  ]);
+/*jshint camelcase: false */
+'use strict';
+/*global strata */
+/*jshint unused:vars */
+
+/**
+ * @ngdoc module
+ * @name
+ *
+ * @description
+ *
+ */
+angular.module('RedhatAccess.search')
+  .directive('rhaAccordionsearchresults', ['SEARCH_CONFIG',
+    function (SEARCH_CONFIG) {
+      return {
+        restrict: 'AE',
+        scope: false,
+        templateUrl: 'search/views/accordion_search_results.html',
+        link: function (scope, element, attr) {
+          scope.showOpenCaseBtn = function () {
+            if (SEARCH_CONFIG.showOpenCaseBtn && (attr && attr.opencase === 'true')) {
+              return true;
+            } else {
+              return false;
+            }
+          };
+        }
+      };
+    }
+  ]);
+/*jshint camelcase: false */
+'use strict';
+/*global strata */
+/*jshint unused:vars */
+
+/**
+ * @ngdoc module
+ * @name
+ *
+ * @description
+ *
+ */
+angular.module('RedhatAccess.search')
+.directive('rhaListsearchresults', function () {
+  return {
+    restrict: 'AE',
+    scope: false,
+    templateUrl: 'search/views/list_search_results.html'
+  };
+});
+/*jshint camelcase: false */
+'use strict';
+/*global strata */
+/*jshint unused:vars */
+
+/**
+ * @ngdoc module
+ * @name
+ *
+ * @description
+ *
+ */
+angular.module('RedhatAccess.search')
+  .directive('rhaResultdetaildisplay', ['RESOURCE_TYPES',
+    function (RESOURCE_TYPES) {
+      return {
+        restrict: 'AE',
+        scope: {
+          result: '='
+        },
+        link: function (scope, element, attr) {
+          scope.isSolution = function () {
+            if (scope.result !== undefined && scope.result.resource_type !== undefined) {
+              if (scope.result.resource_type === RESOURCE_TYPES.solution) {
+                return true;
+              } else {
+                return false;
+              }
+            }
+            return false;
+          };
+          scope.isArticle = function () {
+            if (scope.result !== undefined && scope.result.resource_type !== undefined) {
+              if (scope.result.resource_type === RESOURCE_TYPES.article) {
+                return true;
+              } else {
+                return false;
+              }
+            }
+            return false;
+          };
+          scope.getSolutionResolution = function () {
+            var resolution_html = '';
+            if (scope.result.resolution !== undefined) {
+              resolution_html = scope.result.resolution.html;
+            }
+            return resolution_html;
+          };
+
+          scope.getArticleHtml = function () {
+            if (scope.result === undefined) {
+              return '';
+            }
+            if (scope.result.body !== undefined) {
+              if (scope.result.body.html !== undefined) {
+                //this is for newer version of strata
+                return scope.result.body.html;
+              } else {
+                //handle old markdown format
+                return scope.result.body;
+              }
+            } else {
+              return '';
+            }
+          };
+
+        },
+        templateUrl: 'search/views/resultDetail.html'
+      };
+    }
+  ]);
+/*jshint camelcase: false */
+'use strict';
+/*global strata */
+/*jshint unused:vars */
+
+/**
+ * @ngdoc module
+ * @name
+ *
+ * @description
+ *
+ */
+angular.module('RedhatAccess.search')
+  .directive('rhaSearchform', function () {
+    return {
+      restrict: 'AE',
+      scope: false,
+      templateUrl: 'search/views/search_form.html'
+    };
+  });
+/*jshint camelcase: false */
+'use strict';
+/*global strata */
+/*jshint unused:vars */
+
+/**
+ * @ngdoc module
+ * @name
+ *
+ * @description
+ *
+ */
+angular.module('RedhatAccess.search')
+  .directive('rhaStandardsearch', function () {
+    return {
+      restrict: 'AE',
+      scope: false,
+      templateUrl: 'search/views/standard_search.html'
+    };
+  });
+/*jshint camelcase: false */
+'use strict';
+/*global strata */
+/*jshint unused:vars */
+
+/**
+ * @ngdoc module
+ * @name
+ *
+ * @description
+ *
+ */
+angular.module('RedhatAccess.search')
+  .factory('SearchResultsService', ['$q', '$rootScope', 'AUTH_EVENTS', 'RESOURCE_TYPES', 'SEARCH_PARAMS', 'AlertService', 'securityService',
+    function ($q, $rootScope, AUTH_EVENTS, RESOURCE_TYPES, SEARCH_PARAMS, AlertService, securityService) {
+      var searchArticlesOrSolutions = function (searchString, limit) {
+        //var that = this;
+        if ((limit === undefined) || (limit < 1)) {
+          limit = SEARCH_PARAMS.limit;
+        }
+        service.clear();
+        AlertService.clearAlerts();
+
+        service.setCurrentSearchData(searchString, 'search');
+        var deferreds = [];
+        strata.search(
+          searchString,
+          function (entries) {
+            //retrieve details for each solution
+            if (entries !== undefined) {
+              if (entries.length === 0) {
+                AlertService.addSuccessMessage('No recommendations found.');
+              }
+              entries.forEach(function (entry) {
+                var deferred = $q.defer();
+                deferreds.push(deferred.promise);
+                strata.utils.getURI(
+                  entry.uri,
+                  entry.resource_type,
+                  function (type, info) {
+                    if (info !== undefined) {
+                      info.resource_type = type;
+                    }
+                    deferred.resolve(info);
+                  },
+                  function (error) {
+                    deferred.resolve();
+                  });
+              });
+            } else {
+              AlertService.addSuccessMessage('No recommendations found.');
+            }
+            $q.all(deferreds).then(
+              function (results) {
+                results.forEach(function (result) {
+                  if (result !== undefined) {
+                    service.add(result);
+                  }
+                });
+                service.searchInProgress.value = false;
+              },
+              function (error) {
+                service.searchInProgress.value = false;
+              }
+            );
+          },
+          function (error) {
+            $rootScope.$apply(function () {
+              service.searchInProgress.value = false;
+              AlertService.addDangerMessage(error);
+            });
+          },
+          limit,
+          false
+        );
+      };
+      var searchProblems = function (data, limit) {
+        if ((limit === undefined) || (limit < 1)) {
+          limit = SEARCH_PARAMS.limit;
+        }
+        service.clear();
+        AlertService.clearAlerts();
+        var deferreds = [];
+        service.searchInProgress.value = true;
+        service.setCurrentSearchData(data, 'diagnose');
+        strata.problems(
+          data,
+          function (solutions) {
+            //retrieve details for each solution
+            if (solutions !== undefined) {
+              if (solutions.length === 0) {
+                AlertService.addSuccessMessage('No solutions found.');
+              }
+
+              solutions.forEach(function (solution) {
+                var deferred = $q.defer();
+                deferreds.push(deferred.promise);
+                strata.solutions.get(
+                  solution.uri,
+                  function (solution) {
+                    deferred.resolve(solution);
+                  },
+                  function (error) {
+                    deferred.resolve();
+                  });
+              });
+            } else {
+              AlertService.addSuccessMessage('No solutions found.');
+            }
+            $q.all(deferreds).then(
+              function (solutions) {
+                solutions.forEach(function (solution) {
+                  if (solution !== undefined) {
+                    solution.resource_type = RESOURCE_TYPES.solution;
+                    service.add(solution);
+                  }
+                });
+                service.searchInProgress.value = false;
+              },
+              function (error) {
+                service.searchInProgress.value = false;
+              }
+            );
+          },
+
+          function (error) {
+            $rootScope.$apply(function () {
+              service.searchInProgress.value = false;
+              AlertService.addDangerMessage(error);
+            });
+          },
+          limit
+        );
+      };
+      var service = {
+        results: [],
+        currentSelection: {
+          data: {},
+          index: -1
+        },
+        searchInProgress: {
+          value: false
+        },
+        currentSearchData: {
+          data: '',
+          method: ''
+        },
+
+        add: function (result) {
+          this.results.push(result);
+        },
+        clear: function () {
+          this.results.length = 0;
+          this.setSelected({}, -1);
+          this.setCurrentSearchData('', '');
+
+        },
+        setSelected: function (selection, index) {
+          this.currentSelection.data = selection;
+          this.currentSelection.index = index;
+        },
+        setCurrentSearchData: function (data, method) {
+          this.currentSearchData.data = data;
+          this.currentSearchData.method = method;
+        },
+        search: function (searchString, limit) {
+          this.searchInProgress.value = true;
+          var that = this;
+          securityService.validateLogin(true).then(
+            function (authedUser) {
+              searchArticlesOrSolutions(searchString, limit);
+            },
+            function (error) {
+              that.searchInProgress.value = false;
+              AlertService.addDangerMessage('You must be logged in to use this functionality.');
+            });
+
+        },
+        diagnose: function (data, limit) {
+          this.searchInProgress.value = true;
+          var that = this;
+          securityService.validateLogin(true).then(
+            function (authedUser) {
+              searchProblems(data, limit);
+            },
+            function (error) {
+              that.searchInProgress.value = false;
+              AlertService.addDangerMessage('You must be logged in to use this functionality.');
+            });
+
+        }
+      };
+
+      $rootScope.$on(AUTH_EVENTS.logoutSuccess, function () {
+        service.clear.apply(service);
+      });
+
+      return service;
+    }
+  ]);
+'use strict';
 
 angular.module('RedhatAccess.cases')
 .controller('AccountSelect', [
@@ -19494,7 +19617,7 @@ angular.module('RedhatAccess.cases')
       strataService.accounts.list().then(
         function(response) {
           $scope.loadingAccountNumber = false;
-          CaseService.account.number = response;         
+          CaseService.account.number = response;
           $scope.populateAccountSpecificFields();
         },
         function(error) {
@@ -19552,8 +19675,9 @@ angular.module('RedhatAccess.cases')
         CaseService.commentText = '';
 
         //TODO: find better way than hard code
-        if(CaseService.kase.status.name === "Closed"){
-          CaseService.kase.status.name = "Waiting on Red Hat";
+        if(CaseService.kase.status.name === 'Closed'){
+          var status = {name:'Waiting on Red Hat'};
+          CaseService.kase.status = status;
         }
 
         CaseService.populateComments(CaseService.kase.case_number).then(
@@ -19574,14 +19698,14 @@ angular.module('RedhatAccess.cases')
 
       if(RHAUtils.isNotEmpty(CaseService.draftComment)) {
         strataService.cases.comments.put(
-          CaseService.kase.case_number, 
-          CaseService.commentText, 
-          false, 
+          CaseService.kase.case_number,
+          CaseService.commentText,
+          false,
           CaseService.draftComment.id)
             .then(onSuccess, onError);
       } else {
         strataService.cases.comments.post(
-          CaseService.kase.case_number, 
+          CaseService.kase.case_number,
           CaseService.commentText)
             .then(onSuccess, onError);
       }
@@ -19608,31 +19732,31 @@ angular.module('RedhatAccess.cases')
         $scope.draftSaved = true;
 
         CaseService.draftComment = {
-          "text": CaseService.commentText,
-          "id": RHAUtils.isNotEmpty(commentId) ? commentId : draftComment.id,
-          "draft": true,
-          "case_number": CaseService.kase.case_number
+          'text': CaseService.commentText,
+          'id': RHAUtils.isNotEmpty(commentId) ? commentId : draftComment.id,
+          'draft': true,
+          'case_number': CaseService.kase.case_number
         };
       };
 
       var onFailure = function(error) {
         AlertService.addStrataErrorMessage(error);
         $scope.savingDraft = false;
-      }
+      };
 
       if (RHAUtils.isNotEmpty(CaseService.draftComment)) {
         //draft update
         strataService.cases.comments.put(
-          CaseService.kase.case_number, 
-          CaseService.commentText, 
-          true, 
+          CaseService.kase.case_number,
+          CaseService.commentText,
+          true,
           CaseService.draftComment.id)
             .then(onSuccess, onFailure);
       } else {
         //initial draft save
         strataService.cases.comments.post(
-          CaseService.kase.case_number, 
-          CaseService.commentText, 
+          CaseService.kase.case_number,
+          CaseService.commentText,
           true)
             .then(onSuccess, onFailure);
       }
@@ -19685,6 +19809,7 @@ angular.module('RedhatAccess.cases')
       $scope.fileSize = $scope.fileObj.size;
       $scope.fileName = $scope.fileObj.name;
       $scope.$apply();
+      $('#fileUploader')[0].value = '';
     };
 
     $scope.clearSelectedFile();
@@ -20147,7 +20272,7 @@ angular.module('RedhatAccess.cases')
         templateUrl: 'cases/views/createGroupModal.html',
         controller: 'CreateGroupModal'
       });
-    }
+    };
   }
 ]);
 
@@ -20189,13 +20314,13 @@ angular.module('RedhatAccess.cases')
 
     $scope.closeModal = function() {
       $modalInstance.close();
-    };   
+    };
 
     $scope.onGroupNameKeyPress = function($event) {
       if ($event.keyCode === 13) {
         angular.bind(this, $scope.createGroup)();
       }
-    }
+    };
   }
 ]);
 
@@ -20253,7 +20378,7 @@ angular.module('RedhatAccess.cases')
           AlertService.addStrataErrorMessage(error);
         }
       );
-    }
+    };
   }
 ]);
 
@@ -20350,29 +20475,29 @@ angular.module('RedhatAccess.cases')
       $scope.updatingDetails = true;
 
       var caseJSON = {};
-      if (CaseService.kase != null) {
-        if (CaseService.kase.type != null) {
+      if (CaseService.kase !== null) {
+        if (CaseService.kase.type !== null) {
           caseJSON.type = CaseService.kase.type.name;
         }
-        if (CaseService.kase.severity != null) {
+        if (CaseService.kase.severity !== null) {
           caseJSON.severity = CaseService.kase.severity.name;
         }
-        if (CaseService.kase.status != null) {
+        if (CaseService.kase.status !== null) {
           caseJSON.status = CaseService.kase.status.name;
         }
-        if (CaseService.kase.alternate_id != null) {
+        if (CaseService.kase.alternate_id !== null) {
           caseJSON.alternateId = CaseService.kase.alternate_id;
         }
-        if (CaseService.kase.product != null) {
+        if (CaseService.kase.product !== null) {
           caseJSON.product = CaseService.kase.product.name;
         }
-        if (CaseService.kase.version != null) {
+        if (CaseService.kase.version !== null) {
           caseJSON.version = CaseService.kase.version;
         }
-        if (CaseService.kase.summary != null) {
+        if (CaseService.kase.summary !== null) {
           caseJSON.summary = CaseService.kase.summary;
         }
-        if (CaseService.kase.group != null) {
+        if (CaseService.kase.group !== null) {
           caseJSON.folderNumber = CaseService.kase.group.number;
         }
         if (RHAUtils.isNotEmpty(CaseService.kase.fts)) {
@@ -20384,12 +20509,15 @@ angular.module('RedhatAccess.cases')
         if (CaseService.kase.fts && RHAUtils.isNotEmpty(CaseService.kase.contact_info24_x7)) {
           caseJSON.contactInfo24X7 = CaseService.kase.contact_info24_x7;
         }
+        if (CaseService.kase.notes !== null) {
+          caseJSON.notes = CaseService.kase.notes;
+        }
 
         strataService.cases.put(CaseService.kase.case_number, caseJSON).then(
             function() {
               $scope.caseDetails.$setPristine();
               $scope.updatingDetails = false;
-              if ($scope.$root.$$phase != '$apply' && $scope.$root.$$phase != '$digest') {
+              if ($scope.$root.$$phase !== '$apply' && $scope.$root.$$phase !== '$digest') {
                 $scope.$apply();
               }
             },
@@ -20723,7 +20851,7 @@ angular.module('RedhatAccess.cases')
 
           orderedData = params.sorting() ?
               $filter('orderBy')(orderedData, params.orderBy()) : orderedData;
-          
+
           orderedData.length < 1 ? $scope.listEmpty = true : $scope.listEmpty = false;
 
           var pageData = orderedData.slice(
@@ -20760,8 +20888,8 @@ angular.module('RedhatAccess.cases')
         } else {
           GroupService.groupsOnScreen[i].selected = false;
         }
-      };
-    }
+      }
+    };
 
     CaseService.clearCase();
   }
@@ -20842,7 +20970,7 @@ angular.module('RedhatAccess.cases')
         }, {
           total: SearchCaseService.cases.length,
           getData: function ($defer, params) {
-            if(!SearchCaseService.allCasesDownloaded && ((params.count() * params.page()) / SearchCaseService.total >= .8)){
+            if(!SearchCaseService.allCasesDownloaded && ((params.count() * params.page()) / SearchCaseService.total >= 0.8)){
               SearchCaseService.doFilter().then(
                 function () {
                   $scope.tableParams.reload();
@@ -20876,6 +21004,7 @@ angular.module('RedhatAccess.cases')
         CaseService.onSelectChanged =
         CaseService.onOwnerSelectChanged =
         CaseService.onGroupSelectChanged = function () {
+          SearchCaseService.clearPagination();
           SearchCaseService.doFilter().then(
             function () {
               if (!tableBuilt) {
@@ -20885,7 +21014,7 @@ angular.module('RedhatAccess.cases')
               }
             }
           );
-      };
+        };
 
       /**
        * Callback after user login. Load the cases and clear alerts
@@ -20901,6 +21030,7 @@ angular.module('RedhatAccess.cases')
       });
     }
   ]);
+
 'use strict';
 
 angular.module('RedhatAccess.cases')
@@ -20921,15 +21051,16 @@ angular.module('RedhatAccess.cases')
   'CaseService',
   'securityService',
   function (
-	  	$scope,
-	    CaseService,
-	    securityService) {
+      $scope,
+      CaseService,
+      securityService) {
 
-  	$scope.CaseService = CaseService;
-  	$scope.securityService = securityService;
+    $scope.CaseService = CaseService;
+    $scope.securityService = securityService;
   }
-    
+
 ]);
+
 'use strict';
  /*jshint camelcase: false */
 angular.module('RedhatAccess.cases')
@@ -21052,18 +21183,18 @@ angular.module('RedhatAccess.cases')
        */
       $scope.initSelects = function () {
         $scope.productsLoading = true;
-        strataService.products.list().then(
+        strataService.products.list(securityService.loginStatus.ssoName).then(
           function (products) {
             $scope.products = products;
             $scope.productsLoading = false;
 
             if (RHAUtils.isNotEmpty(NEW_DEFAULTS.product)) {
               CaseService.kase.product = {
-              name: NEW_DEFAULTS.product,
-              code: NEW_DEFAULTS.product
-            };
-            $scope.getRecommendations();
-            $scope.getProductVersions(CaseService.kase.product);
+                name: NEW_DEFAULTS.product,
+                code: NEW_DEFAULTS.product
+              };
+              $scope.getRecommendations();
+              $scope.getProductVersions(CaseService.kase.product);
             }
           },
           function (error) {
@@ -21076,7 +21207,7 @@ angular.module('RedhatAccess.cases')
           function (severities) {
             CaseService.severities = severities;
             CaseService.kase.severity = severities[severities.length - 1];
-          $scope.severitiesLoading = false;
+            $scope.severitiesLoading = false;
           },
           function (error) {
             AlertService.addStrataErrorMessage(error);
@@ -21091,7 +21222,7 @@ angular.module('RedhatAccess.cases')
             for (var i = 0; i < groups.length; i++) {
               if (groups[i].is_default) {
                 CaseService.kase.group = groups[i];
-              break;
+                break;
               }
             }
             $scope.groupsLoading = false;
@@ -21107,7 +21238,7 @@ angular.module('RedhatAccess.cases')
 
         var setDesc = function (desc) {
           CaseService.kase.description = desc;
-        $scope.getRecommendations();
+          $scope.getRecommendations();
         };
 
         if (searchObject.data) {
@@ -21145,10 +21276,10 @@ angular.module('RedhatAccess.cases')
        */
       $scope.getProductVersions = function (product) {
         CaseService.kase.version = '';
-      $scope.versionDisabled = true;
-      $scope.versionLoading = true;
+        $scope.versionDisabled = true;
+        $scope.versionLoading = true;
 
-      strataService.products.versions(product.code).then(
+        strataService.products.versions(product.code).then(
         function (response) {
           $scope.versions = response;
           CaseService.validateNewCasePage1();
@@ -21157,7 +21288,7 @@ angular.module('RedhatAccess.cases')
 
           if (RHAUtils.isNotEmpty(NEW_DEFAULTS.version)) {
             CaseService.kase.version = NEW_DEFAULTS.version;
-          $scope.getRecommendations();
+            $scope.getRecommendations();
           }
         },
         function (error) {
@@ -21196,9 +21327,9 @@ angular.module('RedhatAccess.cases')
        * Create the case with attachments
        */
       $scope.doSubmit = function ($event) {
-        if(window.portal){
+        if(window.chrometwo_require != null){
           chrometwo_require(['analytics/main'], function (analytics) {
-             analytics.trigger('OpenSupportCaseSubmit', $event);
+            analytics.trigger('OpenSupportCaseSubmit', $event);
           });
         }
 
@@ -21274,6 +21405,7 @@ angular.module('RedhatAccess.cases')
       $scope.gotoPage(1);
     }
   ]);
+
 'use strict';
 
 angular.module('RedhatAccess.cases')
@@ -21334,7 +21466,7 @@ angular.module('RedhatAccess.cases')
       function(error) {
         $scope.productsLoading = false;
         AlertService.addStrataErrorMessage(error);
-      })
+      });
   }
 ]);
 
@@ -21361,7 +21493,7 @@ angular.module('RedhatAccess.cases')
 
     $scope.selectRecommendationsPage = function(pageNum) {
       //filter out pinned recommendations
-      angular.forEach(RecommendationsService.pinnedRecommendations, 
+      angular.forEach(RecommendationsService.pinnedRecommendations,
           function(pinnedRec) {
             angular.forEach(RecommendationsService.recommendations,
               function(rec, index) {
@@ -21399,13 +21531,13 @@ angular.module('RedhatAccess.cases')
     $scope.pinRecommendation = function(recommendation, $index, $event) {
       $scope.currentRecPin = recommendation;
       $scope.currentRecPin.pinning = true;
-      
+
       var doPut = function(linked) {
         var recJSON = {
           recommendations: {
             recommendation: [
               {
-                linked: linked.toString(), 
+                linked: linked.toString(),
                 resourceId: recommendation.id,
                 resourceType: 'Solution'
               }
@@ -21435,13 +21567,13 @@ angular.module('RedhatAccess.cases')
               $scope.currentRecPin.pinning = false;
               $scope.currentRecPin.pinned = !$scope.currentRecPin.pinned;
               $scope.selectPageOne();
-            }, 
+            },
             function(error) {
               $scope.currentRecPin.pinning = false;
               AlertService.addStrataErrorMessage(error);
             }
         );
-      }
+      };
 
       recommendation.pinned ? doPut(false) : doPut(true);
     };
@@ -21452,12 +21584,12 @@ angular.module('RedhatAccess.cases')
     };
 
     $scope.triggerAnalytics = function($event) {
-      if(window.portal){
+      if(window.chrometwo_require != null){
         chrometwo_require(['analytics/main'], function (analytics) {
-          analytics.trigger('OpenSupportCaseRecommendationClick', $event);
+          analytics.trigger('CaseViewRecommendationClick', $event);
         });
       }
-    }
+    };
 
     RecommendationsService.setPopulateCallback($scope.selectPageOne);
   }
@@ -21571,7 +21703,7 @@ angular.module('RedhatAccess.cases')
       $scope.maxPagerSize = 5;
 
       $scope.selectPage = function (pageNum) {
-        if(!SearchCaseService.allCasesDownloaded && (($scope.itemsPerPage * pageNum) / SearchCaseService.total >= .8)){
+        if(!SearchCaseService.allCasesDownloaded && (($scope.itemsPerPage * pageNum) / SearchCaseService.total >= 0.8)){
           SearchCaseService.doFilter().then(
                 function () {
                   var start = $scope.itemsPerPage * (pageNum - 1);
@@ -21581,7 +21713,7 @@ angular.module('RedhatAccess.cases')
 
                   $scope.casesOnScreen =
                     SearchCaseService.cases.slice(start, end);
-            }
+                }
           );
         } else {
           var start = $scope.itemsPerPage * (pageNum - 1);
@@ -21598,12 +21730,13 @@ angular.module('RedhatAccess.cases')
         CaseService.onSelectChanged =
         CaseService.onOwnerSelectChanged =
         CaseService.onGroupSelectChanged = function () {
+          SearchCaseService.clearPagination();
           SearchCaseService.doFilter().then(
             function () {
               $scope.selectPage(1);
             }
           );
-      };
+        };
 
       if (securityService.loginStatus.isLoggedIn) {
         CaseService.clearCase();
@@ -21626,6 +21759,7 @@ angular.module('RedhatAccess.cases')
 
     }
   ]);
+
 'use strict';
 
 angular.module('RedhatAccess.cases')
@@ -21746,7 +21880,7 @@ angular.module('RedhatAccess.cases')
       function(error) {
         $scope.typesLoading = false;
         AlertService.addStrataErrorMessage(error);
-      })
+      });
   }
 ]);
 
@@ -22040,7 +22174,7 @@ angular.module('RedhatAccess.cases')
   return {
     restrict: 'A',
     link: function (scope, element, attrs) {
-      element.bind('change', element.scope()[attrs.rhaOnChange]);
+      element.bind('change', element.scope()[attrs.rhaOnchange]);
     }
   };
 });
@@ -22340,8 +22474,9 @@ angular.module('RedhatAccess.cases')
       };
 
       this.updateAttachments = function (caseId) {
-        var hasLocalAttachments = !angular.equals(this.originalAttachments, this.updatedAttachments);
-        var hasServerAttachments = this.hasBackEndSelections;
+        var hasServerAttachments = this.hasBackEndSelections();
+        var hasLocalAttachments = !angular.equals(this.updatedAttachments.length, 0);
+        
         if (hasLocalAttachments || hasServerAttachments) {
           var promises = [];
           var updatedAttachments = this.updatedAttachments;
@@ -22413,12 +22548,11 @@ angular.module('RedhatAccess.cases')
   .service('CaseService', [
     'strataService',
     'AlertService',
-    'ENTITLEMENTS',
     'RHAUtils',
     'securityService',
     '$q',
     '$filter',
-    function(strataService, AlertService, ENTITLEMENTS, RHAUtils, securityService, $q, $filter) {
+    function(strataService, AlertService, RHAUtils, securityService, $q, $filter) {
       this.
       kase = {};
       this.versions = [];
@@ -22620,20 +22754,16 @@ angular.module('RedhatAccess.cases')
             // to select it, regardless of the product.
             // TODO: strata should respond with a filtered list given a product.
             //       Adding the query param ?product=$PRODUCT does not work.
-            var premiumSupport = $filter('filter')(entitlementsResponse.entitlement, {'sla': ENTITLEMENTS.premium});
-            var standardSupport = $filter('filter')(entitlementsResponse.entitlement, {'sla': ENTITLEMENTS.standard});
+            var uniqueEntitlements = function(a) {
+              return a.reduce(function(p, c) {
+                if (p.indexOf(c.sla) < 0) p.push(c.sla);
+                return p;
+              }, []);
+            };
+            var entitlements = uniqueEntitlements(entitlementsResponse.entitlement);
 
-            var entitlements = [];
-            if (RHAUtils.isNotEmpty(premiumSupport)) {
-              entitlements.push(ENTITLEMENTS.premium);
-            }
-            if (RHAUtils.isNotEmpty(standardSupport)) {
-              entitlements.push(ENTITLEMENTS.standard);
-            }
-
-            if (entitlements.length === 0) {
-              entitlements.push(ENTITLEMENTS.defaults);
-            }
+            var unknownIndex = entitlements.indexOf("UNKNOWN");
+            if (unknownIndex > -1) entitlements.splice(unknownIndex, 1);
 
             this.entitlements = entitlements;
             this.entitlementsLoading = false;
@@ -22645,10 +22775,10 @@ angular.module('RedhatAccess.cases')
       };
 
       this.showFts = function() {
-        if (RHAUtils.isNotEmpty(this.severities) && angular.equals(this.kase.severity, this.severities[0])) {
-          if (this.entitlement === ENTITLEMENTS.premium ||
+        if (RHAUtils.isNotEmpty(this.severities)) {
+          if ((this.entitlement === "PREMIUM" || this.entitlement === "AMC") ||
               (RHAUtils.isNotEmpty(this.kase.entitlement) &&
-               this.kase.entitlement.sla === ENTITLEMENTS.premium)) {
+               (this.kase.entitlement.sla === "PREMIUM" || this.kase.entitlement.sla === "AMC"))) {
             return true;
           }
         }
@@ -22698,7 +22828,12 @@ angular.module('RedhatAccess.cases')
     this.handPickedRecommendations = [];
     this.populateCallback = function() {};
 
-    var currentData = {};
+    var currentData = {
+      product: null,
+      version: null,
+      summary: null,
+      description: null
+    };
     this.loadingRecommendations = false;
 
     var setCurrentData = function () {
@@ -22726,11 +22861,11 @@ angular.module('RedhatAccess.cases')
         //Push any pinned recommendations to the front of the array
         if (CaseService.kase.recommendations.recommendation) {
           var pinnedRecsPromises = [];
-          angular.forEach(CaseService.kase.recommendations.recommendation, 
+          angular.forEach(CaseService.kase.recommendations.recommendation,
               angular.bind(this, function(rec) {
                 if (rec.pinned_at) {
                   var promise =
-                    strataService.solutions.get(rec.solution_url).then(
+                    strataService.solutions.get(rec.resource_id).then(
                       angular.bind(this, function(solution) {
                         solution.pinned = true;
                         this.pinnedRecommendations.push(solution);
@@ -22741,8 +22876,8 @@ angular.module('RedhatAccess.cases')
                     );
                   promises.push(promise);
                 } else if (rec.linked){
-                  var promise = 
-                    strataService.solutions.get(rec.solution_url).then(
+                  var promise =
+                    strataService.solutions.get(rec.resource_id).then(
                       angular.bind(this, function(solution) {
                         //solution.pinned = true;
                         solution.handPicked = true;
@@ -22778,8 +22913,11 @@ angular.module('RedhatAccess.cases')
         description: CaseService.kase.description
       };
 
-      if ((!angular.equals(currentData, newData) && !this.loadingRecommendations) || 
-          (this.recommendations.length < 1 && this.failureCount < 10)) {
+      if ((newData.product !== undefined && newData.version !== undefined && 
+        newData.summary !== undefined && newData.description !== undefined) &&
+        ((!angular.equals(currentData, newData) && !this.loadingRecommendations) ||
+        (this.recommendations.length < 1 && this.failureCount < 10))) {
+
         this.loadingRecommendations = true;
         setCurrentData();
         var deferreds = [];
@@ -22788,7 +22926,8 @@ angular.module('RedhatAccess.cases')
             angular.bind(this, function(solutions) {
               //retrieve details for each solution
               solutions.forEach(function (solution) {
-                var deferred = strataService.solutions.get(solution.uri);
+                var splitUri = solution.uri.split('/');
+                var deferred = strataService.solutions.get(splitUri[splitUri.length - 1]);
                 deferreds.push(deferred);
               });
 
@@ -22896,6 +23035,13 @@ angular.module('RedhatAccess.cases')
         this.allCasesDownloaded = false;
       };
 
+      this.clearPagination = function() {
+        this.start = 0;
+        this.total = 0;
+        this.allCasesDownloaded = false;
+        this.cases = [];
+      };
+
       this.oldParams = {};
       this.doFilter = function () {
         if (angular.isFunction(this.prefilter)) {
@@ -22974,10 +23120,10 @@ angular.module('RedhatAccess.cases')
                   that.start = that.start + that.count;
                   that.total = that.total + that.count;
 
-                if (angular.isFunction(that.postFilter)) {
-                  that.postFilter();
-                }
-              }),
+                  if (angular.isFunction(that.postFilter)) {
+                    that.postFilter();
+                  }
+                }),
               angular.bind(that, function (error) {
                 AlertService.addStrataErrorMessage(error);
                 that.searching = false;
@@ -23021,71 +23167,76 @@ angular.module('RedhatAccess.cases')
       };
     }
   ]);
+
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
 .controller('AccordionDemoCtrl', [
-	'$scope', 
-	'accordian', 
-	function($scope, accordian) {
-		$scope.oneAtATime = true;
-		$scope.groups = accordian.getGroups();
-}]);
+  '$scope',
+  'accordian',
+  function($scope, accordian) {
+    $scope.oneAtATime = true;
+    $scope.groups = accordian.getGroups();
+  }
+]);
+
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
 .controller('DropdownCtrl', [
-	'$scope', 
-	'$http', 
-	'$location', 
-	'files', 
-	'hideMachinesDropdown',
-	'AlertService', 
-	function($scope, $http, $location, files, hideMachinesDropdown, AlertService) {
-		$scope.machinesDropdownText = "Please Select the Machine";
-		$scope.items = [];
-		$scope.hideDropdown = hideMachinesDropdown.value;
-		$scope.loading = false;
-		var sessionId = $location.search().sessionId;
+  '$scope',
+  '$http',
+  '$location',
+  'files',
+  'hideMachinesDropdown',
+  'AlertService',
+  function($scope, $http, $location, files, hideMachinesDropdown, AlertService) {
+    $scope.machinesDropdownText = 'Please Select the Machine';
+    $scope.items = [];
+    $scope.hideDropdown = hideMachinesDropdown.value;
+    $scope.loading = false;
+    var sessionId = $location.search().sessionId;
 
-		$scope.getMachines = function() {
-			$http({
-				method : 'GET',
-				url : 'machines?sessionId=' + encodeURIComponent(sessionId)
-			}).success(function(data, status, headers, config) {
-				$scope.items = data;
-			}).error(function(data, status, headers, config) {
-				AlertService.addDangerMessage(data);
-			});
-		};
-		$scope.machineSelected = function() {
-			$scope.loading = true;
-			var sessionId = $location.search().sessionId;
-			var userId = $location.search().userId;
-			files.selectedHost = this.choice;
-			$scope.machinesDropdownText = this.choice;
-			$http(
-			{
-				method : 'GET',
-				url : 'logs?machine=' + files.selectedHost
-				+ '&sessionId=' + encodeURIComponent(sessionId)
-				+ '&userId=' + encodeURIComponent(userId)
-			}).success(function(data, status, headers, config) {
-				$scope.loading = false;
-				var tree = new Array();
-				parseList(tree, data);
-				files.setFileList(tree);
-			}).error(function(data, status, headers, config) {
-				$scope.loading = false;
-				AlertService.addDangerMessage(data);
-			});
-		};
-		if($scope.hideDropdown){
-			$scope.machineSelected();
-		} else{
-			$scope.getMachines();
-		}
-}]);
+    $scope.getMachines = function() {
+      $http({
+        method : 'GET',
+        url : 'machines?sessionId=' + encodeURIComponent(sessionId)
+      }).success(function(data, status, headers, config) {
+        $scope.items = data;
+      }).error(function(data, status, headers, config) {
+        AlertService.addDangerMessage(data);
+      });
+    };
+    $scope.machineSelected = function() {
+      $scope.loading = true;
+      var sessionId = $location.search().sessionId;
+      var userId = $location.search().userId;
+      files.selectedHost = this.choice;
+      $scope.machinesDropdownText = this.choice;
+      $http(
+      {
+        method : 'GET',
+        url : 'logs?machine=' + files.selectedHost +
+        '&sessionId=' + encodeURIComponent(sessionId) +
+        '&userId=' + encodeURIComponent(userId)
+      }).success(function(data, status, headers, config) {
+        $scope.loading = false;
+        var tree = [];
+        parseList(tree, data);
+        files.setFileList(tree);
+      }).error(function(data, status, headers, config) {
+        $scope.loading = false;
+        AlertService.addDangerMessage(data);
+      });
+    };
+    if($scope.hideDropdown){
+      $scope.machineSelected();
+    } else{
+      $scope.getMachines();
+    }
+  }
+]);
+
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
@@ -23106,21 +23257,21 @@ angular.module('RedhatAccess.logViewer')
 		$scope.$watch(function() {
 			return files.getFileClicked().check;
 		}, function() {
-			if(files.getFileClicked().check && files.selectedFile != null){
-				var tab = new Object();
-				if(files.selectedHost != null){
-					tab.longTitle = files.selectedHost + ":"
+			if(files.getFileClicked().check && files.selectedFile !== null){
+				var tab = {};
+				if(files.selectedHost !== null){
+					tab.longTitle = files.selectedHost + ':';
 				} else {
-					tab.longTitle = new String();
+					tab.longTitle = '';
 				}
 				tab.longTitle = tab.longTitle.concat(files.selectedFile);
-				var splitFileName = files.selectedFile.split("/");
+				var splitFileName = files.selectedFile.split('/');
 				var fileName = splitFileName[splitFileName.length - 1];
-				
-				if(files.selectedHost != null){
-					tab.shortTitle = files.selectedHost + ":"
+
+				if(files.selectedHost !== null){
+					tab.shortTitle = files.selectedHost + ':';
 				} else {
-					tab.shortTitle = new String();
+					tab.shortTitle = '';
 				}
 				tab.shortTitle = tab.shortTitle.concat(fileName);
 				tab.active = true;
@@ -23133,7 +23284,7 @@ angular.module('RedhatAccess.logViewer')
 		$scope.$watch(function() {
 			return files.file;
 		}, function() {
-			if (files.file != null && files.activeTab  != null) {
+			if (files.file && files.activeTab) {
 				files.activeTab.content = files.file;
 				$scope.isLoading = false;
 				files.file = null;
@@ -23142,9 +23293,9 @@ angular.module('RedhatAccess.logViewer')
 		$scope.$watch(function() {
 			return SearchResultsService.searchInProgress.value;
 		}, function() {
-			if (SearchResultsService.searchInProgress.value == true) {
+			if (SearchResultsService.searchInProgress.value === true) {
 				$scope.$parent.isDisabled = true;
-			} else if(SearchResultsService.searchInProgress.value == false && $scope.$parent.textSelected == true){
+			} else if(SearchResultsService.searchInProgress.value === false && $scope.$parent.textSelected === true){
 				$scope.$parent.isDisabled = false;
 			}
 		});
@@ -23169,8 +23320,8 @@ angular.module('RedhatAccess.logViewer')
 				if (!$scope.$parent.solutionsToggle) {
 					$scope.$parent.solutionsToggle = !$scope.$parent.solutionsToggle;
 				}
-				
-				if (text != "") {
+
+				if (text !== '') {
 					$scope.checked = !$scope.checked;
 					SearchResultsService.diagnose(text, 5);
 				}
@@ -23193,18 +23344,18 @@ angular.module('RedhatAccess.logViewer')
 			var userId = $location.search().userId;
 			var fileNameForRefresh = this.$parent.tab.longTitle;
 			var hostForRefresh = null;
-			var splitNameForRefresh = fileNameForRefresh.split(":");
+			var splitNameForRefresh = fileNameForRefresh.split(':');
 			if(splitNameForRefresh[0] && splitNameForRefresh[1]){
 				hostForRefresh = splitNameForRefresh[0];
 				fileNameForRefresh = splitNameForRefresh[1];
 				$http(
 				{
 					method : 'GET',
-					url : 'logs?sessionId='
-					+ encodeURIComponent(sessionId) + '&userId='
-					+ encodeURIComponent(userId) + '&path='
-					+ fileNameForRefresh+ '&machine='
-					+ hostForRefresh
+					url : 'logs?sessionId=' +
+					encodeURIComponent(sessionId) + '&userId=' +
+					encodeURIComponent(userId) + '&path=' +
+					fileNameForRefresh+ '&machine=' +
+					hostForRefresh
 				}).success(function(data, status, headers, config) {
 					$scope.tabs[index].content = data;
 				}).error(function(data, status, headers, config) {
@@ -23213,146 +23364,153 @@ angular.module('RedhatAccess.logViewer')
 			}
 		};
 }]);
+
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
 .controller('fileController', [
-	'$scope', 
-	'files', 
-	function($scope, files) {
-		$scope.roleList = '';
+  '$scope',
+  'files',
+  function($scope, files) {
+    $scope.roleList = '';
 
-		$scope.$watch(function() {
-			return $scope.mytree.currentNode;
-		}, function() {
-			if ($scope.mytree.currentNode != null
-				&& $scope.mytree.currentNode.fullPath != null) {
-				files.setSelectedFile($scope.mytree.currentNode.fullPath);
-				files.setRetrieveFileButtonIsDisabled(false);
-			} else {
-				files.setRetrieveFileButtonIsDisabled(true);
-			}
-		});
-		$scope.$watch(function() {
-			return files.fileList;
-		}, function() {
-			$scope.roleList = files.fileList;
-		});
+    $scope.$watch(function() {
+      return $scope.mytree.currentNode;
+    }, function() {
+      if ($scope.mytree.currentNode != null
+        && $scope.mytree.currentNode.fullPath != null) {
+        files.setSelectedFile($scope.mytree.currentNode.fullPath);
+        files.setRetrieveFileButtonIsDisabled(false);
+      } else {
+        files.setRetrieveFileButtonIsDisabled(true);
+      }
+    });
+    $scope.$watch(function() {
+      return files.fileList;
+    }, function() {
+      $scope.roleList = files.fileList;
+    });
 }]);
+
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
 .controller('logViewerController', [
-	'$scope', 
-	'SearchResultsService', 
-	function($scope, SearchResultsService) {
-		$scope.isDisabled = true;
-		$scope.textSelected = false;
-		$scope.enableDiagnoseButton = function(){
-			//Gotta wait for text to "unselect"
-			$scope.sleep(1, $scope.checkTextSelection);
-		};
-		$scope.checkTextSelection = function(){
-			if(strata.utils.getSelectedText()){
-				$scope.textSelected = true;
-				if(SearchResultsService.searchInProgress.value){
-					$scope.isDisabled = true;
-				} else {
-					$scope.isDisabled = false;
-				}
-			} else{
-				$scope.textSelected = false;
-				$scope.isDisabled = true;
-			}
-			$scope.$apply();
-		};
+  '$scope',
+  'SearchResultsService',
+  function($scope, SearchResultsService) {
+    $scope.isDisabled = true;
+    $scope.textSelected = false;
+    $scope.enableDiagnoseButton = function(){
+      //Gotta wait for text to "unselect"
+      $scope.sleep(1, $scope.checkTextSelection);
+    };
+    $scope.checkTextSelection = function(){
+      if(strata.utils.getSelectedText()){
+        $scope.textSelected = true;
+        if(SearchResultsService.searchInProgress.value){
+          $scope.isDisabled = true;
+        } else {
+          $scope.isDisabled = false;
+        }
+      } else{
+        $scope.textSelected = false;
+        $scope.isDisabled = true;
+      }
+      $scope.$apply();
+    };
 
-		$scope.sleep = function(millis, callback) {
-			setTimeout(function()
-        		{ callback(); }
-			, millis);
-		};
+    $scope.sleep = function(millis, callback) {
+      setTimeout(function(){
+        callback();
+      }, millis);
+    };
 }]);
+
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
 .controller('selectFileButton', [
-	'$scope', 
-	'$rootScope',
-	'$http', 
-	'$location',
-	'files', 
-	'AlertService', 
-	'LOGVIEWER_EVENTS',
-	function($scope,$rootScope, $http, $location,
-	files, AlertService, LOGVIEWER_EVENTS) {
-		$scope.retrieveFileButtonIsDisabled = files.getRetrieveFileButtonIsDisabled();
+  '$scope',
+  '$rootScope',
+  '$http',
+  '$location',
+  'files',
+  'AlertService',
+  'LOGVIEWER_EVENTS',
+  function($scope,$rootScope, $http, $location,
+  files, AlertService, LOGVIEWER_EVENTS) {
+    $scope.retrieveFileButtonIsDisabled = files.getRetrieveFileButtonIsDisabled();
 
-		$scope.fileSelected = function() {
-			files.setFileClicked(true);
-			var sessionId = $location.search().sessionId;
-			var userId = $location.search().userId;
-			$scope.$parent.$parent.sidePaneToggle = !$scope.$parent.$parent.sidePaneToggle;
-			$http(
-			{
-				method : 'GET',
-				url : 'logs?sessionId='
-				+ encodeURIComponent(sessionId) + '&userId='
-				+ encodeURIComponent(userId) + '&path='
-				+ files.selectedFile + '&machine='
-				+ files.selectedHost
-			}).success(function(data, status, headers, config) {
-				files.file = data;
-			}).error(function(data, status, headers, config) {
-				AlertService.addDangerMessage(data);
-			});
-		};
+    $scope.fileSelected = function() {
+      files.setFileClicked(true);
+      var sessionId = $location.search().sessionId;
+      var userId = $location.search().userId;
+      $scope.$parent.$parent.sidePaneToggle = !$scope.$parent.$parent.sidePaneToggle;
+      $http(
+      {
+        method : 'GET',
+        url : 'logs?sessionId=' +
+          encodeURIComponent(sessionId) + '&userId=' +
+          encodeURIComponent(userId) + '&path=' +
+          files.selectedFile + '&machine=' +
+          files.selectedHost
+      }).success(function(data, status, headers, config) {
+        files.file = data;
+      }).error(function(data, status, headers, config) {
+        AlertService.addDangerMessage(data);
+      });
+    };
 
-		$rootScope.$on(LOGVIEWER_EVENTS.allTabsClosed, function() {
-             $scope.$parent.$parent.sidePaneToggle = !$scope.$parent.$parent.sidePaneToggle;
-        });
-}]);
+    $rootScope.$on(LOGVIEWER_EVENTS.allTabsClosed, function() {
+      $scope.$parent.$parent.sidePaneToggle = !$scope.$parent.$parent.sidePaneToggle;
+    });
+  }
+]);
+
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
 .directive('rhaFilldown', [
-	'$window', 
-	'$timeout', 
-	function($window, $timeout) {
-		return {
-			restrict: 'A',
-			link: function postLink(scope, element, attrs) {
-				scope.onResizeFunction = function() {
-					var distanceToTop = element[0].getBoundingClientRect().top;
-					var height = $window.innerHeight - distanceToTop - 21;
-					if(element[0].id == 'fileList'){
-						height -= 34;
-					}
-					return scope.windowHeight = height;
-				};
-	      // This might be overkill?? 
-	      //scope.onResizeFunction();
-	      angular.element($window).bind('resize', function() {
-	      	scope.onResizeFunction();
-	      	scope.$apply();
-	      });
-	      angular.element($window).bind('click', function() {
-	      	scope.onResizeFunction();
-	      	scope.$apply();
-	      });
-	      $timeout(scope.onResizeFunction, 100);
-	      // $(window).load(function(){
-	      // 	scope.onResizeFunction();
-	      // 	scope.$apply();
-	      // });
-	      // scope.$on('$viewContentLoaded', function() {
-	      // 	scope.onResizeFunction();
-	      // 	//scope.$apply();
-	      // });
-	  }
-	}
-}
+  '$window',
+  '$timeout',
+  function($window, $timeout) {
+    return {
+      restrict: 'A',
+      link: function postLink(scope, element) {
+        scope.onResizeFunction = function() {
+          var distanceToTop = element[0].getBoundingClientRect().top;
+          var height = $window.innerHeight - distanceToTop - 21;
+          if(element[0].id === 'fileList'){
+            height -= 34;
+          }
+          scope.windowHeight = height;
+          return scope.windowHeight;
+        };
+        // This might be overkill??
+        //scope.onResizeFunction();
+        angular.element($window).bind('resize', function() {
+          scope.onResizeFunction();
+          scope.$apply();
+        });
+        angular.element($window).bind('click', function() {
+          scope.onResizeFunction();
+          scope.$apply();
+        });
+        $timeout(scope.onResizeFunction, 100);
+        // $(window).load(function(){
+        //  scope.onResizeFunction();
+        //  scope.$apply();
+        // });
+        // scope.$on('$viewContentLoaded', function() {
+        //  scope.onResizeFunction();
+        //  //scope.$apply();
+        // });
+      }
+    };
+  }
 ]);
+
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
@@ -23397,11 +23555,12 @@ angular.module('RedhatAccess.logViewer')
     }
   };
 });
+
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
 .service('accordian', function() {
-	var groups = new Array();
+	var groups = [];
 	return {
 		getGroups : function() {
 			return groups;
@@ -23414,13 +23573,13 @@ angular.module('RedhatAccess.logViewer')
 		}
 	};
 });
+
 'use strict';
 
 angular.module('RedhatAccess.logViewer')
 .factory('files', function() {
 	var fileList = '';
 	var selectedFile = '';
-	var selectedHost = '';
 	var file = '';
 	var retrieveFileButtonIsDisabled = {check : true};
 	var fileClicked = {check : false};
@@ -23446,7 +23605,7 @@ angular.module('RedhatAccess.logViewer')
 
 		setFile : function(file) {
 			this.file = file;
-		}, 
+		},
 
 		setRetrieveFileButtonIsDisabled : function(isDisabled){
 			retrieveFileButtonIsDisabled.check = isDisabled;
@@ -23471,7 +23630,8 @@ angular.module('RedhatAccess.logViewer')
 		}
 	};
 });
-angular.module('RedhatAccess.template', ['common/views/alert.html', 'common/views/header.html', 'common/views/title.html', 'common/views/treenode.html', 'common/views/treeview-selector.html', 'security/login_form.html', 'security/login_status.html', 'search/views/accordion_search.html', 'search/views/accordion_search_results.html', 'search/views/list_search_results.html', 'search/views/resultDetail.html', 'search/views/search.html', 'search/views/search_form.html', 'search/views/standard_search.html', 'cases/views/accountSelect.html', 'cases/views/addCommentSection.html', 'cases/views/attachLocalFile.html', 'cases/views/attachProductLogs.html', 'cases/views/attachmentsSection.html', 'cases/views/chatButton.html', 'cases/views/commentsSection.html', 'cases/views/compact.html', 'cases/views/compactCaseList.html', 'cases/views/compactEdit.html', 'cases/views/createGroupButton.html', 'cases/views/createGroupModal.html', 'cases/views/deleteGroupButton.html', 'cases/views/descriptionSection.html', 'cases/views/detailsSection.html', 'cases/views/edit.html', 'cases/views/emailNotifySelect.html', 'cases/views/entitlementSelect.html', 'cases/views/exportCSVButton.html', 'cases/views/group.html', 'cases/views/groupList.html', 'cases/views/groupSelect.html', 'cases/views/list.html', 'cases/views/listAttachments.html', 'cases/views/listBugzillas.html', 'cases/views/listFilter.html', 'cases/views/listNewAttachments.html', 'cases/views/new.html', 'cases/views/ownerSelect.html', 'cases/views/productSelect.html', 'cases/views/recommendationsSection.html', 'cases/views/requestManagementEscalationModal.html', 'cases/views/search.html', 'cases/views/searchBox.html', 'cases/views/searchResult.html', 'cases/views/selectLoadingIndicator.html', 'cases/views/severitySelect.html', 'cases/views/statusSelect.html', 'cases/views/typeSelect.html', 'log_viewer/views/logTabs.html', 'log_viewer/views/log_viewer.html', 'log_viewer/views/logsInstructionPane.html', 'log_viewer/views/navSideBar.html', 'log_viewer/views/recommendations.html']);
+
+angular.module('RedhatAccess.template', ['common/views/alert.html', 'common/views/header.html', 'common/views/title.html', 'common/views/treenode.html', 'common/views/treeview-selector.html', 'security/views/login_form.html', 'security/views/login_status.html', 'search/views/accordion_search.html', 'search/views/accordion_search_results.html', 'search/views/list_search_results.html', 'search/views/resultDetail.html', 'search/views/search.html', 'search/views/search_form.html', 'search/views/standard_search.html', 'cases/views/accountSelect.html', 'cases/views/addCommentSection.html', 'cases/views/attachLocalFile.html', 'cases/views/attachProductLogs.html', 'cases/views/attachmentsSection.html', 'cases/views/chatButton.html', 'cases/views/commentsSection.html', 'cases/views/compact.html', 'cases/views/compactCaseList.html', 'cases/views/compactEdit.html', 'cases/views/createGroupButton.html', 'cases/views/createGroupModal.html', 'cases/views/deleteGroupButton.html', 'cases/views/descriptionSection.html', 'cases/views/detailsSection.html', 'cases/views/edit.html', 'cases/views/emailNotifySelect.html', 'cases/views/entitlementSelect.html', 'cases/views/exportCSVButton.html', 'cases/views/group.html', 'cases/views/groupList.html', 'cases/views/groupSelect.html', 'cases/views/list.html', 'cases/views/listAttachments.html', 'cases/views/listBugzillas.html', 'cases/views/listFilter.html', 'cases/views/listNewAttachments.html', 'cases/views/new.html', 'cases/views/ownerSelect.html', 'cases/views/productSelect.html', 'cases/views/recommendationsSection.html', 'cases/views/requestManagementEscalationModal.html', 'cases/views/search.html', 'cases/views/searchBox.html', 'cases/views/searchResult.html', 'cases/views/selectLoadingIndicator.html', 'cases/views/severitySelect.html', 'cases/views/statusSelect.html', 'cases/views/typeSelect.html', 'log_viewer/views/logTabs.html', 'log_viewer/views/log_viewer.html', 'log_viewer/views/logsInstructionPane.html', 'log_viewer/views/navSideBar.html', 'log_viewer/views/recommendations.html']);
 
 angular.module("common/views/alert.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("common/views/alert.html",
@@ -23543,8 +23703,8 @@ angular.module("common/views/treeview-selector.html", []).run(["$templateCache",
     "</div>");
 }]);
 
-angular.module("security/login_form.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("security/login_form.html",
+angular.module("security/views/login_form.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("security/views/login_form.html",
     "<div class=\"modal-header\" id=\"rha-login-modal-header\">\n" +
     "    <h3 translate>\n" +
     "        Sign into the Red Hat Customer Portal\n" +
@@ -23590,8 +23750,8 @@ angular.module("security/login_form.html", []).run(["$templateCache", function($
     "</div>");
 }]);
 
-angular.module("security/login_status.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("security/login_status.html",
+angular.module("security/views/login_status.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("security/views/login_status.html",
     "<div ng-controller = 'SecurityController' ng-show=\"displayLoginStatus()\">\n" +
     "<span ng-show=\"securityService.loginStatus.isLoggedIn\" class=\"pull-right rha-logged-in\"> {{'Logged into the Red Hat Customer Portal as'|translate}} {{securityService.loginStatus.loggedInUser}} &nbsp;|&nbsp;\n" +
     "    <span ng-if=\"securityService.logoutURL.length === 0\">\n" +
@@ -23646,15 +23806,15 @@ angular.module("search/views/accordion_search_results.html", []).run(["$template
     "</div>\n" +
     "<div class=\"\">\n" +
     "    <!--div class=\"col-xs-12\" style=\"overflow: auto;\" rha-resizable rha-dom-ready=\"domReady\"-->\n" +
-    "        <accordion>\n" +
-    "            <accordion-group is-open=\"isopen\" ng-click=\"triggerAnalytics($event)\" ng-repeat=\"result in results\">\n" +
-    "                <accordion-heading>\n" +
+    "        <div accordion=''>\n" +
+    "            <div accordion-group='' is-open=\"isopen\" ng-click=\"triggerAnalytics($event)\" ng-repeat=\"result in results\">\n" +
+    "                <div accordion-heading=''>\n" +
     "                    <span class=\"pull-left glyphicon\" ng-class=\"{'glyphicon-chevron-down': isopen, 'glyphicon-chevron-right': !isopen}\"></span>\n" +
-    "                    <span>&nbsp{{result.title}}</span>\n" +
-    "                </accordion-heading>\n" +
+    "                    <span class=\"result-title\">&nbsp{{result.title}}</span>\n" +
+    "                </div>\n" +
     "                <div rha-resultdetaildisplay result='result' />\n" +
-    "            </accordion-group>\n" +
-    "        </accordion>\n" +
+    "            </div>\n" +
+    "        </div>\n" +
     "    <!--/div-->\n" +
     "</div>\n" +
     "");
@@ -23751,17 +23911,17 @@ angular.module("search/views/standard_search.html", []).run(["$templateCache", f
 
 angular.module("cases/views/accountSelect.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/accountSelect.html",
-    "<div style=\"display: inline-block; padding-right: 10px;\"><input style=\"width: 100%\" ng-model=\"CaseService.account.number\" ng-blur=\"populateAccountSpecificFields()\" class=\"form-control\"/></div><div style=\"display: inline-block;\"><button ng-click=\"selectUserAccount()\" ng-hide=\"loadingAccountNumber\" translate=\"\" class=\"btn btn-secondary\">My Account</button><span ng-show=\"loadingAccountNumber\" class=\"rha-search-spinner\">&nbsp;</span></div>");
+    "<div style=\"display: inline-block; padding-right: 10px;\"><input id=\"rha-account-number\" style=\"width: 100%\" ng-model=\"CaseService.account.number\" ng-blur=\"populateAccountSpecificFields()\" class=\"form-control\"/></div><div style=\"display: inline-block;\"><button ng-click=\"selectUserAccount()\" ng-hide=\"loadingAccountNumber\" translate=\"\" class=\"btn btn-secondary\">My Account</button><span ng-show=\"loadingAccountNumber\" class=\"rha-search-spinner\">&nbsp;</span></div>");
 }]);
 
 angular.module("cases/views/addCommentSection.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/addCommentSection.html",
-    "<div style=\"margin-left: 60px; margin-right: 60px;\"><div style=\"margin-bottom: 10px;\" class=\"well\"><textarea ng-disabled=\"addingComment\" rows=\"5\" ng-model=\"CaseService.commentText\" style=\"max-width: 100%\" ng-keypress=\"onNewCommentKeypress()\" class=\"form-control\"></textarea><div style=\"padding-top: 10px;\"><span class=\"hidden\">{{'You have used 0% of the 32KB maximum description size.'|translate}}</span><span ng-show=\"savingDraft\" class=\"pull-right rha-bold\">{{'Saving draft...'|translate}}</span><span ng-show=\"draftSaved\" class=\"pull-right rha-bold\">{{'Draft saved'|translate}}</span></div></div><div style=\"float: right;\"><span ng-show=\"addingComment\" class=\"rha-search-spinner\"></span><button ng-hide=\"addingComment\" ng-disabled=\"false\" ng-click=\"addComment()\" style=\"float: right;\" translate=\"\" class=\"btn btn-primary\">Add Comment</button></div></div>");
+    "<div style=\"margin-left: 60px; margin-right: 60px;\"><div style=\"margin-bottom: 10px;\" class=\"well\"><textarea id=\"case-comment-box\" ng-disabled=\"addingComment\" rows=\"5\" ng-model=\"CaseService.commentText\" style=\"max-width: 100%\" ng-keypress=\"onNewCommentKeypress()\" class=\"form-control\"></textarea><div style=\"padding-top: 10px;\"><span class=\"hidden\">{{'You have used 0% of the 32KB maximum description size.'|translate}}</span><span ng-show=\"savingDraft\" class=\"pull-right rha-bold\">{{'Saving draft...'|translate}}</span><span ng-show=\"draftSaved\" class=\"pull-right rha-bold\">{{'Draft saved'|translate}}</span></div></div><div style=\"float: right;\"><span ng-show=\"addingComment\" class=\"rha-search-spinner\"></span><button ng-hide=\"addingComment\" ng-disabled=\"false\" ng-click=\"addComment()\" style=\"float: right;\" translate=\"\" class=\"btn btn-primary\">Add Comment</button></div></div>");
 }]);
 
 angular.module("cases/views/attachLocalFile.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/attachLocalFile.html",
-    "<div class=\"container-fluid\"><div class=\"row rha-create-field\"><div class=\"col-xs-6\"><button style=\"float: left;\" ng-click=\"getFile()\" ng-disabled=\"disabled\" translate=\"\" class=\"btn\">Attach local file</button><div style=\"height: 0px; width:0px; overflow:hidden;\"><input id=\"fileUploader\" type=\"file\" value=\"upload\" rha-on-change=\"selectFile\" ng-model=\"file\" ng-disabled=\"disabled\"/></div></div><div class=\"col-xs-6\"><div style=\"float: left; word-wrap: break-word; width: 100%;\">{{fileName}}</div></div></div><div class=\"row rha-create-field\"><div style=\"font-size: 80%;\" class=\"col-xs-12\"><span>{{'File names must be less than 80 characters. Maximum file size for web-uploaded attachments is 250 MB. Please FTP larger files to dropbox.redhat.com.'|translate}}&nbsp;</span><span><a href=\"https://access.devgssci.devlab.phx1.redhat.com/knowledge/solutions/2112\">(More info)</a></span></div></div><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><input style=\"float: left;\" placeholder=\"File description\" ng-model=\"fileDescription\" ng-disabled=\"disabled\" class=\"form-control\"/></div></div><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><button ng-disabled=\"fileName == NO_FILE_CHOSEN || disabled\" style=\"float: right;\" ng-click=\"addFile(fileUploaderForm)\" translate=\"\" class=\"btn\">Add</button></div></div></div>");
+    "<div class=\"container-fluid\"><div class=\"row rha-create-field\"><div class=\"col-xs-6\"><button style=\"float: left;\" ng-click=\"getFile()\" ng-disabled=\"disabled\" translate=\"\" class=\"btn btn-attach\">Attach local file</button><div style=\"height: 0px; width:0px; overflow:hidden;\"><input id=\"fileUploader\" type=\"file\" value=\"upload\" rha-onchange=\"selectFile\" ng-model=\"file\" ng-disabled=\"disabled\"/></div></div><div class=\"col-xs-6\"><div style=\"float: left; word-wrap: break-word; width: 100%;\">{{fileName}}</div></div></div><div class=\"row rha-create-field\"><div style=\"font-size: 80%;\" class=\"col-xs-12\"><span>{{'File names must be less than 80 characters. Maximum file size for web-uploaded attachments is 250 MB. Please FTP larger files to dropbox.redhat.com.'|translate}}&nbsp;</span><span><a href=\"https://access.devgssci.devlab.phx1.redhat.com/knowledge/solutions/2112\" target=\"_blank\">(More info)</a></span></div></div><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><input style=\"float: left;\" placeholder=\"File description\" ng-model=\"fileDescription\" ng-disabled=\"disabled\" class=\"form-control\"/></div></div><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><button ng-disabled=\"fileName == NO_FILE_CHOSEN || disabled\" style=\"float: right;\" ng-click=\"addFile(fileUploaderForm)\" translate=\"\" class=\"btn btn-add\">Add</button></div></div></div>");
 }]);
 
 angular.module("cases/views/attachProductLogs.html", []).run(["$templateCache", function($templateCache) {
@@ -23771,7 +23931,7 @@ angular.module("cases/views/attachProductLogs.html", []).run(["$templateCache", 
 
 angular.module("cases/views/attachmentsSection.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/attachmentsSection.html",
-    "<h4 translate=\"\" class=\"rha-section-header\">Attachments</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid rha-side-padding\"><div class=\"row rha-side-padding\"><div class=\"col-xs-12 rha-col-no-padding\"><div rha-listattachments=\"\"></div></div></div><div style=\"border-top: 1px solid #cccccc; padding-top: 10px; margin: 0;\" class=\"row\"></div><div ng-hide=\"AttachmentsService.updatedAttachments.length &lt;= 0 &amp;&amp; TreeViewSelectorUtils.getSelectedLeaves(AttachmentsService.backendAttachments).length &lt;= 0\"><div class=\"row rha-side-padding\"><div class=\"col-xs-12 rha-col-no-padding\"><div rha-listnewattachments=\"rha-listnewattachments\"></div></div></div><div class=\"row rha-side-padding\"><div style=\"padding-bottom: 14px;\" class=\"col-xs-12 rha-col-no-padding\"><div style=\"float: right\"><span ng-show=\"updatingAttachments\" class=\"rha-search-spinner\"></span><button ng-hide=\"updatingAttachments\" ng-click=\"doUpdate()\" translate=\"\" class=\"btn btn-primary\">Upload Attachments</button></div></div></div><div style=\"border-top: 1px solid #cccccc; padding-top: 10px; margin: 0;\" class=\"row\"></div></div><div class=\"row\"><div class=\"col-xs-12\"><div rha-attachlocalfile=\"\"></div></div></div><div ng-show=\"showServerSideAttachments\"><div class=\"row\"><div class=\"col-xs-12\"><div class=\"server-attach-header\">{{'Server File(s) To Attach:'|translate}}</div><div rha-choicetree=\"\" ng-model=\"attachmentTree\" ng-controller=\"BackEndAttachmentsCtrl\" rhaDisabled=\"rhaDisabled\"></div></div></div></div></div>");
+    "<h4 translate=\"\" class=\"rha-section-header\">Attachments</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid rha-side-padding\"><div class=\"row rha-side-padding\"><div class=\"col-xs-12 rha-col-no-padding\"><div rha-listattachments=\"\"></div></div></div><div style=\"border-top: 1px solid #cccccc; padding-top: 10px; margin: 0;\" class=\"row\"></div><div ng-hide=\"AttachmentsService.updatedAttachments.length &lt;= 0 &amp;&amp; TreeViewSelectorUtils.getSelectedLeaves(AttachmentsService.backendAttachments).length &lt;= 0\"><div class=\"row rha-side-padding\"><div class=\"col-xs-12 rha-col-no-padding\"><div rha-listnewattachments=\"rha-listnewattachments\"></div></div></div><div class=\"row rha-side-padding\"><div style=\"padding-bottom: 14px;\" class=\"col-xs-12 rha-col-no-padding\"><div style=\"float: right\"><span ng-show=\"updatingAttachments\" class=\"rha-search-spinner\"></span><button ng-hide=\"updatingAttachments\" ng-click=\"doUpdate()\" translate=\"\" class=\"btn btn-primary\">Upload Attachments</button></div></div></div><div style=\"border-top: 1px solid #cccccc; padding-top: 10px; margin: 0;\" class=\"row\"></div></div><div class=\"row\"><div class=\"col-xs-12\"><div rha-attachlocalfile=\"\"></div></div></div><div ng-show=\"showServerSideAttachments\"><div class=\"row\"><div class=\"col-xs-12\"><div class=\"server-attach-header\">{{'Server File(s) To Attach:'|translate}}</div><div rha-choicetree=\"\" ng-model=\"attachmentTree\" ng-controller=\"BackEndAttachmentsCtrl\" rhaDisabled=\"rhaDisabled\">     </div></div></div></div></div>");
 }]);
 
 angular.module("cases/views/chatButton.html", []).run(["$templateCache", function($templateCache) {
@@ -23781,7 +23941,7 @@ angular.module("cases/views/chatButton.html", []).run(["$templateCache", functio
 
 angular.module("cases/views/commentsSection.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/commentsSection.html",
-    "<h4 translate=\"\" class=\"rha-section-header\">Case Discussion</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid rha-side-padding\"><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><div rha-addcommentsection=\"\"></div></div></div><div style=\"border-top: 1px solid #cccccc; padding-top: 10px; padding-bottom: 10px;\" class=\"row\"><div class=\"col-xs-12\"><span style=\"display: inline-block; padding-right: 10px;\">{{'Would you like a Red Hat support manager to contact you regarding this case?'|translate}}</span><button style=\"display: inline-block\" ng-click=\"requestManagementEscalation()\" translate=\"\" class=\"btn btn-secondary\">Request Management Escalation</button></div></div><div ng-hide=\"CaseService.comments.length &lt;= 0 || CaseService.comments === undefined\" style=\"border-top: 1px solid #dddddd;\"><div style=\"padding-top: 10px; padding-bottom: 10px;\" class=\"row\"><div class=\"col-xs-12\"><pagination style=\"float: right;\" boundary-links=\"true\" total-items=\"CaseService.comments.length\" on-select-page=\"selectPage(page)\" items-per-page=\"itemsPerPage\" page=\"currentPage\" rotate=\"false\" max-size=\"maxPagerSize\" previous-text=\"&lt;\" next-text=\"&gt;\" first-text=\"&lt;&lt;\" last-text=\"&gt;&gt;\" class=\"pagination-sm\"></pagination></div></div><div ng-repeat=\"comment in commentsOnScreen\" ng-if=\"!comment.draft\"><div style=\"padding-bottom: 10px;\" class=\"row\"><div class=\"col-md-2\"><div class=\"rha-bold\">{{comment.created_by}}</div><div>{{comment.created_date | date:'mediumDate'}}</div><div>{{comment.created_date | date:'h:mm:ss a Z'}}</div></div><div class=\"col-md-10\"><pre style=\"word-break: normal;\">{{comment.text}}</pre></div></div></div></div></div>");
+    "<h4 translate=\"\" class=\"rha-section-header\">Case Discussion</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid rha-side-padding\"><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><div rha-addcommentsection=\"\"></div></div></div><div style=\"border-top: 1px solid #cccccc; padding-top: 10px; padding-bottom: 10px;\" class=\"row\"><div class=\"col-xs-12\"><span style=\"display: inline-block; padding-right: 10px;\">{{'Would you like a Red Hat support manager to contact you regarding this case?'|translate}}</span><button style=\"display: inline-block\" ng-click=\"requestManagementEscalation()\" translate=\"\" class=\"btn btn-secondary\">Request Management Escalation</button></div></div><div ng-hide=\"CaseService.comments.length &lt;= 0 || CaseService.comments === undefined\" style=\"border-top: 1px solid #dddddd;\" class=\"rha-comments-section\"><div style=\"padding-top: 10px; padding-bottom: 10px;\" class=\"row\"><div class=\"col-xs-12\"><pagination style=\"float: right;\" boundary-links=\"true\" total-items=\"CaseService.comments.length\" on-select-page=\"selectPage(page)\" items-per-page=\"itemsPerPage\" page=\"currentPage\" rotate=\"false\" max-size=\"maxPagerSize\" previous-text=\"&lt;\" next-text=\"&gt;\" first-text=\"&lt;&lt;\" last-text=\"&gt;&gt;\" class=\"pagination-sm\"></pagination></div></div><div ng-repeat=\"comment in commentsOnScreen\" ng-if=\"!comment.draft\"><div style=\"padding-bottom: 10px;\" class=\"row\"><div class=\"col-md-2\"><div class=\"rha-bold\">{{comment.created_by}}</div><div>{{comment.created_date | date:'mediumDate'}}</div><div>{{comment.created_date | date:'h:mm:ss a Z'}}</div></div><div class=\"col-md-10 rha-comment-text\"><pre style=\"word-break: normal;\">{{comment.text}}</pre></div></div></div></div></div>");
 }]);
 
 angular.module("cases/views/compact.html", []).run(["$templateCache", function($templateCache) {
@@ -23835,12 +23995,12 @@ angular.module("cases/views/deleteGroupButton.html", []).run(["$templateCache", 
 
 angular.module("cases/views/descriptionSection.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/descriptionSection.html",
-    "<h4 translate=\"\" class=\"rha-section-header\">Description</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid rha-side-padding\"><div class=\"row\"><div class=\"col-md-2\"><strong>{{CaseService.kase.created_by}}</strong></div><div class=\"col-md-10\">{{CaseService.kase.description}}</div></div></div>");
+    "<h4 translate=\"\" class=\"rha-section-header\">Description</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid rha-side-padding\"><div class=\"row\"><div class=\"col-md-2\"><strong>{{CaseService.kase.created_by}}</strong></div><div class=\"col-md-10 textBlock\">{{CaseService.kase.description}}</div></div></div>");
 }]);
 
 angular.module("cases/views/detailsSection.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/detailsSection.html",
-    "<form name=\"caseDetails\"><div style=\"display: table; width: 100%; padding-bottom: 20px;\"><div style=\"display: table-cell; width: 50%;\"><div><h3 style=\"margin-top: 0px;\">Case {{CaseService.kase.case_number}}</h3></div><input style=\"width: 100%; display: inline-block;\" ng-model=\"CaseService.kase.summary\" name=\"summary\" class=\"form-control\"/><span ng-show=\"caseDetails.summary.$dirty\" style=\"display: inline-block;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></div><div ng-show=\"showEmailNotifications\" style=\"display: table-cell; vertical-align: bottom; width: 50%;\"><div style=\"width: 75%\" class=\"pull-right\"><div rha-emailnotifyselect=\"\"></div></div></div></div><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid rha-side-padding\"><div id=\"rha-case-details\" class=\"row\"><div class=\"col-sm-12 rha-section-header\"><h4 translate=\"\">Details</h4></div><div class=\"container-fluid rha-side-padding\"><div class=\"row\"><div class=\"col-md-4\"><table class=\"table details-table\"><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'Case Type:'|translate}}</div><span ng-show=\"caseDetails.type.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"caseTypes === undefined\" type=\"bootstrap\"><select name=\"type\" style=\"width: 100%;\" ng-model=\"CaseService.kase.type\" ng-options=\"c.name for c in caseTypes track by c.name\" class=\"form-control\"></select></div></td></tr><tr><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'Severity:'|translate}}</div><span ng-show=\"caseDetails.severity.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"CaseService.severities === undefined\" type=\"bootstrap\"><select name=\"severity\" style=\"width: 100%;\" ng-model=\"CaseService.kase.severity\" ng-options=\"s.name for s in CaseService.severities track by s.name\" class=\"form-control\"></select></div></td></tr><tr ng-show=\"CaseService.showFts()\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'24x7 Support:'|translate}}</div></th><td><input ng-model=\"CaseService.kase.fts\" type=\"checkbox\"/></td></tr><tr ng-show=\"CaseService.showFts() &amp;&amp; CaseService.kase.fts\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'24x7 Contact:'|translate}}</div></th><td><input ng-model=\"CaseService.kase.contact_info24_x7\" class=\"form-control\"/></td></tr><tr><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'Status:'|translate}}</div><span ng-show=\"caseDetails.status.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"statuses === undefined\" type=\"bootstrap\"><select name=\"status\" style=\"width: 100%;\" ng-model=\"CaseService.kase.status\" ng-options=\"s.name for s in statuses track by s.name\" class=\"form-control\"></select></div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'Alternate ID:'|translate}}</div><span ng-show=\"caseDetails.alternate_id.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><input style=\"width: 100%\" ng-model=\"CaseService.kase.alternate_id\" name=\"alternate_id\" class=\"form-control\"/></td></tr></table></div><div class=\"col-md-4\"><table class=\"table details-table\"><tr><th><div style=\"vertical-align: 50%; display: inline-block;\">{{'Product:'|translate}}</div><span ng-show=\"caseDetails.product.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"products === undefined\" type=\"bootstrap\"><select name=\"product\" style=\"width: 100%;\" ng-model=\"CaseService.kase.product\" ng-change=\"getProductVersions()\" ng-options=\"s.name for s in products track by s.name\" required=\"required\" class=\"form-control\"></select></div></td></tr><tr><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'Product Version:'|translate}}</div><span ng-show=\"caseDetails.version.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"CaseService.versions.length === 0\" type=\"bootstrap\"><select name=\"version\" style=\"width: 100%;\" ng-options=\"v for v in CaseService.versions track by v\" ng-model=\"CaseService.kase.version\" required=\"required\" class=\"form-control\"></select></div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Support Level:'|translate}}</th><td>{{CaseService.kase.entitlement.sla}}</td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Owner:'|translate}}</th><td>{{CaseService.kase.contact_name}}</td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Red Hat Owner:'|translate}}</th><td>{{CaseService.kase.owner}}</td></tr></table></div><div class=\"col-md-4\"><table class=\"table details-table\"><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'Group:'|translate}}</div><span ng-show=\"caseDetails.group.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"groups === undefined\" type=\"bootstrap\"><select name=\"group\" style=\"width: 100%;\" ng-options=\"g.name for g in groups track by g.number\" ng-model=\"CaseService.kase.group\" class=\"form-control\"></select></div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Opened:'|translate}}</th><td><div>{{CaseService.kase.created_date | date:'MMM d, y h:mm:ss a Z'}}</div><div>{{CaseService.kase.created_by}}</div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Last Updated:'|translate}}</th><td><div>{{CaseService.kase.last_modified_date | date:'MMM d, y h:mm:ss a Z'}}</div><div>{{CaseService.kase.last_modified_by}}</div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Account Number:'|translate}}</th><td>{{CaseService.kase.account_number}}</td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\">{{'Account Name:'|translate}}</th><td>{{CaseService.account.name}}</td></tr></table></div></div><div style=\"padding-top: 10px;\" class=\"row\"><div class=\"col-xs-12\"><div style=\"float: right;\"><button name=\"updateButton\" ng-disabled=\"!caseDetails.$dirty\" ng-hide=\"updatingDetails\" ng-click=\"updateCase()\" translate=\"\" class=\"btn btn-primary\">Update Details</button><span ng-show=\"updatingDetails\" class=\"rha-search-spinner\"></span></div></div></div></div></div></div></form>");
+    "<form name=\"caseDetails\"><div style=\"display: table; width: 100%; padding-bottom: 20px;\"><div style=\"display: table-cell; width: 50%;\"><div><h3 style=\"margin-top: 0px;\" class=\"case-id\">Case {{CaseService.kase.case_number}}</h3></div><input style=\"width: 100%; display: inline-block;\" ng-model=\"CaseService.kase.summary\" name=\"summary\" class=\"form-control\"/><span ng-show=\"caseDetails.summary.$dirty\" style=\"display: inline-block;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></div><div ng-show=\"showEmailNotifications\" style=\"display: table-cell; vertical-align: bottom; width: 50%;\"><div style=\"width: 75%\" class=\"pull-right\"><div rha-emailnotifyselect=\"\"></div></div></div></div><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"loading\" class=\"container-fluid rha-side-padding\"><div id=\"rha-case-details\" class=\"row\"><div class=\"col-sm-12 rha-section-header\"><h4 translate=\"\">Details</h4></div><div class=\"container-fluid rha-side-padding\"><div class=\"row\"><div class=\"col-md-4\"><table class=\"table details-table\"><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\"><label for=\"rha-case-type\">{{'Case Type:'|translate}}</label></div><span ng-show=\"caseDetails.type.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"caseTypes === undefined\" type=\"bootstrap\"><select id=\"rha-case-type\" name=\"type\" style=\"width: 100%;\" ng-model=\"CaseService.kase.type\" ng-options=\"c.name for c in caseTypes track by c.name\" class=\"form-control\"></select></div></td></tr><tr><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\"><label for=\"rha-case-severity\">{{'Severity:'|translate}}</label></div><span ng-show=\"caseDetails.severity.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"CaseService.severities === undefined\" type=\"bootstrap\"><select id=\"rha-case-severity\" name=\"severity\" style=\"width: 100%;\" ng-model=\"CaseService.kase.severity\" ng-options=\"s.name for s in CaseService.severities track by s.name\" class=\"form-control\"></select></div></td></tr><tr ng-show=\"CaseService.showFts()\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'24x7 Support:'|translate}}</div></th><td><input ng-model=\"CaseService.kase.fts\" type=\"checkbox\"/></td></tr><tr ng-show=\"CaseService.showFts() &amp;&amp; CaseService.kase.fts\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\">{{'24x7 Contact:'|translate}}</div></th><td><input ng-model=\"CaseService.kase.contact_info24_x7\" class=\"form-control\"/></td></tr><tr><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\"><label for=\"rha-case-status\">{{'Status:'|translate}}</label></div><span ng-show=\"caseDetails.status.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"statuses === undefined\" type=\"bootstrap\"><select id=\"rha-case-status\" name=\"status\" style=\"width: 100%;\" ng-model=\"CaseService.kase.status\" ng-options=\"s.name for s in statuses track by s.name\" class=\"form-control\"></select></div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\"><label for=\"rha-case-alt-id\">{{'Alternate Case ID:'|translate}}</label></div><span ng-show=\"caseDetails.alternate_id.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><input id=\"rha-case-alt-id\" style=\"width: 100%\" ng-model=\"CaseService.kase.alternate_id\" name=\"alternate_id\" class=\"form-control\"/></td></tr></table></div><div class=\"col-md-4\"><table class=\"table details-table\"><tr><th><div style=\"vertical-align: 50%; display: inline-block;\"><label for=\"rha-product\">{{'Product:'|translate}}</label></div><span ng-show=\"caseDetails.product.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"products === undefined\" type=\"bootstrap\"><select id=\"rha-product\" name=\"product\" style=\"width: 100%;\" ng-model=\"CaseService.kase.product\" ng-change=\"getProductVersions()\" ng-options=\"s.name for s in products track by s.name\" required=\"required\" class=\"form-control\"></select></div></td></tr><tr><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\"><label for=\"rha-product-version\">{{'Product Version:'|translate}}</label></div><span ng-show=\"caseDetails.version.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"CaseService.versions.length === 0\" type=\"bootstrap\"><select id=\"rha-product-version\" name=\"version\" style=\"width: 100%;\" ng-options=\"v for v in CaseService.versions track by v\" ng-model=\"CaseService.kase.version\" required=\"required\" class=\"form-control\"></select></div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><label for=\"rha-support-level\">{{'Support Level:'|translate}}</label></th><td id=\"rha-support-level\">{{CaseService.kase.entitlement.sla}}</td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><label for=\"rha-owner\">{{'Owner:'|translate}}</label></th><td id=\"rha-owner\">{{CaseService.kase.contact_name}}</td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><label for=\"rha-rh-owner\">{{'Red Hat Owner:'|translate}}</label></th><td id=\"rha-rh-owner\">{{CaseService.kase.owner}}</td></tr></table></div><div class=\"col-md-4\"><table class=\"table details-table\"><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><div style=\"vertical-align: 50%; display: inline-block;\"><label for=\"rha-group-select\">{{'Group:'|translate}}</label></div><span ng-show=\"caseDetails.group.$dirty\" style=\"display: inline-block;float: right; vertical-align: 50%;\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span></th><td><div rha-selectloadingindicator=\"\" loading=\"groups === undefined\" type=\"bootstrap\"><select id=\"rha-group-select\" name=\"group\" style=\"width: 100%;\" ng-options=\"g.name for g in groups track by g.number\" ng-model=\"CaseService.kase.group\" class=\"form-control\"></select></div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><label for=\"rha-opened\">{{'Opened:'|translate}}</label></th><td id=\"rha-opened\"><div>{{CaseService.kase.created_date | date:'MMM d, y h:mm:ss a Z'}}</div><div>{{CaseService.kase.created_by}}</div></td></tr><tr ng-hide=\"compact\"><th class=\"rha-detail-table-header\"><label for=\"rha-last-updated\">{{'Last Updated:'|translate}}</label></th><td id=\"rha-last-updated\"><div>{{CaseService.kase.last_modified_date | date:'MMM d, y h:mm:ss a Z'}}</div><div>{{CaseService.kase.last_modified_by}}</div></td></tr><tr ng-hide=\"compact\" ng-if=\"securityService.loginStatus.isInternal\" class=\"rha-detail-acc-number\"><th class=\"rha-detail-table-header\"><label for=\"rha-account-number\">{{'Account Number:'|translate}}</label></th><td id=\"rha-account-number\">{{CaseService.kase.account_number}}</td></tr><tr ng-hide=\"compact\" ng-if=\"securityService.loginStatus.isInternal\" class=\"rha-detail-acc-name\"><th class=\"rha-detail-table-header\"><label for=\"rha-account-name\">{{'Account Name:'|translate}}</label></th><td id=\"rha-account-name\">{{CaseService.account.name}}        </td></tr></table></div></div><div ng-if=\"!securityService.loginStatus.isInternal\"><label for=\"rha-case-notes\">{{'Notes:'|translate}} </label><span ng-show=\"caseDetails.notes.$dirty\" class=\"glyphicon glyphicon-asterisk form-control-feedback\"></span><textarea id=\"rha-case-notes\" style=\"width: 100%; height: 100px; max-width: 100%;\" ng-model=\"CaseService.kase.notes\" name=\"notes\"></textarea></div><div style=\"padding-top: 10px;\" class=\"row\"><div class=\"col-xs-12\"><div style=\"float: right;\"><button name=\"updateButton\" ng-disabled=\"!caseDetails.$dirty\" ng-hide=\"updatingDetails\" ng-click=\"updateCase()\" translate=\"\" class=\"btn btn-primary\">Update Details</button><span ng-show=\"updatingDetails\" class=\"rha-search-spinner\"></span></div></div></div></div></div></div></form>");
 }]);
 
 angular.module("cases/views/edit.html", []).run(["$templateCache", function($templateCache) {
@@ -23855,7 +24015,7 @@ angular.module("cases/views/emailNotifySelect.html", []).run(["$templateCache", 
 
 angular.module("cases/views/entitlementSelect.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/entitlementSelect.html",
-    "<div rha-selectloadingindicator=\"\" loading=\"CaseService.entitlementsLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.entitlement\" ng-change=\"CaseService.onSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"entitlement in CaseService.entitlements\">{{entitlement}}</option></select></div>");
+    "<div rha-selectloadingindicator=\"\" loading=\"CaseService.entitlementsLoading\" type=\"select2\"><select id=\"rha-entitlement-select\" ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.entitlement\" ng-change=\"CaseService.onSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"entitlement in CaseService.entitlements\">{{entitlement}}</option></select></div>");
 }]);
 
 angular.module("cases/views/exportCSVButton.html", []).run(["$templateCache", function($templateCache) {
@@ -23875,7 +24035,7 @@ angular.module("cases/views/groupList.html", []).run(["$templateCache", function
 
 angular.module("cases/views/groupSelect.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/groupSelect.html",
-    "<div rha-selectloadingindicator=\"\" loading=\"CaseService.groupsLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.group\" ng-change=\"CaseService.onGroupSelectChanged()\" placeholder=\"Select a Group\" style=\"width: 100%\"><option value=\"\" ng-if=\"showsearchoptions\">All Groups</option><option value=\"{{CASE_GROUPS.ungrouped}}\" ng-if=\"showsearchoptions\">Ungrouped Cases</option><option disabled=\"disabled\" ng-hide=\"CaseService.groups.length &lt; 1\" ng-if=\"showsearchoptions\">────────────────────────────────────────</option><option ng-repeat=\"group in CaseService.groups\" value=\"{{group.number}}\">{{group.name}}</option><option ng-if=\"securityService.userAllowedToManageGroups() &amp;&amp; showsearchoptions\" disabled=\"disabled\">────────────────────────────────────────</option><option ng-if=\"securityService.userAllowedToManageGroups() &amp;&amp; showsearchoptions\" value=\"{{CASE_GROUPS.manage}}\">Manage Case Groups</option></select></div>");
+    "<div rha-selectloadingindicator=\"\" loading=\"CaseService.groupsLoading\" type=\"select2\"><select id=\"rha-group-select\" ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.group\" ng-change=\"CaseService.onGroupSelectChanged()\" placeholder=\"Select a Group\" style=\"width: 100%\"><option value=\"\" ng-if=\"showsearchoptions\">All Groups</option><option value=\"{{CASE_GROUPS.ungrouped}}\" ng-if=\"showsearchoptions\">Ungrouped Cases</option><option disabled=\"disabled\" ng-hide=\"CaseService.groups.length &lt; 1\" ng-if=\"showsearchoptions\">────────────────────────────────────────</option><option ng-repeat=\"group in CaseService.groups\" value=\"{{group.number}}\">{{group.name}}</option><option ng-if=\"securityService.userAllowedToManageGroups() &amp;&amp; showsearchoptions\" disabled=\"disabled\">────────────────────────────────────────</option><option ng-if=\"securityService.userAllowedToManageGroups() &amp;&amp; showsearchoptions\" value=\"{{CASE_GROUPS.manage}}\">Manage Case Groups</option></select></div>");
 }]);
 
 angular.module("cases/views/list.html", []).run(["$templateCache", function($templateCache) {
@@ -23885,12 +24045,12 @@ angular.module("cases/views/list.html", []).run(["$templateCache", function($tem
 
 angular.module("cases/views/listAttachments.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/listAttachments.html",
-    "<div ng-show=\"AttachmentsService.originalAttachments.length == 0\" style=\"padding-bottom: 10px;\">{{'No attachments added'|translate}}</div><div ng-show=\"AttachmentsService.originalAttachments.length &gt; 0\" class=\"panel panel-default\"><div class=\"panel-heading\">{{'Attached Files'|translate}}</div><table class=\"table table-hover table-bordered\"><thead><th>{{'Filename'|translate}}</th><th>{{'Description'|translate}}</th><th>{{'Size'|translate}}</th><th>{{'Attached'|translate}}</th><th>{{'Attached By'|translate}}</th><th>{{'Delete'|translate}}</th></thead><tbody><tr ng-repeat=\"attachment in AttachmentsService.originalAttachments\"><td><a ng-hide=\"attachment.uri == null\" href=\"{{attachment.uri}}\">{{attachment.file_name}}</a><div ng-show=\"attachment.uri == null\">{{attachment.file_name}}</div></td><td>{{attachment.description}}</td><td>{{attachment.length | bytes}}</td><td>{{attachment.created_date | date:'medium'}}</td><td>{{attachment.created_by}}</td><td><div ng-show=\"disabled\">{{'Delete'|translate}}</div><a ng-click=\"AttachmentsService.removeOriginalAttachment($index)\" ng-hide=\"disabled\">{{'Delete'|translate}}</a></td></tr></tbody></table></div>");
+    "<div ng-show=\"AttachmentsService.originalAttachments.length == 0\" style=\"padding-bottom: 10px;\" class=\"rha-attachments-section\">{{'No attachments added'|translate}}</div><div ng-show=\"AttachmentsService.originalAttachments.length &gt; 0\" class=\"panel panel-default\"><div class=\"panel-heading\">{{'Attached Files'|translate}}</div><table class=\"table table-hover table-bordered\"><thead><th>{{'Filename'|translate}}</th><th>{{'Description'|translate}}</th><th>{{'Size'|translate}}</th><th>{{'Attached'|translate}}</th><th>{{'Attached By'|translate}}</th><th>{{'Delete'|translate}}</th></thead><tbody><tr ng-repeat=\"attachment in AttachmentsService.originalAttachments\"><td><a ng-hide=\"attachment.uri == null\" href=\"{{attachment.uri}}\">{{attachment.file_name}}</a><div ng-show=\"attachment.uri == null\">{{attachment.file_name}}</div></td><td>{{attachment.description}}</td><td>{{attachment.length | bytes}}</td><td>{{attachment.created_date | date:'medium'}}</td><td>{{attachment.created_by}}</td><td><div ng-show=\"disabled\">{{'Delete'|translate}}</div><a ng-click=\"AttachmentsService.removeOriginalAttachment($index)\" ng-hide=\"disabled\">{{'Delete'|translate}}</a></td></tr></tbody></table></div>");
 }]);
 
 angular.module("cases/views/listBugzillas.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/listBugzillas.html",
-    "<div ng-show=\"securityService.loginStatus.isInternal\" class=\"redhat-access-bz\"><h4 style=\"padding-top: 20px;\" class=\"section-header\">{{'Bugzilla Tickets'|translate}}</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"CaseService.bugzillaList.bugzilla.length &gt; 0\" style=\"padding-bottom: 10px;\">{{'No linked bugzillas'|translate}}</div><div ng-show=\"CaseService.bugzillaList.bugzilla.length &gt; 0\" class=\"panel panel-default\"><table class=\"table table-hover table-bordered\"><thead><th>{{'Bugzilla Number'|translate}}</th><th>{{'Summary of Request'|translate}}</th></thead><tbody>  <tr ng-repeat=\"bugzilla in CaseService.bugzillaList.bugzilla\"><td><a href=\"{{bugzilla.resource_view_uri}}\" target=\"_blank\">{{bugzilla.bugzilla_number}}</a></td><td>{{bugzilla.summary}}</td></tr></tbody></table></div></div>");
+    "<div ng-show=\"securityService.loginStatus.isInternal\" class=\"redhat-access-bz\"><h4 style=\"padding-top: 20px;\" class=\"rha-section-header\">{{'Bugzilla Tickets'|translate}}</h4><span ng-show=\"loading\" class=\"rha-search-spinner\"></span><div ng-hide=\"CaseService.bugzillaList.bugzilla.length &gt; 0\" style=\"padding-bottom: 10px;\">{{'No linked bugzillas'|translate}}</div><div ng-show=\"CaseService.bugzillaList.bugzilla.length &gt; 0\" class=\"panel panel-default\"><table class=\"table table-hover table-bordered\"><thead><th>{{'Bugzilla Number'|translate}}</th><th>{{'Summary of Request'|translate}}</th></thead><tbody>  <tr ng-repeat=\"bugzilla in CaseService.bugzillaList.bugzilla\"><td><a href=\"{{bugzilla.resource_view_uri}}\" target=\"_blank\">{{bugzilla.bugzilla_number}}</a></td><td>{{bugzilla.summary}}</td></tr></tbody></table></div></div>");
 }]);
 
 angular.module("cases/views/listFilter.html", []).run(["$templateCache", function($templateCache) {
@@ -23905,12 +24065,12 @@ angular.module("cases/views/listNewAttachments.html", []).run(["$templateCache",
 
 angular.module("cases/views/new.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/new.html",
-    "<div class=\"container-offset\"><div id=\"redhat-access-case\" class=\"container-fluid\"><div rha-header=\"\" page=\"newCase\"></div><div ng-show=\"securityService.loginStatus.isLoggedIn &amp;&amp; securityService.loginStatus.hasChat\" class=\"row\"><div class=\"pull-right\"><div rha-chatbutton=\"\" style=\"margin-right: 10px;\"></div></div></div><div ng-show=\"securityService.loginStatus.isLoggedIn &amp;&amp; securityService.loginStatus.hasChat\" class=\"rha-bottom-border\"></div><div class=\"row\"><div style=\"border-right: 1px solid; border-color: #cccccc;\" class=\"col-xs-6\"><div class=\"container-fluid rha-side-padding\"><div ng-class=\"{&quot;hidden&quot;: isPage2}\" id=\"rha-case-wizard-page-1\" class=\"rha-create-case-section\"><div ng-if=\"securityService.loginStatus.isInternal\"><div class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'Account:'|translate}}</div></div><div class=\"col-md-8\"><div rha-accountselect=\"\"></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'Owner:'|translate}}</div></div><div class=\"col-md-8\"><div rha-ownerselect=\"\"></div></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'Product:'|translate}}</div></div><div class=\"col-md-8\"><div rha-selectloadingindicator=\"\" loading=\"productsLoading\" type=\"bootstrap\"><select ng-disabled=\"!securityService.loginStatus.isLoggedIn || submittingCase\" style=\"width: 100%;\" ng-model=\"CaseService.kase.product\" ng-change=\"getProductVersions(CaseService.kase.product)\" ng-options=\"p.name for p in products track by p.code\" ng-blur=\"getRecommendations()\" class=\"form-control\"></select></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'Product Version:'|translate}}</div></div><div class=\"col-md-8\"><div><div rha-selectloadingindicator=\"\" loading=\"versionLoading\" type=\"bootstrap\"><select style=\"width: 100%;\" ng-model=\"CaseService.kase.version\" ng-options=\"v for v in versions\" ng-change=\"CaseService.validateNewCasePage1()\" ng-disabled=\"versionDisabled || !securityService.loginStatus.isLoggedIn || submittingCase\" ng-blur=\"getRecommendations()\" class=\"form-control\"></select></div></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'Summary:'|translate}}</div></div><div class=\"col-md-8\"><input id=\"rha-case-summary\" style=\"width: 100%;\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-change=\"CaseService.validateNewCasePage1()\" ng-model=\"CaseService.kase.summary\" ng-blur=\"getRecommendations()\" class=\"form-control\"/></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'Description:'|translate}}</div></div><div class=\"col-md-8\"><textarea style=\"width: 100%; height: 200px; max-width: 100%;\" ng-model=\"CaseService.kase.description\" ng-change=\"CaseService.validateNewCasePage1()\" ng-disabled=\"!securityService.loginStatus.isLoggedIn || submittingCase\" ng-blur=\"getRecommendations()\" class=\"form-control description-box\"></textarea></div></div><div class=\"row\"><div ng-class=\"{&quot;hidden&quot;: isPage2}\" class=\"col-xs-12\"><button style=\"float: right\" ng-click=\"doNext()\" ng-disabled=\"CaseService.newCasePage1Incomplete\" translate=\"\" class=\"btn btn-primary\">Next</button></div></div></div><div ng-class=\"{hidden: isPage1}\" id=\"rha-case-wizard-page-2\" class=\"rha-create-case-section\"><div class=\"rha-bottom-border\"><div class=\"row\"><div class=\"col-xs-12\"><div style=\"margin-bottom: 10px;\" class=\"rha-bold\">{{CaseService.kase.product.name}} {{CaseService.kase.version}}</div></div></div><div class=\"row\"><div class=\"col-xs-12\"><div style=\"font-size: 90%; margin-bottom: 4px;\" class=\"rha-bold\">{{CaseService.kase.summary}}</div></div></div><div class=\"row\"><div class=\"col-xs-12\"><div style=\"font-size: 85%\">{{CaseService.kase.description}}</div></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\">Support Level:</div><div ng-show=\"CaseService.entitlements.length &lt;= 1\" class=\"col-md-8\">{{CaseService.entitlements[0]}}</div><div ng-hide=\"CaseService.entitlements.length &lt;= 1\" class=\"col-md-8\"><div rha-entitlementselect=\"\"></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\">{{'Severity:'|translate}}</div><div class=\"col-md-8\"><div rha-loadingindicator=\"\" loading=\"severitiesLoading\"><select style=\"width: 100%;\" ng-model=\"CaseService.kase.severity\" ng-change=\"validatePage2()\" ng-disabled=\"submittingCase\" ng-options=\"s.name for s in CaseService.severities track by s.name\" class=\"form-control\"></select></div></div></div><div ng-show=\"CaseService.showFts()\" style=\"padding-left: 30px;\"><div class=\"row rha-create-field\"><div class=\"col-md-12\"><span>{{'24x7 Support:'|translate}}</span><input type=\"checkbox\" ng-model=\"CaseService.fts\" style=\"display: inline-block; padding-left: 10px;\"/></div></div><div ng-show=\"CaseService.fts\" class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'24x7 Contact:'|translate}}</div></div><div class=\"col-md-8\"><input ng-model=\"CaseService.fts_contact\" class=\"form-control\"/></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\">{{'Case Group:'|translate}}</div><div class=\"col-md-8\"><div rha-groupselect=\"\" showsearchoptions=\"false\"></div></div></div><div ng-show=\"NEW_CASE_CONFIG.showAttachments\"><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><div>{{'Attachments:'|translate}}</div></div></div><div class=\"rha-bottom-border\"><div style=\"overflow: auto\" class=\"row rha-create-field\"><div class=\"col-xs-12\"><div rha-listnewattachments=\"\"></div></div></div><div ng-hide=\"submittingCase\" class=\"row rha-create-field\"><div class=\"col-xs-12\"><div rha-attachlocalfile=\"\" disabled=\"submittingCase\"></div></div></div><div ng-hide=\"submittingCase\" class=\"row rha-create-field\"><div class=\"col-xs-12\"><div ng-show=\"NEW_CASE_CONFIG.showServerSideAttachments\"><div class=\"server-attach-header\">Server File(s) To Attach:<div rha-choicetree=\"\" ng-model=\"attachmentTree\" ng-controller=\"BackEndAttachmentsCtrl\"></div></div></div></div></div></div></div><div style=\"margin-top: 20px;\" class=\"row\"><div class=\"col-xs-6\"><button style=\"float: left\" ng-click=\"doPrevious()\" ng-disabled=\"submittingCase\" translate=\"\" class=\"btn btn-primary\">Previous</button></div><div class=\"col-xs-6\"><button style=\"float: right\" ng-disabled=\"submittingCase\" ng-hide=\"submittingCase\" ng-click=\"doSubmit($event)\" translate=\"\" class=\"btn btn-primary\">Submit</button><span ng-show=\"submittingCase\" style=\"float: right\" class=\"rha-search-spinner\"></span></div></div></div></div></div><div style=\"overflow: auto;\" rha-resizable=\"rha-resizable\" rha-domready=\"domReady\" ng-show=\"NEW_CASE_CONFIG.showRecommendations\" class=\"col-xs-6\"><div ng-controller=\"SearchController\" style=\"overflow: vertical;\"><div rha-accordionsearchresults=\"\"></div></div></div></div></div></div>");
+    "<div class=\"container-offset\"><div id=\"redhat-access-case\" class=\"container-fluid\"><div rha-header=\"\" page=\"newCase\"></div><div ng-show=\"securityService.loginStatus.isLoggedIn &amp;&amp; securityService.loginStatus.hasChat\" class=\"row\"><div class=\"pull-right\"><div rha-chatbutton=\"\" style=\"margin-right: 10px;\"></div></div></div><div ng-show=\"securityService.loginStatus.isLoggedIn &amp;&amp; securityService.loginStatus.hasChat\" class=\"rha-bottom-border\"></div><div class=\"row\"><div style=\"border-right: 1px solid; border-color: #cccccc;\" class=\"col-xs-6\"><div class=\"container-fluid rha-side-padding\"><div ng-class=\"{&quot;hidden&quot;: isPage2}\" id=\"rha-case-wizard-page-1\" class=\"rha-create-case-section\"><div ng-if=\"securityService.loginStatus.isInternal &amp;&amp; securityService.loginStatus.orgAdmin\"><div class=\"row rha-create-field\"><div class=\"col-md-4\"><label for=\"rha-account-number\">{{'Account:'|translate}}</label></div><div class=\"col-md-8\"><div rha-accountselect=\"\"></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><label for=\"rha-owners-elect\">{{'Owner:'|translate}}</label></div><div class=\"col-md-8\"><div rha-ownerselect=\"\"></div></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><label for=\"rha-product-select\">{{'Product:'|translate}}</label></div><div class=\"col-md-8\"><div rha-selectloadingindicator=\"\" loading=\"productsLoading\" type=\"bootstrap\"><select id=\"rha-product-select\" ng-disabled=\"!securityService.loginStatus.isLoggedIn || submittingCase\" style=\"width: 100%;\" ng-model=\"CaseService.kase.product\" ng-change=\"getProductVersions(CaseService.kase.product)\" ng-options=\"p.name for p in products track by p.code\" ng-blur=\"getRecommendations()\" class=\"form-control\"></select></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><label for=\"rha-product-version-select\">{{'Product Version:'|translate}}</label></div><div class=\"col-md-8\"><div><div rha-selectloadingindicator=\"\" loading=\"versionLoading\" type=\"bootstrap\"><select id=\"rha-product-version-select\" style=\"width: 100%;\" ng-model=\"CaseService.kase.version\" ng-options=\"v for v in versions\" ng-change=\"CaseService.validateNewCasePage1()\" ng-disabled=\"versionDisabled || !securityService.loginStatus.isLoggedIn || submittingCase\" ng-blur=\"getRecommendations()\" class=\"form-control\"></select></div></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><label for=\"rha-case-summary\">{{'Summary:'|translate}}</label></div><div class=\"col-md-8\"><input id=\"rha-case-summary\" style=\"width: 100%;\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-change=\"CaseService.validateNewCasePage1()\" ng-model=\"CaseService.kase.summary\" ng-blur=\"getRecommendations()\" class=\"form-control\"/></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><label for=\"rha-case-description\">{{'Description:'|translate}}</label></div><div class=\"col-md-8\"><textarea id=\"rha-case-description\" style=\"width: 100%; height: 200px; max-width: 100%;\" ng-model=\"CaseService.kase.description\" ng-change=\"CaseService.validateNewCasePage1()\" ng-disabled=\"!securityService.loginStatus.isLoggedIn || submittingCase\" ng-blur=\"getRecommendations()\" class=\"form-control description-box\"></textarea></div></div><div class=\"row\"><div ng-class=\"{&quot;hidden&quot;: isPage2}\" class=\"col-xs-12\"><button style=\"float: right\" ng-click=\"doNext()\" ng-disabled=\"CaseService.newCasePage1Incomplete\" translate=\"\" class=\"btn btn-primary btn-next\">Next</button></div></div></div><div ng-class=\"{hidden: isPage1}\" id=\"rha-case-wizard-page-2\" class=\"rha-create-case-section\"><div class=\"rha-bottom-border\"><div class=\"row\"><div class=\"col-xs-12\"><div style=\"margin-bottom: 10px;\" class=\"rha-bold\">{{CaseService.kase.product.name}} {{CaseService.kase.version}}</div></div></div><div class=\"row\"><div class=\"col-xs-12\"><div style=\"font-size: 90%; margin-bottom: 4px;\" class=\"rha-bold\">{{CaseService.kase.summary}}</div></div></div><div class=\"row\"><div class=\"col-xs-12\"><div style=\"font-size: 85%\">{{CaseService.kase.description}}</div></div></div></div><div class=\"row rha-create-field\"><div ng-hide=\"CaseService.entitlements.length &lt;= 1\" class=\"col-md-4\"><label for=\"rha-entitlement-select\">Support Level:</label></div><div ng-show=\"CaseService.entitlements.length &lt;= 1\" class=\"col-md-8\">{{CaseService.entitlements[0]}}</div><div ng-hide=\"CaseService.entitlements.length &lt;= 1\" class=\"col-md-8\"><div rha-entitlementselect=\"\"></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><label for=\"rha-severity\">{{'Severity:'|translate}}</label></div><div class=\"col-md-8\"><div rha-loadingindicator=\"\" loading=\"severitiesLoading\"><select id=\"rha-severity\" style=\"width: 100%;\" ng-model=\"CaseService.kase.severity\" ng-change=\"validatePage2()\" ng-disabled=\"submittingCase\" ng-options=\"s.name for s in CaseService.severities track by s.name\" class=\"form-control\"></select></div></div></div><div ng-show=\"CaseService.showFts()\" style=\"padding-left: 30px;\"><div class=\"row rha-create-field\"><div class=\"col-md-12\"><span>{{'24x7 Support:'|translate}}</span><input type=\"checkbox\" ng-model=\"CaseService.fts\" style=\"display: inline-block; padding-left: 10px;\"/></div></div><div ng-show=\"CaseService.fts\" class=\"row rha-create-field\"><div class=\"col-md-4\"><div>{{'24x7 Contact:'|translate}}</div></div><div class=\"col-md-8\"><input ng-model=\"CaseService.fts_contact\" class=\"form-control\"/></div></div></div><div class=\"row rha-create-field\"><div class=\"col-md-4\"><label for=\"rha-group-select\">{{'Case Group:'|translate}}</label></div><div class=\"col-md-8\"><div rha-groupselect=\"\" showsearchoptions=\"false\"></div></div></div><div ng-show=\"NEW_CASE_CONFIG.showAttachments\"><div class=\"row rha-create-field\"><div class=\"col-xs-12\"><label>{{'Attachments:'|translate}}</label></div></div><div class=\"rha-bottom-border\"><div style=\"overflow: auto\" class=\"row rha-create-field\"><div class=\"col-xs-12\"><div rha-listnewattachments=\"\"></div></div></div><div ng-hide=\"submittingCase\" class=\"row rha-create-field\"><div class=\"col-xs-12\"><div rha-attachlocalfile=\"\" disabled=\"submittingCase\"></div></div></div><div ng-hide=\"submittingCase\" class=\"row rha-create-field\"><div class=\"col-xs-12\"><div ng-show=\"NEW_CASE_CONFIG.showServerSideAttachments\"><div class=\"server-attach-header\">Server File(s) To Attach:<div rha-choicetree=\"\" ng-model=\"attachmentTree\" ng-controller=\"BackEndAttachmentsCtrl\"></div></div></div></div></div></div></div><div style=\"margin-top: 20px;\" class=\"row\"><div class=\"col-xs-6\"><button style=\"float: left\" ng-click=\"doPrevious()\" ng-disabled=\"submittingCase\" translate=\"\" class=\"btn btn-primary btn-previous\">Previous</button></div><div class=\"col-xs-6\"><button style=\"float: right\" ng-disabled=\"submittingCase\" ng-hide=\"submittingCase\" ng-click=\"doSubmit($event)\" translate=\"\" class=\"btn btn-primary btn-submit\">Submit</button><span ng-show=\"submittingCase\" style=\"float: right\" class=\"rha-search-spinner\"></span></div></div></div></div></div><div style=\"overflow: auto;\" rha-resizable=\"rha-resizable\" rha-domready=\"domReady\" ng-show=\"NEW_CASE_CONFIG.showRecommendations\" class=\"col-xs-6\"><div ng-controller=\"SearchController\" style=\"overflow: vertical;\"><div rha-accordionsearchresults=\"\"></div></div></div></div></div></div>");
 }]);
 
 angular.module("cases/views/ownerSelect.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("cases/views/ownerSelect.html",
-    "<div id=\"rha-owner-select\"><div rha-selectloadingindicator=\"\" loading=\"CaseService.usersLoading\" type=\"select2\"><select ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.owner\" ng-change=\"CaseService.onOwnerSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"user in CaseService.users\">{{user.sso_username}}</option></select></div></div>");
+    "<div><div rha-selectloadingindicator=\"\" loading=\"CaseService.usersLoading\" type=\"select2\"><select id=\"rha-owner-select\" ui-select2=\"ui-select2\" ng-disabled=\"!securityService.loginStatus.isLoggedIn\" ng-model=\"CaseService.owner\" ng-change=\"CaseService.onOwnerSelectChanged()\" style=\"width: 100%\"><option ng-repeat=\"user in CaseService.users\">{{user.sso_username}}</option></select></div></div>");
 }]);
 
 angular.module("cases/views/productSelect.html", []).run(["$templateCache", function($templateCache) {
@@ -23994,7 +24154,8 @@ angular.module("log_viewer/views/logTabs.html", []).run(["$templateCache", funct
     "            </div>\n" +
     "        </div>\n" +
     "    </div>\n" +
-    "</div>");
+    "</div>\n" +
+    "");
 }]);
 
 angular.module("log_viewer/views/log_viewer.html", []).run(["$templateCache", function($templateCache) {

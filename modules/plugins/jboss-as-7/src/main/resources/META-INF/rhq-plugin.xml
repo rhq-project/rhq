@@ -1216,6 +1216,14 @@
         <value-context>measurementTrait</value-context>
         <value-name>domain-temp-dir</value-name>
       </destination-base-dir>
+      <destination-definition name="Patches">
+          <accepts bundle-type="Wildfly Patch"/>
+          <description>Use this location to apply patches to the server</description>
+          <connection>DOMAIN</connection>
+          <referenced-configuration>
+              <all of="pluginConfiguration"/>
+          </referenced-configuration>
+      </destination-definition>
     </bundle-target>
 
     <help>
@@ -13816,6 +13824,7 @@
       <bundle type="Wildfly Patch">
           <targets>
               <resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+              <resource-type name="JBossAS7 Host Controller" plugin="&pluginName;"/>
           </targets>
       </bundle>
   </service>

@@ -1,8 +1,6 @@
 package org.rhq.server.metrics.invalid;
 
 import static java.util.Arrays.asList;
-import static org.rhq.server.metrics.domain.MetricsTable.ONE_HOUR;
-import static org.rhq.server.metrics.domain.MetricsTable.SIX_HOUR;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +19,6 @@ import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.Bucket;
-import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
@@ -455,12 +452,12 @@ public class InvalidMetricsManager {
 
     private List<AggregateNumericMetric> replace1HourMetric(AggregateNumericMetric metric,
         AggregateNumericMetric newMetric, List<AggregateNumericMetric> metrics) {
-        return replaceMetric(metric, newMetric, metrics, ONE_HOUR);
+        return replaceMetric(metric, newMetric, metrics, Bucket.ONE_HOUR);
     }
 
     private List<AggregateNumericMetric> replace6HourMetric(AggregateNumericMetric metric,
         AggregateNumericMetric newMetric, List<AggregateNumericMetric> metrics) {
-        return replaceMetric(metric, newMetric, metrics, SIX_HOUR);
+        return replaceMetric(metric, newMetric, metrics, Bucket.SIX_HOUR);
     }
 
     private List<AggregateNumericMetric> removeMetric(AggregateNumericMetric metric,
@@ -474,17 +471,17 @@ public class InvalidMetricsManager {
     }
 
     private List<AggregateNumericMetric> replaceMetric(AggregateNumericMetric metric,
-        AggregateNumericMetric newMetric, List<AggregateNumericMetric> metrics, MetricsTable type) {
+        AggregateNumericMetric newMetric, List<AggregateNumericMetric> metrics, Bucket bucket) {
 
-        switch (type) {
-        case ONE_HOUR:
-            persist1HourMetric(newMetric);
-            break;
-        case SIX_HOUR:
-            persist6HourMetric(newMetric);
-            break;
-        default:
-            throw new IllegalArgumentException(type + " cannot be used for this method");
+        switch (bucket) {
+            case ONE_HOUR:
+                persist1HourMetric(newMetric);
+                break;
+            case SIX_HOUR:
+                persist6HourMetric(newMetric);
+                break;
+            default:
+                throw new IllegalArgumentException(bucket + " cannot be used for this method");
         }
 
         List<AggregateNumericMetric> updatedMetrics = new ArrayList<AggregateNumericMetric>(metrics);

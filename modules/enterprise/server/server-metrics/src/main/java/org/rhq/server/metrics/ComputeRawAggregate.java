@@ -6,6 +6,7 @@ import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Function;
 
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
 
@@ -49,6 +50,6 @@ public class ComputeRawAggregate implements Function<ResultSet, AggregateNumeric
 
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
-        return new AggregateNumericMetric(0, mean.getArithmeticMean(), min, max, timestamp);
+        return new AggregateNumericMetric(0, Bucket.ONE_HOUR, mean.getArithmeticMean(), min, max, timestamp);
     }
 }

@@ -372,7 +372,7 @@ public class MetricsServer {
             Bucket bucket = getBucket(begin);
             queryFuture = dao.findAggregateMetricsAsync(scheduleId, bucket, beginTime, endTime);
 
-            return Futures.transform(queryFuture, new ComputeAggregate(beginTime));
+            return Futures.transform(queryFuture, new ComputeAggregate(beginTime, bucket));
         } finally {
             long end = System.currentTimeMillis();
             if (log.isDebugEnabled()) {
@@ -616,7 +616,7 @@ public class MetricsServer {
 
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
-        return new AggregateNumericMetric(0, mean.getArithmeticMean(), min, max, timestamp);
+        return new AggregateNumericMetric(0, Bucket.ONE_HOUR, mean.getArithmeticMean(), min, max, timestamp);
     }
 
     private AggregateNumericMetric calculateAggregate(Iterable<AggregateNumericMetric> metrics, long timestamp,

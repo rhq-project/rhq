@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.Futures;
 import org.joda.time.DateTime;
 import org.testng.annotations.BeforeClass;
 
+import org.rhq.cassandra.schema.Table;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
@@ -89,11 +90,9 @@ public class MetricsTest extends CassandraIntegrationTest {
     }
 
     protected void purgeDB() {
-        session.execute("TRUNCATE " + MetricsTable.INDEX);
-        session.execute("TRUNCATE " + MetricsTable.RAW);
-        session.execute("TRUNCATE " + MetricsTable.AGGREGATE);
-        session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE);
-        session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE_INDEX);
+        for (Table table : Table.values()) {
+            session.execute("TRUNCATE " + table.getTableName());
+        }
     }
 
     protected void assertRawDataEquals(int scheduleId, DateTime startTime, DateTime endTime,

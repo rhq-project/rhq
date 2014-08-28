@@ -13,6 +13,7 @@ import org.rhq.cassandra.util.ConfigEditor;
 import org.rhq.cassandra.util.ConfigEditorException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
@@ -78,6 +79,15 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
         yamlEditor.load();
         config.put(new PropertySimple("cqlPort", yamlEditor.getNativeTransportPort()));
         config.put(new PropertySimple("gossipPort", yamlEditor.getStoragePort()));
+
+        // Read data directories here..
+        config.put(new PropertySimple("CommitLogLocation", yamlEditor.getCommitLogDirectory()));
+        config.put(new PropertySimple("SavedCachesLocation", yamlEditor.getSavedCachesDirectory()));
+        PropertyList dataFileLocations = new PropertyList("AllDataFileLocations");
+        for (String s : yamlEditor.getDataFileDirectories()) {
+            dataFileLocations.add(new PropertySimple("directory", s));
+        }
+        config.put(dataFileLocations);
 
         return config;
     }
@@ -160,6 +170,21 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
 
             updateCassandraJvmProps(config);
             updateCassandraYaml(config);
+
+            String dataFilesChangedString = config.getSimpleValue("dataDirectoriesChanged");
+            boolean dataFilesChanged = dataFilesChangedString != null && Boolean.parseBoolean(dataFilesChangedString);
+
+            if(dataFilesChanged && invoker != null) {
+                try {
+                    OperationResult moveDataFilesResult = invoker.invokeOperation("moveDataFiles", config);
+                    if(moveDataFilesResult.getErrorMessage() != null) {
+                        configurationUpdateReport.setErrorMessage(moveDataFilesResult.getErrorMessage());
+                    }
+                    restartIfNecessary = false; // We have already restarted the storage node, don't do it twice
+                } catch (Exception e) {
+                    configurationUpdateReport.setErrorMessage(e.getMessage());
+                }
+            }
 
             if (isWindows()) {
                 updateWrapperEnv(config);

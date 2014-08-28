@@ -161,6 +161,19 @@
       </parameters>
     </operation>
 
+    <operation name="moveDataFiles" description="Move StorageNode datafiles to a new location">
+      <parameters>
+        <c:simple-property name="CommitLogLocation" description="Location of the commit log directory" required="false" type="string" />
+        <c:simple-property name="SavedCachesLocation" description="Location of the saved caches directory" required="false" type="string" />
+        <c:list-property name="AllDataFileLocations" displayName="Data File Locations" description="List of data file locations">
+          <c:simple-property name="directory" type="string" />
+        </c:list-property>
+      </parameters>
+      <results>
+        <c:simple-property name="operationResult" description="Outcome of updating the configuration."/>
+      </results>
+    </operation>
+
     <operation name="takeSnapshot"
                description="Takes a snapshot of all keyspaces. A snapshot first flushes all in-memory writes to disk and then creates a hard
                link of each SSTable file for the keyspace. Note that a column family can have multiple
@@ -241,6 +254,13 @@
                            type="integer"
                            description="The port used for internode communication. This is a shared, cluster-wide setting."/>
 
+      </c:group>
+      <c:group name="DataFileLocations">
+        <c:simple-property name="CommitLogLocation" description="Location of the commit log directory" required="false" type="string" />
+        <c:simple-property name="SavedCachesLocation" description="Location of the saved caches directory" required="false" type="string" />
+        <c:list-property name="AllDataFileLocations" displayName="Data File Locations" description="List of data file locations">
+          <c:simple-property name="directory" type="string" />
+        </c:list-property>
       </c:group>
     </resource-configuration>
 

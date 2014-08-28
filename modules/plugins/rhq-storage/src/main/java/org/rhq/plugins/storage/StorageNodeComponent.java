@@ -1,7 +1,7 @@
 /*
  *
  *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
+ *  * Copyright (C) 2005-2014 Red Hat, Inc.
  *  * All rights reserved.
  *  *
  *  * This program is free software; you can redistribute it and/or modify
@@ -29,9 +29,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -149,6 +151,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             return decommission();
         } else if (name.equals("uninstall")) {
             return uninstall();
+        } else if (name.equals("moveDataFiles")) {
+            return moveDataFiles(parameters);
         } else {
             return super.invokeOperation(name, parameters);
         }
@@ -246,10 +250,12 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         ConfigurationUpdateReport configurationUpdateReport = new ConfigurationUpdateReport(config);
         StorageNodeConfigDelegate configDelegate = new StorageNodeConfigDelegate(getBasedir(), this);
         configDelegate.updateResourceConfigurationAndRestartIfNecessary(configurationUpdateReport, restartIfRequired);
+
         OperationResult result = new OperationResult("Configuration updated.");
         if (!configurationUpdateReport.getStatus().equals(ConfigurationUpdateStatus.SUCCESS)) {
             result.setErrorMessage(configurationUpdateReport.getErrorMessage());
         }
+
         return result;
     }
 
@@ -295,10 +301,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             File basedir = getBasedir();
             if (basedir.exists()) {
                 log.info("Purging data directories");
-                Configuration pluginConfig = getResourceContext().getPluginConfiguration();
-                String yamlProp = pluginConfig.getSimpleValue("yamlConfiguration");
-                File yamlFile = new File(yamlProp);
-                ConfigEditor yamlEditor = new ConfigEditor(yamlFile);
+                ConfigEditor yamlEditor = getYamlConfigEditor();
                 yamlEditor.load();
                 purgeDataDirs(yamlEditor);
 
@@ -436,10 +439,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         }
 
         Configuration pluginConfig = context.getPluginConfiguration();
-        String yamlProp = pluginConfig.getSimpleValue("yamlConfiguration");
-        File yamlFile = new File(yamlProp);
+        ConfigEditor configEditor = getYamlConfigEditor();
 
-        ConfigEditor configEditor = new ConfigEditor(yamlFile);
         try {
             configEditor.load();
 
@@ -464,7 +465,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             configEditor.setStoragePort(gossipPort);
 
             configEditor.save();
-            log.info("Cluster configuration settings have been applied to " + yamlFile);
+            log.info("Cluster configuration settings have been applied to " + configEditor.getConfigFile());
 
             updateInternodeAuthConfFile(new HashSet<String>(addresses));
 
@@ -479,17 +480,17 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
             return result;
         } catch (ConfigEditorException e) {
-            log.error("There was an error while trying to update " + yamlFile, e);
+            log.error("There was an error while trying to update " + configEditor.getConfigFile(), e);
             if (e.getCause() instanceof YAMLException) {
-                log.info("Attempting to restore " + yamlFile);
+                log.info("Attempting to restore " + configEditor.getConfigFile());
                 try {
                     configEditor.restore();
-                    result.setErrorMessage("Failed to update configuration file [" + yamlFile + "]: " +
+                    result.setErrorMessage("Failed to update configuration file [" + configEditor.getConfigFile() + "]: " +
                         ThrowableUtil.getAllMessages(e.getCause()));
                 } catch (ConfigEditorException e1) {
-                    log.error("Failed to restore " + yamlFile + ". A copy of the file prior to any modifications " +
+                    log.error("Failed to restore " + configEditor.getConfigFile() + ". A copy of the file prior to any modifications " +
                         "can be found at " + configEditor.getBackupFile());
-                    result.setErrorMessage("There was an error updating [" + yamlFile + "] and undoing the changes " +
+                    result.setErrorMessage("There was an error updating [" + configEditor.getConfigFile() + "] and undoing the changes " +
                         "Failed. A copy of the file can be found at " + configEditor.getBackupFile() + ". See the " +
                         "agent logs for more details");
                 }
@@ -511,6 +512,187 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             result.setErrorMessage("Failed to update " + authFile + " due to the following error(s): " +
                 ThrowableUtil.getAllMessages(e));
             return result;
+        }
+    }
+
+    /**
+     * @param origDir Current data directory in the config
+     * @param destDir Potential new data directory
+     * @return true if files were moved
+     */
+    private boolean copyDataDirectoryIfChanged(String origDir, String destDir) throws IOException {
+        if(destDir != null && destDir.length() > 0 && !origDir.equals(destDir)) {
+            log.debug("Moving data from " + origDir + " to " + destDir);
+            File currentDir = new File(origDir);
+            File newDir = new File(destDir);
+
+            FileUtil.copyDirectory(currentDir, newDir);
+            return true;
+        }
+        return false;
+    }
+
+    private OperationResult moveDataFiles(Configuration params) {
+        ResourceContext context = getResourceContext();
+        OperationResult result = new OperationResult();
+
+        log.info("Preparing to move " + this + "'s datafiles to new locations");
+
+        String newCommitLogDirectory = params.getSimpleValue("CommitLogLocation");
+        String newSavedCachesDirectory = params.getSimpleValue("SavedCachesLocation");
+        PropertyList allDataFileLocations = params.getList("AllDataFileLocations");
+        String newDataFileDirectory = null;
+        if(allDataFileLocations != null) {
+            List<String> dataDirectories = new LinkedList<String>();
+            for (Property property : allDataFileLocations.getList()) {
+                PropertySimple dataFileLocation = (PropertySimple) property;
+                dataDirectories.add(dataFileLocation.getStringValue());
+            }
+            if(dataDirectories.size() > 1) {
+                result.setErrorMessage("This process does not support more than one active directory for StorageNode data locations. ");
+                return result;
+            }
+            newDataFileDirectory = dataDirectories.get(0);
+        }
+
+        if(newCommitLogDirectory == null && newSavedCachesDirectory == null && newDataFileDirectory == null) {
+            return new OperationResult("No new directories were specified");
+        }
+
+
+        log.info("Stopping storage node");
+        OperationResult shutdownResult = super.shutdownNode(); // CassandraNodeComponent.shutDownNode() does draining before shutting down
+        try {
+            waitForNodeToGoDown();
+        } catch (InterruptedException e) {
+            log.error("Received " + e.getLocalizedMessage() + " while waiting for storage node " + getResourceContext().getResourceKey() + " to shutdown", e);
+            result.setErrorMessage("Failed to stop the storage node. The storage node must be shut down in order " +
+                    "for the changes made by this operation to take effect. The attempt to stop shut down the storage " +
+                    "node failed with this error: " + shutdownResult.getErrorMessage());
+            return result;
+        }
+        if (shutdownResult.getErrorMessage() != null) {
+            log.error("Failed to stop storage node " + getResourceContext().getResourceKey() + ". The storage node " +
+                    "must be shut down in order for the changes made by this operation to take effect.");
+            result.setErrorMessage("Failed to stop the storage node. The storage node must be shut down in order " +
+                    "for the changes made by this operation to take effect. The attempt to stop shut down the storage " +
+                    "node failed with this error: " + shutdownResult.getErrorMessage());
+            return result;
+        }
+
+        log.info("Storage node shutdown, preparing to move datafiles");
+
+        List<String> originalDataDirectories = new LinkedList<String>();
+        List<String> createdDataDirectories = new LinkedList<String>();
+
+        ConfigEditor configEditor = getYamlConfigEditor();
+        try {
+            configEditor.load();
+
+            // Moving the data directory
+            List<String> dataFileDirectories = configEditor.getDataFileDirectories();
+            if(dataFileDirectories.size() > 1) {
+                // We do not support this scenario
+                log.error("More than one datadirectory configured for the StorageNode. This operation mode is not supported by this tool");
+                StringBuilder pathListBuilder = new StringBuilder();
+                for (String dataFileDir : dataFileDirectories) {
+                    pathListBuilder.append(dataFileDir).append(", ");
+                }
+                result.setErrorMessage("Could not proceed with moving datafiles from " + pathListBuilder.toString() + "this tool does not support"
+                        + " multiple datafile paths.");
+                return result;
+            } else if(dataFileDirectories.size() == 1) {
+                String currentDataFileLocation = dataFileDirectories.get(0);
+                boolean dataFilesMoved = copyDataDirectoryIfChanged(currentDataFileLocation, newDataFileDirectory);
+                if(dataFilesMoved) {
+                    originalDataDirectories.add(currentDataFileLocation);
+                    createdDataDirectories.add(newDataFileDirectory);
+                    List<String> newDataFileDirectories = new LinkedList<String>();
+                    newDataFileDirectories.add(newDataFileDirectory);
+                    configEditor.setDataFileDirectories(newDataFileDirectories);
+                }
+            }
+
+            // In theory we wouldn't need to copy these, as draining should empty these
+            String currentCommitLogDirectory = configEditor.getCommitLogDirectory();
+
+            boolean commitLogCopied = copyDataDirectoryIfChanged(currentCommitLogDirectory, newCommitLogDirectory);
+            if(commitLogCopied) {
+                originalDataDirectories.add(currentCommitLogDirectory);
+                createdDataDirectories.add(newCommitLogDirectory);
+                configEditor.setCommitLogDirectory(newCommitLogDirectory);
+            }
+
+            // Not so dangerous if we lose these, but lets try to keep them
+            String currentSavedCachesDirectory = configEditor.getSavedCachesDirectory();
+
+            boolean savedCachesCopied = copyDataDirectoryIfChanged(currentSavedCachesDirectory, newSavedCachesDirectory);
+            if(savedCachesCopied) {
+                originalDataDirectories.add(currentSavedCachesDirectory);
+                createdDataDirectories.add(newSavedCachesDirectory);
+                configEditor.setSavedCachesDirectory(newSavedCachesDirectory);
+            }
+
+            log.info(this + " datafiles have been moved. Restarting storage node...");
+            OperationResult startResult = startNode();
+            if (startResult.getErrorMessage() != null) {
+                log.error("Failed to restart storage node:\n" + startResult.getErrorMessage());
+                result.setErrorMessage("Failed to restart storage node:\n" + startResult.getErrorMessage());
+                // rollback here
+                configEditor.restore();
+                purgeDirectories(createdDataDirectories);
+            } else {
+                result.setSimpleResult("The storage node was succesfully updated.");
+                // Commit changes, remove old directories
+                configEditor.save(); // This can still throw an exception, in which case we need to rollback
+                purgeDirectories(originalDataDirectories);
+            }
+
+            return result;
+        } catch (ConfigEditorException e) {
+            log.error("There was an error while trying to update " + configEditor.getConfigFile(), e);
+            if (e.getCause() instanceof YAMLException) {
+                log.info("Attempting to restore " + configEditor.getConfigFile());
+                try {
+                    configEditor.restore();
+                    purgeDirectories(createdDataDirectories);
+                    result.setErrorMessage("Failed to update configuration file [" + configEditor.getConfigFile() + "]: " +
+                            ThrowableUtil.getAllMessages(e.getCause()));
+                } catch (ConfigEditorException e1) {
+                    log.error("Failed to restore " + configEditor.getConfigFile() + ". A copy of the file prior to any modifications " +
+                            "can be found at " + configEditor.getBackupFile());
+                    result.setErrorMessage("There was an error updating [" + configEditor.getConfigFile() + "] and undoing the changes " +
+                            "Failed. A copy of the file can be found at " + configEditor.getBackupFile() + ". See the " +
+                            "agent logs for more details");
+                }
+            }
+
+            EmsConnection emsConnection = getEmsConnection();
+            EmsBean storageService = emsConnection.getBean("org.apache.cassandra.db:type=StorageService");
+            EmsAttribute attribute = storageService.getAttribute("OperationMode");
+            String operationMode = (String) attribute.refresh();
+
+            if (!operationMode.equals("NORMAL")) {
+                result.setErrorMessage("Bootstrapping " + getHost() + " failed. The StorageService is reporting " +
+                        operationMode + " for its operation mode but it should be reporting NORMAL. The StorageService " +
+                        "operation mode is not to be confused with the Storage Node operation mode.");
+            }
+            return result;
+        } catch (IOException e) {
+            log.error("Moving datafiles failed", e);
+            purgeDirectories(createdDataDirectories);
+            configEditor.restore();
+            result.setErrorMessage("Failed to move all the files to new destinations, " + e.getLocalizedMessage() + ". StorageService was left offline" +
+                    ", investigate before restarting the node");
+//            OperationResult startResult = startNode(); // return the StorageNode online, but what if IOException was out of diskspace?
+            return result;
+        }
+    }
+
+    private void purgeDirectories(List<String> directories) {
+        for(String dir : directories) {
+            File directory = new File(dir);
+            purgeDir(directory);
         }
     }
 
@@ -806,5 +988,12 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     public String toString() {
         return StorageNodeComponent.class.getSimpleName() + "[resourceKey: " + getResourceContext().getResourceKey() +
             "]";
+    }
+
+    private ConfigEditor getYamlConfigEditor() {
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+        String yamlProp = pluginConfig.getSimpleValue("yamlConfiguration");
+        File yamlFile = new File(yamlProp);
+        return new ConfigEditor(yamlFile);
     }
 }

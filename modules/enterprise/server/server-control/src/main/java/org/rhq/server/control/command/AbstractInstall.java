@@ -434,11 +434,15 @@ public abstract class AbstractInstall extends ControlCommand {
         // We also need to revert mgmt-users.properties
         File mgmtUserPropertiesFile = new File(getBaseDir(),
                 "jbossas/standalone/configuration/mgmt-users.properties");
+        File standaloneXmlFile = new File(getBaseDir(), "jbossas/standalone/configuration/standalone-full.xml");
         final FileReverter mgmtUserPropertiesReverter = new FileReverter(mgmtUserPropertiesFile);
-        addUndoTask(new ControlCommand.UndoTask("Removing server-installed marker file and management user") {
+        final FileReverter standaloneXmlFileReverter = new FileReverter(standaloneXmlFile);
+        addUndoTask(new ControlCommand.UndoTask(
+            "Removing server-installed marker file and management user and reverting to original standalone-full.xml") {
             public void performUndoWork() throws Exception {
                 getServerInstalledMarkerFile(getBaseDir()).delete();
                 mgmtUserPropertiesReverter.revert();
+                standaloneXmlFileReverter.revert();
             }
         });
 

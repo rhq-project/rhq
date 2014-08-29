@@ -12,6 +12,11 @@
   <artifactId>rhq-cassandra-schema</artifactId>
   <name>RHQ Cassandra Schema</name>
 
+  <properties>
+    <rhq.storage.deploy>true</rhq.storage.deploy>
+    <numSchedules>50</numSchedules>
+  </properties>
+
   <dependencies>
      <dependency>
        <groupId>${project.groupId}</groupId>
@@ -46,6 +51,25 @@
       <artifactId>joda-time</artifactId>
       <version>2.1</version>
     </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-core-dbutils</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-core-util</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-cassandra-ccm-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -58,6 +82,33 @@
               <mainClass>org.rhq.cassandra.schema.SchemaManager</mainClass>
               <classpathScope>compile</classpathScope>
           </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemProperties>
+            <property>
+              <name>rhq.db.url</name>
+              <value>${rhq.test.ds.connection-url}</value>
+            </property>
+            <property>
+              <name>rhq.db.username</name>
+              <value>${rhq.test.ds.user-name}</value>
+            </property>
+            <property>
+              <name>rhq.db.password</name>
+              <value>${rhq.test.ds.password}</value>
+            </property>
+            <property>
+              <name>rhq.storage.deploy</name>
+              <value>${rhq.storage.deploy}</value>
+            </property>
+            <property>
+              <name>numSchedules</name>
+              <value>${numSchedules}</value>
+            </property>
+          </systemProperties>
+        </configuration>
       </plugin>
     </plugins>
   </build>

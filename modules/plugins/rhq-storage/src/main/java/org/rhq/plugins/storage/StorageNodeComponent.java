@@ -474,7 +474,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
                 log.error("Failed to restart storage node:\n" + startResult.getErrorMessage());
                 result.setErrorMessage("Failed to restart storage node:\n" + startResult.getErrorMessage());
             } else {
-                result.setSimpleResult("The storage node was succesfully updated is now bootstrapping into the cluster.");
+                result.setSimpleResult("The storage node was successfully updated is now bootstrapping into the cluster.");
             }
 
             return result;

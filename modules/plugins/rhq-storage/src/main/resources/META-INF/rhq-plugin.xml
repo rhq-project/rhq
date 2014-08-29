@@ -141,6 +141,9 @@
           <c:simple-property name="address"/>
         </c:list-property>
       </parameters>
+      <results>
+          <c:simple-property name="operationResult"/>
+      </results>
     </operation>
 
     <operation name="prepareForUpgrade" description="Prepares the storage node for upgrade (this operation consists of following steps: 1) turning off the RPC server, 2) turning off the gossiper, 3) taking the snapshot (backuping the data), 4) invoking the drain operation">

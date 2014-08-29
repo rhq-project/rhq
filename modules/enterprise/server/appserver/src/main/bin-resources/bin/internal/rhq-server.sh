@@ -477,7 +477,7 @@ case "$1" in
         # first, make sure its working directory is the JBossAS bin directory
         cd "${RHQ_SERVER_JBOSS_HOME}/bin"
         if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
-           "$_JBOSS_RUN_SCRIPT" $_CMDLINE_OPTS &
+           "$_JBOSS_RUN_SCRIPT" $_CMDLINE_OPTS > "${RHQ_SERVER_HOME}/logs/rhq-server.log" 2>&1 &
         else
            "$_JBOSS_RUN_SCRIPT" $_CMDLINE_OPTS > /dev/null 2>&1 &
         fi

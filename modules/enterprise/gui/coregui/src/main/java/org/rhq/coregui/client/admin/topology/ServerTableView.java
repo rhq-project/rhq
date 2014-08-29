@@ -160,34 +160,38 @@ public class ServerTableView extends
 
         addTableAction(MSG.view_adminTopology_server_removeSelected(), null, ButtonColor.RED,
             new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                List<String> selectedNames = getSelectedNames(selections);
-                String message = MSG.view_adminTopology_message_removeServerConfirm(selectedNames.toString());
-                SC.ask(message, new BooleanCallback() {
-                    public void execute(Boolean confirmed) {
-                        if (confirmed) {
-                            int[] selectedIds = getSelectedIds(selections);
-                            GWTServiceLookup.getTopologyService().deleteServers(selectedIds, new AsyncCallback<Void>() {
-                                public void onSuccess(Void arg0) {
-                                    Message msg = new Message(MSG.view_adminTopology_message_removedServer(String
-                                        .valueOf(selections.length)), Message.Severity.Info);
-                                    CoreGUI.getMessageCenter().notify(msg);
-                                    refresh();
-                                }
+                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                    List<String> selectedNames = getSelectedNames(selections);
+                    String message = MSG.view_adminTopology_message_removeServerConfirm(selectedNames.toString());
+                    SC.ask(message, new BooleanCallback() {
+                        public void execute(Boolean confirmed) {
+                            if (null == confirmed || !confirmed) { // clicked "No" or closed the dialog
+                                refreshTableInfo();
+                            } else {
+                                int[] selectedIds = getSelectedIds(selections);
+                                GWTServiceLookup.getTopologyService().deleteServers(selectedIds,
+                                    new AsyncCallback<Void>() {
+                                        public void onSuccess(Void arg0) {
+                                            Message msg = new Message(MSG
+                                                .view_adminTopology_message_removedServer(String
+                                                    .valueOf(selections.length)), Message.Severity.Info);
+                                            CoreGUI.getMessageCenter().notify(msg);
+                                            refresh();
+                                        }
 
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_adminTopology_message_removeServerFail(String
-                                            .valueOf(selections.length)) + " " + caught.getMessage(), caught);
-                                    refreshTableInfo();
-                                }
+                                        public void onFailure(Throwable caught) {
+                                            CoreGUI.getErrorHandler().handleError(
+                                                MSG.view_adminTopology_message_removeServerFail(String
+                                                    .valueOf(selections.length)) + " " + caught.getMessage(), caught);
+                                            refreshTableInfo();
+                                        }
 
-                            });
+                                    });
+                            }
                         }
-                    }
-                });
-            }
-        });
+                    });
+                }
+            });
     }
 
     private void addChangeOperationModeAction(final OperationMode mode, String label) {
@@ -198,11 +202,13 @@ public class ServerTableView extends
                 String message = MSG.view_adminTopology_message_setModeConfirm(selectedNames.toString(), mode.name());
                 SC.ask(message, new BooleanCallback() {
                     public void execute(Boolean confirmed) {
-                        if (confirmed) {
+                        if (null == confirmed || !confirmed) { // clicked "No" or closed the dialog
+                            refreshTableInfo();
+                        } else {
                             int[] selectedIds = getSelectedIds(selections);
                             boolean manualMaintenance = mode == OperationMode.MAINTENANCE;
-                            GWTServiceLookup.getTopologyService().updateServerManualMaintenance(selectedIds, manualMaintenance,
-                                new AsyncCallback<Void>() {
+                            GWTServiceLookup.getTopologyService().updateServerManualMaintenance(selectedIds,
+                                manualMaintenance, new AsyncCallback<Void>() {
                                     public void onSuccess(Void result) {
                                         Message msg = new Message(MSG.view_adminTopology_message_setMode(
                                             String.valueOf(selections.length), mode.name()), Message.Severity.Info);
@@ -219,8 +225,6 @@ public class ServerTableView extends
                                     }
 
                                 });
-                        } else {
-                            refreshTableInfo();
                         }
                     }
                 });

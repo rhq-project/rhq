@@ -100,7 +100,6 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private ButtonItem findAgentInstallPathButton;
     private ButtonItem statusCheckButton;
     private CheckboxItem rememberMeCheckbox;
-    private VLayout agentInfoLayout;
 
     private Dialog dialog;
 
@@ -168,11 +167,6 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         layout.addMember(header);
         layout.addMember(getButtons());
 
-        agentInfoLayout = new VLayout();
-        agentInfoLayout.setWidth100();
-        agentInfoLayout.setHeight100();
-        agentInfoLayout.setMembersMargin(1);
-        layout.addMember(agentInfoLayout);
         addMember(layout);
 
     }
@@ -585,11 +579,6 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private void installAgent() {
         disableButtons(true);
 
-        // clear any old information that was from a prior attempt
-        for (Canvas child : agentInfoLayout.getChildren()) {
-            child.destroy();
-        }
-
         // FOR TESTING WITHOUT DOING A REAL INSTALL - START
         //        AgentInstallInfo result = new AgentInstallInfo("mypath", "myown", "1.1", "localHOST", "serverHOST");
         //        for (int i = 1; i < 20; i++)
@@ -690,7 +679,6 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                                     }
 
                                     buildInstallInfoCanvas(result);
-                                    agentInfoLayout.markForRedraw();
                                     agentStatusCheck(); // we are relying on this to call doneProcessing(), we shouldn't do it here
                                 }
 

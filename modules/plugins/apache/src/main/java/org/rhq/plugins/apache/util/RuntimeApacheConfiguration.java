@@ -101,7 +101,6 @@ public class RuntimeApacheConfiguration {
 
             if (currentNodeName.equalsIgnoreCase("LoadModule")) {
                 state.loadedModules.add(allValues.get(0));
-                result.nodeIsConditional = false;
             } else if (currentNodeName.equalsIgnoreCase("<IfModule")) {
                 String moduleFile = valueAsString;
                 boolean negate = false;
@@ -133,8 +132,6 @@ public class RuntimeApacheConfiguration {
                 }
 
                 result.shouldRecurseIntoConditionalNode = moduleLoaded != negate;
-
-                result.nodeIsConditional = true;
             } else if (currentNodeName.equalsIgnoreCase("<IfDefine")) {
                 String define = valueAsString;
                 boolean negate = false;
@@ -146,8 +143,6 @@ public class RuntimeApacheConfiguration {
                 boolean isDefined = state.defines.contains(define);
 
                 result.shouldRecurseIntoConditionalNode = isDefined != negate;
-
-                result.nodeIsConditional = true;
             } else if (currentNodeName.equalsIgnoreCase("<IfVersion")) {
                 //<IfVersion [[!]operator] version> ... </IfVersion>
                 //operator: =, ==, >, >=, <, <=, ~
@@ -232,11 +227,9 @@ public class RuntimeApacheConfiguration {
                 }
 
                 result.shouldRecurseIntoConditionalNode = hasVersion != negate;
-
-                result.nodeIsConditional = true;
-            } else {
-                result.nodeIsConditional = false;
             }
+
+            result.nodeIsConditional = ApacheDirective.isConditionalDirectiveName(currentNodeName);
 
             return result;
         }

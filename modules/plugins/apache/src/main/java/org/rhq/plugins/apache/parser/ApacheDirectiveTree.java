@@ -31,6 +31,46 @@ public class ApacheDirectiveTree implements Cloneable {
             return parseExpr(rootNode, name);
     }
 
+    /**
+     * Search can be provided a path-like expression to look for specific children.
+     * This method merely looks for children with specified name.
+     * <p/>
+     * If recursive is <code>false</code>, this method is equivalent to {@link ApacheDirective#getChildByName(String)}.
+     *
+     * @param nd the root node to start the search from
+     * @param name the name of the child node
+     * @param recursively whether to recurse down the child tree (in the depth first search manner)
+     * @return the list of directives with given name.
+     */
+    public List<ApacheDirective> findByName(ApacheDirective nd, String name, boolean recursively) {
+        List<ApacheDirective> ret = new ArrayList<ApacheDirective>();
+        findByName(nd, name, recursively, ret);
+        return ret;
+    }
+
+    /**
+     * Same as {@link #findByName(ApacheDirective, String, boolean, java.util.List)} with the root node of this tree
+     * provided as the node parameter.
+     * @param name the name of the child nodes
+     * @param recursively whether to recurse down the child tree (in the depth first search manner)
+     * @return the list of directives with given name.
+     */
+    public List<ApacheDirective> findByName(String name, boolean recursively) {
+        return findByName(rootNode, name, recursively);
+    }
+
+    private void findByName(ApacheDirective root, String name, boolean recursively, List<ApacheDirective> results) {
+        for (ApacheDirective child : root.getChildDirectives()) {
+            if (name.equals(child.getName())) {
+                results.add(child);
+            }
+
+            if (recursively) {
+                findByName(child, name, true, results);
+            }
+        }
+    }
+
     private List<ApacheDirective> parseExpr(ApacheDirective nd, String expr) {
         int index = expr.indexOf("/");
         String name;

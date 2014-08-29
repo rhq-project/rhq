@@ -290,34 +290,41 @@ public class Installer {
                     .valueOf(valueToEncode));
             }
 
+            System.out.println("     ");
+            System.out.println("     ");
+
             if ("rhq.server.database.password".equals(associatedProperty)
                 || "rhq.autoinstall.server.admin.password".equals(associatedProperty)
                 || "rhq.storage.password".equals(associatedProperty)) {
-                LOG.info("*** Encoded password for rhq-server.properties:");
-                LOG.info("***     " + associatedProperty + "=" + encodedValue);
-                LOG.info("***     ");
+                System.out.println("Encoded password for rhq-server.properties:");
+                System.out.println("     " + associatedProperty + "=" + encodedValue);
+                System.out.println("     ");
             } else {
-                LOG.info("*** !!! WARNING !!!");
-                LOG.info("*** Both standalone-full.xml and rhq-server.properties need to be updated if a property from rhq-server.properties is used in standalone-full.xml");
-                LOG.info("*** !!! WARNING !!!");
-                LOG.info("***     ");
-                LOG.info("***     ");
-                LOG.info("*** Encoded password for rhq-server.properties:");
-                LOG.info("***     " + associatedProperty + "=RESTRICTED::" + encodedValue);
-                LOG.info("***     ");
-                LOG.info("*** Encoded password for standalone-full.xml with vault with password as default value:");
-                LOG.info("***     ${VAULT::restricted::" + associatedProperty + "::" + encodedValue + "}");
-                LOG.info("***     ");
-                LOG.info("*** Encoded password for standalone-full.xml with vault without default:");
-                LOG.info("***     ${VAULT::restricted::" + associatedProperty + ":: }");
-                LOG.info("***     ");
-                LOG.info("*** Encoded password for agent-configuration.xml:");
-                LOG.info("***     <entry key=\"" + associatedProperty + "\" value=\"RESTRICTED::" + encodedValue
-                    + "\" />");
-                LOG.info("***     ");
+                String prompt = "value";
+                if (associatedProperty != null && associatedProperty.toLowerCase().contains("password")) {
+                    prompt = "password";
+                }
+
+                System.out.println("!!! WARNING !!!");
+                System.out.println("Both standalone-full.xml and rhq-server.properties need to be updated if a property from rhq-server.properties is used in standalone-full.xml");
+                System.out.println("!!! WARNING !!!");
+                System.out.println("     ");
+                System.out.println("Encoded " + prompt + " for rhq-server.properties:");
+                System.out.println("     " + associatedProperty + "=RESTRICTED::" + encodedValue);
+                System.out.println("     ");
+                System.out.println("Encoded " + prompt + " for standalone-full.xml with selected " + prompt + " as default:");
+                System.out.println("     ${VAULT::restricted::" + associatedProperty + "::" + encodedValue + "}");
+                System.out.println("     ");
+                System.out.println("Encoded " + prompt + " for standalone-full.xml without default:");
+                System.out.println("     ${VAULT::restricted::" + associatedProperty + ":: }");
+                System.out.println("     ");
+                System.out.println("Encoded " + prompt + " for agent-configuration.xml:");
+                System.out.println("     <entry key=\"" + associatedProperty + "\" value=\"RESTRICTED::" + encodedValue + "\" />");
+                System.out.println("     ");
             }
 
-            LOG.info("*** Please consult the documentation for additional help.");
+            System.out.println("Please consult the documentation for additional help.");
+            System.out.println("     ");
 
             return new WhatToDo[] { WhatToDo.DO_NOTHING };
         }

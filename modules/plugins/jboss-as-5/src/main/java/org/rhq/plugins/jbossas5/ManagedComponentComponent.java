@@ -1,25 +1,26 @@
 /*
-* Jopr Management Platform
-* Copyright (C) 2005-2012 Red Hat, Inc.
-* All rights reserved.
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License, version 2, as
-* published by the Free Software Foundation, and/or the GNU Lesser
-* General Public License, version 2.1, also as published by the Free
-* Software Foundation.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License and the GNU Lesser General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License
-* and the GNU Lesser General Public License along with this program;
-* if not, write to the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-*/
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+
 package org.rhq.plugins.jbossas5;
 
 import java.lang.reflect.Array;
@@ -85,6 +86,9 @@ import org.rhq.plugins.jbossas5.util.ResourceTypeUtils;
  */
 public class ManagedComponentComponent extends AbstractManagedComponent implements ConfigurationFacet,
     DeleteResourceFacet, OperationFacet, MeasurementFacet {
+
+    private static final Log LOG = LogFactory.getLog(ManagedComponentComponent.class);
+
     public static interface Config {
         String COMPONENT_TYPE = "componentType";
         String COMPONENT_SUBTYPE = "componentSubtype";
@@ -94,8 +98,6 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     }
 
     protected static final char PREFIX_DELIMITER = '|';
-
-    private final Log log = LogFactory.getLog(this.getClass());
 
     /**
      * The availability refresh interval specifies a duration that if exceeded means a managed
@@ -114,7 +116,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
      * {@link #getAvailability} to determine whether or not a component is needed to
      * perform an availability check.
      */
-    private long lastComponentRefresh = 0L;
+    private volatile long lastComponentRefresh = 0L;
 
     // The last known runState for the component.  This is used to determine the result of getAvailability(). We
     // do *not* cache the entire ManagedComponent because it is potentially a huge object that would eat too much memory.
@@ -125,13 +127,14 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     // ResourceComponent Implementation  --------------------------------------------
 
+    @Override
     public AvailabilityType getAvailability() {
         long timeSinceComponentRefresh = System.currentTimeMillis() - lastComponentRefresh;
         boolean refresh = timeSinceComponentRefresh > availRefreshInterval;
 
-        if (refresh) {
-            if (lastComponentRefresh > 0L && log.isDebugEnabled()) {
-                log.debug("The availability refresh interval for [resourceKey: "
+        if (runState == null || refresh) {
+            if (LOG.isDebugEnabled() && runState != null && lastComponentRefresh > 0L) {
+                LOG.debug("The availability refresh interval for [resourceKey: "
                     + getResourceContext().getResourceKey() + ", type: " + componentType + ", name: " + componentName
                     + "] has been exceeded by " + (timeSinceComponentRefresh - availRefreshInterval)
                     + " ms. Reloading managed component...");
@@ -149,34 +152,36 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             return AvailabilityType.UP;
 
         } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Returning DOWN avail for " + componentType + " component '" + componentName
-                    + "' with runState [" + runState
-                    + "].");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Returning DOWN avail for " + componentType + " component '" + componentName
+                    + "' with runState [" + runState + "].");
             }
 
             return AvailabilityType.DOWN;
         }
     }
 
+    @Override
     public void start(ResourceContext<ProfileServiceComponent<?>> resourceContext) throws Exception {
         super.start(resourceContext);
         componentType = ConversionUtils.getComponentType(getResourceContext().getResourceType());
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
         componentName = pluginConfig.getSimple(Config.COMPONENT_NAME).getStringValue();
         initAvailRefreshInterval(resourceContext);
-        if (log.isTraceEnabled()) {
-            log.trace("Started ResourceComponent for " + getResourceDescription() + ", managing " + this.componentType
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Started ResourceComponent for " + getResourceDescription() + ", managing " + this.componentType
                 + " component '" + this.componentName + "'.");
         }
     }
 
+    @Override
     public void stop() {
         super.stop();
     }
 
     // ConfigurationComponent Implementation  --------------------------------------------
 
+    @Override
     public Configuration loadResourceConfiguration() {
         Configuration resourceConfig;
         ManagedComponent managedComponent = getManagedComponent();
@@ -184,16 +189,17 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(getResourceContext()
                 .getPluginConfiguration());
-            if (this.log.isDebugEnabled())
-                this.log.debug("*** AFTER LOAD:\n" + DebugUtils.convertPropertiesToString(managedProperties));
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("*** AFTER LOAD:\n" + DebugUtils.convertPropertiesToString(managedProperties));
+            }
             resourceConfig = ConversionUtils.convertManagedObjectToConfiguration(managedProperties, customProps,
                 getResourceContext().getResourceType());
         } catch (Exception e) {
             RunState runState = managedComponent.getRunState();
             if (runState == RunState.RUNNING) {
-                this.log.error("Failed to load configuration for " + getResourceDescription() + ".", e);
-            } else {
-                this.log.debug("Failed to load configuration for " + getResourceDescription()
+                LOG.error("Failed to load configuration for " + getResourceDescription() + ".", e);
+            } else if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to load configuration for " + getResourceDescription()
                     + ", but managed component is not in the RUNNING state.", e);
             }
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
@@ -201,6 +207,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         return resourceConfig;
     }
 
+    @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport) {
         Configuration resourceConfig = configurationUpdateReport.getConfiguration();
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
@@ -208,16 +215,18 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             ManagedComponent managedComponent = getManagedComponent();
             Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(pluginConfig);
-            if (this.log.isDebugEnabled())
-                this.log.debug("*** BEFORE UPDATE:\n" + DebugUtils.convertPropertiesToString(managedProperties));
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("*** BEFORE UPDATE:\n" + DebugUtils.convertPropertiesToString(managedProperties));
+            }
             ConversionUtils.convertConfigurationToManagedProperties(managedProperties, resourceConfig,
                 getResourceContext().getResourceType(), customProps);
-            if (this.log.isDebugEnabled())
-                this.log.debug("*** AFTER UPDATE:\n" + DebugUtils.convertPropertiesToString(managedProperties));
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("*** AFTER UPDATE:\n" + DebugUtils.convertPropertiesToString(managedProperties));
+            }
             updateComponent(managedComponent);
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.SUCCESS);
         } catch (Exception e) {
-            this.log.error("Failed to update configuration for " + getResourceDescription() + ".", e);
+            LOG.error("Failed to update configuration for " + getResourceDescription() + ".", e);
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
             configurationUpdateReport.setErrorMessage(ThrowableUtil.getAllMessages(e));
         }
@@ -225,24 +234,29 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     // DeleteResourceFacet Implementation  --------------------------------------------
 
+    @Override
     public void deleteResource() throws Exception {
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
         if (!deploymentManager.isRedeploySupported())
             throw new UnsupportedOperationException("Deletion of " + getResourceContext().getResourceType().getName()
                 + " Resources is not currently supported.");
         ManagedComponent managedComponent = getManagedComponent();
-        log.debug("Removing " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Removing " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
+        }
         ManagementView managementView = getConnection().getManagementView();
         managementView.removeComponent(managedComponent);
         ManagedDeployment parentDeployment = managedComponent.getDeployment();
 
         if (parentDeployment.getComponents().size() > 1 || !parentDeployment.getChildren().isEmpty()) {
-            log.debug("Redeploying parent deployment '" + parentDeployment.getName()
-                + "' in order to complete removal of component " + toString(managedComponent) + "...");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Redeploying parent deployment '" + parentDeployment.getName()
+                    + "' in order to complete removal of component " + toString(managedComponent) + "...");
+            }
             DeploymentProgress progress = deploymentManager.redeploy(parentDeployment.getName());
             DeploymentStatus status = DeploymentUtils.run(progress);
             if (status.isFailed()) {
-                log.error("Failed to redeploy parent deployment '" + parentDeployment.getName()
+                LOG.error("Failed to redeploy parent deployment '" + parentDeployment.getName()
                     + "during removal of component " + toString(managedComponent)
                     + " - removal may not persist when the app server is restarted.", status.getFailure());
             }
@@ -250,13 +264,15 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             //this is the last component of the deployment and nothing would be left there after
             //the component was removed. Let's just undeploy it in addition to removing the component.
             //This will make sure that the deployment doesn't leave behind any defunct config files, etc.
-            log.debug("Undeploying parent deployment '" + parentDeployment.getName()
-                + "' in order to complete removal of component " + toString(managedComponent) + "...");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Undeploying parent deployment '" + parentDeployment.getName()
+                    + "' in order to complete removal of component " + toString(managedComponent) + "...");
+            }
             parentDeployment = managementView.getDeployment(parentDeployment.getName());
             DeploymentProgress progress = deploymentManager.remove(parentDeployment.getName());
             DeploymentStatus status = DeploymentUtils.run(progress);
             if (status.isFailed()) {
-                log.error("Failed to undeploy parent deployment '" + parentDeployment.getName()
+                LOG.error("Failed to undeploy parent deployment '" + parentDeployment.getName()
                     + "during removal of component " + toString(managedComponent)
                     + " - removal may not persist when the app server is restarted.", status.getFailure());
             }
@@ -267,6 +283,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     // OperationFacet Implementation  --------------------------------------------
 
+    @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         return invokeOperation(getManagedComponent(), name, parameters);
     }
@@ -295,6 +312,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     // MeasurementFacet Implementation  --------------------------------------------
 
+    @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
         getValues(getManagedComponent(), report, metrics);
     }
@@ -308,9 +326,9 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
                 addValueToMeasurementReport(report, request, value);
             } catch (Exception e) {
                 if (runState == RunState.RUNNING) {
-                    log.error("Failed to collect metric for " + request, e);
-                } else {
-                    log.debug("Failed to collect metric for " + request
+                    LOG.error("Failed to collect metric for " + request, e);
+                } else if (LOG.isDebugEnabled()) {
+                    LOG.debug("Failed to collect metric for " + request
                         + ", but managed component is not in the RUNNING state.", e);
                 }
             }
@@ -327,7 +345,9 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     }
 
     protected void updateComponent(ManagedComponent managedComponent) throws Exception {
-        log.trace("Updating " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Updating " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
+        }
         ManagementView managementView = getConnection().getManagementView();
         managementView.updateComponent(managedComponent);
         managementView.load();
@@ -391,9 +411,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         String compositePropName = (pipeIndex == -1) ? metricName : metricName.substring(pipeIndex + 1);
         int dotIndex = compositePropName.indexOf('.');
         String metricPropName = (dotIndex == -1) ? compositePropName : compositePropName.substring(0, dotIndex);
-        ManagedProperty metricProp = managedComponent.getProperty(metricPropName);
-
-        return metricProp;
+        return managedComponent.getProperty(metricPropName);
     }
 
     // TODO: Move this to a utility class.
@@ -414,7 +432,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             value = arrayValue.getValue();
         } else if (metaValue.getMetaType().isCollection()) {
             CollectionValue collectionValue = (CollectionValue) metaValue;
-            List list = new ArrayList();
+            List<Object> list = new ArrayList<Object>();
             for (MetaValue element : collectionValue.getElements()) {
                 list.add(getInnerValue(element));
             }
@@ -439,7 +457,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
                 MeasurementDataNumeric dataNumeric = new MeasurementDataNumeric(request, Double.valueOf(stringValue));
                 report.addData(dataNumeric);
             } catch (NumberFormatException e) {
-                log.error("Profile service did not return a numeric value as expected for metric [" + request.getName()
+                LOG.error("Profile service did not return a numeric value as expected for metric [" + request.getName()
                     + "] - value returned was " + value + ".", e);
             }
             break;
@@ -489,8 +507,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
                 + this.componentName + "].");
         }
 
-        if (log.isTraceEnabled()) {
-            log.trace("Retrieved " + toString(managedComponent) + ".");
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Retrieved " + toString(managedComponent) + ".");
         }
 
         return managedComponent;
@@ -500,9 +518,9 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
      * This is an override point. When actually fetching the managed component, this entry point should not be
      * used. Instead, access should be via {@link #getManagedComponent()}. 
      *
-     * @param managementView
+     * @param managementView for querying profile service
      * @return the ManagedComponent. Null if not found.
-     * @Throws Exception if there is a problem getting the component.
+     * @throws Exception if there is a problem getting the component.
      */
     protected ManagedComponent getManagedComponent(ManagementView managementView) throws Exception {
         if (null == managementView) {
@@ -572,8 +590,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         }
 
         if (component == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Failed to find parent " + ApplicationServerComponent.class.getSimpleName()
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to find parent " + ApplicationServerComponent.class.getSimpleName()
                     + ". Using default component refresh interval, " + AVAIL_REFRESH_INTERVAL + " ms");
             }
             return;

@@ -653,16 +653,16 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         String httpdVersion = binaryInfo.getVersion();
         Map<String, String> defaultModuleNames = getDefaultModuleNames(httpdVersion);
 
-        return parseRuntimeConfiguration(path, processInfo, binaryInfo, defaultModuleNames, true);
+        return parseRuntimeConfiguration(path, processInfo, binaryInfo, defaultModuleNames, true, false);
     }
 
     public static ApacheDirectiveTree parseRuntimeConfiguration(String path, ProcessInfo processInfo,
-        ApacheBinaryInfo binaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
+        ApacheBinaryInfo binaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings, boolean keepConditional) {
         String defaultServerRoot = binaryInfo.getRoot();
 
         RuntimeApacheConfiguration.NodeInspector insp =
             RuntimeApacheConfiguration.getNodeInspector(processInfo, binaryInfo, moduleNames,
-                suppressUnknownModuleWarnings);
+                suppressUnknownModuleWarnings, keepConditional);
 
         ApacheDirectiveTree tree = new ApacheDirectiveTree();
         ApacheParser parser = new ApacheParserImpl(tree, defaultServerRoot, insp);

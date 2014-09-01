@@ -28,6 +28,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -832,9 +833,14 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
     @NotNull
     public ConfigurationTimestamp getConfigurationTimestamp() {
-        AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getTemporaryDirectory()
-            .getAbsolutePath(), resourceContext.getPluginConfiguration());
-        return new ConfigurationTimestamp(config.getAllConfigurationFiles());
+        ApacheDirectiveTree tree = parseRuntimeConfiguration(true);
+        Set<String> paths = tree.getAllPaths();
+        Set<File> files = new HashSet<File>(paths.size());
+        for (String p : paths) {
+            files.add(new File(p));
+        }
+
+        return new ConfigurationTimestamp(files);
     }
 
     /**
@@ -1051,11 +1057,15 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     }
 
     public ApacheDirectiveTree parseRuntimeConfiguration(boolean suppressUnknownModuleWarnings) {
+        return parseRuntimeConfiguration(suppressUnknownModuleWarnings,false);
+    }
+    
+    public ApacheDirectiveTree parseRuntimeConfiguration(boolean suppressUnknownModuleWarnings, boolean keepConditional) {
         String httpdConfPath = getHttpdConfFile().getAbsolutePath();
         ProcessInfo processInfo = resourceContext.getNativeProcess();
 
         return ApacheServerDiscoveryComponent.parseRuntimeConfiguration(httpdConfPath, processInfo, binaryInfo,
-            getModuleNames(), suppressUnknownModuleWarnings);
+            getModuleNames(), suppressUnknownModuleWarnings, keepConditional);
     }
 
     public boolean isAugeasEnabled() {

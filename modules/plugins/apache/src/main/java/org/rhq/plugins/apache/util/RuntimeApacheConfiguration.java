@@ -79,9 +79,11 @@ public class RuntimeApacheConfiguration {
      */
     public static class NodeInspector {
         private TransformState state;
+        final public boolean keepConditional;
 
-        private NodeInspector(TransformState state) {
+        private NodeInspector(TransformState state, boolean keepConditional) {
             this.state = state;
+            this.keepConditional = keepConditional;
         }
 
         /**
@@ -99,7 +101,6 @@ public class RuntimeApacheConfiguration {
 
             if (currentNodeName.equalsIgnoreCase("LoadModule")) {
                 state.loadedModules.add(allValues.get(0));
-                result.nodeIsConditional = false;
             } else if (currentNodeName.equalsIgnoreCase("<IfModule")) {
                 String moduleFile = valueAsString;
                 boolean negate = false;
@@ -131,8 +132,6 @@ public class RuntimeApacheConfiguration {
                 }
 
                 result.shouldRecurseIntoConditionalNode = moduleLoaded != negate;
-
-                result.nodeIsConditional = true;
             } else if (currentNodeName.equalsIgnoreCase("<IfDefine")) {
                 String define = valueAsString;
                 boolean negate = false;
@@ -144,8 +143,6 @@ public class RuntimeApacheConfiguration {
                 boolean isDefined = state.defines.contains(define);
 
                 result.shouldRecurseIntoConditionalNode = isDefined != negate;
-
-                result.nodeIsConditional = true;
             } else if (currentNodeName.equalsIgnoreCase("<IfVersion")) {
                 //<IfVersion [[!]operator] version> ... </IfVersion>
                 //operator: =, ==, >, >=, <, <=, ~
@@ -230,11 +227,9 @@ public class RuntimeApacheConfiguration {
                 }
 
                 result.shouldRecurseIntoConditionalNode = hasVersion != negate;
-
-                result.nodeIsConditional = true;
-            } else {
-                result.nodeIsConditional = false;
             }
+
+            result.nodeIsConditional = ApacheDirective.isConditionalDirectiveName(currentNodeName);
 
             return result;
         }
@@ -427,9 +422,9 @@ public class RuntimeApacheConfiguration {
     }
 
     public static NodeInspector getNodeInspector(ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo,
-        Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
+        Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings, boolean keepConditional) {
         return new NodeInspector(new TransformState(httpdProcessInfo, httpdBinaryInfo, moduleNames,
-            suppressUnknownModuleWarnings));
+            suppressUnknownModuleWarnings), keepConditional);
     }
 
     /**
@@ -452,7 +447,7 @@ public class RuntimeApacheConfiguration {
         ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
         ApacheDirectiveTree ret = tree.clone();
         transform(new TransformingWalker(), ret.getRootNode(),
-            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
+            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings, false));
 
         return ret;
     }
@@ -493,7 +488,7 @@ public class RuntimeApacheConfiguration {
         };
 
         transform(walker, tree.getRootNode(),
-            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
+            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings, false));
     }
 
     public static void walkRuntimeConfig(final NodeVisitor<AugeasNode> visitor, AugeasTree tree,
@@ -542,7 +537,7 @@ public class RuntimeApacheConfiguration {
             }
         };
         transform(walker, tree.getRootNode(),
-            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
+            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings, false));
     }
 
     private static <T> void transform(TreeWalker<T> walker, T parentNode, NodeInspector inspector) {

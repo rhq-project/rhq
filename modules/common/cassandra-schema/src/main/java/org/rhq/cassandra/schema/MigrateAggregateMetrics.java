@@ -1,5 +1,7 @@
 package org.rhq.cassandra.schema;
 
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -32,6 +34,23 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
+ * <p>
+ * Migrates aggregate metrics from the one_hour_metrics, six_hour_metrics, and twenty_four_hour_metrics tables to the
+ * new aggregate_metrics table. The failure to migrate data for a single measurement schedule will result in an
+ * exception being thrown that causes the upgrade to fail; however, all schedules will be processed even if there are
+ * failures. An exception is thrown only after going through data for all schedules.
+ * </p>
+ * <p>
+ * When data for a measurement schedule is successfully migrated, the schedule id is recorded in a log. There are
+ * separate log files for each of the 1 hour, 6 hour, and 24 hour tables. They are stored in the server data directory.
+ * Each table log is read prior to starting the migration to determine what schedule ids have data to be migrated.
+ * </p>
+ * <p>
+ * After all data has been successfully migrated, the one_hour_metrics, six_hour_metrics, and twenty_four_hour_metrics
+ * tables are dropped.
+ * </p>
+ *
+ *
  * @author John Sanda
  */
 public class MigrateAggregateMetrics implements Step {
@@ -56,18 +75,6 @@ public class MigrateAggregateMetrics implements Step {
         public String toString() {
             return tableName;
         }
-
-        public static Bucket fromString(String table) {
-            if (table.equals(ONE_HOUR.tableName)) {
-                return ONE_HOUR;
-            } else if (table.equals(SIX_HOUR.tableName)) {
-                return SIX_HOUR;
-            } else if (table.equals(TWENTY_FOUR_HOUR.tableName)) {
-                return TWENTY_FOUR_HOUR;
-            } else {
-                throw new IllegalArgumentException(table + " is not a recognized table name");
-            }
-        }
     }
 
     private Session session;
@@ -89,6 +96,8 @@ public class MigrateAggregateMetrics implements Step {
     private ListeningExecutorService threadPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(4,
         new SchemaUpdateThreadFactory()));
 
+    private String dataDir;
+
     @Override
     public void setSession(Session session) {
         this.session = session;
@@ -97,6 +106,7 @@ public class MigrateAggregateMetrics implements Step {
     @Override
     public void bind(Properties properties) {
         dbConnectionFactory = (DBConnectionFactory) properties.get(SchemaManager.RELATIONAL_DB_CONNECTION_FACTORY_PROP);
+        dataDir = properties.getProperty("data.dir", System.getProperty("jboss.server.data.dir"));
     }
 
     @Override
@@ -124,7 +134,7 @@ public class MigrateAggregateMetrics implements Step {
                     "upgrade will have to be run again to complete the migration.");
             }
         }
-        //dropTables();
+        dropTables();
     }
 
     private void migrate(Set<Integer> scheduleIds, PreparedStatement query, final Bucket bucket) {
@@ -132,14 +142,24 @@ public class MigrateAggregateMetrics implements Step {
 
         CountDownLatch latch = new CountDownLatch(scheduleIds.size());
         MigrationProgressLogger progressLogger = new MigrationProgressLogger(bucket, latch);
+        File logFile = new File(dataDir, bucket + "_migration.log");
+        MigrationLog migrationLog = null;
         try {
+            migrationLog = new MigrationLog(logFile);
+            Set<Integer> migratedScheduleIds = migrationLog.read();
             threadPool.submit(progressLogger);
             for (Integer scheduleId : scheduleIds) {
-                readPermits.acquire();
-                ResultSet resultSet = session.execute(query.bind(scheduleId));
-                ListenableFuture<Integer> migrationFuture = threadPool.submit(new MetricsWriter(scheduleId, bucket,
-                    resultSet));
-                Futures.addCallback(migrationFuture, migrationFinished(scheduleId, bucket, latch));
+                if (migratedScheduleIds.contains(scheduleId)) {
+                    log.debug(bucket + " data for schedule id " + scheduleId + " has already been migrated. It will " +
+                        "be skipped.");
+                    latch.countDown();
+                } else {
+                    readPermits.acquire();
+                    ResultSet resultSet = session.execute(query.bind(scheduleId));
+                    ListenableFuture<Integer> migrationFuture = threadPool.submit(new MetricsWriter(scheduleId, bucket,
+                        resultSet));
+                    Futures.addCallback(migrationFuture, migrationFinished(scheduleId, bucket, latch, migrationLog));
+                }
             }
             latch.await();
             log.info("Finished migrating " + bucket + " data");
@@ -147,8 +167,16 @@ public class MigrateAggregateMetrics implements Step {
             threadPool.shutdownNow();
             throw new RuntimeException("Migration of " + bucket + " data did not complete due to an interrupt. The " +
                 "upgrade will have to be run again to finish the migration", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Migration of " + bucket + " data did not complete due to an I/O error. The " +
+                "upgrade will have to be run again to finish the migration", e);
         } finally {
             progressLogger.finished();
+            try {
+                migrationLog.close();
+            } catch (IOException e) {
+                log.warn("There was an error closing " + logFile.getAbsolutePath(), e);
+            }
         }
     }
 
@@ -208,18 +236,30 @@ public class MigrateAggregateMetrics implements Step {
     }
 
     private void dropTables() {
-        session.execute("DROP table rhq.one_hour_metrics");
-        session.execute("DROP table rhq.six_hour_metrics");
-        session.execute("DROP table rhq.twenty_four_hour_metrics");
+        ResultSet resultSet = session.execute("SELECT columnfamily_name FROM system.schema_columnfamilies " +
+            "WHERE keyspace_name = 'rhq'");
+        for (Row row : resultSet) {
+            String table = row.getString(0);
+            if (table.equals("one_hour_metrics") || table.equals("six_hour_metrics") ||
+                table.equals("twenty_four_hour_metrics")) {
+                log.info("Dropping table " +  table);
+                session.execute("DROP table rhq." + table);
+            }
+        }
     }
 
     private FutureCallback<Integer> migrationFinished(final Integer scheduleId, final Bucket bucket,
-        final CountDownLatch latch) {
+        final CountDownLatch latch, final MigrationLog migrationLog) {
         return new FutureCallback<Integer>() {
             @Override
             public void onSuccess(Integer metricsWritten) {
                 latch.countDown();
                 readPermits.release();
+                try {
+                    migrationLog.write(scheduleId);
+                } catch (IOException e) {
+                    log.warn("Failed to update migration log for bucket " + bucket + " and schedule id " + scheduleId);
+                }
             }
 
             @Override

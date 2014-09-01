@@ -563,20 +563,23 @@ public class InstallerServiceImpl implements InstallerService {
                         return DbUtil.getConnection(dbUrl, dbUsername, dbPassword);
                     }
                 };
+                Properties schemaProperties = new Properties();
+                schemaProperties.put(SchemaManager.RELATIONAL_DB_CONNECTION_FACTORY_PROP, connectionFactory);
+                schemaProperties.put(SchemaManager.DATA_DIR, System.getProperty("jboss.server.data.dir"));
 
                 try {
                     storageNodeSchemaManager.checkCompatibility();
                 } catch (AuthenticationException e1) {
                     log("Install RHQ schema along with updates to storage nodes.");
-                    storageNodeSchemaManager.install(connectionFactory);
+                    storageNodeSchemaManager.install(schemaProperties);
                     storageNodeSchemaManager.updateTopology();
                 } catch (SchemaNotInstalledException e2) {
                     log("Install RHQ schema along with updates to storage nodes.");
-                    storageNodeSchemaManager.install(connectionFactory);
+                    storageNodeSchemaManager.install(schemaProperties);
                     storageNodeSchemaManager.updateTopology();
                 } catch (InstalledSchemaTooOldException e3) {
                     log("Install RHQ schema updates to storage cluster.");
-                    storageNodeSchemaManager.install(connectionFactory);
+                    storageNodeSchemaManager.install(schemaProperties);
                 }
                 storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
                 storageNodeSchemaManager.shutdown();

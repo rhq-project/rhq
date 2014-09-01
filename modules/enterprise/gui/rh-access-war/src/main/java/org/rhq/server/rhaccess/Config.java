@@ -41,7 +41,7 @@ public class Config {
 
     public Config() {
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-        settings = systemManager.getSystemSettings(LookupUtil.getSubjectManager().getOverlord());
+        settings = systemManager.getUnmaskedSystemSettings(false);
     }
     /**
      * return same value as defined in WEB-INF/support.html
@@ -60,20 +60,28 @@ public class Config {
     }
 
     public String getProxyUser() {
-        return settings.get(SystemSetting.HTTP_PROXY_SERVER_USERNAME);
+        String value = settings.get(SystemSetting.HTTP_PROXY_SERVER_USERNAME);
+        if ("".equals(value)) {
+            return null;
+        }
+        return value;
     }
 
     public String getProxyPassword() {
-        return settings.get(SystemSetting.HTTP_PROXY_SERVER_PASSWORD);
+        String value = settings.get(SystemSetting.HTTP_PROXY_SERVER_PASSWORD);
+        if ("".equals(value)) {
+            return null;
+        }
+        return value;
     }
 
     public URL getProxyURL() {
         try {
-            String url = settings.get(SystemSetting.HTTP_PROXY_SERVER_HOST);
-            if (url == null) {
+            String host = settings.get(SystemSetting.HTTP_PROXY_SERVER_HOST);
+            if (host == null || "".equals(host)) {
                 return null;
             }
-            return new URL(url);
+            return new URL("http://" + host);
         } catch (MalformedURLException e) {
             log.error("Unable to parse PROXY_SERVER_HOST setting to URL", e);
             return null;
@@ -94,5 +102,14 @@ public class Config {
 
     public boolean isDevel() {
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder("Config [").append("url=" + getURL()).append(", userAgent=" + getUserAgent())
+            .append(", proxyURL=" + getProxyURL()).append(", proxyPort=" + getProxyPort())
+            .append(", proxyUser=" + getProxyUser()).append(", proxyPassword=" + getProxyPassword())
+            .append(", sessionTimeout=" + getSessionTimeout()).append(", devel=" + isDevel())
+            .append(", brokered=" + isBrokered()).append("]").toString();
     }
 }

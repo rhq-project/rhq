@@ -41,13 +41,17 @@ public class ConfigurationTimestamp {
         lastModifiedTimes = new HashMap<String, Long>();
     }
 
+    @Deprecated
     public ConfigurationTimestamp(List<File> files) {
+        this((Iterable<File>) files);
+    }
+
+    public ConfigurationTimestamp(Iterable<File> files) {
         this();
         for (File f : files) {
             lastModifiedTimes.put(f.getAbsolutePath(), f.lastModified());
         }
     }
-
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof ConfigurationTimestamp)) {

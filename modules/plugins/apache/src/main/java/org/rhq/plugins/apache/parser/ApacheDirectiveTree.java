@@ -1,7 +1,9 @@
 package org.rhq.plugins.apache.parser;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ApacheDirectiveTree implements Cloneable {
 
@@ -57,6 +59,24 @@ public class ApacheDirectiveTree implements Cloneable {
      */
     public List<ApacheDirective> findByName(String name, boolean recursively) {
         return findByName(rootNode, name, recursively);
+    }
+
+    /**
+     * @return the paths of all config files that contribute to this config tree
+     */
+    public Set<String> getAllPaths() {
+        Set<String> paths = new HashSet<String>();
+        //this will leave out the path of the root node. But that's OK, because rootNode
+        //doesn't correspond to any real directive anyway.
+        addPath(rootNode, paths);
+        return paths;
+    }
+
+    private void addPath(ApacheDirective directive, Set<String> paths) {
+        for (ApacheDirective c : directive.getChildDirectives()) {
+            paths.add(c.getFile());
+            addPath(c, paths);
+        }
     }
 
     private void findByName(ApacheDirective root, String name, boolean recursively, List<ApacheDirective> results) {

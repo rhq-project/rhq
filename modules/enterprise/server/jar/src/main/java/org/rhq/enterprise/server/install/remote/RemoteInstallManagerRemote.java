@@ -96,7 +96,7 @@ public interface RemoteInstallManagerRemote {
      *         information for the given agent (and thus nothing was uninstalled).
      * @since 4.11
      */
-    String uninstallAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
+    String uninstallAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String agentInstallPath);
 
     /**
      * Starts the agent located in the given installation directory.

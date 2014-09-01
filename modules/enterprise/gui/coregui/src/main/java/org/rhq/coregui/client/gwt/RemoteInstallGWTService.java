@@ -45,7 +45,7 @@ public interface RemoteInstallGWTService extends RemoteService {
     AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, CustomAgentInstallData customData)
         throws SSHSecurityException, RuntimeException;
 
-    String uninstallAgent(RemoteAccessInfo remoteAccessInfo) throws SSHSecurityException, RuntimeException;
+    String uninstallAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws SSHSecurityException, RuntimeException;
 
     String startAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws SSHSecurityException,
         RuntimeException;

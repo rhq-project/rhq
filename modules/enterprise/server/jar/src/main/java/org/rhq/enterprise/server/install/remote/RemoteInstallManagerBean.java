@@ -235,25 +235,26 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public String uninstallAgent(Subject subject, RemoteAccessInfo remoteAccessInfo) {
+    public String uninstallAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String agentInstallPath) {
         String agentName = remoteAccessInfo.getAgentName();
-        AgentInstall ai = agentManager.getAgentInstallByAgentName(subject, agentName);
-        if (ai == null || ai.getInstallLocation() == null || ai.getInstallLocation().trim().length() == 0) {
-            throw new IllegalArgumentException("Agent [" + agentName
-                + "] does not have a known install location. For security purposes, the uninstall will not be allowed."
-                + " You will have to manually uninstall it from that machine.");
-        }
-
-        // for security reasons, don't connect to a different machine than where the AgentInstall thinks the agent is.
-        // If there is no known host in AgentInstall, then we accept the caller's hostname.
-        if (ai.getSshHost() != null && !ai.getSshHost().equals(remoteAccessInfo.getHost())) {
-            throw new IllegalArgumentException("Agent [" + agentName + "] is not known to be on host ["
-                + remoteAccessInfo.getHost() + "] - aborting uninstall");
+        if(agentName != null) {
+            AgentInstall ai = agentManager.getAgentInstallByAgentName(subject, agentName);
+            if (ai == null || ai.getInstallLocation() == null || ai.getInstallLocation().trim().length() == 0) {
+                throw new IllegalArgumentException("Agent [" + agentName
+                        + "] does not have a known install location. For security purposes, the uninstall will not be allowed."
+                        + " You will have to manually uninstall it from that machine.");
+            }
+            // for security reasons, don't connect to a different machine than where the AgentInstall thinks the agent is.
+            // If there is no known host in AgentInstall, then we accept the caller's hostname.
+            if (ai.getSshHost() != null && !ai.getSshHost().equals(remoteAccessInfo.getHost())) {
+                throw new IllegalArgumentException("Agent [" + agentName + "] is not known to be on host ["
+                        + remoteAccessInfo.getHost() + "] - aborting uninstall");
+            }
         }
 
         SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
         try {
-            return sshUtil.uninstallAgent(ai.getInstallLocation());
+            return sshUtil.uninstallAgent(agentInstallPath);
         } finally {
             sshUtil.disconnect();
         }

@@ -694,7 +694,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
         createWaitingWindow(MSG.view_remoteAgentInstall_uninstallingPleaseWait(), true);
 
-        remoteInstallService.uninstallAgent(getRemoteAccessInfo(), new AsyncCallback<String>() {
+        remoteInstallService.uninstallAgent(getRemoteAccessInfo(), getAgentInstallPath(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
                 displayError(MSG.view_remoteAgentInstall_error_7(), caught);
                 setAgentStatusText(MSG.view_remoteAgentInstall_error_7());

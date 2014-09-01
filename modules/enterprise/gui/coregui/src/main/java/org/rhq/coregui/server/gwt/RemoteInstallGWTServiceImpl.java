@@ -70,9 +70,9 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public String uninstallAgent(RemoteAccessInfo remoteAccessInfo) throws SSHSecurityException, RuntimeException {
+    public String uninstallAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws SSHSecurityException, RuntimeException {
         try {
-            return SerialUtility.prepare(remoteInstallManager.uninstallAgent(getSessionSubject(), remoteAccessInfo),
+            return SerialUtility.prepare(remoteInstallManager.uninstallAgent(getSessionSubject(), remoteAccessInfo, agentInstallPath),
                 "RemoteInstallService.uninstallAgent");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

@@ -22,9 +22,14 @@ package org.rhq.plugins.apache;
 import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.File;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +46,9 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
@@ -143,10 +151,47 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public AvailabilityType getAvailability() {
-        lastKnownAvailability = getAvailabilityInternal();
+        if (resourceContext.getParentResourceComponent().getUseBMX())
+            lastKnownAvailability = getAvailabilityBMXInternal();
+        else
+            lastKnownAvailability = getAvailabilityInternal();
         return lastKnownAvailability;
     }
 
+    public AvailabilityType getAvailabilityBMXInternal() {	  
+    	boolean availability = false;
+   
+                 HttpURLConnection urlConn = null; 
+	   	 try {
+	   	         URL url = new URL(resourceContext.getParentResourceComponent().getBMXUrl());
+	   	         urlConn = (HttpURLConnection) url.openConnection();
+	   		 urlConn.connect();
+	   		 
+	   		 if(urlConn.getResponseCode() == HttpURLConnection.HTTP_OK)
+	   			 availability = true;
+	   		 else
+	   			 availability = false;
+	   	 } catch (ConnectException e) {
+	   		LOG.info("The Apache server is down !");
+	   	 } catch (MalformedURLException e) {
+	   		LOG.error("Malformed URL : " + resourceContext.getParentResourceComponent().getBMXUrl());
+	   	 } catch (IOException e) {
+	   		 LOG.error("IO Error on : " + resourceContext.getParentResourceComponent().getBMXUrl());
+	   	 } finally {
+                         if (urlConn != null) {
+                                 try {
+                                        urlConn.disconnect();
+                                 } catch (Exception e) {
+                                        // Ignored it.
+                                 }
+                         }
+                 }
+	   	 
+	   	 if(!availability)
+	   		 return AvailabilityType.DOWN;
+	   	 else
+	   		 return AvailabilityType.UP;
+    }
     private AvailabilityType getAvailabilityInternal() {
         if (url != null) {
             int timeout = PluginUtility.getAvailabilityFacetTimeout();
@@ -283,6 +328,12 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
+        if (resourceContext.getParentResourceComponent().getUseBMX())
+            getBMXValues(report, schedules);
+        else
+            getSNMPValues(report, schedules);
+    }
+    private void getSNMPValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
         SNMPSession snmpSession = this.resourceContext.getParentResourceComponent().getSNMPSession();
         int primaryIndex = getWwwServiceIndex();
         boolean ping = snmpSession.ping();
@@ -326,6 +377,58 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             }
         }
 
+        LOG.info("Collected " + report.getDataCount() + " metrics for VirtualHost "
+            + this.resourceContext.getResourceKey() + ".");
+    }
+    private void getBMXValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {    	
+         Map<String,String> values = ApacheServerComponent.parseBMXInput(this.resourceContext.getResourceKey(), resourceContext.getParentResourceComponent().getBMXUrl());
+         if (LOG.isDebugEnabled()) {
+             LOG.debug("Collecting BMX metrics");
+         }
+
+         for (MeasurementScheduleRequest schedule : schedules) {
+             /* convert the name like mod_snmp */
+             String metricName = ApacheServerComponent.convertStringToBMX(schedule.getName());
+             if (LOG.isDebugEnabled()) {
+                 LOG.debug("Collecting BMX metric [" + metricName + "]");
+             }
+             if (values.containsKey(metricName)) {
+                 if (schedule.getDataType()== DataType.TRAIT) {
+                     String val = values.get(metricName);
+                     if (LOG.isDebugEnabled()) {
+                         LOG.debug("Collected BMX metric [" + metricName + "], value = " + val);
+                     }
+                     MeasurementDataTrait mdt = new MeasurementDataTrait(schedule,val);                     
+                     report.addData(mdt);
+                 } else {
+                    Double val = Double.valueOf(values.get(metricName));
+                     if (LOG.isDebugEnabled()) {
+                         LOG.debug("Collected BMX metric [" + metricName + "], value = " + val);
+                     }
+                    MeasurementDataNumeric mdn = new MeasurementDataNumeric(schedule,val);
+                    report.addData(mdn);
+                 }
+             } else if (metricName.equals(RESPONSE_TIME_METRIC)) {
+                /* a special handling for ResponseTime */
+                if (this.logParser != null) {
+                    try {
+                        CallTimeData callTimeData = new CallTimeData(schedule);
+                        this.logParser.parseLog(callTimeData);
+                        report.addData(callTimeData);
+                    } catch (Exception e) {
+                        LOG.error("Failed to retrieve HTTP call-time data.", e);
+                    }
+                } else {
+                    LOG.error("The '" + RESPONSE_TIME_METRIC + "' metric is enabled for resource '"
+                        + this.resourceContext.getResourceKey() + "', but no value is defined for the '"
+                        + RESPONSE_TIME_LOG_FILE_CONFIG_PROP + "' connection property.");
+                    // TODO: Communicate this error back to the server for display in the GUI.
+                }
+             } else {
+                LOG.warn("BMX metric [" + metricName + "] not found");
+             }
+         }
+         
         LOG.info("Collected " + report.getDataCount() + " metrics for VirtualHost "
             + this.resourceContext.getResourceKey() + ".");
     }

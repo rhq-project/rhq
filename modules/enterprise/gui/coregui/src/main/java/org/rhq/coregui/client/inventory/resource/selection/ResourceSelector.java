@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.client.inventory.resource.selection;
 
 import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
@@ -51,7 +52,6 @@ public class ResourceSelector extends AbstractSelector<Resource, ResourceCriteri
 
     private ResourceType resourceTypeFilter;
     private boolean forceResourceTypeFilter;
-    private boolean displayResourceTypeFilter = true;
     private IPickTreeItem typeSelectItem;
 
     public ResourceSelector() {
@@ -64,6 +64,7 @@ public class ResourceSelector extends AbstractSelector<Resource, ResourceCriteri
         this.forceResourceTypeFilter = forceResourceTypeFilter;
     }
 
+    @Override
     protected DynamicForm getAvailableFilterForm() {
         if (null == availableFilterForm) {
             availableFilterForm = new DynamicForm();
@@ -74,15 +75,12 @@ public class ResourceSelector extends AbstractSelector<Resource, ResourceCriteri
 
             typeSelectItem = new IPickTreeItem("type", MSG.common_title_type());
             typeSelectItem.setDataSource(new ResourceTypePluginTreeDataSource(false));
-            typeSelectItem.setValueField("id");
+            typeSelectItem.setValueField("itemId");
             typeSelectItem.setCanSelectParentItems(true);
             typeSelectItem.setLoadDataOnDemand(false);
 
             if (this.forceResourceTypeFilter) {
                 typeSelectItem.setDisabled(true);
-            }
-            if (!isDisplayResourceTypeFilter()) {
-                typeSelectItem.setVisible(false);
             }
 
             categorySelect = new SelectItem("category", MSG.common_title_category());
@@ -105,6 +103,7 @@ public class ResourceSelector extends AbstractSelector<Resource, ResourceCriteri
         return valueMap;
     }
 
+    @Override
     protected RPCDataSource<Resource, ResourceCriteria> getDataSource() {
         if (null == datasource) {
             datasource = new SelectedResourceDataSource();
@@ -113,9 +112,7 @@ public class ResourceSelector extends AbstractSelector<Resource, ResourceCriteri
         return datasource;
     }
 
-    // TODO: Until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed, avoid AdvancedCriteria and always
-    // use server-side fetch and simple criteria. When fixed, use the commented version below. Also see
-    // ResourceDataSource.
+    @Override
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
         String search = (String) availableFilterForm.getValue("search");
         String type = availableFilterForm.getValueAsString("type");
@@ -140,32 +137,6 @@ public class ResourceSelector extends AbstractSelector<Resource, ResourceCriteri
         return criteria;
     }
 
-    //  protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
-    //  String search = (String) availableFilterForm.getValue("search");
-    //  String type = availableFilterForm.getValueAsString("type");
-    //  String category = (String) availableFilterForm.getValue("category");
-    //  ArrayList<Criterion> criteria = new ArrayList<Criterion>(3);
-    //  if (null != search) {
-    //      criteria.add(new Criterion(NAME.propertyName(), OperatorId.CONTAINS, search));
-    //  }
-    //  if (null != type) {
-    //      // If type is a number its a typeId, otherwise a plugin name
-    //      try {
-    //          Integer.parseInt(type);
-    //          criteria.add(new Criterion(TYPE.propertyName(), OperatorId.EQUALS, type));
-    //      } catch (NumberFormatException nfe) {
-    //          criteria.add(new Criterion(PLUGIN.propertyName(), OperatorId.EQUALS, type));
-    //      }
-    //  }
-    //  if (null != category) {
-    //      criteria.add(new Criterion(CATEGORY.propertyName(), OperatorId.EQUALS, category));
-    //  }
-    //  AdvancedCriteria latestCriteria = new AdvancedCriteria(OperatorId.AND, criteria.toArray(new Criterion[criteria
-    //      .size()]));
-    //
-    //  return latestCriteria;
-    //}
-
     @Override
     protected String getItemTitle() {
         return "resource";
@@ -174,6 +145,7 @@ public class ResourceSelector extends AbstractSelector<Resource, ResourceCriteri
     @Override
     protected HoverCustomizer getNameHoverCustomizer() {
         return new HoverCustomizer() {
+            @Override
             public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
                 return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
             }
@@ -204,13 +176,5 @@ public class ResourceSelector extends AbstractSelector<Resource, ResourceCriteri
             return result;
         }
 
-    }
-
-    public boolean isDisplayResourceTypeFilter() {
-        return displayResourceTypeFilter;
-    }
-
-    public void setDisplayResourceTypeFilter(boolean displayResourceTypeFilter) {
-        this.displayResourceTypeFilter = displayResourceTypeFilter;
     }
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,13 +13,17 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.client.inventory.resource.type;
+
+import static java.lang.Boolean.FALSE;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -34,8 +38,9 @@ import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceTypeGWTServiceAsync;
@@ -44,36 +49,36 @@ import org.rhq.coregui.client.gwt.ResourceTypeGWTServiceAsync;
  * @author Greg Hinkle
  */
 public class ResourceTypePluginTreeDataSource extends DataSource {
+    private static final String ID = "id";
+    private static final String PARENT_ID = "parentId";
+    private static final String ITEM_ID = "itemId";
+    private static final String NAME = "name";
+    private static final String PLUGIN = "plugin";
+    private static final String CATEGORY = "category";
 
-    private Messages MSG = CoreGUI.getMessages();
-
-    private ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
-
+    private final Messages MSG = CoreGUI.getMessages();
+    private final ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
     private final boolean showIgnoredResourceTypes;
 
     public ResourceTypePluginTreeDataSource(boolean showIgnoredResourceTypes) {
-
         this.showIgnoredResourceTypes = showIgnoredResourceTypes;
 
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
 
-        DataSourceTextField idField = new DataSourceTextField("id", MSG.common_title_id());
+        DataSourceTextField idField = new DataSourceTextField(ID, MSG.common_title_id());
         idField.setPrimaryKey(true);
-
-        DataSourceTextField parentIdField = new DataSourceTextField("parentId", MSG.view_type_parentId());
-        parentIdField.setForeignKey("id");
-
-        DataSourceTextField resourceNameField = new DataSourceTextField("name", MSG.common_title_name());
-
-        DataSourceTextField resourceKeyField = new DataSourceTextField("plugin", MSG.common_title_plugin());
-
-        DataSourceTextField resourceTypeField = new DataSourceTextField("category", MSG.common_title_category());
-
-        setFields(idField, parentIdField, resourceNameField, resourceKeyField, resourceTypeField);
+        DataSourceTextField parentIdField = new DataSourceTextField(PARENT_ID, MSG.view_type_parentId());
+        parentIdField.setForeignKey(ID);
+        DataSourceTextField itemIdField = new DataSourceTextField(ITEM_ID);
+        DataSourceTextField resourceNameField = new DataSourceTextField(NAME, MSG.common_title_name());
+        DataSourceTextField resourceKeyField = new DataSourceTextField(PLUGIN, MSG.common_title_plugin());
+        DataSourceTextField resourceTypeField = new DataSourceTextField(CATEGORY, MSG.common_title_category());
+        setFields(idField, parentIdField, itemIdField, resourceNameField, resourceKeyField, resourceTypeField);
     }
 
+    @Override
     protected Object transformRequest(DSRequest request) {
         DSResponse response = new DSResponse();
         response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
@@ -90,123 +95,138 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
         return request.getData();
     }
 
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-
-        String parentIdString = request.getCriteria().getAttributeAsString("parentId");
+    private void executeFetch(final DSRequest request, final DSResponse response) {
+        String parentIdString = request.getCriteria().getAttributeAsString(PARENT_ID);
         if (parentIdString != null) {
             processResponse(request.getRequestId(), response);
         } else {
             ResourceTypeCriteria criteria = new ResourceTypeCriteria();
-            criteria.addFilterIgnored((showIgnoredResourceTypes ? (Boolean) null : Boolean.FALSE));
+            criteria.addFilterIgnored((showIgnoredResourceTypes ? null : FALSE));
             criteria.fetchParentResourceTypes(true);
             criteria.setPageControl(PageControl.getUnlimitedInstance());
 
             resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
+                @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_type_typeTreeLoadFailure(), caught);
                 }
 
+                @Override
                 public void onSuccess(PageList<ResourceType> result) {
-                    response.setData(buildNodes(result));
+                    TreeNodesBuilder treeNodesBuilder = new TreeNodesBuilder(result);
+                    response.setData(treeNodesBuilder.buildNodes());
                     processResponse(request.getRequestId(), response);
                 }
             });
         }
     }
 
-    public static TreeNode[] buildNodes(PageList<ResourceType> result) {
+    private static class TreeNodesBuilder {
+        private final PageList<ResourceType> resourceTypes;
+        HashMap<String, ArrayList<ResourceType>> rootTypes;
+        HashMap<ResourceType, ArrayList<ResourceType>> typeChildren;
+        int id;
+        ArrayList<TreeNode> nodes;
 
-        HashMap<String, PluginTreeNode> pluginNodes = new HashMap<String, PluginTreeNode>();
+        private TreeNodesBuilder(PageList<ResourceType> resourceTypes) {
+            this.resourceTypes = resourceTypes;
+        }
 
-        ArrayList<TreeNode> nodes = new ArrayList<TreeNode>();
-        // Add a dummy node so that if the user selects a plugin or resource type, he has
-        // the ability to undo the selection. This data source is used with a IPickTreeItem
-        // and that widget does not allow you to select the initial value once the user
-        // selects a value. See https://bugzilla.redhat.com/show_bug.cgi?id=749801.
-        nodes.add(new TreeNode(""));
-        for (ResourceType type : result) {
-            if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
+        TreeNode[] buildNodes() {
+            rootTypes = new HashMap<String, ArrayList<ResourceType>>();
+            typeChildren = new HashMap<ResourceType, ArrayList<ResourceType>>();
+            id = 0;
 
-                PluginTreeNode pluginNode = pluginNodes.get(type.getPlugin());
-                if (pluginNode == null) {
-                    pluginNode = new PluginTreeNode(type.getPlugin());
-                    pluginNodes.put(type.getPlugin(), pluginNode);
-                    nodes.add(pluginNode);
-                }
+            nodes = new ArrayList<TreeNode>(resourceTypes.size() + 1 /* at least this size*/);
+            // Add a dummy node so that if the user selects a plugin or resource type, he has
+            // the ability to undo the selection. This data source is used with a IPickTreeItem
+            // and that widget does not allow you to select the initial value once the user
+            // selects a value. See https://bugzilla.redhat.com/show_bug.cgi?id=749801.
+            nodes.add(new TreeNode(""));
 
-                nodes.add(new ResourceTypeTreeNode(type, type.getPlugin()));
-            } else {
-                for (ResourceType parent : type.getParentResourceTypes()) {
-                    nodes.add(new ResourceTypeTreeNode(type, String.valueOf(parent.getId())));
+            for (ResourceType type : resourceTypes) {
+                String plugin = type.getPlugin();
+                Set<ResourceType> parentTypes = type.getParentResourceTypes();
+                if (parentTypes == null || parentTypes.isEmpty()) {
+                    ArrayList<ResourceType> pluginRoots = rootTypes.get(plugin);
+                    if (pluginRoots == null) {
+                        pluginRoots = new ArrayList<ResourceType>();
+                        rootTypes.put(plugin, pluginRoots);
+                    }
+                    pluginRoots.add(type);
+                } else {
+                    for (ResourceType parentType : parentTypes) {
+                        ArrayList<ResourceType> siblingTypes = typeChildren.get(parentType);
+                        if (siblingTypes == null) {
+                            siblingTypes = new ArrayList<ResourceType>();
+                            typeChildren.put(parentType, siblingTypes);
+                        }
+                        siblingTypes.add(type);
+                    }
                 }
             }
+
+            for (String pluginName : rootTypes.keySet()) {
+                PluginTreeNode pluginNode = new PluginTreeNode(null, String.valueOf(id++), pluginName);
+                nodes.add(pluginNode);
+
+                for (ResourceType rootType : rootTypes.get(pluginName)) {
+                    ResourceTypeTreeNode typeNode = new ResourceTypeTreeNode(pluginNode.id, String.valueOf(id++),
+                        rootType);
+                    nodes.add(typeNode);
+                    addChildrenRecursively(typeNode);
+                }
+            }
+
+            return nodes.toArray(new TreeNode[nodes.size()]);
         }
 
-        TreeNode[] treeNodes = nodes.toArray(new TreeNode[nodes.size()]);
-        return treeNodes;
-    }
-
-    /**
-     * Returns a prepopulated PageControl based on the provided DSRequest. This will set sort fields,
-     * pagination, but *not* filter fields.
-     *
-     * @param request the request to turn into a page control
-     * @return the page control for passing to criteria and other queries
-     */
-    protected PageControl getPageControl(DSRequest request) {
-        // Initialize paging.
-        PageControl pageControl;
-        if (request.getStartRow() == null || request.getEndRow() == null) {
-            pageControl = new PageControl();
-        } else {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow()
-                - request.getStartRow());
-        }
-
-        // Initialize sorting.
-        String sortBy = request.getAttribute("sortBy");
-        if (sortBy != null) {
-            String[] sorts = sortBy.split(",");
-            for (String sort : sorts) {
-                PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
-                String columnName = (ordering == PageOrdering.DESC) ? sort.substring(1) : sort;
-                pageControl.addDefaultOrderingField(columnName, ordering);
+        void addChildrenRecursively(ResourceTypeTreeNode parentNode) {
+            ResourceType parentType = parentNode.resourceType;
+            ArrayList<ResourceType> siblings = typeChildren.get(parentType);
+            if (siblings == null) {
+                return;
+            }
+            for (ResourceType type : siblings) {
+                ResourceTypeTreeNode typeNode = new ResourceTypeTreeNode(parentNode.id, String.valueOf(id++), type);
+                nodes.add(typeNode);
+                addChildrenRecursively(typeNode);
             }
         }
-
-        return pageControl;
     }
 
-    public static class PluginTreeNode extends TreeNode {
+    private static class PluginTreeNode extends TreeNode {
+        static String pluginStr = CoreGUI.getMessages().common_title_plugin();
 
-        private static String pluginStr = CoreGUI.getMessages().common_title_plugin();
+        final String parentId;
+        final String id;
 
-        String id;
+        PluginTreeNode(String parentId, String id, String pluginName) {
+            this.parentId = parentId;
+            this.id = id;
 
-        PluginTreeNode(String pluginName) {
+            setID(id);
+            setParentID(parentId);
 
-            setID(pluginName);
-            this.id = pluginName;
-            setParentID(null);
+            setAttribute(ID, id);
+            setAttribute(PARENT_ID, parentId);
+            setAttribute(ITEM_ID, pluginName);
+            setAttribute(NAME, pluginName + " " + pluginStr);
 
-            setAttribute("name", pluginName + " " + pluginStr);
-            setEnabled(true);
-            // setIcon(IconEnum.PLUGIN.getIcon16x16Path()); // IPickTreeItem doesn't appear to want to use this
+            setIcon(IconEnum.PLUGIN.getIcon16x16Path());
         }
 
         @Override
         public boolean equals(Object o) {
-            if (this == o)
+            if (this == o) {
                 return true;
-            if (o == null || getClass() != o.getClass())
+            }
+            if (o == null || getClass() != o.getClass()) {
                 return false;
+            }
+            ResourceTypeTreeNode that = (ResourceTypeTreeNode) o;
+            return id.equals(that.id);
 
-            PluginTreeNode that = (PluginTreeNode) o;
-
-            if (!id.equals(that.id))
-                return false;
-
-            return true;
         }
 
         @Override
@@ -215,28 +235,27 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
         }
     }
 
-    public static class ResourceTypeTreeNode extends TreeNode {
+    private static class ResourceTypeTreeNode extends TreeNode {
+        final String parentId;
+        final String id;
+        final ResourceType resourceType;
 
-        private ResourceType resourceType;
-        String id;
-        String parentId;
-
-        private ResourceTypeTreeNode(ResourceType resourceType, String parentId) {
+        private ResourceTypeTreeNode(String parentId, String id, ResourceType resourceType) {
+            this.parentId = parentId;
+            this.id = id;
             this.resourceType = resourceType;
 
-            String id = String.valueOf(resourceType.getId());
-
             setID(id);
-            this.id = id;
             setParentID(parentId);
-            this.parentId = parentId;
 
-            setAttribute("id", id);
-            setAttribute("parentId", parentId);
-            setAttribute("name", resourceType.getName());
-            setAttribute("plugin", resourceType.getPlugin());
+            setAttribute(ID, id);
+            setAttribute(PARENT_ID, parentId);
+            setAttribute(ITEM_ID, resourceType.getId());
+            setAttribute(NAME, resourceType.getName());
+            setAttribute(PLUGIN, resourceType.getPlugin());
             setAttribute("category", resourceType.getCategory().getDisplayName());
-            // setIcon(ImageManager.getResourceIcon(resourceType.getCategory())); // IPickTreeItem doesn't appear to want to use this
+
+            setIcon(ImageManager.getResourceIcon(resourceType.getCategory()));
         }
 
         public ResourceType getResourceType() {
@@ -245,26 +264,20 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o)
+            if (this == o) {
                 return true;
-            if (o == null || getClass() != o.getClass())
+            }
+            if (o == null || getClass() != o.getClass()) {
                 return false;
-
+            }
             ResourceTypeTreeNode that = (ResourceTypeTreeNode) o;
+            return id.equals(that.id);
 
-            if (!id.equals(that.id))
-                return false;
-            if (parentId != null ? !parentId.equals(that.parentId) : that.parentId != null)
-                return false;
-
-            return true;
         }
 
         @Override
         public int hashCode() {
-            int result = id.hashCode();
-            result = 31 * result + (parentId != null ? parentId.hashCode() : 0);
-            return result;
+            return id.hashCode();
         }
     }
 }

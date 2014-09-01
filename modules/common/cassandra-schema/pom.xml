@@ -14,6 +14,7 @@
 
   <properties>
     <rhq.storage.deploy>true</rhq.storage.deploy>
+    <rhq.storage.shutdown>true</rhq.storage.shutdown>
     <numSchedules>50</numSchedules>
   </properties>
 
@@ -102,6 +103,10 @@
             <property>
               <name>rhq.storage.deploy</name>
               <value>${rhq.storage.deploy}</value>
+            </property>
+            <property>
+              <name>rhq.storage.shutdown</name>
+              <value>${rhq.storage.shutdown}</value>
             </property>
             <property>
               <name>numSchedules</name>

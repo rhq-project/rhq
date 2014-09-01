@@ -44,6 +44,8 @@ public class SchemaManager {
 
     public static final String RELATIONAL_DB_CONNECTION_FACTORY_PROP = "relational_db_connection_factory";
 
+    public static final String DATA_DIR = "data.dir";
+
     /**
      * The username that RHQ will use to connect to the storage cluster.
      */
@@ -107,15 +109,12 @@ public class SchemaManager {
     }
 
     /**
-     * Install and update the storage cluster schema.
+     * Install and update the storage cluster
      *
-     * @param factory Creates new JDBC connections to the RHQ relational database
+     * @param properties Properties to be passed to schema update steps
      * @throws Exception
      */
-    public void install(DBConnectionFactory factory) throws Exception {
-        Properties properties = new Properties();
-        properties.put(RELATIONAL_DB_CONNECTION_FACTORY_PROP, factory);
-
+    public void install(Properties properties) throws Exception {
         VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager);
         version.install(properties);
     }

@@ -26,7 +26,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.Duration;
 import org.joda.time.Hours;
-import org.junit.AfterClass;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -64,6 +64,8 @@ public class MigrateAggregateMetricsTest {
 
     private PreparedStatement insert24HourData;
 
+    private CassandraClusterManager ccm;
+
     @BeforeClass
     public void setupClass() throws Exception {
         connection = DbUtil.getConnection(System.getProperty("rhq.db.url"),
@@ -76,6 +78,9 @@ public class MigrateAggregateMetricsTest {
     @AfterClass
     public void tearDownClass() throws Exception {
         JDBCUtil.safeClose(connection);
+        if (Boolean.valueOf(System.getProperty("rhq.storage.shutdown", "true"))) {
+            ccm.shutdownCluster();
+        }
     }
 
     @BeforeMethod
@@ -100,7 +105,7 @@ public class MigrateAggregateMetricsTest {
         deploymentOptions.setHeapNewSize("64M");
         deploymentOptions.setJmxPort(8399);
 
-        CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
+        ccm = new CassandraClusterManager(deploymentOptions);
         ccm.createCluster();
         ccm.startCluster(false);
 
@@ -117,23 +122,26 @@ public class MigrateAggregateMetricsTest {
 
     @Test
     public void runMigration() throws Exception {
-        int numSchedules = Integer.parseInt(System.getProperty("numSchedules", "50"));
+        int numSchedules = Integer.parseInt(System.getProperty("numSchedules", "10"));
         createResource();
         createMeasurementSchedules(numSchedules);
 
-//        SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
-//            new String[] {"127.0.0.1"}, 9042);
-//        schemaManager.drop();
-//        schemaManager.shutdown();
-//        schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
-//            new String[] {"127.0.0.1"}, 9042);
-//        schemaManager.install(new DBConnectionFactory() {
-//            @Override
-//            public Connection newConnection() throws SQLException {
-//                return DbUtil.getConnection(System.getProperty("rhq.db.url"), System.getProperty("rhq.db.username"),
-//                    System.getProperty("rhq.db.password"));
-//            }
-//        });
+        Properties properties = new Properties();
+        properties.put(SchemaManager.RELATIONAL_DB_CONNECTION_FACTORY_PROP, new DBConnectionFactory() {
+            @Override
+            public Connection newConnection() throws SQLException {
+                return DbUtil.getConnection(System.getProperty("rhq.db.url"), System.getProperty("rhq.db.username"),
+                    System.getProperty("rhq.db.password"));
+            }
+        });
+        properties.put(SchemaManager.DATA_DIR, "target");
+
+        TestSchemaManager schemaManager = new TestSchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
+            new String[] {"127.0.0.1"}, 9042);
+        schemaManager.drop();
+        schemaManager.install(properties);
+        schemaManager.shutdown();
+
         Cluster cluster = new Cluster.Builder()
             .addContactPoint("127.0.0.1")
             .withCredentials("rhqadmin", "rhqadmin")
@@ -145,23 +153,15 @@ public class MigrateAggregateMetricsTest {
         initPreparedStatements();
 
         DateTime endTime = DateTime.now();
-//        insert1HourData(numSchedules, endTime);
-//        insert6HourData(numSchedules, endTime);
-//        insert24HourData(numSchedules, endTime);
+        insert1HourData(numSchedules, endTime);
+        insert6HourData(numSchedules, endTime);
+        insert24HourData(numSchedules, endTime);
 
-        Properties properties = new Properties();
-        properties.put(SchemaManager.RELATIONAL_DB_CONNECTION_FACTORY_PROP, new DBConnectionFactory() {
-            @Override
-            public Connection newConnection() throws SQLException {
-                return DbUtil.getConnection(System.getProperty("rhq.db.url"), System.getProperty("rhq.db.username"),
-                    System.getProperty("rhq.db.password"));
-            }
-        });
 
-        MigrateAggregateMetrics step = new MigrateAggregateMetrics();
-        step.setSession(session);
-        step.bind(properties);
-        step.execute();
+        schemaManager = new TestSchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
+            new String[] {"127.0.0.1"}, 9042);
+        schemaManager.updateAggregateMetrics = true;
+        schemaManager.install(properties);
     }
 
     private void initPreparedStatements() {
@@ -190,28 +190,6 @@ public class MigrateAggregateMetricsTest {
         Duration duration = Hours.ONE.toStandardDuration();
 
         insertData(numSchedules, startTime, endTime, duration, insert1HourData);
-
-//        while (time.isBefore(endTime)) {
-//            for (int i = -1; i > -numSchedules; --i) {
-//                List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>(3);
-//                permits.acquire(3);
-//                futures.add(session.executeAsync(insert1HourData.bind(i, time.toDate(), 0, 3.14)));
-//                futures.add(session.executeAsync(insert1HourData.bind(i, time.toDate(), 1, 3.14)));
-//                futures.add(session.executeAsync(insert1HourData.bind(i, time.toDate(), 2, 3.14)));
-//                ListenableFuture<List<ResultSet>> insertsFuture = Futures.allAsList(futures);
-//                Futures.addCallback(insertsFuture, new FutureCallback<List<ResultSet>>() {
-//                    @Override
-//                    public void onSuccess(List<ResultSet> result) {
-//                    }
-//
-//                    @Override
-//                    public void onFailure(Throwable t) {
-//                        log.warn("Inserts failed", t);
-//                    }
-//                });
-//            }
-//            time = time.plusHours(1);
-//        }
     }
 
     private void insert6HourData(int numSchedules, DateTime endTime) {
@@ -288,6 +266,54 @@ public class MigrateAggregateMetricsTest {
             statement.executeUpdate(sql);
         } finally {
             JDBCUtil.safeClose(statement);
+        }
+    }
+
+    private class TestSchemaManager extends SchemaManager {
+
+        public boolean updateAggregateMetrics;
+
+        private String username;
+
+        private String password;
+
+        private String[] nodes;
+
+        private int cqlPort;
+
+        public TestSchemaManager(String username, String password, String[] nodes, int cqlPort) {
+            super(username, password, nodes, cqlPort);
+            this.username = username;
+            this.password = password;
+            this.nodes = nodes;
+            this.cqlPort = cqlPort;
+        }
+
+        @Override
+        public void install(Properties properties) throws Exception {
+            TestVersionManager versionManager = new TestVersionManager(username, password, nodes, cqlPort);
+            versionManager.updateAggregateMetrics = updateAggregateMetrics;
+            versionManager.install(properties);
+        }
+    }
+
+    private class TestVersionManager extends VersionManager {
+
+        public boolean updateAggregateMetrics;
+
+        public TestVersionManager(String username, String password, String[] nodes, int cqlPort) throws Exception {
+            super(username, password, nodes, cqlPort, new SessionManager());
+        }
+
+        @Override
+        protected void execute(UpdateFile updateFile, Properties properties) {
+            if (updateAggregateMetrics) {
+                super.execute(updateFile, properties);
+            } else {
+                if (!updateFile.getFile().equals("schema/update//0005.xml")) {
+                    super.execute(updateFile, properties);
+                }
+            }
         }
     }
 

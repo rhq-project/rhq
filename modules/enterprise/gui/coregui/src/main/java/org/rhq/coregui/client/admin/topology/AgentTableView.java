@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -76,6 +76,9 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
 
     private final boolean isAffinityGroupId;
     private final Integer id;
+
+    private PopupWindow popupWindow = null;
+    private RemoteAgentInstallView remoteAgentView = null;
 
     public AgentTableView(Integer id, boolean isAffinityGroupId) {
         super(null);
@@ -163,6 +166,31 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
         });
     }
 
+    private void showRemoteAgentInstallView(AgentInstall ai, String title, RemoteAgentInstallView.Type type) {
+        showRemoteAgentInstallView(ai, title, type, new RemoteAgentInstallView.SuccessHandler() {
+            @Override
+            public void onSuccess(Type type) {
+                closeInstallView();
+            }
+        });
+    }
+
+    private void showRemoteAgentInstallView(AgentInstall ai, String title, RemoteAgentInstallView.Type type, RemoteAgentInstallView.SuccessHandler successHandler) {
+        remoteAgentView = new RemoteAgentInstallView(ai, type);
+        remoteAgentView.setSuccessHandler(successHandler);
+        popupWindow = new PopupWindow(remoteAgentView);
+        popupWindow.setTitle(title);
+        popupWindow.setHeight(350);
+        popupWindow.setWidth(850);
+        popupWindow.show();
+        refreshTableInfo();
+    }
+
+    private void closeInstallView() {
+        remoteAgentView.markForDestroy();
+        popupWindow.markForDestroy();
+    }
+
     private void setupStartButton() {
         addTableAction(MSG.common_button_start(), null, ButtonColor.GRAY, new AuthorizedTableAction(this,
             TableActionEnablement.SINGLE, Permission.MANAGE_INVENTORY) {
@@ -178,26 +206,20 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                     new AsyncCallback<AgentInstall>() {
                         @Override
                         public void onSuccess(AgentInstall result) {
-                            showRemoteAgentInstallView(result);
+                            showRemoteAgentInstallViewAsync(result);
                         }
 
                         @Override
                         public void onFailure(Throwable caught) {
-                            showRemoteAgentInstallView(null); // can't get any info on the agent - the user will have to provide it all
+                            showRemoteAgentInstallViewAsync(null); // can't get any info on the agent - the user will have to provide it all
                         }
 
-                        private void showRemoteAgentInstallView(AgentInstall ai) {
+                        private void showRemoteAgentInstallViewAsync(AgentInstall ai) {
                             // if no hostname is in agent install info, help out the user by suggesting the agent endpoint hostname
                             if (ai != null && ai.getSshHost() == null) {
                                 ai.setSshHost(agentAddress);
                             }
-                            RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(ai, Type.START);
-                            PopupWindow window = new PopupWindow(remoteAgentView);
-                            window.setTitle(MSG.view_adminTopology_agent_start());
-                            window.setHeight(350);
-                            window.setWidth(850);
-                            window.show();
-                            refreshTableInfo();
+                            showRemoteAgentInstallView(ai, MSG.common_label_startAgent(), Type.START);
                         }
                     });
             }
@@ -219,26 +241,20 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                     new AsyncCallback<AgentInstall>() {
                         @Override
                         public void onSuccess(AgentInstall result) {
-                            showRemoteAgentInstallView(result);
+                            showRemoteAgentInstallViewAsync(result);
                         }
 
                         @Override
                         public void onFailure(Throwable caught) {
-                            showRemoteAgentInstallView(null); // can't get any info on the agent - the user will have to provide it all
+                            showRemoteAgentInstallViewAsync(null); // can't get any info on the agent - the user will have to provide it all
                         }
 
-                        private void showRemoteAgentInstallView(AgentInstall ai) {
+                        private void showRemoteAgentInstallViewAsync(AgentInstall ai) {
                             // if no hostname is in agent install info, help out the user by suggesting the agent endpoint hostname
                             if (ai != null && ai.getSshHost() == null) {
                                 ai.setSshHost(agentAddress);
                             }
-                            RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(ai, Type.STOP);
-                            PopupWindow window = new PopupWindow(remoteAgentView);
-                            window.setTitle(MSG.view_adminTopology_agent_stop());
-                            window.setHeight(350);
-                            window.setWidth(850);
-                            window.show();
-                            refreshTableInfo();
+                            showRemoteAgentInstallView(ai, MSG.view_adminTopology_agent_stop(), Type.STOP);
                         }
                     });
             }
@@ -285,24 +301,17 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                                     new AsyncCallback<AgentInstall>() {
                                         @Override
                                         public void onSuccess(AgentInstall result) {
-                                            RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(result,
-                                                Type.UNINSTALL);
 
-                                            final PopupWindow window = new PopupWindow(remoteAgentView);
-                                            window.setTitle(MSG.view_adminTopology_agent_uninstall());
-                                            window.setHeight(350);
-                                            window.setWidth(850);
-                                            window.show();
-
-                                            remoteAgentView
-                                                .setSuccessHandler(new RemoteAgentInstallView.SuccessHandler() {
-                                                    @Override
-                                                    public void onSuccess(RemoteAgentInstallView.Type type) {
-                                                        if (type == Type.UNINSTALL) {
-                                                            removeResources();
-                                                        }
+                                            RemoteAgentInstallView.SuccessHandler resourceRemover = new RemoteAgentInstallView.SuccessHandler() {
+                                                @Override
+                                                public void onSuccess(RemoteAgentInstallView.Type type) {
+                                                    if (type == Type.UNINSTALL) {
+                                                        removeResources();
+                                                        closeInstallView();
                                                     }
-                                                });
+                                                }
+                                            };
+                                            showRemoteAgentInstallView(result, MSG.view_adminTopology_agent_uninstall(), Type.UNINSTALL, resourceRemover);
                                         }
 
                                         @Override

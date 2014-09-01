@@ -437,8 +437,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private void doneProcessing() {
         disableButtons(false);
         hostAuthorized = false; // if the ssh fingerprint changes under us this forces the user to re-authorize again
-        dialog.hide();
-        dialog.destroy();
+        dialog.markForDestroy();
     }
 
     private void displayError(String msg) {

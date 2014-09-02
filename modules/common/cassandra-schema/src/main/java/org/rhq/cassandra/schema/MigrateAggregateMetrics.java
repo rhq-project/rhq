@@ -17,6 +17,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.datastax.driver.core.Host;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
@@ -87,7 +88,7 @@ public class MigrateAggregateMetrics implements Step {
 
     private PreparedStatement find24HourData;
 
-    private RateLimiter writePermits = RateLimiter.create(7500, 30, TimeUnit.SECONDS);
+    private RateLimiter writePermits;
 
     private Semaphore readPermits = new Semaphore(1);
 
@@ -116,6 +117,8 @@ public class MigrateAggregateMetrics implements Step {
         if (dbConnectionFactory == null) {
             log.info("The relational database connection factory is not set. No data migration necessary");
         } else {
+            writePermits = RateLimiter.create(calculatePermits(), 30, TimeUnit.SECONDS);
+
             Stopwatch stopwatch = new Stopwatch().start();
             initPreparedStatements();
             Set<Integer> scheduleIds = loadScheduleIds();
@@ -135,6 +138,21 @@ public class MigrateAggregateMetrics implements Step {
             }
         }
         dropTables();
+    }
+
+    private int calculatePermits() {
+        int requestLimit = Integer.parseInt(System.getProperty("rhq.storage.request.limit", "20000"));
+        return requestLimit * getNumberOfUpNodes();
+    }
+
+    private int getNumberOfUpNodes() {
+        int count = 0;
+        for (Host host : session.getCluster().getMetadata().getAllHosts()) {
+            if (host.isUp()) {
+                ++count;
+            }
+        }
+        return count;
     }
 
     private void migrate(Set<Integer> scheduleIds, PreparedStatement query, final Bucket bucket) {

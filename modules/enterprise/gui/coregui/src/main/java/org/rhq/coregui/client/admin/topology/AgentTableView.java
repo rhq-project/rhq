@@ -219,7 +219,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                             if (ai != null && ai.getSshHost() == null) {
                                 ai.setSshHost(agentAddress);
                             }
-                            showRemoteAgentInstallView(ai, MSG.view_adminTopology_agent_start(), Type.START);
+                            showRemoteAgentInstallView(ai, MSG.common_label_startAgent(), Type.START);
                         }
                     });
             }

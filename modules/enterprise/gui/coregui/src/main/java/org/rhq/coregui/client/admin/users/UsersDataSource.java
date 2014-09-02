@@ -43,6 +43,7 @@ import org.rhq.coregui.client.admin.roles.RolesDataSource;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.validator.EmailValidator;
 
 /**
  * A DataSource for RHQ {@link Subject user}s.
@@ -54,7 +55,6 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
 
     private static UsersDataSource INSTANCE;
 
-    private static final String EMAIL_ADDRESS_REGEXP = "^([a-zA-Z0-9_.\\-+])+@([a-zA-Z0-9\\-])+(\\.([a-zA-Z0-9\\-])+)*$";
     private static final String MASKED_PASSWORD_VALUE = "XXXXXXXX";
 
     public static abstract class Field {
@@ -142,7 +142,7 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
         DataSourceTextField emailAddressField = createTextField(Field.EMAIL_ADDRESS,
             MSG.dataSource_users_field_emailAddress(), null, 100, true);
         fields.add(emailAddressField);
-        RegExpValidator emailAddressValidator = new RegExpValidator(EMAIL_ADDRESS_REGEXP);
+        EmailValidator emailAddressValidator = new EmailValidator();
         emailAddressValidator.setErrorMessage(MSG.dataSource_users_invalidEmailAddress());
         emailAddressField.setValidators(emailAddressValidator);
 

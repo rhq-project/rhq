@@ -370,28 +370,28 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         assertEquals(actual, expected, "The raw cache entries do not match");
     }
 
-    @Test(enabled = ENABLED)
-    public void insertAndFindIndexEntries() {
-        IndexEntry entry1 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 100);
-        IndexEntry entry2 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 101);
-        IndexEntry entry3 = new IndexEntry(MetricsTable.RAW, 1, hour(2).getMillis(), 102);
-        IndexEntry entry4 = new IndexEntry(MetricsTable.RAW, 0, hour(3).getMillis(), 101);
-
-        dao.insertIndexEntry(entry1).get();
-        dao.insertIndexEntry(entry2).get();
-        dao.insertIndexEntry(entry3).get();
-        dao.insertIndexEntry(entry4).get();
-
-        List<IndexEntry> expected = asList(entry1, entry2);
-        List<IndexEntry> actual = new ArrayList<IndexEntry>();
-
-        ResultSet resultSet = dao.findIndexEntries(MetricsTable.RAW, 0, hour(2).getMillis()).get();
-        for (Row row : resultSet) {
-            actual.add(new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), row.getInt(0)));
-        }
-
-        assertEquals(actual, expected, "The index entries do not match");
-    }
+//    @Test(enabled = ENABLED)
+//    public void insertAndFindIndexEntries() {
+//        IndexEntry entry1 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 100);
+//        IndexEntry entry2 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 101);
+//        IndexEntry entry3 = new IndexEntry(MetricsTable.RAW, 1, hour(2).getMillis(), 102);
+//        IndexEntry entry4 = new IndexEntry(MetricsTable.RAW, 0, hour(3).getMillis(), 101);
+//
+//        dao.insertIndexEntry(entry1).get();
+//        dao.insertIndexEntry(entry2).get();
+//        dao.insertIndexEntry(entry3).get();
+//        dao.insertIndexEntry(entry4).get();
+//
+//        List<IndexEntry> expected = asList(entry1, entry2);
+//        List<IndexEntry> actual = new ArrayList<IndexEntry>();
+//
+//        ResultSet resultSet = dao.findIndexEntries(MetricsTable.RAW, 0, hour(2).getMillis()).get();
+//        for (Row row : resultSet) {
+//            actual.add(new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), row.getInt(0)));
+//        }
+//
+//        assertEquals(actual, expected, "The index entries do not match");
+//    }
 
     @Test(enabled = ENABLED)
     public void deleteRawCacheEntries() {

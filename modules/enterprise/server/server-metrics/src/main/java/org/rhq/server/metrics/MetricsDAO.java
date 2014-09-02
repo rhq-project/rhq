@@ -44,7 +44,6 @@ import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetricMapper;
 import org.rhq.server.metrics.domain.Bucket;
-import org.rhq.server.metrics.domain.IndexEntry;
 import org.rhq.server.metrics.domain.ListPagedResult;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
@@ -74,8 +73,8 @@ public class MetricsDAO {
     private PreparedStatement findAggregateMetricsByDateRange;
     private PreparedStatement findCacheEntries;
     private PreparedStatement deleteCacheEntries;
-    private PreparedStatement insertIndexEntry;
-    private PreparedStatement findIndexEntries;
+//    private PreparedStatement insertIndexEntry;
+//    private PreparedStatement findIndexEntries;
     private PreparedStatement updateCacheIndex;
     private PreparedStatement findCacheIndexEntriesByDay;
     private PreparedStatement findPastCacheIndexEntriesBeforeToday;
@@ -149,12 +148,12 @@ public class MetricsDAO {
             "DELETE FROM " + MetricsTable.METRICS_CACHE + " " +
             "WHERE bucket = ? AND time_slice = ? AND start_schedule_id = ?");
 
-        insertIndexEntry = storageSession.prepare(
-            "INSERT INTO " + MetricsTable.INDEX + " (bucket, partition, time, schedule_id) " +
-            "VALUES (?, ?, ?, ?) ");
-
-        findIndexEntries = storageSession.prepare(
-            "SELECT schedule_id FROM " + MetricsTable.INDEX + " WHERE bucket = ? AND partition = ? AND time = ?");
+//        insertIndexEntry = storageSession.prepare(
+//            "INSERT INTO " + MetricsTable.INDEX + " (bucket, partition, time, schedule_id) " +
+//            "VALUES (?, ?, ?, ?) ");
+//
+//        findIndexEntries = storageSession.prepare(
+//            "SELECT schedule_id FROM " + MetricsTable.INDEX + " WHERE bucket = ? AND partition = ? AND time = ?");
 
         updateCacheIndex = storageSession.prepare(
             "UPDATE " + MetricsTable.METRICS_CACHE_INDEX + " " +
@@ -310,16 +309,16 @@ public class MetricsDAO {
         return storageSession.executeAsync(statement);
     }
 
-    public StorageResultSetFuture findIndexEntries(MetricsTable bucket, int partition, long timestamp) {
-        BoundStatement statement = findIndexEntries.bind(bucket.toString(), partition, new Date(timestamp));
-        return storageSession.executeAsync(statement);
-    }
-
-    public StorageResultSetFuture insertIndexEntry(IndexEntry indexEntry) {
-        BoundStatement statement = insertIndexEntry.bind(indexEntry.getBucket().toString(), indexEntry.getPartition(),
-            new Date(indexEntry.getTimestamp()), indexEntry.getScheduleId());
-        return storageSession.executeAsync(statement);
-    }
+//    public StorageResultSetFuture findIndexEntries(MetricsTable bucket, int partition, long timestamp) {
+//        BoundStatement statement = findIndexEntries.bind(bucket.toString(), partition, new Date(timestamp));
+//        return storageSession.executeAsync(statement);
+//    }
+//
+//    public StorageResultSetFuture insertIndexEntry(IndexEntry indexEntry) {
+//        BoundStatement statement = insertIndexEntry.bind(indexEntry.getBucket().toString(), indexEntry.getPartition(),
+//            new Date(indexEntry.getTimestamp()), indexEntry.getScheduleId());
+//        return storageSession.executeAsync(statement);
+//    }
 
     public StorageResultSetFuture updateCacheIndex(MetricsTable table, long day, int partition, long collectionTimeSlice,
         int startScheduleId, long insertTimeSlice, Set<Integer> scheduleIds) {

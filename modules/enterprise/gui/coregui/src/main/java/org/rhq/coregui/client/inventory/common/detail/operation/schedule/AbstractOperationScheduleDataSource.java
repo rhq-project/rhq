@@ -123,8 +123,7 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
             .dataSource_operationSchedule_field_operationDisplayName(), null, 100, true);
         fields.add(operationDisplayNameField);
 
-        DataSourceField subjectField = new DataSourceField(Field.SUBJECT, FieldType.ANY, MSG
-            .dataSource_operationSchedule_field_subject());
+        DataSourceField subjectField = new DataSourceField(Field.SUBJECT, FieldType.ANY, MSG.common_title_owner());
         subjectField.setCanEdit(false);
         fields.add(subjectField);
 

@@ -3,7 +3,7 @@
    <parent>
       <artifactId>rhq-parent</artifactId>
       <groupId>org.rhq</groupId>
-      <version>4.12.0.JON330DR01</version>
+      <version>4.12.0.JON330ER02</version>
    </parent>
 
    <artifactId>rhq-code-coverage</artifactId>

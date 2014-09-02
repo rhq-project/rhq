@@ -30,13 +30,10 @@ import static org.joda.time.DateTime.now;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
@@ -48,8 +45,6 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.Bucket;
-import org.rhq.server.metrics.domain.IndexEntry;
-import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
@@ -150,16 +145,16 @@ public class MetricsServerTest extends MetricsTest {
 //            new IndexEntry(MetricsTable.RAW, 1, hour(5).getMillis(), scheduleId4)));
     }
 
-    private void assertIndexEquals(MetricsTable table, int partition, DateTime time, List<IndexEntry> expected) {
-        ResultSet resultSet = dao.findIndexEntries(table, partition, time.getMillis()).get();
-        List<IndexEntry> actual = new ArrayList<IndexEntry>();
-
-        for (Row row : resultSet) {
-            actual.add(new IndexEntry(table, partition, time.getMillis(), row.getInt(0)));
-        }
-
-        assertEquals(actual, expected, "The index entries do not match");
-    }
+//    private void assertIndexEquals(MetricsTable table, int partition, DateTime time, List<IndexEntry> expected) {
+//        ResultSet resultSet = dao.findIndexEntries(table, partition, time.getMillis()).get();
+//        List<IndexEntry> actual = new ArrayList<IndexEntry>();
+//
+//        for (Row row : resultSet) {
+//            actual.add(new IndexEntry(table, partition, time.getMillis(), row.getInt(0)));
+//        }
+//
+//        assertEquals(actual, expected, "The index entries do not match");
+//    }
 
     @Test
     public void insertLateData() throws Exception {

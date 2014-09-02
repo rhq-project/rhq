@@ -1,6 +1,7 @@
 package org.rhq.cassandra.schema;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -36,9 +37,6 @@ import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.ClusterInitService;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
-import org.rhq.core.db.DatabaseType;
-import org.rhq.core.db.DatabaseTypeFactory;
-import org.rhq.core.db.DbUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 
 /**
@@ -68,8 +66,7 @@ public class MigrateAggregateMetricsTest {
 
     @BeforeClass
     public void setupClass() throws Exception {
-        connection = DbUtil.getConnection(System.getProperty("rhq.db.url"),
-            System.getProperty("rhq.db.username"), System.getProperty("rhq.db.password"));
+        connection = newJDBCConnection();
         if (Boolean.valueOf(System.getProperty("rhq.storage.deploy", "true"))) {
             deployStorageCluster();
         }
@@ -130,8 +127,7 @@ public class MigrateAggregateMetricsTest {
         properties.put(SchemaManager.RELATIONAL_DB_CONNECTION_FACTORY_PROP, new DBConnectionFactory() {
             @Override
             public Connection newConnection() throws SQLException {
-                return DbUtil.getConnection(System.getProperty("rhq.db.url"), System.getProperty("rhq.db.username"),
-                    System.getProperty("rhq.db.password"));
+                return newJDBCConnection();
             }
         });
         properties.put(SchemaManager.DATA_DIR, "target");
@@ -236,12 +232,10 @@ public class MigrateAggregateMetricsTest {
     }
 
     private void createResource() throws Exception {
-        DatabaseType databaseType = DatabaseTypeFactory.getDatabaseType(connection);
-
         String insertResourceType = "insert into rhq_resource_type (id, name, category, creation_data_type, " +
             "create_delete_policy, singleton, supports_manual_add, missing_policy) values (" + RESOURCE_TYPE_ID +
-            ", 'migration-test-type', 'test', 'test', 'test', " + databaseType.getBooleanValue(true) + ", " +
-            databaseType.getBooleanValue(true) + ", 'test')";
+            ", 'migration-test-type', 'test', 'test', 'test', " + jdbcBooleanValue(true) + ", " +
+            jdbcBooleanValue(true) + ", 'test')";
 
         String insertResource = "insert into rhq_resource (id, resource_type_id, uuid, resource_key) values (" +
             RESOURCE_ID + ", " + RESOURCE_TYPE_ID + ", 'migration-test', 'migration-test')";
@@ -315,6 +309,18 @@ public class MigrateAggregateMetricsTest {
                 }
             }
         }
+    }
+
+    private Connection newJDBCConnection() throws SQLException {
+        return DriverManager.getConnection(System.getProperty("rhq.db.url"),
+            System.getProperty("rhq.db.username"), System.getProperty("rhq.db.password"));
+    }
+
+    private String jdbcBooleanValue(boolean value) {
+        if (System.getProperty("rhq.db.url").contains("postgres")) {
+            return value ? "true" : "false";
+        }
+        return value ? "1" : "0";
     }
 
 }

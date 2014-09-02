@@ -193,7 +193,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                             }
                             RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(ai, Type.START);
                             PopupWindow window = new PopupWindow(remoteAgentView);
-                            window.setTitle(MSG.view_adminTopology_agent_start());
+                            window.setTitle(MSG.common_label_startAgent());
                             window.setHeight(350);
                             window.setWidth(850);
                             window.show();

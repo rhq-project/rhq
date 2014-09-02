@@ -266,7 +266,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
         createAgentStatusTextItem();
 
-        statusCheckButton = new ButtonItem("updateStatus", MSG.view_remoteAgentInstall_updateStatus());
+        statusCheckButton = new ButtonItem("updateStatus", MSG.common_title_updateStatus());
         statusCheckButton.setStartRow(false);
         statusCheckButton.setEndRow(true);
         if (findAgentInstallPathButton.getTitle().length() < 15) { //i18n may prolong the title
@@ -372,7 +372,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             }
         });
 
-        startButton = new EnhancedIButton(MSG.view_remoteAgentInstall_startAgent());
+        startButton = new EnhancedIButton(MSG.common_label_startAgent());
         startButton.setExtraSpace(10);
         startButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -771,7 +771,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         StaticTextItem path = new StaticTextItem("path", MSG.common_title_path());
         path.setValue(info.getPath());
 
-        StaticTextItem owner = new StaticTextItem("owner", MSG.view_remoteAgentInstall_owner());
+        StaticTextItem owner = new StaticTextItem("owner", MSG.common_title_owner());
         owner.setValue(info.getOwner());
 
         StaticTextItem config = new StaticTextItem("config", MSG.common_title_configuration());

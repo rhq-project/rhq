@@ -28,6 +28,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -61,7 +62,7 @@ public class RevertStep extends AbstractWizardStep {
             canvas.setHeight100();
             canvas.setAlign(Alignment.CENTER);
 
-            final Img deployingImage = new Img("/images/status-bar.gif");
+            final Img deployingImage = new Img(ImageManager.getLoadingIcon());
             deployingImage.setLayoutAlign(Alignment.CENTER);
             deployingImage.setWidth(50);
             deployingImage.setHeight(15);
@@ -76,7 +77,7 @@ public class RevertStep extends AbstractWizardStep {
                 this.wizard.getDeploymentDescription(), this.wizard.isCleanDeployment(), //
                 new AsyncCallback<BundleDeployment>() {
                     public void onSuccess(BundleDeployment result) {
-                        deployingImage.setSrc("/images/status_complete.gif");
+                        deployingImage.setSrc(ImageManager.getStatusComplete());
                         deployingMessage.setText(MSG.view_bundle_revertWizard_revertStep_scheduled());
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_bundle_revertWizard_revertStep_scheduledDetails(result.getName(),
@@ -86,7 +87,7 @@ public class RevertStep extends AbstractWizardStep {
                     }
 
                     public void onFailure(Throwable caught) {
-                        deployingImage.setSrc("/images/status_error.gif");
+                        deployingImage.setSrc(ImageManager.getStatusError());
                         deployingMessage.setText(MSG.view_bundle_revertWizard_revertStep_scheduledFailure());
                         CoreGUI.getErrorHandler().handleError(
                             MSG.view_bundle_revertWizard_revertStep_scheduledFailure(), caught);

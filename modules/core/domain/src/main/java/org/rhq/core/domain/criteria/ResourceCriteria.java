@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,10 +20,13 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.core.domain.criteria;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -211,6 +214,26 @@ public class ResourceCriteria extends TaggedCriteria {
 
     public void addFilterPluginName(String filterPluginName) {
         this.filterPluginName = filterPluginName;
+    }
+
+    public void setStrictFilterPluginName(boolean strict) {
+        Set<String> strictFilters = new HashSet<String>(Arrays.asList(getStrictFilters()));
+        if (strict) {
+            strictFilters.add("pluginName");
+        } else {
+            strictFilters.remove("pluginName");
+        }
+        setStrictFilters(strictFilters.toArray(new String[strictFilters.size()]));
+    }
+
+    public void setCaseSensitiveFilterPluginName(boolean caseSensitive) {
+        Set<String> caseSensitiveFilters = new HashSet<String>(Arrays.asList(getCaseSensitiveFilters()));
+        if (caseSensitive) {
+            caseSensitiveFilters.add("pluginName");
+        } else {
+            caseSensitiveFilters.remove("pluginName");
+        }
+        setCaseSensitiveFilters(caseSensitiveFilters.toArray(new String[caseSensitiveFilters.size()]));
     }
 
     public void addFilterParentResourceId(Integer filterParentResourceId) {

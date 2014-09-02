@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -70,7 +70,7 @@ public final class CriteriaQueryGenerator {
         RESOURCE, // specifies the resource alias to join on for standard res-group-role-subject authorization checking
         GROUP, // specifies the group alias to join on for standard group-role-subject authorization checking
         BUNDLE, // specifies the bundle alias to join on for standard bundle-bundleGroup-role-subject authorization checking
-        BUNDLE_GROUP; // specifies the bundle group alias to join on for standard bundleGroup-role-subject authorization checking
+        BUNDLE_GROUP // specifies the bundle group alias to join on for standard bundleGroup-role-subject authorization checking
     }
 
     private Criteria criteria;
@@ -118,7 +118,7 @@ public final class CriteriaQueryGenerator {
     }
 
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, int subjectId) {
-        String defaultFragment = null;
+        String defaultFragment;
         if (type == AuthorizationTokenType.RESOURCE) {
             defaultFragment = "resource";
             setAuthorizationResourceFragment(type, defaultFragment, subjectId);
@@ -338,7 +338,7 @@ public final class CriteriaQueryGenerator {
                 query = query.replace(":tagName", tag.getName());
 
             } else {
-                value = getParameterReplacedValue(value);
+                value = getParameterReplacedValue(critField.getKey(), value);
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
                 }
@@ -356,10 +356,10 @@ public final class CriteriaQueryGenerator {
         return query;
     }
 
-    private String getParameterReplacedValue(Object value) {
+    private String getParameterReplacedValue(String filter, Object value) {
         String returnValue;
         if (value instanceof String) {
-            returnValue = "'" + prepareStringBindValue((String) value) + "'";
+            returnValue = "'" + prepareStringBindValue(filter, (String) value) + "'";
         } else if (value instanceof Enum<?>) {
             // note: this strategy won't work for entities with multiple enums that are persisted differently
             EnumType type = getPersistenceEnumType(value.getClass());
@@ -378,7 +378,7 @@ public final class CriteriaQueryGenerator {
                 } else {
                     results.append(",");
                 }
-                results.append(getParameterReplacedValue(nextValue));
+                results.append(getParameterReplacedValue(filter, nextValue));
             }
             returnValue = results.toString();
         } else {
@@ -439,7 +439,7 @@ public final class CriteriaQueryGenerator {
 
         results.append("FROM ").append(className).append(' ').append(alias).append(NL);
 
-        if (countQuery == false) {
+        if (!countQuery) {
             /*
              * don't fetch in the count query to avoid: "query specified join fetching,
              * but the owner of the fetched association was not present in the select list"
@@ -581,10 +581,10 @@ public final class CriteriaQueryGenerator {
             conjunctiveResults.append(fragment).append(' ');
         }
 
-        if (conjunctiveResults.length()>0 || authorizationPermsFragment != null
-            || authorizationCustomConditionFragment != null || searchExpressionWhereClause != null ) {
+        if (conjunctiveResults.length() > 0 || authorizationPermsFragment != null
+            || authorizationCustomConditionFragment != null || searchExpressionWhereClause != null) {
             results.append("WHERE ");
-            if (conjunctiveResults.length()>0) {
+            if (conjunctiveResults.length() > 0) {
                 results.append("( ").append(conjunctiveResults).append(")");
             }
         }
@@ -611,16 +611,14 @@ public final class CriteriaQueryGenerator {
         }
 
         if (searchExpressionWhereClause != null) {
-            if (firstCrit) {
-                firstCrit = false;
-            } else {
+            if (!firstCrit) {
                 // always want to additionally filter by translated from the RHQL search expression
                 results.append(NL).append(" AND ");
             }
             results.append(searchExpressionWhereClause);
         }
 
-        if (countQuery == false) {
+        if (!countQuery) {
             // group by clause
             if (groupByClause != null) {
                 results.append(NL).append("GROUP BY ").append(groupByClause);
@@ -655,7 +653,7 @@ public final class CriteriaQueryGenerator {
             return false;
         }
         for (char next : input.toCharArray()) {
-            if (Character.isDigit(next) == false) {
+            if (!Character.isDigit(next)) {
                 return false;
             }
         }
@@ -705,9 +703,6 @@ public final class CriteriaQueryGenerator {
                 results.put(getCleansedFieldName(filterField, 6), filterFieldValue);
             }
         }
-        //        for (Map.Entry<String, Object> entries : results.entrySet()) {
-        //            LOG.info("Filter: (" + entries.getKey() + ", " + entries.getValue() + ")");
-        //        }
         return results;
     }
 
@@ -915,11 +910,9 @@ public final class CriteriaQueryGenerator {
                 query.setParameter("tagSemantic", tag.getSemantic());
                 query.setParameter("tagName", tag.getName());
 
-            } else if (value instanceof Criteria.NonBindingOverrideFilter) {
-                // skip this one - do nothing since there is no parameter binding for this value
-            } else {
+            } else if (!(value instanceof Criteria.NonBindingOverrideFilter)) {
                 if (value instanceof String) {
-                    value = prepareStringBindValue((String) value);
+                    value = prepareStringBindValue(critField.getKey(), (String) value);
                 }
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
@@ -934,16 +927,30 @@ public final class CriteriaQueryGenerator {
         }
     }
 
-    private String prepareStringBindValue(String value) {
-        if (!criteria.isStrict()) {
+    private String prepareStringBindValue(String filter, String value) {
+        if (!criteria.isStrict() && !arrayContains(criteria.getStrictFilters(), filter)) {
             value = "%" + QueryUtility.escapeSearchParameter(value) + "%";
         }
-
-        if (!criteria.isCaseSensitive()) {
+        if (!criteria.isCaseSensitive() && !arrayContains(criteria.getCaseSensitiveFilters(), filter)) {
             value = value.toLowerCase();
         }
-
         return value;
+    }
+
+    private boolean arrayContains(String[] strings, String s) {
+        if (strings == null) {
+            return false;
+        }
+        for (String string : strings) {
+            if (s == null) {
+                if (string == null) {
+                    return true;
+                }
+            } else if (s.equals(string)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void main(String[] args) {
@@ -1051,7 +1058,7 @@ public final class CriteriaQueryGenerator {
 
             for (String fieldName : criteria.getOrderingFieldNames()) {
                 for (Field sortField : CriteriaUtil.getFields(criteria, Criteria.Type.SORT)) {
-                    if (sortField.getName().equals(fieldName) == false) {
+                    if (!sortField.getName().equals(fieldName)) {
                         continue;
                     }
                     Object sortFieldValue;

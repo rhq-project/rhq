@@ -200,13 +200,16 @@ public class MigrateAggregateMetrics implements Step {
 
     private void initPreparedStatements() {
         find1HourData = session.prepare(
-            "SELECT schedule_id, time, type, value, ttl(value) FROM rhq.one_hour_metrics WHERE schedule_id = ?");
+            "SELECT schedule_id, time, type, value, ttl(value), writetime(value) FROM rhq.one_hour_metrics " +
+            "WHERE schedule_id = ?");
 
         find6HourData = session.prepare(
-            "SELECT schedule_id, time, type, value, ttl(value) FROM rhq.six_hour_metrics WHERE schedule_id = ?");
+            "SELECT schedule_id, time, type, value, ttl(value, writetime(value) FROM rhq.six_hour_metrics " +
+            "WHERE schedule_id = ?");
 
         find24HourData = session.prepare(
-            "SELECT schedule_id, time, type, value, ttl(value) FROM rhq.twenty_four_hour_metrics WHERE schedule_id = ?");
+            "SELECT schedule_id, time, type, value, ttl(value), writetime(value) FROM rhq.twenty_four_hour_metrics " +
+            "WHERE schedule_id = ?");
     }
 
     private Set<Integer> loadScheduleIds() {
@@ -319,6 +322,7 @@ public class MigrateAggregateMetrics implements Step {
             Double max = null;
             Double min = null;
             Double avg = null;
+            Long writeTime = rows.get(0).getLong(5);
             Integer ttl = rows.get(0).getInt(4);
 
             for (Row row : rows) {
@@ -343,7 +347,7 @@ public class MigrateAggregateMetrics implements Step {
                         log.debug("We only have a partial " + bucket + " metric for {scheduleId: " + scheduleId +
                             ", time: " + time.getTime() + "}. It will not be migrated.");
                     } else {
-                        ResultSetFuture writeFuture = writeMetrics(time, avg, max, min, ttl);
+                        ResultSetFuture writeFuture = writeMetrics(time, avg, max, min, ttl, writeTime);
                         Futures.addCallback(writeFuture, this);
                     }
 
@@ -352,6 +356,7 @@ public class MigrateAggregateMetrics implements Step {
                     min = null;
                     avg = null;
                     ttl = row.getInt(4);
+                    writeTime = row.getLong(5);
                 }
             }
             if (writeFailed) {
@@ -383,12 +388,13 @@ public class MigrateAggregateMetrics implements Step {
             log.warn("Migration of " + bucket + " data for schedule id " + scheduleId + " failed", t);
         }
 
-        private ResultSetFuture writeMetrics(Date time, Double avg, Double max, Double min, Integer ttl) {
+        private ResultSetFuture writeMetrics(Date time, Double avg, Double max, Double min, Integer ttl,
+            Long writeTime) {
             writePermits.acquire();
             return session.executeAsync(
                 "INSERT INTO rhq.aggregate_metrics(schedule_id, bucket, time, avg, max, min) VALUES " +
                 "(" + scheduleId + ", '" + bucket + "', " + time.getTime() + ", " + avg + ", " + max + ", " +
-                    min + ") USING TTL " + ttl);
+                    min + ") USING TTL " + ttl + " AND TIMESTAMP " + writeTime);
         }
     }
 

@@ -565,7 +565,7 @@ public class InstallerServiceImpl implements InstallerService {
                 };
                 Properties schemaProperties = new Properties();
                 schemaProperties.put(SchemaManager.RELATIONAL_DB_CONNECTION_FACTORY_PROP, connectionFactory);
-                schemaProperties.put(SchemaManager.DATA_DIR, System.getProperty("jboss.server.data.dir"));
+                schemaProperties.put(SchemaManager.DATA_DIR, getAppServerDataDir());
 
                 try {
                     storageNodeSchemaManager.checkCompatibility();

@@ -168,12 +168,13 @@ public class ResourceSelector extends AbstractSelector<Resource, ResourceCriteri
                 ResourceSelector.this.resourceTypeFilter = null;
             }
 
-            ResourceCriteria result = super.getFetchCriteria(request);
+            ResourceCriteria criteria = super.getFetchCriteria(request);
+            criteria.setStrictFilterPluginName(true);
 
             // additional return data
-            result.fetchResourceType(true);
+            criteria.fetchResourceType(true);
 
-            return result;
+            return criteria;
         }
 
     }

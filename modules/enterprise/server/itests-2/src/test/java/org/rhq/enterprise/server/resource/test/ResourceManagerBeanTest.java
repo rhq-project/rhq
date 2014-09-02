@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.resource.test;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -32,8 +31,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
-import org.jboss.remoting.InvokerLocator;
-
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
@@ -43,16 +40,11 @@ import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -63,24 +55,17 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.communications.ServiceContainer;
-import org.rhq.enterprise.communications.command.server.CommandProcessorMetrics;
-import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SessionNotFoundException;
-import org.rhq.enterprise.server.core.comm.ServerConfiguration;
 import org.rhq.enterprise.server.discovery.DiscoveryServerServiceImpl;
 import org.rhq.enterprise.server.operation.OperationDefinitionNotFoundException;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionNotFoundException;
 import org.rhq.enterprise.server.resource.metadata.test.UpdatePluginMetadataTestBase;
-import org.rhq.enterprise.server.test.TestServerCommunicationsService;
-import org.rhq.enterprise.server.test.TestServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -244,7 +229,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         PageList<ResourceGroup> persistedGroups = groupManager.findResourceGroupsByCriteria(getOverlord(), criteria);
         assertEquals("There should be just one group with id " + newGroup.getId(), 1,
             persistedGroups.size());
-        
+
         // equals is based on the name of a group
         assertEquals("Persisted group should be the same as the group created in before method.", newGroup,
             persistedGroups.get(0));
@@ -285,17 +270,17 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
     public void testResourceRemovalFromGroup() {
         ResourceGroup persistedGroup = groupManager.getResourceGroup(getOverlord(), newGroup.getId());
         assertEquals("An empty group is considered as MIXED.", GroupCategory.MIXED, persistedGroup.getGroupCategory());
-        
+
         // add resource to group
         groupManager.addResourcesToGroup(getOverlord(), persistedGroup.getId(), new int[] { newResource.getId() });
         persistedGroup = groupManager.getResourceGroup(getOverlord(), newGroup.getId());
         assertEquals("A group with just one explicit member is considered as COMPATIBLE.", GroupCategory.COMPATIBLE,
             persistedGroup.getGroupCategory());
-        
+
         // now remove the only resource from the group
         groupManager.removeResourcesFromGroup(getOverlord(), persistedGroup.getId(), new int[] { newResource.getId() });
         persistedGroup = groupManager.getResourceGroup(getOverlord(), newGroup.getId());
-        assertEquals("An empty group is considered as MIXED.", GroupCategory.MIXED, persistedGroup.getGroupCategory());     
+        assertEquals("An empty group is considered as MIXED.", GroupCategory.MIXED, persistedGroup.getGroupCategory());
     }
 
     public void testLiveAvailability() throws Exception {
@@ -369,6 +354,67 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
 
         List<Alert> alerts = LookupUtil.getAlertManager().findAlertsByCriteria(getOverlord(), aCrit);
         assertEquals("Unexpected number of alerts on the resource.", 1, alerts.size());
+    }
+
+    // we can add a lot more here, but this mainly exists to test some criteria stuff not obviously tested elsewhere
+    public void testFindByResourceCriteria() {
+        ResourceCriteria c = new ResourceCriteria();
+
+        List<Resource> result = resourceManager.findResourcesByCriteria(getOverlord(), c);
+        assertNotNull(result);
+        assertEquals(1, result.size());
+
+        c.addFilterPluginName("TES");
+        result = resourceManager.findResourcesByCriteria(getOverlord(), c);
+        assertEquals(1, result.size());
+
+        c.setStrict(true);
+        result = resourceManager.findResourcesByCriteria(getOverlord(), c);
+        assertEquals(0, result.size());
+
+        c.setStrict(false);
+        c.setCaseSensitive(true);
+        result = resourceManager.findResourcesByCriteria(getOverlord(), c);
+        assertEquals(0, result.size());
+
+        c.setCaseSensitive(false);
+        result = resourceManager.findResourcesByCriteria(getOverlord(), c);
+        assertEquals(1, result.size());
+
+        c.setStrictFilters("foo");
+        c.setCaseSensitiveFilters("foo");
+        result = resourceManager.findResourcesByCriteria(getOverlord(), c);
+        assertEquals(1, result.size());
+
+        c.setStrictFilters("pluginName", "foo");
+        result = resourceManager.findResourcesByCriteria(getOverlord(), c);
+        assertEquals(0, result.size());
+
+        c.setStrictFilters(null);
+        result = resourceManager.findResourcesByCriteria(getOverlord(), c);
+        assertEquals(1, result.size());
+
+        c.setCaseSensitiveFilters("pluginName", "foo");
+        result = resourceManager.findResourcesByCriteria(getOverlord(), c);
+        assertEquals(0, result.size());
+
+        c.setCaseSensitiveFilters("pluginName", "foo");
+        result = resourceManager.findResourcesByCriteria(getOverlord(), c);
+        assertEquals(0, result.size());
+
+        c.setStrictFilters("pluginName", "foo");
+        c.setCaseSensitiveFilters("pluginName", "foo");
+        c.addFilterPluginName("test");
+        result = resourceManager.findResourcesByCriteria(getOverlord(), c);
+        assertEquals(1, result.size());
+
+        c.addFilterPluginName("TEST");
+        result = resourceManager.findResourcesByCriteria(getOverlord(), c);
+        assertEquals(0, result.size());
+
+        c.addFilterPluginName("testy");
+        result = resourceManager.findResourcesByCriteria(getOverlord(), c);
+        assertEquals(0, result.size());
     }
 
     private int givenASampleResourceHierarchy() throws NotSupportedException, SystemException {

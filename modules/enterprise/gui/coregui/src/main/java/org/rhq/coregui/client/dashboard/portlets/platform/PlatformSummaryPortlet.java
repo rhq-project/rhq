@@ -18,6 +18,7 @@
  */
 package org.rhq.coregui.client.dashboard.portlets.platform;
 
+import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
@@ -142,6 +143,7 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
                 setShowRecordComponents(true);
                 setShowRecordComponentsByCell(true);
                 setAutoFitData(Autofit.VERTICAL);
+                setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
                 setOverflow(Overflow.AUTO);
                 setShowEmptyMessage(false);
             }

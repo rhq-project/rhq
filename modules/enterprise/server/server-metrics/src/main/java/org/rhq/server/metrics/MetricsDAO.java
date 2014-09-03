@@ -41,14 +41,11 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
-import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
-import org.rhq.server.metrics.domain.AggregateSimpleNumericMetricMapper;
 import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.ListPagedResult;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
-import org.rhq.server.metrics.domain.SimplePagedResult;
 
 
 /**
@@ -280,14 +277,6 @@ public class MetricsDAO {
         BoundStatement statement = findAggregateMetricsByDateRange.bind(scheduleId, bucket.toString(),
             new Date(startTime), new Date(endTime));
         return storageSession.executeAsync(statement);
-    }
-
-    public Iterable<AggregateSimpleNumericMetric> findAggregatedSimpleOneHourMetric(int scheduleId, long startTime,
-        long endTime) {
-        BoundStatement statement = findAggregateMetricsByDateRange.bind(scheduleId, Bucket.ONE_HOUR.toString(),
-            new Date(startTime), new Date(endTime));
-        return new SimplePagedResult<AggregateSimpleNumericMetric>(statement, new AggregateSimpleNumericMetricMapper(),
-            storageSession);
     }
 
     public StorageResultSetFuture findCacheEntriesAsync(MetricsTable table, long timeSlice,

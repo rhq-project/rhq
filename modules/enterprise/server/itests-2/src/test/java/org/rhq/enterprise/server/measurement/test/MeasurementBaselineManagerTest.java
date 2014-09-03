@@ -57,7 +57,6 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.MetricsTable;
 
-@Test
 public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     private Agent agent;
     private ResourceType platformType;
@@ -104,6 +103,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
      *
      * @throws Throwable
      */
+    @Test
     public void testAutoBaselineCalculationsWithLargeInventory() throws Throwable {
         long startingTime;
 
@@ -174,6 +174,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
      *
      * @throws Throwable
      */
+    @Test
     public void testAutoBaselineCalculations() throws Throwable {
         begin();
 
@@ -203,7 +204,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             // pass now for olderThanTime to ensure all existing baselines are deleted
             // pass 30000 for amountOfData to only include the youngest in the baseline calculation
-            long computeTime = baselineManager.calculateAutoBaselines(30000, System.currentTimeMillis());
+            long computeTime = baselineManager.calculateAutoBaselines(3000, System.currentTimeMillis());
             assert computeTime > 0;
 
             MeasurementBaseline bl1;

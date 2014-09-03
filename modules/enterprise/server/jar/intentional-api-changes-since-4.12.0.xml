@@ -22,7 +22,7 @@
   <difference>
     <className>org/rhq/enterprise/server/install/remote/RemoteInstallManagerRemote</className>
     <differenceType>7004</differenceType>  <!-- number of args changed -->
-    <method>java.lang.String uninstallAgent(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.install.remote.RemoteAccessInfo, java.lang.String)</method>
+    <method>java.lang.String uninstallAgent(*)</method>
     <justification>Pass installpath to the uninstallAgent method also, https://bugzilla.redhat.com/show_bug.cgi?id=1130162</justification>
   </difference>
 </differences>

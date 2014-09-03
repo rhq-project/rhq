@@ -79,13 +79,14 @@ class VersionManager extends AbstractManager {
         log.info("Preparing to install storage schema");
 
         try {
+            // Drop the existing connection so we don't use stale session
+            shutdownClusterConnection();
             initClusterSession();
         } catch (AuthenticationException e) {
             log.debug("Authentication exception. Will now attempt to create the storage schema.");
             log.debug(e);
             create();
         }
-
         update(properties);
     }
 

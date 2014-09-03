@@ -147,7 +147,7 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             for (ResourceType type : resourceTypes) {
                 String plugin = type.getPlugin();
                 Set<ResourceType> parentTypes = type.getParentResourceTypes();
-                if (parentTypes == null || parentTypes.isEmpty()) {
+                if (parentTypes == null || parentTypes.isEmpty() || parentTypes.size() > 1) {
                     ArrayList<ResourceType> pluginRoots = rootTypes.get(plugin);
                     if (pluginRoots == null) {
                         pluginRoots = new ArrayList<ResourceType>();
@@ -155,14 +155,13 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
                     }
                     pluginRoots.add(type);
                 } else {
-                    for (ResourceType parentType : parentTypes) {
-                        ArrayList<ResourceType> siblingTypes = typeChildren.get(parentType);
-                        if (siblingTypes == null) {
-                            siblingTypes = new ArrayList<ResourceType>();
-                            typeChildren.put(parentType, siblingTypes);
-                        }
-                        siblingTypes.add(type);
+                    ResourceType parentType = parentTypes.iterator().next();
+                    ArrayList<ResourceType> siblingTypes = typeChildren.get(parentType);
+                    if (siblingTypes == null) {
+                        siblingTypes = new ArrayList<ResourceType>();
+                        typeChildren.put(parentType, siblingTypes);
                     }
+                    siblingTypes.add(type);
                 }
             }
 

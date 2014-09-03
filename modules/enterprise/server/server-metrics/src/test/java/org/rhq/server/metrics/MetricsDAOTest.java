@@ -50,6 +50,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.cassandra.schema.Table;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
@@ -57,7 +58,6 @@ import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.CacheIndexEntryMapper;
-import org.rhq.server.metrics.domain.IndexEntry;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
@@ -90,11 +90,9 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @BeforeMethod
     public void resetDB() throws Exception {
-        session.execute("TRUNCATE " + MetricsTable.INDEX);
-        session.execute("TRUNCATE " + MetricsTable.RAW);
-        session.execute("TRUNCATE " + MetricsTable.AGGREGATE);
-        session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE);
-        session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE_INDEX);
+        for (Table table : Table.values()) {
+            session.execute("TRUNCATE " + table.getTableName());
+        }
     }
 
     @Test(enabled = ENABLED)

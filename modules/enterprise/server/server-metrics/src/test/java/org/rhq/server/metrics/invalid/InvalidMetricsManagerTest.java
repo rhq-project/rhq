@@ -53,7 +53,6 @@ public class InvalidMetricsManagerTest extends CassandraIntegrationTest {
     }
 
     private void purgeDB() {
-        session.execute("TRUNCATE " + MetricsTable.INDEX);
         session.execute("TRUNCATE " + MetricsTable.RAW);
         session.execute("TRUNCATE " + MetricsTable.AGGREGATE);
         session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE);

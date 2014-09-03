@@ -53,8 +53,8 @@ class TopologyManager extends AbstractManager {
     }
 
     public TopologyManager(String username, String password, String[] nodes, int cqlPort,
-        SessionManager sessionManager) {
-        super(username, password, nodes, cqlPort, sessionManager);
+        SessionManager sessionManager, UpdateFolderFactory updateFolderFactory) {
+        super(username, password, nodes, cqlPort, sessionManager, updateFolderFactory);
     }
 
     /**

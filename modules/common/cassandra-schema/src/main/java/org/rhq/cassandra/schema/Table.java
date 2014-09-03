@@ -22,4 +22,9 @@ public enum Table {
         return tableName;
     }
 
+
+    @Override
+    public String toString() {
+        return tableName;
+    }
 }

@@ -31,7 +31,6 @@ import static org.testng.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 import com.datastax.driver.core.ResultSet;
@@ -46,10 +45,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.cassandra.schema.Table;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
-import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.IndexBucket;
 import org.rhq.server.metrics.domain.IndexEntry;
@@ -80,11 +78,9 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @BeforeMethod
     public void resetDB() throws Exception {
-        session.execute("TRUNCATE " + MetricsTable.INDEX);
-        session.execute("TRUNCATE " + MetricsTable.RAW);
-        session.execute("TRUNCATE " + MetricsTable.AGGREGATE);
-        session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE);
-        session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE_INDEX);
+        for (Table table : Table.values()) {
+            session.execute("TRUNCATE " + table.getTableName());
+        }
     }
 
     @Test(enabled = ENABLED)
@@ -321,102 +317,6 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         }
         assertEquals(actual, expected, "The next page of index entries is wrong");
 
-    }
-
-    @Test(enabled = ENABLED)
-    public void findAggregatedSimpleMetrics() throws InterruptedException {
-        List<AggregateNumericMetric> metrics;
-
-        long startTime = System.currentTimeMillis();
-        long endTime = startTime + HOUR;
-
-        int scheduleId = 123;
-        int numberOfAggregatedMetrics = 250;
-
-        metrics = this.generateRandomAggregatedMetrics(scheduleId, numberOfAggregatedMetrics, startTime);
-        for (AggregateNumericMetric metric : metrics) {
-            dao.insert1HourData(metric).get();
-
-        }
-        double expectedAverageSum = 0;
-
-        for (AggregateNumericMetric aggregatedMetric : metrics) {
-            expectedAverageSum += aggregatedMetric.getAvg();
-        }
-
-        int alternateScheduleId = 321;
-        int alternateNumberOfAggregatedMetrics = 75;
-        metrics = this.generateRandomAggregatedMetrics(alternateScheduleId, alternateNumberOfAggregatedMetrics,
-            startTime);
-        for (AggregateNumericMetric metric : metrics) {
-            dao.insert1HourData(metric).get();
-        }
-
-        List<AggregateSimpleNumericMetric> retrievedItems = Lists.newArrayList(dao.findAggregatedSimpleOneHourMetric(
-            scheduleId, startTime, endTime));
-        assertEquals(numberOfAggregatedMetrics, retrievedItems.size());
-        double actualAverageSum = 0;
-        double actualMinSum = 0;
-        double actualMaxSum = 0;
-        for (AggregateSimpleNumericMetric metric : retrievedItems) {
-            if (AggregateType.AVG.equals(metric.getType())) {
-                actualAverageSum += metric.getValue();
-            } else if (AggregateType.MAX.equals(metric.getType())) {
-                actualMaxSum += metric.getValue();
-            } else if (AggregateType.MIN.equals(metric.getType())) {
-                actualMinSum += metric.getValue();
-            }
-        }
-
-        assertEquals(expectedAverageSum, actualAverageSum);
-        assertEquals(actualMaxSum, 0.0);
-        assertEquals(actualMinSum, 0.0);
-    }
-
-    /**
-     * Generates a set of aggregated metrics with randomized data. Using the schedule id provided the
-     * aggregated metrics are 1 millisecond apart beginning with start time and min<average<max.
-     *
-     * @param scheduleId
-     * @param numberOfAggregatedMetrics
-     * @param startTime
-     * @return
-     */
-    private List<AggregateNumericMetric> generateRandomAggregatedMetrics(int scheduleId,
-        int numberOfAggregatedMetrics, long startTime) {
-        double max;
-        double min;
-        double average;
-        double temp;
-
-        Random random = new Random();
-        List<AggregateNumericMetric> generatedMetrics = new ArrayList<AggregateNumericMetric>();
-
-        for (int i = 0; i < numberOfAggregatedMetrics; i++) {
-            max = random.nextDouble() * 1000;
-            average = random.nextDouble() * 1000;
-            if (average > max) {
-                temp = max;
-                max = average;
-                average = temp;
-            }
-
-            min = random.nextDouble() * 1000;
-            if (min > max) {
-                temp = min;
-                min = average;
-                average = max;
-                max = temp;
-            } else if (min > average) {
-                temp = average;
-                average = min;
-                min = temp;
-            }
-
-            generatedMetrics.add(new AggregateNumericMetric(scheduleId, Bucket.ONE_HOUR, average, min, max, startTime + i));
-        }
-
-        return generatedMetrics;
     }
 
     private List<RawNumericMetric> map(List<MeasurementDataNumeric> data) {

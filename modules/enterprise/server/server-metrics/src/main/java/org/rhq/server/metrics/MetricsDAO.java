@@ -39,8 +39,6 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
-import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
-import org.rhq.server.metrics.domain.AggregateSimpleNumericMetricMapper;
 import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.IndexBucket;
 import org.rhq.server.metrics.domain.IndexEntry;
@@ -48,7 +46,6 @@ import org.rhq.server.metrics.domain.ListPagedResult;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
-import org.rhq.server.metrics.domain.SimplePagedResult;
 
 
 /**

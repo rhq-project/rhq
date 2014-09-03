@@ -50,7 +50,6 @@ import org.quartz.Trigger;
 
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
-import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.JobTrigger;
@@ -405,7 +404,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             ensureControlPermission(subject, resource);
 
             // while unscheduling, be aware that the job could complete at any time
-            ResourceOperationSchedule schedule = null;
+            ResourceOperationSchedule schedule;
             try {
                 schedule = getResourceOperationSchedule(subject, jobId);
             } catch (SchedulerException e) {
@@ -451,7 +450,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             getCompatibleGroupIfAuthorized(subject, resourceGroupId); // just want to do this to check for permissions
 
             // while unscheduling, be aware that the job could complete at any time
-            GroupOperationSchedule schedule = null;
+            GroupOperationSchedule schedule;
             try {
                 schedule = getGroupOperationSchedule(subject, jobId);
             } catch (SchedulerException e) {
@@ -989,6 +988,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         // The history item may have been created already, so find it in the database and
         // set the new state from our input
         boolean isNewHistory = (0 == history.getId());
+        OperationRequestStatus originalStatus = null;
         if (!isNewHistory) {
             OperationHistory existingHistoryItem = entityManager.find(OperationHistory.class, history.getId());
             if (null == existingHistoryItem) {
@@ -997,6 +997,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                         + history + "]");
             }
 
+            originalStatus = existingHistoryItem.getStatus();
             existingHistoryItem.setStatus(history.getStatus());
             existingHistoryItem.setErrorMessage(history.getErrorMessage());
             if (existingHistoryItem.getStartedTime() == 0) {
@@ -1037,7 +1038,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         // we can even alert on In-Progress (an operation just being scheduled) so we need to check the
         // condition manager
-        notifyAlertConditionCacheManager("updateOperationHistory", history);
+        if (isNewHistory || originalStatus != history.getStatus()) {
+            notifyAlertConditionCacheManager("updateOperationHistory", history);
+        }
 
         // if this is not the initial create (i.e schedule-time of the operation) it means the
         // operation status has likely been updated.  Notify the storage node to see if it needs
@@ -1296,7 +1299,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public int purgeOperationHistory(Date purgeBeforeTime) {
         int totalPurged = 0;
-        int batchPurged = 0;
+        int batchPurged;
         final int groupLimit = 1;
         final int resourceLimit = 50;
         long startTime = System.currentTimeMillis();
@@ -2158,6 +2161,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return results.get(0);
     }
 
+    // Only call this method if the operation history status has changed
     private void notifyAlertConditionCacheManager(String callingMethod, OperationHistory operationHistory) {
         AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(operationHistory);
         if (LOG.isDebugEnabled()) {
@@ -2167,7 +2171,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
     /**
      * Returns a managed entity of the scheduled job.
-     *+
+     *
      * @param  jobId
      *
      * @return a managed entity, attached to this bean's entity manager
@@ -2248,7 +2252,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
         ResourceOperationHistoryCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        if (authorizationManager.isInventoryManager(subject) == false) {
+        if (!authorizationManager.isInventoryManager(subject)) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
                 subject.getId());
         }
@@ -2262,7 +2266,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(Subject subject,
         GroupOperationHistoryCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        if (authorizationManager.isInventoryManager(subject) == false) {
+        if (!authorizationManager.isInventoryManager(subject)) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP,
                 subject.getId());
         }

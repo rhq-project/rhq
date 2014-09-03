@@ -204,7 +204,7 @@ public class MigrateAggregateMetrics implements Step {
             "WHERE schedule_id = ?");
 
         find6HourData = session.prepare(
-            "SELECT schedule_id, time, type, value, ttl(value, writetime(value) FROM rhq.six_hour_metrics " +
+            "SELECT schedule_id, time, type, value, ttl(value), writetime(value) FROM rhq.six_hour_metrics " +
             "WHERE schedule_id = ?");
 
         find24HourData = session.prepare(

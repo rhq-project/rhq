@@ -185,12 +185,26 @@ public class Deployer {
             wrapperEnvProps.setProperty("set.heap_new", "-Xmn" + deploymentOptions.getHeapNewSize());
             wrapperEnvProps.setProperty("set.thread_stack_size", "-Xss" + deploymentOptions.getStackSize());
             wrapperEnvProps.setProperty("set.jmx_port", deploymentOptions.getJmxPort().toString());
+            // This is always on by default, just set it literally
+            wrapperEnvProps.setProperty("set.heap_dump_on_OOMError", "-XX:+HeapDumpOnOutOfMemoryError");
+            // This is always set to the bin directory initially
+            wrapperEnvProps.setProperty("set.heap_dump_dir", "-XX:HeapDumpPath="
+                + useForwardSlash(new File(deployDir, "bin").getAbsolutePath()));
 
             propertiesUpdater.update(wrapperEnvProps);
         } catch (IOException e) {
             log.error("An error occurred while updating " + wrapperEnvFile, e);
             throw new DeploymentException("An error occurred while updating " + wrapperEnvFile, e);
         }
+    }
+
+    /**
+     * Ensure that the path uses only forward slash.
+     * @param path
+     * @return forward-slashed path, or null if path is null
+     */
+    private static String useForwardSlash(String path) {
+        return (null != path) ? path.replace('\\', '/') : null;
     }
 
     public void updateFilePerms() {

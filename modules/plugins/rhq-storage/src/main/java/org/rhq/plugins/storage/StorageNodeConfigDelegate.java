@@ -201,7 +201,7 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
             restartIfNecessary(configurationUpdateReport);
         }
     }
-    
+
     private void restartIfNecessary(ConfigurationUpdateReport configurationUpdateReport) {
         boolean restartIsRequired = false;
         Configuration params = configurationUpdateReport.getConfiguration();
@@ -343,7 +343,7 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
 
         String heapDumpDir = useForwardSlash(config.getSimpleValue("heapDumpDir"));
         if (!StringUtil.isEmpty(heapDumpDir)) {
-            properties.setProperty("set.heap_dump_dir", heapDumpDir);
+            properties.setProperty("set.heap_dump_dir", "-XX:HeapDumpPath=" + heapDumpDir);
         }
 
         propertiesUpdater.update(properties);

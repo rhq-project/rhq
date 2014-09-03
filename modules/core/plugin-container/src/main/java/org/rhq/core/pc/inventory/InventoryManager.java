@@ -132,6 +132,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryCallback;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.operation.OperationContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeCallback;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.system.SystemInfo;
@@ -572,7 +573,39 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceUpgradeFacet<T> proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(
                 resourceType, component, timeout, ResourceUpgradeFacet.class, parentResourceContainer);
 
-            return proxy.upgrade(inventoriedResource);
+            ResourceUpgradeReport report = proxy.upgrade(inventoriedResource);
+
+            //funnel the report through all the optional resource upgrade callbacks
+            Map<String, List<String>> callbacks = this.pluginManager.getMetadataManager()
+                .getResourceUpgradeCallbacks(resourceType);
+
+            if (callbacks != null) {
+                //never pass a nul report to the callbacks... if it is null at the moment, just
+                //create a new "blank" one. The upgrade delegate will see that there's nothing to upgrade
+                //in it.
+                if (report == null) {
+                    report = new ResourceUpgradeReport();
+                }
+                //no timeouts or anything, just direct invocation.. let's hope plugins play nice
+                for (Map.Entry<String, List<String>> e : callbacks.entrySet()) {
+                    String pluginName = e.getKey();
+                    List<String> callbackClasses = e.getValue();
+
+                    for (String cls : callbackClasses) {
+                        ResourceUpgradeCallback<T> callback = getPluginComponentFactory()
+                            .getResourceUpgradeCallback(pluginName, cls);
+
+                        try {
+                            callback.upgrade(report, inventoriedResource);
+                        } catch (Throwable t) {
+                            log.error("Resource upgrade callback [" + cls + "] from plugin [" + pluginName +
+                                "] failed" + " on resource " + inventoriedResource.getResourceDetails());
+                        }
+                    }
+                }
+            }
+
+            return report;
         } catch (BlacklistedException e) {
             log.debug(e);
             return null;

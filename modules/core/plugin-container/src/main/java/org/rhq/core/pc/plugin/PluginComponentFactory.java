@@ -40,6 +40,7 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryCallback;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeCallback;
 
 /**
  * This class builds and lifecycles the various plugin components for use by the other services.
@@ -236,16 +237,43 @@ public class PluginComponentFactory implements ContainerService {
         throws PluginContainerException {
 
         // same classloader as plugin discovery component would use - with null parent, its just the plugin classloader
-        ClassLoader classLoader = getDiscoveryComponentClassLoader(null, pluginName);
-
-        ResourceDiscoveryCallback callback = (ResourceDiscoveryCallback) instantiateClass(classLoader,
-            callbackClassName);
+        ResourceDiscoveryCallback callback = instantiateInDiscoveryComponentClassLoader(pluginName, callbackClassName,
+            ResourceDiscoveryCallback.class);
 
         if (log.isDebugEnabled()) {
             log.debug("Created discovery callback [" + callbackClassName + "] for plugin [" + pluginName + ']');
         }
 
         return callback;
+    }
+
+    /**
+     * This will create a new {@link ResourceUpgradeCallback} instance that can be used to process
+     * details of upgraded resources.
+     *
+     * @return a new resource upgrade callback loaded in the proper classloader
+     * @throws PluginContainerException if failed to create the discovery callback instance
+     */
+    public <T extends ResourceComponent<?>> ResourceUpgradeCallback<T> getResourceUpgradeCallback(String pluginName,
+        String callbackClassName) throws PluginContainerException {
+
+        // same classloader as plugin discovery component would use - with null parent, its just the plugin classloader
+        ResourceUpgradeCallback callback = instantiateInDiscoveryComponentClassLoader(pluginName, callbackClassName,
+            ResourceUpgradeCallback.class);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Created resource upgrade callback [" + callbackClassName + "] for plugin [" + pluginName + ']');
+        }
+
+        return callback;
+    }
+
+    private  <T> T instantiateInDiscoveryComponentClassLoader(String pluginName, String className, Class<T> facetType)
+        throws PluginContainerException {
+
+        ClassLoader classLoader = getDiscoveryComponentClassLoader(null, pluginName);
+
+        return facetType.cast(instantiateClass(classLoader, className));
     }
 
     private List<URL> askDiscoveryComponentForAdditionalClasspathUrls(Resource resource,

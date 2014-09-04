@@ -13,7 +13,9 @@
     <name>RHQ RedHat Access</name>
     <properties>
         <!-- whem updating this version, please make sure org.rhq.server.rhaccess.Config#getUserAgent() returns appropriate value -->
-        <redhat-support-lib.version>1.0.4</redhat-support-lib.version>
+        <redhat-support-lib.version>2.0.5</redhat-support-lib.version>
+        <!-- override version from parent pom so at least 4.3.x gets pulled (required by redhat-support.lib) -->
+        <apache.httpcomponents.version>4.3.2</apache.httpcomponents.version>
     </properties>
     <build>
         <finalName>rh-access</finalName>
@@ -67,11 +69,22 @@
             <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
         </dependency>
 
+        <!-- depend on httpclient to pull right version for redhat-support-lib -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-enterprise-server</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.jboss.msc</groupId>

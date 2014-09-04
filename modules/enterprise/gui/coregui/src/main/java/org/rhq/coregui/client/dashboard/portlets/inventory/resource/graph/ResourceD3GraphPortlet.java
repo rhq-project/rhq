@@ -30,6 +30,8 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.events.ResizedEvent;
+import com.smartgwt.client.widgets.events.ResizedHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
@@ -46,6 +48,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.components.lookup.ResourceLookupComboBoxItem;
 import org.rhq.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
@@ -84,6 +87,12 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
     public ResourceD3GraphPortlet() {
         super();
         setOverflow(Overflow.HIDDEN);
+
+        addResizedHandler(new ResizedHandler() {
+            public void onResized(ResizedEvent event) {
+                refresh();
+            }
+        });
     }
 
     @Override
@@ -151,11 +160,24 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
                     new ResourceTypeRepository.TypesLoadedCallback() {
 
                         @Override
-                        public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                        public void onTypesLoaded(final Map<Integer, ResourceType> types) {
                             ResourceType type = types.get(resource.getResourceType().getId());
                             for (final MeasurementDefinition def : type.getMetricDefinitions()) {
                                 if (def.getId() == measurementDefId) {
                                     Log.debug("Found portlet measurement definition !" + def);
+
+                                    // Adding the resource link in the portlet pushed the chart down too far, so
+                                    // I'm adding it to the title. TODO: In the future (RHQ Metrics) the link
+                                    // back should be done better and it should provide ancestry in a nice way.
+                                    portletWindow.setTitle(NAME
+                                        + " - "
+                                        + LinkManager.getHref(LinkManager.getResourceLink(resource.getId()),
+                                            resource.getName()));
+                                    // I couldn't figure a good way to show ancestry. There is no way to set
+                                    // a tooltip on only the window title or header and having it on the whole
+                                    // window is annoying.
+                                    //portletWindow.setTooltip(AncestryUtil.getAncestryHoverHTMLForResource(resource,
+                                    //    types, 0));
 
                                     graph.setEntityId(resource.getId());
                                     graph.setEntityName(resource.getName());
@@ -351,7 +373,7 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
     //Custom refresh operation as we are not directly extending Table
     @Override
     public void refresh() {
-        if (isVisible() && !isRefreshing() ){
+        if (isVisible() && !isRefreshing()) {
             refreshFromConfiguration(portletWindow.getStoredPortlet());
         }
     }

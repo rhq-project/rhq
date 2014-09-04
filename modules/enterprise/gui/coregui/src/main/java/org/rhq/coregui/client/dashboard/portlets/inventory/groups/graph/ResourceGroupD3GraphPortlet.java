@@ -31,6 +31,8 @@ import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.events.ResizedEvent;
+import com.smartgwt.client.widgets.events.ResizedHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
@@ -50,6 +52,7 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.components.form.SortedSelectItem;
 import org.rhq.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.coregui.client.components.selector.AssignedItemsChangedHandler;
@@ -92,6 +95,12 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
 
     public ResourceGroupD3GraphPortlet() {
         setOverflow(Overflow.HIDDEN);
+
+        addResizedHandler(new ResizedHandler() {
+            public void onResized(ResizedEvent event) {
+                refresh();
+            }
+        });
     }
 
     @Override
@@ -159,9 +168,9 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
                     return;
                 }
                 // only concerned with first resource since this is a query by id
-                final ResourceGroup resource = result.get(0);
+                final ResourceGroup group = result.get(0);
                 HashSet<Integer> typesSet = new HashSet<Integer>();
-                typesSet.add(resource.getResourceType().getId());
+                typesSet.add(group.getResourceType().getId());
 
                 ResourceTypeRepository.Cache.getInstance().getResourceTypes(
                     typesSet.toArray(new Integer[typesSet.size()]),
@@ -170,18 +179,26 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
 
                         @Override
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            ResourceType type = types.get(resource.getResourceType().getId());
+                            ResourceType type = types.get(group.getResourceType().getId());
                             for (final MeasurementDefinition def : type.getMetricDefinitions()) {
                                 if (def.getId() == measurementDefId) {
                                     Log.debug("Found portlet measurement definition !" + def);
 
-                                    graph.setEntityId(resource.getId());
-                                    graph.setEntityName(resource.getName());
+                                    // Adding the resource group link in the portlet pushed the chart down too far, so
+                                    // I'm adding it to the title. TODO: In the future (RHQ Metrics) the link
+                                    // back should be done better.
+                                    portletWindow.setTitle(NAME
+                                        + " - "
+                                        + LinkManager.getHref(LinkManager.getResourceGroupLink(group.getId()),
+                                            group.getName()));
+
+                                    graph.setEntityId(group.getId());
+                                    graph.setEntityName(group.getName());
                                     graph.setDefinition(def);
                                     final long startTime = System.currentTimeMillis();
 
                                     GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroupForLast(
-                                        resource.getId(), new int[] { def.getId() }, 8, MeasurementUtils.UNIT_HOURS,
+                                        group.getId(), new int[] { def.getId() }, 8, MeasurementUtils.UNIT_HOURS,
                                         60, new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                                             @Override
                                             public void onFailure(Throwable caught) {
@@ -281,7 +298,7 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
                 form.setValue(CFG_RESOURCE_GROUP_ID, integerValue);
                 ListGridRecord group = new ListGridRecord();
                 group.setAttribute("id", integerValue);
-                ListGridRecord[] groups = { group }; 
+                ListGridRecord[] groups = { group };
                 resourceGroupSelector.setAssigned(groups);
             }
 
@@ -296,7 +313,7 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
             public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
                 ResourceGroup selectedGroup = resourceGroupSelector.getSelectedGroup();
-                String groupId = selectedGroup == null ? null : String.valueOf(selectedGroup.getId()); // can be null 
+                String groupId = selectedGroup == null ? null : String.valueOf(selectedGroup.getId()); // can be null
                 storedPortlet.getConfiguration().put(new PropertySimple(CFG_RESOURCE_GROUP_ID, groupId));
                 storedPortlet.getConfiguration().put(
                     new PropertySimple(CFG_DEFINITION_ID, form.getValue(CFG_DEFINITION_ID)));

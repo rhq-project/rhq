@@ -41,7 +41,8 @@ public class CalltimeTableView extends Table<CalltimeDataSource> implements Refr
     public CalltimeTableView(EntityContext context) {
         setDataSource(new CalltimeDataSource(context));
         destinationFilter = new TextItem(CalltimeDataSource.FILTER_DESTINATION,
-                MSG.view_resource_monitor_calltime_destinationFilter());
+            MSG.view_resource_monitor_calltime_destinationFilter());
+        startRefreshCycle();
     }
 
     @Override
@@ -64,6 +65,9 @@ public class CalltimeTableView extends Table<CalltimeDataSource> implements Refr
 
     @Override
     public void startRefreshCycle() {
+        if (refreshTimer != null) {
+            destroyRefreshTimer();
+        }
         refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
     }
 
@@ -74,7 +78,11 @@ public class CalltimeTableView extends Table<CalltimeDataSource> implements Refr
 
     @Override
     protected void onDestroy() {
-        AutoRefreshUtil.onDestroy(refreshTimer);
+        destroyRefreshTimer();
         super.onDestroy();
+    }
+
+    private void destroyRefreshTimer() {
+        AutoRefreshUtil.onDestroy(refreshTimer);
     }
 }

@@ -165,6 +165,10 @@ public class EventManager implements ContainerService {
     }
 
     void unregisterEventPoller(Resource resource, String eventType, String sourceLocation) {
+        if (null == pollerThreadPool || pollerThreadPool.isShutdown()) {
+            return;
+        }
+
         PollerKey pollerKey = new PollerKey(resource.getId(), eventType, sourceLocation);
         if (this.pollerThreads.containsKey(pollerKey)) {
             Runnable pollerThread = this.pollerThreads.get(pollerKey);

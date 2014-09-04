@@ -48,7 +48,7 @@ debug_msg "Sourcing $_SCRIPT_DIR/rhq-server-env.sh"
 if [ -f "$_SCRIPT_DIR/rhq-server-env.sh" ]; then
    . "$_SCRIPT_DIR/rhq-server-env.sh" $*
 else
-   debug_msg "Failed to find rhq-server-env.bat. Continuing with current environment..."
+   debug_msg "Failed to find rhq-server-env.sh Continuing with current environment..."
 fi
 
 # ----------------------------------------------------------------------
@@ -184,7 +184,7 @@ else
 fi
 
 # set some of the base required options
-RHQ_CONTROL_JAVA_OPTS="${RHQ_CONTROL_JAVA_OPTS} -Djava.awt.headless=true -Drhq.server.properties-file=${RHQ_SERVER_HOME}/bin/rhq-server.properties -Drhq.control.logdir=${RHQ_SERVER_HOME}/logs -Drhq.control.loglevel=${_RHQ_LOGLEVEL} -Drhq.server.basedir=${RHQ_SERVER_HOME} -Drhqctl.properties-file=$RHQ_SERVER_HOME/bin/rhqctl.properties -Drhq.java-exe-file-path=${RHQ_JAVA_EXE_FILE_PATH}" 
+RHQ_CONTROL_JAVA_OPTS="${RHQ_CONTROL_JAVA_OPTS} -Djava.awt.headless=true -Drhq.server.properties-file=${RHQ_SERVER_HOME}/bin/rhq-server.properties -Drhq.control.logdir=${RHQ_SERVER_HOME}/logs -Drhq.control.loglevel=${_RHQ_LOGLEVEL} -Drhq.server.basedir=${RHQ_SERVER_HOME} -Drhqctl.properties-file=$RHQ_SERVER_HOME/bin/rhqctl.properties -Drhq.java-exe-file-path=${RHQ_JAVA_EXE_FILE_PATH}"
 
 # Sample JPDA settings for remote socket debugging
 #RHQ_CONTROL_JAVA_OPTS="${RHQ_CONTROL_JAVA_OPTS} -Xrunjdwp:transport=dt_socket,address=8786,server=y,suspend=y"

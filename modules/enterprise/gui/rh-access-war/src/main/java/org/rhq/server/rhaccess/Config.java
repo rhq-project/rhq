@@ -48,7 +48,7 @@ public class Config {
      * @return version of rh-access-plugin being sent to RHA
      */
     public String getUserAgent() {
-        return "redhat-access-plugin-jon-1.0.4";
+        return "redhat-access-plugin-jon-2.0.5";
     }
 
     public boolean isBrokered() {

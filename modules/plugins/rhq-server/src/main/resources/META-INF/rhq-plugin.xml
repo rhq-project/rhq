@@ -12,6 +12,7 @@
 
   <discovery-callbacks>
      <type-callback plugin="JBossAS7" type="JBossAS7 Standalone Server" callbackClass="DiscoveryCallbackImpl" />
+     <upgrade-callback type="JBossAS7 Standalone Server" plugin="JBossAS7" callbackClass="ResourceUpgradeCallbackImpl"/>
   </discovery-callbacks>
   
   <service

@@ -77,13 +77,23 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
 
     @Override
     public BundleDeployResult deployBundle(BundleDeployRequest request) {
+        ServerControl control = onServer(request);
+
+        String errorMessage = sanityCheck(control, request.getReferencedConfiguration(),
+            request.getBundleManagerProvider(), request.getResourceDeployment());
+
+        if (errorMessage != null) {
+            BundleDeployResult result = new BundleDeployResult();
+            result.setErrorMessage(errorMessage);
+
+            return result;
+        }
+
         if (request.isRevert()) {
             return handleRevert(request);
         }
 
         BundleDeployResult result = new BundleDeployResult();
-
-        ServerControl control = onServer(request);
 
         ASConnection connection = new ASConnection(
             ASConnectionParams.createFrom(new ServerPluginConfiguration(request.getReferencedConfiguration())));
@@ -144,7 +154,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
             }
         } finally {
             if (startUp) {
-                String errorMessage = startServer(connection, control, bmp, rd);
+                errorMessage = startServer(connection, control, bmp, rd);
                 if (errorMessage != null) {
                     result.setErrorMessage(errorMessage);
                 }
@@ -157,6 +167,17 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
     @Override
     public BundlePurgeResult purgeBundle(BundlePurgeRequest request) {
         BundlePurgeResult result = new BundlePurgeResult();
+
+        ServerControl control = ServerControl
+            .onServer(request.getReferencedConfiguration(), AS7Mode.valueOf(request.getDestinationTarget().getPath()),
+                context.getSystemInformation());
+
+        String errorMessage = sanityCheck(control, request.getReferencedConfiguration(),
+            request.getBundleManagerProvider(), request.getLiveResourceDeployment());
+        if (errorMessage != null) {
+            result.setErrorMessage(errorMessage);
+            return result;
+        }
 
         PropertySimple patchIdProp = request.getLiveResourceDeployment().getBundleDeployment().getConfiguration()
             .getSimple("patchId");
@@ -176,14 +197,10 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
             return result;
         }
 
-        ServerControl control = ServerControl
-            .onServer(request.getReferencedConfiguration(), AS7Mode.valueOf(request.getDestinationTarget().getPath()),
-                context.getSystemInformation());
-
         ASConnection connection = new ASConnection(
             ASConnectionParams.createFrom(new ServerPluginConfiguration(request.getReferencedConfiguration())));
 
-        String errorMessage = rollbackPatches(control, request.getBundleManagerProvider(),
+        errorMessage = rollbackPatches(control, request.getBundleManagerProvider(),
             request.getLiveResourceDeployment(), connection, pids);
 
         if (errorMessage != null) {
@@ -485,6 +502,43 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
             Thread.currentThread().interrupt();
 
             return message;
+        }
+
+        return null;
+    }
+
+    private String sanityCheck(ServerControl serverControl, Configuration referencedConfiguration,
+        BundleManagerProvider bmp, BundleResourceDeployment resourceDeployment) {
+
+        PropertySimple supportsPatching = referencedConfiguration.getSimple("supportsPatching");
+
+        if (supportsPatching == null) {
+            return "Target resource doesn't contain the 'Supports Patching' property in its connection settings. Using an old version of the JBossAS7 plugin?";
+        }
+
+        if (supportsPatching.getBooleanValue() == null || !supportsPatching.getBooleanValue()) {
+            return "The target resource does not support patching.";
+        }
+
+        ProcessExecutionResults results = serverControl.cli().disconnected(true).executeCliCommand("help --commands");
+        switch (handleExecutionResults(results, bmp, resourceDeployment, false)) {
+        case EXECUTION_ERROR:
+            return
+                "Failed to check availability of patch command using the 'help --commands' command. The error was: " +
+                    results.getError().getMessage();
+        case ERROR:
+            return
+                "Failed to check availability of patch command using the 'help --commands' command. The execution failed with an exit code " +
+                    results.getExitCode();
+        case TIMEOUT:
+            return
+                "Failed to check availability of patch command using the 'help --commands' command. The execution timed out with the output: " +
+                    results.getCapturedOutput();
+        case OK:
+            if (results.getCapturedOutput() == null || !results.getCapturedOutput().contains(" patch ")) {
+                return "The underlying server does not support the patch command. Cannot perform the patch operation.";
+            }
+            break;
         }
 
         return null;

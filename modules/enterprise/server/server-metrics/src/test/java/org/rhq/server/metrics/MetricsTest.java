@@ -188,8 +188,32 @@ public class MetricsTest extends CassandraIntegrationTest {
         assertIndexEquals(MetricsTable.RAW, partition, time, scheduleIds);
     }
 
+    protected void assertRawIndexEmpty(int partition, DateTime time) {
+        assertIndexEquals(MetricsTable.RAW, partition, time, Collections.EMPTY_LIST);
+    }
+
     protected void assert1HourIndexEquals(int partition, DateTime time, List<Integer> scheduleIds) {
         assertIndexEquals(MetricsTable.ONE_HOUR, partition, time, scheduleIds);
+    }
+
+    protected void assert1HourIndexEmpty(int partition, DateTime time) {
+        assertIndexEquals(MetricsTable.ONE_HOUR, partition, time, Collections.EMPTY_LIST);
+    }
+
+    protected void assert6HourIndexEquals(int partition, DateTime time, List<Integer> scheduleIds) {
+        assertIndexEquals(MetricsTable.SIX_HOUR, partition, time, scheduleIds);
+    }
+
+    protected void assert6HourIndexEmpty(int partition, DateTime time) {
+        assertIndexEquals(MetricsTable.SIX_HOUR, partition, time, Collections.EMPTY_LIST);
+    }
+
+    protected void assert24HourIndexEquals(int partition, DateTime time, List<Integer> scheduleIds) {
+        assertIndexEquals(MetricsTable.TWENTY_FOUR_HOUR, partition, time, scheduleIds);
+    }
+
+    protected void assert24HourIndexEmpty(int partition, DateTime time) {
+        assertIndexEquals(MetricsTable.TWENTY_FOUR_HOUR, partition, time, Collections.EMPTY_LIST);
     }
 
     private void assertIndexEquals(MetricsTable bucket, int partition, DateTime time, List<Integer> scheduleIds) {

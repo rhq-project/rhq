@@ -10,8 +10,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -28,20 +30,31 @@ import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.IndexEntry;
 import org.rhq.server.metrics.domain.NumericMetric;
+import org.rhq.server.metrics.domain.RawNumericMetric;
+import org.rhq.server.metrics.domain.RawNumericMetricMapper;
 import org.rhq.server.metrics.domain.ResultSetMapper;
 
 /**
  * @author John Sanda
  */
-abstract class BaseAggregator {
+class DataAggregator {
 
     private final Log LOG = LogFactory.getLog(getClass());
 
     protected static final int BATCH_SIZE = 5;
+
+    /**
+     * This is a hook for consuming 1 hour data produced from raw data aggregation. The 1 hour data needs to be made
+     * available for baseline calculations.
+     */
+    static interface BatchFinishedListener {
+        void onFinish(List<AggregateNumericMetric> metrics);
+    }
 
     protected MetricsDAO dao;
 
@@ -63,88 +76,13 @@ abstract class BaseAggregator {
 
     protected TaskTracker taskTracker = new TaskTracker();
 
-    /**
-     * This is a flag that determines whether or not we pull data from the metrics_cache table. It servers as a global
-     * override that applies to both past and current data. There are two use cases for when this would be false.
-     * The first is for the data migration that will be necessary when users upgrade to RHQ 4.11. The second is to
-     * allow resizing of cache partitions to take effect.
-     */
-    protected boolean cacheActive = true;
-
     protected int indexPageSize;
+
     protected AtomicInteger schedulesCount = new AtomicInteger();
-    protected CacheAggregator.BatchFinishedListener batchFinishedListener;
 
-    @SuppressWarnings("unchecked")
-    protected void aggregationTaskFinished(ListenableFuture<List<AggregateNumericMetric>> metricsFuture,
-        ListenableFuture<List<ResultSet>> deletedIndexEntriesFuture) {
-        final ListenableFuture<List<List<?>>> argsFuture = Futures.allAsList(metricsFuture, deletedIndexEntriesFuture);
-        Futures.addCallback(argsFuture, new AggregationTaskFinishedCallback<List<List<?>>>() {
-            @Override
-            protected void onFinish(List<List<?>> args) {
-                List<AggregateNumericMetric> metrics = (List<AggregateNumericMetric>) args.get(0);
-                if (batchFinishedListener != null) {
-                    batchFinishedListener.onFinish(metrics);
-                }
-                schedulesCount.addAndGet(metrics.size());
-            }
-        }, aggregationTasks);
-    }
+    protected BatchFinishedListener batchFinishedListener;
 
-    /**
-     * AggregationTask is a Runnable that computes aggregates for a set of schedules in a {@link CacheIndexEntry}.
-     * If there are any unexpected errors, e.g., a NullPointerException, aggregation will be aborted.
-     */
-    protected abstract class AggregationTask implements Runnable {
-
-        private List<IndexEntry> batch;
-
-        public AggregationTask(List<IndexEntry> batch) {
-            this.batch = batch;
-        }
-
-        @Override
-        public void run() {
-            try {
-                run(batch);
-            } catch (Exception e) {
-                LOG.error("Aggregation will be aborted due to an unexpected error", e);
-                taskTracker.abort("Aborting aggregation due to an unexpected error: " + e.getMessage());
-            }
-        }
-
-        abstract void run(List<IndexEntry> batch);
-    }
-
-    protected class AggregationTaskFinishedCallback<T> implements FutureCallback<T> {
-        @Override
-        public void onSuccess(T args) {
-            try {
-                onFinish(args);
-            } finally {
-                permits.release();
-                taskTracker.finishedTask();
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("There are " + taskTracker.getRemainingTasks() + " remaining tasks and " +
-                        permits.availablePermits() + " available permits");
-                }
-            }
-        }
-
-        protected void onFinish(T args) {
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-            LOG.warn("There was an error aggregating data", t);
-            permits.release();
-            taskTracker.finishedTask();
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("There are " + taskTracker.getRemainingTasks() + " remaining tasks and " +
-                    permits.availablePermits() + " available permits");
-            }
-        }
-    }
+    protected ResultSetMapper resultSetMapper;
 
     void setDao(MetricsDAO dao) {
         this.dao = dao;
@@ -152,6 +90,11 @@ abstract class BaseAggregator {
 
     void setAggregationType(AggregationType aggregationType) {
         this.aggregationType = aggregationType;
+        if (aggregationType == AggregationType.RAW) {
+            resultSetMapper = new RawNumericMetricMapper();
+        } else {
+            resultSetMapper = new AggregateNumericMetricMapper();
+        }
     }
 
     void setPersistMetrics(AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persistMetrics) {
@@ -174,12 +117,93 @@ abstract class BaseAggregator {
         this.dateTimeService = dateTimeService;
     }
 
-    void setCacheActive(boolean cacheActive) {
-        this.cacheActive = cacheActive;
+    void setIndexPageSize(int indexPageSize) {
+        this.indexPageSize = indexPageSize;
     }
 
-    public void setIndexPageSize(int indexPageSize) {
-        this.indexPageSize = indexPageSize;
+    void setBatchFinishedListener(BatchFinishedListener batchFinishedListener) {
+        this.batchFinishedListener = batchFinishedListener;
+    }
+
+    /**
+     * @return A mapping of the number of schedules that had data aggregated for each bucket, e.g., raw, 1 hour, 6 hour
+     */
+    protected Map<AggregationType, Integer> getAggregationCounts() {
+        return ImmutableMap.of(aggregationType, schedulesCount.get());
+    }
+
+    protected String getDebugType() {
+        return aggregationType.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    protected void aggregationTaskFinished(ListenableFuture<List<AggregateNumericMetric>> metricsFuture,
+        ListenableFuture<List<ResultSet>> deletedIndexEntriesFuture) {
+        final ListenableFuture<List<List<?>>> argsFuture = Futures.allAsList(metricsFuture, deletedIndexEntriesFuture);
+        Futures.addCallback(argsFuture, new AggregationTaskFinishedCallback<List<List<?>>>() {
+            @Override
+            protected void onFinish(List<List<?>> args) {
+                List<AggregateNumericMetric> metrics = (List<AggregateNumericMetric>) args.get(0);
+                if (batchFinishedListener != null) {
+                    batchFinishedListener.onFinish(metrics);
+                }
+                schedulesCount.addAndGet(metrics.size());
+            }
+        }, aggregationTasks);
+    }
+
+    protected ListenableFuture<List<ResultSet>> fetchData(DateTime start, DateTime end, Bucket bucket,
+        List<IndexEntry> indexEntries) {
+        List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(indexEntries.size());
+        for (IndexEntry indexEntry : indexEntries) {
+            queryFutures.add(dao.findAggregateMetricsAsync(indexEntry.getScheduleId(), bucket, start.getMillis(),
+                end.getMillis()));
+        }
+        return Futures.allAsList(queryFutures);
+    }
+
+    protected AggregationTask createAggregationTask(List<IndexEntry> batch) {
+        return new AggregationTask(batch) {
+            @Override
+            void run(List<IndexEntry> batch) {
+                DateTime endTime;
+                ListenableFuture<List<ResultSet>> queriesFuture;
+
+                switch (aggregationType) {
+                    case RAW:
+                        queriesFuture = fetchRawData(startTime, batch);
+                        processBatch(queriesFuture, batch, Bucket.ONE_HOUR);
+                        break;
+                    case ONE_HOUR:
+                        endTime = dateTimeService.get6HourTimeSliceEnd(startTime);
+                        queriesFuture = fetchData(startTime, endTime, Bucket.ONE_HOUR, batch);
+                        processBatch(queriesFuture, batch, Bucket.SIX_HOUR);
+                        break;
+                    default:
+                        endTime = dateTimeService.get24HourTimeSliceEnd(startTime);
+                        queriesFuture = fetchData(startTime, endTime, Bucket.SIX_HOUR, batch);
+                        processBatch(queriesFuture, batch, Bucket.TWENTY_FOUR_HOUR);
+                }
+            }
+        };
+    }
+
+    protected void processBatch(ListenableFuture<List<ResultSet>> queriesFuture, List<IndexEntry> indexEntries,
+        Bucket bucket) {
+
+        ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(queriesFuture,
+            toIterable(resultSetMapper), aggregationTasks);
+
+        ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
+            computeAggregates(startTime.getMillis(), RawNumericMetric.class, bucket), aggregationTasks);
+
+        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(metricsFuture, persistMetrics,
+            aggregationTasks);
+
+        ListenableFuture<List<ResultSet>> deleteIndexEntriesFuture = Futures.transform(insertsFuture,
+            deleteIndexEntries(indexEntries), aggregationTasks);
+
+        aggregationTaskFinished(metricsFuture, deleteIndexEntriesFuture);
     }
 
     public Map<AggregationType, Integer> execute() throws InterruptedException, AbortedException {
@@ -206,20 +230,25 @@ abstract class BaseAggregator {
         return getAggregationCounts();
     }
 
+    protected List<IndexEntry> loadIndexEntries() {
+        ResultSet resultSet = dao.findIndexEntries(aggregationType.getCacheTable(), 0, startTime.getMillis()).get();
+        List<IndexEntry> indexEntries = new ArrayList<IndexEntry>();
 
-    protected abstract List<IndexEntry> loadIndexEntries();
+        for (Row row : resultSet) {
+            indexEntries.add(new IndexEntry(aggregationType.getCacheTable(), 0, startTime.getMillis(), row.getInt(0)));
+        }
 
-    protected abstract AggregationTask createAggregationTask(List<IndexEntry> batch);
+        return indexEntries;
+    }
 
-    /**
-     * @return A mapping of the number of schedules that had data aggregated for each bucket, e.g., raw, 1 hour, 6 hour
-     */
-    protected abstract Map<AggregationType, Integer> getAggregationCounts();
-
-    /**
-     * @return The aggregation type for display in debug log messages
-     */
-    protected abstract String getDebugType();
+    protected ListenableFuture<List<ResultSet>> fetchRawData(DateTime startTime, List<IndexEntry> batch) {
+        List<StorageResultSetFuture> queryFutures = new ArrayList(batch.size());
+        long endTime = new DateTime(startTime).plusHours(1).getMillis();
+        for (IndexEntry indexEntry : batch) {
+            queryFutures.add(dao.findRawMetricsAsync(indexEntry.getScheduleId(), indexEntry.getTimestamp(), endTime));
+        }
+        return Futures.allAsList(queryFutures);
+    }
 
     private void scheduleTasks(List<IndexEntry> indexEntries) {
         try {
@@ -344,6 +373,61 @@ abstract class BaseAggregator {
                 return Futures.allAsList(deleteFutures);
             }
         };
+    }
+
+    /**
+     * AggregationTask is a Runnable that computes aggregates for a set of schedules in a {@link CacheIndexEntry}.
+     * If there are any unexpected errors, e.g., a NullPointerException, aggregation will be aborted.
+     */
+    protected abstract class AggregationTask implements Runnable {
+
+        private List<IndexEntry> batch;
+
+        public AggregationTask(List<IndexEntry> batch) {
+            this.batch = batch;
+        }
+
+        @Override
+        public void run() {
+            try {
+                run(batch);
+            } catch (Exception e) {
+                LOG.error("Aggregation will be aborted due to an unexpected error", e);
+                taskTracker.abort("Aborting aggregation due to an unexpected error: " + e.getMessage());
+            }
+        }
+
+        abstract void run(List<IndexEntry> batch);
+    }
+
+    protected class AggregationTaskFinishedCallback<T> implements FutureCallback<T> {
+        @Override
+        public void onSuccess(T args) {
+            try {
+                onFinish(args);
+            } finally {
+                permits.release();
+                taskTracker.finishedTask();
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("There are " + taskTracker.getRemainingTasks() + " remaining tasks and " +
+                        permits.availablePermits() + " available permits");
+                }
+            }
+        }
+
+        protected void onFinish(T args) {
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            LOG.warn("There was an error aggregating data", t);
+            permits.release();
+            taskTracker.finishedTask();
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("There are " + taskTracker.getRemainingTasks() + " remaining tasks and " +
+                    permits.availablePermits() + " available permits");
+            }
+        }
     }
 
 }

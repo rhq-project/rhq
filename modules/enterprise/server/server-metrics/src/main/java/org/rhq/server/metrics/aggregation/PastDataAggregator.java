@@ -20,7 +20,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 
-import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.Bucket;
@@ -32,7 +31,7 @@ import org.rhq.server.metrics.domain.RawNumericMetricMapper;
 /**
  * @author John Sanda
  */
-class PastDataAggregator extends BaseAggregator {
+class PastDataAggregator extends DataAggregator {
 
     private static final Log LOG = LogFactory.getLog(PastDataAggregator.class);
 
@@ -53,6 +52,15 @@ class PastDataAggregator extends BaseAggregator {
     @Override
     protected String getDebugType() {
         return DEBUG_TYPE;
+    }
+
+    @Override
+    protected Map<AggregationType, Integer> getAggregationCounts() {
+        return ImmutableMap.of(
+            AggregationType.RAW, rawSchedulesCount.get(),
+            AggregationType.ONE_HOUR, oneHourSchedulesCount.get(),
+            AggregationType.SIX_HOUR, sixHourScheduleCount.get()
+        );
     }
 
     @Override
@@ -78,33 +86,15 @@ class PastDataAggregator extends BaseAggregator {
         return new AggregationTask(batch) {
             @Override
             void run(List<IndexEntry> batch) {
-                DateTime timeSlice = null;
-                List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(batch.size());
-                for (IndexEntry indexEntry : batch) {
-                    if (timeSlice == null) {
-                        timeSlice = new DateTime(indexEntry.getTimestamp());
-                    }
-                    queryFutures.add(dao.findRawMetricsAsync(indexEntry.getScheduleId(), indexEntry.getTimestamp(),
-                        timeSlice.plusHours(1).getMillis()));
-                }
-                processBatch(queryFutures, timeSlice, batch);
+                DateTime startTime = new DateTime(batch.get(0).getTimestamp());
+                ListenableFuture<List<ResultSet>> queriesFuture = fetchRawData(startTime, batch);
+                processBatch(queriesFuture, startTime, batch);
             }
         };
     }
 
-    @Override
-    protected Map<AggregationType, Integer> getAggregationCounts() {
-        return ImmutableMap.of(
-            AggregationType.RAW, rawSchedulesCount.get(),
-            AggregationType.ONE_HOUR, oneHourSchedulesCount.get(),
-            AggregationType.SIX_HOUR, sixHourScheduleCount.get()
-        );
-    }
-
-    private void processBatch(List<StorageResultSetFuture> queryFutures, DateTime timeSlice,
+    private void processBatch(ListenableFuture<List<ResultSet>> queriesFuture, DateTime timeSlice,
         List<IndexEntry> indexEntries) {
-
-        ListenableFuture<List<ResultSet>> queriesFuture = Futures.allAsList(queryFutures);
 
         ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(queriesFuture,
             toIterable(new RawNumericMetricMapper()), aggregationTasks);
@@ -113,8 +103,8 @@ class PastDataAggregator extends BaseAggregator {
             computeAggregates(timeSlice.getMillis(), RawNumericMetric.class, Bucket.ONE_HOUR),
             aggregationTasks);
 
-        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(metricsFuture, persistMetrics,
-            aggregationTasks);
+        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(metricsFuture,
+            persistFns.persist1HourMetricsAndNoIndexUpdates(), aggregationTasks);
 
         if (dateTimeService.is6HourTimeSliceFinished(timeSlice)) {
             DateTime start = dateTimeService.get6HourTimeSlice(timeSlice);
@@ -133,7 +123,7 @@ class PastDataAggregator extends BaseAggregator {
                     Bucket.SIX_HOUR));
 
             ListenableFuture<List<ResultSet>> sixHourInsertsFuture = Futures.transform(sixHourMetricsFuture,
-                persistFns.persist6HourMetrics(), aggregationTasks);
+                persistFns.persist6HourMetricsAndNoIndexUpdates(), aggregationTasks);
 
             if (dateTimeService.is24HourTimeSliceFinished(timeSlice)) {
                 start = dateTimeService.get24HourTimeSlice(timeSlice);
@@ -210,16 +200,6 @@ class PastDataAggregator extends BaseAggregator {
                 };
             }
         };
-    }
-
-    private ListenableFuture<List<ResultSet>> fetchData(DateTime start, DateTime end, Bucket bucket,
-        List<IndexEntry> indexEntries) {
-        List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(indexEntries.size());
-        for (IndexEntry indexEntry : indexEntries) {
-            queryFutures.add(dao.findAggregateMetricsAsync(indexEntry.getScheduleId(), bucket, start.getMillis(),
-                end.getMillis()));
-        }
-        return Futures.allAsList(queryFutures);
     }
 
     private void late1HourAggregationFinished(final int count,

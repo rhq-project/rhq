@@ -2,6 +2,7 @@ package org.rhq.server.metrics.aggregation;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -145,14 +146,12 @@ public class AggregationManager {
         PastDataAggregator aggregator = new PastDataAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setAggregationType(AggregationType.RAW);
-        aggregator.setCurrentDay(dtService.get24HourTimeSlice(startTime));
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
-        aggregator.setStartingDay(dtService.get24HourTimeSlice(startTime).minusDays(1));
         aggregator.setStartTime(startTime);
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistFns(persistFunctions);
-        aggregator.setPersistMetrics(persistFunctions.persist1HourMetricsAndUpdateCache());
+        aggregator.setPersistMetrics(persistFunctions.persist1HourMetrics());
         aggregator.setCacheActive(isCacheActive());
         aggregator.setIndexPageSize(indexPageSize);
 
@@ -166,13 +165,12 @@ public class AggregationManager {
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
         aggregator.setStartTime(startTime);
-        aggregator.setCurrentDay(dtService.get24HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
-        aggregator.setPersistMetrics(persistFunctions.persist1HourMetricsAndUpdateCache());
-        aggregator.setCacheBlockFinishedListener(new CacheAggregator.CacheBlockFinishedListener() {
+        aggregator.setPersistMetrics(persistFunctions.persist1HourMetrics());
+        aggregator.setBatchFinishedListener(new CacheAggregator.BatchFinishedListener() {
             @Override
-            public void onFinish(IndexAggregatesPair pair) {
-                oneHourData.addAll(pair.metrics);
+            public void onFinish(List<AggregateNumericMetric> metrics) {
+                oneHourData.addAll(metrics);
             }
         });
         aggregator.setCacheActive(isCacheActive());
@@ -189,9 +187,8 @@ public class AggregationManager {
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
         aggregator.setStartTime(dtService.get6HourTimeSlice(startTime));
-        aggregator.setCurrentDay(dtService.get24HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
-        aggregator.setPersistMetrics(persistFunctions.persist6HourMetricsAndUpdateCache());
+        aggregator.setPersistMetrics(persistFunctions.persist6HourMetrics());
         aggregator.setCacheActive(isCacheActive());
         aggregator.setResultSetMapper(new AggregateNumericMetricMapper());
         aggregator.setIndexPageSize(indexPageSize);
@@ -206,7 +203,6 @@ public class AggregationManager {
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
         aggregator.setStartTime(dtService.get24HourTimeSlice(startTime));
-        aggregator.setCurrentDay(dtService.get24HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist24HourMetrics());
         aggregator.setCacheActive(isCacheActive());

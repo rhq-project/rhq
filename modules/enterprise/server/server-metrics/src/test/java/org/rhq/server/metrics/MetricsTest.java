@@ -2,7 +2,6 @@ package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
-import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 
 import java.math.BigDecimal;
@@ -11,27 +10,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import com.datastax.driver.core.ResultSet;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
+import com.datastax.driver.core.Row;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
 
 import org.joda.time.DateTime;
 import org.testng.annotations.BeforeClass;
 
 import org.rhq.cassandra.schema.Table;
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
-import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.Bucket;
-import org.rhq.server.metrics.domain.CacheIndexEntry;
-import org.rhq.server.metrics.domain.CacheIndexEntryMapper;
+import org.rhq.server.metrics.domain.IndexEntry;
 import org.rhq.server.metrics.domain.MetricsTable;
-import org.rhq.server.metrics.domain.NumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
 
@@ -47,9 +39,6 @@ public class MetricsTest extends CassandraIntegrationTest {
     protected MetricsDAO dao;
     protected MetricsConfiguration configuration = new MetricsConfiguration();
     protected DateTimeServiceStub dateTimeService;
-    private RawCacheMapper rawCacheMapper = new RawCacheMapper();
-    private AggregateCacheMapper aggregateCacheMapper = new AggregateCacheMapper();
-    private CacheIndexEntryMapper cacheIndexEntryMapper = new CacheIndexEntryMapper();
     private RawNumericMetricMapper rawMapper = new RawNumericMetricMapper();
     private AggregateNumericMetricMapper aggregateMapper = new AggregateNumericMetricMapper();
 
@@ -195,6 +184,29 @@ public class MetricsTest extends CassandraIntegrationTest {
             " does not match expected values", expected, actual, TEST_PRECISION);
     }
 
+    protected void assertRawIndexEquals(int partition, DateTime time, List<Integer> scheduleIds) {
+        assertIndexEquals(MetricsTable.RAW, partition, time, scheduleIds);
+    }
+
+    protected void assert1HourIndexEquals(int partition, DateTime time, List<Integer> scheduleIds) {
+        assertIndexEquals(MetricsTable.ONE_HOUR, partition, time, scheduleIds);
+    }
+
+    private void assertIndexEquals(MetricsTable bucket, int partition, DateTime time, List<Integer> scheduleIds) {
+        List<IndexEntry> expected = new ArrayList<IndexEntry>(scheduleIds.size());
+        for (Integer scheduleId : scheduleIds) {
+            expected.add(new IndexEntry(bucket, partition, time.getMillis(), scheduleId));
+        }
+        ResultSet resultSet = dao.findIndexEntries(bucket, partition, time.getMillis()).get();
+        List<IndexEntry> actual = new ArrayList<IndexEntry>();
+
+        for (Row row : resultSet) {
+            actual.add(new IndexEntry(bucket, partition, time.getMillis(), row.getInt(0)));
+        }
+
+        assertEquals(actual, expected, "The index entries do not match");
+    }
+
     /**
      * Verifies that the 6 hour data table is empty for the specified schedule id.
      *
@@ -246,470 +258,8 @@ public class MetricsTest extends CassandraIntegrationTest {
             " but found " + metrics);
     }
 
-    protected WaitForWrite insertRawData(DateTime timeSlice, MeasurementDataNumeric... data) {
-        WaitForWrite waitForRawInserts = new WaitForWrite(data.length * 2);
-        StorageResultSetFuture future;
-        for (MeasurementDataNumeric raw : data) {
-            future = dao.insertRawData(raw);
-            Futures.addCallback(future, waitForRawInserts);
-            future = dao.updateMetricsCache(MetricsTable.RAW, timeSlice.getMillis(),
-                startScheduleId(raw.getScheduleId()), raw.getScheduleId(), raw.getTimestamp(), ImmutableMap.of(
-                AggregateType.VALUE.ordinal(), raw.getValue()));
-            Futures.addCallback(future, waitForRawInserts);
-        }
-        return waitForRawInserts;
-    }
-
     protected int startScheduleId(int scheduleId) {
         return (scheduleId / PARTITION_SIZE) * PARTITION_SIZE;
-    }
-
-    /**
-     * Verifies that the raw cache is empty for the specified time slice and start schedule id.
-     *
-     * @param timeSlice The time slice to query
-     * @param startScheduleId The start schedule id to query
-     */
-    protected void assertRawCacheEmpty(DateTime timeSlice, int startScheduleId) {
-        List<RawNumericMetric> emptyRaws = Collections.emptyList();
-        assertRawCacheEquals(timeSlice, startScheduleId, emptyRaws);
-    }
-
-    /**
-     * Verifies that the raw cache is empty for the specified time slice and start schedule ids.
-     *
-     * @param timeSlice The time slice to query
-     * @param startScheduleIds The start schedule ids to query
-     */
-    protected void assertRawCacheEmpty(DateTime timeSlice, int... startScheduleIds) {
-        List<RawNumericMetric> emptyRaws = Collections.emptyList();
-        for (Integer startScheduleId : startScheduleIds) {
-            assertRawCacheEquals(timeSlice, startScheduleId, emptyRaws);
-        }
-    }
-
-    /**
-     * Verifies that the raw cache equals the expected values for the specified time slice and start schedule id
-     *
-     * @param timeSlice The time slice to query
-     * @param startScheduleId The start schedule id to query
-     * @param expected The expected values
-     */
-    protected void assertRawCacheEquals(DateTime timeSlice, int startScheduleId, RawNumericMetric... expected) {
-        assertRawCacheEquals(timeSlice, startScheduleId, asList(expected));
-    }
-
-    /**
-     * Verifies that the raw cache equals the expected values for the specified time slice and start schedule id
-     *
-     * @param timeSlice The time slice to query
-     * @param startScheduleId The start schedule id to query
-     * @param expected The expected values
-     */
-    protected void assertRawCacheEquals(DateTime timeSlice, int startScheduleId,
-        List<RawNumericMetric> expected) {
-        assertCacheEquals(MetricsTable.RAW, timeSlice, startScheduleId, expected, rawCacheMapper);
-    }
-
-    /**
-     * Verifies that the 1 hour cache equals the expected values for the specified time slice and start schedule id.
-     *
-     * @param timeSlice The time slice to query
-     * @param startScheduleId The start schedule id to query
-     * @param expected The expected values.
-     */
-    protected void assert1HourCacheEquals(DateTime timeSlice, int startScheduleId,
-        List<AggregateNumericMetric> expected) {
-        assertCacheEquals(MetricsTable.ONE_HOUR, timeSlice, startScheduleId, expected, aggregateCacheMapper);
-    }
-
-    /**
-     * Verifies that the 6 hour cache equals the expected values for the specified time slice and start schedule id.
-     *
-     * @param timeSlice The time slice to query
-     * @param startScheduleId The start schedule id to query
-     * @param expected The expected values.
-     */
-    protected void assert6HourCacheEquals(DateTime timeSlice, int startScheduleId,
-        List<AggregateNumericMetric> expected) {
-        assertCacheEquals(MetricsTable.SIX_HOUR, timeSlice, startScheduleId, expected, aggregateCacheMapper);
-    }
-
-    private <T extends NumericMetric> void assertCacheEquals(MetricsTable table, DateTime timeSlice,
-        int startScheduleId, List<T> expected, CacheMapper<T> cacheMapper) {
-        ResultSet resultSet = dao.findCacheEntriesAsync(table, timeSlice.getMillis(), startScheduleId).get();
-        List<T> actual = cacheMapper.map(resultSet);
-
-        assertEquals(actual, expected, "The " + table + " cache is wrong");
-    }
-
-    protected void assertCacheIndexEntriesEqual(List<CacheIndexEntry> actual, List<CacheIndexEntry> expected,
-        MetricsTable bucket) {
-        assertEquals(actual.size(), expected.size(), "The number of " + bucket + " cache index entries is wrong");
-        for (int i = 0; i < expected.size(); ++i) {
-            assertPropertiesMatch(expected.get(i), actual.get(i), "The " + bucket + " cache index entry does not " +
-                "match the expected value");
-        }
-    }
-
-    /**
-     * Verifies that the 1 hour cache is empty for the specified time slice and start schedule id
-     *
-     * @param timeSlice The time slice to query
-     * @param startScheduleId The start schedule id to query
-     */
-    protected void assert1HourCacheEmpty(DateTime timeSlice, int startScheduleId) {
-        assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.ONE_HOUR);
-    }
-
-    /**
-     * Verifies that the 1 hour cache is empty for the specified time slice and start schedule ids.
-     *
-     * @param timeSlice The time slice to query
-     * @param startScheduleIds The start schedule ids to query
-     */
-    protected void assert1HourCacheEmpty(DateTime timeSlice, int... startScheduleIds) {
-        for (Integer startScheduleId : startScheduleIds) {
-            assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.ONE_HOUR);
-        }
-    }
-
-    protected void assert6HourCacheEmpty(DateTime timeSlice, int startScheduleId) {
-        assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.SIX_HOUR);
-    }
-
-    private void assertAggregateCacheEmpty(DateTime timeSlice, int startScheduleId, MetricsTable table) {
-        ResultSet resultSet = dao.findCacheEntriesAsync(table, timeSlice.getMillis(), startScheduleId).get();
-        List<AggregateNumericMetric> metrics = aggregateCacheMapper.map(resultSet);
-        assertEquals(metrics.size(), 0, "Expected the " + table + " cache to be empty but found " + metrics);
-    }
-
-    /**
-     * Verifies that the raw cache index is empty for the specified collection time slice. The day to query is
-     * derived from <code>collectionTimeSlice</code>.
-     *
-     * @param collectionTimeSlice The time slice in the index to query. The day to query is determined by the 24 hour
-     *                            time slice of this value.
-     */
-    protected void assertRawCacheIndexEmpty(DateTime collectionTimeSlice) {
-        List<CacheIndexEntry> emptyEntries = Collections.emptyList();
-        assertRawCacheIndexEquals(collectionTimeSlice, emptyEntries);
-    }
-
-    /**
-     * <p>
-     * Verifies that the raw cache for <code>collectionTimeSlice</code> matches the expected values. The day to
-     * query in the index is derived from <code>collectionTimeSlice</code>.
-     * </p>
-     * <p>
-     * Note that expected values for {@link CacheIndexEntry#getDay() CacheIndexEntry.day},
-     * {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.collectionTimeSlice}, and
-     * {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.insertTimeSlice} will be overwritten and set using
-     * the <code>collectionTimeSlice</code> argument. The <code>day</code> property will be set to the 24 hour time slice
-     * of <code>collectionTimeSlice</code>.
-     * </p>
-     *
-     * @param collectionTimeSlice    The time slice in the index to query. The day to query is determined by the 24 hour
-     *                               time slice of this value.
-     * @param expected The expected values
-     */
-    protected void assertRawCacheIndexEquals(DateTime collectionTimeSlice, List<CacheIndexEntry> expected) {
-        setTimestamps(collectionTimeSlice, expected);
-        assertCacheIndexEquals(MetricsTable.RAW, collectionTimeSlice, expected);
-    }
-
-    /**
-     * Verifies that the raw cache index before <code>collectionTimeSlice</code> matches the expected values. The
-     * day to query in the index is derived from <code>collectionTimeSlice</code>.
-     *
-     * @param collectionTimeSlice The exclusive upper bound for the date range queried. The lower bound is the start of
-     *                            the 24 hour time slice for this value.
-     * @param expected The expected values
-     */
-    protected void assertRawCacheIndexBeforeEquals(DateTime collectionTimeSlice, List<CacheIndexEntry> expected) {
-        assertCacheIndexBeforeEquals(MetricsTable.RAW, collectionTimeSlice, expected);
-    }
-
-    /**
-     * Verifies that the raw cache index after <code>collectionTimeSlice</code> matches the expected values. The day
-     * to query in the index is derived from <code>collectionTimeSlice</code>.
-     *
-     * @param collectionTimeSlice The inclusive lower bound for the date range queried. The upper bound is the start of
-     *                            the next 24 hour time slice, exclusive.
-     * @param expected The expected values.
-     */
-    protected void assertRawCacheIndexAfterEquals(DateTime collectionTimeSlice, List<CacheIndexEntry> expected) {
-        assertCacheIndexAfterEquals(MetricsTable.RAW, collectionTimeSlice, expected);
-    }
-
-    /**
-     * <p>
-     * Verifies that 1 hour cache for <code>collectionTimeSlice</code> matches the expected values. The day to
-     * query in the index is derived from <code>collectionTimeSlice</code>.
-     * </p>
-     * <p>
-     * Note that expected values for {@link CacheIndexEntry#getDay() CacheIndexEntry.day},
-     * {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.collectionTimeSlice}, and
-     * {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.insertTimeSlice} will be overwritten and set using
-     * the <code>collectionTimeSlice</code> argument. The <code>day</code> property will be set to the 24 hour time slice
-     * of <code>collectionTimeSlice</code>.
-     * </p>
-     *
-     * @param collectionTimeSlice    The time slice in the index to query. The day to query is determined by the 24 hour
-     *                               time slice of this value.
-     * @param expected The expected values
-     */
-    protected void assert1HourCacheIndexEquals(DateTime collectionTimeSlice, List<CacheIndexEntry> expected) {
-        setTimestamps(collectionTimeSlice, expected);
-        assertCacheIndexEquals(MetricsTable.ONE_HOUR, collectionTimeSlice, expected);
-    }
-
-    /**
-     * Verifies that the 1 hour cache index is empty for the specified collection time slice. The day to query is
-     * derived from <code>collectionTimeSlice</code>.
-     *
-     * @param collectionTimeSlice The time slice in the index to query. The day to query is determined by the 24 hour
-     *                            time slice of this value.
-     */
-    protected void assert1HourCacheIndexEmpty(DateTime collectionTimeSlice) {
-        List<CacheIndexEntry> emptyEntries = Collections.emptyList();
-        assert1HourCacheIndexEquals(collectionTimeSlice, emptyEntries);
-    }
-
-    /**
-     * <p>
-     * Verifies that 6 hour cache for <code>collectionTimeSlice</code> matches the expected values. The day to
-     * query in the index is derived from <code>collectionTimeSlice</code>.
-     * </p>
-     * <p>
-     * Note that expected values for {@link CacheIndexEntry#getDay() CacheIndexEntry.day},
-     * {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.collectionTimeSlice}, and
-     * {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.insertTimeSlice} will be overwritten and set using
-     * the <code>collectionTimeSlice</code> argument. The <code>day</code> property will be set to the 24 hour time slice
-     * of <code>collectionTimeSlice</code>.
-     * </p>
-     *
-     * @param collectionTimeSlice    The time slice in the index to query. The day to query is determined by the 24 hour
-     *                               time slice of this value.
-     * @param expected The expected values
-     */
-    protected void assert6HourCacheIndexEquals(DateTime collectionTimeSlice, List<CacheIndexEntry> expected) {
-        setTimestamps(collectionTimeSlice, expected);
-        assertCacheIndexEquals(MetricsTable.SIX_HOUR, collectionTimeSlice, expected);
-    }
-
-    /**
-     * Verifies that the 6 hour cache index is empty for the specified collection time slice. The day to query is
-     * derived from <code>collectionTimeSlice</code>.
-     *
-     * @param collectionTimeSlice The time slice in the index to query. The day to query is determined by the 24 hour
-     *                            time slice of this value.
-     */
-    protected void assert6HourCacheIndexEmpty(DateTime collectionTimeSlice) {
-        List<CacheIndexEntry> emptyEntries = Collections.emptyList();
-        assert6HourCacheIndexEquals(collectionTimeSlice, emptyEntries);
-    }
-
-    /**
-     * Verifies that the cache index for <code>collectionTimeSlice</code> equals the expected entries. The day to query
-     * is derived from <code>collectionTimeSlice</code>.
-     *
-     * @param bucket The bucket to query, e.g., raw_metrics, one_hour_metrics
-     * @param collectionTimeSlice The time slice in the index to query. The day to query is determined by the 24 hour
-     *                            time slice of this value.
-     * @param expected The expected values.
-     */
-    private void assertCacheIndexEquals(MetricsTable bucket, DateTime collectionTimeSlice,
-        List<CacheIndexEntry> expected) {
-
-        ResultSet resultSet = dao.findCurrentCacheIndexEntries(bucket, dateTimeService.get24HourTimeSlice(
-            collectionTimeSlice).getMillis(), 0, collectionTimeSlice.getMillis()).get();
-
-        List<CacheIndexEntry> actual = cacheIndexEntryMapper.map(resultSet);
-
-        assertCacheIndexEntriesEqual(actual, expected, bucket);
-    }
-
-    /**
-     * Verifies that the cache index after <code>collectionTimeSlice</code> equals the expected entries. The day to
-     * query is derived from <code>collectionTimeSlice</code>.
-     *
-     * @param bucket The bucket to query, e.g., raw_metrics, one_hour_metrics
-     * @param collectionTimeSlice The inclusive lower bound for the date range queried. The upper bound is the start of
-     *                            next 24 hour time slice, exclusive
-     * @param expected The expected values
-     */
-    protected void assertCacheIndexAfterEquals(MetricsTable bucket, DateTime collectionTimeSlice,
-        List<CacheIndexEntry> expected) {
-        DateTime day = dateTimeService.get24HourTimeSlice(collectionTimeSlice);
-        ResultSet resultSet = dao.findPastCacheIndexEntriesBeforeToday(bucket, day.getMillis(), 0,
-            collectionTimeSlice.getMillis()).get();
-        List<CacheIndexEntry> actual = cacheIndexEntryMapper.map(resultSet);
-
-        assertCacheIndexEntriesEqual(actual, expected, bucket);
-    }
-
-    /**
-     * Verifies that the cache index before <code>collectionTimeSlice</code> equals the expected entries. The day to
-     * query is derived from <code>collectionTimeSlice</code>.
-     *
-     * @param bucket The bucket to query, e.g., raw_metrics, one_hour_metrics
-     * @param collectionTimeSlice The exclusive upper bound for the date range queried. The lower bound is the start of
-     *                            the 24 hour time slice for this value.
-     * @param expected The expected values
-     */
-    private void assertCacheIndexBeforeEquals(MetricsTable bucket, DateTime collectionTimeSlice,
-        List<CacheIndexEntry> expected) {
-        DateTime day = dateTimeService.get24HourTimeSlice(collectionTimeSlice);
-        ResultSet resultSet = dao.findPastCacheIndexEntriesFromToday(bucket, day.getMillis(), 0,
-            collectionTimeSlice.getMillis()).get();
-        List<CacheIndexEntry> actual = cacheIndexEntryMapper.map(resultSet);
-
-        assertCacheIndexEntriesEqual(actual, expected, MetricsTable.RAW);
-    }
-
-    /**
-     * Creates a raw cache index entry. {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice} will be the same
-     * as <code>collectionTimeSlice</code> and {@link CacheIndexEntry#getDay() day} will be the 24 hour time slice of
-     * <code>collectionTimeSlice</code>.
-     *
-     * @param collectionTimeSlice The value to assign {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.collectionTimeSlice}
-     * @param startScheduleId     The value to assign {@link CacheIndexEntry#getStartScheduleId() CacheIndexEntry.startScheduleId}
-     * @param scheduleIds The value(s) to assign {@link CacheIndexEntry#getScheduleIds() CacheIndexEntry.scheduleIds}
-     *
-     * @return A new raw cache index entry
-     */
-    protected CacheIndexEntry newRawCacheIndexEntry(DateTime collectionTimeSlice, int startScheduleId,
-        Integer... scheduleIds) {
-        return newCacheIndexEntry(MetricsTable.RAW, dateTimeService.get24HourTimeSlice(collectionTimeSlice), 0,
-            collectionTimeSlice, startScheduleId, collectionTimeSlice, ImmutableSet.copyOf(scheduleIds));
-    }
-
-    /**
-     * Creates a raw cache index entry. The caller is responsible for assigning values to the
-     * {@link CacheIndexEntry#getDay() day}, {@link CacheIndexEntry#getCollectionTimeSlice() collectionTimeSlice}, and
-     * {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice} properties.
-     *
-     * @param startScheduleId The value to assign {@link CacheIndexEntry#getStartScheduleId() CacheIndexEntry.startScheduleId}
-     * @param scheduleIds The value(s) to assign {@link CacheIndexEntry#getScheduleIds() CacheIndexEntry.scheduleIds}
-     * @return A new raw cache index entry
-     */
-    protected CacheIndexEntry newRawCacheIndexEntry(int startScheduleId, Integer... scheduleIds) {
-        return newCacheIndexEntry(MetricsTable.RAW, null, 0, null, startScheduleId, null,
-            ImmutableSet.copyOf(scheduleIds));
-    }
-
-    /**
-     * Creates a raw cache index entry. {@link CacheIndexEntry#getDay() day} will be the 24 hour time slice of
-     * <code>collectionTimeSlice</code>.
-     *
-     * @param collectionTimeSlice The value to assign {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.collectionTimeSlice}
-     * @param startScheduleId     The value to assign {@link CacheIndexEntry#getStartScheduleId() CacheIndexEntry.startScheduleId}
-     * @param insertTimeSlice The value to assign {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.insertTimeSlice}
-     * @param scheduleIds The value(s) to assign {@link CacheIndexEntry#getScheduleIds() CacheIndexEntry.scheduleIds}
-     *
-     * @return A new raw cache index entry
-     */
-    protected CacheIndexEntry newRawCacheIndexEntry(DateTime collectionTimeSlice, int startScheduleId,
-        DateTime insertTimeSlice, Integer... scheduleIds) {
-        return newCacheIndexEntry(MetricsTable.RAW, dateTimeService.get24HourTimeSlice(collectionTimeSlice), 0,
-            collectionTimeSlice, startScheduleId, insertTimeSlice, ImmutableSet.copyOf(scheduleIds));
-    }
-
-    /**
-     * Creates a 1 hour cache index entry. The caller is responsible for assigning values to the
-     * {@link CacheIndexEntry#getDay() day}, {@link CacheIndexEntry#getCollectionTimeSlice() collectionTimeSlice}, and
-     * {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice} properties.
-     *
-     * @param startScheduleId The value to assign {@link CacheIndexEntry#getStartScheduleId() CacheIndexEntry.startScheduleId}
-     * @param scheduleIds The value(s) to assign {@link CacheIndexEntry#getScheduleIds() CacheIndexEntry.scheduleIds}
-     * @return A new raw cache index entry
-     */
-    protected CacheIndexEntry new1HourCacheIndexEntry(int startScheduleId, Integer... scheduleIds) {
-        return newCacheIndexEntry(MetricsTable.ONE_HOUR, null, 0, null, startScheduleId, null,
-            ImmutableSet.copyOf(scheduleIds));
-    }
-
-    /**
-     * Creates a 1 hour cache index entry. {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice} will be the same
-     * as <code>collectionTimeSlice</code> and {@link CacheIndexEntry#getDay() day} will be the 24 hour time slice of
-     * <code>collectionTimeSlice</code>.
-     *
-     * @param collectionTimeSlice The value to assign {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.collectionTimeSlice}
-     * @param startScheduleId     The value to assign {@link CacheIndexEntry#getStartScheduleId() CacheIndexEntry.startScheduleId}
-     * @param scheduleIds The value(s) to assign {@link CacheIndexEntry#getScheduleIds() CacheIndexEntry.scheduleIds}
-     *
-     * @return A new 1 hour cache index entry
-     */
-    protected CacheIndexEntry new1HourCacheIndexEntry(DateTime collectionTimeSlice, int startScheduleId,
-        Integer... scheduleIds) {
-        return newCacheIndexEntry(MetricsTable.ONE_HOUR, dateTimeService.get24HourTimeSlice(collectionTimeSlice), 0,
-            collectionTimeSlice, startScheduleId, collectionTimeSlice, ImmutableSet.copyOf(scheduleIds));
-    }
-
-    /**
-     * Creates a 6 hour cache index entry. The caller is responsible for assigning values to the
-     * {@link CacheIndexEntry#getDay() day}, {@link CacheIndexEntry#getCollectionTimeSlice() collectionTimeSlice}, and
-     * {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice} properties.
-     *
-     * @param startScheduleId The value to assign {@link CacheIndexEntry#getStartScheduleId() CacheIndexEntry.startScheduleId}
-     * @param scheduleIds The value(s) to assign {@link CacheIndexEntry#getScheduleIds() CacheIndexEntry.scheduleIds}
-     * @return A new raw cache index entry
-     */
-    protected CacheIndexEntry new6HourCacheIndexEntry(int startScheduleId, Integer... scheduleIds) {
-        return newCacheIndexEntry(MetricsTable.SIX_HOUR, null, 0, null, startScheduleId, null,
-            ImmutableSet.copyOf(scheduleIds));
-    }
-
-    /**
-     * Creates a 6 hour cache index entry. {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice} will be the same
-     * as <code>collectionTimeSlice</code> and {@link CacheIndexEntry#getDay() day} will be the 24 hour time slice of
-     * <code>collectionTimeSlice</code>.
-     *
-     * @param collectionTimeSlice The value to assign {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.collectionTimeSlice}
-     * @param startScheduleId     The value to assign {@link CacheIndexEntry#getStartScheduleId() CacheIndexEntry.startScheduleId}
-     * @param scheduleIds The value(s) to assign {@link CacheIndexEntry#getScheduleIds() CacheIndexEntry.scheduleIds}
-     *
-     * @return A new 6 hour cache index entry
-     */
-    protected CacheIndexEntry new6HourCacheIndexEntry(DateTime collectionTimeSlice, int startScheduleId,
-        Integer... scheduleIds) {
-        return newCacheIndexEntry(MetricsTable.SIX_HOUR, dateTimeService.get24HourTimeSlice(collectionTimeSlice), 0,
-            collectionTimeSlice, startScheduleId, collectionTimeSlice, ImmutableSet.copyOf(scheduleIds));
-    }
-
-    private CacheIndexEntry newCacheIndexEntry(MetricsTable table, DateTime day, int partition,
-        DateTime collectionTimeSlice, int startScheduleId, DateTime insertTimeSlice, Set<Integer> scheduleIds) {
-        CacheIndexEntry indexEntry = new CacheIndexEntry();
-        indexEntry.setBucket(table);
-
-        // Note that we allow null for some arguments because some assert methods take care of setting the corresponding
-        // cache index entry properties.
-
-        if (day != null) {
-            indexEntry.setDay(day.getMillis());
-        }
-        indexEntry.setPartition(partition);
-        if (collectionTimeSlice != null) {
-            indexEntry.setCollectionTimeSlice(collectionTimeSlice.getMillis());
-        }
-        indexEntry.setStartScheduleId(startScheduleId);
-        if (insertTimeSlice != null) {
-            indexEntry.setInsertTimeSlice(insertTimeSlice.getMillis());
-        }
-        indexEntry.setScheduleIds(scheduleIds);
-
-        return indexEntry;
-    }
-
-    private void setTimestamps(DateTime collectionTimeSlice, List<CacheIndexEntry> expected) {
-        DateTime day = dateTimeService.get24HourTimeSlice(collectionTimeSlice);
-
-        for (CacheIndexEntry indexEntry : expected) {
-            indexEntry.setDay(day.getMillis());
-            indexEntry.setCollectionTimeSlice(collectionTimeSlice.getMillis());
-            indexEntry.setInsertTimeSlice(collectionTimeSlice.getMillis());
-        }
     }
 
     static class DateTimeServiceStub extends DateTimeService {

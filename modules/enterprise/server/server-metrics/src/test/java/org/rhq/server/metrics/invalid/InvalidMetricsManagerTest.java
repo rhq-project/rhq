@@ -11,13 +11,13 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.cassandra.schema.Table;
 import org.rhq.server.metrics.CassandraIntegrationTest;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.Bucket;
-import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
  * @author John Sanda
@@ -53,10 +53,9 @@ public class InvalidMetricsManagerTest extends CassandraIntegrationTest {
     }
 
     private void purgeDB() {
-        session.execute("TRUNCATE " + MetricsTable.RAW);
-        session.execute("TRUNCATE " + MetricsTable.AGGREGATE);
-        session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE);
-        session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE_INDEX);
+        for (Table table : Table.values()) {
+            session.execute("TRUNCATE " + table.getTableName());
+        }
     }
 
     /**

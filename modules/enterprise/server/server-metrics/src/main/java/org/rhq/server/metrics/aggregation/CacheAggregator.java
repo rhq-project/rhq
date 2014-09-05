@@ -1,15 +1,12 @@
 package org.rhq.server.metrics.aggregation;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.PeekingIterator;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -20,7 +17,7 @@ import org.joda.time.DateTime;
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.Bucket;
-import org.rhq.server.metrics.domain.CacheIndexEntry;
+import org.rhq.server.metrics.domain.IndexEntry;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.ResultSetMapper;
 
@@ -31,28 +28,14 @@ class CacheAggregator extends BaseAggregator {
 
     private static final Log LOG = LogFactory.getLog(CacheAggregator.class);
 
-    static interface CacheBlockFinishedListener {
-        void onFinish(IndexAggregatesPair pair);
+    static interface BatchFinishedListener {
+        void onFinish(List<AggregateNumericMetric> metrics);
     }
-
-    private DateTime currentDay;
-
-    private AtomicInteger schedulesCount = new AtomicInteger();
-
-    private CacheBlockFinishedListener cacheBlockFinishedListener;
 
     private ResultSetMapper resultSetMapper;
 
-    void setStartTime(DateTime startTime) {
-        this.startTime = startTime;
-    }
-
-    void setCurrentDay(DateTime currentDay) {
-        this.currentDay = currentDay;
-    }
-
-    void setCacheBlockFinishedListener(CacheBlockFinishedListener cacheBlockFinishedListener) {
-        this.cacheBlockFinishedListener = cacheBlockFinishedListener;
+    public void setBatchFinishedListener(BatchFinishedListener batchFinishedListener) {
+        this.batchFinishedListener = batchFinishedListener;
     }
 
     void setResultSetMapper(ResultSetMapper resultSetMapper) {
@@ -65,124 +48,63 @@ class CacheAggregator extends BaseAggregator {
     }
 
     @Override
-    protected List<CacheIndexEntry> getIndexEntries() {
-        IndexEntriesLoader loader = new IndexEntriesLoader(startTime, currentDay, dao);
-        return loader.loadCurrentCacheIndexEntries(indexPageSize, aggregationType.getCacheTable());
-    }
+    protected List<IndexEntry> loadIndexEntries() {
+        ResultSet resultSet = dao.findIndexEntries(aggregationType.getCacheTable(), 0, startTime.getMillis()).get();
+        List<IndexEntry> indexEntries = new ArrayList<IndexEntry>();
 
-    /**
-     * Filters out index entries where {@link CacheIndexEntry#getCollectionTimeSlice() collectionTimeSlice} does not
-     * equal {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice}. The filtering is done in support of data
-     * migration which will be necessary for users upgrading from versions prior to RHQ 4.11.
-     *
-     * @param indexEntries The index entries returned from the storage cluster
-     * @return An Iterable of the index entries with those having {@link CacheIndexEntry#getCollectionTimeSlice() collectionTimeSlice}
-     * not equal to {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice} filtered out.
-     */
-    @Override
-    protected Iterable<CacheIndexEntry> reduceIndexEntries(List<CacheIndexEntry> indexEntries) {
-        final PeekingIterator<CacheIndexEntry> iterator = Iterators.peekingIterator(indexEntries.iterator());
+        for (Row row : resultSet) {
+            indexEntries.add(new IndexEntry(aggregationType.getCacheTable(), 0, startTime.getMillis(), row.getInt(0)));
+        }
 
-        return new Iterable<CacheIndexEntry>() {
-            @Override
-            public Iterator<CacheIndexEntry> iterator() {
-                return new Iterator<CacheIndexEntry>() {
-                    @Override
-                    public boolean hasNext() {
-                        return iterator.hasNext() &&
-                            iterator.peek().getCollectionTimeSlice() == iterator.peek().getInsertTimeSlice();
-                    }
-
-                    @Override
-                    public CacheIndexEntry next() {
-                        return iterator.next();
-                    }
-
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-                };
-            }
-        };
+        return indexEntries;
     }
 
     @Override
-    protected AggregationTask createAggregationTask(CacheIndexEntry indexEntry) {
-        return new AggregationTask(indexEntry) {
+    protected AggregationTask createAggregationTask(List<IndexEntry> batch) {
+        return new AggregationTask(batch) {
             @Override
-            void run(CacheIndexEntry indexEntry) {
-                if (LOG.isTraceEnabled()) {
-                    LOG.trace("Executing " + getDebugType() + " aggregation task for " + indexEntry);
-                }
-
-                if (cacheActive) {
-                    StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
-                        startTime.getMillis(), indexEntry.getStartScheduleId());
-
-                    throw new RuntimeException("Cache aggregation is disabled!");
-//                    processCacheBlock(indexEntry, cacheFuture, persistMetrics);
-                } else {
-                    switch (aggregationType) {
-                        case RAW:
-                            processRawBatches(indexEntry);
-                            break;
-                        case ONE_HOUR:
-                            process1HourBatches(indexEntry);
-                            break;
-                        default:
-                            process6HourBatches(indexEntry);
-                    }
+            void run(List<IndexEntry> batch) {
+                switch (aggregationType) {
+                    case RAW:
+                        processRawBatch(batch);
+                        break;
+                    case ONE_HOUR:
+                        process1HourBatch(batch);
+                        break;
+                    default:
+                        process6HourBatch(batch);
                 }
             }
         };
     }
 
-    private void processRawBatches(CacheIndexEntry indexEntry) {
-        List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
+    private void processRawBatch(List<IndexEntry> batch) {
+        List<StorageResultSetFuture> queryFutures = new ArrayList(batch.size());
         long endTime = new DateTime(startTime).plusHours(1).getMillis();
-        for (Integer scheduleId : indexEntry.getScheduleIds()) {
-            queryFutures.add(dao.findRawMetricsAsync(scheduleId, indexEntry.getCollectionTimeSlice(), endTime));
-            if (queryFutures.size() == BATCH_SIZE) {
-                processBatch(queryFutures, indexEntry, Bucket.ONE_HOUR);
-                queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
-            }
+        for (IndexEntry indexEntry : batch) {
+            queryFutures.add(dao.findRawMetricsAsync(indexEntry.getScheduleId(), indexEntry.getTimestamp(), endTime));
         }
-        if (!queryFutures.isEmpty()) {
-            processBatch(queryFutures, indexEntry, Bucket.ONE_HOUR);
-        }
+        processBatch(queryFutures, batch, startTime, Bucket.ONE_HOUR);
     }
 
-    private void process1HourBatches(CacheIndexEntry indexEntry) {
-        List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
-        long endTime = dateTimeService.get6HourTimeSliceEnd(new DateTime(startTime)).getMillis();
-        for (Integer scheduleId : indexEntry.getScheduleIds()) {
-            queryFutures.add(dao.findAggregateMetricsAsync(scheduleId, Bucket.ONE_HOUR,
-                indexEntry.getCollectionTimeSlice(), endTime));
-            if (queryFutures.size() == BATCH_SIZE) {
-                processBatch(queryFutures, indexEntry, Bucket.SIX_HOUR);
-                queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
-            }
+    private void process1HourBatch(List<IndexEntry> batch) {
+        List<StorageResultSetFuture> queryFutures = new ArrayList(batch.size());
+        DateTime endTime = dateTimeService.get6HourTimeSliceEnd(startTime);
+        for (IndexEntry indexEntry : batch) {
+            queryFutures.add(dao.findAggregateMetricsAsync(indexEntry.getScheduleId(), Bucket.ONE_HOUR,
+                startTime.getMillis(), endTime.getMillis()));
         }
-        if (!queryFutures.isEmpty()) {
-            processBatch(queryFutures, indexEntry, Bucket.SIX_HOUR);
-        }
+        processBatch(queryFutures, batch, startTime, Bucket.SIX_HOUR);
     }
 
-    private void process6HourBatches(CacheIndexEntry indexEntry) {
-        List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
-        long endTime = dateTimeService.get24HourTimeSliceEnd(new DateTime(startTime)).getMillis();
-        for (Integer scheduleId : indexEntry.getScheduleIds()) {
-            queryFutures.add(dao.findAggregateMetricsAsync(scheduleId, Bucket.SIX_HOUR,
-                indexEntry.getCollectionTimeSlice(), endTime));
-            if (queryFutures.size() == BATCH_SIZE) {
-                processBatch(queryFutures, indexEntry, Bucket.TWENTY_FOUR_HOUR);
-                queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
-            }
+    private void process6HourBatch(List<IndexEntry> batch) {
+        List<StorageResultSetFuture> queryFutures = new ArrayList(batch.size());
+        DateTime endTime = dateTimeService.get24HourTimeSliceEnd(startTime);
+        for (IndexEntry indexEntry : batch) {
+            queryFutures.add(dao.findAggregateMetricsAsync(indexEntry.getScheduleId(), Bucket.SIX_HOUR,
+                startTime.getMillis(), endTime.getMillis()));
         }
-        if (!queryFutures.isEmpty()) {
-            processBatch(queryFutures, indexEntry, Bucket.TWENTY_FOUR_HOUR);
-        }
+        processBatch(queryFutures, batch, startTime, Bucket.TWENTY_FOUR_HOUR);
     }
 
     @Override
@@ -190,7 +112,7 @@ class CacheAggregator extends BaseAggregator {
         return ImmutableMap.of(aggregationType, schedulesCount.get());
     }
 
-    /**
+    /*
      * <p>
      * This method provides the core aggregation logic. It performs the following steps:
      *
@@ -216,72 +138,25 @@ class CacheAggregator extends BaseAggregator {
      * @param cacheFuture A future of the cache query result set
      * @param persistMetricsFn The function that will be used to persist the aggregate metrics
      */
-//    @SuppressWarnings("unchecked")
-//    protected void processCacheBlock(CacheIndexEntry indexEntry,
-//        StorageResultSetFuture cacheFuture, AsyncFunction<IndexAggregatesPair, List<ResultSet>> persistMetricsFn) {
-//
-//        ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(cacheFuture,
-//            toIterable(aggregationType.getCacheMapper()), aggregationTasks);
-//
-//        ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
-//            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class), aggregationTasks);
-//
-//        ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(metricsFuture,
-//            indexAggregatesPair(indexEntry));
-//
-//        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(pairFuture, persistMetricsFn,
-//            aggregationTasks);
-//
-//        ListenableFuture<ResultSet> deleteCacheFuture = Futures.transform(insertsFuture,
-//            deleteCacheEntry(indexEntry), aggregationTasks);
-//
-//        ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
-//            deleteCacheIndexEntry(indexEntry), aggregationTasks);
-//
-//        aggregationTaskFinished(deleteCacheIndexFuture, pairFuture);
-//    }
 
-    @SuppressWarnings("unchecked")
-    private void processBatch(List<StorageResultSetFuture> queryFutures, CacheIndexEntry indexEntry, Bucket bucket) {
+
+    private void processBatch(List<StorageResultSetFuture> queryFutures, List<IndexEntry> indexEntries,
+        DateTime timeSlice, Bucket bucket) {
         ListenableFuture<List<ResultSet>> queriesFuture = Futures.allAsList(queryFutures);
 
         ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(queriesFuture,
             toIterable(resultSetMapper), aggregationTasks);
 
         ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
-            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class, bucket), aggregationTasks);
+            computeAggregates(timeSlice.getMillis(), RawNumericMetric.class, bucket), aggregationTasks);
 
-        ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(metricsFuture,
-            indexAggregatesPair(indexEntry));
-
-        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(pairFuture, persistMetrics,
+        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(metricsFuture, persistMetrics,
             aggregationTasks);
 
-        ListenableFuture<ResultSet> deleteCacheFuture = Futures.transform(insertsFuture,
-            deleteCacheEntry(indexEntry), aggregationTasks);
+        ListenableFuture<List<ResultSet>> deleteIndexEntriesFuture = Futures.transform(insertsFuture,
+            deleteIndexEntries(indexEntries), aggregationTasks);
 
-        ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
-            deleteCacheIndexEntry(indexEntry), aggregationTasks);
-
-        aggregationTaskFinished(deleteCacheIndexFuture, pairFuture);
+        aggregationTaskFinished(metricsFuture, deleteIndexEntriesFuture);
     }
 
-    @SuppressWarnings("unchecked")
-    private void aggregationTaskFinished(ListenableFuture<ResultSet> deleteCacheIndexFuture,
-        ListenableFuture<IndexAggregatesPair> pairFuture) {
-
-        final ListenableFuture<List<Object>> argsFuture = Futures.allAsList(deleteCacheIndexFuture, pairFuture);
-
-        Futures.addCallback(argsFuture, new AggregationTaskFinishedCallback<List<Object>>() {
-            @Override
-            protected void onFinish(List<Object> args) {
-                IndexAggregatesPair pair = (IndexAggregatesPair) args.get(1);
-
-                if (cacheBlockFinishedListener != null) {
-                    cacheBlockFinishedListener.onFinish(pair);
-                }
-                schedulesCount.addAndGet(pair.metrics.size());
-            }
-        }, aggregationTasks);
-    }
 }

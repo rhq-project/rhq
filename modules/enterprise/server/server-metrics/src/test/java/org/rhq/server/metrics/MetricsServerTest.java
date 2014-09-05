@@ -102,10 +102,7 @@ public class MetricsServerTest extends MetricsTest {
         );
 
         assertEquals(actual, expected, "Failed to retrieve raw metric data");
-
-        // TODO uncomment once we add in support for the new metrics_idx table
-//        IndexEntry indexEntry = new IndexEntry(MetricsTable.RAW, 0, hour(4).getMillis(), scheduleId);
-//        assertIndexEquals(MetricsTable.RAW, 0, hour(4), asList(indexEntry));
+        assertRawIndexEquals(0, hour(4), asList(scheduleId));
     }
 
     @Test
@@ -137,24 +134,9 @@ public class MetricsServerTest extends MetricsTest {
         assertRawDataEquals(scheduleId3, hour(5), hour(6), expected3);
         assertRawDataEquals(scheduleId4, hour(5), hour(6), expected4);
 
-//        assertIndexEquals(MetricsTable.RAW, 0, hour(5), asList(
-//            new IndexEntry(MetricsTable.RAW, 0, hour(5).getMillis(), scheduleId2),
-//            new IndexEntry(MetricsTable.RAW, 0, hour(5).getMillis(), scheduleId3)));
-//        assertIndexEquals(MetricsTable.RAW, 1, hour(5), asList(
-//            new IndexEntry(MetricsTable.RAW, 1, hour(5).getMillis(), scheduleId1),
-//            new IndexEntry(MetricsTable.RAW, 1, hour(5).getMillis(), scheduleId4)));
+        assertRawIndexEquals(0, hour(5), asList(scheduleId2, scheduleId3));
+        assertRawIndexEquals(1, hour(5), asList(scheduleId1, scheduleId4));
     }
-
-//    private void assertIndexEquals(MetricsTable table, int partition, DateTime time, List<IndexEntry> expected) {
-//        ResultSet resultSet = dao.findIndexEntries(table, partition, time.getMillis()).get();
-//        List<IndexEntry> actual = new ArrayList<IndexEntry>();
-//
-//        for (Row row : resultSet) {
-//            actual.add(new IndexEntry(table, partition, time.getMillis(), row.getInt(0)));
-//        }
-//
-//        assertEquals(actual, expected, "The index entries do not match");
-//    }
 
     @Test
     public void insertLateData() throws Exception {
@@ -186,20 +168,6 @@ public class MetricsServerTest extends MetricsTest {
         assertRawDataEquals(scheduleId2, yesterday().plusHours(19), yesterday().plusHours(20), expected2);
         assertRawDataEquals(scheduleId3, hour(5), hour(6), expected3);
         assertRawDataEquals(scheduleId4, hour(4), hour(5), expected4);
-
-//        assertRawCacheEquals(yesterday().plusHours(19), startScheduleId(scheduleId1), expected1);
-//        assertRawCacheEquals(yesterday().plusHours(19), startScheduleId(scheduleId2), expected2);
-//        assertRawCacheEquals(hour(5), startScheduleId(scheduleId3), expected3);
-//
-//        assertRawCacheIndexBeforeEquals(hour(5), asList(
-//            newRawCacheIndexEntry(hour(4), startScheduleId(scheduleId4), hour(5), scheduleId4)));
-//
-//        assertRawCacheIndexEquals(hour(5), asList(newRawCacheIndexEntry(startScheduleId(scheduleId3), scheduleId3)));
-//
-//        assertRawCacheIndexAfterEquals(yesterday().plusHours(19), asList(
-//            newRawCacheIndexEntry(yesterday().plusHours(19), startScheduleId(scheduleId1), hour(5), scheduleId1),
-//            newRawCacheIndexEntry(yesterday().plusHours(19), startScheduleId(scheduleId2), hour(5), scheduleId2)
-//        ));
     }
 
     @Test
@@ -215,8 +183,6 @@ public class MetricsServerTest extends MetricsTest {
         waitForRawInserts.await("Failed to insert raw data");
 
         assertRawDataEmpty(scheduleId, hour(5).minusHours(25), hour(5).minusHours(24));
-//        assertRawCacheEmpty(hour(5).minusHours(25), startScheduleId(scheduleId));
-//        assertRawCacheIndexEmpty(hour(5));
     }
 
     @Test
@@ -249,16 +215,10 @@ public class MetricsServerTest extends MetricsTest {
         List<AggregateNumericMetric> expected = asList(new AggregateNumericMetric(scheduleId, Bucket.ONE_HOUR,
             divide((3.9 + 3.2 + 2.6), 3), 2.6, 3.9, lastHour.getMillis()));
         assertMetricDataEquals(scheduleId, Bucket.ONE_HOUR, expected);
-//        assert1HourDataEquals(scheduleId, expected);
 
         // verify that 6 hour metric data is updated
         assertMetricDataEquals(scheduleId, Bucket.SIX_HOUR, asList(new AggregateNumericMetric(scheduleId,
             Bucket.SIX_HOUR, divide((3.9 + 3.2 + 2.6), 3), 2.6, 3.9, hour0.getMillis())));
-//        assert6HourDataEquals(scheduleId, asList(new AggregateNumericMetric(scheduleId, divide((3.9 + 3.2 + 2.6), 3),
-//            2.6, 3.9, hour0.getMillis())));
-
-        // TODO verify that 24 hour data is *not* updated
-        // TODO verify metrics index for 24 hour data is updated
     }
 
     @Test
@@ -294,16 +254,11 @@ public class MetricsServerTest extends MetricsTest {
             new AggregateNumericMetric(scheduleId, Bucket.ONE_HOUR, divide((1.1 + 2.2 + 3.3), 3),
                 firstValue, thirdValue, hour8.getMillis()));
         assertMetricDataEquals(scheduleId, Bucket.ONE_HOUR, expected);
-//        assert1HourCacheEquals(hour(6), startScheduleId(scheduleId), expected);
 
         // The 6 hour data should not get aggregated since the current 6 hour time slice
         // has not passed yet. More specifically, the aggregation job is running at 09:00
         // which means that the current 6 hour slice is from 06:00 to 12:00.
         assert6HourDataEmpty(scheduleId);
-//        assert6HourCacheEmpty(hour(0), startScheduleId(scheduleId));
-
-        // verify that the 1 hour cache has been purged
-//        assertRawCacheEmpty(hour8, startScheduleId(scheduleId));
     }
 
     /**
@@ -368,7 +323,7 @@ public class MetricsServerTest extends MetricsTest {
             new AggregateNumericMetric(scheduleId, Bucket.ONE_HOUR, hour14Avg, hour14Min, hour14Max, hour(14).getMillis())
         );
         assert1HourDataEquals(scheduleId, expectedOneHourData);
-        assert1HourCacheEquals(hour(12), startScheduleId(scheduleId), expectedOneHourData.subList(1, 2));
+//        assert1HourCacheEquals(hour(12), startScheduleId(scheduleId), expectedOneHourData.subList(1, 2));
 
         // verify that we have 6 hour aggregates for hour 6. The data from the
         // 10:00 hour falls into the 6:00 - 12:00 time slice so we should have
@@ -376,7 +331,7 @@ public class MetricsServerTest extends MetricsTest {
         List<AggregateNumericMetric> expected6HourData = asList(new AggregateNumericMetric(scheduleId, Bucket.ONE_HOUR,
             hour10Avg, hour10Min, hour10Max, hour(6).getMillis()));
         assert6HourDataEquals(scheduleId, expected6HourData);
-        assert6HourCacheEquals(hour(0), startScheduleId(scheduleId), expected6HourData);
+//        assert6HourCacheEquals(hour(0), startScheduleId(scheduleId), expected6HourData);
     }
 
     @Test(enabled = false)
@@ -444,7 +399,7 @@ public class MetricsServerTest extends MetricsTest {
         List<AggregateNumericMetric> expected6HourData = asList(new AggregateNumericMetric(scheduleId, Bucket.SIX_HOUR,
             hour20YesterdayAvg, hour20YesterdayMin, hour20YesterdayMax, hour18Yesterday.getMillis()));
         assert6HourDataEquals(scheduleId, expected6HourData);
-        assert6HourCacheEmpty(hour(0).minusDays(24), startScheduleId(scheduleId));
+//        assert6HourCacheEmpty(hour(0).minusDays(24), startScheduleId(scheduleId));
 
         // verify that we have a 24 hour aggregate for the previous day's data
         assert24HourDataEquals(scheduleId, asList(new AggregateNumericMetric(scheduleId, Bucket.TWENTY_FOUR_HOUR, hour20YesterdayAvg,

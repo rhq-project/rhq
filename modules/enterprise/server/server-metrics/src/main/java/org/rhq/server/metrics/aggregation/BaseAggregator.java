@@ -1,17 +1,20 @@
 package org.rhq.server.metrics.aggregation;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
@@ -21,12 +24,13 @@ import org.joda.time.DateTime;
 
 import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.ArithmeticMeanCalculator;
-import org.rhq.server.metrics.CacheMapper;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
+import org.rhq.server.metrics.domain.IndexEntry;
 import org.rhq.server.metrics.domain.NumericMetric;
 import org.rhq.server.metrics.domain.ResultSetMapper;
 
@@ -47,7 +51,7 @@ abstract class BaseAggregator {
      */
     protected AggregationType aggregationType;
 
-    protected AsyncFunction<IndexAggregatesPair, List<ResultSet>> persistMetrics;
+    protected AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persistMetrics;
 
     protected Semaphore permits;
 
@@ -68,6 +72,24 @@ abstract class BaseAggregator {
     protected boolean cacheActive = true;
 
     protected int indexPageSize;
+    protected AtomicInteger schedulesCount = new AtomicInteger();
+    protected CacheAggregator.BatchFinishedListener batchFinishedListener;
+
+    @SuppressWarnings("unchecked")
+    protected void aggregationTaskFinished(ListenableFuture<List<AggregateNumericMetric>> metricsFuture,
+        ListenableFuture<List<ResultSet>> deletedIndexEntriesFuture) {
+        final ListenableFuture<List<List<?>>> argsFuture = Futures.allAsList(metricsFuture, deletedIndexEntriesFuture);
+        Futures.addCallback(argsFuture, new AggregationTaskFinishedCallback<List<List<?>>>() {
+            @Override
+            protected void onFinish(List<List<?>> args) {
+                List<AggregateNumericMetric> metrics = (List<AggregateNumericMetric>) args.get(0);
+                if (batchFinishedListener != null) {
+                    batchFinishedListener.onFinish(metrics);
+                }
+                schedulesCount.addAndGet(metrics.size());
+            }
+        }, aggregationTasks);
+    }
 
     /**
      * AggregationTask is a Runnable that computes aggregates for a set of schedules in a {@link CacheIndexEntry}.
@@ -75,23 +97,23 @@ abstract class BaseAggregator {
      */
     protected abstract class AggregationTask implements Runnable {
 
-        private CacheIndexEntry indexEntry;
+        private List<IndexEntry> batch;
 
-        public AggregationTask(CacheIndexEntry indexEntry) {
-            this.indexEntry = indexEntry;
+        public AggregationTask(List<IndexEntry> batch) {
+            this.batch = batch;
         }
 
         @Override
         public void run() {
             try {
-                run(indexEntry);
+                run(batch);
             } catch (Exception e) {
                 LOG.error("Aggregation will be aborted due to an unexpected error", e);
                 taskTracker.abort("Aborting aggregation due to an unexpected error: " + e.getMessage());
             }
         }
 
-        abstract void run(CacheIndexEntry indexEntry);
+        abstract void run(List<IndexEntry> batch);
     }
 
     protected class AggregationTaskFinishedCallback<T> implements FutureCallback<T> {
@@ -132,7 +154,7 @@ abstract class BaseAggregator {
         this.aggregationType = aggregationType;
     }
 
-    void setPersistMetrics(AsyncFunction<IndexAggregatesPair, List<ResultSet>> persistMetrics) {
+    void setPersistMetrics(AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persistMetrics) {
         this.persistMetrics = persistMetrics;
     }
 
@@ -165,7 +187,7 @@ abstract class BaseAggregator {
 
         Stopwatch stopwatch = new Stopwatch().start();
         try {
-            List<CacheIndexEntry> indexEntries = getIndexEntries();
+            List<IndexEntry> indexEntries = loadIndexEntries();
             scheduleTasks(indexEntries);
             taskTracker.waitForTasksToFinish();
         } catch (CacheIndexQueryException e) {
@@ -185,12 +207,9 @@ abstract class BaseAggregator {
     }
 
 
-    /**
-     * @return The cache index entries for which aggregation tasks will be scheduled
-     */
-    protected abstract List<CacheIndexEntry> getIndexEntries();
+    protected abstract List<IndexEntry> loadIndexEntries();
 
-    protected abstract AggregationTask createAggregationTask(CacheIndexEntry indexEntry);
+    protected abstract AggregationTask createAggregationTask(List<IndexEntry> batch);
 
     /**
      * @return A mapping of the number of schedules that had data aggregated for each bucket, e.g., raw, 1 hour, 6 hour
@@ -198,30 +217,26 @@ abstract class BaseAggregator {
     protected abstract Map<AggregationType, Integer> getAggregationCounts();
 
     /**
-     * Aggregation tasks are scheduled based on a {collectionTimeSlice, startScheduleId} pair, and there can be multiple
-     * index entries per pair. This method is responsible for reducing or combining those into a single a index entry.
-     * Index entries can also be altogether filtered out as well. See {@link CacheAggregator#reduceIndexEntries(java.util.List)}
-     * for details.
-     *
-     * @param indexEntries The index entries returned from the storage cluster
-     * @return An Iterable of index entries for which aggregation tasks will be scheduled
-     */
-    protected abstract Iterable<CacheIndexEntry> reduceIndexEntries(List<CacheIndexEntry> indexEntries);
-
-    /**
      * @return The aggregation type for display in debug log messages
      */
     protected abstract String getDebugType();
 
-    private void scheduleTasks(List<CacheIndexEntry> indexEntries) {
+    private void scheduleTasks(List<IndexEntry> indexEntries) {
         try {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Scheduling " + getDebugType() + " aggregation tasks for " + indexEntries.size() +
-                    " index entries");
+                    " schedule ids");
             }
-
-            for (CacheIndexEntry indexEntry : reduceIndexEntries(indexEntries)) {
-                submitAggregationTask(indexEntry);
+            List<IndexEntry> batch = new ArrayList<IndexEntry>(BATCH_SIZE);
+            for (IndexEntry indexEntry : indexEntries) {
+                batch.add(indexEntry);
+                if (batch.size() == BATCH_SIZE) {
+                    submitAggregationTask(batch);
+                    batch = new ArrayList<IndexEntry>();
+                }
+            }
+            if (!batch.isEmpty()) {
+                submitAggregationTask(batch);
             }
             taskTracker.finishedSchedulingTasks();
         } catch (InterruptedException e) {
@@ -235,15 +250,17 @@ abstract class BaseAggregator {
         }
     }
 
-    protected void submitAggregationTask(CacheIndexEntry indexEntry) throws InterruptedException {
+    protected void submitAggregationTask(List<IndexEntry> batch) throws InterruptedException {
         permits.acquire();
-        aggregationTasks.submit(createAggregationTask(indexEntry));
+        aggregationTasks.submit(createAggregationTask(batch));
         taskTracker.addTask();
     }
 
     protected <T extends NumericMetric> Function<List<ResultSet>, Iterable<List<T>>> toIterable(
         final ResultSetMapper<T> mapper) {
-
+        // TODO add a unit test for when when one of the result sets is empty
+        // We need to make sure we handle the case where one of the result sets is empty. This can happen since storing
+        // a metric and updating the index is done as two separate writes and not as an atomic operation.
         return new Function<List<ResultSet>, Iterable<List<T>>>() {
             @Override
             public Iterable<List<T>> apply(final List<ResultSet> resultSets) {
@@ -274,14 +291,14 @@ abstract class BaseAggregator {
         };
     }
 
-    protected <T extends NumericMetric> Function<Iterable<List<T>>, List<AggregateNumericMetric>> computeAggregates(
+    protected <T extends NumericMetric> Function<Iterable<? extends Collection<T>>, List<AggregateNumericMetric>> computeAggregates(
         final long timeSlice, Class<T> type, final Bucket bucket) {
 
-        return new Function<Iterable<List<T>>, List<AggregateNumericMetric>>() {
+        return new Function<Iterable<? extends Collection<T>>, List<AggregateNumericMetric>>() {
             @Override
-            public List<AggregateNumericMetric> apply(Iterable<List<T>> values) {
+            public List<AggregateNumericMetric> apply(Iterable<? extends Collection<T>> values) {
                 List<AggregateNumericMetric> aggregates = new ArrayList<AggregateNumericMetric>(BATCH_SIZE);
-                for (List<T> metricList : values) {
+                for (Collection<T> metricList : values) {
                     aggregates.add(computeAggregate(metricList, timeSlice, bucket));
                 }
                 return aggregates;
@@ -289,7 +306,7 @@ abstract class BaseAggregator {
         };
     }
 
-    private <T extends NumericMetric> AggregateNumericMetric computeAggregate(List<T> metrics, long timeSlice,
+    private <T extends NumericMetric> AggregateNumericMetric computeAggregate(Collection<T> metrics, long timeSlice,
         Bucket bucket) {
         Double min = Double.NaN;
         Double max = Double.NaN;
@@ -316,68 +333,17 @@ abstract class BaseAggregator {
         return new AggregateNumericMetric(scheduleId, bucket, mean.getArithmeticMean(), min, max, timeSlice);
     }
 
-    /**
-     * @param indexEntry
-     * @return
-     */
-    protected AsyncFunction<List<ResultSet>, ResultSet> deleteCacheEntry(final CacheIndexEntry indexEntry) {
-        return new AsyncFunction<List<ResultSet>, ResultSet>() {
+    protected AsyncFunction<List<ResultSet>, List<ResultSet>> deleteIndexEntries(final List<IndexEntry> indexEntries) {
+        return new AsyncFunction<List<ResultSet>, List<ResultSet>>() {
             @Override
-            public ListenableFuture<ResultSet> apply(List<ResultSet> resultSets) throws Exception {
-                return dao.deleteCacheEntries(aggregationType.getCacheTable(), indexEntry.getCollectionTimeSlice(),
-                    indexEntry.getStartScheduleId());
+            public ListenableFuture<List<ResultSet>> apply(List<ResultSet> insertResultSets) throws Exception {
+                List<StorageResultSetFuture> deleteFutures = new ArrayList<StorageResultSetFuture>(indexEntries.size());
+                for (IndexEntry indexEntry : indexEntries) {
+                    deleteFutures.add(dao.deleteIndexEntry(indexEntry));
+                }
+                return Futures.allAsList(deleteFutures);
             }
         };
     }
-
-    protected AsyncFunction<ResultSet, ResultSet> deleteCacheIndexEntry(final CacheIndexEntry indexEntry) {
-        return new AsyncFunction<ResultSet, ResultSet>() {
-            @Override
-            public ListenableFuture<ResultSet> apply(ResultSet deleteCacheResultSet) throws Exception {
-                return dao.deleteCacheIndexEntry(aggregationType.getCacheTable(), indexEntry.getDay(),
-                    indexEntry.getPartition(), indexEntry.getCollectionTimeSlice(), indexEntry.getStartScheduleId(),
-                    indexEntry.getInsertTimeSlice());
-            }
-        };
-    }
-
-    /**
-     * <p>
-     * Some functions called during aggregation need as input both the computed, aggregate metrics and their
-     * corresponding index entry. Guava is pretty limited when it comes to passing multiple arguments (which are
-     * ListenableFutures) to a function. You are left with Futures.allAsList or Futures.successfulAsList. These methods
-     * are fine sometimes, but when you have futures of different types, callee code gets littered with a lot type
-     * casting.
-     * </p>
-     * <p>
-     * This method returns a function that combines an index entry with aggregate metrics. The function returns a
-     * {@link IndexAggregatesPair} which provides a strongly typed alternative to either Futures.allAsList or
-     * Futures.successfulAsList.
-     * </p>
-     */
-    protected Function<List<AggregateNumericMetric>, IndexAggregatesPair> indexAggregatesPair(
-        final CacheIndexEntry indexEntry) {
-        return new Function<List<AggregateNumericMetric>, IndexAggregatesPair>() {
-            @Override
-            public IndexAggregatesPair apply(List<AggregateNumericMetric> metrics) {
-                return new IndexAggregatesPair(indexEntry, metrics);
-            }
-        };
-    }
-
-    protected <T extends NumericMetric> Function<ResultSet, Iterable<List<T>>> toIterable(final CacheMapper<T> mapper) {
-        return new Function<ResultSet, Iterable<List<T>>>() {
-            @Override
-            public Iterable<List<T>> apply(final ResultSet resultSet) {
-                return new Iterable<List<T>>() {
-                    @Override
-                    public Iterator<List<T>> iterator() {
-                        return new CacheIterator<T>(mapper, resultSet);
-                    }
-                };
-            }
-        };
-    }
-
 
 }

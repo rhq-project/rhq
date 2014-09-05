@@ -563,12 +563,7 @@ public class StorageClientManager implements StorageClientManagerMBean{
         DateTimeService dateTimeService = new DateTimeService();
         dateTimeService.setConfiguration(metricsConfiguration);
         metricsServer.setDateTimeService(dateTimeService);
-        metricsServer.setCacheActivationTime(getCacheActivationTime());
         metricsServer.init();
     }
 
-    private long getCacheActivationTime() {
-        SystemSettings settings = systemManager.getObfuscatedSystemSettings(true);
-        return Long.parseLong(settings.get(SystemSetting.METRICS_CACHE_ACTIVATION_TIME));
-    }
 }

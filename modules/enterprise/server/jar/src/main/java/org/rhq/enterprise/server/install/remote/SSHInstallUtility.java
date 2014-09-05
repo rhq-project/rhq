@@ -332,7 +332,7 @@ public class SSHInstallUtility {
         try {
             int port = Integer.parseInt(portStr.trim());
             info.setAgentPort(port);
-        } catch (NumberFormatException nfe) {
+        } catch (Exception e) {
             info.setAgentPort(0); // indicate that we don't know it
         }
 

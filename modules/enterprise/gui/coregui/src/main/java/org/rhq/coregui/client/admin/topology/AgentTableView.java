@@ -187,8 +187,8 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
     }
 
     private void closeInstallView() {
-        remoteAgentView.destroy();
-        popupWindow.destroy();
+        remoteAgentView.markForDestroy();
+        popupWindow.markForDestroy();
     }
 
     private void setupStartButton() {

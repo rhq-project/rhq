@@ -118,7 +118,7 @@ public class MeasurementScheduleCriteria extends Criteria {
             + "    FROM Resource res " //
             + "    JOIN res.parentResource parent " //
             + "   WHERE parent.id = ? )");
-        filterOverrides.put(FILTER_FIELD_RESOURCE_TYPE_ID, "resource.type.id = ?");
+        filterOverrides.put(FILTER_FIELD_RESOURCE_TYPE_ID, "resource.resourceType.id = ?");
 
         sortOverrides.put(SORT_FIELD_DEFINITION_ID, "definition.id");
         sortOverrides.put(SORT_FIELD_NAME, "definition.name");

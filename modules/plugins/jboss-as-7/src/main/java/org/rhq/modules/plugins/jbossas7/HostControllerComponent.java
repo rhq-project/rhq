@@ -310,6 +310,9 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             if (handoverRequest.getAction().equals("execute-script")) {
                 return handleExecuteScript(handoverRequest);
             }
+            if (handoverRequest.getAction().equals("patch")) {
+                return deployPatch(handoverRequest);
+            }
             return BundleHandoverResponse.failure(INVALID_ACTION);
         } catch (Exception e) {
             return BundleHandoverResponse.failure(EXECUTION, "Unexpected handover failure", e);

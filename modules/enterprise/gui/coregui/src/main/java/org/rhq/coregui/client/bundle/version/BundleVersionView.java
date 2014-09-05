@@ -1,29 +1,33 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.client.bundle.version;
+
+import static org.rhq.coregui.client.CoreGUI.getErrorHandler;
+import static org.rhq.coregui.client.CoreGUI.getMessageCenter;
+import static org.rhq.coregui.client.CoreGUI.goToView;
+import static org.rhq.coregui.client.CoreGUI.isTagsEnabledForUI;
 
 import java.util.HashSet;
 
+import com.google.gwt.core.client.Duration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.util.BooleanCallback;
@@ -46,7 +50,6 @@ import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.BookmarkableView;
-import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.ViewId;
 import org.rhq.coregui.client.ViewPath;
@@ -59,8 +62,8 @@ import org.rhq.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -97,7 +100,7 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
             + version.getVersion()));
 
         //conditionally add tags. Defaults to true, not available in JON builds.
-        if (CoreGUI.isTagsEnabledForUI()) {
+        if (isTagsEnabledForUI()) {
             addMember(createTagEditor());
         }
 
@@ -165,25 +168,13 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
         IButton deleteButton = new EnhancedIButton(MSG.common_button_delete(), ButtonColor.RED);
         //deleteButton.setIcon("subsystems/bundle/BundleVersionAction_Delete_16.png");
         deleteButton.addClickHandler(new ClickHandler() {
+            @Override
             public void onClick(ClickEvent clickEvent) {
                 SC.ask(MSG.view_bundle_version_deleteConfirm(), new BooleanCallback() {
-                    public void execute(Boolean aBoolean) {
-                        if (aBoolean) {
-                            bundleManager.deleteBundleVersion(version.getId(), false, new AsyncCallback<Void>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_bundle_version_deleteFailure(version.getVersion()), caught);
-                                }
-
-                                public void onSuccess(Void result) {
-                                    CoreGUI.getMessageCenter().notify(
-                                        new Message(MSG.view_bundle_version_deleteSuccessful(version.getVersion()),
-                                            Message.Severity.Info));
-                                    // Bundle version is deleted, go back to main bundle view
-                                    CoreGUI.goToView(LinkManager.getBundleVersionLink(version.getBundle().getId(), 0),
-                                        true);
-                                }
-                            });
+                    @Override
+                    public void execute(Boolean confirmed) {
+                        if (confirmed) {
+                            doDeleteBundleVersion();
                         }
                     }
                 });
@@ -198,19 +189,58 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
         return actionLayout;
     }
 
+    private void doDeleteBundleVersion() {
+        String deleteSubmittedMessage = MSG.view_bundle_version_deleteSubmitted(version.getVersion(), version
+            .getBundle().getName());
+        getMessageCenter().notify(new Message(deleteSubmittedMessage, Message.Severity.Info));
+        final Duration duration = new Duration();
+        bundleManager.deleteBundleVersion(version.getId(), false, new AsyncCallback<Void>() {
+            @Override
+            public void onFailure(final Throwable caught) {
+                Timer timer = new Timer() {
+                    @Override
+                    public void run() {
+                        String message = MSG.view_bundle_version_deleteFailure(version.getVersion());
+                        getErrorHandler().handleError(message, caught);
+                    }
+                };
+                // Delay the showing of the result to give the user some time to see the deleteSubmitted notif
+                timer.schedule(Math.max(0, 3 * 1000 - duration.elapsedMillis()));
+            }
+
+            @Override
+            public void onSuccess(Void result) {
+                Timer timer = new Timer() {
+                    @Override
+                    public void run() {
+                        String message = MSG.view_bundle_version_deleteSuccessful(version.getVersion());
+                        getMessageCenter().notify(new Message(message, Message.Severity.Info));
+                        // Bundle version is deleted, go back to main bundle view
+                        goToView(LinkManager.getBundleVersionLink(version.getBundle().getId(), 0), true);
+                    }
+                };
+                // Delay the showing of the result to give the user some time to see the deleteSubmitted notif
+                timer.schedule(Math.max(0, 3 * 1000 - duration.elapsedMillis()));
+            }
+        });
+    }
+
     private TagEditorView createTagEditor() {
         boolean readOnly = !this.canTag;
         TagEditorView tagEditor = new TagEditorView(version.getTags(), readOnly, new TagsChangedCallback() {
+            @Override
             public void tagsChanged(HashSet<Tag> tags) {
                 GWTServiceLookup.getTagService().updateBundleVersionTags(version.getId(), tags,
                     new AsyncCallback<Void>() {
+                        @Override
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(
-                                MSG.view_bundle_version_bundleVersionTagUpdateFailure(), caught);
+                            getErrorHandler().handleError(MSG.view_bundle_version_bundleVersionTagUpdateFailure(),
+                                caught);
                         }
 
+                        @Override
                         public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
+                            getMessageCenter().notify(
                                 new Message(MSG.view_bundle_version_bundleVersionTagUpdateSuccessful(),
                                     Message.Severity.Info));
                         }
@@ -262,6 +292,7 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
         return tab;
     }
 
+    @Override
     public void renderView(final ViewPath viewPath) {
         int bundleVersionId = Integer.parseInt(viewPath.getCurrent().getPath());
 
@@ -274,10 +305,12 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
         criteria.fetchTags(true);
 
         bundleManager.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+            @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_version_loadFailure(), caught);
+                getErrorHandler().handleError(MSG.view_bundle_version_loadFailure(), caught);
             }
 
+            @Override
             public void onSuccess(PageList<BundleVersion> result) {
                 BundleVersion version = result.get(0);
                 ViewId nextPath = viewPath.next().getCurrent();

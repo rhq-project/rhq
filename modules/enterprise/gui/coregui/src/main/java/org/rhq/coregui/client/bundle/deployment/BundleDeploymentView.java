@@ -1,32 +1,36 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.client.bundle.deployment;
+
+import static org.rhq.coregui.client.CoreGUI.getErrorHandler;
+import static org.rhq.coregui.client.CoreGUI.getMessageCenter;
+import static org.rhq.coregui.client.CoreGUI.goToView;
+import static org.rhq.coregui.client.CoreGUI.isTagsEnabledForUI;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import com.google.gwt.core.client.Duration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.types.AutoFitWidthApproach;
@@ -62,11 +66,9 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.BookmarkableView;
-import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ErrorMessageWindow;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.LinkManager;
-import org.rhq.coregui.client.ViewId;
 import org.rhq.coregui.client.ViewPath;
 import org.rhq.coregui.client.bundle.revert.BundleRevertWizard;
 import org.rhq.coregui.client.components.HeaderLabel;
@@ -80,8 +82,8 @@ import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -116,7 +118,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
     }
 
-    private void viewBundleDeployment(BundleDeployment bundleDeployment, ViewId current) {
+    private void viewBundleDeployment(BundleDeployment bundleDeployment) {
         // Whenever a new view request comes in, make sure to clean house to avoid ID conflicts for sub-widgets
         this.destroyMembers();
 
@@ -129,7 +131,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png"), deployment.getName()));
 
         //conditionally add tags. Defaults to true, not available in JON builds.
-        if (CoreGUI.isTagsEnabledForUI()) {
+        if (isTagsEnabledForUI()) {
             addMember(createTagEditor());
         }
         addMember(createSummaryForm());
@@ -183,7 +185,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
             + StringUtility.escapeHtml(deployment.getDestination().getGroup().getName()) + "</a>");
 
         StaticTextItem destBaseDir = new StaticTextItem("destBaseDir", MSG.view_bundle_dest_baseDirName());
-        destBaseDir.setValue(deployment.getDestination().getDestinationBaseDirectoryName());
+        destBaseDir.setValue(deployment.getDestination().getDestinationSpecificationName());
 
         StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
         path.setValue(deployment.getDestination().getDeployDir());
@@ -227,6 +229,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
             IButton revertButton = new EnhancedIButton(MSG.view_bundle_revert(), ButtonColor.RED);
             //revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
             revertButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                @Override
                 public void onClick(com.smartgwt.client.widgets.events.ClickEvent event) {
                     new BundleRevertWizard(deployment.getDestination()).startWizard();
                 }
@@ -236,8 +239,10 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
             IButton purgeButton = new EnhancedIButton(MSG.view_bundle_purge(), ButtonColor.RED);
             //purgeButton.setIcon("subsystems/bundle/BundleDestinationAction_Purge_16.png");
             purgeButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                @Override
                 public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                     SC.ask(MSG.view_bundle_dest_purgeConfirm(), new BooleanCallback() {
+                        @Override
                         public void execute(Boolean aBoolean) {
                             if (aBoolean) {
                                 final int destinationId = deployment.getDestination().getId();
@@ -246,17 +251,17 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
                                 bundleService.purgeBundleDestination(destinationId, new AsyncCallback<Void>() {
                                     @Override
                                     public void onFailure(Throwable caught) {
-                                        CoreGUI.getErrorHandler().handleError(
+                                        getErrorHandler().handleError(
                                             MSG.view_bundle_dest_purgeFailure(destinationName), caught);
                                     }
 
                                     @Override
                                     public void onSuccess(Void result) {
-                                        CoreGUI.getMessageCenter().notify(
+                                        getMessageCenter().notify(
                                             new Message(MSG.view_bundle_dest_purgeSuccessful(destinationName),
                                                 Message.Severity.Info));
                                         // Bundle destination is purged, go back to bundle deployment view - it is not live anymore
-                                        CoreGUI.goToView(
+                                        goToView(
                                             LinkManager.getBundleDeploymentLink(bundle.getId(), deployment.getId()),
                                             true);
                                     }
@@ -280,24 +285,10 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
             @Override
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent event) {
                 SC.ask(MSG.view_bundle_deploy_deleteConfirm(), new BooleanCallback() {
-                    public void execute(Boolean aBoolean) {
-                        if (aBoolean) {
-                            BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
-                            bundleService.deleteBundleDeployment(deployment.getId(), new AsyncCallback<Void>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_bundle_deploy_deleteFailure(deployment.getName()), caught);
-                                }
-
-                                public void onSuccess(Void result) {
-                                    CoreGUI.getMessageCenter().notify(
-                                        new Message(MSG.view_bundle_deploy_deleteSuccessful(deployment.getName()),
-                                            Message.Severity.Info));
-                                    // Bundle deployment is deleted, go back to main bundle destinations view
-                                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), deployment
-                                        .getDestination().getId()), true);
-                                }
-                            });
+                    @Override
+                    public void execute(Boolean confirmed) {
+                        if (confirmed) {
+                            doDeleteBundleDeployment();
                         }
                     }
                 });
@@ -312,18 +303,59 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         return actionLayout;
     }
 
+    private void doDeleteBundleDeployment() {
+        String deleteSubmittedMessage = MSG.view_bundle_deploy_deleteSubmitted(deployment.getName());
+        getMessageCenter().notify(new Message(deleteSubmittedMessage, Message.Severity.Info));
+        final Duration duration = new Duration();
+        BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
+        bundleService.deleteBundleDeployment(deployment.getId(), new AsyncCallback<Void>() {
+            @Override
+            public void onFailure(final Throwable caught) {
+                Timer timer = new Timer() {
+                    @Override
+                    public void run() {
+                        String message = MSG.view_bundle_deploy_deleteFailure(deployment.getName());
+                        getErrorHandler().handleError(message, caught);
+                    }
+                };
+                // Delay the showing of the result to give the user some time to see the deleteSubmitted notif
+                timer.schedule(Math.max(0, 3 * 1000 - duration.elapsedMillis()));
+            }
+
+            @Override
+            public void onSuccess(Void result) {
+                Timer timer = new Timer() {
+                    @Override
+                    public void run() {
+                        String message = MSG.view_bundle_deploy_deleteSuccessful(deployment.getName());
+                        getMessageCenter().notify(new Message(message, Message.Severity.Info));
+                        // Bundle deployment is deleted, go back to main bundle destinations view
+                        goToView(
+                            LinkManager.getBundleDestinationLink(bundle.getId(), deployment.getDestination().getId()),
+                            true);
+                    }
+                };
+                // Delay the showing of the result to give the user some time to see the deleteSubmitted notif
+                timer.schedule(Math.max(0, 3 * 1000 - duration.elapsedMillis()));
+            }
+        });
+    }
+
     private TagEditorView createTagEditor() {
         boolean readOnly = !this.canTag;
         TagEditorView tagEditor = new TagEditorView(version.getTags(), readOnly, new TagsChangedCallback() {
+            @Override
             public void tagsChanged(HashSet<Tag> tags) {
                 GWTServiceLookup.getTagService().updateBundleDeploymentTags(deployment.getId(), tags,
                     new AsyncCallback<Void>() {
+                        @Override
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_tagUpdateFailure(), caught);
+                            getErrorHandler().handleError(MSG.view_bundle_deploy_tagUpdateFailure(), caught);
                         }
 
+                        @Override
                         public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
+                            getMessageCenter().notify(
                                 new Message(MSG.view_bundle_deploy_tagUpdateSuccessful(), Message.Severity.Info));
                         }
                     });
@@ -364,6 +396,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         ListGridField resource = new ListGridField("resource", MSG.common_title_resource());
         resource.setWidth("*");
         resource.setCellFormatter(new CellFormatter() {
+            @Override
             public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId"))
                     + "\">" + StringUtility.escapeHtml(String.valueOf(value)) + "</a>";
@@ -409,6 +442,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         listGrid.setFields(resourceIcon, resource, resourceVersion, status);
         listGrid.setData(records.toArray(new ListGridRecord[records.size()]));
         listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+            @Override
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
 
@@ -430,6 +464,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         return table;
     }
 
+    @Override
     public void renderView(final ViewPath viewPath) {
         int bundleDeploymentId = Integer.parseInt(viewPath.getCurrent().getPath());
 
@@ -443,36 +478,41 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
 
         final BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
         bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
+            @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);
+                getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);
             }
 
+            @Override
             public void onSuccess(PageList<BundleDeployment> result) {
                 final BundleDeployment deployment = result.get(0);
                 BundleCriteria bundleCriteria = new BundleCriteria();
                 bundleCriteria.addFilterId(deployment.getBundleVersion().getBundle().getId());
                 bundleService.findBundlesByCriteria(bundleCriteria, new AsyncCallback<PageList<Bundle>>() {
+                    @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadBundleFailure(), caught);
+                        getErrorHandler().handleError(MSG.view_bundle_deploy_loadBundleFailure(), caught);
                     }
 
+                    @Override
                     public void onSuccess(PageList<Bundle> result) {
                         final Bundle bundle = result.get(0);
                         deployment.getBundleVersion().setBundle(bundle);
                         BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
                         criteria.addFilterBundleDeploymentId(deployment.getId());
-                        criteria.fetchHistories(true);
                         criteria.fetchResource(true);
                         criteria.fetchBundleDeployment(true);
                         bundleService.findBundleResourceDeploymentsByCriteria(criteria,
                             new AsyncCallback<PageList<BundleResourceDeployment>>() {
+                                @Override
                                 public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);
+                                    getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);
                                 }
 
+                                @Override
                                 public void onSuccess(PageList<BundleResourceDeployment> result) {
                                     deployment.setResourceDeployments(result);
-                                    viewBundleDeployment(deployment, viewPath.getCurrent());
+                                    viewBundleDeployment(deployment);
                                 }
                             });
                     }

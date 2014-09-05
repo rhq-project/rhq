@@ -59,7 +59,7 @@ abstract class PurgeTemplate<KEY extends Serializable> {
     private static final Log LOG = LogFactory.getLog(PurgeTemplate.class);
 
     private static final String BATCH_SIZE_SYSTEM_PROPERTY = "org.rhq.enterprise.server.purge.PurgeTemplate.BATCH_SIZE";
-    private static final int BATCH_SIZE = Integer.getInteger(BATCH_SIZE_SYSTEM_PROPERTY, 3000);
+    private static final int BATCH_SIZE = Integer.getInteger(BATCH_SIZE_SYSTEM_PROPERTY, 30000);
     static {
         LOG.info(BATCH_SIZE_SYSTEM_PROPERTY + " = " + BATCH_SIZE);
     }

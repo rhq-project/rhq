@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -57,7 +57,7 @@ import org.rhq.core.domain.resource.Resource;
  * @author Jay Shaughnessy
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = BundleResourceDeployment.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM BundleResourceDeployment brd "
         + " WHERE brd.resource.id IN ( :resourceIds ) )"),
     @NamedQuery(name = BundleResourceDeployment.QUERY_FIND_BY_DEPLOYMENT_ID_NO_FETCH, query = "SELECT brd FROM BundleResourceDeployment brd WHERE brd.bundleDeployment.id = :id "),
@@ -92,7 +92,8 @@ public class BundleResourceDeployment implements Serializable {
     @Column(name = "CTIME")
     private Long ctime = -1L;
 
-    @OneToMany(mappedBy = "resourceDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "resourceDeployment", fetch = FetchType.LAZY, cascade = { CascadeType.DETACH,
+        CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
     private List<BundleResourceDeploymentHistory> histories = new ArrayList<BundleResourceDeploymentHistory>();
 
     protected BundleResourceDeployment() {
@@ -166,10 +167,8 @@ public class BundleResourceDeployment implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("BundleResourceDeployment: ");
-        str.append("bdd=[").append(this.bundleDeployment).append("]");
-        str.append(", resource=[").append(this.resource).append("]");
-        return str.toString();
+        return "BundleResourceDeployment: " + "bdd=[" + this.bundleDeployment + "]" + ", resource=[" + this.resource
+            + "]";
     }
 
     /*
@@ -205,7 +204,7 @@ public class BundleResourceDeployment implements Serializable {
         final BundleResourceDeployment other = (BundleResourceDeployment) obj;
 
         if (bundleDeployment == null) {
-            if (bundleDeployment != null) {
+            if (other.bundleDeployment != null) {
                 return false;
             }
         } else if (!bundleDeployment.equals(other.bundleDeployment)) {
@@ -213,7 +212,7 @@ public class BundleResourceDeployment implements Serializable {
         }
 
         if (resource == null) {
-            if (resource != null) {
+            if (other.resource != null) {
                 return false;
             }
         } else if (!resource.equals(other.resource)) {

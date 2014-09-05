@@ -148,4 +148,11 @@ public class PurgeManagerBean implements PurgeManagerLocal {
         int count = measurementOOBPurge.execute();
         LOG.info("Removed [" + count + "] outdated OOBs");
     }
+
+    @Override
+    public int purgeOrphanedBundleResourceDeploymentHistory() {
+        BundleResourceDeploymentHistoryPurge purge = new BundleResourceDeploymentHistoryPurge(dataSource,
+            userTransaction);
+        return purge.execute();
+    }
 }

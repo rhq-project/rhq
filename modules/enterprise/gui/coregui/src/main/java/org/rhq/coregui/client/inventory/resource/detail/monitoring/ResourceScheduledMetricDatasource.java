@@ -22,7 +22,7 @@
  */
 package org.rhq.coregui.client.inventory.resource.detail.monitoring;
 
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -36,11 +36,13 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
-import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
-import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
@@ -111,44 +113,70 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
                 });
 
         } else if (request.getCriteria().getValues().containsKey("resourceId")) {
-            MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
-            criteria.fetchDefinition(true);
-            criteria.addFilterResourceId(request.getCriteria().getAttributeAsInt("resourceId"));
-            criteria.setPageControl(getPageControl(request));
+            ResourceCriteria rCriteria = new ResourceCriteria();
+            rCriteria.addFilterId(request.getCriteria().getAttributeAsInt("resourceId"));
+            rCriteria.fetchResourceType(true);
 
-            GWTServiceLookup.getMeasurementDataService().findMeasurementSchedulesByCriteria(criteria,
-                new AsyncCallback<PageList<MeasurementSchedule>>() {
-                    @Override
+            GWTServiceLookup.getResourceService().findResourcesByCriteria(rCriteria,
+                new AsyncCallback<PageList<Resource>>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.dataSource_schedules_loadFailed(), caught);
                     }
 
-                    @Override
-                    public void onSuccess(PageList<MeasurementSchedule> result) {
-                        response.setData(buildRecords(result));
-                        setPagingInfo(response, result);
-                        processResponse(request.getRequestId(), response);
+                    public void onSuccess(PageList<Resource> result) {
+                        MeasurementDefinitionCriteria mdCriteria = new MeasurementDefinitionCriteria();
+                        mdCriteria.addFilterResourceTypeId(result.get(0).getResourceType().getId());
+                        mdCriteria.addSortDisplayName(PageOrdering.ASC);
+
+                        GWTServiceLookup.getMeasurementDataService().findMeasurementDefinitionsByCriteria(mdCriteria,
+                            new AsyncCallback<PageList<MeasurementDefinition>>() {
+                                @Override
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler()
+                                        .handleError(MSG.dataSource_schedules_loadFailed(), caught);
+                                }
+
+                                @Override
+                                public void onSuccess(PageList<MeasurementDefinition> result) {
+                                    response.setData(buildRecords(filter(result)));
+                                    setPagingInfo(response, result);
+                                    processResponse(request.getRequestId(), response);
+                                }
+                            });
                     }
                 });
 
         } else if (request.getCriteria().getValues().containsKey("resourceGroupId")) {
-            MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
-            criteria.fetchDefinition(true);
+            ResourceGroupCriteria rgCriteria = new ResourceGroupCriteria();
+            rgCriteria.addFilterId(request.getCriteria().getAttributeAsInt("resourceGroupId"));
+            rgCriteria.fetchResourceType(true);
 
-            criteria.addFilterResourceGroupId(request.getCriteria().getAttributeAsInt("resourceGroupId"));
-
-            GWTServiceLookup.getMeasurementDataService().findMeasurementSchedulesByCriteria(criteria,
-                new AsyncCallback<PageList<MeasurementSchedule>>() {
-                    @Override
+            GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(rgCriteria,
+                new AsyncCallback<PageList<ResourceGroup>>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.dataSource_schedules_loadFailed(), caught);
                     }
 
-                    @Override
-                    public void onSuccess(PageList<MeasurementSchedule> result) {
-                        response.setData(buildRecords(result));
-                        setPagingInfo(response, result);
-                        processResponse(request.getRequestId(), response);
+                    public void onSuccess(PageList<ResourceGroup> result) {
+                        MeasurementDefinitionCriteria mdCriteria = new MeasurementDefinitionCriteria();
+                        mdCriteria.addFilterResourceTypeId(result.get(0).getResourceType().getId());
+                        mdCriteria.addSortDisplayName(PageOrdering.ASC);
+
+                        GWTServiceLookup.getMeasurementDataService().findMeasurementDefinitionsByCriteria(mdCriteria,
+                            new AsyncCallback<PageList<MeasurementDefinition>>() {
+                                @Override
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler()
+                                        .handleError(MSG.dataSource_schedules_loadFailed(), caught);
+                                }
+
+                                @Override
+                                public void onSuccess(PageList<MeasurementDefinition> result) {
+                                    response.setData(buildRecords(filter(result)));
+                                    setPagingInfo(response, result);
+                                    processResponse(request.getRequestId(), response);
+                                }
+                            });
                     }
                 });
 
@@ -157,23 +185,23 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
         }
     }
 
+    private List<MeasurementDefinition> filter(List<MeasurementDefinition> mds) {
+        for (Iterator<MeasurementDefinition> i = mds.iterator(); i.hasNext();) {
+            MeasurementDefinition md = i.next();
+            // don't include the special avail metric
+            if (md.getDisplayName().toLowerCase().equals("availability")) {
+                i.remove();
+                break;
+            }
+        }
+        return mds;
+    }
+
     @Override
     protected Criteria getFetchCriteria(DSRequest request) {
         // our executeFetch does some special conditional checking to determine what kind of criteria to use.
         // because of this, we don't explicitly use this method to get the criteria for this datasource, just return null
         return null;
-    }
-
-    private ListGridRecord[] buildRecords(PageList<MeasurementSchedule> list) {
-        HashSet<MeasurementDefinition> definitions = new HashSet<MeasurementDefinition>();
-
-        for (MeasurementSchedule schedule : list) {
-            if (schedule.isEnabled() && schedule.getDefinition().getDataType() == DataType.MEASUREMENT) {
-                definitions.add(schedule.getDefinition());
-            }
-        }
-
-        return buildRecords(definitions);
     }
 
     @Override

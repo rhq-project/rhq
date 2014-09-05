@@ -654,12 +654,6 @@ public class AgentManagerBean implements AgentManagerLocal, AgentManagerRemote {
                 throw new NullPointerException("no agent version in file");
             }
 
-            String supportedAgentBuilds = properties.getProperty(RHQ_AGENT_SUPPORTED_BUILDS); // this is optional
-            String latestAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
-            if (latestAgentBuild == null) {
-                throw new NullPointerException("no agent build number in file");
-            }
-
             boolean isSupported;
 
             //if no list of supportedBuilds provident then,
@@ -674,7 +668,7 @@ public class AgentManagerBean implements AgentManagerLocal, AgentManagerRemote {
             }
             return new AgentVersionCheckResults(isSupported, new AgentVersion(latestAgentVersion, latestAgentBuild));
         } catch (Exception e) {
-            log.warn("Cannot determine if agent version [" + agentVersionInfo + "] is supported. Cause: " + e);
+            LOG.warn("Cannot determine if agent version [" + agentVersionInfo + "] is supported. Cause: " + e);
             return new AgentVersionCheckResults(false, new AgentVersion("", "")); // assume we can't talk to it
         }
     }

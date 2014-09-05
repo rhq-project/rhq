@@ -193,6 +193,16 @@ public class ServerInstallUtil {
         LOG.info("Logging category org.rhq set to [" + val + "]");
 
         client.setLoggerLevel("org.jboss.as.config", "INFO"); // BZ 1004730
+
+        // BZ 1026786
+        StringBuilder sb = new StringBuilder("not(any(");
+        sb.append("match(\"JBAS015960\")");
+        sb.append(",");
+        sb.append("match(\"JBAS018567\")");
+        sb.append(",");
+        sb.append("match(\"JBAS018568\")");
+        sb.append("))");
+        client.setFilterSpec(sb.toString());
     }
 
     /**

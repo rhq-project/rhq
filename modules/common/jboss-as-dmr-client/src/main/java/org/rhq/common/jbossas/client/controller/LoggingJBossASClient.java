@@ -30,6 +30,7 @@ public class LoggingJBossASClient extends JBossASClient {
 
     public static final String LOGGING = "logging";
     public static final String LOGGER = "logger";
+    public static final String FILE_HANDLER = "periodic-rotating-file-handler";
 
     public LoggingJBossASClient(ModelControllerClient client) {
         super(client);
@@ -93,4 +94,19 @@ public class LoggingJBossASClient extends JBossASClient {
         }
         return;
     }
+
+    public void setFilterSpec(String filterSpec) throws Exception {
+
+        final Address addr = Address.root().add(SUBSYSTEM, LOGGING, FILE_HANDLER, "FILE");
+        final ModelNode request;
+
+        request = createWriteAttributeRequest("filter-spec", filterSpec, addr);
+
+        final ModelNode response = execute(request);
+        if (!isSuccess(response)) {
+            throw new FailureException(response);
+        }
+        return;
+    }
+
 }

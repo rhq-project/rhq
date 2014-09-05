@@ -32,7 +32,11 @@ class PersistFunctions {
 
     private AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist1HourMetrics;
 
+    private AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist1HourMetricsAndNoIndexUpdates;
+
     private AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist6HourMetrics;
+
+    private AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist6HourMetricsAndNoIndexUpdates;
 
     private AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist24HourMetrics;
 
@@ -57,6 +61,17 @@ class PersistFunctions {
             }
         };
 
+        persist1HourMetricsAndNoIndexUpdates = new AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>>() {
+            @Override
+            public ListenableFuture<List<ResultSet>> apply(List<AggregateNumericMetric> metrics) throws Exception {
+                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(metrics.size());
+                for (AggregateNumericMetric metric : metrics) {
+                    futures.add(dao.insert1HourData(metric));
+                }
+                return Futures.allAsList(futures);
+            }
+        };
+
         persist6HourMetrics = new AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>>() {
             @Override
             public ListenableFuture<List<ResultSet>> apply(List<AggregateNumericMetric> metrics) throws Exception {
@@ -66,6 +81,17 @@ class PersistFunctions {
                     futures.add(dao.insert6HourData(metric));
                     futures.add(dao.insertIndexEntry(new IndexEntry(SIX_HOUR, 0, timeSlice.getMillis(),
                         metric.getScheduleId())));
+                }
+                return Futures.allAsList(futures);
+            }
+        };
+
+        persist6HourMetricsAndNoIndexUpdates = new AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>>() {
+            @Override
+            public ListenableFuture<List<ResultSet>> apply(List<AggregateNumericMetric> metrics) throws Exception {
+                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(metrics.size());
+                for (AggregateNumericMetric metric : metrics) {
+                    futures.add(dao.insert6HourData(metric));
                 }
                 return Futures.allAsList(futures);
             }
@@ -87,8 +113,16 @@ class PersistFunctions {
         return persist1HourMetrics;
     }
 
+    public AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist1HourMetricsAndNoIndexUpdates() {
+        return persist1HourMetricsAndNoIndexUpdates;
+    }
+
     public AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist6HourMetrics() {
         return persist6HourMetrics;
+    }
+
+    public AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist6HourMetricsAndNoIndexUpdates() {
+        return persist6HourMetricsAndNoIndexUpdates;
     }
 
     public AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist24HourMetrics() {

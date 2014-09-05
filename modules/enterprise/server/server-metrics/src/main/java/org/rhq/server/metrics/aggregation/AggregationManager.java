@@ -20,9 +20,7 @@ import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.Bucket;
-import org.rhq.server.metrics.domain.RawNumericMetricMapper;
 
 /**
  * This class is the driver for metrics aggregation.
@@ -51,24 +49,17 @@ public class AggregationManager {
 
     private Set<AggregateNumericMetric> oneHourData;
 
-    private int cacheBatchSize;
-
     private Semaphore permits;
-
-    private long cacheActivationTime;
 
     private int indexPageSize;
 
-    private boolean cacheActive = true;
-
     public AggregationManager(ListeningExecutorService aggregationTasks, MetricsDAO dao, DateTimeService dtService,
-        DateTime startTime, int batchSize, int parallelism, int cacheBatchSize, int indexPageSize) {
+        DateTime startTime, int batchSize, int parallelism, int indexPageSize) {
 
         this.dao = dao;
         this.dtService = dtService;
         this.startTime = startTime;
         oneHourData = new ConcurrentSkipListSet<AggregateNumericMetric>(AGGREGATE_COMPARATOR);
-        this.cacheBatchSize = cacheBatchSize;
         permits = new Semaphore(batchSize * parallelism);
         this.aggregationTasks = aggregationTasks;
         this.indexPageSize = indexPageSize;
@@ -80,21 +71,6 @@ public class AggregationManager {
 
     private boolean is24HourTimeSliceFinished() {
         return dtService.is24HourTimeSliceFinished(startTime);
-    }
-
-    /**
-     * <i>Deactivates</i> the metrics_cache table. Data will not be pulled from metrics_cache until
-     * <code>cacheActivationTime</code> has been reached. This applies to both past and current data. At that time,
-     * metrics_cache will be reactivated, and we will start pulling data from it again.
-     *
-     * @param cacheActivationTime The time to reactivate metrics_cache
-     */
-    public void setCacheActivationTime(long cacheActivationTime) {
-        this.cacheActivationTime = cacheActivationTime;
-    }
-
-    public void setCacheActive(boolean cacheActive) {
-        this.cacheActive = cacheActive;
     }
 
     public Set<AggregateNumericMetric> run() {
@@ -152,14 +128,13 @@ public class AggregationManager {
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistFns(persistFunctions);
         aggregator.setPersistMetrics(persistFunctions.persist1HourMetrics());
-        aggregator.setCacheActive(isCacheActive());
         aggregator.setIndexPageSize(indexPageSize);
 
         return aggregator;
     }
 
-    private CacheAggregator createRawAggregator(PersistFunctions persistFunctions) {
-        CacheAggregator aggregator = new CacheAggregator();
+    private DataAggregator createRawAggregator(PersistFunctions persistFunctions) {
+        DataAggregator aggregator = new DataAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setAggregationType(AggregationType.RAW);
         aggregator.setDao(dao);
@@ -167,21 +142,19 @@ public class AggregationManager {
         aggregator.setStartTime(startTime);
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist1HourMetrics());
-        aggregator.setBatchFinishedListener(new CacheAggregator.BatchFinishedListener() {
+        aggregator.setBatchFinishedListener(new DataAggregator.BatchFinishedListener() {
             @Override
             public void onFinish(List<AggregateNumericMetric> metrics) {
                 oneHourData.addAll(metrics);
             }
         });
-        aggregator.setCacheActive(isCacheActive());
-        aggregator.setResultSetMapper(new RawNumericMetricMapper());
         aggregator.setIndexPageSize(indexPageSize);
 
         return aggregator;
     }
 
-    private CacheAggregator create1HourAggregator(PersistFunctions persistFunctions) {
-        CacheAggregator aggregator = new CacheAggregator();
+    private DataAggregator create1HourAggregator(PersistFunctions persistFunctions) {
+        DataAggregator aggregator = new DataAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setAggregationType(AggregationType.ONE_HOUR);
         aggregator.setDao(dao);
@@ -189,15 +162,13 @@ public class AggregationManager {
         aggregator.setStartTime(dtService.get6HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist6HourMetrics());
-        aggregator.setCacheActive(isCacheActive());
-        aggregator.setResultSetMapper(new AggregateNumericMetricMapper());
         aggregator.setIndexPageSize(indexPageSize);
 
         return aggregator;
     }
 
-    private CacheAggregator create6HourAggregator(PersistFunctions persistFunctions) {
-        CacheAggregator aggregator = new CacheAggregator();
+    private DataAggregator create6HourAggregator(PersistFunctions persistFunctions) {
+        DataAggregator aggregator = new DataAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setAggregationType(AggregationType.SIX_HOUR);
         aggregator.setDao(dao);
@@ -205,16 +176,9 @@ public class AggregationManager {
         aggregator.setStartTime(dtService.get24HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist24HourMetrics());
-        aggregator.setCacheActive(isCacheActive());
-        aggregator.setResultSetMapper(new AggregateNumericMetricMapper());
         aggregator.setIndexPageSize(indexPageSize);
 
         return aggregator;
-    }
-
-    private boolean isCacheActive() {
-//        return cacheActive && startTime.getMillis() >= cacheActivationTime;
-        return false;
     }
 
 }

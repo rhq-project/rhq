@@ -530,13 +530,13 @@ public class MetricsServer {
             if (pastAggregationMissed) {
                 DateTime missedHour = roundDownToHour(mostRecentRawDataPriorToStartup);
                 AggregationManager aggregator = new AggregationManager(aggregationWorkers, dao, dateTimeService,
-                    missedHour, aggregationBatchSize, parallelism, cacheBatchSize, configuration.getIndexPageSize());
+                    missedHour, aggregationBatchSize, parallelism, configuration.getIndexPageSize());
                 pastAggregationMissed = false;
             }
             DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
 
             AggregationManager aggregator = new AggregationManager(aggregationWorkers, dao, dateTimeService, timeSlice,
-                aggregationBatchSize, parallelism, cacheBatchSize, configuration.getIndexPageSize());
+                aggregationBatchSize, parallelism, configuration.getIndexPageSize());
 
             return aggregator.run();
         } finally {

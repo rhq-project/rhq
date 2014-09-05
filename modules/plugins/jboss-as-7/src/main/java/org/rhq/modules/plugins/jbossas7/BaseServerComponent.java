@@ -145,6 +145,10 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 try {
                     readAttribute(getHostAddress(), "name");
                     availabilityType = UP;
+                } catch (ResultFailedException rfe) {
+                    throw new InvalidPluginConfigurationException(
+                        "Plugin is unable to manage this resource because attribute 'name' in root element of Host Controller configuratin file is missing. Please update "
+                            + getServerPluginConfiguration().getHostConfigFile() + ".");
                 } catch (Exception ex) {
                     throw ex;
                 }
@@ -164,6 +168,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                     availabilityType = DOWN;
                 }
             }
+        } catch (InvalidPluginConfigurationException ipce) {
+            throw ipce; // rethrow in case it happened in code above
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug(getResourceDescription() + ": exception while checking availability", e);

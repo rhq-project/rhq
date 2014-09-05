@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -79,6 +80,7 @@ import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -1945,12 +1947,18 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                     groupStatus = OperationRequestStatus.FAILURE;
                     if (groupErrorMessage == null) {
                         groupErrorMessage = new StringBuilder(
-                            "The following resources failed to invoke the operation: ");
+                            "The following resources failed to invoke the operation (see group operation history for details) :\n ");
                     } else {
-                        groupErrorMessage.append(',');
+                        groupErrorMessage.append("\n ");
                     }
 
-                    groupErrorMessage.append(resourceHistory.getResource().getName());
+                    Resource resource = resourceHistory.getResource();
+                    String name = resource.getName();
+                    Map<Integer, String> ancestryMap = resourceManager
+                        .getResourcesAncestry(subjectManager.getOverlord(), new Integer[] { resource.getId() },
+                            ResourceAncestryFormat.SIMPLE);
+                    String ancestry = ancestryMap.isEmpty() ? "" : ancestryMap.get(resource.getId());
+                    groupErrorMessage.append(name + " [" + ancestry + "] " + resourceHistory.getStatus().name());
                 }
             }
 

@@ -19,26 +19,29 @@
   -->
 
 <differences>
-    <difference>
-        <className>org/rhq/core/clientapi/server/core/ConnectAgentRequest</className>
-        <differenceType>7004</differenceType> <!-- number of args changed -->
-        <method>ConnectAgentRequest(*)</method>
-        <justification>Only agents use this method and this is needed to fix BZ 1124614</justification>
-    </difference>
-    <difference>
-        <className>org/rhq/core/clientapi/server/core/ConnectAgentResults</className>
-        <differenceType>7004</differenceType> <!-- number of args changed -->
-        <method>ConnectAgentResults(*)</method>
-        <justification>Only agents use this method and this is needed to fix BZ 1124614</justification>
-    </difference>
-    <difference>
-        <className>org/rhq/core/clientapi/server/measurement/MeasurementServerService</className>
-        <differenceType>7012</differenceType> <!-- method added to interface -->
-        <method>org.rhq.core.domain.measurement.MeasurementDataTrait getLastKnownTraitValue(int)</method>
-        <justification>
-            This innterface is not to be implemented outside of RHQ. Also this is a new API so older 
-            versions of the server won't have it. We require version match between server and agent,
-            so we will never be in a situation where a newer agent would be talking to an older server.
-        </justification>               
-    </difference>
+  <difference>
+    <className>org/rhq/core/clientapi/server/core/ConnectAgentRequest</className>
+    <differenceType>7004</differenceType>
+    <!-- number of args changed -->
+    <method>ConnectAgentRequest(*)</method>
+    <justification>Only agents use this method and this is needed to fix BZ 1124614</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/clientapi/server/core/ConnectAgentResults</className>
+    <differenceType>7004</differenceType>
+    <!-- number of args changed -->
+    <method>ConnectAgentResults(*)</method>
+    <justification>Only agents use this method and this is needed to fix BZ 1124614</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/clientapi/server/measurement/MeasurementServerService</className>
+    <differenceType>7012</differenceType>
+    <!-- method added to interface -->
+    <method>org.rhq.core.domain.measurement.MeasurementDataTrait getLastKnownTraitValue(int)</method>
+    <justification>
+      This innterface is not to be implemented outside of RHQ. Also this is a new API so older
+      versions of the server won't have it. We require version match between server and agent,
+      so we will never be in a situation where a newer agent would be talking to an older server.
+    </justification>
+  </difference>
 </differences>

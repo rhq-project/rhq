@@ -188,4 +188,16 @@
     <field>QUERY_FIND_PACKAGE_BY_FILENAME</field>
     <justification>BZ1073691: Unused and non-indexed Query</justification>
   </difference>
+  <difference>
+    <className>org/rhq/core/domain/bundle/BundleDeployment</className>
+    <differenceType>7012</differenceType><!-- method added -->
+    <method>java.lang.Integer getDiscoveryDelay()</method>
+    <justification>BZ 970784, add new property to set delay before automatic discovery of new deployment</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/bundle/BundleDeployment</className>
+    <differenceType>7012</differenceType><!-- method added -->
+    <method>void setDiscoveryDelay(java.lang.Integer)</method>
+    <justification>BZ 970784, add new property to set delay before automatic discovery of new deployment</justification>
+  </difference>
 </differences>

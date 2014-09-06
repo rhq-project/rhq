@@ -617,12 +617,25 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         return packageVersionFiles;
     }
 
-    private void completeDeployment(BundleResourceDeployment resourceDeployment, BundleDeploymentStatus status,
+    private void completeDeployment(final BundleResourceDeployment resourceDeployment, BundleDeploymentStatus status,
         String message) {
         getBundleServerService().setBundleDeploymentStatus(resourceDeployment.getId(), status);
-        BundleResourceDeploymentHistory.Status auditStatus =
-            BundleDeploymentStatus.SUCCESS.equals(status) ? BundleResourceDeploymentHistory.Status.SUCCESS
-                : BundleResourceDeploymentHistory.Status.FAILURE;
+        BundleResourceDeploymentHistory.Status auditStatus = null;
+        if(BundleDeploymentStatus.SUCCESS == status) {
+            auditStatus = BundleResourceDeploymentHistory.Status.SUCCESS;
+            Integer discoveryDelay = resourceDeployment.getBundleDeployment().getDiscoveryDelay();
+            if(discoveryDelay == null) {
+                discoveryDelay = Integer.valueOf(0); // Fallback
+            }
+
+            if(!(discoveryDelay.intValue() < 0)) {
+                inventoryManager.executeServiceScanDeferred(resourceDeployment.getResource().getId(),
+                        discoveryDelay * 1000);
+            }
+        } else {
+            auditStatus = BundleResourceDeploymentHistory.Status.FAILURE;
+        }
+
         auditDeployment(resourceDeployment, AUDIT_DEPLOYMENT_ENDED, resourceDeployment.getBundleDeployment().getName(),
             null, auditStatus, message, null);
     }

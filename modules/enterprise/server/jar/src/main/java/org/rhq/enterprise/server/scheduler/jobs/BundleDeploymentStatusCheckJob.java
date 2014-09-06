@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.server.scheduler.jobs;
@@ -29,6 +29,7 @@ import org.quartz.Trigger;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -75,9 +76,11 @@ public class BundleDeploymentStatusCheckJob implements Job {
             SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
             JobDetail jobDetail = context.getJobDetail();
 
-            if (bundleManager.determineBundleDeploymentStatus(bundleDeployment.getId()).isTerminal()) {
+            BundleDeploymentStatus bundleDeploymentStatus = bundleManager.determineBundleDeploymentStatus(bundleDeployment.getId());
+            if (bundleDeploymentStatus.isTerminal()) {
                 // delete this job, we've assigned a final status
                 try {
+                    context.setResult(bundleDeploymentStatus); // Return status to possible listeners
                     scheduler.deleteJob(jobDetail.getName(), jobDetail.getGroup());
                 } catch (SchedulerException e) {
                     throw new JobExecutionException("Could not delete the bundle deployment completion check job for "

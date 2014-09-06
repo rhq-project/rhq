@@ -24,9 +24,14 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.validator.IsIntegerValidator;
 
+import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
@@ -90,7 +95,19 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
                             }
                         });
 
-                        form.setItems(nameTextItem, descriptionTextAreaItem, cleanDeploymentCBItem);
+                        final TextItem discoveryDelayItem = new TextItem("discoveryDelay", MSG.view_bundle_deployWizard_discoveryDelay());
+                        discoveryDelayItem.setValue(getDiscoveryDelayConfigurationValue());
+                        discoveryDelayItem.setWidth(300);
+                        discoveryDelayItem.setRequired(false);
+                        discoveryDelayItem.setValidators(new IsIntegerValidator());
+                        discoveryDelayItem.addChangedHandler(new ChangedHandler() {
+                            @Override
+                            public void onChanged(ChangedEvent changedEvent) {
+                                wizard.getNewDeployment().setDiscoveryDelay((Integer) changedEvent.getValue());
+                            }
+                        });
+
+                        form.setItems(nameTextItem, descriptionTextAreaItem, cleanDeploymentCBItem, discoveryDelayItem);
 
                     }
 
@@ -105,5 +122,27 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
 
     public boolean nextPage() {
         return form.validate();
+    }
+
+    private String getDiscoveryDelayConfigurationValue() {
+        // This could be the value from either recipe or the default one
+        Integer rValue = wizard.getNewDeployment().getDiscoveryDelay();
+
+        // If user wanted to override the value in recipe, allow it
+        Property discoveryDelayProperty = wizard.getNewDeploymentConfig().get("org.rhq.discoveryDelay");
+        if(discoveryDelayProperty == null) {
+            // If there was no recipe value, assume the current value is the default one and check live-deployment
+            BundleDeployment liveDeployment = wizard.getLiveDeployment();
+
+            // If previous deployment had modified deploymentDelay, use it
+            if(liveDeployment != null) {
+                Integer previousDeploymentDelay = liveDeployment.getDiscoveryDelay();
+                if(previousDeploymentDelay != null) {
+                    rValue = previousDeploymentDelay;
+                }
+            }
+        }
+
+        return rValue.toString();
     }
 }

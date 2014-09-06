@@ -150,6 +150,9 @@ public class BundleDeployment implements Serializable {
     @ManyToMany(mappedBy = "bundleDeployments", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
 
+    @Column(name="DISCOVERY_DELAY")
+    private Integer discoveryDelay;
+
     public BundleDeployment() {
         // for JPA use
     }
@@ -160,6 +163,7 @@ public class BundleDeployment implements Serializable {
         this.name = name;
         this.status = BundleDeploymentStatus.PENDING;
         this.isLive = false;
+        this.discoveryDelay = Integer.valueOf(30);
     }
 
     public int getId() {
@@ -340,6 +344,14 @@ public class BundleDeployment implements Serializable {
         }
         this.resourceDeployments.add(resourceDeployment);
         resourceDeployment.setBundleDeployment(this);
+    }
+
+    public Integer getDiscoveryDelay() {
+        return discoveryDelay;
+    }
+
+    public void setDiscoveryDelay(Integer discoveryDelay) {
+        this.discoveryDelay = discoveryDelay;
     }
 
     public Set<Tag> getTags() {

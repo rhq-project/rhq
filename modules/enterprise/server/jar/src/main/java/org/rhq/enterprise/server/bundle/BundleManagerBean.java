@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
-
 package org.rhq.enterprise.server.bundle;
 
 import java.io.ByteArrayInputStream;
@@ -87,6 +86,7 @@ import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUtility;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Package;
@@ -373,6 +373,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         deployment.setDescription(description);
         deployment.setConfiguration(configuration);
         deployment.setSubjectName(subject.getName());
+
+        PropertySimple discoveryDelayProperty = configuration.getSimple("org.rhq.discoveryDelay");
+        if(discoveryDelayProperty != null) {
+            deployment.setDiscoveryDelay(discoveryDelayProperty.getIntegerValue());
+        }
 
         entityManager.persist(deployment);
 
@@ -937,8 +942,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // !!!! NEW BEHAVIOR SINCE 4.13 - we fail the bundle version creation when we cannot determine the set
         // of the files the bundle version should be comprised of.
         if (info.getBundleFiles() == null && info.getRecipeParseResults().getBundleFileNames() == null) {
-            throw new IllegalArgumentException("Cannot create a bundle version without files determined by the recipe"
-                + " or provided explicitly during bundle version creation.");
+            throw new IllegalArgumentException("Cannot create a bundle version without files determined by the recipe" +
+                " or provided explicitly during bundle version creation.");
         }
 
         BundleType bundleType = bundleManager.getBundleType(subject, info.getBundleTypeName());

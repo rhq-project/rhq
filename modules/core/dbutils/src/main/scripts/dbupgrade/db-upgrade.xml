@@ -2557,6 +2557,9 @@
 
             </schemaSpec>
 
+            <schemaSpec version="2.161">
+              <schema-addColumn table="RHQ_BUNDLE_DEPLOYMENT" column="DISCOVERY_DELAY" columnType="INTEGER" />
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

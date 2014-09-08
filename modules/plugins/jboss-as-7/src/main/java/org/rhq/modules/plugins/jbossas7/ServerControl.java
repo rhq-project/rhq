@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.stream.XMLInputFactory;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -53,16 +55,18 @@ final class ServerControl {
     private final Map<String, String> startScriptEnv;
     private final AS7Mode serverMode;
     private final SystemInfo systemInfo;
+    private final XMLInputFactory xmlInputFactory;
 
     private long waitTime;
     private boolean killOnTimeout;
 
-    private ServerControl(Configuration pluginConfiguration, AS7Mode serverMode, SystemInfo systemInfo) {
+    private ServerControl(Configuration pluginConfiguration, AS7Mode serverMode, SystemInfo systemInfo, XMLInputFactory xmlInputFactory) {
         this.serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
         this.pluginConfiguration = pluginConfiguration;
         this.serverMode = serverMode;
         this.systemInfo = systemInfo;
         this.startScriptEnv = new StartScriptConfiguration(pluginConfiguration).getStartScriptEnv();
+        this.xmlInputFactory = xmlInputFactory;
 
         for (String envVarName : startScriptEnv.keySet()) {
             String envVarValue = startScriptEnv.get(envVarName);
@@ -72,9 +76,9 @@ final class ServerControl {
     }
 
     public static ServerControl onServer(Configuration serverPluginConfig, AS7Mode serverMode,
-        SystemInfo systemInfo) {
+        SystemInfo systemInfo, XMLInputFactory xmlInputFactory) {
 
-        return new ServerControl(serverPluginConfig, serverMode, systemInfo);
+        return new ServerControl(serverPluginConfig, serverMode, systemInfo, xmlInputFactory);
     }
 
     /**
@@ -179,7 +183,14 @@ final class ServerControl {
         }
 
         public ProcessExecutionResults shutdownServer() {
-            return cli().disconnected(false).executeCliCommand("shutdown");
+            String command = "shutdown";
+
+            if (serverMode == AS7Mode.DOMAIN) {
+                String host = BaseServerComponent.findASDomainHostName(xmlInputFactory, serverPluginConfig);
+                command += " --host=" + host;
+            }
+
+            return cli().disconnected(false).executeCliCommand(command);
         }
     }
 

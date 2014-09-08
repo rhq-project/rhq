@@ -29,6 +29,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import javax.xml.stream.XMLInputFactory;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -69,6 +71,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
     private static final String PATCH_ROLLBACK_COMMAND = "patch rollback --reset-configuration=false --patch-id=";
 
     private ResourceContext<ResourceComponent<?>> context;
+    private XMLInputFactory xmlInputFactory;
 
     @Override
     public AvailabilityType getAvailability() {
@@ -178,7 +181,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
 
         ServerControl control = ServerControl
             .onServer(request.getReferencedConfiguration(), AS7Mode.valueOf(request.getDestinationTarget().getPath()),
-                context.getSystemInformation());
+                context.getSystemInformation(), xmlInputFactory);
 
         ASConnection connection = new ASConnection(
             ASConnectionParams.createFrom(new ServerPluginConfiguration(request.getReferencedConfiguration())));
@@ -284,6 +287,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
     @Override
     public void start(ResourceContext<ResourceComponent<?>> context) {
         this.context = context;
+        this.xmlInputFactory = XMLInputFactory.newInstance();
     }
 
     @Override
@@ -369,7 +373,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
     private ServerControl onServer(BundleDeployRequest request) {
         return ServerControl.onServer(request.getReferencedConfiguration(),
             AS7Mode.valueOf(request.getDestinationTarget().getPath()),
-            context.getSystemInformation());
+            context.getSystemInformation(), xmlInputFactory);
     }
 
     private String rollbackPatches(ServerControl control, BundleManagerProvider bmp, BundleResourceDeployment rd,

@@ -94,6 +94,30 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         m_agent = agent;
     }
 
+    public void updateAgent() {
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            @Override
+            public Void run() {
+                ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+                try {
+                    Thread.sleep(5000L); // give our updateAgent() caller a chance to return and finish
+                    Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+                    AgentUpdateThread.updateAgentNow(m_agent, false);
+                } catch (Exception e) {
+                    if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
+                } finally {
+                    Thread.currentThread().setContextClassLoader(originalCL);
+                }
+
+                return null;
+            }
+        });
+    }
+
     public void switchToServer(String server) {
         m_agent.switchToServer(server);
     }
@@ -208,7 +232,7 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
             PluginContainerConfiguration pcConfig = m_agent.getConfiguration().getPluginContainerConfiguration();
             List<String> enabledPlugins = pcConfig.getEnabledPlugins();
             List<String> disabledPlugins = pcConfig.getDisabledPlugins();
-            
+
             PropertyList list = new PropertyList("plugins".intern());
             info.getComplexResults().put(list);
 
@@ -434,6 +458,11 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
     public String executePromptCommand(final String command) throws ExecutionException {
         // we don't know what command will get executed, so let's proactively run it in the privileged action
         // for why it is a good idea, see the comments in the restart() method
+
+        if (command.startsWith("update ")) {
+            throw new ExecutionException(new IllegalArgumentException(
+                "Cannot invoke 'update' prompt command - use 'Update Agent' operation instead"));
+        }
 
         try {
             return AccessController.doPrivileged(new PrivilegedExceptionAction<String>() {

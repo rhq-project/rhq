@@ -162,6 +162,14 @@ class PastDataAggregator extends DataAggregator {
         }
     }
 
+    /**
+     * The returned function takes as input a future of the aggregate metrics that were just computed and a future of
+     * result sets of aggregate metrics for the same bucket. If we just computed 6 hour data for the 06:00 - 12:00 time
+     * slice, then the result sets will contain any data already persisted for for the 06:00 - 12:00 time slice. Each
+     * aggregate metric will be combined with the data fetched from Cassandra. We combine the data because the aggregate
+     * metrics that were just computed might not be included in the query results since we use weak consistency for
+     * reads/writes of metric data.
+     */
     private Function<List<List<?>>, Iterable<Set<AggregateNumericMetric>>> aggregatesToIterable() {
         return new Function<List<List<?>>, Iterable<Set<AggregateNumericMetric>>>() {
             @Override

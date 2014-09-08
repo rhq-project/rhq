@@ -44,9 +44,13 @@ public class MetricsTest extends CassandraIntegrationTest {
 
     @BeforeClass
     public void initClass() throws Exception {
+        initIndexPageSize();
         dao = new MetricsDAO(storageSession, configuration);
         dateTimeService = new DateTimeServiceStub();
         dateTimeService.setConfiguration(configuration);
+    }
+
+    protected void initIndexPageSize() {
     }
 
     protected DateTime hour(int hourOfDay) {

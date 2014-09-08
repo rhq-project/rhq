@@ -58,15 +58,12 @@ public class MetricsServerTest extends MetricsTest {
 
     @BeforeMethod
     public void initServer() throws Exception {
-        System.setProperty("rhq.metric.cache.enabled", "false");
-
         metricsServer = new MetricsServer();
         metricsServer.setConfiguration(configuration);
 
         metricsServer.setDateTimeService(dateTimeService);
 
         metricsServer.setDAO(dao);
-        metricsServer.setCacheBatchSize(PARTITION_SIZE);
         metricsServer.init();
 
         purgeDB();
@@ -102,7 +99,7 @@ public class MetricsServerTest extends MetricsTest {
         );
 
         assertEquals(actual, expected, "Failed to retrieve raw metric data");
-        assertRawIndexEquals(0, hour(4), asList(scheduleId));
+        assertRawIndexEquals(hour(4), asList(scheduleId));
     }
 
     @Test
@@ -134,8 +131,7 @@ public class MetricsServerTest extends MetricsTest {
         assertRawDataEquals(scheduleId3, hour(5), hour(6), expected3);
         assertRawDataEquals(scheduleId4, hour(5), hour(6), expected4);
 
-        assertRawIndexEquals(0, hour(5), asList(scheduleId2, scheduleId3));
-        assertRawIndexEquals(1, hour(5), asList(scheduleId1, scheduleId4));
+        assertRawIndexEquals(hour(5), asList(scheduleId2, scheduleId3, scheduleId1, scheduleId4));
     }
 
     @Test
@@ -173,7 +169,6 @@ public class MetricsServerTest extends MetricsTest {
     @Test
     public void doNotInsertDataThatIsTooOld() throws Exception {
         int scheduleId = 123;
-        int partition = 0;
         Set<MeasurementDataNumeric> data = ImmutableSet.of(new MeasurementDataNumeric(
             today().minusDays(4).plusHours(5).minusHours(25).getMillis(), scheduleId, 3.14));
         WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());

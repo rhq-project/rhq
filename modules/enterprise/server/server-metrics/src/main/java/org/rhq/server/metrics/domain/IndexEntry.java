@@ -9,7 +9,7 @@ import org.joda.time.DateTime;
  */
 public class IndexEntry {
 
-    private MetricsTable bucket;
+    private IndexBucket bucket;
 
     private int partition;
 
@@ -20,22 +20,22 @@ public class IndexEntry {
     public IndexEntry() {
     }
 
-    public IndexEntry(MetricsTable bucket, int partition, long timestamp, int scheduleId) {
+    public IndexEntry(IndexBucket bucket, int partition, long timestamp, int scheduleId) {
         this.bucket = bucket;
         this.partition = partition;
         this.timestamp = timestamp;
         this.scheduleId = scheduleId;
     }
 
-    public IndexEntry(MetricsTable bucket, int partition, DateTime time, int scheduleId) {
+    public IndexEntry(IndexBucket bucket, int partition, DateTime time, int scheduleId) {
         this(bucket, partition, time.getMillis(), scheduleId);
     }
 
-    public MetricsTable getBucket() {
+    public IndexBucket getBucket() {
         return bucket;
     }
 
-    public void setBucket(MetricsTable bucket) {
+    public void setBucket(IndexBucket bucket) {
         this.bucket = bucket;
     }
 

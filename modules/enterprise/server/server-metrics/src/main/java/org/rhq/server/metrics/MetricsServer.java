@@ -55,8 +55,7 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
-import org.rhq.server.metrics.domain.IndexEntry;
-import org.rhq.server.metrics.domain.MetricsTable;
+import org.rhq.server.metrics.domain.IndexBucket;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.invalid.InvalidMetricsManager;
 
@@ -89,11 +88,7 @@ public class MetricsServer {
 
     private int parallelism = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.parallelism", "3"));
 
-    private int cacheBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.cache.batch-size", "5"));
-
     private Days rawDataAgeLimit = Days.days(Integer.parseInt(System.getProperty("rhq.metrics.data.age-limit", "3")));
-
-    private int indexPartitions = 1;
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
@@ -127,10 +122,6 @@ public class MetricsServer {
         return numAggregationWorkers;
     }
 
-    public void setCacheBatchSize(int size) {
-        cacheBatchSize = size;
-    }
-
     ListeningExecutorService getAggregationWorkers() {
         return aggregationWorkers;
     }
@@ -143,12 +134,8 @@ public class MetricsServer {
         this.rawDataAgeLimit = Days.days(rawDataAgeLimit);
     }
 
-    public int getIndexPartitions() {
-        return indexPartitions;
-    }
-
     public void setIndexPartitions(int indexPartitions) {
-        this.indexPartitions = indexPartitions;
+        configuration.setIndexPartitions(indexPartitions);
     }
 
     public void init() {
@@ -483,11 +470,9 @@ public class MetricsServer {
             }
 
             StorageResultSetFuture rawFuture = dao.insertRawData(data);
-            StorageResultSetFuture indexFuture = dao.insertIndexEntry(new IndexEntry(MetricsTable.RAW,
-                (data.getScheduleId() % indexPartitions), collectionTimeSlice.getMillis(), data.getScheduleId()));
-
+            StorageResultSetFuture indexFuture = dao.updateIndex(IndexBucket.RAW, collectionTimeSlice.getMillis(),
+                data.getScheduleId());
             ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(rawFuture, indexFuture);
-
             Futures.addCallback(insertsFuture, new FutureCallback<List<ResultSet>>() {
                 @Override
                 public void onSuccess(List<ResultSet> result) {
@@ -530,13 +515,13 @@ public class MetricsServer {
             if (pastAggregationMissed) {
                 DateTime missedHour = roundDownToHour(mostRecentRawDataPriorToStartup);
                 AggregationManager aggregator = new AggregationManager(aggregationWorkers, dao, dateTimeService,
-                    missedHour, aggregationBatchSize, parallelism, configuration.getIndexPageSize());
+                    missedHour, aggregationBatchSize, parallelism, configuration);
                 pastAggregationMissed = false;
             }
             DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
 
             AggregationManager aggregator = new AggregationManager(aggregationWorkers, dao, dateTimeService, timeSlice,
-                aggregationBatchSize, parallelism, configuration.getIndexPageSize());
+                aggregationBatchSize, parallelism, configuration);
 
             return aggregator.run();
         } finally {

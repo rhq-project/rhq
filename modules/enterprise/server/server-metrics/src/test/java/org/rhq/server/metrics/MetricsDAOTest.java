@@ -50,8 +50,8 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.Bucket;
+import org.rhq.server.metrics.domain.IndexBucket;
 import org.rhq.server.metrics.domain.IndexEntry;
-import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
 
@@ -286,40 +286,35 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @Test(enabled = ENABLED)
     public void insertAndFindIndexEntries() {
-        System.setProperty("rhq.metrics.index.page-size", "2");
+        dao = new MetricsDAO(storageSession, new MetricsConfiguration().setIndexPageSize(2).setIndexPartitions(1));
 
-        dao = new MetricsDAO(storageSession, new MetricsConfiguration());
+        IndexEntry entry1 = new IndexEntry(IndexBucket.RAW, 0, hour(2).getMillis(), 100);
+        IndexEntry entry2 = new IndexEntry(IndexBucket.RAW, 0, hour(2).getMillis(), 101);
+        IndexEntry entry5 = new IndexEntry(IndexBucket.RAW, 0, hour(2).getMillis(), 103);
+        IndexEntry entry6 = new IndexEntry(IndexBucket.RAW, 0, hour(2).getMillis(), 104);
 
-        IndexEntry entry1 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 100);
-        IndexEntry entry2 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 101);
-        IndexEntry entry3 = new IndexEntry(MetricsTable.RAW, 1, hour(2).getMillis(), 102);
-        IndexEntry entry4 = new IndexEntry(MetricsTable.RAW, 0, hour(3).getMillis(), 101);
-        IndexEntry entry5 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 103);
-        IndexEntry entry6 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 104);
-        IndexEntry entry7 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 105);
-
-        dao.insertIndexEntry(entry1).get();
-        dao.insertIndexEntry(entry2).get();
-        dao.insertIndexEntry(entry3).get();
-        dao.insertIndexEntry(entry4).get();
-        dao.insertIndexEntry(entry5).get();
-        dao.insertIndexEntry(entry6).get();
-        dao.insertIndexEntry(entry7).get();
+        dao.updateIndex(IndexBucket.RAW, hour(2).getMillis(), 100).get();
+        dao.updateIndex(IndexBucket.RAW, hour(2).getMillis(), 101).get();
+        dao.updateIndex(IndexBucket.RAW, hour(2).getMillis(), 102).get();
+        dao.updateIndex(IndexBucket.RAW, hour(3).getMillis(), 101).get();
+        dao.updateIndex(IndexBucket.RAW, hour(2).getMillis(), 103).get();
+        dao.updateIndex(IndexBucket.RAW, hour(2).getMillis(), 104).get();
+        dao.updateIndex(IndexBucket.RAW, hour(2).getMillis(), 105).get();
 
         List<IndexEntry> expected = asList(entry1, entry2);
         List<IndexEntry> actual = new ArrayList<IndexEntry>();
 
-        ResultSet resultSet = dao.findIndexEntries(MetricsTable.RAW, 0, hour(2).getMillis()).get();
+        ResultSet resultSet = dao.findIndexEntries(IndexBucket.RAW, 0, hour(2).getMillis()).get();
         for (Row row : resultSet) {
-            actual.add(new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), row.getInt(0)));
+            actual.add(new IndexEntry(IndexBucket.RAW, 0, hour(2).getMillis(), row.getInt(0)));
         }
         assertEquals(actual, expected, "The first page of index entries is wrong");
         actual.clear();
 
-        resultSet = dao.findIndexEntries(MetricsTable.RAW, 0, hour(2).getMillis(), 102).get();
+        resultSet = dao.findIndexEntries(IndexBucket.RAW, 0, hour(2).getMillis(), 102).get();
         expected = asList(entry5, entry6);
         for (Row row : resultSet) {
-            actual.add(new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), row.getInt(0)));
+            actual.add(new IndexEntry(IndexBucket.RAW, 0, hour(2).getMillis(), row.getInt(0)));
         }
         assertEquals(actual, expected, "The next page of index entries is wrong");
 

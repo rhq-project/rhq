@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
 import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
@@ -27,6 +26,7 @@ import org.joda.time.DateTime;
 import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.ArithmeticMeanCalculator;
 import org.rhq.server.metrics.DateTimeService;
+import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
@@ -76,7 +76,7 @@ class DataAggregator {
 
     protected TaskTracker taskTracker = new TaskTracker();
 
-    protected int indexPageSize;
+    protected MetricsConfiguration configuration;
 
     protected AtomicInteger schedulesCount = new AtomicInteger();
 
@@ -117,8 +117,8 @@ class DataAggregator {
         this.dateTimeService = dateTimeService;
     }
 
-    void setIndexPageSize(int indexPageSize) {
-        this.indexPageSize = indexPageSize;
+    public void setConfiguration(MetricsConfiguration configuration) {
+        this.configuration = configuration;
     }
 
     void setBatchFinishedListener(BatchFinishedListener batchFinishedListener) {
@@ -211,7 +211,11 @@ class DataAggregator {
 
         Stopwatch stopwatch = new Stopwatch().start();
         try {
-            List<IndexEntry> indexEntries = loadIndexEntries();
+            IndexIterator iterator = loadIndexEntries();
+            List<IndexEntry> indexEntries = new ArrayList<IndexEntry>();
+            while (iterator.hasNext()) {
+                indexEntries.add(iterator.next());
+            }
             scheduleTasks(indexEntries);
             taskTracker.waitForTasksToFinish();
         } catch (CacheIndexQueryException e) {
@@ -230,15 +234,9 @@ class DataAggregator {
         return getAggregationCounts();
     }
 
-    protected List<IndexEntry> loadIndexEntries() {
-        ResultSet resultSet = dao.findIndexEntries(aggregationType.getCacheTable(), 0, startTime.getMillis()).get();
-        List<IndexEntry> indexEntries = new ArrayList<IndexEntry>();
-
-        for (Row row : resultSet) {
-            indexEntries.add(new IndexEntry(aggregationType.getCacheTable(), 0, startTime.getMillis(), row.getInt(0)));
-        }
-
-        return indexEntries;
+    protected IndexIterator loadIndexEntries() {
+        DateTime endTime = startTime.plus(aggregationType.getTimeSliceDuration());
+        return new IndexIterator(startTime, endTime, aggregationType.getBucket(), dao, configuration);
     }
 
     protected ListenableFuture<List<ResultSet>> fetchRawData(DateTime startTime, List<IndexEntry> batch) {

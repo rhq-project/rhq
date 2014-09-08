@@ -18,6 +18,7 @@ import org.joda.time.DateTime;
 
 import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.DateTimeService;
+import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.Bucket;
@@ -29,7 +30,6 @@ import org.rhq.server.metrics.domain.Bucket;
  */
 public class AggregationManager {
 
-    public static final int INDEX_PARTITION = 0;
     private static final Comparator<AggregateNumericMetric> AGGREGATE_COMPARATOR = new Comparator<AggregateNumericMetric>() {
         @Override
         public int compare(AggregateNumericMetric left, AggregateNumericMetric right) {
@@ -51,10 +51,10 @@ public class AggregationManager {
 
     private Semaphore permits;
 
-    private int indexPageSize;
+    private MetricsConfiguration configuration;
 
     public AggregationManager(ListeningExecutorService aggregationTasks, MetricsDAO dao, DateTimeService dtService,
-        DateTime startTime, int batchSize, int parallelism, int indexPageSize) {
+        DateTime startTime, int batchSize, int parallelism, MetricsConfiguration configuration) {
 
         this.dao = dao;
         this.dtService = dtService;
@@ -62,7 +62,7 @@ public class AggregationManager {
         oneHourData = new ConcurrentSkipListSet<AggregateNumericMetric>(AGGREGATE_COMPARATOR);
         permits = new Semaphore(batchSize * parallelism);
         this.aggregationTasks = aggregationTasks;
-        this.indexPageSize = indexPageSize;
+        this.configuration = configuration;
     }
 
     private boolean is6HourTimeSliceFinished() {
@@ -128,7 +128,8 @@ public class AggregationManager {
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistFns(persistFunctions);
         aggregator.setPersistMetrics(persistFunctions.persist1HourMetrics());
-        aggregator.setIndexPageSize(indexPageSize);
+        aggregator.setConfiguration(configuration);
+
 
         return aggregator;
     }
@@ -148,7 +149,7 @@ public class AggregationManager {
                 oneHourData.addAll(metrics);
             }
         });
-        aggregator.setIndexPageSize(indexPageSize);
+        aggregator.setConfiguration(configuration);
 
         return aggregator;
     }
@@ -162,7 +163,7 @@ public class AggregationManager {
         aggregator.setStartTime(dtService.get6HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist6HourMetrics());
-        aggregator.setIndexPageSize(indexPageSize);
+        aggregator.setConfiguration(configuration);
 
         return aggregator;
     }
@@ -176,7 +177,7 @@ public class AggregationManager {
         aggregator.setStartTime(dtService.get24HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist24HourMetrics());
-        aggregator.setIndexPageSize(indexPageSize);
+        aggregator.setConfiguration(configuration);
 
         return aggregator;
     }

@@ -41,8 +41,6 @@ public class AggregationTests extends MetricsTest {
 
     private final int BATCH_SIZE = 10;
 
-    private final int INDEX_PARTITION = 0;
-
     private MetricsServer metricsServer;
 
     private DateTimeServiceStub dateTimeService;
@@ -66,12 +64,16 @@ public class AggregationTests extends MetricsTest {
         metricsServer.setConfiguration(new MetricsConfiguration());
         metricsServer.setDateTimeService(dateTimeService);
         metricsServer.setDAO(dao);
-        metricsServer.setCacheBatchSize(PARTITION_SIZE);
         metricsServer.init();
 
         aggregationTasks = metricsServer.getAggregationWorkers();
+    }
 
-        configuration.setIndexPageSize(5);
+    @Override
+    protected MetricsConfiguration createConfiguration() {
+        return new MetricsConfiguration()
+            .setIndexPageSize(5)
+            .setIndexPartitions(4);
     }
 
     @Test
@@ -104,8 +106,9 @@ public class AggregationTests extends MetricsTest {
         assert6HourDataEmpty(schedule1.id, schedule2.id, schedule3.id);
         assert24HourDataEmpty(schedule1.id, schedule2.id, schedule3.id);
 
-        assert1HourIndexEquals(0, hour(12), asList(schedule1.id, schedule2.id, schedule3.id));
-        assert6HourIndexEmpty(0, hour(0));
+        assertRawIndexEmpty(hour(16));
+        assert1HourIndexEquals(hour(12), asList(schedule1.id, schedule2.id, schedule3.id));
+        assert6HourIndexEmpty(hour(0));
     }
 
     @Test(dependsOnMethods = "runAggregationForHour16")
@@ -141,8 +144,8 @@ public class AggregationTests extends MetricsTest {
 
         assert24HourDataEmpty(schedule1.id, schedule2.id, schedule3.id);
 
-        assert1HourIndexEmpty(0, hour(12));
-        assert6HourIndexEquals(0, hour(0), asList(schedule1.id, schedule2.id, schedule3.id));
+        assert1HourIndexEmpty(hour(12));
+        assert6HourIndexEquals(hour(0), asList(schedule1.id, schedule2.id, schedule3.id));
     }
 
 
@@ -176,8 +179,8 @@ public class AggregationTests extends MetricsTest {
 
         assert24HourDataEmpty(schedule1.id, schedule2.id, schedule3.id);
 
-        assert1HourIndexEquals(0, hour(18), asList(schedule1.id, schedule2.id, schedule3.id));
-        assert6HourIndexEquals(0, hour(0), asList(schedule1.id, schedule2.id, schedule3.id));
+        assert1HourIndexEquals(hour(18), asList(schedule1.id, schedule2.id, schedule3.id));
+        assert6HourIndexEquals(hour(0), asList(schedule1.id, schedule2.id, schedule3.id));
     }
 
     @Test(dependsOnMethods = "runAggregationForHour18")
@@ -212,8 +215,8 @@ public class AggregationTests extends MetricsTest {
         assert24HourDataEquals(schedule2.id, testdb.get24HourData(schedule2.id));
         assert24HourDataEquals(schedule3.id, testdb.get24HourData(schedule3.id));
 
-        assert1HourIndexEmpty(0, hour(18));
-        assert6HourIndexEmpty(0, hour(0));
+        assert1HourIndexEmpty(hour(18));
+        assert6HourIndexEmpty(hour(0));
     }
 
 
@@ -267,9 +270,9 @@ public class AggregationTests extends MetricsTest {
         assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));
         assert1HourDataEquals(schedule3.id, testdb.get1HourData(schedule3.id));
 
-        assertRawIndexEmpty(0, hour(4));
-        assert1HourIndexEquals(0, hour(0), asList(schedule1.id, schedule2.id, schedule3.id));
-        assert6HourIndexEmpty(0, hour(0));
+        assertRawIndexEmpty(hour(4));
+        assert1HourIndexEquals(hour(0), asList(schedule1.id, schedule2.id, schedule3.id));
+        assert6HourIndexEmpty(hour(0));
     }
 
     @Test(dependsOnMethods = "aggregateLateDataInSame6HourTimeSlice")
@@ -315,13 +318,13 @@ public class AggregationTests extends MetricsTest {
         assert6HourDataEquals(schedule2.id, testdb.get6HourData(schedule2.id));
         assert6HourDataEquals(schedule3.id, testdb.get6HourData(schedule3.id));
 
-        assertRawIndexEmpty(0, hour(5));
-        assertRawIndexEmpty(0, hour(6));
+        assertRawIndexEmpty(hour(5));
+        assertRawIndexEmpty(hour(6));
 
-        assert1HourIndexEmpty(0, hour(0));
-        assert1HourIndexEquals(0, hour(6), asList(schedule1.id, schedule2.id, schedule3.id));
+        assert1HourIndexEmpty(hour(0));
+        assert1HourIndexEquals(hour(6), asList(schedule1.id, schedule2.id, schedule3.id));
 
-        assert6HourIndexEquals(0, hour(0), asList(schedule1.id, schedule2.id, schedule3.id));
+        assert6HourIndexEquals(hour(0), asList(schedule1.id, schedule2.id, schedule3.id));
     }
 
     @Test(dependsOnMethods = "aggregateLateDuringNext6HourTimeSlice")
@@ -365,10 +368,10 @@ public class AggregationTests extends MetricsTest {
 
         assert24HourDataEquals(schedule1.id, testdb.get24HourData(schedule1.id));
 
-        assert1HourIndexEmpty(0, hour(23));
-        assert1HourIndexEquals(0, hour(24), asList(schedule1.id, schedule2.id, schedule3.id));
-        assert6HourIndexEmpty(0, hour(0));
-        assert6HourIndexEmpty(0, hour(24));
+        assert1HourIndexEmpty(hour(23));
+        assert1HourIndexEquals(hour(24), asList(schedule1.id, schedule2.id, schedule3.id));
+        assert6HourIndexEmpty(hour(0));
+        assert6HourIndexEmpty(hour(24));
     }
 
 //    @Test(dependsOnMethods = "runAggregationForHour24")
@@ -426,11 +429,7 @@ public class AggregationTests extends MetricsTest {
     private class AggregationManagerTestStub extends AggregationManager {
 
         public AggregationManagerTestStub(DateTime startTime) {
-            super(aggregationTasks, dao, dateTimeService, startTime, BATCH_SIZE, 4, configuration.getIndexPageSize());
-        }
-
-        public AggregationManagerTestStub(DateTime startTime, MetricsDAO dao) {
-            super(aggregationTasks, dao, dateTimeService, startTime, BATCH_SIZE, 4, configuration.getIndexPageSize());
+            super(aggregationTasks, dao, dateTimeService, startTime, BATCH_SIZE, 4, configuration);
         }
 
     }

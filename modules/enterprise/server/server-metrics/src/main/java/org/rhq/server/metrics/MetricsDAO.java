@@ -42,6 +42,7 @@ import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetricMapper;
 import org.rhq.server.metrics.domain.Bucket;
+import org.rhq.server.metrics.domain.IndexBucket;
 import org.rhq.server.metrics.domain.IndexEntry;
 import org.rhq.server.metrics.domain.ListPagedResult;
 import org.rhq.server.metrics.domain.MetricsTable;
@@ -56,8 +57,6 @@ import org.rhq.server.metrics.domain.SimplePagedResult;
 public class MetricsDAO {
 
     private final Log log = LogFactory.getLog(MetricsDAO.class);
-
-    private static final String DEFAULT_INDEX_PAGE_SIZE = "2000";
 
     private StorageSession storageSession;
 
@@ -140,13 +139,13 @@ public class MetricsDAO {
             "SELECT schedule_id " +
             "FROM " + MetricsTable.INDEX + " " +
             "WHERE bucket = ? AND partition = ? AND time = ? " +
-            "LIMIT " + System.getProperty("rhq.metrics.index.page-size", DEFAULT_INDEX_PAGE_SIZE));
+            "LIMIT " + configuration.getIndexPageSize());
 
         findIndexEntriesAfterScheduleId = storageSession.prepare(
             "SELECT schedule_id " +
             "FROM " + MetricsTable.INDEX + " " +
             "WHERE bucket = ? AND partition = ? AND time = ? AND schedule_id > ? " +
-            "LIMIT " + System.getProperty("rhq.metrics.index.page-size", DEFAULT_INDEX_PAGE_SIZE));
+            "LIMIT " + configuration.getIndexPageSize());
 
         deleteAggregate = storageSession.prepare(
             "DELETE FROM " + MetricsTable.AGGREGATE + " " +
@@ -236,20 +235,20 @@ public class MetricsDAO {
         return storageSession.executeAsync(statement);
     }
 
-    public StorageResultSetFuture findIndexEntries(MetricsTable bucket, int partition, long timestamp, int scheduleId) {
+    public StorageResultSetFuture findIndexEntries(IndexBucket bucket, int partition, long timestamp, int scheduleId) {
         BoundStatement statement = findIndexEntriesAfterScheduleId.bind(bucket.toString(), partition,
             new Date(timestamp), scheduleId);
         return storageSession.executeAsync(statement);
     }
 
-    public StorageResultSetFuture insertIndexEntry(IndexEntry indexEntry) {
-        BoundStatement statement = insertIndexEntry.bind(indexEntry.getBucket().toString(), indexEntry.getPartition(),
-            new Date(indexEntry.getTimestamp()), indexEntry.getScheduleId());
+    public StorageResultSetFuture updateIndex(IndexBucket bucket, long timestamp, int scheduleId) {
+        BoundStatement statement = insertIndexEntry.bind(bucket.toString(),
+            (scheduleId % configuration.getIndexPartitions()), new Date(timestamp), scheduleId);
         return storageSession.executeAsync(statement);
     }
 
     public StorageResultSetFuture deleteIndexEntry(IndexEntry indexEntry) {
-        BoundStatement statement = deleteIndexEntry.bind(indexEntry.getBucket().toString(), 0,
+        BoundStatement statement = deleteIndexEntry.bind(indexEntry.getBucket().toString(), indexEntry.getPartition(),
             new Date(indexEntry.getTimestamp()), indexEntry.getScheduleId());
         return storageSession.executeAsync(statement);
     }

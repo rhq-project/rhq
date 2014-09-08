@@ -10,9 +10,10 @@ import com.google.common.collect.Iterators;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
+import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.domain.IndexBucket;
 import org.rhq.server.metrics.domain.IndexEntry;
-import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
  * An iterator for the index with paging support. The iterator will scan through all partitions for a particular date
@@ -28,7 +29,7 @@ public class IndexIterator implements Iterator<IndexEntry> {
 
     private DateTime endTime;
 
-    private MetricsTable bucket;
+    private IndexBucket bucket;
 
     private MetricsDAO dao;
 
@@ -48,24 +49,29 @@ public class IndexIterator implements Iterator<IndexEntry> {
      *
      * @param startTime The start time inclusive of the date range to query
      * @param endTime The end time exlusive of the date range to query
-     * @param duration The time slice increment, e.g., 1 hour for raw, 6 hours for 1 hr data, and 24 hours for 6 hour
-     *                 data
      * @param bucket Either raw, 1 hour, or 6 hour
      * @param dao Used for querying the index
-     * @param numPartitions The total number of partitions in use which should be configurable through the server's
-     *                      measurement subsystem
-     * @param pageSize The configured page size for index queries which should be configurable through the server's
-     *                 measurement subsystem
+     * @param configuration The metrics configuration which provides the total number of partitions and page size
      */
-    public IndexIterator(DateTime startTime, DateTime endTime, Duration duration, MetricsTable bucket,
-        MetricsDAO dao, int numPartitions, int pageSize) {
+    public IndexIterator(DateTime startTime, DateTime endTime, IndexBucket bucket, MetricsDAO dao,
+        MetricsConfiguration configuration) {
         time = startTime;
         this.endTime = endTime;
         this.duration = duration;
         this.bucket = bucket;
         this.dao = dao;
-        this.numPartitions = numPartitions;
-        this.pageSize = pageSize;
+        this.numPartitions = configuration.getIndexPartitions();
+        this.pageSize = configuration.getIndexPageSize();
+        switch (bucket) {
+            case RAW:
+                this.duration = configuration.getRawTimeSliceDuration();
+                break;
+            case ONE_HOUR:
+                this.duration = configuration.getOneHourTimeSliceDuration();
+                break;
+            default:
+                this.duration = configuration.getSixHourTimeSliceDuration();
+        }
 
        loadPage();
     }

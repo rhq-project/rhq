@@ -1,6 +1,5 @@
 package org.rhq.server.metrics.aggregation;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -10,7 +9,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -23,8 +21,8 @@ import org.joda.time.DateTime;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.Bucket;
+import org.rhq.server.metrics.domain.IndexBucket;
 import org.rhq.server.metrics.domain.IndexEntry;
-import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
 
@@ -64,21 +62,12 @@ class PastDataAggregator extends DataAggregator {
     }
 
     @Override
-    protected List<IndexEntry> loadIndexEntries() {
+    protected IndexIterator loadIndexEntries() {
         // For now we will just search back up to 24 hours, but ultimately this will be
         // configurable.
         DateTime time = startTime.minusHours(24);
-        List<IndexEntry> indexEntries = new ArrayList<IndexEntry>();
 
-        while (time.isBefore(startTime)) {
-            ResultSet resultSet = dao.findIndexEntries(MetricsTable.RAW, 0, time.getMillis()).get();
-            for (Row row : resultSet) {
-                indexEntries.add(new IndexEntry(MetricsTable.RAW, 0, time.getMillis(), row.getInt(0)));
-            }
-            time = time.plusHours(1);
-        }
-
-        return indexEntries;
+        return new IndexIterator(time, startTime, IndexBucket.RAW, dao, configuration);
     }
 
     @Override

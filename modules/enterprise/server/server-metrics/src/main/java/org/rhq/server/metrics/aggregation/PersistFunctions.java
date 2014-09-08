@@ -1,8 +1,5 @@
 package org.rhq.server.metrics.aggregation;
 
-import static org.rhq.server.metrics.domain.MetricsTable.ONE_HOUR;
-import static org.rhq.server.metrics.domain.MetricsTable.SIX_HOUR;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +14,7 @@ import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.IndexEntry;
+import org.rhq.server.metrics.domain.IndexBucket;
 
 /**
  * This is a utility class of functions for persisting aggregate metrics.
@@ -54,8 +51,7 @@ class PersistFunctions {
                 for (AggregateNumericMetric metric : metrics) {
                     DateTime timeSlice = dateTimeService.get6HourTimeSlice(metric.getTimestamp());
                     futures.add(dao.insert1HourData(metric));
-                    futures.add(dao.insertIndexEntry(new IndexEntry(ONE_HOUR, 0, timeSlice.getMillis(),
-                        metric.getScheduleId())));
+                    futures.add(dao.updateIndex(IndexBucket.ONE_HOUR, timeSlice.getMillis(), metric.getScheduleId()));
                 }
                 return Futures.allAsList(futures);
             }
@@ -79,8 +75,7 @@ class PersistFunctions {
                 for (AggregateNumericMetric metric : metrics) {
                     DateTime timeSlice = dateTimeService.get24HourTimeSlice(metric.getTimestamp());
                     futures.add(dao.insert6HourData(metric));
-                    futures.add(dao.insertIndexEntry(new IndexEntry(SIX_HOUR, 0, timeSlice.getMillis(),
-                        metric.getScheduleId())));
+                    futures.add(dao.updateIndex(IndexBucket.SIX_HOUR, timeSlice.getMillis(), metric.getScheduleId()));
                 }
                 return Futures.allAsList(futures);
             }

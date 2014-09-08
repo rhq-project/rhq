@@ -12,16 +12,17 @@ import java.util.Collections;
 import java.util.List;
 
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
 import com.google.common.collect.Lists;
 
 import org.joda.time.DateTime;
 import org.testng.annotations.BeforeClass;
 
 import org.rhq.cassandra.schema.Table;
+import org.rhq.server.metrics.aggregation.IndexIterator;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.Bucket;
+import org.rhq.server.metrics.domain.IndexBucket;
 import org.rhq.server.metrics.domain.IndexEntry;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
@@ -44,13 +45,14 @@ public class MetricsTest extends CassandraIntegrationTest {
 
     @BeforeClass
     public void initClass() throws Exception {
-        initIndexPageSize();
+        configuration = createConfiguration();
         dao = new MetricsDAO(storageSession, configuration);
         dateTimeService = new DateTimeServiceStub();
         dateTimeService.setConfiguration(configuration);
     }
 
-    protected void initIndexPageSize() {
+    protected MetricsConfiguration createConfiguration() {
+        return new MetricsConfiguration();
     }
 
     protected DateTime hour(int hourOfDay) {
@@ -188,51 +190,50 @@ public class MetricsTest extends CassandraIntegrationTest {
             " does not match expected values", expected, actual, TEST_PRECISION);
     }
 
-    protected void assertRawIndexEquals(int partition, DateTime time, List<Integer> scheduleIds) {
-        assertIndexEquals(MetricsTable.RAW, partition, time, scheduleIds);
+    protected void assertRawIndexEquals(DateTime time, List<Integer> scheduleIds) {
+        assertIndexEquals(IndexBucket.RAW, time, time.plus(configuration.getRawTimeSliceDuration()), scheduleIds);
     }
 
-    protected void assertRawIndexEmpty(int partition, DateTime time) {
-        assertIndexEquals(MetricsTable.RAW, partition, time, Collections.EMPTY_LIST);
+    protected void assertRawIndexEmpty(DateTime time) {
+        assertIndexEquals(IndexBucket.RAW, time, time.plus(configuration.getRawTimeSliceDuration()),
+            Collections.EMPTY_LIST);
     }
 
-    protected void assert1HourIndexEquals(int partition, DateTime time, List<Integer> scheduleIds) {
-        assertIndexEquals(MetricsTable.ONE_HOUR, partition, time, scheduleIds);
+    protected void assert1HourIndexEquals(DateTime time, List<Integer> scheduleIds) {
+        assertIndexEquals(IndexBucket.ONE_HOUR, time, time.plus(configuration.getOneHourTimeSliceDuration()),
+            scheduleIds);
     }
 
-    protected void assert1HourIndexEmpty(int partition, DateTime time) {
-        assertIndexEquals(MetricsTable.ONE_HOUR, partition, time, Collections.EMPTY_LIST);
+    protected void assert1HourIndexEmpty(DateTime time) {
+        assertIndexEquals(IndexBucket.ONE_HOUR, time, time.plus(configuration.getOneHourTimeSliceDuration()),
+            Collections.EMPTY_LIST);
     }
 
-    protected void assert6HourIndexEquals(int partition, DateTime time, List<Integer> scheduleIds) {
-        assertIndexEquals(MetricsTable.SIX_HOUR, partition, time, scheduleIds);
+    protected void assert6HourIndexEquals(DateTime time, List<Integer> scheduleIds) {
+        assertIndexEquals(IndexBucket.SIX_HOUR, time, time.plus(configuration.getSixHourTimeSliceDuration()),
+            scheduleIds);
     }
 
-    protected void assert6HourIndexEmpty(int partition, DateTime time) {
-        assertIndexEquals(MetricsTable.SIX_HOUR, partition, time, Collections.EMPTY_LIST);
+    protected void assert6HourIndexEmpty(DateTime time) {
+        assertIndexEquals(IndexBucket.SIX_HOUR, time, time.plus(configuration.getSixHourTimeSliceDuration()),
+            Collections.EMPTY_LIST);
     }
 
-    protected void assert24HourIndexEquals(int partition, DateTime time, List<Integer> scheduleIds) {
-        assertIndexEquals(MetricsTable.TWENTY_FOUR_HOUR, partition, time, scheduleIds);
-    }
-
-    protected void assert24HourIndexEmpty(int partition, DateTime time) {
-        assertIndexEquals(MetricsTable.TWENTY_FOUR_HOUR, partition, time, Collections.EMPTY_LIST);
-    }
-
-    private void assertIndexEquals(MetricsTable bucket, int partition, DateTime time, List<Integer> scheduleIds) {
-        List<IndexEntry> expected = new ArrayList<IndexEntry>(scheduleIds.size());
+    private void assertIndexEquals(IndexBucket bucket, DateTime startTime, DateTime endTime,
+        List<Integer> scheduleIds) {
+        List<IndexEntry> expected = new ArrayList<IndexEntry>();
         for (Integer scheduleId : scheduleIds) {
-            expected.add(new IndexEntry(bucket, partition, time.getMillis(), scheduleId));
+            expected.add(new IndexEntry(bucket, (scheduleId % configuration.getIndexPartitions()), startTime,
+                scheduleId));
         }
-        ResultSet resultSet = dao.findIndexEntries(bucket, partition, time.getMillis()).get();
+
         List<IndexEntry> actual = new ArrayList<IndexEntry>();
-
-        for (Row row : resultSet) {
-            actual.add(new IndexEntry(bucket, partition, time.getMillis(), row.getInt(0)));
+        IndexIterator iterator = new IndexIterator(startTime, endTime, bucket, dao, configuration);
+        while (iterator.hasNext()) {
+            actual.add(iterator.next());
         }
 
-        assertEquals(actual, expected, "The index entries do not match");
+        assertEquals(actual, expected, "The " + bucket + " index entries do not match");
     }
 
     /**

@@ -227,7 +227,7 @@ public class MetricsDAO {
         return storageSession.executeAsync(statement);
     }
 
-    public StorageResultSetFuture findIndexEntries(MetricsTable bucket, int partition, long timestamp) {
+    public StorageResultSetFuture findIndexEntries(IndexBucket bucket, int partition, long timestamp) {
         BoundStatement statement = findIndexEntries.bind(bucket.toString(), partition, new Date(timestamp));
         return storageSession.executeAsync(statement);
     }

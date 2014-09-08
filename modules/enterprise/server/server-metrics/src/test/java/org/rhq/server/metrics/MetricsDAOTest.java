@@ -289,15 +289,25 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @Test(enabled = ENABLED)
     public void insertAndFindIndexEntries() {
+        System.setProperty("rhq.metrics.index.page-size", "2");
+
+        dao = new MetricsDAO(storageSession, new MetricsConfiguration());
+
         IndexEntry entry1 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 100);
         IndexEntry entry2 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 101);
         IndexEntry entry3 = new IndexEntry(MetricsTable.RAW, 1, hour(2).getMillis(), 102);
         IndexEntry entry4 = new IndexEntry(MetricsTable.RAW, 0, hour(3).getMillis(), 101);
+        IndexEntry entry5 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 103);
+        IndexEntry entry6 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 104);
+        IndexEntry entry7 = new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), 105);
 
         dao.insertIndexEntry(entry1).get();
         dao.insertIndexEntry(entry2).get();
         dao.insertIndexEntry(entry3).get();
         dao.insertIndexEntry(entry4).get();
+        dao.insertIndexEntry(entry5).get();
+        dao.insertIndexEntry(entry6).get();
+        dao.insertIndexEntry(entry7).get();
 
         List<IndexEntry> expected = asList(entry1, entry2);
         List<IndexEntry> actual = new ArrayList<IndexEntry>();
@@ -306,8 +316,16 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         for (Row row : resultSet) {
             actual.add(new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), row.getInt(0)));
         }
+        assertEquals(actual, expected, "The first page of index entries is wrong");
+        actual.clear();
 
-        assertEquals(actual, expected, "The index entries do not match");
+        resultSet = dao.findIndexEntries(MetricsTable.RAW, 0, hour(2).getMillis(), 102).get();
+        expected = asList(entry5, entry6);
+        for (Row row : resultSet) {
+            actual.add(new IndexEntry(MetricsTable.RAW, 0, hour(2).getMillis(), row.getInt(0)));
+        }
+        assertEquals(actual, expected, "The next page of index entries is wrong");
+
     }
 
     @Test(enabled = ENABLED)

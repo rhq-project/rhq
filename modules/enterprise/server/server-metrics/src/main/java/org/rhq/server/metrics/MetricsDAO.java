@@ -57,6 +57,8 @@ public class MetricsDAO {
 
     private final Log log = LogFactory.getLog(MetricsDAO.class);
 
+    private static final String DEFAULT_INDEX_PAGE_SIZE = "2000";
+
     private StorageSession storageSession;
 
     private MetricsConfiguration configuration;
@@ -71,6 +73,7 @@ public class MetricsDAO {
     private PreparedStatement findAggregateMetricsByDateRange;
     private PreparedStatement insertIndexEntry;
     private PreparedStatement findIndexEntries;
+    private PreparedStatement findIndexEntriesAfterScheduleId;
     private PreparedStatement deleteIndexEntry;
     private PreparedStatement deleteAggregate;
 
@@ -134,7 +137,16 @@ public class MetricsDAO {
             "WHERE bucket = ? AND partition = ? AND time = ? AND schedule_id = ?");
 
         findIndexEntries = storageSession.prepare(
-            "SELECT schedule_id FROM " + MetricsTable.INDEX + " WHERE bucket = ? AND partition = ? AND time = ?");
+            "SELECT schedule_id " +
+            "FROM " + MetricsTable.INDEX + " " +
+            "WHERE bucket = ? AND partition = ? AND time = ? " +
+            "LIMIT " + System.getProperty("rhq.metrics.index.page-size", DEFAULT_INDEX_PAGE_SIZE));
+
+        findIndexEntriesAfterScheduleId = storageSession.prepare(
+            "SELECT schedule_id " +
+            "FROM " + MetricsTable.INDEX + " " +
+            "WHERE bucket = ? AND partition = ? AND time = ? AND schedule_id > ? " +
+            "LIMIT " + System.getProperty("rhq.metrics.index.page-size", DEFAULT_INDEX_PAGE_SIZE));
 
         deleteAggregate = storageSession.prepare(
             "DELETE FROM " + MetricsTable.AGGREGATE + " " +
@@ -221,6 +233,12 @@ public class MetricsDAO {
 
     public StorageResultSetFuture findIndexEntries(MetricsTable bucket, int partition, long timestamp) {
         BoundStatement statement = findIndexEntries.bind(bucket.toString(), partition, new Date(timestamp));
+        return storageSession.executeAsync(statement);
+    }
+
+    public StorageResultSetFuture findIndexEntries(MetricsTable bucket, int partition, long timestamp, int scheduleId) {
+        BoundStatement statement = findIndexEntriesAfterScheduleId.bind(bucket.toString(), partition,
+            new Date(timestamp), scheduleId);
         return storageSession.executeAsync(statement);
     }
 

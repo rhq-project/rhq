@@ -45,13 +45,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.namespace.QName;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamReader;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
-import org.w3c.dom.Document;
 
 import org.jboss.sasl.util.UsernamePasswordHashUtil;
 
@@ -108,13 +109,13 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private AvailabilityType previousAvailabilityType;
     private String releaseVersion;
     private String aSHostName;
-    private DocumentBuilderFactory docBuilderFactory;
+    private XMLInputFactory xmlInputFactory;
     private long lastManagementInterfaceReply = 0;
 
     @Override
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         super.start(resourceContext);
-        docBuilderFactory = DocumentBuilderFactory.newInstance();
+        xmlInputFactory = XMLInputFactory.newInstance();
         serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
         serverPluginConfig.validate();
         connection = new ASConnection(ASConnectionParams.createFrom(serverPluginConfig));
@@ -399,7 +400,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         }
 
         ProcessExecutionResults results = ServerControl
-            .onServer(context.getPluginConfiguration(), getMode(), context.getSystemInformation())
+            .onServer(context.getPluginConfiguration(), getMode(), context.getSystemInformation(), xmlInputFactory)
             .lifecycle().startServer();
         logExecutionResults(results);
 
@@ -441,7 +442,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             return result;
         }
         ServerControl.Cli cli = ServerControl.onServer(context.getPluginConfiguration(), getMode(),
-            context.getSystemInformation()).waitingFor(waitTime * 1000)
+            context.getSystemInformation(), xmlInputFactory).waitingFor(waitTime * 1000)
             .killingOnTimeout(Boolean.parseBoolean(parameters.getSimpleValue("killOnTimeout", "false"))).cli();
 
         ProcessExecutionResults results;
@@ -771,7 +772,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             FileUtil.writeFile(handoverRequest.getContent(), scriptFile);
 
             ProcessExecutionResults results = ServerControl.onServer(
-                getServerPluginConfiguration().getPluginConfig(), getMode(), context.getSystemInformation())
+                getServerPluginConfiguration().getPluginConfig(), getMode(), context.getSystemInformation(), xmlInputFactory)
                 .waitingFor(waitTime).killingOnTimeout(killOnTimeout).cli().executeCliScript(scriptFile);
 
             Throwable error = results.getError();
@@ -851,27 +852,56 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     }
 
     /**
-     * Reads <host name= attribute from host.xml file.
-     *
-     * @return name attribute from host.xml file
+     * @see #findASDomainHostName(javax.xml.stream.XMLInputFactory, org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration)
      */
     protected String findASDomainHostName() {
         if (getMode().equals(AS7Mode.STANDALONE)) {
             return null;
         }
-        File hostXmlFile = getServerPluginConfiguration().getHostConfigFile();
+
+        return findASDomainHostName(xmlInputFactory, getServerPluginConfiguration());
+    }
+
+    /**
+     * Reads <host name= attribute from host.xml file.
+     *
+     * @return name attribute from host.xml file
+     */
+    public static String findASDomainHostName(XMLInputFactory xmlInputFactory, ServerPluginConfiguration serverPluginConfig) {
+        File hostXmlFile = serverPluginConfig.getHostConfigFile();
         if (hostXmlFile == null) {
             return null;
         }
         String hostName = null;
         try {
-            DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
             InputStream is = new FileInputStream(hostXmlFile);
+            XMLStreamReader rdr = null;
             try {
-                Document document = builder.parse(is);
-                hostName = document.getDocumentElement().getAttribute("name");
+                rdr = xmlInputFactory.createXMLStreamReader(is);
+                boolean cont = true;
+                while (rdr.hasNext() && cont) {
+                    int event = rdr.nextTag();
+                    switch (event) {
+                    case XMLStreamConstants.START_ELEMENT:
+                        QName tag = rdr.getName();
+                        if ("host".equals(tag.getLocalPart()) && tag.getNamespaceURI().startsWith("urn:jboss:domain")) {
+                            for (int i = 0; i < rdr.getAttributeCount(); ++i) {
+                                QName attr = rdr.getAttributeName(i);
+                                if ("name".equals(attr.getLocalPart()) &&
+                                    (attr.getNamespaceURI().isEmpty() || attr.getNamespaceURI().startsWith("urn:jboss:domain"))) {
+                                    hostName = rdr.getAttributeValue(i);
+                                }
+                            }
+                        }
+                        cont = false;
+                        break;
+                    }
+                }
             } finally {
-                is.close();
+                if (rdr != null) {
+                    rdr.close();
+                }
+                StreamUtil.safeClose(is);
             }
         } catch (Exception e) {
             LOG.error(e.getMessage());
@@ -1031,7 +1061,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         }
 
         ProcessExecutionResults results = ServerControl.onServer(context.getPluginConfiguration(), getMode(),
-            context.getSystemInformation()).cli().disconnected(true).executeCliCommand(command.toString());
+            context.getSystemInformation(), xmlInputFactory).cli().disconnected(true).executeCliCommand(command.toString());
 
         if (results.getError() != null || results.getExitCode() == null || results.getExitCode() != 0) {
             String message = "Applying the patch failed ";

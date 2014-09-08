@@ -79,23 +79,6 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
      */
     Configuration getResourceConfiguration(int resourceId);
 
-    /**
-     * Get the currently live resource configuration for the {@link Resource} with the given id. This actually asks for
-     * the up-to-date configuration directly from the agent. An exception will be thrown if communications with the
-     * agent cannot be made.
-     *
-     * @param  subject     the user who wants to see the information
-     * @param  resourceId a {@link Resource} id
-     * @param  pingAgentFirst true if the underlying Agent should be pinged successfully before attempting to retrieve
-     *                        the configuration, or false otherwise
-     *
-     * @return the live configuration
-     *
-     * @throws Exception if failed to get the configuration from the agent
-     */
-    Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst)
-        throws Exception;
-
     Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst,
         boolean fromStructured) throws Exception;
 
@@ -272,20 +255,6 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
     void purgeResourceConfigurationUpdates(Subject subject, int[] configurationUpdateIds, boolean purgeInProgress);
 
     /**
-     * Return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
-     * specified id. The templates will be loaded in the definition returned from this call.
-     *
-     * @param  subject         the user who is requesting the resource configuration definition
-     * @param  resourceTypeId identifies the resource type whose resource configuration definition is being requested
-     *
-     * @return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
-     *         specified id, or <code>null</code> if the ResourceType does not define a resource configuration
-     */
-    @Nullable
-    ConfigurationDefinition getResourceConfigurationDefinitionWithTemplatesForResourceType(Subject subject,
-        int resourceTypeId);
-
-    /**
      * Merge the specified configuration update into the DB.
      *
      * @param  configurationUpdate a configuration update
@@ -399,37 +368,6 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
     void checkForTimedOutConfigurationUpdateRequests();
 
     public Configuration getConfiguration(Subject subject, int configurationId);
-
-    /**
-     * Get the latest plugin configuration for the {@link Resource} with the given id. Returns the configuration as it
-     * is known on the server-side in the database.
-     *
-     * @param  subject     the user who wants to see the information
-     * @param  resourceId a {@link Resource} id
-     *
-     * @return the current plugin configuration (along with additional information about the configuration) for the
-     *         {@link Resource} with the given id
-     * @throws FetchException TODO
-     */
-    PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId);
-
-    /**
-     * Get the latest resource configuration for the {@link Resource} with the given id, or <code>null</code> if the
-     * resource's configuration is not yet initialized and for some reason we can't get its current live configuration
-     * (e.g. in the case the agent or resource is down). Returns the configuration as it is known on the server-side in
-     * the database. The database will be sync'ed with the live values, if the currently live configuration is actually
-     * different than the latest configuration update found in history.
-     *
-     * @param  subject     the user who wants to see the information
-     * @param  resourceId a {@link Resource} id
-     *
-     * @return the current configuration (along with additional information about the configuration) for the
-     *         {@link Resource} with the given id, or <code>null</code> if the resource's configuration is not yet
-     *         initialized and its live configuration could not be determined
-     * @throws FetchException TODO
-     */
-    @Nullable
-    ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId);
 
     ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId,
         boolean fromStructured);

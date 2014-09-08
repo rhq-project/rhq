@@ -32,11 +32,8 @@ import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
-import org.rhq.enterprise.server.rest.BadArgumentException;
 
 /**
  * The configuration manager which allows you to request resource configuration changes, view current resource
@@ -107,16 +104,32 @@ public interface ConfigurationManagerRemote {
     Configuration getResourceConfiguration(Subject subject, int resourceId);
 
     /**
-     * @param subject
-     * @param resourceId
-     * @return the most recent plugin configuration update
+     * Get the latest plugin configuration for the {@link Resource} with the given id. Returns the configuration as it
+     * is known on the server-side in the database.
+     *
+     * @param  subject     the user who wants to see the information
+     * @param  resourceId a {@link Resource} id
+     *
+     * @return the current plugin configuration (along with additional information about the configuration) for the
+     *         {@link Resource} with the given id
      */
     PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId);
 
     /**
-     * @param subject
-     * @param resourceId
-     * @return the most recent resource configuration update
+     * Get the most recent attainable resource configuration for the {@link Resource} with the given id.  Retrieves
+     * and returns live resource configuration from the Agent, if possible.  Otherwise returns the most recent
+     * server-side configuration (from the database).  If the live availability differs from the server-side
+     * the database will be updated to match the live configuration.  This can return <code>null</code> if an initial
+     * resource configuration has yet to be stored in the database and a live configuration can not be retrieved (e.g.
+     * in the case the agent or resource is down).
+     *
+     * @param  subject     the user who wants to see the information
+     * @param  resourceId a {@link Resource} id
+     *
+     * @return the current configuration (along with additional information about the configuration) for the
+     *         {@link Resource} with the given id, or <code>null</code> if the resource's configuration is not yet
+     *         initialized and its live configuration could not be determined.  The configuration can be accessed
+     *         via {@link ResourceConfigurationUpdate#getConfiguration()}.
      */
     ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId);
 
@@ -196,9 +209,10 @@ public interface ConfigurationManagerRemote {
      * the up-to-date configuration directly from the agent. An exception will be thrown if communications with the
      * agent cannot be made.
      *
-     * @param subject    The logged in user's subject.
-     * @param resourceId resourceId
-     * @param pingAgentFirst
+     * @param  subject     the user who wants to see the information
+     * @param  resourceId a {@link Resource} id
+     * @param  pingAgentFirst true if the underlying Agent should be pinged successfully before attempting to retrieve
+     *                        the configuration, or false otherwise
      *
      * @return the live configuration
      *

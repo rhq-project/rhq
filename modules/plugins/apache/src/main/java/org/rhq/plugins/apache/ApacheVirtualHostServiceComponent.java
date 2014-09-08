@@ -614,7 +614,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             return tree.getRootNode();
         }
 
-        final List<ApacheDirective> allVhosts  = tree.search("/<VirtualHost");
+        final List<ApacheDirective> allVhosts = tree.findByName("<VirtualHost", true);
 
         //transform the SNMP index into the index of the vhost
         int idx = allVhosts.size() - snmpIdx + 1;

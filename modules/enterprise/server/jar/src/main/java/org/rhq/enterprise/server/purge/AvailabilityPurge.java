@@ -19,6 +19,9 @@
 
 package org.rhq.enterprise.server.purge;
 
+import static org.rhq.core.db.DatabaseTypeFactory.isOracle;
+import static org.rhq.core.db.DatabaseTypeFactory.isPostgres;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,17 +29,16 @@ import java.sql.SQLException;
 import javax.sql.DataSource;
 import javax.transaction.UserTransaction;
 
+import org.rhq.core.db.DatabaseType;
+
 /**
 * @author Thomas Segismont
 */
 class AvailabilityPurge extends PurgeTemplate<Integer> {
     private static final String ENTITY_NAME = "Availability";
 
-    private static final String QUERY_SELECT_KEYS_FOR_PURGE_POSTGRES = "" //
-        + "SELECT ID FROM RHQ_AVAILABILITY WHERE END_TIME < ? LIMIT ?";
-
-    private static final String QUERY_SELECT_KEYS_FOR_PURGE_ORACLE = "" //
-        + "SELECT ID FROM RHQ_AVAILABILITY WHERE END_TIME < ? AND ROWNUM <= ?";
+    private static final String QUERY_SELECT_KEYS_FOR_PURGE = "" //
+        + "SELECT ID FROM RHQ_AVAILABILITY WHERE END_TIME < ?";
 
     private static final String QUERY_PURGE_BY_KEY = "DELETE FROM RHQ_AVAILABILITY WHERE ID = ?";
 
@@ -53,19 +55,16 @@ class AvailabilityPurge extends PurgeTemplate<Integer> {
     }
 
     @Override
-    protected String getFindRowKeysQueryPostgres() {
-        return QUERY_SELECT_KEYS_FOR_PURGE_POSTGRES;
-    }
-
-    @Override
-    protected String getFindRowKeysQueryOracle() {
-        return QUERY_SELECT_KEYS_FOR_PURGE_ORACLE;
+    protected String getFindRowKeysQuery(DatabaseType databaseType) {
+        if (isPostgres(databaseType) || isOracle(databaseType)) {
+            return QUERY_SELECT_KEYS_FOR_PURGE;
+        }
+        throw new UnsupportedOperationException(databaseType.getName());
     }
 
     @Override
     protected void setFindRowKeysQueryParams(PreparedStatement preparedStatement) throws SQLException {
         preparedStatement.setLong(1, oldest);
-        preparedStatement.setInt(2, getBatchSize());
     }
 
     @Override
@@ -74,13 +73,11 @@ class AvailabilityPurge extends PurgeTemplate<Integer> {
     }
 
     @Override
-    protected String getDeleteRowByKeyQueryPostgres() {
-        return QUERY_PURGE_BY_KEY;
-    }
-
-    @Override
-    protected String getDeleteRowByKeyQueryOracle() {
-        return QUERY_PURGE_BY_KEY;
+    protected String getDeleteRowByKeyQuery(DatabaseType databaseType) {
+        if (isPostgres(databaseType) || isOracle(databaseType)) {
+            return QUERY_PURGE_BY_KEY;
+        }
+        throw new UnsupportedOperationException(databaseType.getName());
     }
 
     @Override

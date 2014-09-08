@@ -19,6 +19,9 @@
 
 package org.rhq.enterprise.server.purge;
 
+import static org.rhq.core.db.DatabaseTypeFactory.isOracle;
+import static org.rhq.core.db.DatabaseTypeFactory.isPostgres;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,6 +29,7 @@ import java.sql.SQLException;
 import javax.sql.DataSource;
 import javax.transaction.UserTransaction;
 
+import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.measurement.MeasurementDataPK;
 
 /**
@@ -39,7 +43,7 @@ class MeasurementDataTraitPurge extends PurgeTemplate<MeasurementDataPK> {
      *       (see http://download.oracle.com/docs/cd/B19306_01/server.102/b14200/ap_standard_sql003.htm, subfeature id
      *       E051-08).
      */
-    private static final String QUERY_SELECT_KEYS_FOR_PURGE_COMMON = "" //
+    private static final String QUERY_SELECT_KEYS_FOR_PURGE = "" //
         + "SELECT schedule_id, time_stamp FROM rhq_measurement_data_trait " // SQL Server doesn't like aliases, use full table name
         + "WHERE EXISTS " // rewritten as exists because H2 doesn't support multi-column conditions
         + "  (SELECT t2.schedule_id, t2.time_stamp " //
@@ -52,12 +56,6 @@ class MeasurementDataTraitPurge extends PurgeTemplate<MeasurementDataPK> {
         + "   AND t2.time_stamp < t3.mx " //
         + "   AND rhq_measurement_data_trait.time_stamp = t2.time_stamp " // rewrote multi-column conditions as additional
         + "   AND rhq_measurement_data_trait.schedule_id = t2.schedule_id) "; // correlated restrictions to the delete table;
-
-    private static final String QUERY_SELECT_KEYS_FOR_PURGE_POSTGRES = "" //
-        + QUERY_SELECT_KEYS_FOR_PURGE_COMMON + " LIMIT ?";
-
-    private static final String QUERY_SELECT_KEYS_FOR_PURGE_ORACLE = "" //
-        + QUERY_SELECT_KEYS_FOR_PURGE_COMMON + " AND ROWNUM <= ?";
 
     private static final String QUERY_PURGE_BY_KEY = "" //
         + "DELETE FROM rhq_measurement_data_trait WHERE schedule_id = ? AND time_stamp = ?";
@@ -75,19 +73,16 @@ class MeasurementDataTraitPurge extends PurgeTemplate<MeasurementDataPK> {
     }
 
     @Override
-    protected String getFindRowKeysQueryPostgres() {
-        return QUERY_SELECT_KEYS_FOR_PURGE_POSTGRES;
-    }
-
-    @Override
-    protected String getFindRowKeysQueryOracle() {
-        return QUERY_SELECT_KEYS_FOR_PURGE_ORACLE;
+    protected String getFindRowKeysQuery(DatabaseType databaseType) {
+        if (isPostgres(databaseType) || isOracle(databaseType)) {
+            return QUERY_SELECT_KEYS_FOR_PURGE;
+        }
+        throw new UnsupportedOperationException(databaseType.getName());
     }
 
     @Override
     protected void setFindRowKeysQueryParams(PreparedStatement preparedStatement) throws SQLException {
         preparedStatement.setLong(1, oldest);
-        preparedStatement.setInt(2, getBatchSize());
     }
 
     @Override
@@ -96,13 +91,11 @@ class MeasurementDataTraitPurge extends PurgeTemplate<MeasurementDataPK> {
     }
 
     @Override
-    protected String getDeleteRowByKeyQueryPostgres() {
-        return QUERY_PURGE_BY_KEY;
-    }
-
-    @Override
-    protected String getDeleteRowByKeyQueryOracle() {
-        return QUERY_PURGE_BY_KEY;
+    protected String getDeleteRowByKeyQuery(DatabaseType databaseType) {
+        if (isPostgres(databaseType) || isOracle(databaseType)) {
+            return QUERY_PURGE_BY_KEY;
+        }
+        throw new UnsupportedOperationException(databaseType.getName());
     }
 
     @Override

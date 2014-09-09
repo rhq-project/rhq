@@ -81,6 +81,13 @@ esac
 # place as this script.
 # ----------------------------------------------------------------------
 
+type readlink >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo >&2 'WARNING: The readlink command is not available on this platform.'
+    echo >&2 '         If this script was launched from a symbolic link, it may '
+    echo >&2 '         fail to properly resolve its home directory.'
+fi
+
 if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then
    # only certain platforms support the -e argument for readlink
    _READLINK_ARG="-e"

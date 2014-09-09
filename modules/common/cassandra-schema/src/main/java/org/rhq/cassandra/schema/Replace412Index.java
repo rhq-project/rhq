@@ -63,17 +63,17 @@ public class Replace412Index {
 
     private void updateRawIndex(DateTime start, DateTime end, DateTime startDay) {
         log.info("Updating raw index");
-        updateIndex("one_hour_metrics", "raw", startDay, start, end, Hours.ONE.toStandardDuration());
+        updateIndex("raw_metrics", "raw", startDay, start, end, Hours.ONE.toStandardDuration());
     }
 
     private void update1HourIndex(DateTime start, DateTime end, DateTime startDay) {
         log.info("Updating one_hour index");
-        updateIndex("six_hour_metrics", "one_hour", startDay, start, end, Hours.SIX.toStandardDuration());
+        updateIndex("one_hour_metrics", "one_hour", startDay, start, end, Hours.SIX.toStandardDuration());
     }
 
     private void update6HourIndex(DateTime start, DateTime end, DateTime startDay) {
         log.info("Updating six_hour index");
-        updateIndex("twenty_four_hour_metrics", "six_hour", startDay, start, end, Days.ONE.toStandardDuration());
+        updateIndex("six_hour_metrics", "six_hour", startDay, start, end, Days.ONE.toStandardDuration());
     }
 
     private void updateIndex(String oldBucket, String newBucket, DateTime startDay, DateTime start, DateTime end,
@@ -109,11 +109,11 @@ public class Replace412Index {
             }
             count = 0;
             resultSet = session.execute(statement);
-        } while (time.isBefore(end));
+        } while (!time.isAfter(end));
     }
 
     protected void drop411Index() {
         log.info("Dropping table metrics_index");
-        session.execute("DROP table rhq.metrics_index");
+        session.execute("DROP table rhq.metrics_cache_index");
     }
 }

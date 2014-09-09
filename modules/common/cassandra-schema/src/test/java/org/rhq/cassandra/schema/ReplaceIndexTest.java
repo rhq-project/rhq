@@ -33,14 +33,18 @@ public class ReplaceIndexTest extends SchemaUpgradeTest {
 
     private static final int NUM_PARTITIONS = 5;
 
+    private static final int CACHE_BATCH_SIZE = 5;
+
     private Session session;
 
     @Test
     public void replace411Index() throws Exception {
+        System.setProperty("rhq.metrics.index.page-size", "5");
+
         SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
             new String[] {"127.0.0.1"}, 9042);
         schemaManager.setUpdateFolderFactory(new TestUpdateFolderFactory(VersionManager.Task.Update.getFolder())
-            .removeFiles("0006.xml", "0007.xml"));
+            .removeFiles("0003.xml", "0004.xml", "0005.xml", "0006.xml", "0007.xml"));
         schemaManager.drop();
         schemaManager.shutdown();
         schemaManager.install(new Properties());
@@ -51,8 +55,6 @@ public class ReplaceIndexTest extends SchemaUpgradeTest {
             .withCredentials("rhqadmin", "rhqadmin")
             .build();
         session = cluster.connect("rhq");
-
-        System.setProperty("rhq.metrics.index.page-size", "5");
 
         DateTime endTime =  DateTime.now().hourOfDay().roundFloorCopy();
         DateTime startTime = endTime.minusDays(3);
@@ -77,19 +79,63 @@ public class ReplaceIndexTest extends SchemaUpgradeTest {
         assert6HourIndexUpdated(today, today.plusDays(1), scheduleIds(100, 125));
     }
 
+    @Test
+    public void replace412Index() throws Exception {
+        System.setProperty("rhq.metrics.index.page-size", "5");
+        System.setProperty("rhq.storage.schema.skip-steps", "false");
+
+        SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
+            new String[] {"127.0.0.1"}, 9042);
+        schemaManager.setUpdateFolderFactory(new TestUpdateFolderFactory(VersionManager.Task.Update.getFolder())
+            .removeFiles("0004.xml", "0005.xml", "0006.xml", "0007.xml"));
+        schemaManager.drop();
+        schemaManager.shutdown();
+        schemaManager.install(new Properties());
+        schemaManager.shutdown();
+
+        DateTime endTime =  DateTime.now().hourOfDay().roundFloorCopy();
+        DateTime startTime = endTime.minusDays(3);
+        DateTime today = endTime.hourOfDay().roundFloorCopy().minusHours(endTime.hourOfDay().roundFloorCopy()
+            .hourOfDay().get());
+
+        populateRaw412Index(startTime, startTime.plusDays(1), scheduleIds(100, 112));
+        populateRaw412Index(startTime.plusDays(1), startTime.plusDays(2), scheduleIds(100, 109));
+        populateRaw412Index(endTime.minusHours(1), endTime, scheduleIds(105, 123));
+        populate1Hour412Index(today, today.plusHours(6), scheduleIds(105, 123));
+        populate6Hour412Index(today, today.plusDays(1), scheduleIds(100, 125));
+
+
+        Cluster cluster = new Cluster.Builder()
+            .addContactPoint("127.0.0.1")
+            .withCredentials("rhqadmin", "rhqadmin")
+            .build();
+        session = cluster.connect("rhq");
+
+        schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
+            new String[] {"127.0.0.1"}, 9042);
+        schemaManager.install(new Properties());
+        schemaManager.shutdown();
+
+        assertRawIndexUpdated(startTime, startTime.plusDays(1), scheduleIds(100, 112));
+        assertRawIndexUpdated(startTime.plusDays(1), startTime.plusDays(2), scheduleIds(100, 109));
+        assertRawIndexUpdated(endTime.minusHours(1), endTime, scheduleIds(105, 123));
+        assert1HourIndexUpdated(today, today.plusHours(6), scheduleIds(105, 123));
+        assert6HourIndexUpdated(today, today.plusDays(1), scheduleIds(100, 125));
+    }
+
     private void populateRaw411Index(DateTime startTime, DateTime endTime, List<Integer> scheduleIds) {
-        updateIndex("one_hour_metrics", startTime, endTime, Hours.ONE.toStandardDuration(), scheduleIds);
+        populate411Index("one_hour_metrics", startTime, endTime, Hours.ONE.toStandardDuration(), scheduleIds);
     }
 
     private void populate1Hour411Index(DateTime startTime, DateTime endTime, List<Integer> scheduleIds) {
-        updateIndex("six_hour_metrics", startTime, endTime, Hours.SIX.toStandardDuration(), scheduleIds);
+        populate411Index("six_hour_metrics", startTime, endTime, Hours.SIX.toStandardDuration(), scheduleIds);
     }
 
     private void populate6Hour411Index(DateTime startTime, DateTime endTime, List<Integer> scheduleIds) {
-        updateIndex("twenty_four_hour_metrics", startTime, endTime, Days.ONE.toStandardDuration(), scheduleIds);
+        populate411Index("twenty_four_hour_metrics", startTime, endTime, Days.ONE.toStandardDuration(), scheduleIds);
     }
 
-    private void updateIndex(String bucket, DateTime startTime, DateTime endTime, Duration timeSlice,
+    private void populate411Index(String bucket, DateTime startTime, DateTime endTime, Duration timeSlice,
         List<Integer> scheduleIds) {
         DateTime time = startTime;
         while (time.isBefore(endTime)) {
@@ -99,6 +145,37 @@ public class ReplaceIndexTest extends SchemaUpgradeTest {
             }
             time = time.plus(timeSlice);
         }
+    }
+
+    private void populateRaw412Index(DateTime startTime, DateTime endTime, List<Integer> scheduleIds) {
+        populate412Index("raw_metrics", startTime, endTime, Hours.ONE.toStandardDuration(), scheduleIds);
+    }
+
+    private void populate1Hour412Index(DateTime startTime, DateTime endTime, List<Integer> scheduleIds) {
+        populate412Index("one_hour_metrics", startTime, endTime, Hours.ONE.toStandardDuration(), scheduleIds);
+    }
+
+    private void populate6Hour412Index(DateTime startTime, DateTime endTime, List<Integer> scheduleIds) {
+        populate412Index("six_hour_metrics", startTime, endTime, Hours.ONE.toStandardDuration(), scheduleIds);
+    }
+
+    private void populate412Index(String bucket, DateTime startTime, DateTime endTime, Duration timeSlice,
+        List<Integer> scheduleIds) {
+        DateTime time = startTime;
+        while (time.isBefore(endTime)) {
+            DateTime day = time.hourOfDay().roundFloorCopy().minusHours(time.getHourOfDay());
+            for (Integer scheduleId : scheduleIds) {
+                session.execute("update metrics_cache_index set schedule_ids = schedule_ids + {" + scheduleId + "} " +
+                    "where bucket = '" + bucket + "' and day = " + day.getMillis() + " and partition = 0 and " +
+                    "collection_time_slice = " + time.getMillis() + " and start_schedule_id = " +
+                    startScheduleId(scheduleId) + " and insert_time_slice = " + time.getMillis());
+            }
+            time = time.plus(timeSlice);
+        }
+    }
+
+    private int startScheduleId(int scheduleId) {
+        return (scheduleId / CACHE_BATCH_SIZE) * CACHE_BATCH_SIZE;
     }
 
     private List<Integer> scheduleIds(int start, int end) {

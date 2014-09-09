@@ -71,6 +71,9 @@ class UpdateFile implements Comparable<UpdateFile> {
      * @return unbound list of steps.
      */
     private List<Step> getStepNodes() {
+        // This is provided as a test hook
+        boolean skipSteps = Boolean.valueOf(System.getProperty("rhq.storage.schema.skip-steps", "true"));
+
         InputStream stream = null;
         try {
             stream = SchemaManager.class.getClassLoader().getResourceAsStream(file);
@@ -93,7 +96,7 @@ class UpdateFile implements Comparable<UpdateFile> {
                 Step step;
                 if (STEP_ELEMENT.equals(updateStepElement.getNodeName()) && updateStepElement.getTextContent() != null) {
                     Node skipAttribute = updateStepElement.getAttributes().getNamedItem("skip");
-                    if (skipAttribute != null && skipAttribute.getNodeValue().equals("true")) {
+                    if (skipSteps && skipAttribute != null && skipAttribute.getNodeValue().equals("true")) {
                         continue;
                     }
                     Node classAttribute = updateStepElement.getAttributes().getNamedItem("class");

@@ -92,6 +92,10 @@ class UpdateFile implements Comparable<UpdateFile> {
                 Node updateStepElement = updateStepElements.item(index);
                 Step step;
                 if (STEP_ELEMENT.equals(updateStepElement.getNodeName()) && updateStepElement.getTextContent() != null) {
+                    Node skipAttribute = updateStepElement.getAttributes().getNamedItem("skip");
+                    if (skipAttribute != null && skipAttribute.getNodeValue().equals("true")) {
+                        continue;
+                    }
                     Node classAttribute = updateStepElement.getAttributes().getNamedItem("class");
                     if (classAttribute == null || classAttribute.getNodeValue().equals(CQLStep.class.getSimpleName()) ||
                         classAttribute.getNodeValue().toUpperCase().equals("CQL")) {

@@ -1,14 +1,4 @@
 <updatePlan>
-  <!--<step>-->
-    <!--CREATE TABLE rhq.metrics_idx (-->
-      <!--bucket text,-->
-      <!--partition int,-->
-      <!--time timestamp,-->
-      <!--schedule_id int,-->
-      <!--PRIMARY KEY ((bucket, partition, time), schedule_id)-->
-    <!--) WITH compression = { 'sstable_compression' : 'LZ4Compressor' };-->
-  <!--</step>-->
-
   <step>
     CREATE TABLE rhq.aggregate_metrics (
       schedule_id int,

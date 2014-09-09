@@ -33,16 +33,12 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.rhq.cassandra.CassandraClusterManager;
-import org.rhq.cassandra.ClusterInitService;
-import org.rhq.cassandra.DeploymentOptions;
-import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.core.util.jdbc.JDBCUtil;
 
 /**
  * @author John Sanda
  */
-public class MigrateAggregateMetricsTest {
+public class MigrateAggregateMetricsTest extends SchemaUpgradeTest {
 
     private static final Log log = LogFactory.getLog(MigrateAggregateMetricsTest.class);
 
@@ -62,22 +58,14 @@ public class MigrateAggregateMetricsTest {
 
     private PreparedStatement insert24HourData;
 
-    private CassandraClusterManager ccm;
-
     @BeforeClass
     public void setupClass() throws Exception {
         connection = newJDBCConnection();
-        if (Boolean.valueOf(System.getProperty("rhq.storage.deploy", "true"))) {
-            deployStorageCluster();
-        }
     }
 
     @AfterClass
     public void tearDownClass() throws Exception {
         JDBCUtil.safeClose(connection);
-        if (Boolean.valueOf(System.getProperty("rhq.storage.shutdown", "true"))) {
-            ccm.shutdownCluster();
-        }
     }
 
     @BeforeMethod
@@ -88,26 +76,6 @@ public class MigrateAggregateMetricsTest {
     @AfterMethod(alwaysRun = true)
     public void tearDown() throws Exception {
         resetDB();
-    }
-
-    private void deployStorageCluster() {
-        DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
-        DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
-        deploymentOptions.setClusterDir("target/cassandra");
-        deploymentOptions.setNumNodes(1);
-        deploymentOptions.setUsername("rhqadmin");
-        deploymentOptions.setPassword("rhqadmin");
-        deploymentOptions.setStartRpc(true);
-        deploymentOptions.setHeapSize("256M");
-        deploymentOptions.setHeapNewSize("64M");
-        deploymentOptions.setJmxPort(8399);
-
-        ccm = new CassandraClusterManager(deploymentOptions);
-        ccm.createCluster();
-        ccm.startCluster(false);
-
-        ClusterInitService clusterInitService = new ClusterInitService();
-        clusterInitService.waitForClusterToStart(new String[] {"127.0.0.1"}, new int[] {8399}, 1, 2000, 20, 10);
     }
 
     private void resetDB() throws Exception {
@@ -134,6 +102,8 @@ public class MigrateAggregateMetricsTest {
 
         TestSchemaManager schemaManager = new TestSchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
             new String[] {"127.0.0.1"}, 9042);
+        schemaManager.setUpdateFolderFactory(new TestUpdateFolderFactory(VersionManager.Task.Update.getFolder())
+            .removeFiles("0005.xml", "0006.xml", "0007.xml"));
         schemaManager.drop();
         schemaManager.install(properties);
         schemaManager.shutdown();

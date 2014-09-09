@@ -1,5 +1,5 @@
 <updatePlan>
-  <step>
+  <step skip="true">
     CREATE TABLE rhq.metrics_cache (
     bucket varchar,
     time_slice timestamp,
@@ -11,7 +11,7 @@
     ) WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
   </step>
 
-  <step>
+  <step skip="true">
     CREATE TABLE rhq.metrics_cache_index (
     bucket varchar,
     day timestamp,
@@ -24,5 +24,5 @@
     ) WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
   </step>
 
-  <step class="org.rhq.cassandra.schema.PopulateCacheIndex"/>
+  <step class="org.rhq.cassandra.schema.PopulateCacheIndex" skip="true"/>
 </updatePlan>

@@ -48,6 +48,20 @@ public abstract class AbstractGroupConfigurationUpdateCriteria extends AbstractC
         this.filterResourceGroupIds = filterResourceGroupIds;
     }
 
+    /**
+     * @param fetchConfiguration If true then fetch the group-level configuration to be applied to each group member.
+     */
+    @Override
+    public void fetchConfiguration(boolean fetchConfiguration) {
+        super.fetchConfiguration(fetchConfiguration);
+    }
+
+    /**
+     * Fetch the current resource configurations for the group members.   The "current" configuration is the one most
+     * recently reported and stored server-side, the agent is not queried.
+     *
+     * @param fetchConfigurationUpdates
+     */
     public void fetchConfigurationUpdates(boolean fetchConfigurationUpdates) {
         this.fetchConfigurationUpdates = fetchConfigurationUpdates;
     }

@@ -50,15 +50,25 @@ public interface ConfigurationManagerRemote {
      * @param criteria
      * @return not null
      *
+     * @see {@link #getLatestPluginConfigurationUpdate(Subject, int)}
+     *
      * @since 4.10
      */
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(Subject subject,
         GroupPluginConfigurationUpdateCriteria criteria);
 
     /**
+     * Note that when setting {@link GroupPluginConfigurationUpdateCriteria#fetchConfigurationUpdates(boolean)} to true,
+     * the current resource configurations are returned.  The "current" configuration is the one most recently reported
+     * and stored server-side, the agent is not queried.  Recent, unreported changes in the "live" configuration will
+     * not be reported.  Querying the agent is slower and not typically necessary, as configuration changes infrequently.
+     *
      * @param subject
      * @param criteria
      * @return not null
+     *
+     * @see {@link #getLatestResourceConfigurationUpdate(Subject, int)}
+     * @see {@link #getLiveResourceConfiguration(Subject, int, boolean)}
      *
      * @since 4.10
      */
@@ -84,34 +94,47 @@ public interface ConfigurationManagerRemote {
     GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject, int configurationUpdateId);
 
     /**
-     * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
-     * resource's plugin configuration is not yet initialized.
+     * Get the "current" plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
+     * resource's plugin configuration is not yet initialized.  The "current" configuration is that which has been
+     * most recently reported and stored server-side, the agent is not queried.
      *
      * @param  subject     the user who wants to see the information
      * @param  resourceId a {@link Resource} id
      *
      * @return the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
-     *         resource's configuration is not yet initialized
+     *         resource's plugin configuration is not yet initialized
+     *
+     * @see {@link #getLatestPluginConfigurationUpdate(Subject, int)}
      */
     Configuration getPluginConfiguration(Subject subject, int resourceId);
 
     /**
-     * Get the current Resource configuration.
-     * @param  subject             The logged in user's subject.
-     * @param resourceId        A resource id.
-     * @return The specified configuration or null
+     * Get the "current" resource configuration for the {@link Resource} with the given id, or <code>null</code> if the
+     * resource's resource configuration is not yet initialized.  The "current" configuration is that which has been
+     * most recently reported and stored server-side, the agent is not queried.
+     *
+     * @param  subject     the user who wants to see the information
+     * @param  resourceId  a {@link Resource} id
+     *
+     * @return the current resource configuration for the {@link Resource} with the given id, or <code>null</code> if the
+     *         resource's resource configuration is not yet initialized
+     *
+     * @see {@link #getLatestResourceConfigurationUpdate(Subject, int)}
+     * @see {@link #getLiveResourceConfiguration(Subject, int, boolean)}
      */
     Configuration getResourceConfiguration(Subject subject, int resourceId);
 
     /**
-     * Get the latest plugin configuration for the {@link Resource} with the given id. Returns the configuration as it
-     * is known on the server-side in the database.
+     * Get the {@link PluginConfigurationUpdate} for the "current" plugin configuration for the {@link Resource} with
+     * the given id.  This is the same as {@link #getPluginConfiguration(Subject, int)} but returns the full update
+     * information as opposed to just the configuration.
      *
      * @param  subject     the user who wants to see the information
      * @param  resourceId a {@link Resource} id
      *
-     * @return the current plugin configuration (along with additional information about the configuration) for the
-     *         {@link Resource} with the given id
+     * @return the {@link PluginConfigurationUpdate} for the "current" plugin configuration
+     *
+     * @see {@link #getPluginConfiguration(Subject, int)}
      */
     PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId);
 
@@ -122,6 +145,10 @@ public interface ConfigurationManagerRemote {
      * the database will be updated to match the live configuration.  This can return <code>null</code> if an initial
      * resource configuration has yet to be stored in the database and a live configuration can not be retrieved (e.g.
      * in the case the agent or resource is down).
+     * </p>
+     * This differs from {@link #getLiveResourceConfiguration(Subject, int, boolean)} in that it will return the latest
+     * stored configuration if the agent can not be queried.  This differs from {@link #getResourceConfiguration(Subject, int)}
+     * in that it will attempt to query the agent to capture the "live" configuration.
      *
      * @param  subject     the user who wants to see the information
      * @param  resourceId a {@link Resource} id
@@ -130,6 +157,9 @@ public interface ConfigurationManagerRemote {
      *         {@link Resource} with the given id, or <code>null</code> if the resource's configuration is not yet
      *         initialized and its live configuration could not be determined.  The configuration can be accessed
      *         via {@link ResourceConfigurationUpdate#getConfiguration()}.
+     *
+     * @see {@link #getLiveResourceConfiguration(Subject, int, boolean)}
+     * @see {@link #getResourceConfiguration(Subject, int)}
      */
     ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId);
 
@@ -205,18 +235,23 @@ public interface ConfigurationManagerRemote {
         Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
     /**
-     * Get the currently live resource configuration for the {@link Resource} with the given id. This actually asks for
-     * the up-to-date configuration directly from the agent. An exception will be thrown if communications with the
-     * agent cannot be made.
+     * Get the "live" resource configuration for the {@link Resource} with the given id.  The live configuration is
+     * that of the resource at the time this call is made.  The agent is queried and will collect the configuration
+     * by inspecting the resource.
+     * </p>
+     * Unlike {@link #getLatestResourceConfigurationUpdate(Subject, int)} this method has no affect on the "current"
+     * resource configuration stored server-side.
      *
-     * @param  subject     the user who wants to see the information
-     * @param  resourceId a {@link Resource} id
+     * @param  subject        the user who wants to see the information
+     * @param  resourceId     a {@link Resource} id
      * @param  pingAgentFirst true if the underlying Agent should be pinged successfully before attempting to retrieve
      *                        the configuration, or false otherwise
      *
-     * @return the live configuration
+     * @return the "live" resource configuration, or null if the "live" configuration can not be determined due to
+     *         agent or resource being unavailable.
      *
-     * @throws Exception if failed to get the configuration from the agent
+     * @see {@link #getLatestResourceConfigurationUpdate(Subject, int)}
+     * @see {@link #getLiveResourceConfiguration(Subject, int, boolean)}
      */
     Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst)
         throws Exception;

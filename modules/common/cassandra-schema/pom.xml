@@ -15,7 +15,7 @@
   <properties>
     <rhq.storage.deploy>true</rhq.storage.deploy>
     <rhq.storage.shutdown>true</rhq.storage.shutdown>
-    <numSchedules>50</numSchedules>
+    <numSchedules>10</numSchedules>
   </properties>
 
   <dependencies>

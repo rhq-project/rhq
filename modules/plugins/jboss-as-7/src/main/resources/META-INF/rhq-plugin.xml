@@ -2027,7 +2027,7 @@
         <c:option-source target="resource" expression="type=SocketBindingGroup" expressionScope="baseResource"/>
       </c:simple-property>
       <c:simple-property name="socket-binding-port-offset" readOnly="false" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
-      <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean"/>
+      <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean" description="Whether or not this server should be started when the Host Controller starts."/>
       <!--
               <c:simple-property name="jmv" displayName="JVM" defaultValue="default" type="string" description="JVM definition to use with this server">
                 <c:option-source target="resource" expression="type='JVM Definition' plugin=&pluginName;"/>

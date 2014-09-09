@@ -59,7 +59,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private Integer filterParentResourceId; // needs overrides
     private String filterParentResourceName; // needs overrides
     private Integer filterParentResourceTypeId; // needs overrides
-    private ResourceCategory filterParentResourceCategory; // needs overrides    
+    private ResourceCategory filterParentResourceCategory; // needs overrides
     private List<InventoryStatus> filterParentInventoryStatuses; // needs overrides
     private String filterAgentName; // needs overrides
     private Integer filterAgentId; // needs overrides
@@ -68,7 +68,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private Long filterEndItime;
     private List<Integer> filterExplicitGroupIds; // requires overrides
     private List<Integer> filterImplicitGroupIds; // requires overrides
-    private Integer filterRootResourceId; // requires overrides    
+    private Integer filterRootResourceId; // requires overrides
 
     private boolean fetchResourceType;
     private boolean fetchChildResources;
@@ -109,9 +109,9 @@ public class ResourceCriteria extends TaggedCriteria {
     /**
      * Note: This constructor sets by default:
      * <pre>filterInventoryStatus = InventoryStatus.COMMITTED</pre>
-     * 
+     *
      * <p>For other implicit defaults see {@link Criteria#Criteria()}</p>
-     * 
+     *
      * @see Criteria#Criteria()
      */
     public ResourceCriteria() {
@@ -167,8 +167,8 @@ public class ResourceCriteria extends TaggedCriteria {
 
     /**
      * Note, by default this filter is set to COMMITTED.  This must be explicitly set to null to get all
-     * Resources. 
-     *  
+     * Resources.
+     *
      * @param filterInventoryStatus
      */
     public void addFilterInventoryStatus(InventoryStatus filterInventoryStatus) {
@@ -177,7 +177,7 @@ public class ResourceCriteria extends TaggedCriteria {
 
     /**
      * Note, setting this filter will set filterInventoryStatus to null since that is a mutually exclusive filter.
-     *  
+     *
      * @param filterInventoryStatuses
      */
     public void addFilterInventoryStatuses(List<InventoryStatus> filterInventoryStatuses) {
@@ -285,6 +285,11 @@ public class ResourceCriteria extends TaggedCriteria {
         this.fetchParentResource = fetchParentResource;
     }
 
+    /**
+     * @param fetchResourceConfiguration if true fetch the current resource configuration for the Resource. The
+     * "current" configuration is that which has been most recently reported and stored server-side, the agent is not
+     * queried.  For agent-side configuration look for methods reporting "live" configuration.
+     */
     public void fetchResourceConfiguration(boolean fetchResourceConfiguration) {
         this.fetchResourceConfiguration = fetchResourceConfiguration;
     }

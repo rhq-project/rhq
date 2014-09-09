@@ -37,7 +37,7 @@ public class TestUpdateFolderFactory extends UpdateFolderFactory {
     @Override
     public UpdateFolder newUpdateFolder(String folder) throws Exception {
         UpdateFolder updateFolder = super.newUpdateFolder(folder);
-        if (folder.equals(folder) && !removedFiles.isEmpty()) {
+        if (this.folder.equals(folder) && !removedFiles.isEmpty()) {
             Iterator<UpdateFile> iterator = updateFolder.getUpdateFiles().iterator();
             while (iterator.hasNext()) {
                 UpdateFile updateFile = iterator.next();

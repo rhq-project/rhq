@@ -47,6 +47,13 @@ esac
 # We also assume our custom environment script is located in the same
 # place as this script.
 # ----------------------------------------------------------------------
+type readlink >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo >&2 'WARNING: The readlink command is not available on this platform.'
+    echo >&2 '         If this script was launched from a symbolic link, it may '
+    echo >&2 '         fail to properly resolve its home directory.'
+fi
+
 _DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
 RHQ_CLI_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`
 

@@ -113,7 +113,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private long lastManagementInterfaceReply = 0;
 
     @Override
-    public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext<T> resourceContext) throws Exception {
         super.start(resourceContext);
         xmlInputFactory = XMLInputFactory.newInstance();
         serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
@@ -153,11 +153,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                     throw new InvalidPluginConfigurationException(
                         "Plugin is unable to manage this resource because attribute 'name' in root element of Host Controller configuratin file is missing. Please update "
                             + getServerPluginConfiguration().getHostConfigFile() + ".");
-                } catch (Exception ex) {
-                    throw ex;
                 }
-            } catch (Exception ex) {
-                throw ex;
             }
         } catch (TimeoutException e) {
             long now = new Date().getTime();
@@ -452,7 +448,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         } else {
             File script = new File(parameters.getSimpleValue("file"));
             if (!script.isAbsolute()) {
-                script = new File(serverPluginConfig.getHomeDir(), script.getPath());
+                script = new File(serverPluginConfig.getHomeDir(), script.getPath()).getAbsoluteFile();
             }
 
             results = cli.executeCliScript(script);
@@ -771,9 +767,19 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             scriptFile = File.createTempFile(handoverRequest.getFilename(), ".tmp", context.getTemporaryDirectory());
             FileUtil.writeFile(handoverRequest.getContent(), scriptFile);
 
-            ProcessExecutionResults results = ServerControl.onServer(
-                getServerPluginConfiguration().getPluginConfig(), getMode(), context.getSystemInformation(), xmlInputFactory)
-                .waitingFor(waitTime).killingOnTimeout(killOnTimeout).cli().executeCliScript(scriptFile);
+            ProcessExecutionResults results = ServerControl //
+                .onServer( //
+                        getServerPluginConfiguration().getPluginConfig(), //
+                        getMode(), //
+                        context.getSystemInformation(), //
+                        xmlInputFactory //
+                ) //
+                .waitingFor(waitTime) //
+                .killingOnTimeout(killOnTimeout) //
+                .cli() //
+                .executeCliScript(scriptFile.getAbsoluteFile());
+
+            logExecutionResults(results);
 
             Throwable error = results.getError();
             if (error != null) {

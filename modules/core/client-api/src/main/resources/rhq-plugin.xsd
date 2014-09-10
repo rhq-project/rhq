@@ -1330,11 +1330,18 @@
 
    <xs:complexType name="DiscoveryCallbacksType">
       <xs:sequence>
-         <xs:element name="type-callback" type="rhq:DiscoveryTypeCallbackType" maxOccurs="unbounded" minOccurs="1">
-            <xs:annotation>
-               <xs:documentation>A discovery callback to help with discovery for a specific resource type.</xs:documentation>
-            </xs:annotation>
-         </xs:element>
+         <xs:choice minOccurs="1" maxOccurs="unbounded">
+             <xs:element name="type-callback" type="rhq:DiscoveryTypeCallbackType" maxOccurs="unbounded" minOccurs="1">
+                 <xs:annotation>
+                     <xs:documentation>A discovery callback to help with discovery for a specific resource type.</xs:documentation>
+                 </xs:annotation>
+             </xs:element>
+             <xs:element name="upgrade-callback" type="rhq:ResourceUpgradeCallbackType" maxOccurs="unbounded" minOccurs="1">
+                 <xs:annotation>
+                     <xs:documentation>A resource upgrade callback to help with upgrade of resources of a specific resource type.</xs:documentation>
+                 </xs:annotation>
+             </xs:element>
+         </xs:choice>
       </xs:sequence>
    </xs:complexType>
 
@@ -1353,6 +1360,24 @@
           <xs:annotation>
              <xs:documentation>The class name of this discovery callback implementation.</xs:documentation>
           </xs:annotation>
+       </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType name="ResourceUpgradeCallbackType" >
+       <xs:attribute name="type" type="xs:string" use="required">
+           <xs:annotation>
+               <xs:documentation>When upgrading a resource of this resource type, the results will be processed by the callback.</xs:documentation>
+           </xs:annotation>
+       </xs:attribute>
+       <xs:attribute name="plugin" type="xs:string" use="required">
+           <xs:annotation>
+               <xs:documentation>The plugin that defines the named resource type. Must be either this plugin or one of its dependencies.</xs:documentation>
+           </xs:annotation>
+       </xs:attribute>
+       <xs:attribute name="callbackClass" type="rhq:classNameType" use="required">
+           <xs:annotation>
+               <xs:documentation>The class name of this resource upgrade callback implementation.</xs:documentation>
+           </xs:annotation>
        </xs:attribute>
    </xs:complexType>
 

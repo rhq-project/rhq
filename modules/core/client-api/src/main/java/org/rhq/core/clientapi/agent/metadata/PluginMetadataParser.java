@@ -58,6 +58,7 @@ import org.rhq.core.clientapi.descriptor.plugin.ProcessScanDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ResourceCreateDeletePolicy;
 import org.rhq.core.clientapi.descriptor.plugin.ResourceCreationData;
 import org.rhq.core.clientapi.descriptor.plugin.ResourceDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ResourceUpgradeCallbackType;
 import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
@@ -94,6 +95,7 @@ public class PluginMetadataParser {
     private Map<ResourceType, String> componentClasses = new HashMap<ResourceType, String>();
 
     private Map<ResourceType, List<String>> discoveryCallbackClasses = null;
+    private Map<ResourceType, List<String>> resourceUpgradeCallbackClasses = null;
 
     // a map keyed on plugin name that contains the parsers for all other known plugin descriptors
     // this map is managed by this parser's PluginMetadataManager and is how the manager shares information
@@ -140,6 +142,10 @@ public class PluginMetadataParser {
      */
     public Map<ResourceType, List<String>> getDiscoveryCallbackClasses() {
         return discoveryCallbackClasses;
+    }
+
+    public Map<ResourceType, List<String>> getResourceUpgradeCallbackClasses() {
+        return resourceUpgradeCallbackClasses;
     }
 
     public void parseDescriptor() throws InvalidPluginDescriptorException {
@@ -209,53 +215,101 @@ public class PluginMetadataParser {
             return;
         }
 
-        List<DiscoveryTypeCallbackType> jaxbCallbacksList = jaxbCallbacks.getTypeCallback();
+        List<Object> jaxbCallbacksList = jaxbCallbacks.getTypeCallbackOrUpgradeCallback();
         if (jaxbCallbacksList == null || jaxbCallbacksList.isEmpty()) {
             return;
         }
 
-        for (DiscoveryTypeCallbackType jaxbCallback : jaxbCallbacksList) {
-            String plugin = jaxbCallback.getPlugin();
-            String type = jaxbCallback.getType();
-            String callbackClass = jaxbCallback.getCallbackClass();
-
-            LOG.debug("Plugin [" + pluginDescriptor.getName() + "] defined a discovery class [" + callbackClass
-                + "] to listen for discovery details for type [{" + plugin + "}" + type + "].");
-
-            if (callbackClass == null || callbackClass.length() == 0) {
-                // this should never happen - the XML parser should have failed to even get this far
-                throw new InvalidPluginDescriptorException("Missing discovery class in plugin ["
-                        + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type);
+        for (Object jaxbCallback : jaxbCallbacksList) {
+            if (jaxbCallback instanceof DiscoveryTypeCallbackType) {
+                parseDiscoveryCallback((DiscoveryTypeCallbackType) jaxbCallback);
+            } else {
+                parseResourceUpgradeCallback((ResourceUpgradeCallbackType) jaxbCallback);
             }
+        }
+    }
 
-            if (plugin == null || plugin.length() == 0 || type == null || type.length() == 0) {
-                // this should never happen - the XML parser should have failed to even get this far
-                throw new InvalidPluginDescriptorException("Both plugin and type must be defined for discovery callbacks in plugin ["
-                    + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type + ":" + callbackClass);
-            }
+    private void parseDiscoveryCallback(DiscoveryTypeCallbackType jaxbCallback) throws InvalidPluginDescriptorException {
+        String plugin = jaxbCallback.getPlugin();
+        String type = jaxbCallback.getType();
+        String callbackClass = jaxbCallback.getCallbackClass();
 
-            ResourceType resourceType = getResourceTypeFromPlugin(type, plugin);
-            if (resourceType == null) {
-                LOG.warn("There is no type named [" + type + "] from a plugin named [" + plugin
-                        + "]. This is probably because that plugin is missing. The discovery callback will be ignored");
-                continue;
-            }
+        LOG.debug("Plugin [" + pluginDescriptor.getName() + "] defined a discovery class [" + callbackClass
+            + "] to listen for discovery details for type [{" + plugin + "}" + type + "].");
 
-            if (discoveryCallbackClasses == null) {
-                discoveryCallbackClasses = new HashMap<ResourceType, List<String>>();
-            }
-
-            List<String> callbacksList = discoveryCallbackClasses.get(resourceType);
-            if (callbacksList == null) {
-                callbacksList = new ArrayList<String>(1);
-                discoveryCallbackClasses.put(resourceType, callbacksList);
-            }
-
-            String fqcn = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), callbackClass);
-            callbacksList.add(fqcn);
+        if (callbackClass == null || callbackClass.length() == 0) {
+            // this should never happen - the XML parser should have failed to even get this far
+            throw new InvalidPluginDescriptorException("Missing discovery class in plugin ["
+                + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type);
         }
 
-        return;
+        if (plugin == null || plugin.length() == 0 || type == null || type.length() == 0) {
+            // this should never happen - the XML parser should have failed to even get this far
+            throw new InvalidPluginDescriptorException("Both plugin and type must be defined for discovery callbacks in plugin ["
+                + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type + ":" + callbackClass);
+        }
+
+        ResourceType resourceType = getResourceTypeFromPlugin(type, plugin);
+        if (resourceType == null) {
+            LOG.warn("There is no type named [" + type + "] from a plugin named [" + plugin
+                + "]. This is probably because that plugin is missing. The discovery callback will be ignored");
+            return;
+        }
+
+        if (discoveryCallbackClasses == null) {
+            discoveryCallbackClasses = new HashMap<ResourceType, List<String>>();
+        }
+
+        List<String> callbacksList = discoveryCallbackClasses.get(resourceType);
+        if (callbacksList == null) {
+            callbacksList = new ArrayList<String>(1);
+            discoveryCallbackClasses.put(resourceType, callbacksList);
+        }
+
+        String fqcn = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), callbackClass);
+        callbacksList.add(fqcn);
+    }
+
+
+    private void parseResourceUpgradeCallback(ResourceUpgradeCallbackType jaxbCallback) throws InvalidPluginDescriptorException {
+        String plugin = jaxbCallback.getPlugin();
+        String type = jaxbCallback.getType();
+        String callbackClass = jaxbCallback.getCallbackClass();
+
+        LOG.debug("Plugin [" + pluginDescriptor.getName() + "] defined a resource upgrade callback class [" + callbackClass
+            + "] to listen for resource upgrade results for type [{" + plugin + "}" + type + "].");
+
+        if (callbackClass == null || callbackClass.length() == 0) {
+            // this should never happen - the XML parser should have failed to even get this far
+            throw new InvalidPluginDescriptorException("Missing resource upgrade class in plugin ["
+                + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type);
+        }
+
+        if (plugin == null || plugin.length() == 0 || type == null || type.length() == 0) {
+            // this should never happen - the XML parser should have failed to even get this far
+            throw new InvalidPluginDescriptorException("Both plugin and type must be defined for resource upgrade callbacks in plugin ["
+                + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type + ":" + callbackClass);
+        }
+
+        ResourceType resourceType = getResourceTypeFromPlugin(type, plugin);
+        if (resourceType == null) {
+            LOG.warn("There is no type named [" + type + "] from a plugin named [" + plugin
+                + "]. This is probably because that plugin is missing. The resource upgrade callback will be ignored");
+            return;
+        }
+
+        if (resourceUpgradeCallbackClasses == null) {
+            resourceUpgradeCallbackClasses = new HashMap<ResourceType, List<String>>();
+        }
+
+        List<String> callbacksList = resourceUpgradeCallbackClasses.get(resourceType);
+        if (callbacksList == null) {
+            callbacksList = new ArrayList<String>(1);
+            resourceUpgradeCallbackClasses.put(resourceType, callbacksList);
+        }
+
+        String fqcn = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), callbackClass);
+        callbacksList.add(fqcn);
     }
 
     private ResourceType parsePlatformDescriptor(PlatformDescriptor platformDescriptor)

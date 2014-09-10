@@ -62,7 +62,7 @@ class PastDataAggregator extends DataAggregator {
     }
 
     @Override
-    protected IndexIterator loadIndexEntries() {
+    protected IndexIterator getIndexIterator() {
         // For now we will just search back up to 24 hours, but ultimately this will be
         // configurable.
         DateTime time = startTime.minusHours(24);

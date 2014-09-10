@@ -14,6 +14,10 @@ import org.joda.time.Hours;
 import org.joda.time.Period;
 
 /**
+ * For RHQ 4.9 - 4.11 installations this migrates data from the metrics_index table into the new metrics_idx table. For
+ * 4.12 installations, it migrates data from metrics_cache_index into metrics_idx. The old index tables are deleted
+ * after successfully migrating data.
+ *
  * @author John Sanda
  */
 public class ReplaceIndex implements Step {
@@ -47,8 +51,10 @@ public class ReplaceIndex implements Step {
         dateRanges.sixHourEndTime = getTimeSlice(dateRanges.rawEndTime, Days.ONE.toStandardDuration());
 
         if (cacheIndexExists()) {
+            log.info("Preparing to replace metrics_cache_index");
             new Replace412Index(session).execute(dateRanges);
         } else {
+            log.info("Preparing to replace metrics_index");
             new ReplaceRHQ411Index(session).execute(dateRanges);
         }
     }

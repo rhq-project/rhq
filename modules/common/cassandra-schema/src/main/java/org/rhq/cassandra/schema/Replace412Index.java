@@ -22,9 +22,9 @@ public class Replace412Index {
 
     private static final Log log = LogFactory.getLog(Replace412Index.class);
 
-    private static final int NUM_PARTITIONS = 4;
+    private static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("rhq.metrics.index.partitions", "4"));
 
-    private static final int PAGE_SIZE = 2500;
+    private static final int PAGE_SIZE = Integer.parseInt(System.getProperty("rhq.metrics.index.page-size", "2500"));
 
     private Session session;
 
@@ -45,7 +45,7 @@ public class Replace412Index {
         updateRawIndex(dateRanges.rawStartTime, dateRanges.rawEndTime, startDay);
         update1HourIndex(dateRanges.oneHourStartTime, dateRanges.oneHourEndTime, startDay);
         update6HourIndex(dateRanges.sixHourStartTime, dateRanges.sixHourEndTime, startDay);
-        drop411Index();
+        dropTables("rhq.metrics_cache", "rhq.metrics_cache_index");
     }
 
     private void initPreparedStatements() {
@@ -112,8 +112,12 @@ public class Replace412Index {
         } while (!time.isAfter(end));
     }
 
-    protected void drop411Index() {
-        log.info("Dropping table metrics_index");
-        session.execute("DROP table rhq.metrics_cache_index");
+    private void dropTables(String... tables) {
+        for (String table : tables) {
+            log.info("Dropping table " + table);
+            session.execute("DROP table " + table);
+        }
     }
+
+
 }

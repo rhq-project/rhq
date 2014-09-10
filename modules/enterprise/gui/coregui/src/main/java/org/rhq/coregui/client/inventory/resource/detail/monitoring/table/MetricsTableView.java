@@ -124,10 +124,20 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
     protected ListGrid createListGrid() {
         metricsTableListGrid = new MetricsTableListGrid(this, resource);
         metricsTableListGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+
             @Override
             public void onSelectionChanged(SelectionEvent selectionEvent) {
+                ListGridRecord selectedRecord = null;
                 addToDashboardButton.enable();
-                ListGridRecord selectedRecord = selectionEvent.getSelectedRecord();
+                // Get the last record selected, by default it returns the first
+                // this is to get around the bug that SINGLE selection policy is not working only MULTIPLE always.
+                if(selectionEvent.getSelection().length == 0){
+                    selectedRecord = selectionEvent.getSelectedRecord();
+                }else {
+                    // always just use the last selection
+                    selectedRecord = selectionEvent.getSelection()[selectionEvent.getSelection().length-1];
+                }
+
                 if (null != selectedRecord) {
                     selectedMetricDefinitionId = selectedRecord.getAttributeAsInt(METRIC_DEF_ID
                             .getValue());
@@ -180,6 +190,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                         Log.debug("Add to Dashboard -- Storing: " + measurementDefinition.getDisplayName() + " in "
                             + selectedDashboard.getName());
                         storeDashboardMetric(selectedDashboard, resource.getId(), measurementDefinition);
+                        addToDashboardButton.disable();
                         break;
                     }
                 }
@@ -197,6 +208,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
             @Override
             public void run() {
                 metricsTableListGrid.expandOpenedRows();
+                addToDashboardButton.disable();
                 new Timer() {
                     @Override
                     public void run() {
@@ -213,6 +225,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
     public void refresh() {
         super.refresh(false);
         metricsTableListGrid.expandOpenedRows();
+        addToDashboardButton.disable();
     }
 
     private void populateDashboardMenu() {

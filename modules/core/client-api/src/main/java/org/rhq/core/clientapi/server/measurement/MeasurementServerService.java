@@ -26,6 +26,8 @@ import java.util.Set;
 
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 
@@ -70,4 +72,11 @@ public interface MeasurementServerService {
      */
     @LimitedConcurrency(CONCURRENCY_LIMIT_MEASUREMENT_SCHEDULE_REQUEST)
     Set<ResourceMeasurementScheduleRequest> getLatestSchedulesForResourceId(int resourceIds, boolean getChildSchedules);
+
+    /**
+     * Asks the server for the last value of the trait that is currently known to it.
+     * @param scheduleId the schedule id of the trait
+     * @return the trait value or null if no value is known to the server
+     */
+    MeasurementDataTrait getLastKnownTraitValue(int scheduleId);
 }

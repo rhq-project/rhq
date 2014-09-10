@@ -1,13 +1,15 @@
 #!/bin/sh
 
-type readlink >/dev/null 2>&1
+command -v readlink >/dev/null 2>&1
 if [ $? -ne 0 ]; then
     echo >&2 'WARNING: The readlink command is not available on this platform.'
-    echo >&2 '         If this script was launched from a symbolic link, it may '
-    echo >&2 '         fail to properly resolve its home directory.'
+    echo >&2 '         If this script was launched from a symbolic link, errors may occur.'
+    echo >&2 '         Consider installing readlink on this platform.'
+    _DOLLARZERO="$0"
+else
+    _DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
 fi
 
-_DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
 RHQ_AGENT_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`
 RHQ_AGENT_MAINCLASS=org.rhq.core.pc.StandaloneContainer
 export RHQ_AGENT_MAINCLASS

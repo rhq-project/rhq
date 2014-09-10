@@ -37,20 +37,21 @@ case "`uname`" in
             ;;
 esac
 
-type readlink >/dev/null 2>&1
+command -v readlink >/dev/null 2>&1
 if [ $? -ne 0 ]; then
     echo >&2 'WARNING: The readlink command is not available on this platform.'
-    echo >&2 '         If this script was launched from a symbolic link, it may '
-    echo >&2 '         fail to properly resolve its home directory.'
+    echo >&2 '         If this script was launched from a symbolic link, errors may occur.'
+    echo >&2 '         Consider installing readlink on this platform.'
+    _DOLLARZERO="$0"
+else
+    # only certain platforms support the -e argument for readlink
+    if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then
+       _READLINK_ARG="-e"
+    fi
+    _DOLLARZERO="`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`"
 fi
 
-# only certain platforms support the -e argument for readlink
-if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then
-   _READLINK_ARG="-e"
-fi
-
-_SCRIPT_DIR_AND_NAME="`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`"
-_SCRIPT_DIR="`dirname $_SCRIPT_DIR_AND_NAME`"
+_SCRIPT_DIR="`dirname $_DOLLARZERO`"
 echo "$_SCRIPT_DIR/rhq-server-env.sh"
 if [ -f "$_SCRIPT_DIR/rhq-server-env.sh" ]; then
    . "$_SCRIPT_DIR/rhq-server-env.sh" $*

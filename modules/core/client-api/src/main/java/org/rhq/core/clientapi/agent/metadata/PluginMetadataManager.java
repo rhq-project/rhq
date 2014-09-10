@@ -90,7 +90,7 @@ public class PluginMetadataManager {
     private Map<ResourceType, Map<String, List<String>>> resourceUpgradeCallbacks = new HashMap<ResourceType, Map<String, List<String>>>();
 
     //this lock is shared for filling up both the discoveryCallbacks and resourceUpgradeCallbacks.
-    private final Object discoveryCallbacksLock = new Object();
+    private final Object discoveryAndResourceUpgradeCallbacksLock = new Object();
 
     public PluginMetadataManager() {
     }
@@ -213,7 +213,7 @@ public class PluginMetadataManager {
                 findDisabledResourceTypesInAllPlugins();
             }
 
-            synchronized (discoveryCallbacksLock) {
+            synchronized (discoveryAndResourceUpgradeCallbacksLock) {
                 // squirrel away all the discovery callbacks
                 Map<ResourceType, List<String>> discoveryCallbacksMap = parser.getDiscoveryCallbackClasses();
                 addCallbacks(discoveryCallbacksMap, pluginDescriptor.getName(), discoveryCallbacks);
@@ -520,7 +520,7 @@ public class PluginMetadataManager {
      * @return the collection of callbacks, grouped by the plugins that defined them (may be null)
      */
     public Map<String, List<String>> getDiscoveryCallbacks(ResourceType resourceType) {
-        synchronized (discoveryCallbacksLock) {
+        synchronized (discoveryAndResourceUpgradeCallbacksLock) {
             Map<String, List<String>> map = discoveryCallbacks.get(resourceType);
             return map;
         }

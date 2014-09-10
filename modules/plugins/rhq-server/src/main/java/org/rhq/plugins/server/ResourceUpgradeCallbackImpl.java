@@ -30,7 +30,7 @@ import org.rhq.core.system.ProcessInfo;
  * @author Lukas Krejci
  * @since 4.13
  */
-public class ResourceUpgradeCallbackImpl implements ResourceUpgradeCallback<ResourceComponent<?>> {
+public final class ResourceUpgradeCallbackImpl implements ResourceUpgradeCallback<ResourceComponent<?>> {
 
     @Override
     public void upgrade(ResourceUpgradeReport upgradeReport,
@@ -44,7 +44,14 @@ public class ResourceUpgradeCallbackImpl implements ResourceUpgradeCallback<Reso
                 pluginConfiguration = inventoriedResource.getPluginConfiguration();
             }
 
-            pluginConfiguration.setSimpleValue("supportsPatching", "false");
+            String currentValue = pluginConfiguration.getSimpleValue("supportsPatching");
+            if (currentValue == null) {
+                // we don't change the value if one is provided even if it is set to true.
+                // if that's the case, the user apparently wants to shoot herself in the foot, which we should not
+                // prevent.
+                pluginConfiguration.setSimpleValue("supportsPatching", "false");
+                upgradeReport.setNewPluginConfiguration(pluginConfiguration);
+            }
 
             String resourceName = upgradeReport.getNewName();
             if (resourceName == null) {
@@ -55,9 +62,9 @@ public class ResourceUpgradeCallbackImpl implements ResourceUpgradeCallback<Reso
             //report, but not enforce the change.
             if (!resourceName.endsWith(" RHQ Server")) {
                 resourceName += " RHQ Server";
-            }
 
-            upgradeReport.setNewName(resourceName);
+                upgradeReport.setNewName(resourceName);
+            }
         }
     }
 }

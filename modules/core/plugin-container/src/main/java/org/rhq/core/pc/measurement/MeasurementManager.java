@@ -704,7 +704,6 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
                 if (value != null) {
                     traitValue = value.getValue();
-                    traitCache.put(traitScheduleId, traitValue);
                 }
             } else {
                 throw new IllegalStateException(

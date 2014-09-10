@@ -31,8 +31,10 @@ import org.quartz.SimpleTrigger;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
+import org.rhq.enterprise.server.purge.PurgeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.storage.StorageClientManager;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
@@ -122,27 +124,33 @@ public class DataCalcJob extends AbstractStatefulJob {
 
     /**
      * Calculate the OOB values for the last hour.
-     * This also removes outdated ones due to recalculated baselines.
+     * This also removes out-dated ones due to recalculated baselines.
      */
     public void calculateOOBs(Iterable<AggregateNumericMetric> oneHourAggregates) {
-
-        long timeStart = System.currentTimeMillis();
         LOG.info("Auto-calculation of OOBs starting");
+
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         MeasurementOOBManagerLocal manager = LookupUtil.getOOBManager();
-        // purge oobs whose baseline just got recalculated
+        PurgeManagerLocal purgeManager = LookupUtil.getPurgeManager();
+        SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+
+        // purge OOBs whose baseline just got recalculated
         // For now just assume that our system is fast, so a cutoff of 30mins is ok,
         // as the calculate baseline job runs hourly
         long cutOff = System.currentTimeMillis() - (30L * 60L * 1000L);
-        manager.removeOutdatedOOBs(overlord, cutOff);
+
+        long timeStart = System.currentTimeMillis();
+
+        purgeManager.removeOutdatedOOBs(cutOff);
 
         // clean up
-        LookupUtil.getSystemManager().vacuum(overlord, new String[] { "RHQ_MEASUREMENT_OOB" });
+        systemManager.vacuum(overlord, new String[] { "RHQ_MEASUREMENT_OOB" });
 
         // Now calculate the fresh OOBs
         manager.computeOOBsForLastHour(overlord, oneHourAggregates);
 
         long duration = System.currentTimeMillis() - timeStart;
+
         LOG.info("Auto-calculation of OOBs completed in [" + duration + "]ms");
     }
 }

@@ -45,6 +45,28 @@ public final class PatchDetails {
     private final Type type;
     private final Date appliedAt;
 
+    public static List<PatchDetails> fromJSONArray(String patchHistoryList) {
+        ObjectMapper mapper = new ObjectMapper();
+
+        try {
+            @SuppressWarnings("unchecked")
+            List<Map<String, String>> lst = mapper.readValue(patchHistoryList, List.class);
+
+            List<PatchDetails> result = new ArrayList<PatchDetails>(lst.size());
+
+            for (Map<String, String> patchDescr : lst) {
+                result.add(processJSONParseResult(patchDescr));
+            }
+
+            return result;
+        } catch (IOException e) {
+            LOG.warn("Failed to parse the patch history JSON: " + e.getMessage());
+            return Collections.emptyList();
+        }
+
+
+    }
+
     public static List<PatchDetails> fromHistory(String patchHistoryOutcome) {
         ObjectMapper mapper = new ObjectMapper();
 
@@ -83,25 +105,29 @@ public final class PatchDetails {
 
         List<PatchDetails> ret = new ArrayList<PatchDetails>();
 
-        for(Map<String, String> patchDescr : patches) {
-            String patchId = patchDescr.get("patch-id");
-            Date appliedAt = null;
-            Type type = Type.fromJsonValue(patchDescr.get("type"));
-
-            try {
-                //This seems to be the date format AS are using
-                DateFormat format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-
-                appliedAt = format.parse(patchDescr.get("applied-at"));
-            } catch (ParseException e) {
-                LOG.info("Failed to parse the installation date of the patch " + patchId + ": '" +
-                    patchDescr.get("applied-at") + "' with error message: " + e.getMessage());
-            }
-
-            ret.add(new PatchDetails(patchId, type, appliedAt));
+        for (Map<String, String> patchDescr : patches) {
+            ret.add(processJSONParseResult(patchDescr));
         }
 
         return ret;
+    }
+
+    private static PatchDetails processJSONParseResult(Map<String, String> jsonParseResult) {
+        String patchId = jsonParseResult.get("patch-id");
+        Date appliedAt = null;
+        Type type = Type.fromJsonValue(jsonParseResult.get("type"));
+
+        try {
+            //This seems to be the date format AS are using
+            DateFormat format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+
+            appliedAt = format.parse(jsonParseResult.get("applied-at"));
+        } catch (ParseException e) {
+            LOG.info("Failed to parse the installation date of the patch " + patchId + ": '" +
+                jsonParseResult.get("applied-at") + "' with error message: " + e.getMessage());
+        }
+
+        return new PatchDetails(patchId, type, appliedAt);
     }
 
     public static List<PatchDetails> fromInfo(String patchInfoOutcome, String patchHistoryOutcome) {
@@ -193,7 +219,7 @@ public final class PatchDetails {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof PatchDetails)) {
             return false;
         }
 
@@ -209,6 +235,14 @@ public final class PatchDetails {
     @Override
     public int hashCode() {
         return id.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        DateFormat format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+
+        return "{\n  \"patch-id\": \"" + id + "\",\n  \"type\": \"" + type + "\",\n  \"applied-at\": \"" +
+            format.format(appliedAt) + "\"\n}";
     }
 
     public enum Type {

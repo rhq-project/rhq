@@ -47,6 +47,7 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
+import org.rhq.core.domain.util.OSGiVersionComparator;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -223,6 +224,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         String name = buildDefaultResourceName(hostPort, managementHostPort, productType, hostConfig.getHostName());
         String description = buildDefaultResourceDescription(hostPort, productType);
         String version = getVersion(homeDir, productType);
+
+        pluginConfig.setSimpleValue("supportsPatching", Boolean.toString(supportsPatching(productType, version)));
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version, description,
             pluginConfig, process);
@@ -473,11 +476,13 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         managementHostPort.port = port;
         String key = createKeyForRemoteResource(hostname + ":" + port);
         String name = buildDefaultResourceName(hostPort, managementHostPort, productType, null);
+        //FIXME this is inconsistent with how the version looks like when autodiscovered
         String version = productInfo.getProductVersion();
         String description = buildDefaultResourceDescription(hostPort, productType);
 
         pluginConfig.put(new PropertySimple("manuallyAdded", true));
         pluginConfig.put(new PropertySimple("productType", productType.name()));
+        pluginConfig.put(new PropertySimple("supportsPatching", supportsPatching(productType, version)));
         pluginConfig.setSimpleValue("expectedRuntimeProductName", productType.PRODUCT_NAME);
 
         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), key, name, version,
@@ -528,6 +533,17 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             upgraded = true;
             pluginConfiguration.setSimpleValue("expectedRuntimeProductName",
                 serverPluginConfiguration.getProductType().PRODUCT_NAME);
+            report.setNewPluginConfiguration(pluginConfiguration);
+        }
+
+        String supportsPatching = pluginConfiguration.getSimpleValue("supportsPatching");
+        if (supportsPatching == null || supportsPatching.startsWith("__UNINITIALIZED_")) {
+            upgraded = true;
+
+            JBossProductType productType = JBossProductType.valueOf(pluginConfiguration.getSimpleValue("productType"));
+            pluginConfiguration
+                .setSimpleValue("supportsPatching", Boolean.toString(supportsPatching(productType, inventoriedResource.getVersion())));
+
             report.setNewPluginConfiguration(pluginConfiguration);
         }
 
@@ -721,6 +737,34 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             version = "";
         }
         return version;
+    }
+
+    private boolean supportsPatching(JBossProductType productType, String version) {
+        if (version.startsWith(productType.SHORT_NAME)) {
+            //version of the resource is SHORT_NAME space VERSION
+            version = version.substring(productType.SHORT_NAME.length() + 1);
+        }
+
+        switch (productType) {
+        case AS:
+            return false;
+        case EAP:
+            return new OSGiVersionComparator().compare("6.2.0", version) <= 0;
+        case WILDFLY8:
+            return true;
+        case JPP:
+            return false; //as of now
+        case SOA:
+            return false; //as of now
+        case ISPN:
+            return new OSGiVersionComparator().compare("7.0.0", version) <= 0;
+        case JDG:
+            return new OSGiVersionComparator().compare("6.3.0", version) <= 0;
+        }
+
+        //let's default to true for the other cases. Most servers support this and additionally plugins
+        //can override this in the plugin config using DiscoveryCallback or ResourceUpgradeCallback.
+        return true;
     }
 
     private class ProductInfo {

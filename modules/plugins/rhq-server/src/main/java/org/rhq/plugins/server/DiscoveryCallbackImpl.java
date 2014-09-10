@@ -105,6 +105,7 @@ public class DiscoveryCallbackImpl implements ResourceDiscoveryCallback {
             pluginConfig.put(new PropertySimple(PLUGIN_CONFIG_PASSWORD, password));
             discoveredDetails.setPluginConfiguration(pluginConfig);
 
+            pluginConfig.setSimpleValue("supportsPatching", "false");
         } catch (Throwable t) {
             log.warn(
                 "Problem setting RHQ Server management password - will not be able to connect to the RHQ Server instance",
@@ -114,7 +115,11 @@ public class DiscoveryCallbackImpl implements ResourceDiscoveryCallback {
         return result;
     }
 
-    private boolean isRhqServer(ProcessInfo process) {
+    public static boolean isRhqServer(ProcessInfo process) {
+
+        if (process == null) {
+            return false;
+        }
 
         // LINUX
         if (File.separatorChar == '/') {

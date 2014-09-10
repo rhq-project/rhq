@@ -24,9 +24,17 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import javax.xml.stream.XMLInputFactory;
@@ -34,10 +42,6 @@ import javax.xml.stream.XMLInputFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.common.wildfly.Patch;
-import org.rhq.common.wildfly.PatchBundle;
-import org.rhq.common.wildfly.PatchInfo;
-import org.rhq.common.wildfly.PatchParser;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.configuration.Configuration;
@@ -53,12 +57,12 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.util.StringUtil;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
-import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.modules.plugins.jbossas7.util.PatchDetails;
 
 /**
@@ -82,12 +86,12 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
     public BundleDeployResult deployBundle(BundleDeployRequest request) {
         ServerControl control = onServer(request);
 
-        String errorMessage = sanityCheck(control, request.getReferencedConfiguration(),
+        Result<Void> check = sanityCheck(control, request.getReferencedConfiguration(),
             request.getBundleManagerProvider(), request.getResourceDeployment());
 
-        if (errorMessage != null) {
+        if (check.failed()) {
             BundleDeployResult result = new BundleDeployResult();
-            result.setErrorMessage(errorMessage);
+            result.setErrorMessage(check.errorMessage);
 
             return result;
         }
@@ -105,15 +109,14 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
         BundleManagerProvider bmp = request.getBundleManagerProvider();
         BundleResourceDeployment rd = request.getResourceDeployment();
 
-        StopResult stop = stopIfNeeded(connection, control,
+        Result<Boolean> stop = stopIfNeeded(connection, control,
             request.getResourceDeployment().getBundleDeployment().getConfiguration(), bmp, rd);
-
-        boolean startUp = stop.hasStopped;
-
-        if (stop.errorMessage != null) {
+        if (stop.failed()) {
             result.setErrorMessage(stop.errorMessage);
             return result;
         }
+
+        boolean startUp = stop.result;
 
         try {
             StringBuilder command = new StringBuilder("patch apply --path=").append(
@@ -141,6 +144,13 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
                 command.append(" --override-modules=").append(overrideModules);
             }
 
+            // as a last thing before the deployment, check the patch history
+            Result<List<PatchDetails>> historyBeforeDeployment = getPatchHistory(control, "deploy");
+            if (historyBeforeDeployment.failed()) {
+                result.setErrorMessage(historyBeforeDeployment.errorMessage);
+                return result;
+            }
+
             results = control.cli().disconnected(true).executeCliCommand(command.toString());
 
             switch (handleExecutionResults(results, bmp, rd, true)) {
@@ -155,9 +165,17 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
                 result.setErrorMessage("Patch application failed with error code " + results.getExitCode() + ".");
                 return result;
             }
+
+            String errorMessage = storeState(control, request.getResourceDeployment(),
+                request.getReferencedConfiguration(), historyBeforeDeployment.result);
+
+            if (errorMessage != null) {
+                result.setErrorMessage(errorMessage);
+                return result;
+            }
         } finally {
             if (startUp) {
-                errorMessage = startServer(connection, control, bmp, rd);
+                String errorMessage = startServer(connection, control, bmp, rd);
                 if (errorMessage != null) {
                     result.setErrorMessage(errorMessage);
                 }
@@ -175,127 +193,93 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
             .onServer(request.getReferencedConfiguration(), AS7Mode.valueOf(request.getDestinationTarget().getPath()),
                 context.getSystemInformation(), xmlInputFactory);
 
-        String errorMessage = sanityCheck(control, request.getReferencedConfiguration(),
+        Result<Void> check = sanityCheck(control, request.getReferencedConfiguration(),
             request.getBundleManagerProvider(), request.getLiveResourceDeployment());
-        if (errorMessage != null) {
-            result.setErrorMessage(errorMessage);
+        if (check.failed()) {
+            result.setErrorMessage(check.errorMessage);
             return result;
         }
 
-        PropertySimple patchIdProp = request.getLiveResourceDeployment().getBundleDeployment().getConfiguration()
-            .getSimple("patchId");
-        PropertySimple allPatchIdsProp = request.getLiveResourceDeployment().getBundleDeployment().getConfiguration()
-            .getSimple("allPatchIds");
-
-        String[] pids;
-        if (patchIdProp != null && patchIdProp.getStringValue() != null) {
-            pids = new String[1];
-            pids[0] = patchIdProp.getStringValue();
-        } else if (allPatchIdsProp != null && allPatchIdsProp.getStringValue() != null) {
-            pids = allPatchIdsProp.getStringValue().split("\\|");
-            //we need to rollback in the reverse order to patch definition order in which they have been applied.
-            Collections.reverse(Arrays.asList(pids));
-        } else {
-            result.setErrorMessage("Could not determine what patch to purge from the bundle configuration.");
+        Result<BundleMetadata> metadata = BundleMetadata
+            .forDeployment(request.getLiveResourceDeployment(), request.getReferencedConfiguration());
+        if (metadata.failed()) {
+            result.setErrorMessage(metadata.errorMessage);
             return result;
+        }
+
+        LinkedHashSet<String> pidsToRollback = new LinkedHashSet<String>();
+        for (BundleMetadata.DeploymentMetadata dm : metadata.result.deployments) {
+            for (PatchDetails pd : dm.applied) {
+                pidsToRollback.add(pd.getId());
+            }
         }
 
         ASConnection connection = new ASConnection(
             ASConnectionParams.createFrom(new ServerPluginConfiguration(request.getReferencedConfiguration())));
 
-        errorMessage = rollbackPatches(control, request.getBundleManagerProvider(),
-            request.getLiveResourceDeployment(), connection, pids);
+        String errorMessage = rollbackPatches(control, request.getBundleManagerProvider(),
+            request.getLiveResourceDeployment(), connection, "purge", new ArrayList<String>(pidsToRollback));
 
         if (errorMessage != null) {
             result.setErrorMessage(errorMessage);
+            return result;
         }
+
+        forgetState(request.getLiveResourceDeployment(), request.getReferencedConfiguration());
 
         return result;
     }
 
     private BundleDeployResult handleRevert(BundleDeployRequest request) {
-        //right, so we're in revert mode.
-        //The deployment we get is the version we should be deploying (i.e. we don't know what the version was
-        //that was last deployed).
-        //So let's revert everything until the installed patch matches what we are deploying in this request.
-
         BundleDeployResult result = new BundleDeployResult();
 
-        ProcessExecutionResults results = onServer(request).cli().disconnected(true).executeCliCommand("patch history");
-        switch (handleExecutionResults(results, null, null, false)) {
-        case EXECUTION_ERROR:
-            result.setErrorMessage(
-                "Failed to determine the patch history while doing a revert: " + results.getError().getMessage());
-            return result;
-        case TIMEOUT:
-            result.setErrorMessage("Timed out while determining patch history for a revert. Output was: " +
-                results.getCapturedOutput());
-            return result;
-        case ERROR:
-            result.setErrorMessage("Failed to determine the patch histor for a revert. Returned error code was: " +
-                results.getExitCode() + "\nOutput was: " + results.getCapturedOutput());
+        //this is what is currently deployed
+        Result<BundleMetadata> liveDeploymentMetadata = BundleMetadata
+            .forDeployment(request.getResourceDeployment(), request.getReferencedConfiguration());
+        if (liveDeploymentMetadata.failed()) {
+            result.setErrorMessage(liveDeploymentMetadata.errorMessage);
             return result;
         }
 
-        List<PatchDetails> installedPatches = PatchDetails.fromHistory(results.getCapturedOutput());
-
-        if (installedPatches.size() < 2) {
-            result.setErrorMessage("Could not revert to previous patch. " +
-                (installedPatches.size() == 0 ? "There are no patches installed at the moment" :
-                    "There's only a single patch installed at the moment."));
+        //this is what we're reverting to.
+        Result<String[]> pids = getPids(request.getResourceDeployment(), "revert");
+        if (pids.failed()) {
+            result.setErrorMessage(pids.errorMessage);
             return result;
         }
 
-        File patchZipFile = request.getPackageVersionFiles().values().iterator().next();
-        FileInputStream patchZipContents = null;
+        //determine the pids that have been deployed on top of the bundle being reverted to.
+        List<String> pidsToRollback = new ArrayList<String>();
+        List<BundleMetadata.DeploymentMetadata> deploymentsToForget = new ArrayList<BundleMetadata.DeploymentMetadata>();
 
-        String patchIdToRollBackTo = null;
-        try {
-            patchZipContents = new FileInputStream(patchZipFile);
-
-            PatchInfo patchInfo = PatchParser.parse(patchZipContents, true);
-            if (patchInfo.is(Patch.class)) {
-                patchIdToRollBackTo = patchInfo.as(Patch.class).getId();
-            } else if (patchInfo.is(PatchBundle.class)) {
-                //this is the patch bundle so we need to roll back to the last patch in the bundle
-                for (PatchBundle.Element e : patchInfo.as(PatchBundle.class)) {
-                    patchIdToRollBackTo = e.getPatch().getId();
+        String stopPid = pids.result[0];
+        outer: for (BundleMetadata.DeploymentMetadata dm : liveDeploymentMetadata.result.deployments) {
+            for (PatchDetails pd : dm.applied) {
+                String pid = pd.getId();
+                if (pid.equals(stopPid)) {
+                    break outer;
                 }
-            }
-        } catch (Exception e) {
-            result.setErrorMessage("Failed to analyze the patch to revert to. " + e.getMessage());
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Failed to analyze the patch to revert to.", e);
+                pidsToRollback.add(pid);
             }
 
-            return result;
-        } finally {
-            StreamUtil.safeClose(patchZipContents);
-        }
-
-        List<String> rolledBackPatches = new ArrayList<String>();
-        for (PatchDetails patchDetails : installedPatches) {
-            if (patchDetails.getId().equals(patchIdToRollBackTo)) {
-                break;
-            }
-
-            rolledBackPatches.add(patchDetails.getId());
-        }
-
-        if (rolledBackPatches.size() == installedPatches.size()) {
-            result.setErrorMessage("The patch to revert to is no longer installed.");
-            return result;
+            deploymentsToForget.add(dm);
         }
 
         ASConnection connection = new ASConnection(
             ASConnectionParams.createFrom(new ServerPluginConfiguration(request.getReferencedConfiguration())));
 
-        String errorMessage = rollbackPatches(onServer(request), request.getBundleManagerProvider(),
-            request.getResourceDeployment(), connection,
-            rolledBackPatches.toArray(new String[rolledBackPatches.size()]));
+        ServerControl control = onServer(request);
+
+        String errorMessage = rollbackPatches(control, request.getBundleManagerProvider(),
+            request.getResourceDeployment(), connection, "revert", pidsToRollback);
 
         if (errorMessage != null) {
             result.setErrorMessage(errorMessage);
+            return result;
+        }
+
+        for (BundleMetadata.DeploymentMetadata dm : deploymentsToForget) {
+            dm.forget(request.getResourceDeployment(), request.getReferencedConfiguration());
         }
 
         return result;
@@ -369,18 +353,18 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
         }
     }
 
-    private String fullErrorMessage(String basicMessage, String[] patchIds, int attemptedPatchIdIndex, String action) {
+    private String fullErrorMessage(String basicMessage, List<String> patchIds, int attemptedPatchIdIndex, String action) {
         String message = basicMessage;
 
         if (attemptedPatchIdIndex > 0) {
             message += " The following patches were successfully " + action + ": " + StringUtil.collectionToString(
-                Arrays.asList(patchIds).subList(0, attemptedPatchIdIndex)) + ".";
+                patchIds.subList(0, attemptedPatchIdIndex)) + ".";
         }
 
-        if (attemptedPatchIdIndex < patchIds.length - 1) {
+        if (attemptedPatchIdIndex < patchIds.size() - 1) {
             message += " The following patches were NOT " + action + ": " +
                 StringUtil
-                    .collectionToString(Arrays.asList(patchIds).subList(attemptedPatchIdIndex + 1, patchIds.length))
+                    .collectionToString(patchIds.subList(attemptedPatchIdIndex + 1, patchIds.size()))
                 + ".";
         }
 
@@ -394,24 +378,57 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
     }
 
     private String rollbackPatches(ServerControl control, BundleManagerProvider bmp, BundleResourceDeployment rd,
-        ASConnection connection, String... pids) {
+        ASConnection connection, String operation, List<String> pids) {
+
+        if (pids.isEmpty()) {
+            return "Nothing to rollback.";
+        }
 
         ProcessExecutionResults results;
+        ServerControl.Cli cli = control.cli().disconnected(true);
+
+        Result<List<PatchDetails>> history = getPatchHistory(control, operation);
+        if (history.errorMessage != null) {
+            return history.errorMessage;
+        }
+
+        List<PatchDetails> installedPatches = history.result;
+
+        if (!pids.get(0).equals(installedPatches.get(0).getId())) {
+            return "No patch out of " + pids + " can be rolled back. The latest applied patch on the target resource is '" +
+                installedPatches.get(0).getId() + "' but was expecting '" + pids.get(0) +
+                "' to be able to perform the " + operation + ".";
+        }
+
+        List<String> pidsToRollback = new ArrayList<String>(pids);
+        List<String> noLongerRemovablePids = new ArrayList<String>();
+        for (int ins = 0, rb = 0; ins < installedPatches.size() && rb < pidsToRollback.size(); ++ins) {
+            PatchDetails installed = installedPatches.get(ins);
+            String pidToRollback = pidsToRollback.get(rb);
+
+            if (installed.getId().equals(pidToRollback)) {
+                rb++;
+            } else {
+                noLongerRemovablePids.add(pidsToRollback.remove(rb));
+            }
+        }
 
         Configuration deploymentConfiguration = rd.getBundleDeployment().getConfiguration();
 
         //if the server is online, let's bring it down for the duration of the rollback.
-        StopResult stop = stopIfNeeded(connection, control, deploymentConfiguration, bmp, rd);
-        boolean serverWasUp = stop.hasStopped;
+        Result<Boolean> stop = stopIfNeeded(connection, control, deploymentConfiguration, bmp, rd);
+        if (stop.failed()) {
+            return stop.errorMessage;
+        }
+
+        boolean serverWasUp = stop.result;
 
         List<String> patchCommands = new ArrayList<String>();
-        for (String pid : pids) {
+        for (String pid : pidsToRollback) {
             patchCommands.add(PATCH_ROLLBACK_COMMAND + pid);
         }
 
         String errorMessage = null;
-
-        ServerControl.Cli cli = control.cli().disconnected(true);
 
         try {
             int i = 0;
@@ -437,13 +454,19 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
             }
         }
 
+        if (!noLongerRemovablePids.isEmpty()) {
+            audit(bmp, rd, "Rollback", "Kept patches", BundleResourceDeploymentHistory.Status.WARN,
+                "The following patches were not rolled back due to other patches having been applied in the meantime: " +
+                    noLongerRemovablePids);
+        }
+
         return errorMessage;
     }
 
     private boolean isServerUp(ASConnection connection) {
         Operation op = new ReadAttribute(new Address(), "release-version");
         try {
-            Result res = connection.execute(op);
+            org.rhq.modules.plugins.jbossas7.json.Result res = connection.execute(op);
             if (res.isSuccess()) { // If op succeeds, server is not down
                 return true;
             }
@@ -456,7 +479,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
         return false;
     }
 
-    private StopResult stopIfNeeded(ASConnection connection, ServerControl control,
+    private Result<Boolean> stopIfNeeded(ASConnection connection, ServerControl control,
         Configuration bundleDeploymentConfiguration, BundleManagerProvider bmp, BundleResourceDeployment resourceDeployment) {
 
         boolean doRestart = Boolean.valueOf(bundleDeploymentConfiguration.getSimpleValue("restart", "true"));
@@ -468,19 +491,19 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
             ProcessExecutionResults results = control.lifecycle().shutdownServer();
             switch (handleExecutionResults(results, bmp, resourceDeployment, true)) {
             case EXECUTION_ERROR:
-                return new StopResult(false, "Error trying to shutdown the server: " + results.getError().getMessage());
+                return new Result<Boolean>(false, "Error trying to shutdown the server: " + results.getError().getMessage());
             case TIMEOUT:
-                return new StopResult(false, "Stopping the server timed out. Captured output: " +
+                return new Result<Boolean>(false, "Stopping the server timed out. Captured output: " +
                     results.getCapturedOutput());
             case ERROR:
-                return new StopResult(false, "Stopping the server failed with error code " + results.getExitCode() +
+                return new Result<Boolean>(false, "Stopping the server failed with error code " + results.getExitCode() +
                     " and output: " + results.getCapturedOutput());
             }
 
-            return new StopResult(true, null);
+            return new Result<Boolean>(true, null);
         }
 
-        return new StopResult(false, null);
+        return new Result<Boolean>(false, null);
     }
 
     private String startServer(ASConnection connection, ServerControl control, BundleManagerProvider bmp, BundleResourceDeployment resourceDeployment) {
@@ -511,50 +534,332 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
         return null;
     }
 
-    private String sanityCheck(ServerControl serverControl, Configuration referencedConfiguration,
+    private Result<Void> sanityCheck(ServerControl serverControl, Configuration referencedConfiguration,
         BundleManagerProvider bmp, BundleResourceDeployment resourceDeployment) {
 
         PropertySimple supportsPatching = referencedConfiguration.getSimple("supportsPatching");
 
         if (supportsPatching == null) {
-            return "Target resource doesn't contain the 'Supports Patching' property in its connection settings. Using an old version of the JBossAS7 plugin?";
+            return Result.error("Target resource doesn't contain the 'Supports Patching' property in its connection settings. Using an old version of the JBossAS7 plugin?");
         }
 
         if (supportsPatching.getBooleanValue() == null || !supportsPatching.getBooleanValue()) {
-            return "The target resource does not support patching.";
+            return Result.error("The target resource does not support patching.");
         }
 
         ProcessExecutionResults results = serverControl.cli().disconnected(true).executeCliCommand("help --commands");
         switch (handleExecutionResults(results, bmp, resourceDeployment, false)) {
         case EXECUTION_ERROR:
             return
-                "Failed to check availability of patch command using the 'help --commands' command. The error was: " +
-                    results.getError().getMessage();
+                Result.error("Failed to check availability of patch command using the 'help --commands' command. The error was: " +
+                    results.getError().getMessage());
         case ERROR:
             return
-                "Failed to check availability of patch command using the 'help --commands' command. The execution failed with an exit code " +
-                    results.getExitCode();
+                Result.error("Failed to check availability of patch command using the 'help --commands' command. The execution failed with an exit code " +
+                    results.getExitCode());
         case TIMEOUT:
             return
-                "Failed to check availability of patch command using the 'help --commands' command. The execution timed out with the output: " +
-                    results.getCapturedOutput();
+                Result.error("Failed to check availability of patch command using the 'help --commands' command. The execution timed out with the output: " +
+                    results.getCapturedOutput());
         case OK:
+
             if (results.getCapturedOutput() == null || !(results.getCapturedOutput().contains(" patch ") || results.getCapturedOutput().contains("\npatch"))) {
-                return "The underlying server does not support the patch command. Cannot perform the patch operation.";
+                return Result.error("The underlying server does not support the patch command. Cannot perform the patch operation.");
             }
             break;
+        }
+
+        return Result.with(null);
+    }
+
+    /**
+     * Store the last deployed patch ID at this point in time. This information is stored for each bundle resource
+     * deployment individually.
+     *
+     * @return the error message or null if everything went fine.
+     */
+    private String storeState(ServerControl control, BundleResourceDeployment rd, Configuration referencedConfiguration,
+        List<PatchDetails> historyBeforeDeployment) {
+
+        Result<List<PatchDetails>> history = getPatchHistory(control, "deployment");
+        if (history.failed()) {
+            return history.errorMessage;
+        }
+
+        BundleMetadata.DeploymentMetadata metadata = BundleMetadata.DeploymentMetadata
+            .from(historyBeforeDeployment, history.result);
+
+        Result<Void> write = metadata.persistAsNewState(rd, referencedConfiguration);
+        if (write.failed()) {
+            return write.errorMessage;
         }
 
         return null;
     }
 
-    private static class StopResult {
-        public final boolean hasStopped;
-        public final String errorMessage;
+    private String forgetState(BundleResourceDeployment rd, Configuration referencedConfiguration) {
+        File baseDir = MetadataFiles.baseDirFor(rd, referencedConfiguration);
 
-        public StopResult(boolean hasStopped, String errorMessage) {
-            this.hasStopped = hasStopped;
+        FileUtil.purge(baseDir, true);
+
+        return null;
+    }
+
+    private Result<List<PatchDetails>> getPatchHistory(ServerControl control, String operation) {
+        Result<String> json = getPatchHistoryJSON(control, operation);
+        if (json.errorMessage != null) {
+            return new Result<List<PatchDetails>>(null, json.errorMessage);
+        }
+
+        List<PatchDetails> installedPatches = PatchDetails.fromHistory(json.result);
+
+        return new Result<List<PatchDetails>>(installedPatches, null);
+    }
+
+    private Result<String> getPatchHistoryJSON(ServerControl control, String operation) {
+        ProcessExecutionResults results = control.cli().disconnected(true).executeCliCommand("patch history");
+        switch (handleExecutionResults(results, null, null, false)) {
+        case EXECUTION_ERROR:
+            return new Result<String>(null,
+                "Failed to determine the patch history while doing a " + operation + ": " +
+                    results.getError().getMessage());
+        case TIMEOUT:
+            return new Result<String>(null,
+                "Timed out while determining patch history for a " + operation + ". Output was: " +
+                    results.getCapturedOutput());
+        case ERROR:
+            return new Result<String>(null,
+                "Failed to determine the patch history for a " + operation + ". Returned error code was: " +
+                    results.getExitCode() + "\nOutput was: " + results.getCapturedOutput());
+        }
+
+        return new Result<String>(results.getCapturedOutput(), null);
+    }
+
+    private Result<String[]> getPids(BundleResourceDeployment rd, String operation) {
+        PropertySimple patchType = rd.getBundleDeployment().getConfiguration().getSimple("patchType");
+        boolean isBundle = patchType != null && "patch-bundle".equals(patchType.getStringValue());
+
+        PropertySimple patchIdProp = rd.getBundleDeployment().getConfiguration()
+            .getSimple("patchId");
+        PropertySimple allPatchIdsProp = rd.getBundleDeployment().getConfiguration()
+            .getSimple("allPatchIds");
+
+        String[] pids;
+        if (isBundle) {
+            if (allPatchIdsProp == null || allPatchIdsProp.getStringValue() == null) {
+                return new Result<String[]>(null,
+                    "Could not determine the list of patch ids from the bundle configuration while performing " +
+                        operation);
+            }
+            pids = allPatchIdsProp.getStringValue().split("\\|");
+            //we need to return the pids in the same order as patch history - i.e. in the reversed deployment order
+            Collections.reverse(Arrays.asList(pids));
+        } else {
+            if (patchIdProp == null || patchIdProp.getStringValue() == null) {
+                return new Result<String[]>(null,
+                    "Could not determine the list of patch ids from the bundle configuration while performing " +
+                        operation);
+            }
+            pids = new String[1];
+            pids[0] = patchIdProp.getStringValue();
+        }
+
+        return new Result<String[]>(pids, null);
+    }
+
+    private static class MetadataFiles {
+        final File[] files;
+        final File baseDir;
+
+        private MetadataFiles(File baseDir, File[] files) {
+            this.baseDir = baseDir;
+            this.files = files;
+        }
+
+        boolean exists() {
+            for (File f : files) {
+                if (!f.exists()) {
+                    return false;
+                }
+            }
+
+            return files.length > 0;
+        }
+
+        static Result<MetadataFiles> forDeployment(BundleResourceDeployment rd, Configuration referencedConfiguration) {
+            File destinationDir = baseDirFor(rd, referencedConfiguration);
+
+            if (!destinationDir.exists() && !destinationDir.mkdirs()) {
+                return Result.error("Failed to create metadata storage under " + destinationDir.getAbsolutePath());
+            }
+
+            File[] files = destinationDir.listFiles();
+
+            if (files == null) {
+                return Result.error("Could not list files in the destination metadata directory " + destinationDir);
+            }
+
+            // sort the files in reverse order so that the newest, current state, is on 0th index.
+            Arrays.sort(files, new Comparator<File>() {
+                @Override
+                public int compare(File o1, File o2) {
+                    return o2.getName().compareTo(o1.getName());
+                }
+            });
+
+            return Result.with(new MetadataFiles(destinationDir, files));
+        }
+
+        static File baseDirFor(BundleResourceDeployment rd, Configuration referencedConfiguration) {
+            ServerPluginConfiguration config = new ServerPluginConfiguration(referencedConfiguration);
+
+            File installationDir = new File(config.getHomeDir(), ".installation");
+
+            File rhqBaseDir = new File(installationDir, ".rhq");
+
+            File destinationDir = new File(rhqBaseDir,
+                Integer.toString(rd.getBundleDeployment().getDestination().getId()));
+
+            return destinationDir;
+        }
+    }
+
+    private static class BundleMetadata {
+        final List<DeploymentMetadata> deployments;
+
+        static class DeploymentMetadata {
+            final List<PatchDetails> applied;
+            int deploymentIndex;
+
+            private DeploymentMetadata(List<PatchDetails> applied, int deploymentIndex) {
+                this.applied = applied;
+                this.deploymentIndex = deploymentIndex;
+            }
+
+            static DeploymentMetadata from(List<PatchDetails> beforeDeployment, List<PatchDetails> afterDeployment) {
+                ArrayList<PatchDetails> currentDeployment = new ArrayList<PatchDetails>();
+
+                PatchDetails firstHistorical =
+                    beforeDeployment.isEmpty() ? null : beforeDeployment.get(0);
+
+                for (Iterator<PatchDetails> it = afterDeployment.iterator(); it.hasNext();) {
+                    PatchDetails p = it.next();
+                    if (p.equals(firstHistorical)) {
+                        break;
+                    }
+
+                    currentDeployment.add(p);
+                }
+
+                return new DeploymentMetadata(currentDeployment, -1);
+            }
+
+            Result<Void> persistAsNewState(BundleResourceDeployment rd, Configuration referencedConfiguration) {
+                try {
+                    Result<MetadataFiles> files = MetadataFiles.forDeployment(rd, referencedConfiguration);
+                    if (files.failed()) {
+                        return Result.error(files.errorMessage);
+                    }
+
+                    deploymentIndex = files.result.files.length;
+
+                    // 1000000 deployments to a single destination should be fairly safe maximum
+                    String fileNameBase = String.format("%06d-", deploymentIndex);
+
+                    String appliedPidsFileName = fileNameBase + "applied";
+
+                    StringReader rdr = new StringReader(applied.toString());
+                    PrintWriter wrt = new PrintWriter(new FileOutputStream(new File(files.result.baseDir, appliedPidsFileName)));
+
+                    StreamUtil.copy(rdr, wrt, true);
+
+                    return Result.with(null);
+                } catch (IOException e) {
+                    return Result.error("Failed to save bundle metadata for " + rd + ": " + e.getMessage());
+                }
+            }
+
+            Result<Void> forget(BundleResourceDeployment rd, Configuration referencedConfiguration) {
+                if (deploymentIndex < 0) {
+                    throw new IllegalStateException(
+                        "Tried to forget deployment metadata without index set. This should not happen");
+                }
+
+                String fileNameBase = String.format("%06d-", deploymentIndex);
+                String appliedPidsFileName = fileNameBase + "applied";
+
+                File baseDir = MetadataFiles.baseDirFor(rd, referencedConfiguration);
+
+                File applied = new File(baseDir, appliedPidsFileName);
+
+                if (!applied.delete()) {
+                    return Result
+                        .error("Failed to delete the deployment metadata file '" + applied.getAbsolutePath() + "'.");
+                }
+
+                return Result.with(null);
+            }
+        }
+        /**
+         * to be used SOLELY by the {@link #forDeployment(org.rhq.core.domain.bundle.BundleResourceDeployment,
+         * org.rhq.core.domain.configuration.Configuration)}
+         * method
+         */
+        private BundleMetadata(List<DeploymentMetadata> deployments) {
+            this.deployments = deployments;
+        }
+
+        static Result<BundleMetadata> forDeployment(BundleResourceDeployment rd, Configuration referecenedConfiguration) {
+            try {
+                Result<MetadataFiles> files = MetadataFiles.forDeployment(rd, referecenedConfiguration);
+                if (files.failed()) {
+                    return Result.error(files.errorMessage);
+                }
+
+                if (!files.result.exists()) {
+                    return Result.error("The metadata for deployment " + rd + " not found.");
+                }
+
+                List<DeploymentMetadata> deployments = new ArrayList<DeploymentMetadata>();
+
+                File[] fs = files.result.files;
+                for (int i = 0; i < fs.length; ++i) {
+                    String addedJson = StreamUtil.slurp(new InputStreamReader(new FileInputStream(fs[i])));
+
+                    List<PatchDetails> addedPatches = PatchDetails.fromJSONArray(addedJson);
+
+                    // the files returned from MetadataFiles are in the reverse order, so we need
+                    // to compute the right index here.
+                    deployments.add(new DeploymentMetadata(addedPatches, fs.length - i - 1));
+                }
+
+                return Result.with(new BundleMetadata(deployments));
+            } catch (IOException e) {
+                return Result.error("Failed to read bundle metadata for " + rd + ": " + e.getMessage());
+            }
+        }
+    }
+
+    private static class Result<T> {
+        final T result;
+        final String errorMessage;
+
+        Result(T result, String errorMessage) {
+            this.result = result;
             this.errorMessage = errorMessage;
+        }
+
+        static <T> Result<T> with(T result) {
+            return new Result<T>(result, null);
+        }
+
+        static <T> Result<T> error(String errorMessage) {
+            return new Result<T>(null, errorMessage);
+        }
+
+        boolean failed() {
+            return errorMessage != null;
         }
     }
 }

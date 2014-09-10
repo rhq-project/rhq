@@ -208,19 +208,26 @@ class DataAggregator {
 
     public Map<AggregationType, Integer> execute() throws InterruptedException, AbortedException {
         LOG.debug("Starting " + getDebugType() + " aggregation");
-
         Stopwatch stopwatch = new Stopwatch().start();
         try {
-            IndexIterator iterator = loadIndexEntries();
+            IndexIterator iterator = getIndexIterator();
             List<IndexEntry> indexEntries = new ArrayList<IndexEntry>();
             while (iterator.hasNext()) {
                 indexEntries.add(iterator.next());
+                if (indexEntries.size() == BATCH_SIZE) {
+                    submitAggregationTask(indexEntries);
+                    indexEntries = new ArrayList<IndexEntry>();
+                }
             }
-            scheduleTasks(indexEntries);
+            if (!indexEntries.isEmpty()) {
+                submitAggregationTask(indexEntries);
+            }
+            iterator = null;
+            taskTracker.finishedSchedulingTasks();
             taskTracker.waitForTasksToFinish();
-        } catch (CacheIndexQueryException e) {
-            LOG.warn("There was an error querying the cache index", e);
-            taskTracker.abort("There was an error querying the cache index: " + e.getMessage());
+        } catch (InterruptedException e) {
+            LOG.warn("There was an interrupt while scheduling aggregation tasks.", e);
+            taskTracker.abort("There was an interrupt while scheduling aggregation tasks.");
         } catch (Exception e) {
             LOG.warn("There was an unexpected error scheduling aggregation tasks", e);
             taskTracker.abort("There was an unexpected error scheduling aggregation tasks: " + e.getMessage());
@@ -234,7 +241,7 @@ class DataAggregator {
         return getAggregationCounts();
     }
 
-    protected IndexIterator loadIndexEntries() {
+    protected IndexIterator getIndexIterator() {
         DateTime endTime = startTime.plus(aggregationType.getTimeSliceDuration());
         return new IndexIterator(startTime, endTime, aggregationType.getBucket(), dao, configuration);
     }
@@ -248,36 +255,10 @@ class DataAggregator {
         return Futures.allAsList(queryFutures);
     }
 
-    private void scheduleTasks(List<IndexEntry> indexEntries) {
-        try {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Scheduling " + getDebugType() + " aggregation tasks for " + indexEntries.size() +
-                    " schedule ids");
-            }
-            List<IndexEntry> batch = new ArrayList<IndexEntry>(BATCH_SIZE);
-            for (IndexEntry indexEntry : indexEntries) {
-                batch.add(indexEntry);
-                if (batch.size() == BATCH_SIZE) {
-                    submitAggregationTask(batch);
-                    batch = new ArrayList<IndexEntry>();
-                }
-            }
-            if (!batch.isEmpty()) {
-                submitAggregationTask(batch);
-            }
-            taskTracker.finishedSchedulingTasks();
-        } catch (InterruptedException e) {
-            LOG.warn("There was an interrupt while scheduling aggregation tasks.", e);
-            taskTracker.abort("There was an interrupt while scheduling aggregation tasks.");
-        } catch (Exception e) {
-            LOG.error("There was an unexpected error while scheduling " + getDebugType() + " aggregation tasks", e);
-            taskTracker.abort("Aborting " + getDebugType() + " aggregation due to unexpected error: " + e.getMessage());
-        } finally {
-            LOG.debug("Finished scheduling aggregation tasks");
-        }
-    }
-
     protected void submitAggregationTask(List<IndexEntry> batch) throws InterruptedException {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Scheduling aggregation task for " + batch);
+        }
         permits.acquire();
         aggregationTasks.submit(createAggregationTask(batch));
         taskTracker.addTask();

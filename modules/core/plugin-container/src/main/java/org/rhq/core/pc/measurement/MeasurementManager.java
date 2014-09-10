@@ -45,6 +45,7 @@ import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -674,7 +675,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                         + container.getResource().getName() + "] is not a trait, it is of type ["
                         + schedule.getDataType() + "]");
                 }
-                traitScheduleId = Integer.valueOf(schedule.getScheduleId());
+                traitScheduleId = schedule.getScheduleId();
             }
         }
         if (traitScheduleId == null) {
@@ -682,7 +683,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                 + container.getResource().getName() + "]");
         }
 
-        String traitValue = getCachedTraitValue(traitScheduleId.intValue());
+        String traitValue = getCachedTraitValue(traitScheduleId);
         if (traitValue == null) {
             // the trait hasn't been collected yet, so it isn't cached. We need to get its live value
             Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>();
@@ -694,6 +695,20 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                 if (value != null) {
                     traitValue = value.toString();
                 }
+            } else if (dataset.isEmpty()) {
+                // so the agent doesn't have a cached value of the trait an the resource seems to be either down
+                // or unable to collect the trait.
+                // Let's try asking the server for the last known value
+                MeasurementDataTrait value = configuration.getServerServices().getMeasurementServerService()
+                    .getLastKnownTraitValue(traitScheduleId);
+
+                if (value != null) {
+                    traitValue = value.getValue();
+                }
+            } else {
+                throw new IllegalStateException(
+                    "Asked for value of trait " + traitName + " on resource " + container.getResource() +
+                        " but got more than one value back. This is unexpected.");
             }
         }
 

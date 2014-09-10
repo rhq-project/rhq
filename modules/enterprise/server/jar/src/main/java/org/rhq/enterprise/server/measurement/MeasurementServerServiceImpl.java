@@ -25,6 +25,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.util.collection.ArrayUtils;
@@ -75,5 +77,11 @@ public class MeasurementServerServiceImpl implements MeasurementServerService {
         Set<Integer> resourceIdSet = new HashSet<Integer>();
         resourceIdSet.add(resourceId);
         return getLatestSchedulesForResourceIds(resourceIdSet, getChildSchedules);
+    }
+
+    @Override
+    public MeasurementDataTrait getLastKnownTraitValue(int scheduleId) {
+        MeasurementDataManagerLocal mdm = LookupUtil.getMeasurementDataManager();
+        return mdm.getCurrentTraitForSchedule(scheduleId);
     }
 }

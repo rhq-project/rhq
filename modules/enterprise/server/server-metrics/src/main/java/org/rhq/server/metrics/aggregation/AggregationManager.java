@@ -146,15 +146,15 @@ public class AggregationManager {
                     oneHourData.addAll(metrics);
                 }
             });
-            int num1hr = rawAggregator.execute(start, end);
+            num1Hour = rawAggregator.execute(start, end);
 
             end = dtService.get6HourTimeSlice(endTime);
             start = dtService.get6HourTimeSlice(endTime).minusDays(7);
-            int num6hr = create1HourAggregator(persistFunctions).execute(start, end);
+            num6Hour = create1HourAggregator(persistFunctions).execute(start, end);
 
             end = dtService.get24HourTimeSlice(endTime);
             start = dtService.get24HourTimeSlice(endTime).minusDays(14);
-            int num24hr = create6HourAggregator(persistFunctions).execute(start, end);
+            num24Hour = create6HourAggregator(persistFunctions).execute(start, end);
 
             return oneHourData;
         } catch (InterruptedException e) {

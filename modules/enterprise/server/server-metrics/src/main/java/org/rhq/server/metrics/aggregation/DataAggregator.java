@@ -180,7 +180,7 @@ class DataAggregator {
         } finally {
             stopwatch.stop();
             log.info("Finished " + bucket + " data aggregation for " + schedulesCount + " measurement schedules in " +
-                stopwatch.elapsed(TimeUnit.MILLISECONDS));
+                stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
         }
         return schedulesCount.get();
     }

@@ -199,7 +199,7 @@ public class MetricsDAO {
     }
 
     public RawNumericMetric findLatestRawMetric(int scheduleId) {
-        RawNumericMetricMapper mapper = new RawNumericMetricMapper(false);
+        RawNumericMetricMapper mapper = new RawNumericMetricMapper();
         BoundStatement boundStatement = findLatestRawMetric.bind(scheduleId);
         ResultSet resultSet = storageSession.execute(boundStatement);
 

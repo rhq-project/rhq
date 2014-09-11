@@ -35,18 +35,15 @@ import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.IndexBucket;
 import org.rhq.server.metrics.domain.IndexEntry;
 import org.rhq.server.metrics.domain.NumericMetric;
-import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
 import org.rhq.server.metrics.domain.ResultSetMapper;
 
 /**
  * @author John Sanda
  */
-class DataAggregator {
+class DataAggregator<T extends NumericMetric> {
 
     private final Log log = LogFactory.getLog(getClass());
-
-    protected static final int BATCH_SIZE = 5;
 
     /**
      * This is a hook for consuming 1 hour data produced from raw data aggregation. The 1 hour data needs to be made
@@ -56,29 +53,31 @@ class DataAggregator {
         void onFinish(List<AggregateNumericMetric> metrics);
     }
 
-    protected MetricsDAO dao;
+    private MetricsDAO dao;
 
-    protected IndexBucket bucket;
+    private IndexBucket bucket;
 
-    protected AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persistMetrics;
+    private AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persistMetrics;
 
-    protected Semaphore permits;
+    private Semaphore permits;
 
-    protected ListeningExecutorService aggregationTasks;
+    private ListeningExecutorService aggregationTasks;
 
-    protected DateTimeService dateTimeService;
+    private DateTimeService dateTimeService;
 
-    protected TaskTracker taskTracker = new TaskTracker();
+    private TaskTracker taskTracker = new TaskTracker();
 
-    protected MetricsConfiguration configuration;
+    private MetricsConfiguration configuration;
 
-    protected AtomicInteger schedulesCount = new AtomicInteger();
+    private AtomicInteger schedulesCount = new AtomicInteger();
 
-    protected BatchFinishedListener batchFinishedListener;
+    private BatchFinishedListener batchFinishedListener;
 
-    protected ResultSetMapper resultSetMapper;
+    private ResultSetMapper resultSetMapper;
 
-    protected Duration timeSliceDuration;
+    private Duration timeSliceDuration;
+
+    private int batchSize;
 
     void setDao(MetricsDAO dao) {
         this.dao = dao;
@@ -121,6 +120,10 @@ class DataAggregator {
         this.batchFinishedListener = batchFinishedListener;
     }
 
+    public void setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
+    }
+
     @SuppressWarnings("unchecked")
     protected void aggregationTaskFinished(ListenableFuture<List<AggregateNumericMetric>> metricsFuture,
         ListenableFuture<List<ResultSet>> deletedIndexEntriesFuture) {
@@ -153,7 +156,7 @@ class DataAggregator {
                 }
                 if (batch.getStartTime().getMillis() == indexEntry.getTimestamp()) {
                     batch.add(indexEntry);
-                    if (batch.size() == BATCH_SIZE) {
+                    if (batch.size() == batchSize) {
                         submitAggregationTask(batch);
                         batch = new Batch();
                     }
@@ -230,11 +233,11 @@ class DataAggregator {
     }
 
     protected void processBatch(Batch batch, Bucket bucket) {
-        ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(batch.getQueriesFuture(),
-            toIterable(resultSetMapper), aggregationTasks);
+        ListenableFuture<Iterable<List<T>>> iterableFuture = Futures.transform(batch.getQueriesFuture(),
+            toIterable(), aggregationTasks);
 
         ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
-            computeAggregates(batch.getStartTime().getMillis(), RawNumericMetric.class, bucket), aggregationTasks);
+            computeAggregates(batch.getStartTime().getMillis(), bucket), aggregationTasks);
 
         ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(metricsFuture, persistMetrics,
             aggregationTasks);
@@ -245,8 +248,7 @@ class DataAggregator {
         aggregationTaskFinished(metricsFuture, deleteIndexEntriesFuture);
     }
 
-    protected <T extends NumericMetric> Function<List<ResultSet>, Iterable<List<T>>> toIterable(
-        final ResultSetMapper<T> mapper) {
+    protected Function<List<ResultSet>, Iterable<List<T>>> toIterable() {
         // TODO add a unit test for when when one of the result sets is empty
         // We need to make sure we handle the case where one of the result sets is empty. This can happen since storing
         // a metric and updating the index is done as two separate writes and not as an atomic operation.
@@ -266,7 +268,7 @@ class DataAggregator {
 
                             @Override
                             public List<T> next() {
-                                return mapper.mapAll(resultSetIterator.next());
+                                return resultSetMapper.mapAll(resultSetIterator.next());
                             }
 
                             @Override
@@ -280,43 +282,42 @@ class DataAggregator {
         };
     }
 
-    protected <T extends NumericMetric> Function<Iterable<? extends Collection<T>>, List<AggregateNumericMetric>> computeAggregates(
-        final long timeSlice, Class<T> type, final Bucket bucket) {
-
+    protected Function<Iterable<? extends Collection<T>>, List<AggregateNumericMetric>> computeAggregates(
+        final long timeSlice, final Bucket bucket) {
         return new Function<Iterable<? extends Collection<T>>, List<AggregateNumericMetric>>() {
             @Override
             public List<AggregateNumericMetric> apply(Iterable<? extends Collection<T>> values) {
-                List<AggregateNumericMetric> aggregates = new ArrayList<AggregateNumericMetric>(BATCH_SIZE);
+                List<AggregateNumericMetric> aggregates = new ArrayList<AggregateNumericMetric>(batchSize);
                 for (Collection<T> metricList : values) {
-                    aggregates.add(computeAggregate(metricList, timeSlice, bucket));
+                    if (metricList.isEmpty()) {
+                        log.warn("Cannot compute a new " + AggregateNumericMetric.class.getSimpleName() +
+                            " from an empty list. The bucket is " + bucket + " and the time slice is " + timeSlice);
+                    } else {
+                        aggregates.add(computeAggregate(metricList, timeSlice, bucket));
+                    }
                 }
                 return aggregates;
             }
         };
     }
 
-    private <T extends NumericMetric> AggregateNumericMetric computeAggregate(Collection<T> metrics, long timeSlice,
-        Bucket bucket) {
-        Double min = Double.NaN;
-        Double max = Double.NaN;
+    private AggregateNumericMetric computeAggregate(Collection<T> metrics, long timeSlice, Bucket bucket) {
+        Iterator<T> iterator = metrics.iterator();
+        T metric = iterator.next();
+        int scheduleId = metric.getScheduleId();
+        Double min = metric.getMin();
+        Double max = metric.getMax();
         ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
-        int scheduleId = 0;
+        mean.add(metric.getAvg());
 
-        // TODO handle when metrics is empty to avoid NaN metrics
-
-        for (T metric : metrics) {
+        while (iterator.hasNext()) {
+            metric = iterator.next();
             mean.add(metric.getAvg());
-            if (Double.isNaN(min)) {
-                scheduleId = metric.getScheduleId();
+            if (metric.getMin() < min) {
                 min = metric.getMin();
+            }
+            if (metric.getMax() > max) {
                 max = metric.getMax();
-            } else {
-                if (metric.getMin() < min) {
-                    min = metric.getMin();
-                }
-                if (metric.getMax() > max) {
-                    max = metric.getMax();
-                }
             }
         }
         return new AggregateNumericMetric(scheduleId, bucket, mean.getArithmeticMean(), min, max, timeSlice);
@@ -341,7 +342,6 @@ class DataAggregator {
      */
     protected abstract class AggregationTask implements Runnable {
 
-//        private List<IndexEntry> batch;
         private Batch batch;
 
         public AggregationTask(Batch batch) {
@@ -361,9 +361,9 @@ class DataAggregator {
         abstract void run(Batch batch);
     }
 
-    protected class AggregationTaskFinishedCallback<T> implements FutureCallback<T> {
+    protected class AggregationTaskFinishedCallback<R> implements FutureCallback<R> {
         @Override
-        public void onSuccess(T args) {
+        public void onSuccess(R args) {
             try {
                 onFinish(args);
             } finally {
@@ -376,7 +376,7 @@ class DataAggregator {
             }
         }
 
-        protected void onFinish(T args) {
+        protected void onFinish(R args) {
         }
 
         @Override

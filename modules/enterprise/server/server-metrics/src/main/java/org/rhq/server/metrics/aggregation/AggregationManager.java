@@ -182,6 +182,7 @@ public class AggregationManager {
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist1HourMetrics());
         aggregator.setConfiguration(configuration);
+        aggregator.setBatchSize(batchSize);
 
         return aggregator;
     }
@@ -196,6 +197,7 @@ public class AggregationManager {
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist6HourMetrics());
         aggregator.setConfiguration(configuration);
+        aggregator.setBatchSize(batchSize);
 
         return aggregator;
     }
@@ -210,6 +212,7 @@ public class AggregationManager {
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist24HourMetrics());
         aggregator.setConfiguration(configuration);
+        aggregator.setBatchSize(batchSize);
 
         return aggregator;
     }

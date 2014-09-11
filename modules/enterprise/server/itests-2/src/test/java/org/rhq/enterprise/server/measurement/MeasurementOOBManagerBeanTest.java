@@ -153,9 +153,9 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
         ));
 
         List<AggregateNumericMetric>  metrics = asList(
-            new AggregateNumericMetric(schedule1.getId(), 3.8, 2.11, 4.6, lastHour.getMillis()),
-            new AggregateNumericMetric(schedule2.getId(), 9.492, 9.481, 9.53, lastHour.getMillis()),
-            new AggregateNumericMetric(schedule3.getId(), 3.15, 2.96, 3.59, lastHour.getMillis())
+            new AggregateNumericMetric(schedule1.getId(), Bucket.ONE_HOUR, 3.8, 2.11, 4.6, lastHour.getMillis()),
+            new AggregateNumericMetric(schedule2.getId(), Bucket.ONE_HOUR, 9.492, 9.481, 9.53, lastHour.getMillis()),
+            new AggregateNumericMetric(schedule3.getId(), Bucket.ONE_HOUR, 3.15, 2.96, 3.59, lastHour.getMillis())
         );
 
         oobManager.computeOOBsForLastHour(overlord, metrics);

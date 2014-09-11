@@ -3,14 +3,16 @@ package org.rhq.server.metrics.aggregation;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,12 +22,11 @@ import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.StorageClientThreadFactory;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.IndexBucket;
 
 /**
- * This class is the driver for metrics aggregation.
- *
  * @author John Sanda
  */
 public class AggregationManager {
@@ -55,56 +56,105 @@ public class AggregationManager {
 
     private DateTimeService dtService;
 
-    private DateTime startTime;
-
-    private DateTime endTime;
-
     private ListeningExecutorService aggregationTasks;
-
-    private Set<AggregateNumericMetric> oneHourData;
 
     private Semaphore permits;
 
     private MetricsConfiguration configuration;
 
-    public AggregationManager(ListeningExecutorService aggregationTasks, MetricsDAO dao, DateTimeService dtService,
-        DateTime startTime, int batchSize, int parallelism, MetricsConfiguration configuration) {
+    private int batchSize;
+
+    private int parallelism;
+
+    private int numWorkers;
+
+    private AtomicLong totalAggregationTime = new AtomicLong();
+
+    public AggregationManager(MetricsDAO dao, DateTimeService dtService, MetricsConfiguration configuration) {
 
         this.dao = dao;
         this.dtService = dtService;
-        this.endTime = dtService.currentHour();
-        this.startTime = startTime;
-        oneHourData = new ConcurrentSkipListSet<AggregateNumericMetric>(AGGREGATE_COMPARATOR);
-        permits = new Semaphore(batchSize * parallelism);
-        this.aggregationTasks = aggregationTasks;
         this.configuration = configuration;
+        batchSize = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.batch-size", "5"));
+        parallelism = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.parallelism", "3"));
+        permits = new Semaphore(batchSize * parallelism);
+
+        numWorkers = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.workers", "4"));
+        // We have to have more than 1 thread, otherwise we can deadlock during aggregation task scheduling.
+        // See https://bugzilla.redhat.com/show_bug.cgi?id=1084626 for details
+        if (numWorkers < 2) {
+            numWorkers = 2;
+        }
+        aggregationTasks = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numWorkers,
+            new StorageClientThreadFactory("AggregationTasks")));
+    }
+
+    public void shutdown() {
+        aggregationTasks.shutdownNow();
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public void setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    public int getParallelism() {
+        return parallelism;
+    }
+
+    public void setParallelism(int parallelism) {
+        this.parallelism = parallelism;
+    }
+
+    public int getNumWorkers() {
+        return numWorkers;
+    }
+
+    public void setNumWorkers(int numWorkers) {
+        this.numWorkers = numWorkers;
+    }
+
+    /**
+     * @return The total aggregation time in milliseconds since server start. This property is updated after each of
+     * raw, one hour, and six hour data are aggregated.
+     */
+    public long getTotalAggregationTime() {
+        return totalAggregationTime.get();
     }
 
     public Set<AggregateNumericMetric> run() {
-        log.info("Starting aggregation for time slice " + startTime);
+        log.info("Starting metrics data aggregation");
         Stopwatch stopwatch = new Stopwatch().start();
-        int numRaw = 0;
         int num1Hour = 0;
         int num6Hour = 0;
+        int num24Hour = 0;
         try {
             PersistFunctions persistFunctions = new PersistFunctions(dao, dtService);
-            Map<IndexBucket, Integer> counts;
-            DateTime end = endTime;
-            DateTime start = endTime.minusDays(2);
+            final Set<AggregateNumericMetric> oneHourData = new ConcurrentSkipListSet<AggregateNumericMetric>(
+                AGGREGATE_COMPARATOR);
 
-            counts = createRawAggregator(persistFunctions).execute(start, end);
-            numRaw += counts.get(IndexBucket.RAW);
+            DateTime endTime = dtService.currentHour();
+            DateTime end = endTime;
+            DateTime start = end.minusDays(2);
+            DataAggregator rawAggregator = createRawAggregator(persistFunctions);
+            rawAggregator.setBatchFinishedListener(new DataAggregator.BatchFinishedListener() {
+                @Override
+                public void onFinish(List<AggregateNumericMetric> metrics) {
+                    oneHourData.addAll(metrics);
+                }
+            });
+            int num1hr = rawAggregator.execute(start, end);
 
             end = dtService.get6HourTimeSlice(endTime);
             start = dtService.get6HourTimeSlice(endTime).minusDays(7);
-            counts = create1HourAggregator(persistFunctions).execute(start, end);
-            num1Hour += counts.get(IndexBucket.ONE_HOUR);
-
+            int num6hr = create1HourAggregator(persistFunctions).execute(start, end);
 
             end = dtService.get24HourTimeSlice(endTime);
             start = dtService.get24HourTimeSlice(endTime).minusDays(14);
-            counts = create6HourAggregator(persistFunctions).execute(start, end);
-            num6Hour += counts.get(IndexBucket.SIX_HOUR);
+            int num24hr = create6HourAggregator(persistFunctions).execute(start, end);
 
             return oneHourData;
         } catch (InterruptedException e) {
@@ -116,8 +166,9 @@ public class AggregationManager {
             return Collections.emptySet();
         } finally {
             stopwatch.stop();
-            log.info("Finished aggregation of {\"raw schedules\": " + numRaw + ", \"1 hour schedules\": " + num1Hour +
-                ", \"6 hour schedules\": " + num6Hour + "} in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            totalAggregationTime.addAndGet(stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            log.info("Finished aggregation of {\"raw schedules\": " + num1Hour + ", \"1 hour schedules\": " + num6Hour +
+                ", \"6 hour schedules\": " + num24Hour + "} in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
         }
     }
 
@@ -130,12 +181,6 @@ public class AggregationManager {
         aggregator.setPermits(permits);
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist1HourMetrics());
-        aggregator.setBatchFinishedListener(new DataAggregator.BatchFinishedListener() {
-            @Override
-            public void onFinish(List<AggregateNumericMetric> metrics) {
-                oneHourData.addAll(metrics);
-            }
-        });
         aggregator.setConfiguration(configuration);
 
         return aggregator;

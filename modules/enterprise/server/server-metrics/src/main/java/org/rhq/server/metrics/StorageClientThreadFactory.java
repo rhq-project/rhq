@@ -15,9 +15,14 @@ public class StorageClientThreadFactory implements ThreadFactory, Thread.Uncaugh
 
     private AtomicInteger threadNumber = new AtomicInteger(0);
 
-    private String poolName = "StorageClientThreadPool";
+    private String poolName;
 
     public StorageClientThreadFactory() {
+        this("StorageClientThreadPool");
+    }
+
+    public StorageClientThreadFactory(String name) {
+        this.poolName = name;
         log = LogFactory.getLog(poolName);
     }
 

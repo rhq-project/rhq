@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.datastax.driver.core.ResultSet;
+import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.joda.time.DateTime;
@@ -70,5 +71,14 @@ public class Batch implements Iterable<IndexEntry> {
     @Override
     public Iterator<IndexEntry> iterator() {
         return indexEntries.iterator();
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(Batch.class)
+            .add("startTime", startTime)
+            .add("endTime", endTime)
+            .add("indexEntries", indexEntries)
+            .toString();
     }
 }

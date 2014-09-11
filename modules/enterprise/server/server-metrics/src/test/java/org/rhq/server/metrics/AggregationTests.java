@@ -14,7 +14,6 @@ import com.datastax.driver.core.ResultSet;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.SettableFuture;
 
 import org.joda.time.DateTime;
@@ -39,8 +38,6 @@ public class AggregationTests extends MetricsTest {
     private Aggregates schedule4 = new Aggregates();
     private Aggregates schedule5 = new Aggregates();
 
-    private ListeningExecutorService aggregationTasks;
-
     private final int BATCH_SIZE = 10;
 
     private MetricsServer metricsServer;
@@ -48,6 +45,8 @@ public class AggregationTests extends MetricsTest {
     private DateTimeServiceStub dateTimeService;
 
     private InMemoryMetricsDB testdb;
+
+    private AggregationManager aggregationManager;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -68,7 +67,7 @@ public class AggregationTests extends MetricsTest {
         metricsServer.setDAO(dao);
         metricsServer.init();
 
-        aggregationTasks = metricsServer.getAggregationWorkers();
+        aggregationManager = metricsServer.getAggregationManager();
     }
 
     @Override
@@ -111,8 +110,7 @@ public class AggregationTests extends MetricsTest {
     public void runAggregationForHour16() throws Exception {
         dateTimeService.setNow(hour(17).plusMinutes(1));
         testdb.aggregateRawData(hour(16), hour(17));
-        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(16));
-        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+        Set<AggregateNumericMetric> oneHourData = aggregationManager.run();
 
         assertCollectionEqualsNoOrder(testdb.get1HourData(hour(16)), oneHourData,
             "The returned one hour aggregates are wrong");
@@ -145,9 +143,8 @@ public class AggregationTests extends MetricsTest {
         dateTimeService.setNow(hour(18).plusMinutes(1));
         testdb.aggregateRawData(hour(17), hour(18));
         testdb.aggregate1HourData(hour(12), hour(18));
-        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(17));
 
-        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+        Set<AggregateNumericMetric> oneHourData = aggregationManager.run();
 
         assertCollectionEqualsNoOrder(testdb.get1HourData(hour(17)), oneHourData,
             "The returned one hour data is wrong");
@@ -182,8 +179,8 @@ public class AggregationTests extends MetricsTest {
     public void runAggregationForHour18() throws Exception {
         dateTimeService.setNow(hour(19).plusMinutes(1));
         testdb.aggregateRawData(hour(18), hour(19));
-        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(18));
-        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+
+        Set<AggregateNumericMetric> oneHourData = aggregationManager.run();
 
         assertCollectionEqualsNoOrder(testdb.get1HourData(hour(18)), oneHourData, "The returned 1 hour data is wrong");
         // verify values in db
@@ -216,8 +213,8 @@ public class AggregationTests extends MetricsTest {
         testdb.aggregateRawData(hour(23), hour(24));
         testdb.aggregate1HourData(hour(18), hour(24));
         testdb.aggregate6HourData(hour(0), hour(24));
-        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(23));
-        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+
+        Set<AggregateNumericMetric> oneHourData = aggregationManager.run();
 
         assertCollectionEqualsNoOrder(testdb.get1HourData(hour(23)), oneHourData, "The returned 1 hour data is wrong");
         // verify values in db
@@ -251,7 +248,7 @@ public class AggregationTests extends MetricsTest {
             newRawData(hour(3).plusMinutes(20), schedule2.id, 100)
         );
         dateTimeService.setNow(hour(4).plusSeconds(5));
-        new AggregationManagerTestStub(hour(3)).run();
+        aggregationManager.run();
 
         assertRawIndexEmpty(hour(3));
 
@@ -283,8 +280,8 @@ public class AggregationTests extends MetricsTest {
 
         dateTimeService.setNow(hour(5).plusSeconds(10));
 
-        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(4));
-        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+        Set<AggregateNumericMetric> oneHourData = aggregationManager.run();
+
         Set<AggregateNumericMetric> expected1HourData = ImmutableSet.of(
             testdb.get1HourData(hour(3), schedule1.id),
             testdb.get1HourData(hour(3), schedule3.id),
@@ -309,7 +306,7 @@ public class AggregationTests extends MetricsTest {
         // First we need to run aggregation for the 05:00 hour in order to generate the
         // necessary 6 hour data
         dateTimeService.setNow(hour(6).plusMinutes(1));
-        new AggregationManagerTestStub(hour(5)).run();
+        aggregationManager.run();
 
         // Next we insert late data
         dateTimeService.setNow(hour(6).plusMinutes(55));
@@ -342,8 +339,7 @@ public class AggregationTests extends MetricsTest {
             testdb.get1HourData(hour(6), schedule3.id)
         );
         dateTimeService.setNow(hour(7).plusSeconds(2));
-        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(6));
-        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+        Set<AggregateNumericMetric> oneHourData = aggregationManager.run();
 
         assertCollectionEqualsNoOrder(expected1HourData, oneHourData, "The returned 1 hour data is wrong");
         // verify values in db
@@ -368,13 +364,13 @@ public class AggregationTests extends MetricsTest {
     public void aggregateLateDataDuringNext24HourTimeSlice() throws Exception {
         // Run aggregation to clear out cache entries from the 06:00 - 12:00 time slice
         dateTimeService.setNow(hour(12).plusMinutes(1));
-        new AggregationManagerTestStub(hour(11)).run();
+        aggregationManager.run();
 
         testdb.aggregate1HourData(hour(6), hour(12));
 
         // Run aggregation to clear out cache entries from the 00:00 - 24:00 time slice
         dateTimeService.setNow(tomorrow().plusMinutes(1));
-        new AggregationManagerTestStub(hour(23)).run();
+        aggregationManager.run();
 
         dateTimeService.setNow(tomorrow().plusHours(1).plusMinutes(50));
 
@@ -401,8 +397,7 @@ public class AggregationTests extends MetricsTest {
             testdb.get1HourData(tomorrow().plusHours(1), schedule3.id)
         );
         dateTimeService.setNow(tomorrow().plusHours(2).plusSeconds(2));
-        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(tomorrow().plusHours(1));
-        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+        Set<AggregateNumericMetric> oneHourData = aggregationManager.run();
 
         assertCollectionEqualsNoOrder(expected1HourData, oneHourData, "The returned 1 hour data is wrong");
         // verify values in the db
@@ -468,14 +463,6 @@ public class AggregationTests extends MetricsTest {
             ids[i] = startId + i;
         }
         return ids;
-    }
-
-    private class AggregationManagerTestStub extends AggregationManager {
-
-        public AggregationManagerTestStub(DateTime startTime) {
-            super(aggregationTasks, dao, dateTimeService, startTime, BATCH_SIZE, 4, configuration);
-        }
-
     }
 
     private class Aggregates {

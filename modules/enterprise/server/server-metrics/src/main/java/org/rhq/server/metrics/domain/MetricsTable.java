@@ -33,6 +33,7 @@ public enum MetricsTable {
     INDEX("metrics_idx", -1),
     RAW("raw_metrics", Duration.standardDays(7).toStandardSeconds().getSeconds()),
     AGGREGATE("aggregate_metrics", -1),
+    // TODO these need to be removed once data migrator code is updated
     ONE_HOUR("one_hour_metrics", Duration.standardDays(14).toStandardSeconds().getSeconds()),
     SIX_HOUR("six_hour_metrics", Duration.standardDays(31).toStandardSeconds().getSeconds()),
     TWENTY_FOUR_HOUR("twenty_four_hour_metrics", Duration.standardDays(365).toStandardSeconds().getSeconds());

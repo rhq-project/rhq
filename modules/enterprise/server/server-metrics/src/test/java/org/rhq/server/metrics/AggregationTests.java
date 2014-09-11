@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 
 import com.datastax.driver.core.ResultSet;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -24,6 +25,7 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.aggregation.AggregationManager;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.Bucket;
+import org.rhq.server.metrics.domain.IndexBucket;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
@@ -76,7 +78,23 @@ public class AggregationTests extends MetricsTest {
             .setIndexPartitions(4);
     }
 
-    @Test
+//    @Test
+    public void aggregateLate6HourData() throws Exception {
+        insertRawData(newRawData(hour(6), 200, 15.0));
+        insertRawData(newRawData(hour(6), 201, 25.0));
+
+        dao.insert1HourData(new AggregateNumericMetric(200, Bucket.ONE_HOUR, 10.0, 10.0, 20.0, hour(4).getMillis()));
+        dao.insert1HourData(new AggregateNumericMetric(200, Bucket.ONE_HOUR, 10.0, 5.0, 10.0, hour(5).getMillis()));
+        dao.insert1HourData(new AggregateNumericMetric(201, Bucket.ONE_HOUR, 20.0, 20.0, 20.0, hour(5).getMillis()));
+
+        dao.updateIndex(IndexBucket.ONE_HOUR, hour(0).getMillis(), 200);
+        dao.updateIndex(IndexBucket.ONE_HOUR, hour(0).getMillis(), 2001);
+
+        assert6HourDataEquals(200, new AggregateNumericMetric(200, Bucket.SIX_HOUR, 10.0, 5.0, 20.0,
+            hour(0).getMillis()));
+    }
+
+    @Test//(dependsOnMethods = "aggregateLate6HourData")
     public void insertRawDataDuringHour16() throws Exception {
 
         dateTimeService.setNow(hour(16).plusMinutes(41));
@@ -232,8 +250,10 @@ public class AggregationTests extends MetricsTest {
             newRawData(hour(3).plusMinutes(15), schedule2.id, 75),
             newRawData(hour(3).plusMinutes(20), schedule2.id, 100)
         );
-
+        dateTimeService.setNow(hour(4).plusSeconds(5));
         new AggregationManagerTestStub(hour(3)).run();
+
+        assertRawIndexEmpty(hour(3));
 
         // Insert the "late" data. That is, aggregation has already been run over the time
         // time of the data being inserted.
@@ -261,10 +281,19 @@ public class AggregationTests extends MetricsTest {
         testdb.aggregateRawData(hour(3), hour(4));
         testdb.aggregateRawData(hour(4), hour(5));
 
+        dateTimeService.setNow(hour(5).plusSeconds(10));
+
         AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(4));
         Set<AggregateNumericMetric> oneHourData = aggregator.run();
+        Set<AggregateNumericMetric> expected1HourData = ImmutableSet.of(
+            testdb.get1HourData(hour(3), schedule1.id),
+            testdb.get1HourData(hour(3), schedule3.id),
+            testdb.get1HourData(hour(4), schedule1.id),
+            testdb.get1HourData(hour(4), schedule2.id),
+            testdb.get1HourData(hour(4), schedule3.id)
+        );
 
-        assertCollectionEqualsNoOrder(testdb.get1HourData(hour(4)), oneHourData, "The returned 1 hour data is wrong");
+        assertCollectionEqualsNoOrder(expected1HourData, oneHourData, "The returned 1 hour data is wrong");
         // verify values in db
         assert1HourDataEquals(schedule1.id, testdb.get1HourData(schedule1.id));
         assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));
@@ -305,10 +334,18 @@ public class AggregationTests extends MetricsTest {
         testdb.aggregateRawData(hour(6), hour(7));
         testdb.aggregate1HourData(hour(0), hour(6));
 
-       AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(6));
+        Set<AggregateNumericMetric> expected1HourData = ImmutableSet.of(
+            testdb.get1HourData(hour(5), schedule1.id),
+            testdb.get1HourData(hour(5), schedule2.id),
+            testdb.get1HourData(hour(6), schedule1.id),
+            testdb.get1HourData(hour(6), schedule2.id),
+            testdb.get1HourData(hour(6), schedule3.id)
+        );
+        dateTimeService.setNow(hour(7).plusSeconds(2));
+        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(6));
         Set<AggregateNumericMetric> oneHourData = aggregator.run();
 
-        assertCollectionEqualsNoOrder(oneHourData, testdb.get1HourData(hour(6)), "The returned 1 hour data is wrong");
+        assertCollectionEqualsNoOrder(expected1HourData, oneHourData, "The returned 1 hour data is wrong");
         // verify values in db
         assert1HourDataEquals(schedule1.id, testdb.get1HourData(schedule1.id));
         assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));
@@ -356,11 +393,18 @@ public class AggregationTests extends MetricsTest {
         testdb.aggregate6HourData(today(), tomorrow());
         testdb.aggregateRawData(tomorrow().plusHours(1), tomorrow().plusHours(2));
 
+        Set<AggregateNumericMetric> expected1HourData = ImmutableSet.of(
+            testdb.get1HourData(hour(23), schedule1.id),
+            testdb.get1HourData(hour(23), schedule3.id),
+            testdb.get1HourData(tomorrow().plusHours(1), schedule1.id),
+            testdb.get1HourData(tomorrow().plusHours(1), schedule2.id),
+            testdb.get1HourData(tomorrow().plusHours(1), schedule3.id)
+        );
+        dateTimeService.setNow(tomorrow().plusHours(2).plusSeconds(2));
         AggregationManagerTestStub aggregator = new AggregationManagerTestStub(tomorrow().plusHours(1));
         Set<AggregateNumericMetric> oneHourData = aggregator.run();
 
-        assertCollectionEqualsNoOrder(oneHourData, testdb.get1HourData(tomorrow().plusHours(1)),
-            "The returned 1 hour data is wrong");
+        assertCollectionEqualsNoOrder(expected1HourData, oneHourData, "The returned 1 hour data is wrong");
         // verify values in the db
         assert1HourDataEquals(schedule1.id, testdb.get1HourData(schedule1.id));
         assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));

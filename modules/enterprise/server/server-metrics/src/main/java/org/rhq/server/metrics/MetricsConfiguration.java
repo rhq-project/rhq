@@ -44,13 +44,13 @@ public class MetricsConfiguration {
 
     private ReadablePeriod twentyFourHourRetention = Days.days(365);
 
-    private int rawTTL = MetricsTable.RAW.getTTL();
+    private int rawTTL = Duration.standardDays(7).toStandardSeconds().getSeconds();
 
-    private int oneHourTTL = MetricsTable.ONE_HOUR.getTTL();
+    private int oneHourTTL = Duration.standardDays(14).toStandardSeconds().getSeconds();
 
-    private int sixHourTTL = MetricsTable.SIX_HOUR.getTTL();
+    private int sixHourTTL = Duration.standardDays(31).toStandardSeconds().getSeconds();
 
-    private int twentyFourHourTTL = MetricsTable.TWENTY_FOUR_HOUR.getTTL();
+    private int twentyFourHourTTL = Duration.standardDays(365).toStandardSeconds().getSeconds();
 
     private Duration rawTimeSliceDuration = Duration.standardHours(1);
 

@@ -21,7 +21,7 @@ import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.Bucket;
+import org.rhq.server.metrics.domain.IndexBucket;
 
 /**
  * This class is the driver for metrics aggregation.
@@ -33,7 +33,19 @@ public class AggregationManager {
     private static final Comparator<AggregateNumericMetric> AGGREGATE_COMPARATOR = new Comparator<AggregateNumericMetric>() {
         @Override
         public int compare(AggregateNumericMetric left, AggregateNumericMetric right) {
-            return (left.getScheduleId() < right.getScheduleId()) ? -1 : ((left.getScheduleId() == right.getScheduleId()) ? 0 : 1);
+            if (left.getScheduleId() == right.getScheduleId()) {
+                if (left.getTimestamp() < right.getTimestamp()) {
+                    return -1;
+                } else if (left.getTimestamp() > right.getTimestamp()) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+            if (left.getScheduleId() < right.getScheduleId()) {
+                return -1;
+            }
+            return 1;
         }
     };
 
@@ -44,6 +56,8 @@ public class AggregationManager {
     private DateTimeService dtService;
 
     private DateTime startTime;
+
+    private DateTime endTime;
 
     private ListeningExecutorService aggregationTasks;
 
@@ -58,19 +72,12 @@ public class AggregationManager {
 
         this.dao = dao;
         this.dtService = dtService;
+        this.endTime = dtService.currentHour();
         this.startTime = startTime;
         oneHourData = new ConcurrentSkipListSet<AggregateNumericMetric>(AGGREGATE_COMPARATOR);
         permits = new Semaphore(batchSize * parallelism);
         this.aggregationTasks = aggregationTasks;
         this.configuration = configuration;
-    }
-
-    private boolean is6HourTimeSliceFinished() {
-        return dtService.is6HourTimeSliceFinished(startTime);
-    }
-
-    private boolean is24HourTimeSliceFinished() {
-        return dtService.is24HourTimeSliceFinished(startTime);
     }
 
     public Set<AggregateNumericMetric> run() {
@@ -81,27 +88,23 @@ public class AggregationManager {
         int num6Hour = 0;
         try {
             PersistFunctions persistFunctions = new PersistFunctions(dao, dtService);
+            Map<IndexBucket, Integer> counts;
+            DateTime end = endTime;
+            DateTime start = endTime.minusDays(2);
 
-            Map<AggregationType, Integer> counts = createPastDataAggregator(persistFunctions).execute();
-            numRaw += counts.get(AggregationType.RAW);
-            num1Hour += counts.get(AggregationType.ONE_HOUR);
-            num6Hour += counts.get(AggregationType.SIX_HOUR);
+            counts = createRawAggregator(persistFunctions).execute(start, end);
+            numRaw += counts.get(IndexBucket.RAW);
 
-            counts = createRawAggregator(persistFunctions).execute();
-            numRaw += counts.get(AggregationType.RAW);
+            end = dtService.get6HourTimeSlice(endTime);
+            start = dtService.get6HourTimeSlice(endTime).minusDays(7);
+            counts = create1HourAggregator(persistFunctions).execute(start, end);
+            num1Hour += counts.get(IndexBucket.ONE_HOUR);
 
-            if (is6HourTimeSliceFinished()) {
-                counts = create1HourAggregator(persistFunctions).execute();
-                num1Hour += counts.get(AggregationType.ONE_HOUR);
-            }
-            if (is24HourTimeSliceFinished()) {
-                counts = create6HourAggregator(persistFunctions).execute();
-                num6Hour += counts.get(AggregationType.SIX_HOUR);
-            }
 
-            for (AggregateNumericMetric metric : oneHourData) {
-                metric.setBucket(Bucket.ONE_HOUR);
-            }
+            end = dtService.get24HourTimeSlice(endTime);
+            start = dtService.get24HourTimeSlice(endTime).minusDays(14);
+            counts = create6HourAggregator(persistFunctions).execute(start, end);
+            num6Hour += counts.get(IndexBucket.SIX_HOUR);
 
             return oneHourData;
         } catch (InterruptedException e) {
@@ -118,29 +121,13 @@ public class AggregationManager {
         }
     }
 
-    private PastDataAggregator createPastDataAggregator(PersistFunctions persistFunctions) {
-        PastDataAggregator aggregator = new PastDataAggregator();
-        aggregator.setAggregationTasks(aggregationTasks);
-        aggregator.setAggregationType(AggregationType.RAW);
-        aggregator.setDao(dao);
-        aggregator.setPermits(permits);
-        aggregator.setStartTime(startTime);
-        aggregator.setDateTimeService(dtService);
-        aggregator.setPersistFns(persistFunctions);
-        aggregator.setPersistMetrics(persistFunctions.persist1HourMetrics());
-        aggregator.setConfiguration(configuration);
-
-
-        return aggregator;
-    }
-
     private DataAggregator createRawAggregator(PersistFunctions persistFunctions) {
         DataAggregator aggregator = new DataAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
-        aggregator.setAggregationType(AggregationType.RAW);
+        aggregator.setBucket(IndexBucket.RAW);
+        aggregator.setTimeSliceDuration(configuration.getRawTimeSliceDuration());
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
-        aggregator.setStartTime(startTime);
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist1HourMetrics());
         aggregator.setBatchFinishedListener(new DataAggregator.BatchFinishedListener() {
@@ -157,10 +144,10 @@ public class AggregationManager {
     private DataAggregator create1HourAggregator(PersistFunctions persistFunctions) {
         DataAggregator aggregator = new DataAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
-        aggregator.setAggregationType(AggregationType.ONE_HOUR);
+        aggregator.setBucket(IndexBucket.ONE_HOUR);
+        aggregator.setTimeSliceDuration(configuration.getOneHourTimeSliceDuration());
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
-        aggregator.setStartTime(dtService.get6HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist6HourMetrics());
         aggregator.setConfiguration(configuration);
@@ -171,10 +158,10 @@ public class AggregationManager {
     private DataAggregator create6HourAggregator(PersistFunctions persistFunctions) {
         DataAggregator aggregator = new DataAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
-        aggregator.setAggregationType(AggregationType.SIX_HOUR);
+        aggregator.setBucket(IndexBucket.SIX_HOUR);
+        aggregator.setTimeSliceDuration(configuration.getSixHourTimeSliceDuration());
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
-        aggregator.setStartTime(dtService.get24HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist24HourMetrics());
         aggregator.setConfiguration(configuration);

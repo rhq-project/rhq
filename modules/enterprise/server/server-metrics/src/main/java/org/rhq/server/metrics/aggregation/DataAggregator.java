@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 
 import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.ArithmeticMeanCalculator;
@@ -33,6 +34,7 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
+import org.rhq.server.metrics.domain.IndexBucket;
 import org.rhq.server.metrics.domain.IndexEntry;
 import org.rhq.server.metrics.domain.NumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetric;
@@ -62,7 +64,9 @@ class DataAggregator {
      * This should always be raw for PastDataAggregator and for CacheAggregator it should match the bucket, e.g.,
      * raw, 1 hour, 6 hr, being aggregated.
      */
-    protected AggregationType aggregationType;
+//    protected AggregationType aggregationType;
+
+    protected IndexBucket bucket;
 
     protected AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persistMetrics;
 
@@ -70,7 +74,9 @@ class DataAggregator {
 
     protected ListeningExecutorService aggregationTasks;
 
-    protected DateTime startTime;
+//    protected DateTime startTime;
+//
+//    protected DateTime endTime;
 
     protected DateTimeService dateTimeService;
 
@@ -84,13 +90,15 @@ class DataAggregator {
 
     protected ResultSetMapper resultSetMapper;
 
+    protected Duration timeSliceDuration;
+
     void setDao(MetricsDAO dao) {
         this.dao = dao;
     }
 
-    void setAggregationType(AggregationType aggregationType) {
-        this.aggregationType = aggregationType;
-        if (aggregationType == AggregationType.RAW) {
+    public void setBucket(IndexBucket bucket) {
+        this.bucket = bucket;
+        if (bucket == IndexBucket.RAW) {
             resultSetMapper = new RawNumericMetricMapper();
         } else {
             resultSetMapper = new AggregateNumericMetricMapper();
@@ -109,8 +117,16 @@ class DataAggregator {
         this.aggregationTasks = aggregationTasks;
     }
 
-    void setStartTime(DateTime startTime) {
-        this.startTime = startTime;
+//    void setStartTime(DateTime startTime) {
+//        this.startTime = startTime;
+//    }
+//
+//    public void setEndTime(DateTime endTime) {
+//        this.endTime = endTime;
+//    }
+
+    public void setTimeSliceDuration(Duration timeSliceDuration) {
+        this.timeSliceDuration = timeSliceDuration;
     }
 
     void setDateTimeService(DateTimeService dateTimeService) {
@@ -128,12 +144,12 @@ class DataAggregator {
     /**
      * @return A mapping of the number of schedules that had data aggregated for each bucket, e.g., raw, 1 hour, 6 hour
      */
-    protected Map<AggregationType, Integer> getAggregationCounts() {
-        return ImmutableMap.of(aggregationType, schedulesCount.get());
+    protected Map<IndexBucket, Integer> getAggregationCounts() {
+        return ImmutableMap.of(bucket, schedulesCount.get());
     }
 
     protected String getDebugType() {
-        return aggregationType.toString();
+        return bucket.toString();
     }
 
     @SuppressWarnings("unchecked")
@@ -152,75 +168,36 @@ class DataAggregator {
         }, aggregationTasks);
     }
 
-    protected ListenableFuture<List<ResultSet>> fetchData(DateTime start, DateTime end, Bucket bucket,
-        List<IndexEntry> indexEntries) {
-        List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(indexEntries.size());
-        for (IndexEntry indexEntry : indexEntries) {
-            queryFutures.add(dao.findAggregateMetricsAsync(indexEntry.getScheduleId(), bucket, start.getMillis(),
-                end.getMillis()));
-        }
-        return Futures.allAsList(queryFutures);
-    }
+    public Map<IndexBucket, Integer> execute(DateTime start, DateTime end) throws InterruptedException,
+        AbortedException {
 
-    protected AggregationTask createAggregationTask(List<IndexEntry> batch) {
-        return new AggregationTask(batch) {
-            @Override
-            void run(List<IndexEntry> batch) {
-                DateTime endTime;
-                ListenableFuture<List<ResultSet>> queriesFuture;
-
-                switch (aggregationType) {
-                    case RAW:
-                        queriesFuture = fetchRawData(startTime, batch);
-                        processBatch(queriesFuture, batch, Bucket.ONE_HOUR);
-                        break;
-                    case ONE_HOUR:
-                        endTime = dateTimeService.get6HourTimeSliceEnd(startTime);
-                        queriesFuture = fetchData(startTime, endTime, Bucket.ONE_HOUR, batch);
-                        processBatch(queriesFuture, batch, Bucket.SIX_HOUR);
-                        break;
-                    default:
-                        endTime = dateTimeService.get24HourTimeSliceEnd(startTime);
-                        queriesFuture = fetchData(startTime, endTime, Bucket.SIX_HOUR, batch);
-                        processBatch(queriesFuture, batch, Bucket.TWENTY_FOUR_HOUR);
-                }
-            }
-        };
-    }
-
-    protected void processBatch(ListenableFuture<List<ResultSet>> queriesFuture, List<IndexEntry> indexEntries,
-        Bucket bucket) {
-
-        ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(queriesFuture,
-            toIterable(resultSetMapper), aggregationTasks);
-
-        ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
-            computeAggregates(startTime.getMillis(), RawNumericMetric.class, bucket), aggregationTasks);
-
-        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(metricsFuture, persistMetrics,
-            aggregationTasks);
-
-        ListenableFuture<List<ResultSet>> deleteIndexEntriesFuture = Futures.transform(insertsFuture,
-            deleteIndexEntries(indexEntries), aggregationTasks);
-
-        aggregationTaskFinished(metricsFuture, deleteIndexEntriesFuture);
-    }
-
-    public Map<AggregationType, Integer> execute() throws InterruptedException, AbortedException {
         LOG.debug("Starting " + getDebugType() + " aggregation");
         Stopwatch stopwatch = new Stopwatch().start();
         try {
-            IndexIterator iterator = getIndexIterator();
-            List<IndexEntry> indexEntries = new ArrayList<IndexEntry>();
+            IndexIterator iterator = new IndexIterator(start, end, bucket, dao, configuration);
+            Batch batch = new Batch();
             while (iterator.hasNext()) {
-                indexEntries.add(iterator.next());
-                if (indexEntries.size() == BATCH_SIZE) {
-                    submitAggregationTask(indexEntries);
-                    indexEntries = new ArrayList<IndexEntry>();
+                IndexEntry indexEntry = iterator.next();
+                if (batch.getStartTime() == null) {
+                    batch.setStartTime(indexEntry.getTimestamp());
+                    batch.setEndTime(new DateTime(indexEntry.getTimestamp()).plus(timeSliceDuration));
+                }
+                if (batch.getStartTime().getMillis() == indexEntry.getTimestamp()) {
+                    batch.add(indexEntry);
+                    if (batch.size() == BATCH_SIZE) {
+                        submitAggregationTask(batch);
+                        batch = new Batch();
+                    }
+                } else {
+                    submitAggregationTask(batch);
+                    batch = new Batch()
+                        .setStartTime(indexEntry.getTimestamp())
+                        .setEndTime(new DateTime(indexEntry.getTimestamp()).plus(timeSliceDuration))
+                        .add(indexEntry);
                 }
             }
-            if (!indexEntries.isEmpty()) {
-                submitAggregationTask(indexEntries);
+            if (batch.size() > 0) {
+                submitAggregationTask(batch);
             }
             iterator = null;
             taskTracker.finishedSchedulingTasks();
@@ -241,27 +218,64 @@ class DataAggregator {
         return getAggregationCounts();
     }
 
-    protected IndexIterator getIndexIterator() {
-        DateTime endTime = startTime.plus(aggregationType.getTimeSliceDuration());
-        return new IndexIterator(startTime, endTime, aggregationType.getBucket(), dao, configuration);
-    }
-
-    protected ListenableFuture<List<ResultSet>> fetchRawData(DateTime startTime, List<IndexEntry> batch) {
-        List<StorageResultSetFuture> queryFutures = new ArrayList(batch.size());
-        long endTime = new DateTime(startTime).plusHours(1).getMillis();
-        for (IndexEntry indexEntry : batch) {
-            queryFutures.add(dao.findRawMetricsAsync(indexEntry.getScheduleId(), indexEntry.getTimestamp(), endTime));
-        }
-        return Futures.allAsList(queryFutures);
-    }
-
-    protected void submitAggregationTask(List<IndexEntry> batch) throws InterruptedException {
+    protected void submitAggregationTask(Batch batch) throws InterruptedException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Scheduling aggregation task for " + batch);
         }
         permits.acquire();
-        aggregationTasks.submit(createAggregationTask(batch));
+        aggregationTasks.submit(new AggregationTask(batch) {
+            @Override
+            void run(Batch batch) {
+                switch (bucket) {
+                    case RAW:
+                        fetchRawData(batch);
+                        processBatch(batch, Bucket.ONE_HOUR);
+                        break;
+                    case ONE_HOUR:
+                        fetchData(batch, Bucket.ONE_HOUR);
+                        processBatch(batch, Bucket.SIX_HOUR);
+                        break;
+                    default:
+                        fetchData(batch, Bucket.SIX_HOUR);
+                        processBatch(batch, Bucket.TWENTY_FOUR_HOUR);
+                }
+            }
+        });
         taskTracker.addTask();
+    }
+
+    protected void fetchRawData(Batch batch) {
+        List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>();
+        for (IndexEntry indexEntry : batch) {
+            queryFutures.add(dao.findRawMetricsAsync(indexEntry.getScheduleId(), batch.getStartTime().getMillis(),
+                batch.getEndTime().getMillis()));
+        }
+        batch.setQueriesFuture(Futures.allAsList(queryFutures));
+    }
+
+    protected void fetchData(Batch batch, Bucket bucket) {
+        List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>();
+        for (IndexEntry indexEntry : batch) {
+            queryFutures.add(dao.findAggregateMetricsAsync(indexEntry.getScheduleId(), bucket,
+                batch.getStartTime().getMillis(), batch.getEndTime().getMillis()));
+        }
+        batch.setQueriesFuture(Futures.allAsList(queryFutures));
+    }
+
+    protected void processBatch(Batch batch, Bucket bucket) {
+        ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(batch.getQueriesFuture(),
+            toIterable(resultSetMapper), aggregationTasks);
+
+        ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
+            computeAggregates(batch.getStartTime().getMillis(), RawNumericMetric.class, bucket), aggregationTasks);
+
+        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(metricsFuture, persistMetrics,
+            aggregationTasks);
+
+        ListenableFuture<List<ResultSet>> deleteIndexEntriesFuture = Futures.transform(insertsFuture,
+            deleteIndexEntries(batch), aggregationTasks);
+
+        aggregationTaskFinished(metricsFuture, deleteIndexEntriesFuture);
     }
 
     protected <T extends NumericMetric> Function<List<ResultSet>, Iterable<List<T>>> toIterable(
@@ -341,12 +355,12 @@ class DataAggregator {
         return new AggregateNumericMetric(scheduleId, bucket, mean.getArithmeticMean(), min, max, timeSlice);
     }
 
-    protected AsyncFunction<List<ResultSet>, List<ResultSet>> deleteIndexEntries(final List<IndexEntry> indexEntries) {
+    protected AsyncFunction<List<ResultSet>, List<ResultSet>> deleteIndexEntries(final Batch batch) {
         return new AsyncFunction<List<ResultSet>, List<ResultSet>>() {
             @Override
             public ListenableFuture<List<ResultSet>> apply(List<ResultSet> insertResultSets) throws Exception {
-                List<StorageResultSetFuture> deleteFutures = new ArrayList<StorageResultSetFuture>(indexEntries.size());
-                for (IndexEntry indexEntry : indexEntries) {
+                List<StorageResultSetFuture> deleteFutures = new ArrayList<StorageResultSetFuture>();
+                for (IndexEntry indexEntry : batch) {
                     deleteFutures.add(dao.deleteIndexEntry(indexEntry));
                 }
                 return Futures.allAsList(deleteFutures);
@@ -360,9 +374,10 @@ class DataAggregator {
      */
     protected abstract class AggregationTask implements Runnable {
 
-        private List<IndexEntry> batch;
+//        private List<IndexEntry> batch;
+        private Batch batch;
 
-        public AggregationTask(List<IndexEntry> batch) {
+        public AggregationTask(Batch batch) {
             this.batch = batch;
         }
 
@@ -376,7 +391,7 @@ class DataAggregator {
             }
         }
 
-        abstract void run(List<IndexEntry> batch);
+        abstract void run(Batch batch);
     }
 
     protected class AggregationTaskFinishedCallback<T> implements FutureCallback<T> {

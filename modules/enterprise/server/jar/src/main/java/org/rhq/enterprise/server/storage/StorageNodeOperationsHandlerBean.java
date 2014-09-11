@@ -168,7 +168,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         log.info("Uninstalling " + storageNode);
 
         if (storageNode.getResource() == null) {
-            finishUninstall(subject, storageNode);
+            storageNodeOperationsHandler.finishUninstall(subject, storageNode);
         } else {
             scheduleOperation(subject, storageNode, new Configuration(), "uninstall");
         }

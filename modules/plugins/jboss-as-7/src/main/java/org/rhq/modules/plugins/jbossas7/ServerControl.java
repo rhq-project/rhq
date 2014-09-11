@@ -32,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
+import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
@@ -60,7 +61,8 @@ final class ServerControl {
     private long waitTime;
     private boolean killOnTimeout;
 
-    private ServerControl(Configuration pluginConfiguration, AS7Mode serverMode, SystemInfo systemInfo, XMLInputFactory xmlInputFactory) {
+    private ServerControl(Configuration pluginConfiguration, AS7Mode serverMode, SystemInfo systemInfo,
+        XMLInputFactory xmlInputFactory) {
         this.serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
         this.pluginConfiguration = pluginConfiguration;
         this.serverMode = serverMode;
@@ -75,8 +77,8 @@ final class ServerControl {
         }
     }
 
-    public static ServerControl onServer(Configuration serverPluginConfig, AS7Mode serverMode,
-        SystemInfo systemInfo, XMLInputFactory xmlInputFactory) {
+    public static ServerControl onServer(Configuration serverPluginConfig, AS7Mode serverMode, SystemInfo systemInfo,
+        XMLInputFactory xmlInputFactory) {
 
         return new ServerControl(serverPluginConfig, serverMode, systemInfo, xmlInputFactory);
     }
@@ -197,6 +199,14 @@ final class ServerControl {
     final class Cli {
         private boolean disconnected;
 
+        Cli() {
+            // When running the CLI on Windows, make sure no "pause" message is shown after script execution
+            // Otherwise the CLI process will just keep running so we'll never get the exit code
+            if (systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS) {
+                startScriptEnv.put("NOPAUSE", "1");
+            }
+        }
+
         public Cli disconnected(boolean disconnected) {
             this.disconnected = disconnected;
             return this;
@@ -242,7 +252,8 @@ final class ServerControl {
             String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
                 + serverPluginConfig.getNativePort();
 
-            return execute(new File("bin", serverMode.getCliScriptFileName()), connect, file, user, password, controller);
+            return execute(new File("bin", serverMode.getCliScriptFileName()), connect, file, user, password,
+                controller);
         }
     }
 }

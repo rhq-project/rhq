@@ -24,9 +24,7 @@
 
 package org.rhq.server.metrics.domain;
 
-import java.util.Map;
-
-import com.google.common.collect.ImmutableMap;
+import com.google.common.base.Objects;
 
 /**
  * @author John Sanda
@@ -44,12 +42,6 @@ public class AggregateNumericMetric implements NumericMetric {
     private Double avg = Double.NaN;
 
     private long timestamp;
-
-    private ColumnMetadata avgColumnMetadata;
-
-    private ColumnMetadata minColumnMetadata;
-
-    private ColumnMetadata maxColumnMetadata;
 
     public AggregateNumericMetric() {
     }
@@ -111,47 +103,16 @@ public class AggregateNumericMetric implements NumericMetric {
         this.timestamp = timestamp;
     }
 
-    public ColumnMetadata getAvgColumnMetadata() {
-        return avgColumnMetadata;
-    }
-
-    public void setAvgColumnMetadata(ColumnMetadata avgColumnMetadata) {
-        this.avgColumnMetadata = avgColumnMetadata;
-    }
-
-    public ColumnMetadata getMinColumnMetadata() {
-        return minColumnMetadata;
-    }
-
-    public void setMinColumnMetadata(ColumnMetadata minColumnMetadata) {
-        this.minColumnMetadata = minColumnMetadata;
-    }
-
-    public ColumnMetadata getMaxColumnMetadata() {
-        return maxColumnMetadata;
-    }
-
-    public void setMaxColumnMetadata(ColumnMetadata maxColumnMetadata) {
-        this.maxColumnMetadata = maxColumnMetadata;
-    }
-
-    public Map<Integer, Double> toMap() {
-        return ImmutableMap.of(
-            AggregateType.MAX.ordinal(), max,
-            AggregateType.MIN.ordinal(), min,
-            AggregateType.AVG.ordinal(), avg
-        );
-    }
-
     @Override
     public String toString() {
-        if (avgColumnMetadata == null && minColumnMetadata == null && maxColumnMetadata == null) {
-            return "AggregatedNumericMetric[scheduleId=" + scheduleId + ", bucket=" + bucket + ", avg=" + avg +
-                ", min=" + min + ", max=" + max + ", timestamp=" + timestamp + "]";
-        }
-        return "AggregatedNumericMetric[scheduleId=" + scheduleId + ", avg=" + avg + ", min=" + min + ", max="
-            + max + " timestamp=" + timestamp + ", avgColumnMetadata=" + avgColumnMetadata + ", minColumnMetadata=" +
-            minColumnMetadata + ", maxColumnMetadata=" + maxColumnMetadata + "]";
+        return Objects.toStringHelper(AggregateNumericMetric.class)
+            .add("scheduleId", scheduleId)
+            .add("bucket", bucket)
+            .add("avg", avg)
+            .add("max", max)
+            .add("min", min)
+            .add("timestamp", timestamp)
+            .toString();
     }
 
     @Override

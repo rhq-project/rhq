@@ -25,6 +25,8 @@
 
 package org.rhq.server.metrics.domain;
 
+import com.google.common.base.Objects;
+
 /**
  * @author John Sanda
  */
@@ -36,8 +38,6 @@ public class RawNumericMetric implements NumericMetric {
 
     private long timestamp;
 
-    private ColumnMetadata columnMetadata;
-
     public RawNumericMetric() {
     }
 
@@ -45,13 +45,6 @@ public class RawNumericMetric implements NumericMetric {
         this.scheduleId = scheduleId;
         this.value = value;
         this.timestamp = timestamp;
-    }
-
-    public RawNumericMetric(int scheduleId, long timestamp, double value, ColumnMetadata metadata) {
-        this.scheduleId = scheduleId;
-        this.value = value;
-        this.timestamp = timestamp;
-        columnMetadata = metadata;
     }
 
     public int getScheduleId() {
@@ -93,22 +86,13 @@ public class RawNumericMetric implements NumericMetric {
         return value;
     }
 
-    public ColumnMetadata getColumnMetadata() {
-        return columnMetadata;
-    }
-
-    public void setColumnMetadata(ColumnMetadata columnMetadata) {
-        this.columnMetadata = columnMetadata;
-    }
-
     @Override
     public String toString() {
-        if (columnMetadata == null) {
-            return "RawNumericMetric[scheduleId=" + scheduleId + ", value=" + value + ", timestamp=" + timestamp + "]";
-        } else {
-            return "RawNumericMetric[scheduleId=" + scheduleId + ", value=" + value + ", timestamp=" + timestamp +
-                " columnMetadata=" + columnMetadata + "]";
-        }
+        return Objects.toStringHelper(RawNumericMetric.class)
+            .add("scheduleId", scheduleId)
+            .add("value", value)
+            .add("timestamp", timestamp)
+            .toString();
     }
 
     @Override

@@ -45,7 +45,7 @@ import org.rhq.server.metrics.StorageSession;
  * @author Stefan Negrea
  *
  */
-public class ListPagedResult<T> implements Iterable<T> {
+public class ListPagedResult<T extends NumericMetric> implements Iterable<T> {
 
 
     private final List<Integer> scheduleIds;

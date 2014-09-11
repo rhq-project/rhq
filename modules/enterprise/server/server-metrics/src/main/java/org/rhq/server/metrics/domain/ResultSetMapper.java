@@ -33,7 +33,7 @@ import com.datastax.driver.core.Row;
 /**
  * @author John Sanda
  */
-public interface ResultSetMapper<T> {
+public interface ResultSetMapper<T extends NumericMetric> {
 
     /**
      * Maps the entire result set to a list.

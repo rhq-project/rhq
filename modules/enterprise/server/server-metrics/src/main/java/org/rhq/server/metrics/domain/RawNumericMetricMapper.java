@@ -36,106 +36,36 @@ import com.datastax.driver.core.Row;
  */
 public class RawNumericMetricMapper implements ResultSetMapper<RawNumericMetric> {
 
-    private ResultSetMapper<RawNumericMetric> mapper;
-
-    public RawNumericMetricMapper() {
-        this(false);
-    }
-
-    public RawNumericMetricMapper(boolean metaDataIncluded) {
-        if (metaDataIncluded) {
-            mapper = new ResultSetMapper<RawNumericMetric>() {
-                @Override
-                public List<RawNumericMetric> mapAll(ResultSet resultSet) {
-                    List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
-                    for (Row row : resultSet) {
-                        metrics.add(map(row));
-                    }
-
-                    return metrics;
-                }
-
-                @Override
-                public RawNumericMetric mapOne(ResultSet resultSet) {
-                    return map(resultSet.one());
-                }
-
-                @Override
-                public List<RawNumericMetric> map(Row... row) {
-                    List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
-
-                    for (Row singleRow : row) {
-                        metrics.add(this.map(singleRow));
-                    }
-
-                    return metrics;
-                }
-
-                @Override
-                public RawNumericMetric map(Row row) {
-                    RawNumericMetric metric = new RawNumericMetric(row.getInt(0), row.getDate(1).getTime(),
-                        row.getDouble(2));
-                    ColumnMetadata metadata = new ColumnMetadata(row.getInt(3), row.getLong(4));
-                    metric.setColumnMetadata(metadata);
-
-                    return metric;
-                }
-            };
-        } else {
-            mapper = new ResultSetMapper<RawNumericMetric>() {
-                @Override
-                public List<RawNumericMetric> mapAll(ResultSet resultSet) {
-                    List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
-                    for (Row row : resultSet) {
-                        metrics.add(this.map(row));
-                    }
-
-                    return metrics;
-                }
-
-                @Override
-                public RawNumericMetric mapOne(ResultSet resultSet) {
-                    if (resultSet.isExhausted()) {
-                        return null;
-                    }
-                    return this.map(resultSet.one());
-                }
-
-                @Override
-                public List<RawNumericMetric> map(Row... row) {
-                    List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
-                    for (Row singleRow : row) {
-                        metrics.add(this.map(singleRow));
-                    }
-
-                    return metrics;
-                }
-
-                @Override
-                public RawNumericMetric map(Row row) {
-                    return new RawNumericMetric(row.getInt(0), row.getDate(1).getTime(), row.getDouble(2));
-                }
-            };
-        }
-    }
-
     @Override
     public List<RawNumericMetric> mapAll(ResultSet resultSet) {
-        return mapper.mapAll(resultSet);
+        List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
+        for (Row row : resultSet) {
+            metrics.add(this.map(row));
+        }
+
+        return metrics;
     }
 
     @Override
     public RawNumericMetric mapOne(ResultSet resultSet) {
-        return mapper.mapOne(resultSet);
+        if (resultSet.isExhausted()) {
+            return null;
+        }
+        return this.map(resultSet.one());
     }
 
     @Override
     public List<RawNumericMetric> map(Row... row) {
-        return mapper.map(row);
+        List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
+        for (Row singleRow : row) {
+            metrics.add(this.map(singleRow));
+        }
+
+        return metrics;
     }
 
     @Override
     public RawNumericMetric map(Row row) {
-        return mapper.map(row);
+        return new RawNumericMetric(row.getInt(0), row.getDate(1).getTime(), row.getDouble(2));
     }
 }

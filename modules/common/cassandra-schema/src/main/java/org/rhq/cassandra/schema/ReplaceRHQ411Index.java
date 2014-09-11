@@ -20,7 +20,7 @@ public class ReplaceRHQ411Index {
 
     private static final Log log = LogFactory.getLog(ReplaceRHQ411Index.class);
 
-    private static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("rhq.metrics.index.partitions", "4"));
+    private static final int NUM_PARTITIONS = 10;
 
     private static final int PAGE_SIZE = Integer.parseInt(System.getProperty("rhq.metrics.index.page-size", "2500"));
 

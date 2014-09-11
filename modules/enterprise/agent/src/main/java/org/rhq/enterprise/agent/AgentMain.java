@@ -1384,9 +1384,9 @@ public class AgentMain {
 
         try {
             StringReader reader = new StringReader(input);
-            XMLInputFactory inputFactory = XMLInputFactory.newFactory();
-            XMLOutputFactory outputFactory = XMLOutputFactory.newFactory();
-            XMLEventFactory eventFactory = XMLEventFactory.newFactory();
+            XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+            XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
+            XMLEventFactory eventFactory = XMLEventFactory.newInstance();
             eventReader = inputFactory.createXMLEventReader(reader);
             eventWriter = outputFactory.createXMLEventWriter(writer);
 

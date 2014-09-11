@@ -22,7 +22,7 @@ public class Replace412Index {
 
     private static final Log log = LogFactory.getLog(Replace412Index.class);
 
-    private static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("rhq.metrics.index.partitions", "4"));
+    private static final int NUM_PARTITIONS = 10;
 
     private static final int PAGE_SIZE = Integer.parseInt(System.getProperty("rhq.metrics.index.page-size", "2500"));
 

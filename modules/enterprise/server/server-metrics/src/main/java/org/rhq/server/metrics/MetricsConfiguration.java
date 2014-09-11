@@ -60,7 +60,8 @@ public class MetricsConfiguration {
 
     private int indexPageSize = Integer.parseInt(System.getProperty("rhq.metrics.index.page-size", "2500"));
 
-    private int indexPartitions = 4;
+    // TODO make this configurable
+    private int indexPartitions = 10;
 
     public int getRawTTL() {
         return rawTTL;

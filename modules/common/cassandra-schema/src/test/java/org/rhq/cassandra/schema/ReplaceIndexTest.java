@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  */
 public class ReplaceIndexTest extends SchemaUpgradeTest {
 
-    private static final int NUM_PARTITIONS = 5;
+    private static final int NUM_PARTITIONS = 10;
 
     private static final int CACHE_BATCH_SIZE = 5;
 

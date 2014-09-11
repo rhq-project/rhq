@@ -23,6 +23,7 @@ import static java.lang.Boolean.FALSE;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -103,7 +104,9 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             ResourceTypeCriteria criteria = new ResourceTypeCriteria();
             criteria.addFilterIgnored((showIgnoredResourceTypes ? null : FALSE));
             criteria.fetchParentResourceTypes(true);
-            criteria.setPageControl(PageControl.getUnlimitedInstance());
+            PageControl pc = PageControl.getUnlimitedInstance();
+            pc.addDefaultOrderingField("name");
+            criteria.setPageControl(pc);
 
             resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
                 @Override
@@ -133,8 +136,8 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
         }
 
         TreeNode[] buildNodes() {
-            rootTypes = new HashMap<String, ArrayList<ResourceType>>();
-            typeChildren = new HashMap<ResourceType, ArrayList<ResourceType>>();
+            rootTypes = new LinkedHashMap<String, ArrayList<ResourceType>>();
+            typeChildren = new LinkedHashMap<ResourceType, ArrayList<ResourceType>>();
             id = 0;
 
             nodes = new ArrayList<TreeNode>(resourceTypes.size() + 1 /* at least this size*/);

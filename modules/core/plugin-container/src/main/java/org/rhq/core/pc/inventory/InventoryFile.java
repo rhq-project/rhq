@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -131,7 +130,7 @@ public class InventoryFile {
                 this.resourceContainers.remove(uuidToIgnore);
             }
 
-            // purge all resources from disabled plugins - after this call, uuidsToIgnore should be empty
+            // purge all resources from disabled plugins
             removeIgnoredResourcesFromChildren(this.platform, uuidsToIgnore);
             return;
         } catch (Exception e) {
@@ -147,18 +146,55 @@ public class InventoryFile {
     }
 
     private void removeIgnoredResourcesFromChildren(Resource resource, Set<String> uuidsToIgnore) {
+        // nothing to ignore, just return
+        if (null == uuidsToIgnore || uuidsToIgnore.isEmpty()) {
+            return;
+        }
+
+        // Note that 'children' will likely be a CopyOnWriteArraySet and will not have a modifiable Iterator
+        // implementation.  So, alter the set only with a supported method, and only once to minimize recreation
+        // of the backing Array.
         Set<Resource> children = inventoryManager.getContainerChildren(resource);
-        if (!children.isEmpty() && !uuidsToIgnore.isEmpty()) {
-            Iterator<Resource> iterator = children.iterator();
-            while (iterator.hasNext() && !uuidsToIgnore.isEmpty()) {
-                Resource child = iterator.next();
-                removeIgnoredResourcesFromChildren(child, uuidsToIgnore);
-                if (uuidsToIgnore.contains(child.getUuid())) {
-                    iterator.remove();
-                    uuidsToIgnore.remove(child.getUuid());
+        Set<Resource> childrenToRemove = null;
+        Set<String> uuidsToRemove = null;
+
+        // no children, just return
+        if (children.isEmpty()) {
+            return;
+        }
+
+        // loop through the children, collecting those that are ignored and need to be removed
+        for (Resource child : children) {
+            // if we've already found all ignored resources, stop looking
+            if (null != uuidsToRemove && uuidsToRemove.size() == uuidsToIgnore.size()) {
+                break;
+            }
+
+            if (uuidsToIgnore.contains(child.getUuid())) {
+                if (null == childrenToRemove) {
+                    childrenToRemove = new HashSet<Resource>();
+                    uuidsToRemove = new HashSet<String>();
                 }
+                childrenToRemove.add(child);
+                uuidsToRemove.add(child.getUuid());
             }
         }
+
+        // remove the ignored children and processed uuids
+        if (null != childrenToRemove) {
+            uuidsToIgnore.removeAll(uuidsToRemove);
+            children.removeAll(childrenToRemove);
+            uuidsToRemove.clear();
+            uuidsToRemove = null;
+            childrenToRemove.clear();
+            childrenToRemove = null;
+        }
+
+        // recurse on the remaining children
+        for (Resource child : children) {
+            removeIgnoredResourcesFromChildren(child, uuidsToIgnore);
+        }
+
         return;
     }
 

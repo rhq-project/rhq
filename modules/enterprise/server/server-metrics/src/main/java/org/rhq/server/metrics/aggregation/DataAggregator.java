@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -12,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -46,7 +44,7 @@ import org.rhq.server.metrics.domain.ResultSetMapper;
  */
 class DataAggregator {
 
-    private final Log LOG = LogFactory.getLog(getClass());
+    private final Log log = LogFactory.getLog(getClass());
 
     protected static final int BATCH_SIZE = 5;
 
@@ -60,12 +58,6 @@ class DataAggregator {
 
     protected MetricsDAO dao;
 
-    /**
-     * This should always be raw for PastDataAggregator and for CacheAggregator it should match the bucket, e.g.,
-     * raw, 1 hour, 6 hr, being aggregated.
-     */
-//    protected AggregationType aggregationType;
-
     protected IndexBucket bucket;
 
     protected AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persistMetrics;
@@ -73,10 +65,6 @@ class DataAggregator {
     protected Semaphore permits;
 
     protected ListeningExecutorService aggregationTasks;
-
-//    protected DateTime startTime;
-//
-//    protected DateTime endTime;
 
     protected DateTimeService dateTimeService;
 
@@ -117,14 +105,6 @@ class DataAggregator {
         this.aggregationTasks = aggregationTasks;
     }
 
-//    void setStartTime(DateTime startTime) {
-//        this.startTime = startTime;
-//    }
-//
-//    public void setEndTime(DateTime endTime) {
-//        this.endTime = endTime;
-//    }
-
     public void setTimeSliceDuration(Duration timeSliceDuration) {
         this.timeSliceDuration = timeSliceDuration;
     }
@@ -139,17 +119,6 @@ class DataAggregator {
 
     void setBatchFinishedListener(BatchFinishedListener batchFinishedListener) {
         this.batchFinishedListener = batchFinishedListener;
-    }
-
-    /**
-     * @return A mapping of the number of schedules that had data aggregated for each bucket, e.g., raw, 1 hour, 6 hour
-     */
-    protected Map<IndexBucket, Integer> getAggregationCounts() {
-        return ImmutableMap.of(bucket, schedulesCount.get());
-    }
-
-    protected String getDebugType() {
-        return bucket.toString();
     }
 
     @SuppressWarnings("unchecked")
@@ -168,10 +137,10 @@ class DataAggregator {
         }, aggregationTasks);
     }
 
-    public Map<IndexBucket, Integer> execute(DateTime start, DateTime end) throws InterruptedException,
+    public int execute(DateTime start, DateTime end) throws InterruptedException,
         AbortedException {
 
-        LOG.debug("Starting " + getDebugType() + " aggregation");
+        log.info("Starting " + bucket + " data aggregation");
         Stopwatch stopwatch = new Stopwatch().start();
         try {
             IndexIterator iterator = new IndexIterator(start, end, bucket, dao, configuration);
@@ -203,24 +172,22 @@ class DataAggregator {
             taskTracker.finishedSchedulingTasks();
             taskTracker.waitForTasksToFinish();
         } catch (InterruptedException e) {
-            LOG.warn("There was an interrupt while scheduling aggregation tasks.", e);
+            log.warn("There was an interrupt while scheduling aggregation tasks.", e);
             taskTracker.abort("There was an interrupt while scheduling aggregation tasks.");
         } catch (Exception e) {
-            LOG.warn("There was an unexpected error scheduling aggregation tasks", e);
+            log.warn("There was an unexpected error scheduling aggregation tasks", e);
             taskTracker.abort("There was an unexpected error scheduling aggregation tasks: " + e.getMessage());
         } finally {
             stopwatch.stop();
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Finished " + getDebugType() + " aggregation in " + stopwatch.elapsed(TimeUnit.MILLISECONDS)
-                    + " ms");
-            }
+            log.info("Finished " + bucket + " data aggregation for " + schedulesCount + " measurement schedules in " +
+                stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
-        return getAggregationCounts();
+        return schedulesCount.get();
     }
 
     protected void submitAggregationTask(Batch batch) throws InterruptedException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Scheduling aggregation task for " + batch);
+        if (log.isDebugEnabled()) {
+            log.debug("Scheduling aggregation task for " + batch);
         }
         permits.acquire();
         aggregationTasks.submit(new AggregationTask(batch) {
@@ -386,7 +353,7 @@ class DataAggregator {
             try {
                 run(batch);
             } catch (Exception e) {
-                LOG.error("Aggregation will be aborted due to an unexpected error", e);
+                log.error("Aggregation will be aborted due to an unexpected error", e);
                 taskTracker.abort("Aborting aggregation due to an unexpected error: " + e.getMessage());
             }
         }
@@ -402,8 +369,8 @@ class DataAggregator {
             } finally {
                 permits.release();
                 taskTracker.finishedTask();
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("There are " + taskTracker.getRemainingTasks() + " remaining tasks and " +
+                if (log.isDebugEnabled()) {
+                    log.debug("There are " + taskTracker.getRemainingTasks() + " remaining tasks and " +
                         permits.availablePermits() + " available permits");
                 }
             }
@@ -414,11 +381,11 @@ class DataAggregator {
 
         @Override
         public void onFailure(Throwable t) {
-            LOG.warn("There was an error aggregating data", t);
+            log.warn("There was an error aggregating data", t);
             permits.release();
             taskTracker.finishedTask();
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("There are " + taskTracker.getRemainingTasks() + " remaining tasks and " +
+            if (log.isDebugEnabled()) {
+                log.debug("There are " + taskTracker.getRemainingTasks() + " remaining tasks and " +
                     permits.availablePermits() + " available permits");
             }
         }

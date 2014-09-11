@@ -182,7 +182,7 @@ public class MeasurementMonitor implements MeasurementMonitorMBean {
     }
 
     public long getMeasurementCompressionTime() {
-        return storageClientManager.getMetricsServer().getTotalAggregationTime();
+        return storageClientManager.getMetricsServer().getAggregationManager().getTotalAggregationTime();
     }
 
     public long getPurgeTime() {
@@ -259,7 +259,7 @@ public class MeasurementMonitor implements MeasurementMonitorMBean {
 
     @Override
     public int getAggregationBatchSize() {
-        return storageClientManager.getMetricsServer().getAggregationBatchSize();
+        return storageClientManager.getAggregationBatchSize();
     }
 
     @Override

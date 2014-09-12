@@ -1,39 +1,40 @@
 package org.rhq.server.metrics.aggregation;
 
-import org.rhq.server.metrics.AggregateCacheMapper;
-import org.rhq.server.metrics.CacheMapper;
-import org.rhq.server.metrics.RawCacheMapper;
-import org.rhq.server.metrics.domain.MetricsTable;
+import org.joda.time.Days;
+import org.joda.time.Duration;
+import org.joda.time.Hours;
+
+import org.rhq.server.metrics.domain.IndexBucket;
 
 /**
  * @author John Sanda
  */
 public enum AggregationType {
 
-    RAW("raw data", MetricsTable.RAW, new RawCacheMapper()),
+    RAW("raw data", IndexBucket.RAW, Hours.ONE.toStandardDuration()),
 
-    ONE_HOUR("one hour data", null, new AggregateCacheMapper()),
+    ONE_HOUR("one hour data", IndexBucket.ONE_HOUR, Hours.SIX.toStandardDuration()),
 
-    SIX_HOUR("six hour data", null, new AggregateCacheMapper());
+    SIX_HOUR("six hour data", IndexBucket.SIX_HOUR, Days.ONE.toStandardDuration());
 
     private String type;
 
-    private MetricsTable cacheTable;
+    private IndexBucket bucket;
 
-    private CacheMapper cacheMapper;
+    private Duration timeSliceDuration;
 
-    private AggregationType(String type, MetricsTable cacheTable, CacheMapper cacheMapper) {
+    private AggregationType(String type, IndexBucket bucket, Duration timeSliceDuration) {
         this.type = type;
-        this.cacheTable = cacheTable;
-        this.cacheMapper = cacheMapper;
+        this.bucket = bucket;
+        this.timeSliceDuration = timeSliceDuration;
     }
 
-    public MetricsTable getCacheTable() {
-        return cacheTable;
+    public IndexBucket getBucket() {
+        return bucket;
     }
 
-    public CacheMapper getCacheMapper() {
-        return cacheMapper;
+    public Duration getTimeSliceDuration() {
+        return timeSliceDuration;
     }
 
     @Override

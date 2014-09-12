@@ -637,8 +637,8 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     private void deleteMeasurementDataNumeric1H(MeasurementSchedule schedule) {
         try {
             StorageSession session = storageClientManager.getSession();
-            session.execute("DELETE FROM " + MetricsTable.ONE_HOUR.getTableName() + " WHERE schedule_id = " +
-                schedule.getId());
+            session.execute("DELETE FROM " + MetricsTable.AGGREGATE.getTableName() + " WHERE schedule_id = " +
+                schedule.getId() + " AND bucket = 'one_hour'");
         } catch (NoHostAvailableException e) {
             throw new RuntimeException("An error occurred while trying to deleted data from " +
                 MetricsTable.ONE_HOUR + " for " + schedule, e);

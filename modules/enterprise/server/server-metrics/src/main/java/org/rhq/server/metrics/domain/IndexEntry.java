@@ -2,12 +2,14 @@ package org.rhq.server.metrics.domain;
 
 import com.google.common.base.Objects;
 
+import org.joda.time.DateTime;
+
 /**
  * @author John Sanda
  */
 public class IndexEntry {
 
-    private MetricsTable bucket;
+    private IndexBucket bucket;
 
     private int partition;
 
@@ -18,18 +20,22 @@ public class IndexEntry {
     public IndexEntry() {
     }
 
-    public IndexEntry(MetricsTable bucket, int partition, long timestamp, int scheduleId) {
+    public IndexEntry(IndexBucket bucket, int partition, long timestamp, int scheduleId) {
         this.bucket = bucket;
         this.partition = partition;
         this.timestamp = timestamp;
         this.scheduleId = scheduleId;
     }
 
-    public MetricsTable getBucket() {
+    public IndexEntry(IndexBucket bucket, int partition, DateTime time, int scheduleId) {
+        this(bucket, partition, time.getMillis(), scheduleId);
+    }
+
+    public IndexBucket getBucket() {
         return bucket;
     }
 
-    public void setBucket(MetricsTable bucket) {
+    public void setBucket(IndexBucket bucket) {
         this.bucket = bucket;
     }
 

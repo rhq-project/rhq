@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,9 +18,16 @@
  */
 package org.rhq.coregui.client.bundle.list;
 
+import static org.rhq.coregui.client.CoreGUI.getErrorHandler;
+import static org.rhq.coregui.client.CoreGUI.getMessageCenter;
+import static org.rhq.coregui.client.CoreGUI.goToView;
+import static org.rhq.coregui.client.CoreGUI.isTagsEnabledForUI;
+
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.gwt.core.client.Duration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
@@ -43,7 +50,6 @@ import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.BookmarkableView;
-import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.PermissionsLoadedListener;
 import org.rhq.coregui.client.PermissionsLoader;
@@ -66,20 +72,16 @@ import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 
 public class BundleView extends EnhancedVLayout implements BookmarkableView {
-    private DynamicForm form;
 
     private int bundleBeingViewed = 0;
-    private HeaderLabel headerLabel;
-    private Table bundleVersionsTable;
     private TabSet tabs;
     private Tab versionsTab;
     private Tab destinationsTab;
-    private Tab bundleGroupsTab;
 
     private Set<Permission> globalPermissions;
     private int permissionCheckBundleId = 0;
@@ -106,11 +108,12 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         this.bundle = bundle;
 
         BackButton backButton = new BackButton(MSG.view_bundle_list_backToAll(), BundleTopView.VIEW_ID.getName());
-        headerLabel = new HeaderLabel(IconEnum.BUNDLE.getIcon24x24Path(), StringUtility.escapeHtml(bundle.getName()));
+        HeaderLabel headerLabel = new HeaderLabel(IconEnum.BUNDLE.getIcon24x24Path(), StringUtility.escapeHtml(bundle
+            .getName()));
         tabs = new TabSet();
         versionsTab = createVersionsTab();
         destinationsTab = createDestinationsTab();
-        bundleGroupsTab = createBundleGroupsTab();
+        Tab bundleGroupsTab = createBundleGroupsTab();
         tabs.addTab(versionsTab);
         tabs.addTab(destinationsTab);
         tabs.addTab(bundleGroupsTab);
@@ -119,7 +122,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         addMember(headerLabel);
 
         //conditionally add tags. Defaults to true, not available in JON builds.
-        if (CoreGUI.isTagsEnabledForUI()) {
+        if (isTagsEnabledForUI()) {
             addMember(createTagEditor());
         }
         addMember(createSummaryForm());
@@ -138,15 +141,18 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
     private TagEditorView createTagEditor() {
         boolean readOnly = !canTag;
         TagEditorView tagEditor = new TagEditorView(bundle.getTags(), readOnly, new TagsChangedCallback() {
+            @Override
             public void tagsChanged(HashSet<Tag> tags) {
                 GWTServiceLookup.getTagService().updateBundleTags(bundleBeingViewed, tags, new AsyncCallback<Void>() {
+                    @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_tagUpdateFailure(), caught);
+                        getErrorHandler().handleError(MSG.view_bundle_list_tagUpdateFailure(), caught);
                     }
 
+                    @Override
                     public void onSuccess(Void result) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_bundle_list_tagUpdateSuccessful(), Message.Severity.Info));
+                        String conciseMessage = MSG.view_bundle_list_tagUpdateSuccessful();
+                        getMessageCenter().notify(new Message(conciseMessage, Message.Severity.Info));
                     }
                 });
             }
@@ -168,7 +174,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         Tab versionsTab = new Tab(MSG.view_bundle_versions());
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleId", bundleBeingViewed);
-        bundleVersionsTable = new BundleVersionListView(criteria);
+        Table bundleVersionsTable = new BundleVersionListView(criteria);
         versionsTab.setPane(bundleVersionsTable);
         return versionsTab;
     }
@@ -177,13 +183,12 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         Tab bundleGroupsTab = new Tab(MSG.common_title_bundleGroups());
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleIds", new Integer[] { bundle.getId() });
-        bundleGroupsTab.setPane(new BundleGroupsListView(criteria, (Set<Permission>) null));
+        bundleGroupsTab.setPane(new BundleGroupsListView(criteria, null));
         return bundleGroupsTab;
     }
 
     private DynamicForm createSummaryForm() {
-
-        form = new DynamicForm();
+        DynamicForm form = new DynamicForm();
         form.setWidth100();
         form.setColWidths("20%", "40%", "40%");
         form.setNumCols(3);
@@ -221,6 +226,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         IButton deployButton = new EnhancedIButton(MSG.view_bundle_deploy(), ButtonColor.BLUE);
         //deployButton.setIcon(IconEnum.BUNDLE_DEPLOY.getIcon16x16Path());
         deployButton.addClickHandler(new ClickHandler() {
+            @Override
             public void onClick(ClickEvent clickEvent) {
 
                 // can change this back to SINGLE selection when we feel like it. currently allowing the wizard to
@@ -230,14 +236,16 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
                 bc.addFilterId(bundle.getId());
                 BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
                 bundleManager.findBundlesByCriteria(bc, new AsyncCallback<PageList<Bundle>>() {
+                    @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_error1(bundle.getName()), caught);
+                        getErrorHandler().handleError(MSG.view_bundle_list_error1(bundle.getName()), caught);
                     }
 
+                    @Override
                     public void onSuccess(PageList<Bundle> result) {
                         if (result == null || result.size() != 1) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message(MSG.view_bundle_list_error2(bundle.getName()), Message.Severity.Error));
+                            String conciseMessage = MSG.view_bundle_list_error2(bundle.getName());
+                            getMessageCenter().notify(new Message(conciseMessage, Message.Severity.Error));
                             return;
                         }
                         new BundleDeployWizard(result.get(0)).startWizard();
@@ -250,23 +258,13 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         IButton deleteButton = new EnhancedIButton(MSG.common_button_delete(), ButtonColor.RED);
         //deleteButton.setIcon(IconEnum.BUNDLE_DELETE.getIcon16x16Path());
         deleteButton.addClickHandler(new ClickHandler() {
+            @Override
             public void onClick(ClickEvent clickEvent) {
                 SC.ask(MSG.view_bundle_deleteConfirm(), new BooleanCallback() {
-                    public void execute(Boolean aBoolean) {
-                        if (aBoolean) {
-                            bundleManager.deleteBundle(bundleBeingViewed, new AsyncCallback<Void>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_bundle_list_deleteFailure(bundle.getName()), caught);
-                                }
-
-                                public void onSuccess(Void result) {
-                                    CoreGUI.getMessageCenter().notify(
-                                        new Message(MSG.view_bundle_list_deleteSuccessful(bundle.getName()),
-                                            Message.Severity.Info));
-                                    CoreGUI.goToView("Bundles", true); // Bundle is deleted, go back to all bundles view
-                                }
-                            });
+                    @Override
+                    public void execute(Boolean confirmed) {
+                        if (confirmed) {
+                            doDeleteBundle();
                         }
                     }
                 });
@@ -280,6 +278,41 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         return layout;
     }
 
+    private void doDeleteBundle() {
+        String deleteSubmittedMessage = MSG.view_bundle_deleteSubmitted(bundle.getName());
+        getMessageCenter().notify(new Message(deleteSubmittedMessage, Message.Severity.Info));
+        final Duration duration = new Duration();
+        bundleManager.deleteBundle(bundleBeingViewed, new AsyncCallback<Void>() {
+            @Override
+            public void onFailure(final Throwable caught) {
+                Timer timer = new Timer() {
+                    @Override
+                    public void run() {
+                        String message = MSG.view_bundle_list_deleteFailure(bundle.getName());
+                        getErrorHandler().handleError(message, caught);
+                    }
+                };
+                // Delay the showing of the result to give the user some time to see the deleteSubmitted notif
+                timer.schedule(Math.max(0, 3 * 1000 - duration.elapsedMillis()));
+            }
+
+            @Override
+            public void onSuccess(Void result) {
+                Timer timer = new Timer() {
+                    @Override
+                    public void run() {
+                        String conciseMessage = MSG.view_bundle_list_deleteSuccessful(bundle.getName());
+                        getMessageCenter().notify(new Message(conciseMessage, Message.Severity.Info));
+                        goToView("Bundles", true); // Bundle is deleted, go back to all bundles view
+                    }
+                };
+                // Delay the showing of the result to give the user some time to see the deleteSubmitted notif
+                timer.schedule(Math.max(0, 3 * 1000 - duration.elapsedMillis()));
+            }
+        });
+    }
+
+    @Override
     public void renderView(final ViewPath viewPath) {
         final int bundleId = Integer.parseInt(viewPath.getCurrent().getPath());
 
@@ -330,14 +363,16 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
 
                 GWTServiceLookup.getBundleService().findBundlesByCriteria(criteria,
                     new AsyncCallback<PageList<Bundle>>() {
+                        @Override
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_error3(), caught);
+                            getErrorHandler().handleError(MSG.view_bundle_list_error3(), caught);
                         }
 
+                        @Override
                         public void onSuccess(PageList<Bundle> result) {
                             if (result == null || result.isEmpty()) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_bundle_list_error4(), Message.Severity.Error));
+                                String conciseMessage = MSG.view_bundle_list_error4();
+                                getMessageCenter().notify(new Message(conciseMessage, Message.Severity.Error));
                                 return;
                             }
                             Bundle bundle = result.get(0);
@@ -367,13 +402,12 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
                     view.renderView(viewPath.next());
                 }
             } else if (viewPath.getCurrent().getPath().equals("deployments")) {
-                if (viewPath.isEnd()) {
-                    // today we do not have an uber-view showing all deployments for a bundle.
-                    // if we did, it would show all deployments to all destinations for all bundle versions.
-                    // because that would be a very large list with a lot of stuff to show, it was deemed
-                    // too complex to be useful for users. thus, we have no uber-deployments view. If we did,
-                    // we would render it here.
-                } else {
+                // today we do not have an uber-view showing all deployments for a bundle.
+                // if we did, it would show all deployments to all destinations for all bundle versions.
+                // because that would be a very large list with a lot of stuff to show, it was deemed
+                // too complex to be useful for users. thus, we have no uber-deployments view. If we did,
+                // we would render it here.
+                if (!viewPath.isEnd()) {
                     // a specific deployment
                     //removeMembers(getMembers());
                     BundleDeploymentView view = new BundleDeploymentView(canDelete, canDeploy, canTag);

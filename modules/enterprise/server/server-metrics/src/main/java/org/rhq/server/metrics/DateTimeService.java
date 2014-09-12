@@ -173,6 +173,16 @@ public class DateTimeService {
     }
 
     /**
+     * Determines the one hour time slice for the specified time and returns the start of that time slice
+     *
+     * @param time The DateTime to be rounded down
+     * @return A DateTime rounded down to the start of the hour.
+     */
+    public DateTime get1HourTimeSlice(DateTime time) {
+        return getTimeSlice(time, configuration.getRawTimeSliceDuration());
+    }
+
+    /**
      * Determines if the current six hour time slice for the specified time has completed.
      * <p>
      * Suppose that the current time is 14:23 and that the specified time is 13:15:00 which falls into the

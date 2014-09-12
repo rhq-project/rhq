@@ -41,7 +41,7 @@ import org.rhq.server.metrics.CQLException;
  * @author Stefan Negrea
  *
  */
-public class SlicedPagedResult<T> implements Iterable<T> {
+public class SlicedPagedResult<T extends NumericMetric> implements Iterable<T> {
 
     private static final int DEFAULT_PAGE_SIZE = 30000;
 

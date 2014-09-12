@@ -59,6 +59,10 @@ class UpdateFolder {
         this.updateFiles = this.loadUpdateFiles();
     }
 
+    public String getFolder() {
+        return folder;
+    }
+
     /**
      * Removes all the update files up to and including the provided version.
      *

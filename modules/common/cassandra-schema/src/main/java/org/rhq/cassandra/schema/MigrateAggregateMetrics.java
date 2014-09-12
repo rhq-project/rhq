@@ -111,6 +111,11 @@ public class MigrateAggregateMetrics implements Step {
     }
 
     @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
+
+    @Override
     public void execute() {
         // dbConnectionFactory can be null in test environments which is fine because we start tests with a brand
         // new schema and cluster. In this case, we do not need to do anything since it is not an upgrade scenario.

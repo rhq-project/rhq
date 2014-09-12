@@ -1,12 +1,17 @@
 package org.rhq.cassandra.schema;
 
+import static org.testng.Assert.assertFalse;
+
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.datastax.driver.core.Cluster;
@@ -15,6 +20,7 @@ import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -33,16 +39,12 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.rhq.cassandra.CassandraClusterManager;
-import org.rhq.cassandra.ClusterInitService;
-import org.rhq.cassandra.DeploymentOptions;
-import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.core.util.jdbc.JDBCUtil;
 
 /**
  * @author John Sanda
  */
-public class MigrateAggregateMetricsTest {
+public class MigrateAggregateMetricsTest extends SchemaUpgradeTest {
 
     private static final Log log = LogFactory.getLog(MigrateAggregateMetricsTest.class);
 
@@ -62,52 +64,29 @@ public class MigrateAggregateMetricsTest {
 
     private PreparedStatement insert24HourData;
 
-    private CassandraClusterManager ccm;
-
     @BeforeClass
     public void setupClass() throws Exception {
         connection = newJDBCConnection();
-        if (Boolean.valueOf(System.getProperty("rhq.storage.deploy", "true"))) {
-            deployStorageCluster();
-        }
     }
 
-    @AfterClass
+    @AfterClass(alwaysRun = true)
     public void tearDownClass() throws Exception {
         JDBCUtil.safeClose(connection);
-        if (Boolean.valueOf(System.getProperty("rhq.storage.shutdown", "true"))) {
-            ccm.shutdownCluster();
-        }
     }
 
     @BeforeMethod
     public void setUp() throws Exception {
         resetDB();
+        for (File file : new File("target").listFiles()) {
+            if (file.getName().endsWith("_migration.log")) {
+                file.delete();
+            }
+        }
     }
 
     @AfterMethod(alwaysRun = true)
     public void tearDown() throws Exception {
         resetDB();
-    }
-
-    private void deployStorageCluster() {
-        DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
-        DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
-        deploymentOptions.setClusterDir("target/cassandra");
-        deploymentOptions.setNumNodes(1);
-        deploymentOptions.setUsername("rhqadmin");
-        deploymentOptions.setPassword("rhqadmin");
-        deploymentOptions.setStartRpc(true);
-        deploymentOptions.setHeapSize("256M");
-        deploymentOptions.setHeapNewSize("64M");
-        deploymentOptions.setJmxPort(8399);
-
-        ccm = new CassandraClusterManager(deploymentOptions);
-        ccm.createCluster();
-        ccm.startCluster(false);
-
-        ClusterInitService clusterInitService = new ClusterInitService();
-        clusterInitService.waitForClusterToStart(new String[] {"127.0.0.1"}, new int[] {8399}, 1, 2000, 20, 10);
     }
 
     private void resetDB() throws Exception {
@@ -132,9 +111,12 @@ public class MigrateAggregateMetricsTest {
         });
         properties.put(SchemaManager.DATA_DIR, "target");
 
-        TestSchemaManager schemaManager = new TestSchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
+        SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
             new String[] {"127.0.0.1"}, 9042);
+        schemaManager.setUpdateFolderFactory(new TestUpdateFolderFactory(VersionManager.Task.Update.getFolder())
+            .removeFiles("0005.xml", "0006.xml", "0007.xml"));
         schemaManager.drop();
+        schemaManager.shutdown();
         schemaManager.install(properties);
         schemaManager.shutdown();
 
@@ -153,11 +135,16 @@ public class MigrateAggregateMetricsTest {
         insert6HourData(numSchedules, endTime);
         insert24HourData(numSchedules, endTime);
 
-
-        schemaManager = new TestSchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
+        schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
             new String[] {"127.0.0.1"}, 9042);
-        schemaManager.updateAggregateMetrics = true;
         schemaManager.install(properties);
+        schemaManager.shutdown();
+
+        assert1HourDataMigrated(numSchedules);
+        assert6HourDataMigrated(numSchedules);
+        assert24HourDataMigrated(numSchedules);
+
+        assertTablesDropped("one_hour_metrics", "six_hour_metrics", "twenty_four_hour_metrics");
     }
 
     private void initPreparedStatements() {
@@ -263,54 +250,6 @@ public class MigrateAggregateMetricsTest {
         }
     }
 
-    private class TestSchemaManager extends SchemaManager {
-
-        public boolean updateAggregateMetrics;
-
-        private String username;
-
-        private String password;
-
-        private String[] nodes;
-
-        private int cqlPort;
-
-        public TestSchemaManager(String username, String password, String[] nodes, int cqlPort) {
-            super(username, password, nodes, cqlPort);
-            this.username = username;
-            this.password = password;
-            this.nodes = nodes;
-            this.cqlPort = cqlPort;
-        }
-
-        @Override
-        public void install(Properties properties) throws Exception {
-            TestVersionManager versionManager = new TestVersionManager(username, password, nodes, cqlPort);
-            versionManager.updateAggregateMetrics = updateAggregateMetrics;
-            versionManager.install(properties);
-        }
-    }
-
-    private class TestVersionManager extends VersionManager {
-
-        public boolean updateAggregateMetrics;
-
-        public TestVersionManager(String username, String password, String[] nodes, int cqlPort) throws Exception {
-            super(username, password, nodes, cqlPort, new SessionManager());
-        }
-
-        @Override
-        protected void execute(UpdateFile updateFile, Properties properties) {
-            if (updateAggregateMetrics) {
-                super.execute(updateFile, properties);
-            } else {
-                if (!updateFile.getFile().equals("schema/update//0005.xml")) {
-                    super.execute(updateFile, properties);
-                }
-            }
-        }
-    }
-
     private Connection newJDBCConnection() throws SQLException {
         return DriverManager.getConnection(System.getProperty("rhq.db.url"),
             System.getProperty("rhq.db.username"), System.getProperty("rhq.db.password"));
@@ -321,6 +260,47 @@ public class MigrateAggregateMetricsTest {
             return value ? "true" : "false";
         }
         return value ? "1" : "0";
+    }
+
+    /**
+     * Verifies that there exists 1 hour data in the new tables. The actual data is not is not inspected.
+     */
+    private void assert1HourDataMigrated(int numSchedules) {
+        assertDataMigrated(numSchedules, "one_hour");
+    }
+
+    /**
+     * Verifies that there exists 6 hour data in the new tables. The actual data is not is not inspected.
+     */
+    private void assert6HourDataMigrated(int numSchedules) {
+        assertDataMigrated(numSchedules, "six_hour");
+    }
+
+    /**
+     * Verifies that there exists 24 hour data in the new tables. The actual data is not is not inspected.
+     */
+    private void assert24HourDataMigrated(int numSchedules) {
+        assertDataMigrated(numSchedules, "twenty_four_hour");
+    }
+
+    private void assertDataMigrated(int numSchedules, String bucket) {
+        for (int i = -1; i > -numSchedules; --i) {
+            ResultSet resultSet = session.execute("select * from " + Table.AGGREGATE_METRICS + " where schedule_id = " +
+                i + " and bucket = '" + bucket + "' limit 1");
+            assertFalse(resultSet.isExhausted(), "Failed to migrate " + bucket + " data for schedule id " + i);
+        }
+    }
+
+    private void assertTablesDropped(String... tables) {
+        Set<String> existingTables = new HashSet<String>();
+        ResultSet resultSet = session.execute("SELECT columnfamily_name FROM system.schema_columnfamilies " +
+            "WHERE keyspace_name = 'rhq'");
+        for (Row row : resultSet) {
+            existingTables.add(row.getString(0));
+        }
+        for (String table : tables) {
+            assertFalse(existingTables.contains(table), table + " should have been dropped");
+        }
     }
 
 }

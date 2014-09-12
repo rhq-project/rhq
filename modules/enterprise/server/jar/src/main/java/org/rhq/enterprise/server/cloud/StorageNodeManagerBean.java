@@ -80,7 +80,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
@@ -773,11 +772,11 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         if (storageNode.getResource() == null) {
             storageNode = entityManager.find(StorageNode.class, storageNode.getId());
             if (storageNode == null) { // no storage node with the specified id
-                throw new ResourceNotFoundException("There is no storage node with id [" + storageNodeId
+                throw new IllegalStateException("There is no storage node with id [" + storageNodeId
                     + "] stored in the database.");
             }
             if (storageNode.getResource() == null) { // no associated resource
-                throw new IllegalStateException("This storage node [" + storageNode.getId()
+                throw new ResourceNotFoundException("This storage node [" + storageNode.getId()
                     + "] has no associated resource.");
             }
         }
@@ -1262,7 +1261,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 if (REGULAR_SNAPSHOTS_SCHEDULE_DESCRIPTION.equals(schedule.getDescription())) {
                     log.info("Found operation schedule, unscheduling " + schedule);
                     operationManager.unscheduleResourceOperation(subject, schedule.getJobId().toString(), test.getId());
-                    // delete history items that have been scheduled but not yet started 
+                    // delete history items that have been scheduled but not yet started
                     ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
                     criteria.setPageControl(PageControl.getUnlimitedInstance());
                     criteria.addFilterJobId(schedule.getJobId());

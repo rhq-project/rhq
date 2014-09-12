@@ -693,12 +693,23 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
         }
 
+        // if any of the doomed resources are storage nodes (we don't know, we only have ids, so we'll just have
+        // to make the call anyway. Unfortunately, this can't wait until the async work because the StorageNode
+        // is still active and should not be linked to an uninventoried resource.
+        try {
+            Query query = entityManager.createNamedQuery(StorageNode.QUERY_UPDATE_REMOVE_LINKED_RESOURCES);
+            query.setParameter("resourceIds", resourceIds);
+            query.executeUpdate();
+        } catch (Exception e) {
+            LOG.warn(
+                "May have been unable to unlink StorageNode from it's Resource. This is unlikely to be a problem.", e);
+        }
+
         return hasErrors;
     }
 
     private boolean uninventoryResourceBulkDeleteAsyncWork(Subject overlord, int resourceId) {
         String[] namedQueriesToExecute = new String[] { //
-        StorageNode.QUERY_UPDATE_REMOVE_LINKED_RESOURCES, //remove storage node resource links
             ResourceRepo.DELETE_BY_RESOURCES, //
             MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, // baseline BEFORE schedules
             MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES, // traits BEFORE schedules

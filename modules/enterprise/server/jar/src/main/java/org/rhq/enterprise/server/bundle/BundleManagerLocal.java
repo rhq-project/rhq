@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,13 +13,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.bundle;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.ejb.Local;
@@ -68,6 +70,16 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      */
     BundleResourceDeploymentHistory addBundleResourceDeploymentHistoryInNewTrans(Subject subject,
         int resourceDeploymentId, BundleResourceDeploymentHistory history) throws Exception;
+
+    /**
+     * Used by the UI. Performs security checks.
+     *
+     * @param subject the caller
+     * @param resourceDeploymentId id of the deployment
+     *
+     * @return the list of audit entities, or an empty list if the caller is not authorized to view this deployment.
+     */
+    List<BundleResourceDeploymentHistory> getBundleResourceDeploymentHistories(Subject subject, int resourceDeploymentId);
 
     /**
      * Internal use only, and test entry point.

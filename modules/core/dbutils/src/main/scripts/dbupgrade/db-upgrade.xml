@@ -2532,6 +2532,31 @@
               <!-- BZ 1070257 + 911432 -->
               <schema-alterColumn table="RHQ_ALERT_CONDITION_LOG" column="VALUE" columnType="VARCHAR2" precision="4000" />
             </schemaSpec>
+
+            <!-- Bug 1079303 - Excessive database size when using bundles causing UI to fail -->
+            <schemaSpec version="2.160">
+
+              <!--
+                BREAKING THE RULE: drop the foreign key.
+
+                Some users may have millions of audit messages related to a single bundle. In this case, deleting the
+                bundle inside a single transaction is impossible. Dropping the foreign key allows to delete the whole
+                bundle entity hierarchy, leaving orphaned audit messages (the server has a purge task to remove them).
+
+                Audit messages are not a central part of the data model (in opposition to resource types, for example).
+                There are only a handful of methods in the codebase for inserting/querying/removing. This makes dropping
+                the foreign key exceptionally acceptable.
+              -->
+              <schema-dropForeignKeys table="RHQ_BUNDLE_RES_DEP_HIST" column="BUNDLE_RES_DEPLOY_ID" ignoreError="true"/>
+
+              <schema-directSQL ignoreError="true">
+                <statement desc="Optimize query for audit messages of a resource deployment">
+                  CREATE INDEX RHQ_BDLE_AUDIT_RESDPLY_IDX ON RHQ_BUNDLE_RES_DEP_HIST(BUNDLE_RES_DEPLOY_ID)
+                </statement>
+              </schema-directSQL>
+
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

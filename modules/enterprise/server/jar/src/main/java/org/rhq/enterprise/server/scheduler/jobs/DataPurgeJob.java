@@ -103,6 +103,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeAvailabilityData(purgeManager, systemConfig);
         purgeOrphanedDriftFiles(LookupUtil.getDriftManager(), systemConfig);
         purgeOperationHistoryData(LookupUtil.getOperationManager(), systemConfig);
+        purgeOrphanedBundleResourceDeploymentHistory(purgeManager);
     }
 
     private void purgeMeasurementTraitData(PurgeManagerLocal purgeManager, Properties systemConfig) {
@@ -295,6 +296,21 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
+    private void purgeOrphanedBundleResourceDeploymentHistory(PurgeManagerLocal purgeManager) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Orphaned bundle audit messages purge starting at " + new Date(timeStart));
+        int orphansPurged = 0;
+        try {
+            orphansPurged = purgeManager.purgeOrphanedBundleResourceDeploymentHistory();
+        } catch (Exception e) {
+            LOG.error("Failed to purge orphaned bundle audit messages. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Purged [" + orphansPurged + "] orphaned bundle audit messages - completed in [" + duration
+                + "]ms");
+        }
+    }
+
     private void performDatabaseMaintenance(SystemManagerLocal systemManager, Properties systemConfig) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Database maintenance starting at " + new Date(timeStart));
@@ -341,7 +357,5 @@ public class DataPurgeJob extends AbstractStatefulJob {
             long duration = System.currentTimeMillis() - timeStart;
             LOG.info("Database maintenance completed in [" + duration + "]ms");
         }
-
-        return;
     }
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.resource;
 
 import static org.rhq.core.domain.criteria.Criteria.Restriction.COLLECTION_ONLY;
@@ -69,7 +70,6 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
-import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -155,7 +155,7 @@ import org.rhq.enterprise.server.util.QueryUtility;
  */
 @Stateless
 public class ResourceManagerBean implements ResourceManagerLocal, ResourceManagerRemote {
-    private final Log log = LogFactory.getLog(ResourceManagerBean.class);
+    private static final Log LOG = LogFactory.getLog(ResourceManagerBean.class);
 
     private final static String BOUNDED_MAX_RESOURCES = "1000";
     private final static String BOUNDED_MAX_RESOURCES_BY_TYPE = "200";
@@ -183,6 +183,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @EJB
     private AvailabilityManagerLocal availabilityManager;
 
+    @Override
     public void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException {
         Resource parent = null;
         if (parentId != Resource.ROOT_ID) {
@@ -213,7 +214,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         entityManager.persist(resource);
-        log.debug("********* resource persisted ************");
+        LOG.debug("********* resource persisted ************");
         // Execute sub-methods as overlord to bypass additional security checks.
         Subject overlord = this.subjectManager.getOverlord();
         updateImplicitMembership(overlord, resource);
@@ -237,6 +238,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         groupManager.updateImplicitGroupMembership(subject, resource);
     }
 
+    @Override
     public Resource updateResource(Subject user, Resource resource) {
         Resource persistedResource = entityManager.find(Resource.class, resource.getId());
         if (persistedResource == null) {
@@ -266,6 +268,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return entityManager.merge(persistedResource);
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void uninventoryResourcesOfResourceType(Subject subject, int resourceTypeId) {
@@ -275,7 +278,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         List<Integer> resourceIds = resourceManager.findIdsByTypeIds(typeIds);
 
         if (resourceIds != null && !resourceIds.isEmpty()) {
-            log.info("Uninventorying all [" + resourceIds.size() + "] resources with resource type ID of ["
+            LOG.info("Uninventorying all [" + resourceIds.size() + "] resources with resource type ID of ["
                 + resourceTypeId + "]");
 
             for (Integer resourceId : resourceIds) {
@@ -283,9 +286,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
         }
 
-        return;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void uninventoryAllResourcesByAgent(Subject user, Agent doomedAgent) {
         Resource platform = resourceManager.getPlatform(doomedAgent);
@@ -297,6 +300,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<Integer> uninventoryResources(Subject user, int[] resourceIds) {
 
@@ -317,6 +321,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<Integer> uninventoryResource(Subject user, int resourceId) {
 
@@ -348,11 +353,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // no need to start the new transaction here, we're already in a new transaction and have
             // only pulled a couple of things into the hibernate cache. So don't call through the facade.
             uninventoryResourceInNewTransaction(resourceId);
-            log.info("Automatic uninventory of MISSING resource: " + resource);
+            LOG.info("Automatic uninventory of MISSING resource: " + resource);
             return true;
         case IGNORE:
             LookupUtil.getDiscoveryBoss().ignoreResources(subjectManager.getOverlord(), new int[] { resourceId });
-            log.info("Automatic ignore of MISSING resource: " + resource);
+            LOG.info("Automatic ignore of MISSING resource: " + resource);
             return true;
         }
 
@@ -367,13 +372,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         if (resource == null) {
-            log.info("Delete resource not possible, as resource with id [" + resourceId + "] was not found");
+            LOG.info("Delete resource not possible, as resource with id [" + resourceId + "] was not found");
             return Collections.emptyList(); // Resource not found. TODO give a nice message to the user
         }
 
         // if the resource has no parent, its a platform resource and its agent should be purged too
         Agent doomedAgent = null;
-        boolean isDebugEnabled = log.isDebugEnabled();
+        boolean isDebugEnabled = LOG.isDebugEnabled();
 
         try {
             Subject overlord = subjectManager.getOverlord();
@@ -384,7 +389,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
                 // note - test code does not always provide the agent, if not found, just warn
                 if (doomedAgent == null) {
-                    log.warn("Platform resource had no associated agent. This warning should occur in TEST code only!");
+                    LOG.warn("Platform resource had no associated agent. This warning should occur in TEST code only!");
                 }
             }
 
@@ -399,7 +404,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 // The test code does not always generate agents for the resources. Catch and log any problem but continue
                 agentClient = agentManager.getAgentClient(overlord, resourceId);
             } catch (Throwable t) {
-                log.warn("No AgentClient found for resource [" + resource
+                LOG.warn("No AgentClient found for resource [" + resource
                     + "]. Unable to inform agent of inventory removal (this may be ok): " + t);
             }
 
@@ -408,7 +413,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             // delete the resource and all its children
             if (isDebugEnabled) {
-                log.debug("Marking resource [" + resource + "] for asynchronous uninventory");
+                LOG.debug("Marking resource [" + resource + "] for asynchronous uninventory");
             }
 
             // set agent references null
@@ -418,7 +423,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             int i = 0;
             if (isDebugEnabled) {
-                log.debug("== total size : " + toBeDeletedResourceIds.size());
+                LOG.debug("== total size : " + toBeDeletedResourceIds.size());
             }
 
             while (i < toBeDeletedResourceIds.size()) {
@@ -427,7 +432,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     j = toBeDeletedResourceIds.size();
                 List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i, j);
                 if (isDebugEnabled) {
-                    log.debug("== Bounds " + i + ", " + j);
+                    LOG.debug("== Bounds " + i + ", " + j);
                 }
 
                 // refresh overlord session for each batch to avoid session timeout
@@ -463,7 +468,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
 
             if (resourcesDeleted != toBeDeletedResourceIds.size()) {
-                log.error("Tried to uninventory " + toBeDeletedResourceIds.size()
+                LOG.error("Tried to uninventory " + toBeDeletedResourceIds.size()
                     + " resources, but actually uninventoried " + resourcesDeleted);
             }
 
@@ -482,12 +487,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                         if (agentClient.pingService(3000L)) {
                             agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
                         } else {
-                            log.warn(" Unable to inform agent [" + agentClient.getAgent().getName()
+                            LOG.warn(" Unable to inform agent [" + agentClient.getAgent().getName()
                                 + "] of inventory removal for resource [" + resourceId
                                 + "]. Agent can not be reached or is not accepting service requests.");
                         }
                     } catch (Exception e) {
-                        log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
+                        LOG.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
                     }
                 }
             }
@@ -521,8 +526,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     private List<Integer> getDescendents(int resourceId) {
-        List<Integer> result = null;
-        Query query = null;
+        List<Integer> result;
+        Query query;
 
         DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
         if (DatabaseTypeFactory.isOracle(dbType)) {
@@ -551,12 +556,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<Integer> getResourceDescendantsByTypeAndName(Subject user, int resourceId, Integer resourceTypeId,
         String name) {
 
-        List<Integer> result = null;
-        Query query = null;
+        List<Integer> result;
+        Query query;
         DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
 
         if (DatabaseTypeFactory.isOracle(dbType)) {
@@ -587,6 +593,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void uninventoryResourceAsyncWork(Subject user, int resourceId) {
         if (!authorizationManager.isOverlord(user)) {
@@ -613,8 +620,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         Resource attachedResource = entityManager.find(Resource.class, resourceId);
-        if (log.isDebugEnabled()) {
-            log.debug("Overlord is asynchronously deleting resource [" + attachedResource + "]");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Overlord is asynchronously deleting resource [" + attachedResource + "]");
         }
 
         if (attachedResource != null) {
@@ -635,10 +642,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 try {
                     resourceGroupManager.deleteResourceGroups(user, backingGroupIds);
                 } catch (Throwable t) {
-                    if (log.isDebugEnabled()) {
-                        log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds, t);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds, t);
                     } else {
-                        log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds
+                        LOG.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds
                             + ": " + t.getMessage());
                     }
                 }
@@ -647,7 +654,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // now we can purge the resource, let cascading do the rest
             entityManager.remove(attachedResource);
         }
-        return;
     }
 
     private boolean uninventoryResourcesBulkDelete(Subject overlord, List<Integer> resourceIds) {
@@ -683,7 +689,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 resourceGroupManager.setResourceType(groupId);
 
             } catch (ResourceGroupDeleteException rgde) {
-                log.warn("Unable to change resource type for group with id [" + groupId + "]", rgde);
+                LOG.warn("Unable to change resource type for group with id [" + groupId + "]", rgde);
             }
         }
 
@@ -704,7 +710,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             ResourceError.QUERY_DELETE_BY_RESOURCES, //
             Event.DELETE_BY_RESOURCES, //
             EventSource.QUERY_DELETE_BY_RESOURCES, //
-            BundleResourceDeploymentHistory.QUERY_DELETE_BY_RESOURCES, // resource deployment history BEFORE resource deployment
             BundleResourceDeployment.QUERY_DELETE_BY_RESOURCES, //
             PackageInstallationStep.QUERY_DELETE_BY_RESOURCES, // steps BEFORE installed package history
             InstalledPackageHistory.QUERY_DELETE_BY_RESOURCES, // history BEFORE installed packages & content service requests
@@ -738,7 +743,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         boolean supportsCascade = DatabaseTypeFactory.getDefaultDatabaseType().supportsSelfReferringCascade();
 
         boolean hasErrors = false;
-        boolean debugEnabled = log.isDebugEnabled();
+        boolean debugEnabled = LOG.isDebugEnabled();
         for (String namedQueryToExecute : namedQueriesToExecute) {
             // execute all in new transactions, continuing on error, but recording whether errors occurred
 
@@ -752,7 +757,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
 
             if (debugEnabled) {
-                log.debug("uninv, running query: " + namedQueryToExecute);
+                LOG.debug("uninv, running query: " + namedQueryToExecute);
             }
             hasErrors |= resourceManager.bulkNamedQueryDeleteInNewTransaction(overlord, namedQueryToExecute,
                 resourceIds);
@@ -761,6 +766,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return hasErrors;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public boolean bulkNativeQueryDeleteInNewTransaction(Subject subject, String nativeQueryString,
         List<Integer> resourceIds) {
@@ -773,10 +779,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             nativeQuery.setParameter("resourceIds", resourceIds);
             nativeQuery.executeUpdate();
         } catch (Throwable t) {
-            if (log.isDebugEnabled()) {
-                log.error("Bulk native query delete error for '" + nativeQueryString + "' for " + resourceIds, t);
+            if (LOG.isDebugEnabled()) {
+                LOG.error("Bulk native query delete error for '" + nativeQueryString + "' for " + resourceIds, t);
             } else {
-                log.error("Bulk native query delete error for '" + nativeQueryString + "' for " + resourceIds + ": "
+                LOG.error("Bulk native query delete error for '" + nativeQueryString + "' for " + resourceIds + ": "
                     + t.getMessage());
             }
             return true; // had errors
@@ -784,6 +790,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return false;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public boolean bulkNamedQueryDeleteInNewTransaction(Subject subject, String namedQuery, List<Integer> resourceIds) {
         if (!authorizationManager.isOverlord(subject)) {
@@ -795,10 +802,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             nativeQuery.setParameter("resourceIds", resourceIds);
             nativeQuery.executeUpdate();
         } catch (Throwable t) {
-            if (log.isDebugEnabled()) {
-                log.error("Bulk named query delete error for '" + namedQuery + "' for " + resourceIds, t);
+            if (LOG.isDebugEnabled()) {
+                LOG.error("Bulk named query delete error for '" + namedQuery + "' for " + resourceIds, t);
             } else {
-                log.error("Bulk named query delete error for '" + namedQuery + "' for " + resourceIds + ": "
+                LOG.error("Bulk named query delete error for '" + namedQuery + "' for " + resourceIds + ": "
                     + t.getMessage());
             }
             return true; // had errors
@@ -806,6 +813,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return false;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Resource setResourceStatus(Subject user, Resource resource, InventoryStatus newStatus, boolean setDescendents) {
         // do special processing if we are being asked to commit the resource to inventory
@@ -818,7 +826,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
 
             if ((resource.getResourceType() == null) || (resource.getResourceType().isIgnored())) {
-                log.debug("Not commiting resource [" + resource + "] to inventory because its type is ignored");
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Not commiting resource [" + resource + "] to inventory because its type is ignored");
+                }
                 return resource;
             }
         }
@@ -853,6 +863,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         resource.setAgentSynchronizationNeeded();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Resource getResourceById(Subject user, int resourceId) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_BY_ID);
@@ -871,6 +882,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resources.get(0);
     }
 
+    @Override
     @Nullable
     public Resource getResourceByParentAndKey(Subject user, Resource parent, String key, String plugin, String typeName) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_BY_PARENT_AND_KEY);
@@ -892,6 +904,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resource;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<ResourceWithAvailability> findResourcesByParentAndType(Subject user, Resource parent, ResourceType type) {
 
@@ -921,6 +934,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
+    @Override
     @Nullable
     public Resource getParentResource(int resourceId) {
 
@@ -952,11 +966,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
+    @Override
     public List<Integer> getResourceIdLineage(int resourceId) {
         List<Integer> lineage = new ArrayList<Integer>();
 
         Integer child = resourceId;
-        Integer parent = null;
+        Integer parent;
         while ((parent = getParentResourceId(child)) != null) {
             lineage.add(parent);
             child = parent;
@@ -966,6 +981,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
+    @Override
     public List<Resource> getResourceLineage(int resourceId) {
         LinkedList<Resource> resourceLineage = new LinkedList<Resource>();
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -984,6 +1000,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resourceLineage;
     }
 
+    @Override
     public List<ResourceLineageComposite> getResourceLineageAndSiblings(Subject subject, int resourceId) {
         // Get the raw resource lineage up to the platform. We'll check the auth below.
         List<Resource> rawResourceLineage = getResourceLineage(resourceId);
@@ -1035,6 +1052,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
+    @Override
     public List<ResourceLineageComposite> getResourceLineage(Subject subject, int resourceId) {
         boolean isInventoryManager = authorizationManager.isInventoryManager(subject);
 
@@ -1054,6 +1072,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resourceLineage;
     }
 
+    @Override
     public Map<Integer, String> getResourcesAncestry(Subject subject, Integer[] resourceIds,
         ResourceAncestryFormat format) {
         Map<Integer, String> result = new HashMap<Integer, String>(resourceIds.length);
@@ -1207,11 +1226,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     // Used by Portal WAR only
+    @Override
     @Deprecated
     @NotNull
     public Resource getRootResourceForResource(int resourceId) {
-        Query query = null;
-        Resource result = null;
+        Query query;
+        Resource result;
         DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
 
         if (DatabaseTypeFactory.isOracle(dbType)) {
@@ -1239,6 +1259,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Resource> findResourceByParentAndInventoryStatus(Subject user, Resource parent,
         InventoryStatus inventoryStatus, PageControl pageControl) {
@@ -1295,6 +1316,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(results, (int) count, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<Integer> findChildrenResourceIds(int parentResourceId, InventoryStatus status) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_IDS_ADMIN);
@@ -1305,9 +1327,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
-    public PageList<Resource> findChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent, @Nullable
-    ResourceCategory category, InventoryStatus status, PageControl pageControl) {
+    public PageList<Resource> findChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent,
+        @Nullable ResourceCategory category, InventoryStatus status, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
         Query queryCount;
@@ -1338,6 +1361,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(results, (int) count, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Resource> findResourcesByCategory(Subject user, ResourceCategory category,
         InventoryStatus inventoryStatus, PageControl pageControl) {
@@ -1387,6 +1411,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
      *
      * @return
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<ResourceComposite> findResourceComposites(Subject user, ResourceCategory category, String typeName,
         String pluginName, Resource parentResource, String searchString, boolean attachParentResource,
@@ -1454,6 +1479,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
      *
      * @return
      */
+    @Override
     public PageList<ResourceComposite> findResourceCompositeForParentAndTypeAndCategory(Subject user,
         ResourceCategory category, int resourceTypeId, Resource parentResource, PageControl pageControl) {
         // pageControl.initDefaultOrderingField(); // not needed since findResourceComposites will set it
@@ -1499,6 +1525,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(results, (int) count, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public int[] getResourceCountSummary(Subject user, InventoryStatus status) {
         Query query;
@@ -1531,6 +1558,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return counts;
     }
 
+    @Override
     public int getResourceCountByCategory(Subject user, ResourceCategory category, InventoryStatus status) {
         Query queryCount;
         if (authorizationManager.isInventoryManager(user)) {
@@ -1550,6 +1578,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return (int) count;
     }
 
+    @Override
     public int getResourceCountByTypeAndIds(Subject user, ResourceType type, int[] resourceIds) {
         Query queryCount;
         if (authorizationManager.isInventoryManager(user)) {
@@ -1569,6 +1598,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return (int) count;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<Integer> findResourcesMarkedForAsyncDeletion(Subject user) {
         if (!authorizationManager.isOverlord(user)) {
@@ -1581,6 +1611,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<RecentlyAddedResourceComposite> findRecentlyAddedPlatforms(Subject user, long ctime, int maxItems) {
         Query query;
@@ -1601,6 +1632,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return query.getResultList();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<RecentlyAddedResourceComposite> findRecentlyAddedServers(Subject user, long ctime, int platformId) {
         Query query;
@@ -1618,6 +1650,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return query.getResultList();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public AutoGroupComposite getResourceAutoGroup(Subject user, int resourceId) {
         Query query;
@@ -1651,6 +1684,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
+    @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public List<AutoGroupComposite> findResourcesAutoGroups(Subject subject, int[] resourceIds) {
         List<AutoGroupComposite> results = new ArrayList<AutoGroupComposite>();
@@ -1704,6 +1738,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     @NotNull
     public List<AutoGroupComposite> findChildrenAutoGroups(Subject user, int parentResourceId, int[] resourceTypeIds) {
@@ -1760,10 +1795,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resourceAutoGroups;
     }
 
+    @Override
     public List<AutoGroupComposite> findChildrenAutoGroups(Subject user, int parentResourceId) {
         return findChildrenAutoGroups(user, parentResourceId, (int[]) null);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Resource> findExplicitResourcesByResourceGroup(Subject user, ResourceGroup group,
         PageControl pageControl) {
@@ -1793,6 +1830,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(results, (int) count, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<Integer> findExplicitResourceIdsByResourceGroup(int resourceGroupId) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN);
@@ -1802,6 +1840,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<Integer> findImplicitResourceIdsByResourceGroup(int resourceGroupId) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_IMPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN);
@@ -1811,6 +1850,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<ResourceIdFlyWeight> findFlyWeights(int[] resourceIds) {
         Integer[] ids = ArrayUtils.wrapInArray(resourceIds);
@@ -1832,6 +1872,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Resource> findImplicitResourcesByResourceGroup(Subject user, ResourceGroup group,
         PageControl pageControl) {
@@ -1861,6 +1902,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(results, (int) count, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     // RHQ-796, queries now return the parent resource attached
     public PageList<ResourceWithAvailability> findExplicitResourceWithAvailabilityByResourceGroup(Subject subject,
@@ -1892,6 +1934,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<ResourceWithAvailability>(results, (int) count, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     // RHQ-796, queries now return the parent resource attached
     public PageList<ResourceWithAvailability> findImplicitResourceWithAvailabilityByResourceGroup(Subject subject,
@@ -1923,6 +1966,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<ResourceWithAvailability>(results, (int) count, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<ResourceHealthComposite> findResourceHealth(Subject user, int[] resourceIds, PageControl pc) {
         pc.initDefaultOrderingField("res.name");
@@ -1964,6 +2008,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @SuppressWarnings("unchecked")
     // note: this method also eagerly loads the parent resource, so that more context info is displayed for each record
@@ -2025,6 +2070,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(resources, (int) count, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Resource> findAvailableResourcesForRepo(Subject user, int repoId, String search,
         ResourceCategory category, PageControl pageControl) {
@@ -2058,6 +2104,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(resources, (int) count, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     // note, typeId can be null
     public PageList<Resource> findAvailableResourcesForDashboardPortlet(Subject user, Integer typeId,
@@ -2101,6 +2148,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(resources, (int) count, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Resource> findResourceByIds(Subject subject, int[] resourceIds, boolean attachParentResource,
         PageControl pageControl) {
@@ -2155,6 +2203,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(resources, (int) count, pageControl);
     }
 
+    @Override
     public Resource getResourceTree(int rootResourceId, boolean recursive) {
         Subject overlord = subjectManager.getOverlord();
         Resource root = getResourceById(overlord, rootResourceId);
@@ -2168,6 +2217,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return root;
     }
 
+    @Override
     @NotNull
     @SuppressWarnings("unchecked")
     public List<ResourceError> findResourceErrors(Subject user, int resourceId, ResourceErrorType errorType) {
@@ -2184,6 +2234,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return query.getResultList();
     }
 
+    @Override
     @NotNull
     @SuppressWarnings("unchecked")
     public List<ResourceError> findResourceErrors(Subject user, int resourceId) {
@@ -2199,6 +2250,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return query.getResultList();
     }
 
+    @Override
     public void addResourceError(ResourceError resourceError) {
         ResourceErrorType resourceErrorType = resourceError.getErrorType();
 
@@ -2213,10 +2265,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         entityManager.persist(resourceError);
-
-        return;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public int clearResourceConfigErrorByType(Subject subject, int resourceId, ResourceErrorType resourceErrorType) {
 
@@ -2235,6 +2286,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return updates;
     }
 
+    @Override
     public void clearResourceConfigError(int resourceId) {
         // TODO change sig to get user passed in, rather than using overlord/assuming user is authz'ed
         Subject s = subjectManager.getOverlord();
@@ -2243,13 +2295,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         int cleared = clearResourceConfigErrorByType(s, resourceId, ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
 
         if (cleared > 1) {
-            log.warn("Resource [" + resourceId + "] had [" + cleared
+            LOG.warn("Resource [" + resourceId + "] had [" + cleared
                 + "] INVALID_PLUGIN_CONFIGURATION ResourceErrors associated with it.");
         }
-
-        return;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void deleteResourceError(Subject user, int resourceErrorId) {
         ResourceError error = entityManager.find(ResourceError.class, resourceErrorId);
@@ -2263,10 +2314,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             entityManager.remove(error);
         }
-
-        return;
     }
 
+    @Override
     public Map<Integer, InventoryStatus> getResourceStatuses(int rootResourceId, boolean descendents) {
         Resource root = entityManager.find(Resource.class, rootResourceId);
         Map<Integer, InventoryStatus> statuses = new LinkedHashMap<Integer, InventoryStatus>();
@@ -2276,6 +2326,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return statuses;
     }
 
+    @Override
     public Resource getPlatform(Agent agent) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_PLATFORM_BY_AGENT);
         query.setParameter("category", ResourceCategory.PLATFORM);
@@ -2292,6 +2343,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId) {
         if (!authorizationManager.canViewResource(user, resourceId)) {
@@ -2307,6 +2359,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new ResourceAvailabilitySummary(availabilities);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<ResourceFlyweight> findResourcesByAgent(Subject user, int agentId, PageControl unlimitedInstance) {
         // Note: I didn't put these queries in as named queries since they have very specific prefeching
@@ -2401,6 +2454,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resources;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<ResourceFlyweight> findResourcesByCompatibleGroup(Subject user, int compatibleGroupId,
         PageControl pageControl) {
@@ -2492,6 +2546,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    @Override
     public Resource getResource(Subject subject, int resourceId) {
         return getResourceById(subject, resourceId);
     }
@@ -2512,8 +2567,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // validate the resource and agent, protect against REST dummy agent
             Agent agent = agentManager.getAgentByResourceId(subjectManager.getOverlord(), resourceId);
             if (agent == null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Resource [" + resourceId + "] does not exist or has no agent assigned");
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Resource [" + resourceId + "] does not exist or has no agent assigned");
                 }
                 new IllegalStateException("No agent is associated with the resource with id [" + resourceId + "]");
             } else if (agent.getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)
@@ -2561,8 +2616,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
 
         } catch (Exception e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Failed to get live availability: " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to get live availability: " + e.getMessage());
             }
         }
 
@@ -2570,6 +2625,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
+    @Override
     public List<Resource> findResourceLineage(Subject subject, int resourceId) {
         List<Resource> result = getResourceLineage(resourceId);
 
@@ -2583,6 +2639,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions) {
@@ -2597,8 +2654,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<ResourceInstallCount> findResourceComplianceCounts(Subject subject) {
-        Query query = null;
-        List<ResourceInstallCount> results = null;
+        Query query;
+        List<ResourceInstallCount> results;
 
         query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_IN_COMPLIANCE);
         results = query.getResultList();
@@ -2609,6 +2666,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
+    @Override
     public PageList<ResourceComposite> findResourceCompositesByCriteria(Subject subject, ResourceCriteria criteria) {
 
         boolean isInventoryManager = authorizationManager.isInventoryManager(subject);
@@ -2668,6 +2726,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
+    @Override
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
@@ -2751,8 +2810,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
+    @Override
     public Resource getPlaformOfResource(Subject subject, int resourceId) {
-        Resource resource = null;
+        Resource resource;
         Resource parent = null;
         do {
             resource = parent;
@@ -2778,6 +2838,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resource;
     }
 
+    @Override
     public Resource getParentResource(Subject subject, int resourceId) {
         Resource resource = getParentResource(resourceId);
 
@@ -2789,18 +2850,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resource;
     }
 
+    @Override
     public PageList<Resource> findChildResources(Subject subject, int parentResourceId, PageControl pageControl) {
         Resource parentResource = getResourceById(subject, parentResourceId);
 
         return (findChildResources(subject, parentResource, pageControl));
     }
 
+    @Override
     public <T> List<DisambiguationReport<T>> disambiguate(List<T> results, IntExtractor<? super T> extractor,
         DisambiguationUpdateStrategy updateStrategy) {
         return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager,
             typeManager.getDuplicateTypeNames());
     }
 
+    @Override
     public void updateAncestry(Subject subject, int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (null == resource) {
@@ -2819,6 +2883,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<Integer> findIdsByTypeIds(List<Integer> resourceTypeIds) {
         return entityManager.createNamedQuery(Resource.QUERY_FIND_IDS_BY_TYPE_IDS)
@@ -2881,19 +2946,19 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             Resource resource = entityManager.find(Resource.class, resourceId);
 
             if (null == resource) {
-                log.info("Disable resource not possible, resource with id [" + resourceId + "] was not found");
+                LOG.info("Disable resource not possible, resource with id [" + resourceId + "] was not found");
                 continue;
             }
 
             // you can't disable a platform
             if (null == resource.getParentResource()) {
-                log.info("Disabling a platform is not allowed, skipping platform resource with id [" + resourceId + "]");
+                LOG.info("Disabling a platform is not allowed, skipping platform resource with id [" + resourceId + "]");
                 continue;
             }
 
             // disable the resource and all its children, get the family resource ids
-            if (log.isDebugEnabled()) {
-                log.debug("Subject [" + subject + "] is setting resource [" + resource + "] and its children DISABLED.");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Subject [" + subject + "] is setting resource [" + resource + "] and its children DISABLED.");
             }
 
             List<Integer> familyResourceIds = getFamily(resource);
@@ -2980,7 +3045,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 scheduler.scheduleJob(jobDetail, trigger);
             }
         } catch (SchedulerException e) {
-            log.error("Failed to schedule AgentRequestFullAvailabilityJob.", e);
+            LOG.error("Failed to schedule AgentRequestFullAvailabilityJob.", e);
         }
     }
 
@@ -2992,7 +3057,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 isScheduled = true;
             }
         } catch (SchedulerException se) {
-            log.error("Error getting job detail", se);
+            LOG.error("Error getting job detail", se);
         }
         return isScheduled;
     }
@@ -3023,19 +3088,19 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             Resource resource = entityManager.find(Resource.class, resourceId);
             if (null == resource) {
-                log.info("Enable resource not possible, resource with id [" + resourceId + "] was not found");
+                LOG.info("Enable resource not possible, resource with id [" + resourceId + "] was not found");
                 continue;
             }
 
             // you can't enable a platform
             if (null == resource.getParentResource()) {
-                log.info("Enabling a platform is not allowed, skipping platform resource with id [" + resourceId + "]");
+                LOG.info("Enabling a platform is not allowed, skipping platform resource with id [" + resourceId + "]");
                 continue;
             }
 
             // enable the resource and all its children, get the hierarchy
-            if (log.isDebugEnabled()) {
-                log.debug("Subject [" + subject + "] is setting resource [" + resource + "] and its children enabled.");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Subject [" + subject + "] is setting resource [" + resource + "] and its children enabled.");
             }
 
             List<Integer> familyResourceIds = getFamily(resource);

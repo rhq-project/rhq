@@ -1,7 +1,7 @@
 /*
  *
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -273,7 +273,6 @@ public class Upgrade extends AbstractInstall {
                 // We need to be sure the storage is really stopped (long enough) to not get a port conflict
                 waitForProcessToStop(getStoragePid());
 
-                addUndoTaskToStopComponent("--storage");
                 // if the upgrade fails, we need to purge the new storage node basedir to allow for user to try again
                 // later
                 addUndoTask(new ControlCommand.UndoTask("Removing new storage node install directory") {
@@ -281,6 +280,7 @@ public class Upgrade extends AbstractInstall {
                         FileUtil.purge(getStorageBasedir(), true);
                     }
                 });
+                addUndoTaskToStopComponent("--storage"); // The undo tasks are done in reversed order
 
                 org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--upgrade",
                     getFromServerDir(rhqctlCommandLine).getAbsolutePath());

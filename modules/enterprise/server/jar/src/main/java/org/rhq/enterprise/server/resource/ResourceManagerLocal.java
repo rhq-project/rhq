@@ -126,6 +126,8 @@ public interface ResourceManagerLocal extends ResourceManagerRemote {
 
     boolean bulkNamedQueryDeleteInNewTransaction(Subject subject, String namedQuery, List<Integer> resourceIds);
 
+    void unlinkStorageNodesInNewTx(List<Integer> resourceIds);
+
     List<Integer> getResourceDescendantsByTypeAndName(Subject user, int resourceId, Integer resourceTypeId, String name);
 
     /**

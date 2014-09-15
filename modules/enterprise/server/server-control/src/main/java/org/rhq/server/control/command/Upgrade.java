@@ -466,6 +466,11 @@ public class Upgrade extends AbstractInstall {
         oldServerProps.setProperty("rhq.autoinstall.enabled", "true"); // ensure that we always enable the installer
         oldServerProps.setProperty("rhq.autoinstall.database", "auto"); // the old value could have been "overwrite" - NOT what we want when upgrading
 
+        // For upgrades the RHQ Server super-user should already exist.  But to pass server properties file validation
+        // this property must be set.  Setting it to an invalid plain-text value will fail the upgrade if for some reason
+        // the rhqadmin user does not exist, which is, I think, what we would want to have happen.
+        oldServerProps.setProperty("rhq.autoinstall.server.admin.password", "ignored-on-upgrade");
+
         // remove some old, obsolete settings no longer needed or used
         oldServerProps.remove("rhq.server.embedded-agent.name");
         oldServerProps.remove("rhq.server.embedded-agent.reset-configuration");
@@ -562,7 +567,7 @@ public class Upgrade extends AbstractInstall {
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.keystore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.truststore.file");
 
-        // for oracle, ensure the unused properties are set to unused otherwise prop file validation may fail
+        // for oracle, ensure the unused properties are set to unused, otherwise prop file validation may fail
         String dbType = oldServerProps.getProperty("rhq.server.database.type-mapping");
         if (null != dbType && dbType.toLowerCase().contains("oracle")) {
             oldServerProps.setProperty("rhq.server.database.server-name", "unused");

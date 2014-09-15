@@ -1103,6 +1103,11 @@ public class InstallerServiceImpl implements InstallerService {
                 String hostStr = fallbackProps.get("jboss.bind.address.management");
                 if (hostStr != null && hostStr.length() > 0 && !hostStr.equals(host)) {
                     host = hostStr;
+
+                    // BZ 1141175 - if binding address is "all addresses", then use 127.0.0.1 because 0.0.0.0 can't be used by the client
+                    if (host.equals("0.0.0.0")) {
+                        host = "127.0.0.1";
+                    }
                     differentValues = true;
                 }
                 String portStr = fallbackProps.get("jboss.management.native.port");

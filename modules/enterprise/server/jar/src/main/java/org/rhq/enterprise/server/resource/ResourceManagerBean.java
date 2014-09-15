@@ -686,7 +686,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         for (int i = 0, size = rs.size(); i < size; ++i) {
             try {
                 groupId = dbType.getInteger(rs.get(i));
-                resourceGroupManager.setResourceType(groupId);
+                resourceGroupManager.setResourceTypeInNewTx(groupId);
 
             } catch (ResourceGroupDeleteException rgde) {
                 LOG.warn("Unable to change resource type for group with id [" + groupId + "]", rgde);
@@ -696,21 +696,27 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // if any of the doomed resources are storage nodes (we don't know, we only have ids, so we'll just have
         // to make the call anyway. Unfortunately, this can't wait until the async work because the StorageNode
         // is still active and should not be linked to an uninventoried resource.
+        resourceManager.unlinkStorageNodesInNewTx(resourceIds);
+
+        return hasErrors;
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void unlinkStorageNodesInNewTx(List<Integer> resourceIds) {
         try {
             Query query = entityManager.createNamedQuery(StorageNode.QUERY_UPDATE_REMOVE_LINKED_RESOURCES);
             query.setParameter("resourceIds", resourceIds);
             query.executeUpdate();
         } catch (Exception e) {
             LOG.warn(
-                "May have been unable to unlink StorageNode from it's Resource. This is unlikely to be a problem.", e);
+                "May not have been able to unlink StorageNode from it's Resource. This is unlikely to be a problem.", e);
         }
-
-        return hasErrors;
     }
 
     private boolean uninventoryResourceBulkDeleteAsyncWork(Subject overlord, int resourceId) {
         String[] namedQueriesToExecute = new String[] { //
-            ResourceRepo.DELETE_BY_RESOURCES, //
+        ResourceRepo.DELETE_BY_RESOURCES, //
             MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, // baseline BEFORE schedules
             MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES, // traits BEFORE schedules
             CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, // call time data values BEFORE schedules & call time data keys
@@ -1340,8 +1346,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @Override
     @SuppressWarnings("unchecked")
-    public PageList<Resource> findChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent,
-        @Nullable ResourceCategory category, InventoryStatus status, PageControl pageControl) {
+    public PageList<Resource> findChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent, @Nullable
+    ResourceCategory category, InventoryStatus status, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
         Query queryCount;

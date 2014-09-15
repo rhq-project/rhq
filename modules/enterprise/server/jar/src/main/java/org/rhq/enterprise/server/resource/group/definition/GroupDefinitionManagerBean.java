@@ -344,7 +344,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
              * updated and any compatible group constructs need to be removed from this group.  the following method
              * will achieve both of those goals
              */
-            resourceGroupManager.setResourceType(nextResourceGroupId);
+            resourceGroupManager.setResourceTypeInNewTx(nextResourceGroupId);
 
             /*
              * remove all ids returned from the helper.  by the time we're done looping over all

@@ -64,17 +64,17 @@ public class MigrateAggregateMetricsTest extends SchemaUpgradeTest {
 
     private PreparedStatement insert24HourData;
 
-    @BeforeClass
+    @BeforeClass(enabled = false)
     public void setupClass() throws Exception {
         connection = newJDBCConnection();
     }
 
-    @AfterClass(alwaysRun = true)
+    @AfterClass(enabled = false)
     public void tearDownClass() throws Exception {
         JDBCUtil.safeClose(connection);
     }
 
-    @BeforeMethod
+    @BeforeMethod(enabled = false)
     public void setUp() throws Exception {
         resetDB();
         for (File file : new File("target").listFiles()) {
@@ -84,7 +84,7 @@ public class MigrateAggregateMetricsTest extends SchemaUpgradeTest {
         }
     }
 
-    @AfterMethod(alwaysRun = true)
+    @AfterMethod(enabled = false)
     public void tearDown() throws Exception {
         resetDB();
     }
@@ -96,7 +96,7 @@ public class MigrateAggregateMetricsTest extends SchemaUpgradeTest {
         executeUpdate("delete from rhq_resource_type where id = " + RESOURCE_TYPE_ID);
     }
 
-    @Test
+    @Test(enabled = false)
     public void runMigration() throws Exception {
         int numSchedules = Integer.parseInt(System.getProperty("numSchedules", "10"));
         createResource();

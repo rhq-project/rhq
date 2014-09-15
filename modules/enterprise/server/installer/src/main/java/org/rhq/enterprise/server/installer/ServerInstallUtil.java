@@ -194,13 +194,15 @@ public class ServerInstallUtil {
 
         client.setLoggerLevel("org.jboss.as.config", "INFO"); // BZ 1004730
 
-        // BZ 1026786
+        // BZ 1026786, 1078500
         StringBuilder sb = new StringBuilder("not(any(");
         sb.append("match(\"JBAS015960\")");
         sb.append(",");
         sb.append("match(\"JBAS018567\")");
         sb.append(",");
         sb.append("match(\"JBAS018568\")");
+        sb.append(",");
+        sb.append("match(\"JSF1051\")");
         sb.append("))");
         client.setFilterSpec(sb.toString());
     }

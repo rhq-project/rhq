@@ -43,11 +43,13 @@
             <c:simple-property name="fixedDescription" required="false" description="If specified, this will be the description of the managed resource - the executable will not be invoked to determine it." />
          </c:group>
          <c:group name="argumentsParsing" displayName="Parsing of Arguments">
-             <c:simple-property name="quotingEnabled" displayName="Enable Quoting of Arguments" required="true" type="boolean" default="false">
+             <c:simple-property name="quotingEnabled" displayName="Enable Quoting of Arguments" required="true" type="boolean" default="true">
                  <c:description>
-                     1) In unquoted text: the escape character preserves the value of any following character
-                     2) In double-quoted text: the escape character escapes " and itself otherwise is both the escape character and the following character are left intact
-                     3) In single-quoted text: no escaping can occur
+                   &lt;ol&gt;
+                     &lt;li&gt;In unquoted text: the escape character preserves the value of any following character&lt;/li&gt;
+                     &lt;li&gt;In double-quoted text: the escape character escapes " and itself otherwise is both the escape character and the following character are left intact&lt;/li&gt;
+                     &lt;li&gt;In single-quoted text: no escaping can occur&lt;/li&gt;
+                   &lt;/ol&gt;
                  </c:description>
              </c:simple-property>
              <c:simple-property name="escapeCharacter" required="true" description="The escape character to be used when parsing arguments. By default the escape character is backslash."

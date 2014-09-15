@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.script;
+
+import static java.lang.Boolean.TRUE;
+import static org.rhq.core.util.StringUtil.isBlank;
 
 import java.io.File;
 import java.util.HashMap;
@@ -58,8 +62,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * @author John Mazzitelli
  */
 public class ScriptServerComponent implements ResourceComponent, MeasurementFacet, OperationFacet {
-
-    private final Log log = LogFactory.getLog(ScriptServerComponent.class);
+    private static final Log LOG = LogFactory.getLog(ScriptServerComponent.class);
 
     private static final long DEFAULT_MAX_WAIT_TIME = 3600000L;
 
@@ -97,22 +100,27 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
     private char escapeChar = DISABLING_ESCAPE_CHARACTER;
     private ResourceContext resourceContext;
 
+    @Override
     public void start(ResourceContext context) {
-        if (log.isDebugEnabled()) {
-            log.debug("Script Server started: " + context.getPluginConfiguration());
-        }
-
-        this.resourceContext = context;
-
+        resourceContext = context;
         escapeChar = getConfiguredEscapeCharacter(resourceContext.getPluginConfiguration());
-    }
-
-    public void stop() {
-        if (log.isDebugEnabled()) {
-            log.debug("Script Server stopped: " + this.resourceContext.getPluginConfiguration());
+        if (isBlank(resourceContext.getPluginConfiguration().getSimpleValue(PLUGINCONFIG_QUOTING_ENABLED))) {
+            LOG.warn(resourceContext.getResourceDetails() + ": the attribute enabling argument quoting is not set"
+                + " in plugin config. Defaulting to enabled.");
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Script Server started: " + context.getPluginConfiguration());
         }
     }
 
+    @Override
+    public void stop() {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Script Server stopped: " + this.resourceContext.getPluginConfiguration());
+        }
+    }
+
+    @Override
     public AvailabilityType getAvailability() {
         boolean result = checkAvailability();
         return result ? AvailabilityType.UP : AvailabilityType.DOWN;
@@ -135,6 +143,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
      * 
      * @see MeasurementFacet#getValues(MeasurementReport, Set)
      */
+    @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
         Map<String, ProcessExecutionResults> exeResultsCache = new HashMap<String, ProcessExecutionResults>();
 
@@ -147,7 +156,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
             } else if (request.getDataType() == DataType.TRAIT) {
                 dataMustBeNumeric = false;
             } else {
-                log.error("Plugin does not support metric [" + metricPropertyName + "] of type ["
+                LOG.error("Plugin does not support metric [" + metricPropertyName + "] of type ["
                     + request.getDataType() + "]");
                 continue;
             }
@@ -176,7 +185,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
 
                 // don't report a metric value if the CLI failed to execute
                 if (exeResults.getError() != null) {
-                    log.error("Cannot collect CLI metric [" + metricPropertyName + "]. Cause: "
+                    LOG.error("Cannot collect CLI metric [" + metricPropertyName + "]. Cause: "
                         + ThrowableUtil.getAllMessages(exeResults.getError()));
                     continue;
                 }
@@ -185,14 +194,14 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
                 if (valueIsExitCode) {
                     dataValue = exeResults.getExitCode();
                     if (dataValue == null) {
-                        log.error("Could not determine exit code for metric property [" + metricPropertyName
+                        LOG.error("Could not determine exit code for metric property [" + metricPropertyName
                             + "] - metric will not be collected");
                         continue;
                     }
                 } else if (regex != null) {
                     String output = exeResults.getCapturedOutput();
                     if (output == null) {
-                        log.error("Could not get output for metric property [" + metricPropertyName
+                        LOG.error("Could not get output for metric property [" + metricPropertyName
                             + "] -- metric will not be collected");
                         continue;
                     } else {
@@ -208,14 +217,14 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
                             dataValue = output;
                         }
                     } else {
-                        log.error("Output did not match metric property [" + metricPropertyName
+                        LOG.error("Output did not match metric property [" + metricPropertyName
                             + "] - metric will not be collected: " + truncateString(output));
                         continue;
                     }
                 } else {
                     dataValue = exeResults.getCapturedOutput();
                     if (dataValue == null) {
-                        log.error("Could not get output for metric property [" + metricPropertyName
+                        LOG.error("Could not get output for metric property [" + metricPropertyName
                             + "] - metric will not be collected");
                         continue;
                     }
@@ -224,19 +233,14 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
                 // add the metric value to the measurement report
                 if (dataMustBeNumeric) {
                     Double numeric = Double.parseDouble(dataValue.toString().trim());
-                    report.addData(new MeasurementDataNumeric(request, numeric.doubleValue()));
+                    report.addData(new MeasurementDataNumeric(request, numeric));
                 } else {
                     report.addData(new MeasurementDataTrait(request, dataValue.toString().trim()));
                 }
             } catch (Exception e) {
-                log.error("Failed to obtain measurement [" + metricPropertyName + "]. Cause: " + e);
+                LOG.error("Failed to obtain measurement [" + metricPropertyName + "]. Cause: " + e);
             }
         }
-
-        exeResultsCache.clear(); // help out the garbage collector, since this could be alot of data
-        exeResultsCache = null;
-
-        return;
     }
 
     /**
@@ -268,11 +272,11 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
             } else {
                 String[] argsRegex = metricPropertyName.substring(1).split("\\}\\|", 2);
                 if (argsRegex.length != 2) {
-                    log.error("Invalid metric property [" + metricPropertyName + "] - metric will not be collected");
+                    LOG.error("Invalid metric property [" + metricPropertyName + "] - metric will not be collected");
                     return null;
                 }
                 if (!isValidRegularExpression(argsRegex[1])) {
-                    log.error("Invalid regex [" + argsRegex[1] + "] for metric property [" + metricPropertyName
+                    LOG.error("Invalid regex [" + argsRegex[1] + "] for metric property [" + metricPropertyName
                         + "] - metric will not be collected");
                     return null;
                 }
@@ -294,6 +298,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
      * 
      * @see OperationFacet#invokeOperation(String, Configuration)
      */
+    @Override
     public OperationResult invokeOperation(String name, Configuration configuration) throws Exception {
 
         OperationResult result = new OperationResult();
@@ -318,17 +323,8 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
             waitTime = DEFAULT_MAX_WAIT_TIME;
         }
 
-        if (captureOutputStr != null) {
-            captureOutput = Boolean.parseBoolean(captureOutputStr);
-        } else {
-            captureOutput = true;
-        }
-
-        if (killOnTimeoutStr != null) {
-            killOnTimeout = Boolean.parseBoolean(killOnTimeoutStr);
-        } else {
-            killOnTimeout = true;
-        }
+        captureOutput = captureOutputStr == null || Boolean.parseBoolean(captureOutputStr);
+        killOnTimeout = killOnTimeoutStr == null || Boolean.parseBoolean(killOnTimeoutStr);
 
         ProcessExecutionResults exeResults = executeExecutable(arguments, waitTime, captureOutput, killOnTimeout);
         Integer exitcode = exeResults.getExitCode();
@@ -380,15 +376,14 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
      * @throws InvalidPluginConfigurationException
      */
     protected ProcessExecutionResults executeExecutable(String args, long wait, boolean captureOutput,
-        boolean killOnTimeout)
-        throws InvalidPluginConfigurationException {
+        boolean killOnTimeout) throws InvalidPluginConfigurationException {
 
         SystemInfo sysInfo = this.resourceContext.getSystemInformation();
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         ProcessExecutionResults results = executeExecutable(sysInfo, pluginConfig, args, wait, captureOutput,
             killOnTimeout, escapeChar);
 
-        if (log.isDebugEnabled()) {
+        if (LOG.isDebugEnabled()) {
             logDebug("CLI results: exitcode=[" + results.getExitCode() + "]; error=[" + results.getError()
                 + "]; output=" + truncateString(results.getCapturedOutput()));
         }
@@ -396,15 +391,13 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
         return results;
     }
 
-
     protected static char getConfiguredEscapeCharacter(Configuration pluginConfiguration) {
         char escapeChar = DISABLING_ESCAPE_CHARACTER;
-        boolean quotingEnabled = Boolean.parseBoolean(pluginConfiguration.getSimpleValue(PLUGINCONFIG_QUOTING_ENABLED, "false"));
-        if (quotingEnabled) {
+        String attributeString = pluginConfiguration.getSimpleValue(PLUGINCONFIG_QUOTING_ENABLED);
+        if (isBlank(attributeString) || TRUE.toString().equalsIgnoreCase(attributeString)) {
             String ec = pluginConfiguration.getSimpleValue(PLUGINCONFIG_ESCAPE_CHARACTER, "\\");
             escapeChar = ec.charAt(0);
         }
-
         return escapeChar;
     }
 
@@ -480,7 +473,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
         // first, make sure the executable actually exists
         File executableFile = new File(executable);
         if (!executableFile.exists()) {
-            if (log.isDebugEnabled()) {
+            if (LOG.isDebugEnabled()) {
                 logDebug("The executable [" + executable + "] does not exist - resource is considered DOWN");
             }
             return false;
@@ -492,7 +485,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
 
             // if we get some error while trying to run the executable, immediately consider the resource down
             if (results.getError() != null) {
-                if (log.isDebugEnabled()) {
+                if (LOG.isDebugEnabled()) {
                     logDebug("CLI execution encountered an error, resource is considered DOWN: "
                         + ThrowableUtil.getAllMessages(results.getError()));
                 }
@@ -502,7 +495,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
             // if the exit code is used to determine availability, check it now
             if (availExitCodeRegex != null) {
                 if (results.getExitCode() == null) {
-                    if (log.isDebugEnabled()) {
+                    if (LOG.isDebugEnabled()) {
                         logDebug("Cannot get exit code, resource is considered DOWN");
                     }
                     return false;
@@ -510,7 +503,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
 
                 boolean exitcodeMatches = results.getExitCode().toString().matches(availExitCodeRegex);
                 if (!exitcodeMatches) {
-                    if (log.isDebugEnabled()) {
+                    if (LOG.isDebugEnabled()) {
                         logDebug("CLI exit code=[" + results.getExitCode() + "] != [" + availExitCodeRegex + "]. DOWN");
                     }
                     return false;
@@ -528,7 +521,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
 
                 boolean outputMatches = availOutputRegex.matcher(output).find();
                 if (!outputMatches) {
-                    if (log.isDebugEnabled()) {
+                    if (LOG.isDebugEnabled()) {
                         logDebug("CLI output [" + truncateString(output) + "] did not match regex [" + availOutputRegex
                             + "], resource is considered DOWN");
                     }
@@ -562,7 +555,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
         PropertySimple workingDirProp = pluginConfig.getSimple(PLUGINCONFIG_WORKINGDIR);
         PropertyList envvarsProp = pluginConfig.getList(PLUGINCONFIG_ENVVARS);
 
-        String executable = null;
+        String executable;
         String workingDir = null;
         Map<String, String> envvars = null;
 
@@ -587,7 +580,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
                 // we want envvars to be null if there are no envvars defined, so the agent env is passed
                 // but if there are 1 or more envvars in our config, then we define our envvars list
                 List<Property> listOfMaps = envvarsProp.getList();
-                if (listOfMaps != null && listOfMaps.size() > 0) {
+                if (listOfMaps.size() > 0) {
                     envvars = new HashMap<String, String>();
                     for (Property envvarMap : listOfMaps) {
                         PropertySimple name = (PropertySimple) ((PropertyMap) envvarMap).get(PLUGINCONFIG_ENVVAR_NAME);
@@ -619,7 +612,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
     }
 
     private void logDebug(String msg) {
-        log.debug("[" + this.resourceContext.getResourceKey() + "]: " + msg);
+        LOG.debug("[" + this.resourceContext.getResourceKey() + "]: " + msg);
     }
 
     private static boolean isQuotingEnabled(char escapeChar) {

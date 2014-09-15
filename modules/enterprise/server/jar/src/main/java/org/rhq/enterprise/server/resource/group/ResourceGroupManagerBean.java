@@ -239,7 +239,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         if (updateMembership) {
             try {
-                setResourceType(groupId);
+                setResourceTypeInNewTx(groupId);
             } catch (ResourceGroupDeleteException e) {
                 throw new ResourceGroupNotFoundException(e.getMessage());
             }
@@ -462,7 +462,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         if (setType) {
             try {
-                setResourceType(groupId);
+                setResourceTypeInNewTx(groupId);
             } catch (ResourceGroupDeleteException e) {
                 throw new ResourceGroupNotFoundException(e.getMessage());
             }
@@ -611,7 +611,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         if (setType) {
             try {
-                setResourceType(groupId);
+                setResourceTypeInNewTx(groupId);
             } catch (ResourceGroupDeleteException e) {
                 throw new ResourceGroupNotFoundException(e.getMessage());
             }
@@ -1008,7 +1008,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void setResourceType(int resourceGroupId) throws ResourceGroupDeleteException {
+    public void setResourceTypeInNewTx(int resourceGroupId) throws ResourceGroupDeleteException {
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP);
         query.setParameter("groupId", resourceGroupId);
 
@@ -1344,7 +1344,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         // As a result of the membership change ensure that the group type is set correctly.
         if (setType) {
-            setResourceType(groupId);
+            setResourceTypeInNewTx(groupId);
         }
     }
 
@@ -1366,7 +1366,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             addResourcesToGroup(subject, addedGroupId, resourceIdArr);
             // As a result of the membership change ensure that the group type is set correctly.
             if (setType) {
-                setResourceType(addedGroupId);
+                setResourceTypeInNewTx(addedGroupId);
             }
         }
 
@@ -1376,7 +1376,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             removeResourcesFromGroup(subject, removedGroupId, resourceIdArr);
             // As a result of the membership change ensure that the group type is set correctly.
             if (setType) {
-                setResourceType(removedGroupId);
+                setResourceTypeInNewTx(removedGroupId);
             }
         }
     }

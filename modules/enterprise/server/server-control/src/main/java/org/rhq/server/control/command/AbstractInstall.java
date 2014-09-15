@@ -182,21 +182,40 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    @SuppressWarnings("resource")
+    protected ModelControllerClient getModelControllerClient() throws IOException {
+        ModelControllerClient mcc = null;
+
+        File propsFile = getServerPropertiesFile();
+        BufferedReader reader = new BufferedReader(new FileReader(propsFile));
+        Properties props = new Properties();
+
+        try {
+            props.load(reader);
+        } finally {
+            try {
+                reader.close();
+            } catch (Exception e) {
+                // best effort
+            }
+        }
+
+        String host = (String) props.get("jboss.bind.address.management");
+        if (host.equals("0.0.0.0")) {
+            host = "127.0.0.1"; // use the loopback address if the management address is bound to all addressed (the client can't use 0.0.0.0)
+        }
+
+        int port = Integer.valueOf((String) props.get("jboss.management.native.port")).intValue();
+        mcc = MCCHelper.createModelControllerClient(host, port);
+        return mcc;
+    }
+
     protected boolean isRHQServerInitialized() throws IOException {
 
         BufferedReader reader = null;
         ModelControllerClient mcc = null;
-        Properties props = new Properties();
 
         try {
-            File propsFile = getServerPropertiesFile();
-            reader = new BufferedReader(new FileReader(propsFile));
-            props.load(reader);
-
-            String host = (String) props.get("jboss.bind.address.management");
-            int port = Integer.valueOf((String) props.get("jboss.management.native.port")).intValue();
-            mcc = MCCHelper.createModelControllerClient(host, port);
+            mcc = getModelControllerClient();
             DeploymentJBossASClient client = new DeploymentJBossASClient(mcc);
             boolean isDeployed = client.isDeployment("rhq.ear");
             return isDeployed;

@@ -56,7 +56,7 @@ public class MetricsGroupView extends AbstractD3GraphListView implements
     private static final String COLLAPSED_TOOLTIP = MSG.chart_metrics_collapse_tooltip();
     private static final String EXPANDED_TOOLTIP = MSG.chart_metrics_expand_tooltip();
 
-    private final ResourceGroup resourceGroup;
+    private final EntityContext entityContext;
     private EnhancedHLayout expandCollapseHLayout;
     private MetricsGroupTableView metricsTableView;
     private static Integer lastResourceGroupId = 0;
@@ -65,35 +65,37 @@ public class MetricsGroupView extends AbstractD3GraphListView implements
      * Encapsulate the creation logic and not let it leak out into other objects.
      * Clear the expanded rows set when changing resources as well.
      * @see ExpandedRowsMomento
+     * @param entityContext to distinguish standard | autogroup | autocluster
      * @param group
      * @return MetricsGroupView
      */
-    public static MetricsGroupView create(ResourceGroup group ){
+    public static MetricsGroupView create(EntityContext entityContext, ResourceGroup resourceGroup) {
 
-        boolean isDifferentResource = (group.getId() != lastResourceGroupId);
+        boolean isDifferentGroup = (entityContext.getGroupId() != lastResourceGroupId);
 
-        if(isDifferentResource){
+        if (isDifferentGroup) {
             ExpandedRowsMomento.getInstance().clear();
         }
 
-        return  new MetricsGroupView(group,  ExpandedRowsMomento.getInstance().getExpandedRows());
+        return new MetricsGroupView(entityContext, resourceGroup, ExpandedRowsMomento.getInstance().getExpandedRows());
 
     }
 
-    private MetricsGroupView(ResourceGroup resourceGroup, Set<Integer> expandedRows) {
+    private MetricsGroupView(EntityContext entityContext, ResourceGroup resourceGroup, Set<Integer> expandedRows) {
         super();
         setOverflow(Overflow.AUTO);
         setWidth100();
         setHeight100();
-        this.resourceGroup = resourceGroup;
-        metricsTableView = new MetricsGroupTableView(resourceGroup, this, expandedRows);
+        this.entityContext = entityContext;
+        metricsTableView = new MetricsGroupTableView(entityContext, resourceGroup, this, expandedRows);
 
-        final MetricAvailabilityView availabilityDetails = new MetricAvailabilityView(resourceGroup.getId());
+        final MetricAvailabilityView availabilityDetails = new MetricAvailabilityView(entityContext.getGroupId());
         availabilityDetails.hide();
 
         metricsTableView.setHeight100();
 
-        availabilityGraph = AvailabilityD3GraphView.create( new AvailabilityOverUnderGraphType(resourceGroup.getId()));
+        availabilityGraph = AvailabilityD3GraphView.create(new AvailabilityOverUnderGraphType(entityContext
+            .getGroupId()));
 
         expandCollapseHLayout = new EnhancedHLayout();
         //add expand/collapse icon
@@ -126,22 +128,21 @@ public class MetricsGroupView extends AbstractD3GraphListView implements
         addMember(expandCollapseHLayout);
         addMember(availabilityDetails);
         addMember(metricsTableView);
-        lastResourceGroupId = resourceGroup.getId();
+        lastResourceGroupId = entityContext.getGroupId();
     }
-
 
     private void addAvailabilityGraph() {
-            expandCollapseHLayout.removeMember(availabilityGraph);
-            availabilityGraph.destroy();
+        expandCollapseHLayout.removeMember(availabilityGraph);
+        availabilityGraph.destroy();
 
-            availabilityGraph = AvailabilityD3GraphView.create(new AvailabilityOverUnderGraphType(resourceGroup.getId()));
+        availabilityGraph = AvailabilityD3GraphView.create(new AvailabilityOverUnderGraphType(entityContext
+            .getGroupId()));
 
-            expandCollapseHLayout.addMember(availabilityGraph);
+        expandCollapseHLayout.addMember(availabilityGraph);
 
-            queryAvailability(EntityContext.forGroup(resourceGroup.getId()), CustomDateRangeState.getInstance().getStartTime(),
-                CustomDateRangeState.getInstance().getEndTime(), null);
+        queryAvailability(entityContext, CustomDateRangeState.getInstance().getStartTime(), CustomDateRangeState
+            .getInstance().getEndTime(), null);
     }
-
 
     @Override
     protected void queryAvailability(final EntityContext context, Long startTime, Long endTime, CountDownLatch notUsed) {
@@ -149,24 +150,24 @@ public class MetricsGroupView extends AbstractD3GraphListView implements
         // now return the availability
         GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResourceGroup(context.getGroupId(), startTime,
             endTime, new AsyncCallback<List<ResourceGroupAvailability>>() {
-            @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
-            }
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
+                }
 
-            @Override
+                @Override
                 public void onSuccess(List<ResourceGroupAvailability> availList) {
                     availabilityGraph.setGroupAvailabilityList(availList);
-                new Timer() {
-                    @Override
-                    public void run() {
-                        buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
-                        availabilityGraph.drawJsniChart();
+                    new Timer() {
+                        @Override
+                        public void run() {
+                            buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
+                            availabilityGraph.drawJsniChart();
 
-                    }
-                }.schedule(150);
-            }
-        });
+                        }
+                    }.schedule(150);
+                }
+            });
     }
 
     private void drawAvailabilityGraphAndSparklines() {

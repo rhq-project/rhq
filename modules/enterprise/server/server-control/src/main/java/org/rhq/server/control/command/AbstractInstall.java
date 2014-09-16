@@ -200,7 +200,7 @@ public abstract class AbstractInstall extends ControlCommand {
         }
 
         String host = (String) props.get("jboss.bind.address.management");
-        if (host.equals("0.0.0.0")) {
+        if ("0.0.0.0".equals(host)) {
             host = "127.0.0.1"; // use the loopback address if the management address is bound to all addressed (the client can't use 0.0.0.0)
         }
 

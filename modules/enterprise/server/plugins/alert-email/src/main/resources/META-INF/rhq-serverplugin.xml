@@ -28,7 +28,7 @@
             <c:constraint>
                 <!-- a real email regex that validates all possible email address would be thousands of chars long -->
                 <!-- here we do just a very basic validation of comma-separated str1@str2 -->
-                <c:regex-constraint expression=".+@[^@, ]+(,.+@[^,@ ]+)?"/>
+                <c:regex-constraint expression="((([a-zA-Z0-9_.\-+])+@([a-zA-Z0-9\-])+(\.([a-zA-Z0-9\-])+)*),?)*"/>
             </c:constraint>
         </c:simple-property>
     </alert-configuration>

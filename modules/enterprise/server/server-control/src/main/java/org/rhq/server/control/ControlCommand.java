@@ -409,6 +409,25 @@ public abstract class ControlCommand {
         return result;
     }
 
+    /**
+     * For console commands on Windows only
+     */
+    protected org.apache.commons.exec.CommandLine getConsoleCommandLine(String scriptName, String... args) {
+        org.apache.commons.exec.CommandLine result;
+
+        result = new org.apache.commons.exec.CommandLine("cmd.exe");
+        result.addArgument("/C");
+        result.addArgument("start");
+        result.addArgument("/I");
+        result.addArgument(scriptName.replace('/', '\\') + ".bat");
+
+        for (String arg : args) {
+            result.addArgument(arg);
+        }
+
+        return result;
+    }
+
     protected String getScript(String scriptName) {
         if (isWindows()) {
             return scriptName.replace('/', '\\') + ".bat";
@@ -457,9 +476,9 @@ public abstract class ControlCommand {
             if (tries > maxTries) {
                 throw new RHQControlException("Process [" + pid
                     + "] did not finish yet. Terminate it manually and retry.");
-                }
             }
         }
+    }
 
     protected void killPid(String pid) throws IOException {
         Executor executor = new DefaultExecutor();
@@ -487,7 +506,7 @@ public abstract class ControlCommand {
             if (code != 0) {
                 isRunning = false;
             }
-        } catch (ExecuteException ee ) {
+        } catch (ExecuteException ee) {
             log.debug("kill -0 for pid [" + pid + "] threw exception with exit value [" + ee.getExitValue() + "]");
             if (ee.getExitValue() == 1) {
                 // return code 1 means process does not exist

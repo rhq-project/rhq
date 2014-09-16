@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.concurrent.Future;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -43,8 +44,8 @@ public class Console extends ControlCommand {
     public Console() {
         options = new Options().addOption(null, "storage", false, "Start the RHQ storage node in the foreground")
             .addOption(null, "server", false, "Start the RHQ server in the foreground")
-            // leaving out the agent option for now...
-            ;//.addOption(null, "agent", false, "Start the RHQ agent in the foreground (unsupported)");
+        // leaving out the agent option for now...
+        ;//.addOption(null, "agent", false, "Start the RHQ agent in the foreground (unsupported)");
     }
 
     @Override
@@ -55,7 +56,7 @@ public class Console extends ControlCommand {
     @Override
     public String getDescription() {
         return "Starts an RHQ service in the foreground. Only --server or --storage is supported. To start the agent in "
-        + "the foreground, use the <RHQ_AGENT_HOME>/bin/rhq-agent.(sh|bat) script.";
+            + "the foreground, use the <RHQ_AGENT_HOME>/bin/rhq-agent.(sh|bat) script.";
     }
 
     @Override
@@ -117,6 +118,10 @@ public class Console extends ControlCommand {
 
         File storageBinDir = new File(getStorageBasedir(), "bin");
 
+        if (isWindows()) {
+            return startInWindowsForeground(storageBinDir, "cassandra", "-f");
+        }
+
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(getCommandLine(false,
             "cassandra", "-f"));
         return ExecutorAssist.execute(storageBinDir, commandLine);
@@ -124,9 +129,16 @@ public class Console extends ControlCommand {
 
     private int startServerInForeground() throws Exception {
         log.debug("Starting RHQ server in foreground");
+
         validateServerPropertiesFile();
+        File binDir = getBinDir();
+
+        if (isWindows()) {
+            return startInWindowsForeground(binDir, "rhq-server", "console");
+        }
+
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "console");
-        return ExecutorAssist.execute(getBinDir(), commandLine);
+        return ExecutorAssist.execute(binDir, commandLine);
     }
 
     private int startAgentInForeground() throws Exception {
@@ -137,7 +149,6 @@ public class Console extends ControlCommand {
         File confDir = new File(agentHomeDir, "conf");
         File agentConfigFile = new File(confDir, "agent-configuration.xml");
 
-        //TODO: fix for windows
         Process process = new ProcessBuilder(getScript("rhq-agent"), "-c", agentConfigFile.getPath()).directory(
             agentBinDir)
         //            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
@@ -166,6 +177,18 @@ public class Console extends ControlCommand {
         //        doneSignal.await();
         //        agentThread.join();
         return RHQControl.EXIT_CODE_OK;
+    }
+
+    private int startInWindowsForeground(File binDir, String script, String... scriptArgs) throws Exception {
+        org.apache.commons.exec.CommandLine commandLine = getConsoleCommandLine(script, scriptArgs);
+
+        Future<Integer> f = ExecutorAssist.executeAsync(binDir, commandLine, null);
+        // The program won't launch if rhqctl exits first, wait a few seconds
+        for (int i = 0; (i < 3) && !f.isDone(); ++i) {
+            Thread.sleep(1000);
+        }
+
+        return f.isDone() ? f.get() : 0;
     }
 
     private class AgentInputStreamPipe extends Thread {

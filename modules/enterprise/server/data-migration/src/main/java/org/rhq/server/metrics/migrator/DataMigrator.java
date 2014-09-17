@@ -27,10 +27,10 @@ import com.datastax.driver.core.Session;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.migrator.workers.AggregateDataMigrator;
 import org.rhq.server.metrics.migrator.workers.CallableMigrationWorker;
 import org.rhq.server.metrics.migrator.workers.DeleteAllData;
+import org.rhq.server.metrics.migrator.workers.MigrationTable;
 import org.rhq.server.metrics.migrator.workers.RawDataMigrator;
 
 
@@ -115,15 +115,15 @@ public class DataMigrator {
         }
 
         if (config.isRun1HAggregateDataMigration()) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.ONE_HOUR, config), Task.Estimate);
+            retryOnFailure(new AggregateDataMigrator(MigrationTable.ONE_HOUR, config), Task.Estimate);
         }
 
         if (config.isRun6HAggregateDataMigration()) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.SIX_HOUR, config), Task.Estimate);
+            retryOnFailure(new AggregateDataMigrator(MigrationTable.SIX_HOUR, config), Task.Estimate);
         }
 
         if (config.isRun1DAggregateDataMigration()) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.TWENTY_FOUR_HOUR, config), Task.Estimate);
+            retryOnFailure(new AggregateDataMigrator(MigrationTable.TWENTY_FOUR_HOUR, config), Task.Estimate);
         }
 
         if (config.isDeleteAllDataAtEndOfMigration()) {
@@ -141,15 +141,15 @@ public class DataMigrator {
         }
 
         if (config.isRun1HAggregateDataMigration()) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.ONE_HOUR, config), Task.Migrate);
+            retryOnFailure(new AggregateDataMigrator(MigrationTable.ONE_HOUR, config), Task.Migrate);
         }
 
         if (config.isRun6HAggregateDataMigration()) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.SIX_HOUR, config), Task.Migrate);
+            retryOnFailure(new AggregateDataMigrator(MigrationTable.SIX_HOUR, config), Task.Migrate);
         }
 
         if (config.isRun1DAggregateDataMigration()) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.TWENTY_FOUR_HOUR, config), Task.Migrate);
+            retryOnFailure(new AggregateDataMigrator(MigrationTable.TWENTY_FOUR_HOUR, config), Task.Migrate);
         }
 
         if (config.isDeleteAllDataAtEndOfMigration()) {

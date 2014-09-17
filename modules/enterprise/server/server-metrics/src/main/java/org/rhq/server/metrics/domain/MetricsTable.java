@@ -25,39 +25,21 @@
 
 package org.rhq.server.metrics.domain;
 
-import org.joda.time.Duration;
-
-
 public enum MetricsTable {
 
-    INDEX("metrics_idx", -1),
-    RAW("raw_metrics", Duration.standardDays(7).toStandardSeconds().getSeconds()),
-    AGGREGATE("aggregate_metrics", -1),
-    // TODO these need to be removed once data migrator code is updated
-    ONE_HOUR("one_hour_metrics", Duration.standardDays(14).toStandardSeconds().getSeconds()),
-    SIX_HOUR("six_hour_metrics", Duration.standardDays(31).toStandardSeconds().getSeconds()),
-    TWENTY_FOUR_HOUR("twenty_four_hour_metrics", Duration.standardDays(365).toStandardSeconds().getSeconds());
+    INDEX("metrics_idx"),
+    RAW("raw_metrics"),
+    AGGREGATE("aggregate_metrics");
 
     private final String tableName;
-    private final int ttl;
 
-    private MetricsTable(String tableName, int ttl) {
+    private MetricsTable(String tableName) {
         this.tableName = tableName;
-        this.ttl = ttl;
     }
 
     public String getTableName() {
         return this.tableName;
     }
-
-    public int getTTL() {
-        return this.ttl;
-    }
-
-    public long getTTLinMilliseconds() {
-        return this.ttl * 1000l;
-    }
-
     @Override
     public String toString() {
         return this.tableName;

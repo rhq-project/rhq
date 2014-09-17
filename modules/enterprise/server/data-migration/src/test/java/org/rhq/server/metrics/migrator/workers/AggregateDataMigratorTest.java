@@ -48,7 +48,6 @@ import org.testng.IObjectFactory;
 import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 
-import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.migrator.DataMigrator.DataMigratorConfiguration;
 import org.rhq.server.metrics.migrator.DataMigrator.DatabaseType;
 import org.rhq.server.metrics.migrator.datasources.ScrollableDataSource;
@@ -70,9 +69,9 @@ public class AggregateDataMigratorTest {
         DataMigratorConfiguration mockConfig = mock(DataMigratorConfiguration.class);
         when(mockConfig.getDatabaseType()).thenReturn(databaseType);
 
-        MetricsIndexUpdateAccumulator mockMetricsIndexUpdateAccumulator = mock(MetricsIndexUpdateAccumulator.class);
-        PowerMockito.whenNew(MetricsIndexUpdateAccumulator.class)
-            .withArguments(eq(MetricsTable.ONE_HOUR), eq(mockConfig))
+        MetricsIndexMigrator mockMetricsIndexUpdateAccumulator = mock(MetricsIndexMigrator.class);
+        PowerMockito.whenNew(MetricsIndexMigrator.class)
+            .withArguments(eq(MigrationTable.ONE_HOUR), eq(mockConfig))
             .thenReturn(mockMetricsIndexUpdateAccumulator);
 
         EntityManager mockEntityManager = mock(EntityManager.class);
@@ -96,13 +95,13 @@ public class AggregateDataMigratorTest {
         when(mockDataSource.getData(eq(0), anyInt())).thenReturn(new ArrayList<Object[]>());
 
         //create object to test and inject required dependencies
-        AggregateDataMigrator objectUnderTest = new AggregateDataMigrator(MetricsTable.ONE_HOUR, mockConfig);
+        AggregateDataMigrator objectUnderTest = new AggregateDataMigrator(MigrationTable.ONE_HOUR, mockConfig);
 
         //run code under test
         long estimateActual = objectUnderTest.estimate();
 
         //verify the results (assert and mock verification)
-        PowerMockito.verifyNew(MetricsIndexUpdateAccumulator.class).withArguments(eq(MetricsTable.ONE_HOUR),
+        PowerMockito.verifyNew(MetricsIndexMigrator.class).withArguments(eq(MigrationTable.ONE_HOUR),
             eq(mockConfig));
         PowerMockito.verifyNew(ScrollableDataSource.class, times(1)).withArguments(eq(mockEntityManager),
             eq(databaseType), any(), anyInt());
@@ -130,9 +129,9 @@ public class AggregateDataMigratorTest {
         Session mockCassandraSession = mock(Session.class);
         when(mockConfig.getSession()).thenReturn(mockCassandraSession);
 
-        MetricsIndexUpdateAccumulator mockMetricsIndexUpdateAccumulator = mock(MetricsIndexUpdateAccumulator.class);
-        PowerMockito.whenNew(MetricsIndexUpdateAccumulator.class)
-            .withArguments(eq(MetricsTable.ONE_HOUR), eq(mockConfig))
+        MetricsIndexMigrator mockMetricsIndexUpdateAccumulator = mock(MetricsIndexMigrator.class);
+        PowerMockito.whenNew(MetricsIndexMigrator.class)
+            .withArguments(eq(MigrationTable.ONE_HOUR), eq(mockConfig))
             .thenReturn(mockMetricsIndexUpdateAccumulator);
 
         EntityManager mockEntityManager = mock(EntityManager.class);
@@ -167,13 +166,13 @@ public class AggregateDataMigratorTest {
         when(mockCassandraSession.executeAsync(any(Query.class))).thenReturn(mockResultSetFuture);
 
         //create object to test and inject required dependencies
-        AggregateDataMigrator objectUnderTest = new AggregateDataMigrator(MetricsTable.ONE_HOUR, mockConfig);
+        AggregateDataMigrator objectUnderTest = new AggregateDataMigrator(MigrationTable.ONE_HOUR, mockConfig);
 
         //run code under test
         objectUnderTest.migrate();
 
         //verify the results (assert and mock verification)
-        PowerMockito.verifyNew(MetricsIndexUpdateAccumulator.class).withArguments(eq(MetricsTable.ONE_HOUR),
+        PowerMockito.verifyNew(MetricsIndexMigrator.class).withArguments(eq(MigrationTable.ONE_HOUR),
             eq(mockConfig));
         PowerMockito.verifyNew(ScrollableDataSource.class, times(1)).withArguments(eq(mockEntityManager),
             eq(databaseType), any());

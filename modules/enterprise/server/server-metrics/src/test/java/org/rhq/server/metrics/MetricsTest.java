@@ -136,7 +136,7 @@ public class MetricsTest extends CassandraIntegrationTest {
      * @param expected The expected values
      */
     protected void assert1HourDataEquals(int scheduleId, List<AggregateNumericMetric> expected) {
-        assertMetricDataEquals(MetricsTable.ONE_HOUR, scheduleId, expected);
+        assertMetricDataEquals(Bucket.ONE_HOUR, scheduleId, expected);
     }
 
     /**
@@ -156,7 +156,7 @@ public class MetricsTest extends CassandraIntegrationTest {
      * @param expected The expected values
      */
     protected void assert6HourDataEquals(int scheduleId, List<AggregateNumericMetric> expected) {
-        assertMetricDataEquals(MetricsTable.SIX_HOUR, scheduleId, expected);
+        assertMetricDataEquals(Bucket.SIX_HOUR, scheduleId, expected);
     }
 
     /**
@@ -166,13 +166,14 @@ public class MetricsTest extends CassandraIntegrationTest {
      * @param expected The expected values
      */
     protected void assert24HourDataEquals(int scheduleId, List<AggregateNumericMetric> expected) {
-        assertMetricDataEquals(MetricsTable.TWENTY_FOUR_HOUR, scheduleId, expected);
+        assertMetricDataEquals(Bucket.TWENTY_FOUR_HOUR, scheduleId, expected);
     }
 
-    private void assertMetricDataEquals(MetricsTable columnFamily, int scheduleId,
+    private void assertMetricDataEquals(Bucket bucket, int scheduleId,
         List<AggregateNumericMetric> expected) {
-        List<AggregateNumericMetric> actual = Lists.newArrayList(findAggregateMetrics(columnFamily, scheduleId));
-        assertCollectionMatchesNoOrder("Metric data for schedule id " + scheduleId + " in table " + columnFamily +
+        List<AggregateNumericMetric> actual = Lists.newArrayList(findAggregateMetrics(bucket, scheduleId));
+        assertCollectionMatchesNoOrder("Metric data for schedule id " + scheduleId + " in table " + bucket
+            +
             " does not match expected values", expected, actual, TEST_PRECISION);
     }
 
@@ -194,6 +195,7 @@ public class MetricsTest extends CassandraIntegrationTest {
         assertIndexEquals(IndexBucket.RAW, time, time.plus(configuration.getRawTimeSliceDuration()), scheduleIds);
     }
 
+    @SuppressWarnings("unchecked")
     protected void assertRawIndexEmpty(DateTime time) {
         assertIndexEquals(IndexBucket.RAW, time, time.plus(configuration.getRawTimeSliceDuration()),
             Collections.EMPTY_LIST);
@@ -204,6 +206,7 @@ public class MetricsTest extends CassandraIntegrationTest {
             scheduleIds);
     }
 
+    @SuppressWarnings("unchecked")
     protected void assert1HourIndexEmpty(DateTime time) {
         assertIndexEquals(IndexBucket.ONE_HOUR, time, time.plus(configuration.getOneHourTimeSliceDuration()),
             Collections.EMPTY_LIST);
@@ -214,6 +217,7 @@ public class MetricsTest extends CassandraIntegrationTest {
             scheduleIds);
     }
 
+    @SuppressWarnings("unchecked")
     protected void assert6HourIndexEmpty(DateTime time) {
         assertIndexEquals(IndexBucket.SIX_HOUR, time, time.plus(configuration.getSixHourTimeSliceDuration()),
             Collections.EMPTY_LIST);

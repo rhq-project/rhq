@@ -51,12 +51,12 @@ public class RawDataMigrator extends AbstractMigrationWorker implements Callable
     private final Log log = LogFactory.getLog(RawDataMigrator.class);
 
     private final Queue<String> tablesNotProcessed = new LinkedList<String>(Arrays.asList(getRawDataTables()));
-    private final MetricsIndexUpdateAccumulator metricsIndexAccumulator;
+    private final MetricsIndexMigrator metricsIndexAccumulator;
     private final DataMigratorConfiguration config;
 
     public RawDataMigrator(DataMigratorConfiguration config) {
         this.config = config;
-        this.metricsIndexAccumulator = new MetricsIndexUpdateAccumulator(MetricsTable.RAW, config);
+        this.metricsIndexAccumulator = new MetricsIndexMigrator(MigrationTable.RAW, config);
     }
 
     public long estimate() throws Exception {
@@ -72,7 +72,7 @@ public class RawDataMigrator extends AbstractMigrationWorker implements Callable
 
         Telemetry telemetry = this.performMigration(Task.Estimate);
         long estimatedTimeToMigrate = telemetry.getMigrationTime();
-        long estimation = (recordCount / (long) MAX_RECORDS_TO_LOAD_FROM_SQL / (long) NUMBER_OF_BATCHES_FOR_ESTIMATION)
+        long estimation = (recordCount / MAX_RECORDS_TO_LOAD_FROM_SQL / NUMBER_OF_BATCHES_FOR_ESTIMATION)
             * estimatedTimeToMigrate;
         estimation += telemetry.getNonMigrationTime();
 
@@ -212,7 +212,7 @@ public class RawDataMigrator extends AbstractMigrationWorker implements Callable
         long creationTimeMillis;
         long itemTTLSeconds;
         long currentTimeMillis = System.currentTimeMillis();
-        long expectedTTLMillis = MetricsTable.RAW.getTTLinMilliseconds();
+        long expectedTTLMillis = MigrationTable.RAW.getTTLinMilliseconds();
 
         for (Object[] rawDataPoint : existingData) {
             creationTimeMillis = Long.parseLong(rawDataPoint[MigrationQuery.TIMESTAMP_INDEX].toString());

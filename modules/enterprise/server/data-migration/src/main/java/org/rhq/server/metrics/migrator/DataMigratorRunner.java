@@ -58,7 +58,7 @@ import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.server.metrics.migrator.DataMigrator.DatabaseType;
 import org.rhq.server.metrics.migrator.workers.AggregateDataMigrator;
 import org.rhq.server.metrics.migrator.workers.DeleteAllData;
-import org.rhq.server.metrics.migrator.workers.MetricsIndexUpdateAccumulator;
+import org.rhq.server.metrics.migrator.workers.MetricsIndexMigrator;
 import org.rhq.server.metrics.migrator.workers.RawDataMigrator;
 
 
@@ -210,7 +210,7 @@ public class DataMigratorRunner {
 
         //force change some of the logger levels
         Class[] clazzes = new Class[] { DataMigratorRunner.class, DataMigrator.class, RawDataMigrator.class,
-            DeleteAllData.class, AggregateDataMigrator.class, MetricsIndexUpdateAccumulator.class };
+            DeleteAllData.class, AggregateDataMigrator.class, MetricsIndexMigrator.class };
         for (Class clazz : clazzes) {
             migratorLogging = root.getLogger(clazz);
             if (Level.DEBUG.equals(level)) {

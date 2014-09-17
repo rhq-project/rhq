@@ -48,6 +48,7 @@ import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.admin.AdministrationView;
 import org.rhq.coregui.client.components.table.AuthorizedTableAction;
@@ -235,10 +236,12 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
 
         addTableAction(MSG.view_adminTopology_storageNodes_run_undeploySelected(), null, ButtonColor.RED,
             new AuthorizedTableAction(this, TableActionEnablement.SINGLE, Permission.MANAGE_SETTINGS) {
+            
+                private String availabilityIcon = ImageManager.getAvailabilityIconFromAvailType(AvailabilityType.UP);
 
                 @Override
                 public boolean isEnabled(ListGridRecord[] selection) {
-                    return StorageNodeTableView.this.isUndeployable(super.isEnabled(selection), selection);
+                    return StorageNodeTableView.this.isUndeployable(super.isEnabled(selection), selection, availabilityIcon);
                 }
 
                 @Override
@@ -488,7 +491,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         return true;
     }
 
-    private boolean isUndeployable(boolean parentsOpinion, ListGridRecord[] selection) {
+    private boolean isUndeployable(boolean parentsOpinion, ListGridRecord[] selection, String availIcon) {
         if (!parentsOpinion || !isEnabled(parentsOpinion, selection)) {
             return false;
         }
@@ -512,8 +515,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
             }
             if (StorageNode.Status.NORMAL.toString().equals(
                 storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                && AvailabilityType.UP
-                    .equals(storageNodeRecord.getAttributeAsObject(FIELD_AVAILABILITY.propertyName()))) {
+                && availIcon.equals(storageNodeRecord.getAttributeAsObject(FIELD_AVAILABILITY.propertyName()))) {
                 nodesInNormalCouner++;
             }
         }

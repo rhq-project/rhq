@@ -185,7 +185,7 @@
             <c:option value="Move"/>
           </c:property-options>
         </c:simple-property>
-        <c:simple-property name="location" required="false" type="string" description="Additional parameter to Deletion Strategy, specifies location to move snaphosts to, snads for L" />
+        <c:simple-property name="location" required="false" type="string" description="Additional parameter to Deletion Strategy, specifies location to move snaphosts to." />
       </parameters>
     </operation>
 

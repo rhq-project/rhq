@@ -48,17 +48,17 @@ import org.rhq.server.metrics.migrator.DataMigrator.DataMigratorConfiguration;
  * @author Stefan Negrea
  *
  */
-public class MetricsIndexUpdateAccumulator extends AbstractMigrationWorker {
+public class MetricsIndexMigrator extends AbstractMigrationWorker {
     private static final int MAX_SIZE = 3000;
 
-    private final Log log = LogFactory.getLog(MetricsIndexUpdateAccumulator.class);
+    private final Log log = LogFactory.getLog(MetricsIndexMigrator.class);
 
     private final DateTimeService dateTimeService = new DateTimeService();
-    private final MetricsConfiguration configuration = new MetricsConfiguration();
+    private final MetricsConfiguration metricsConfiguration = new MetricsConfiguration();
     private final Map<Integer, Set<Long>> accumulator = new HashMap<Integer, Set<Long>>();
 
-    private final MetricsTable table;
-    private final DataMigratorConfiguration config;
+    private final MigrationTable table;
+    private final DataMigratorConfiguration migratorConfiguration;
 
     private final long timeLimit;
     private final PreparedStatement updateMetricsIndex;
@@ -67,16 +67,18 @@ public class MetricsIndexUpdateAccumulator extends AbstractMigrationWorker {
 
     private int currentCount = 0;
 
-    public MetricsIndexUpdateAccumulator(MetricsTable table, DataMigratorConfiguration config) {
+    public MetricsIndexMigrator(MigrationTable table, DataMigratorConfiguration config) {
         this.table = table;
-        this.config = config;
+        this.migratorConfiguration = config;
 
-        if (MetricsTable.RAW.equals(table) || MetricsTable.ONE_HOUR.equals(table)
-            || MetricsTable.SIX_HOUR.equals(table)) {
-            this.sliceDuration = configuration.getTimeSliceDuration(table);
+        if (MigrationTable.RAW.equals(table) || MigrationTable.ONE_HOUR.equals(table)
+            || MigrationTable.SIX_HOUR.equals(table)) {
+            this.sliceDuration = this.getTimeSliceDuration(table);
             this.timeLimit = this.getLastAggregationTime(table) - this.sliceDuration.getMillis();
             this.updateMetricsIndex = config.getSession().prepare(
-                "INSERT INTO metrics_index (bucket, time, schedule_id) VALUES (?, ?, ?)");
+                "INSERT INTO " + MetricsTable.INDEX + " " +
+                "(bucket, partition, time, schedule_id) " +
+                "VALUES (?, ?, ?, ?) ");
             this.validAccumulatorTable = true;
         } else {
             this.timeLimit = Integer.MAX_VALUE;
@@ -120,9 +122,12 @@ public class MetricsIndexUpdateAccumulator extends AbstractMigrationWorker {
 
         for (Map.Entry<Integer, Set<Long>> entry : accumulator.entrySet()) {
             for (Long timestamp : entry.getValue()) {
-                BoundStatement statement = updateMetricsIndex.bind(this.table.getTableName(), new Date(timestamp),
-                    entry.getKey());
-                resultSetFutures.add(config.getSession().executeAsync(statement));
+                Integer scheduleId = entry.getKey();
+
+                BoundStatement statement = updateMetricsIndex.bind(table.getAggregationBucket().toString(),
+                    (scheduleId % metricsConfiguration.getIndexPartitions()), new Date(timestamp), scheduleId);
+
+                resultSetFutures.add(migratorConfiguration.getSession().executeAsync(statement));
             }
         }
 
@@ -134,21 +139,21 @@ public class MetricsIndexUpdateAccumulator extends AbstractMigrationWorker {
         currentCount = 0;
     }
 
-    private long getLastAggregationTime(MetricsTable migratedTable) {
-        StatelessSession session = getSQLSession(config);
+    private long getLastAggregationTime(MigrationTable migratedTable) {
+        StatelessSession session = getSQLSession(migratorConfiguration);
 
         long aggregationSlice = Integer.MAX_VALUE;
         Duration duration = null;
         String queryString = null;
 
-        if (MetricsTable.RAW.equals(migratedTable)) {
-            duration = configuration.getRawTimeSliceDuration();
+        if (MigrationTable.RAW.equals(migratedTable)) {
+            duration = metricsConfiguration.getRawTimeSliceDuration();
             queryString = MigrationQuery.MAX_TIMESTAMP_1H_DATA.toString();
-        } else if (MetricsTable.ONE_HOUR.equals(migratedTable)) {
-            duration = configuration.getOneHourTimeSliceDuration();
+        } else if (MigrationTable.ONE_HOUR.equals(migratedTable)) {
+            duration = metricsConfiguration.getOneHourTimeSliceDuration();
             queryString = MigrationQuery.MAX_TIMESTAMP_6H_DATA.toString();
-        } else if (MetricsTable.SIX_HOUR.equals(migratedTable)) {
-            duration = configuration.getSixHourTimeSliceDuration();
+        } else if (MigrationTable.SIX_HOUR.equals(migratedTable)) {
+            duration = metricsConfiguration.getSixHourTimeSliceDuration();
             queryString = MigrationQuery.MAX_TIMESTAMP_1D_DATA.toString();
         }
 
@@ -167,5 +172,18 @@ public class MetricsIndexUpdateAccumulator extends AbstractMigrationWorker {
         closeSQLSession(session);
 
         return aggregationSlice;
+    }
+
+    public Duration getTimeSliceDuration(MigrationTable table) {
+        if (MigrationTable.RAW.equals(table)) {
+            return metricsConfiguration.getRawTimeSliceDuration();
+        } else if (MigrationTable.ONE_HOUR.equals(table)) {
+            return metricsConfiguration.getOneHourTimeSliceDuration();
+        } else if (MigrationTable.SIX_HOUR.equals(table)) {
+            return metricsConfiguration.getSixHourTimeSliceDuration();
+        }
+
+        throw new IllegalArgumentException("Time slice duration for " + table.getTableName()
+            + " table is not supported");
     }
 }

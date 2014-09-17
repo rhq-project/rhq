@@ -641,8 +641,8 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             session.execute("DELETE FROM " + MetricsTable.AGGREGATE.getTableName() + " WHERE schedule_id = " +
                 schedule.getId() + " AND bucket = 'one_hour'");
         } catch (NoHostAvailableException e) {
-            throw new RuntimeException("An error occurred while trying to deleted data from " +
-                MetricsTable.ONE_HOUR + " for " + schedule, e);
+            throw new RuntimeException("An error occurred while trying to deleted data from "
+                + MetricsTable.AGGREGATE.getTableName() + " for " + schedule, e);
         }
     }
 }

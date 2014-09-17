@@ -27,6 +27,13 @@
 #   !!!! You will lose your data if your this script without manually disabling the data deletion part !!!!
 #6) Expect the generation process to take about 60 seconds per agent
 #7) The script is configured to generate data for 10 agents, if you can increase that limit by updating the variables below
+#
+# Fedora 20 prerequesites:
+#   sudo yum install python2
+#   sudo yum install python2-devel
+#   sudo yum install postgresql-devel
+#   sudo pip install psycopg2
+
 
 import psycopg2
 import sys
@@ -41,7 +48,7 @@ def parse_arguments():
    parser = OptionParser()
 
    #db settings
-   parser.add_option("--host", default="localhost", action="store", type="string", dest="db_host")
+   parser.add_option("--host", default="127.0.0.1", action="store", type="string", dest="db_host")
    parser.add_option("--database", default="rhq_db", action="store", type="string", dest="db_database")
    parser.add_option("--user", default="rhqadmin", action="store", type="string", dest="db_user")
    parser.add_option("--password", default="rhqadmin", action="store", type="string", dest="db_password")

@@ -48,7 +48,6 @@ import org.testng.IObjectFactory;
 import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 
-import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.migrator.DataMigrator.DataMigratorConfiguration;
 import org.rhq.server.metrics.migrator.DataMigrator.DatabaseType;
 import org.rhq.server.metrics.migrator.datasources.ScrollableDataSource;
@@ -70,8 +69,8 @@ public class RawDataMigratorTest {
         DataMigratorConfiguration mockConfig = mock(DataMigratorConfiguration.class);
         when(mockConfig.getDatabaseType()).thenReturn(databaseType);
 
-        MetricsIndexUpdateAccumulator mockMetricsIndexUpdateAccumulator = mock(MetricsIndexUpdateAccumulator.class);
-        PowerMockito.whenNew(MetricsIndexUpdateAccumulator.class).withArguments(eq(MetricsTable.RAW), eq(mockConfig))
+        MetricsIndexMigrator mockMetricsIndexUpdateAccumulator = mock(MetricsIndexMigrator.class);
+        PowerMockito.whenNew(MetricsIndexMigrator.class).withArguments(eq(MigrationTable.RAW), eq(mockConfig))
             .thenReturn(mockMetricsIndexUpdateAccumulator);
 
         EntityManager mockEntityManager = mock(EntityManager.class);
@@ -101,7 +100,7 @@ public class RawDataMigratorTest {
         long estimateActual = objectUnderTest.estimate();
 
         //verify the results (assert and mock verification)
-        PowerMockito.verifyNew(MetricsIndexUpdateAccumulator.class).withArguments(eq(MetricsTable.RAW), eq(mockConfig));
+        PowerMockito.verifyNew(MetricsIndexMigrator.class).withArguments(eq(MigrationTable.RAW), eq(mockConfig));
         PowerMockito.verifyNew(ScrollableDataSource.class, times(15)).withArguments(eq(mockEntityManager),
             eq(databaseType), any(), anyInt());
 
@@ -128,8 +127,8 @@ public class RawDataMigratorTest {
         Session mockCassandraSession = mock(Session.class);
         when(mockConfig.getSession()).thenReturn(mockCassandraSession);
 
-        MetricsIndexUpdateAccumulator mockMetricsIndexUpdateAccumulator = mock(MetricsIndexUpdateAccumulator.class);
-        PowerMockito.whenNew(MetricsIndexUpdateAccumulator.class).withArguments(eq(MetricsTable.RAW), eq(mockConfig))
+        MetricsIndexMigrator mockMetricsIndexUpdateAccumulator = mock(MetricsIndexMigrator.class);
+        PowerMockito.whenNew(MetricsIndexMigrator.class).withArguments(eq(MigrationTable.RAW), eq(mockConfig))
             .thenReturn(mockMetricsIndexUpdateAccumulator);
 
         EntityManager mockEntityManager = mock(EntityManager.class);
@@ -170,7 +169,7 @@ public class RawDataMigratorTest {
         objectUnderTest.migrate();
 
         //verify the results (assert and mock verification)
-        PowerMockito.verifyNew(MetricsIndexUpdateAccumulator.class).withArguments(eq(MetricsTable.RAW), eq(mockConfig));
+        PowerMockito.verifyNew(MetricsIndexMigrator.class).withArguments(eq(MigrationTable.RAW), eq(mockConfig));
         PowerMockito.verifyNew(ScrollableDataSource.class, times(15)).withArguments(eq(mockEntityManager),
             eq(databaseType), any());
 

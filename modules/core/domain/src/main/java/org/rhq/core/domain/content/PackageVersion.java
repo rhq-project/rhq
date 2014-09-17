@@ -59,17 +59,8 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
 @NamedQueries({
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VERSION, query = "" //
         + "SELECT pv FROM PackageVersion AS pv " //
-        + " WHERE pv.generalPackage.name = :packageName " //
-        + "   AND pv.generalPackage.packageType.name = :packageTypeName " //
-        + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId " //
+        + " WHERE pv.generalPackage.id = :packageId " //
         + "   AND pv.version = :version "//
-        + " ORDER BY pv.id DESC "),
-    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_SHA, query = "" //
-        + "SELECT pv FROM PackageVersion AS pv " //
-        + " WHERE pv.generalPackage.name = :packageName " //
-        + "   AND pv.generalPackage.packageType.name = :packageTypeName " //
-        + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId " //
-        + "   AND pv.sha256 = :sha " //
         + " ORDER BY pv.id DESC "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH, query = "SELECT pv FROM PackageVersion AS pv "
         + " WHERE pv.generalPackage.name = :name " + "   AND pv.generalPackage.packageType.id = :packageTypeId "
@@ -133,14 +124,6 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
         + "                        LEFT JOIN pv1.repoPackageVersions cpv "
         + "                        LEFT JOIN cpv.repo.resourceRepos rc "
         + "                  WHERE rc.resource.id = :resourceId) "),
-
-    // returns the identified package version, but only if it is orphaned and has no associated content sources or repos
-    // and is not installed anywhere
-    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "SELECT pv "
-        + "  FROM PackageVersion pv " + " WHERE pv.id = :id " + "   AND pv.id NOT IN (SELECT pvcs.packageVersion.id "
-        + "                       FROM PackageVersionContentSource pvcs "
-        + "                      WHERE pvcs.packageVersion.id = :id) " + "   AND pv.repoPackageVersions IS EMPTY "
-        + "   AND pv.installedPackages IS EMPTY " + "   AND pv.installedPackageHistory IS EMPTY "),
     @NamedQuery(name = PackageVersion.QUERY_GET_PKG_BITS_LENGTH_BY_PKG_DETAILS_AND_RES_ID, query = "SELECT pv.fileSize "
         + "  FROM PackageVersion AS pv "
         + "       JOIN pv.generalPackage.packageType.resourceType.resources r "
@@ -252,8 +235,6 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
         + "                 (SELECT ip1.packageVersion.id FROM InstalledPackage ip1 WHERE ip1.resource.id = :resourceId)"
         + "            )" + "       )"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_ID, query = "SELECT pv FROM PackageVersion pv WHERE pv.id = :id"),
-    @NamedQuery(name = PackageVersion.QUERY_FIND_PACKAGE_BY_FILENAME, query = "SELECT p FROM Package p "
-        + "WHERE p.id IN (SELECT pv.generalPackage.id FROM PackageVersion AS pv WHERE pv.fileName = :rpmName)"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_PACKAGEVERSION_BY_FILENAME, query = "SELECT pv FROM PackageVersion AS pv WHERE pv.fileName = :rpmName)"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_AND_REPO_ID, query = "SELECT pv"
         + " FROM PackageVersion pv" + " JOIN pv.repoPackageVersions rpv" + " WHERE pv.generalPackage.id = :packageId"
@@ -272,7 +253,7 @@ public class PackageVersion implements Serializable {
 
     public static final String QUERY_FIND_BY_PACKAGE_VERSION = "PackageVersion.findByPackageVersion";
     public static final String QUERY_FIND_BY_PACKAGE_VER_ARCH = "PackageVersion.findByPackageVerArch";
-    public static final String QUERY_FIND_BY_PACKAGE_SHA = "PackageVersion.findByPackageSha";
+
     public static final String QUERY_FIND_BY_PACKAGE_SHA_RES_TYPE = "PackageVersion.findByPackageShaResType";
     public static final String QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE = "PackageVersion.findByPackageDetailsKeyWithNonNullResourceType";
     public static final String QUERY_FIND_BY_PACKAGE_DETAILS_KEY = "PackageVersion.findByPackageDetailsKey";
@@ -285,7 +266,6 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_BY_REPO_ID_WITH_PACKAGE = "PackageVersion.findByRepoIdWithPackage";
     public static final String QUERY_FIND_BY_REPO_ID_WITH_PACKAGE_FILTERED = "PackageVersion.findByRepoIdWithPackageFiltered";
     public static final String QUERY_FIND_METADATA_BY_RESOURCE_ID = "PackageVersion.findMetadataByResourceId";
-    public static final String QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.findByIdIfNoContentSourcesOrRepos";
     public static final String QUERY_GET_PKG_BITS_LENGTH_BY_PKG_DETAILS_AND_RES_ID = "PackageVersion.getPkgBitsLengthByPkgDetailsAndResId";
     public static final String DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteIfNoContentSourcesOrRepos";
     public static final String DELETE_SINGLE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteSingleIfNoContentSourcesOrRepos";
@@ -298,7 +278,6 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_COMPOSITES_BY_IDS = "PackageVersion.findCompositesByIds";
     public static final String QUERY_FIND_COMPOSITE_BY_FILTERS = "PackageVersion.findCompositeByFilters";
     public static final String QUERY_FIND_BY_ID = "PackageVersion.findById";
-    public static final String QUERY_FIND_PACKAGE_BY_FILENAME = "PackageVersion.findPackageByFilename";
     public static final String QUERY_FIND_PACKAGEVERSION_BY_FILENAME = "PackageVersion.findPackageVersionByFilename";
     public static final String QUERY_FIND_DELETEABLE_IDS_IN_REPO = "PackageVersion.findDeleteableVersionIds";
 
@@ -367,6 +346,10 @@ public class PackageVersion implements Serializable {
     @Column(name = "LONG_DESCRIPTION", nullable = true)
     private String longDescription;
 
+    /**
+     * This is basically an enhanced SHA, and will be unique across PVs for a package.  Architecture is no longer
+     * a required differentiator.
+     */
     @Column(name = "VERSION", nullable = false)
     private String version;
 

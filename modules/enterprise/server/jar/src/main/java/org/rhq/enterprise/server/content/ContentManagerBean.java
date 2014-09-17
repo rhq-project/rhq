@@ -35,6 +35,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -93,6 +94,7 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
@@ -105,6 +107,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -162,10 +165,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     @EJB
     private RepoManagerLocal repoManager;
 
+    @EJB
+    private SubjectManagerLocal subjectManager;
 
     // ContentManagerLocal Implementation  --------------------------------------------
 
-    @SuppressWarnings("unchecked")
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void mergeDiscoveredPackages(ContentDiscoveryReport report) {
         int resourceId = report.getResourceId();
 
@@ -177,181 +183,35 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 + resourceId + "]...");
         }
 
-        // Load the resource and its installed packages
-        Resource resource = entityManager.find(Resource.class, resourceId);
-        if (resource == null) {
+        // Load the resource and its installed packages.
+        ResourceCriteria c = new ResourceCriteria();
+        c.addFilterId(resourceId);
+        c.fetchInstalledPackages(true);
+        List<Resource> result = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(), c);
+        if (result.isEmpty()) {
             LOG.error("Invalid resource ID specified for merge. Resource ID: " + resourceId);
             return;
         }
 
+        // Installed packages on the Resource that are not referenced in the report will be removed. The doomed
+        // list is seeded with all of the currently installed packages, and what remains after processing are
+        // those to be removed.
+        Resource resource = result.get(0);
+        Set<InstalledPackage> doomedPackages = new HashSet<InstalledPackage>(resource.getInstalledPackages());
+
         // Timestamp to use for all audit trail entries from this report
         long timestamp = System.currentTimeMillis();
 
-        // Before we process the report, get a list of all installed packages on the resource.
-        // InstalledPackage objects in this list that are not referenced in the report are to be removed.
-        Query currentInstalledPackageQuery = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID);
-        currentInstalledPackageQuery.setParameter("resourceId", resource.getId());
-
-        Set<InstalledPackage> doomedPackages = new HashSet<InstalledPackage>(currentInstalledPackageQuery
-            .getResultList());
-
-        // The report contains an entire snapshot of packages, so each of these has to be represented
-        // as an InstalledPackage
+        // The report contains an entire snapshot of packages, each has to be represented as an InstalledPackage
         for (ResourcePackageDetails discoveredPackage : report.getDeployedPackages()) {
 
-            Package generalPackage = null;
-            PackageVersion packageVersion = null;
+            // process each in a separate Tx to avoid a large umbrella Tx and locking issues.
+            contentManager.handleDiscoveredPackage(resource, discoveredPackage, doomedPackages, timestamp);
 
-            // Load the overall package (used in a few places later in this loop)
-            Query packageQuery = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_RESOURCE_TYPE);
-            packageQuery.setFlushMode(FlushModeType.COMMIT);
-            packageQuery.setParameter("name", discoveredPackage.getName());
-            packageQuery.setParameter("packageTypeName", discoveredPackage.getPackageTypeName());
-            packageQuery.setParameter("resourceTypeId", resource.getResourceType().getId());
-            List<Package> resultPackages = packageQuery.getResultList();
-            if (resultPackages.size() > 0) {
-                generalPackage = resultPackages.get(0);
-            }
-
-            // If the package exists see if package version already exists
-            if (null != generalPackage) {
-                Query packageVersionQuery = entityManager
-                    .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VERSION);
-                packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
-                packageVersionQuery.setParameter("packageName", discoveredPackage.getName());
-                packageVersionQuery.setParameter("packageTypeName", discoveredPackage.getPackageTypeName());
-                packageVersionQuery.setParameter("resourceTypeId", resource.getResourceType().getId());
-                packageVersionQuery.setParameter("version", discoveredPackage.getVersion());
-                List<PackageVersion> resultPackageVersions = packageVersionQuery.getResultList();
-                if (resultPackageVersions.size() > 0) {
-                    packageVersion = resultPackageVersions.get(0);
-                }
-            }
-
-            // If we didn't find a package version for this deployed package, we will need to create it
-            if (null == packageVersion) {
-                if (null == generalPackage) {
-                    Query packageTypeQuery = entityManager
-                        .createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME);
-                    packageTypeQuery.setFlushMode(FlushModeType.COMMIT);
-                    packageTypeQuery.setParameter("typeId", resource.getResourceType().getId());
-                    packageTypeQuery.setParameter("name", discoveredPackage.getPackageTypeName());
-
-                    PackageType packageType = (PackageType) packageTypeQuery.getSingleResult();
-
-                    generalPackage = new Package(discoveredPackage.getName(), packageType);
-                    generalPackage = persistOrMergePackageSafely(generalPackage);
-                }
-
-                // Create a new package version and attach to the general package
-                Query architectureQuery = entityManager.createNamedQuery(Architecture.QUERY_FIND_BY_NAME);
-                architectureQuery.setFlushMode(FlushModeType.COMMIT);
-                architectureQuery.setParameter("name", discoveredPackage.getArchitectureName());
-
-                Architecture packageArchitecture;
-
-                // We don't have an architecture enum, so it's very possible the plugin will pass in a crap string here.
-                // Catch and log a better error message but continue processing the rest of the report
-                // TODO: if arch is "none" we should consider manually switching it to be our standard "noarch"
-                try {
-                    packageArchitecture = (Architecture) architectureQuery.getSingleResult();
-                } catch (Exception e) {
-                    LOG.warn("Could not load architecture for architecture name ["
-                        + discoveredPackage.getArchitectureName() + "] for package [" + discoveredPackage.getName()
-                        + "]. Cause: " + ThrowableUtil.getAllMessages(e));
-                    continue;
-                }
-
-                packageVersion = new PackageVersion(generalPackage, discoveredPackage.getVersion(), packageArchitecture);
-                packageVersion.setDisplayName(discoveredPackage.getDisplayName());
-                packageVersion.setDisplayVersion(discoveredPackage.getDisplayVersion());
-                packageVersion.setFileCreatedDate(discoveredPackage.getFileCreatedDate());
-                packageVersion.setFileName(discoveredPackage.getFileName());
-                packageVersion.setFileSize(discoveredPackage.getFileSize());
-                packageVersion.setLicenseName(discoveredPackage.getLicenseName());
-                packageVersion.setLicenseVersion(discoveredPackage.getLicenseVersion());
-                packageVersion.setLongDescription(discoveredPackage.getLongDescription());
-                packageVersion.setMD5(discoveredPackage.getMD5());
-                packageVersion.setMetadata(discoveredPackage.getMetadata());
-                packageVersion.setSHA256(discoveredPackage.getSHA256());
-                packageVersion.setShortDescription(discoveredPackage.getShortDescription());
-                packageVersion.setExtraProperties(discoveredPackage.getExtraProperties());
-
-                packageVersion = persistOrMergePackageVersionSafely(packageVersion);
-            } // end package version null check
-            else {
-                // If the package version was already in the system, see if there is an installed package for
-                // this package version. If so, we're done processing this package
-                Query installedPackageQuery = entityManager
-                    .createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_AND_PACKAGE_VER);
-                installedPackageQuery.setFlushMode(FlushModeType.COMMIT);
-                installedPackageQuery.setParameter("resourceId", resource.getId());
-                installedPackageQuery.setParameter("packageVersionId", packageVersion.getId());
-
-                List<InstalledPackage> installedPackageList = installedPackageQuery.getResultList();
-
-                if (installedPackageList.size() > 0) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Discovered package is already known to the inventory "
-                            + installedPackageList.iterator().next());
-                    }
-
-                    // This represents a package that was previously installed and still is. We need to remove
-                    // the reference to this from the doomed packages list so it's not marked as deleted at the end.
-                    for (InstalledPackage ip : installedPackageList) {
-                        doomedPackages.remove(ip);
-                    }
-
-                    continue;
-                }
-            }
-
-            // At this point, we have the package and package version in the system (now added if they weren't already)
-            // We've also punched out early if we already knew about the installed package, so we won't add another
-            // reference from the resource to the package nor another audit trail entry saying it was discovered.
-
-            // Create a new installed package entry in the audit
-            InstalledPackage newlyInstalledPackage = new InstalledPackage();
-            newlyInstalledPackage.setPackageVersion(packageVersion);
-            newlyInstalledPackage.setResource(resource);
-            newlyInstalledPackage.setInstallationDate(discoveredPackage.getInstallationTimestamp());
-
-            entityManager.persist(newlyInstalledPackage);
-
-            // Create an audit trail entry to show how this package was added to the system
-            InstalledPackageHistory history = new InstalledPackageHistory();
-            history.setDeploymentConfigurationValues(discoveredPackage.getDeploymentTimeConfiguration());
-            history.setPackageVersion(packageVersion);
-            history.setResource(resource);
-            history.setStatus(InstalledPackageHistoryStatus.DISCOVERED);
-            history.setTimestamp(timestamp);
-
-            entityManager.persist(history);
-
-            entityManager.flush();
         } // end resource package loop
 
-        // For any previously active installed packages that were not found again (and thus removed from the doomed
-        // list), delete them.
-        int deletedPackages = 0;
-        for (InstalledPackage doomedPackage : doomedPackages) {
-            doomedPackage = entityManager.find(InstalledPackage.class, doomedPackage.getId());
-
-            // Add an audit trail entry to indicate the package was not rediscovered
-            InstalledPackageHistory history = new InstalledPackageHistory();
-            history.setPackageVersion(doomedPackage.getPackageVersion());
-            history.setResource(resource);
-            history.setStatus(InstalledPackageHistoryStatus.MISSING);
-            history.setTimestamp(timestamp);
-            entityManager.persist(history);
-
-            entityManager.remove(doomedPackage);
-
-            // no idea if this helps, but if we are deleting large numbers of packages, it probably does
-            if ((++deletedPackages) % 100 == 0) {
-                entityManager.flush();
-            }
-        }
+        // Now remove from the resource the remaining doomed installed packages, they were no longer discovered
+        contentManager.removeInstalledPackages(resource, doomedPackages, timestamp);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Finished merging [" + report.getDeployedPackages().size() + "] packages in "
@@ -359,10 +219,170 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
+    @Override
+    public void handleDiscoveredPackage(Resource resource, ResourcePackageDetails discoveredPackage,
+        Set<InstalledPackage> doomedPackages, long timestamp) {
+
+        Package generalPackage = null;
+        PackageVersion packageVersion = null;
+
+        // Load the overall package (used in a few places later in this loop)
+        Query packageQuery = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_RESOURCE_TYPE);
+        packageQuery.setFlushMode(FlushModeType.COMMIT);
+        // these form a query for a unique package
+        packageQuery.setParameter("name", discoveredPackage.getName());
+        packageQuery.setParameter("packageTypeName", discoveredPackage.getPackageTypeName());
+        packageQuery.setParameter("resourceTypeId", resource.getResourceType().getId());
+        List<Package> resultPackages = packageQuery.getResultList();
+        if (resultPackages.size() > 0) {
+            generalPackage = resultPackages.get(0); // returns at most 1 Package
+        }
+
+        // If the package exists see if package version already exists
+        if (null != generalPackage) {
+            Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VERSION);
+            packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
+            packageVersionQuery.setParameter("packageId", generalPackage.getId());
+            packageVersionQuery.setParameter("version", discoveredPackage.getVersion());
+            List<PackageVersion> resultPackageVersions = packageVersionQuery.getResultList();
+            // Although the PV unique index is (package,version,arch) in reality the architecture portion is
+            // superfluous.  The version is now basically unique (it's basically an enhanced SHA) so it means that
+            // two different architectures would basically have two different versions anyway.  So, despite the
+            // DB model, this query will return at most 1 PV.
+            if (resultPackageVersions.size() > 0) {
+                packageVersion = resultPackageVersions.get(0); // returns at most 1 PackageVersion
+            }
+        }
+
+        // If we didn't find a package version for this deployed package, we will need to create it
+        if (null == packageVersion) {
+            if (null == generalPackage) {
+                Query packageTypeQuery = entityManager
+                    .createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME);
+                packageTypeQuery.setFlushMode(FlushModeType.COMMIT);
+                packageTypeQuery.setParameter("typeId", resource.getResourceType().getId());
+                packageTypeQuery.setParameter("name", discoveredPackage.getPackageTypeName());
+
+                PackageType packageType = (PackageType) packageTypeQuery.getSingleResult();
+
+                generalPackage = new Package(discoveredPackage.getName(), packageType);
+                generalPackage = persistOrMergePackageSafely(generalPackage);
+            }
+
+            // Create a new package version and attach to the general package
+            Architecture packageArchitecture;
+            Query architectureQuery = entityManager.createNamedQuery(Architecture.QUERY_FIND_BY_NAME);
+            architectureQuery.setFlushMode(FlushModeType.COMMIT);
+            architectureQuery.setParameter("name", discoveredPackage.getArchitectureName());
+
+            // We don't have an architecture enum, so it's very possible the plugin will pass in a crap string here.
+            // If the architecture is unknown just use "noarch" and log a warning.  We don't want to blow up
+            // just because a plugin didn't set this correctly, as architecture is nearly useless at this point.
+            try {
+                packageArchitecture = (Architecture) architectureQuery.getSingleResult();
+            } catch (Exception e) {
+                LOG.warn("Discovered Architecture [" + discoveredPackage.getArchitectureName()
+                    + "] not found for package [" + discoveredPackage.getName()
+                    + "]. Setting to [noarch] and continuing...");
+                packageArchitecture = getNoArchitecture();
+            }
+
+            packageVersion = new PackageVersion(generalPackage, discoveredPackage.getVersion(), packageArchitecture);
+            packageVersion.setDisplayName(discoveredPackage.getDisplayName());
+            packageVersion.setDisplayVersion(discoveredPackage.getDisplayVersion());
+            packageVersion.setFileCreatedDate(discoveredPackage.getFileCreatedDate());
+            packageVersion.setFileName(discoveredPackage.getFileName());
+            packageVersion.setFileSize(discoveredPackage.getFileSize());
+            packageVersion.setLicenseName(discoveredPackage.getLicenseName());
+            packageVersion.setLicenseVersion(discoveredPackage.getLicenseVersion());
+            packageVersion.setLongDescription(discoveredPackage.getLongDescription());
+            packageVersion.setMD5(discoveredPackage.getMD5());
+            packageVersion.setMetadata(discoveredPackage.getMetadata());
+            packageVersion.setSHA256(discoveredPackage.getSHA256());
+            packageVersion.setShortDescription(discoveredPackage.getShortDescription());
+            packageVersion.setExtraProperties(discoveredPackage.getExtraProperties());
+
+            packageVersion = persistOrMergePackageVersionSafely(packageVersion);
+
+        } else {
+            // At this point we know a PackageVersion existed previously in the DB already. If it is already
+            // installed to the resource then we are done, and we can remove it from the doomed package list.
+            for (Iterator<InstalledPackage> i = doomedPackages.iterator(); i.hasNext();) {
+                InstalledPackage ip = i.next();
+                PackageVersion pv = ip.getPackageVersion();
+                if (pv.getId() == packageVersion.getId()) {
+                    i.remove();
+                    return;
+                }
+            }
+        }
+
+        // At this point, we have the package and package version in the system (now added if they weren't already)
+        // We've also punched out early if we already knew about the installed package, so we won't add another
+        // reference from the resource to the package nor another audit trail entry saying it was discovered.
+
+        // Create a new installed package entry in the audit
+        InstalledPackage newlyInstalledPackage = new InstalledPackage();
+        newlyInstalledPackage.setPackageVersion(packageVersion);
+        newlyInstalledPackage.setResource(resource);
+        newlyInstalledPackage.setInstallationDate(discoveredPackage.getInstallationTimestamp());
+
+        entityManager.persist(newlyInstalledPackage);
+
+        // Create an audit trail entry to show how this package was added to the system
+        InstalledPackageHistory history = new InstalledPackageHistory();
+        history.setDeploymentConfigurationValues(discoveredPackage.getDeploymentTimeConfiguration());
+        history.setPackageVersion(packageVersion);
+        history.setResource(resource);
+        history.setStatus(InstalledPackageHistoryStatus.DISCOVERED);
+        history.setTimestamp(timestamp);
+
+        entityManager.persist(history);
+    }
+
+    @Override
+    public void removeInstalledPackages(Resource resource, Set<InstalledPackage> doomedPackages, long timestamp) {
+
+        // first, create history records to audit that the previously discovered package was no longer found
+        for (InstalledPackage doomedPackage : doomedPackages) {
+            InstalledPackageHistory history = new InstalledPackageHistory();
+            history.setPackageVersion(doomedPackage.getPackageVersion());
+            history.setResource(resource);
+            history.setStatus(InstalledPackageHistoryStatus.MISSING);
+            history.setTimestamp(timestamp);
+            entityManager.persist(history);
+        }
+
+        // let's flush these to not buffer too much
+        entityManager.flush();
+
+        // now, remove the installed packages (in batches to protect against oracle limit)
+        Query query = entityManager.createNamedQuery(InstalledPackage.QUERY_DELETE_BY_IDS);
+        final int batchSize = 200;
+        List<Integer> doomedIds = new ArrayList(doomedPackages.size());
+        for (InstalledPackage ip : doomedPackages) {
+            doomedIds.add(ip.getId());
+        }
+
+        while (!doomedIds.isEmpty()) {
+            int size = doomedIds.size();
+            int end = (batchSize < size) ? batchSize : size;
+
+            List<Integer> idBatch = doomedIds.subList(0, end);
+            query.setParameter("ids", idBatch);
+            query.executeUpdate();
+
+            // Advance our progress and possibly help GC. This will remove the processed ids from the backing list
+            idBatch.clear();
+        }
+    }
+
+    @Override
     public void deployPackages(Subject user, int[] resourceIds, int[] packageVersionIds) {
         this.deployPackagesWithNote(user, resourceIds, packageVersionIds, null);
     }
 
+    @Override
     public void deployPackagesWithNote(Subject user, int[] resourceIds, int[] packageVersionIds, String requestNotes) {
         for (int resourceId : resourceIds) {
             Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
@@ -381,6 +401,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
+    @Override
     public void deployPackages(Subject user, int resourceId, Set<ResourcePackageDetails> packages, String requestNotes) {
         if (packages == null) {
             throw new IllegalArgumentException("packages cannot be null");
@@ -427,6 +448,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ContentServiceRequest createDeployRequest(int resourceId, String username,
         Set<ResourcePackageDetails> packages, String notes) {
@@ -469,6 +491,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return persistedRequest;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void completeDeployPackageRequest(DeployPackagesResponse response) {
         LOG.info("Completing deploy package response: " + response);
@@ -590,12 +613,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
+    @Override
     public void deletePackages(Subject user, int[] resourceIds, int[] installedPackageIds) {
         for (int resourceId : resourceIds) {
             deletePackages(user, resourceId, installedPackageIds, null);
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void deletePackages(Subject user, int resourceId, int[] installedPackageIds, String requestNotes) {
         if (installedPackageIds == null) {
@@ -654,6 +679,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void deletePackageVersion(Subject subject, int packageVersionId) {
         Query q = entityManager.createNamedQuery(PackageVersion.DELETE_SINGLE_IF_NO_CONTENT_SOURCES_OR_REPOS);
@@ -661,6 +687,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         q.executeUpdate();
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ContentServiceRequest createRemoveRequest(int resourceId, String username, int[] installedPackageIds,
         String requestNotes) {
@@ -694,6 +721,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return persistedRequest;
     }
 
+    @Override
     public void completeDeletePackageRequest(RemovePackagesResponse response) {
         LOG.info("Completing delete package response: " + response);
 
@@ -790,6 +818,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
+    @Override
     public void retrieveBitsFromResource(Subject user, int resourceId, int installedPackageId) {
         LOG.info("Retrieving bits for package [" + installedPackageId + "] on resource ID [" + resourceId + "]");
 
@@ -829,6 +858,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
+    @Override
     public byte[] getPackageBytes(Subject user, int resourceId, int installedPackageId) {
         // Check permissions first
         if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_CONTENT, resourceId)) {
@@ -870,6 +900,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
+    @Override
     public List<DeployPackageStep> translateInstallationSteps(int resourceId, ResourcePackageDetails packageDetails)
         throws Exception {
         LOG.info("Retrieving installation steps for package [" + packageDetails + "]");
@@ -893,6 +924,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return packageStepList;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ContentServiceRequest createRetrieveBitsRequest(int resourceId, String username, int installedPackageId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -922,20 +954,19 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return persistedRequest;
     }
 
+    @Override
     @TransactionTimeout(45 * 60)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void completeRetrievePackageBitsRequest(ContentServiceResponse response, InputStream bitStream) {
         LOG.info("Completing retrieve package bits response: " + response);
 
         // Load persisted request
-        ContentServiceRequest persistedRequest = entityManager.find(ContentServiceRequest.class, response
-            .getRequestId());
+        ContentServiceRequest persistedRequest = entityManager.find(ContentServiceRequest.class,
+            response.getRequestId());
 
         // There is some inconsistency if we're completing a request that was not in the database
         if (persistedRequest == null) {
-            LOG
-                .error("Attempting to complete a request that was not found in the database: "
-                    + response.getRequestId());
+            LOG.error("Attempting to complete a request that was not found in the database: " + response.getRequestId());
             return;
         }
         Resource resource = persistedRequest.getResource();
@@ -1023,6 +1054,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Set<ResourcePackageDetails> loadDependencies(int requestId, Set<PackageDetailsKey> keys) {
         Set<ResourcePackageDetails> dependencies = new HashSet<ResourcePackageDetails>();
@@ -1044,7 +1076,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         long installationDate = System.currentTimeMillis();
 
         for (PackageDetailsKey key : keys) {
-            Query packageQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
+            Query packageQuery = entityManager
+                .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
             packageQuery.setParameter("packageName", key.getName());
             packageQuery.setParameter("packageTypeName", key.getPackageTypeName());
             packageQuery.setParameter("architectureName", key.getArchitectureName());
@@ -1083,6 +1116,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return dependencies;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void failRequest(int requestId, Throwable error) {
         Query query = entityManager.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID);
@@ -1112,6 +1146,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<Architecture> findArchitectures(Subject subject) {
         Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_ALL);
@@ -1120,6 +1155,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return architectures;
     }
 
+    @Override
     public Architecture getNoArchitecture() {
         Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_BY_NAME);
         q.setParameter("name", "noarch");
@@ -1128,6 +1164,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return architecture;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<PackageType> findPackageTypes(Subject subject, String resourceTypeName, String pluginName)
         throws ResourceTypeNotFoundException {
@@ -1144,6 +1181,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return result;
     }
 
+    @Override
     public PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName) {
         Query q = entityManager
             .createNamedQuery(resourceTypeId == null ? PackageType.QUERY_FIND_BY_NAME_AND_NULL_RESOURCE_TYPE
@@ -1162,12 +1200,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         } else if (results.size() == 1) {
             return results.get(0);
         } else {
-            String message = "2 or more package types with name '" + packageTypeName + "' found on the resource type with id " + resourceTypeId + ". This is a bug in the database.";
+            String message = "2 or more package types with name '" + packageTypeName
+                + "' found on the resource type with id " + resourceTypeId + ". This is a bug in the database.";
             LOG.error(message);
             throw new IllegalStateException(message);
         }
     }
 
+    @Override
     public PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(Subject subject,
         Integer resourceTypeId, String packageTypeName) {
 
@@ -1188,6 +1228,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return new PackageTypeAndVersionFormatComposite(type, format);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void checkForTimedOutRequests(Subject subject) {
         if (!authorizationManager.isOverlord(subject)) {
@@ -1260,12 +1301,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
+    @Override
     public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
         Integer architectureId, byte[] packageBytes) {
         return createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version, null,
             architectureId, packageBytes);
     }
 
+    @Override
     public PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName,
         int packageTypeId, String version, String displayVersion, Integer architectureId, byte[] packageBytes) {
 
@@ -1276,10 +1319,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         return createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version, displayVersion,
-            (null == architectureId) ? getNoArchitecture()
-                .getId() : architectureId, new ByteArrayInputStream(packageBytes));
+            (null == architectureId) ? getNoArchitecture().getId() : architectureId, new ByteArrayInputStream(
+                packageBytes));
     }
 
+    @Override
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     public PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName,
         int packageTypeId, String version, String displayVersion, int architectureId, InputStream packageBitStream) {
@@ -1308,7 +1352,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         //check the validity of the provided data
         try {
             PackageTypeBehavior behavior = ContentManagerHelper.getPackageTypeBehavior(packageTypeId);
-            ValidatablePackageDetailsKey key = new ValidatablePackageDetailsKey(packageName, version, packageType.getName(), architecture.getName());
+            ValidatablePackageDetailsKey key = new ValidatablePackageDetailsKey(packageName, version,
+                packageType.getName(), architecture.getName());
             behavior.validateDetails(key, subject);
 
             packageName = key.getName();
@@ -1361,6 +1406,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return newPackageVersion;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public PackageVersion persistPackageVersion(PackageVersion pv) {
         // EM.persist requires related entities to be attached, let's attach them now
@@ -1385,6 +1431,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return pv;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PackageVersion persistOrMergePackageVersionSafely(PackageVersion pv) {
         PackageVersion persisted = null;
@@ -1440,6 +1487,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return persisted;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Package persistPackage(Package pkg) {
         // EM.persist requires related entities to be attached, let's attach them now
@@ -1450,6 +1498,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return pkg;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Package persistOrMergePackageSafely(Package pkg) {
         Package persisted = null;
@@ -1495,6 +1544,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return persisted;
     }
 
+    @Override
     public PackageType getResourceCreationPackageType(int resourceTypeId) {
         Query query = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_CREATION_FLAG);
         query.setParameter("typeId", resourceTypeId);
@@ -1545,6 +1595,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return steps;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<String> findInstalledPackageVersions(Subject user, int resourceId) {
         Query query = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_PACKAGE_LIST_VERSIONS);
@@ -1554,6 +1605,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return packages;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<InstalledPackage> findInstalledPackagesByCriteria(Subject subject, InstalledPackageCriteria criteria) {
 
@@ -1571,6 +1623,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return queryRunner.execute();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria) {
 
@@ -1594,11 +1647,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return queryRunner.execute();
     }
 
+    @Override
     public PageList<Package> findPackagesByCriteria(Subject subject, PackageCriteria criteria) {
 
         if (criteria.getFilterRepoId() != null) {
             if (!authorizationManager.canViewRepo(subject, criteria.getFilterRepoId())) {
-                throw new PermissionException("Subject [" + subject.getName() + "] cannot view the repo with id " + criteria.getFilterRepoId());
+                throw new PermissionException("Subject [" + subject.getName() + "] cannot view the repo with id "
+                    + criteria.getFilterRepoId());
             }
         } else if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
             throw new PermissionException("Only repository managers can search for packages across all repos.");
@@ -1611,6 +1666,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return runner.execute();
     }
 
+    @Override
     public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(Subject subject,
         PackageCriteria criteria) {
         if (criteria.getFilterRepoId() == null) {
@@ -1623,7 +1679,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PageList<PackageAndLatestVersionComposite> ret = new PageList<PackageAndLatestVersionComposite>(
             packages.getTotalSize(), packages.getPageControl());
 
-        for(Package p : packages) {
+        for (Package p : packages) {
             PackageVersion latest = repoManager.getLatestPackageVersion(subject, p.getId(), criteria.getFilterRepoId());
             ret.add(new PackageAndLatestVersionComposite(p, latest));
         }
@@ -1631,6 +1687,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return ret;
     }
 
+    @Override
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {
         InstalledPackage result = null;
 
@@ -1672,10 +1729,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      *  as the agent side discovery mechanism, and passes in additional parameters available
      *  when file has been uploaded via the UI.
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PackageVersion getUploadedPackageVersion(Subject subject, String packageName, int packageTypeId,
-        String version, int architectureId, InputStream packageBitStream,
-        Map<String, String> packageUploadDetails, Integer repoId) {
+        String version, int architectureId, InputStream packageBitStream, Map<String, String> packageUploadDetails,
+        Integer repoId) {
 
         PackageVersion packageVersion = null;
 
@@ -1691,7 +1749,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Query packageVersionQuery = null;
 
         if (packageType.getResourceType() != null) {
-            packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
+            packageVersionQuery = entityManager
+                .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
             packageVersionQuery.setParameter("resourceTypeId", packageType.getResourceType().getId());
 
         } else {
@@ -1720,7 +1779,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             if (behavior != null) {
                 String packageTypeName = packageType.getName();
                 String archName = architecture.getName();
-                ValidatablePackageDetailsKey key = new ValidatablePackageDetailsKey(packageName, version, packageTypeName, archName);
+                ValidatablePackageDetailsKey key = new ValidatablePackageDetailsKey(packageName, version,
+                    packageTypeName, archName);
                 behavior.validateDetails(key, subject);
 
                 //update the details from the validation results
@@ -1739,7 +1799,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             LOG.error("Failed to get the package type plugin container. This is a bug.", e);
             throw new IllegalStateException("Failed to get the package type plugin container.", e);
         }
-
 
         Package existingPackage = null;
 
@@ -1765,7 +1824,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         //get the data
         Map<String, String> contentDetails = new HashMap<String, String>();
-        PackageBits bits = loadPackageBits(packageBitStream, packageVersion.getId(), packageName, version, null, contentDetails);
+        PackageBits bits = loadPackageBits(packageBitStream, packageVersion.getId(), packageName, version, null,
+            contentDetails);
 
         packageVersion.setPackageBits(bits);
 
@@ -1794,6 +1854,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     }
 
+    @Override
     public PackageType persistServersidePackageType(PackageType packageType) {
         if (packageType.getResourceType() != null) {
             throw new IllegalArgumentException("Server-side package types can't be associated with a resource type.");
@@ -1880,8 +1941,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         if (null != contentDetails) {
             contentDetails.put(UPLOAD_FILE_SIZE, String.valueOf(bytes.length));
             try {
-                contentDetails.put(UPLOAD_SHA256, new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
-                    .calcDigestString(bytes));
+                contentDetails.put(UPLOAD_SHA256,
+                    new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(bytes));
             } catch (Exception e) {
                 throw new RuntimeException("Failed to calculate SHA256 for package bits: ", e);
             }
@@ -1932,7 +1993,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      * @param stream
      * @param contentDetails Map to store content details in used in PackageVersioning
      */
-    @SuppressWarnings("unused")
+    @Override
     public void updateBlobStream(InputStream stream, PackageBits bits, Map<String, String> contentDetails) {
 
         //TODO: are there any db specific limits that we should check/verify here before stuffing
@@ -2040,6 +2101,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      * @return
      * @throws RuntimeException
      */
+    @SuppressWarnings("resource")
     private long copyAndDigest(InputStream input, OutputStream output, boolean closeStreams,
         Map<String, String> contentDetails) throws RuntimeException {
         long numBytesCopied = 0;
@@ -2094,6 +2156,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      *
      * @param stream non null stream where contents to be written to.
      */
+    @Override
     public void writeBlobOutToStream(OutputStream stream, PackageBits bits, boolean closeStreams) {
 
         if (stream == null) {
@@ -2170,7 +2233,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         try {
             fileInputStream = new FileInputStream(getTemporaryContentFile(temporaryContentHandle));
             return createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version, displayVersion,
-                    (null == architectureId) ? getNoArchitecture().getId() : architectureId, fileInputStream);
+                (null == architectureId) ? getNoArchitecture().getId() : architectureId, fileInputStream);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         } finally {

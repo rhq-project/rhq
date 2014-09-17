@@ -211,8 +211,9 @@ public interface BundleManagerRemote {
      * @param bundleVersionId the BundleVersion being deployed by this deployment
      * @param bundleDestinationId the BundleDestination for the deployment
      * @param description an optional longer description describing this deployment
-     * @param configuration a Configuration (pojo) to be associated with this deployment. Although
-     *        it is not enforceable must be that of the associated BundleVersion.
+     * @param configuration a Configuration (pojo) to be associated with this deployment.
+     *                      This is validated against the configuration definition provided by the
+     *                      bundle version.
      * @return the persisted deployment
      * @throws Exception
      */

@@ -126,6 +126,45 @@ public class ConfigurationUtility {
     }
 
     /**
+     * This is a little bit similar to {@link #normalizeConfiguration(Configuration,
+     * org.rhq.core.domain.configuration.definition.ConfigurationDefinition, boolean, boolean)}
+     * but can be used in cases where you need a new configuration based on the default template of the provided
+     * configuration definition yet want to reuse some or all of the corresponding properties from the provided
+     * "existing" configuration.
+     * <p/>
+     * In another words you want to adapt the existing configuration to the new format prescribed by the definition.
+     *
+     * @param existingConfiguration   the existing configuration to take values from if possible.
+     * @param definition              the definition to which the returned configuration will conform
+     * @param adaptReadonlyProperties set this to true if also the values of the readonly properties should be taken
+     *                                from the existing configuration. If this is false, the default value of the
+     *                                readonly properties defined in the definition is used instead.
+     *
+     * @return a new configuration object corresponding to the definition, with values reused from the existing
+     * configuration if possible
+     */
+    public static Configuration adaptConfiguration(Configuration existingConfiguration,
+        ConfigurationDefinition definition, boolean adaptReadonlyProperties) {
+
+        Configuration targetConfig = createDefaultConfiguration(definition);
+
+        if (existingConfiguration != null) {
+            for (Map.Entry<String, PropertyDefinition> e : definition.getPropertyDefinitions().entrySet()) {
+                String name = e.getKey();
+                PropertyDefinition def = e.getValue();
+
+                Property source = existingConfiguration.get(name);
+                if (source != null) {
+                    Property target = targetConfig.get(name);
+                    adaptProperty(source, target, def, targetConfig, adaptReadonlyProperties);
+                }
+            }
+        }
+
+        return targetConfig;
+    }
+
+    /**
      * Validate the given configuration according to the given configuration definition. That is, check that any
      * required properties in the top-level configuration Map or any sub-Maps, are defined and, in the case of simple
      * properties, check that they have a non-null value. A list of messages describing any errors that were found is
@@ -170,6 +209,14 @@ public class ConfigurationUtility {
     private static void createDefaultProperty(PropertyDefinition propertyDefinition,
         AbstractPropertyMap parentPropertyMap) {
 
+        Property property = instantiateDefaultProperty(propertyDefinition);
+
+        if (property != null) {
+            parentPropertyMap.put(property);
+        }
+    }
+
+    private static Property instantiateDefaultProperty(PropertyDefinition propertyDefinition) {
         Property property = null;
 
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
@@ -216,9 +263,7 @@ public class ConfigurationUtility {
             }
         }
 
-        if (property != null) {
-            parentPropertyMap.put(property);
-        }
+        return property;
     }
 
     private static void normalizeProperty(PropertyDefinition propertyDefinition, AbstractPropertyMap parentPropertyMap,
@@ -243,7 +288,8 @@ public class ConfigurationUtility {
             else if (propertyDefinition instanceof PropertyDefinitionMap) {
                 PropertyMap propertyMap = parentPropertyMap.getMap(propertyDefinition.getName());
                 PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) propertyDefinition;
-                normalizePropertyMap(propertyMap, propertyDefinitionMap, false, false); // TODO do we want to pass normalizeRequired/OptionalDefaults?
+                normalizePropertyMap(propertyMap, propertyDefinitionMap, false,
+                    false); // TODO do we want to pass normalizeRequired/OptionalDefaults?
             } else if (propertyDefinition instanceof PropertyDefinitionList) {
                 PropertyDefinitionList propertyDefinitionList = (PropertyDefinitionList) propertyDefinition;
                 PropertyDefinition listMemberPropertyDefinition = propertyDefinitionList.getMemberDefinition();
@@ -254,7 +300,8 @@ public class ConfigurationUtility {
                     PropertyList propertyList = parentPropertyMap.getList(propertyDefinition.getName());
                     for (Property property : propertyList.getList()) {
                         PropertyMap propertyMap = (PropertyMap) property;
-                        normalizePropertyMap(propertyMap, propertyDefinitionMap, false, false); // TODO do we want to pass normalizeRequired/OptionalDefaults?
+                        normalizePropertyMap(propertyMap, propertyDefinitionMap, false,
+                            false); // TODO do we want to pass normalizeRequired/OptionalDefaults?
                     }
                 }
             }
@@ -421,5 +468,133 @@ public class ConfigurationUtility {
             errorMessages.add("The list property '%s' should contain a minimum of " + listMin + " and a maximum of "
                 + listMax + " row(s)");
         }
+    }
+
+    private static void adaptPropertyMap(AbstractPropertyMap source, AbstractPropertyMap target,
+        PropertyDefinitionMap definition, Object parent, boolean adaptReadonlyProperties) {
+
+        if ((adaptReadonlyProperties || !definition.isReadOnly()) && target == null) {
+            target = new PropertyMap(definition.getName());
+            add(parent, (PropertyMap) target);
+        }
+
+        for (Map.Entry<String, PropertyDefinition> e : definition.getPropertyDefinitions().entrySet()) {
+            String name = e.getKey();
+            PropertyDefinition def = e.getValue();
+
+            Property sourceChild = source.get(name);
+
+            // only bother if we have something to adapt from
+            if (sourceChild != null) {
+                Property targetChild = target.get(name);
+                adaptProperty(sourceChild, targetChild, def, target, adaptReadonlyProperties);
+            }
+        }
+    }
+
+    private static void adaptPropertyList(PropertyList source, PropertyList target, PropertyDefinitionList definition,
+        Object parent, boolean adaptReadonlyProperties) {
+
+        if ((adaptReadonlyProperties || !definition.isReadOnly())) {
+
+            if (target == null) {
+                target = new PropertyList(definition.getName());
+                add(parent, target);
+            }
+
+            if (target.getList().isEmpty()) {
+                PropertyDefinition memberDef = definition.getMemberDefinition();
+
+                for (Property p : source.getList()) {
+                    PropertyType type = conforms(p, memberDef);
+
+                    if (type != null && type != PropertyType.UNKNOWN) {
+                        Property targetMember = instantiateDefaultProperty(memberDef);
+                        target.add(targetMember);
+
+                        adaptProperty(p, targetMember, memberDef, target, adaptReadonlyProperties);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void adaptPropertySimple(PropertySimple source, PropertySimple target,
+        PropertyDefinitionSimple definition, Object parent, boolean adaptReadonlyProperties) {
+
+        if (adaptReadonlyProperties || !definition.isReadOnly()) {
+
+            if (target == null) {
+                target = new PropertySimple();
+                target.setName(definition.getName());
+                add(parent, target);
+            }
+
+            target.setStringValue(source.getStringValue());
+        }
+    }
+
+    private static void adaptProperty(Property source, Property target, PropertyDefinition def, Object parent,
+        boolean adaptReadonlyProperties) {
+
+        PropertyType sourceType = conforms(source, def);
+        PropertyType targetType = conforms(target, def);
+
+        if (sourceType != null && sourceType != PropertyType.UNKNOWN &&
+            (sourceType == targetType || targetType == PropertyType.UNKNOWN)) {
+
+            switch (sourceType) {
+            case MAP:
+                adaptPropertyMap((AbstractPropertyMap) source, (AbstractPropertyMap) target,
+                    (PropertyDefinitionMap) def, parent, adaptReadonlyProperties);
+                break;
+            case LIST:
+                adaptPropertyList((PropertyList) source, (PropertyList) target, (PropertyDefinitionList) def, parent,
+                    adaptReadonlyProperties);
+                break;
+            case SIMPLE:
+                adaptPropertySimple((PropertySimple) source, (PropertySimple) target, (PropertyDefinitionSimple) def,
+                    parent, adaptReadonlyProperties);
+                break;
+            case DYNAMIC:
+                //TODO
+            }
+        }
+        // the types of the properties don't match... let's just leave target as it is because it comes
+        // from the config definition we want...
+    }
+
+    private static PropertyType conforms(Property p, PropertyDefinition d) {
+        if (p == null) {
+            return PropertyType.UNKNOWN;
+        }
+
+        if (!p.getName().equals(d.getName())) {
+            return null;
+        }
+
+        if (p instanceof PropertySimple && d instanceof PropertyDefinitionSimple) {
+            return PropertyType.SIMPLE;
+        } else if (p instanceof PropertyList && d instanceof PropertyDefinitionList) {
+            return PropertyType.LIST;
+        } else if (p instanceof PropertyMap && d instanceof PropertyDefinitionMap) {
+            return PropertyType.MAP;
+        } else if (p instanceof PropertySimple && d instanceof PropertyDefinitionDynamic) {
+            return PropertyType.DYNAMIC;
+        } else {
+            return null;
+        }
+    }
+
+    private static void add(Object parent, Property prop) {
+        if (parent instanceof AbstractPropertyMap) {
+            ((AbstractPropertyMap) parent).put(prop);
+        } else if (parent instanceof PropertyList) {
+            ((PropertyList) parent).add(prop);
+        }
+    }
+
+    private enum PropertyType {
+        UNKNOWN, SIMPLE, LIST, MAP, DYNAMIC
     }
 }

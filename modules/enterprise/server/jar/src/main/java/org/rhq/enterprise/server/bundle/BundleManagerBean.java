@@ -357,7 +357,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 throw new IllegalArgumentException(
                     "Missing Configuration. Configuration is required when the specified BundleVersion defines Configuration Properties.");
             }
-            List<String> errors = ConfigurationUtility.validateConfiguration(configuration, configDef);
+
+            // passing in the default configuration will make sure that the readonly properties with the non-null
+            // default values defined in the config def cannot be overridden by the caller.
+            // Those properties are meant to be set by the bundle plugins, not by the user.
+            Configuration defaultConfig = ConfigurationUtility.createDefaultConfiguration(configDef);
+
+            List<String> errors = ConfigurationUtility.validateConfiguration(configuration, defaultConfig, configDef);
             if (!errors.isEmpty()) {
                 throw new IllegalArgumentException("Invalid Configuration: " + errors.toString());
             }

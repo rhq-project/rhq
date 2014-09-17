@@ -59,6 +59,7 @@ import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -74,7 +75,7 @@ import org.rhq.enterprise.server.util.ResourceTreeHelper;
 public class ContentManagerBeanTest extends AbstractEJB3Test {
     // Attributes  --------------------------------------------
 
-    private static final boolean ENABLE_TESTS = false;
+    private static final boolean ENABLE_TESTS = true;
 
     /**
      * ContentAgentService method implementations should synchronize on this to allow the test method to pause before
@@ -429,8 +430,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
-    // @Test(enabled = ENABLE_TESTS)
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testSuccessfulDeployPackages() throws Exception {
         // Setup  --------------------------------------------
         Subject overlord = subjectManager.getOverlord();
@@ -1094,7 +1094,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             assert resultList.size() == 1 : "Incorrect number of requests loaded. Expected: 1, Found: "
                 + resultList.size();
 
-            request = (ContentServiceRequest) resultList.get(0);
+            request = resultList.get(0);
 
             assert request.getInstalledPackageHistory().size() == 3 : "Incorrect number of being installed packages on request. Expected: 3, Found: "
                 + resultList.size();
@@ -1445,6 +1445,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             // Create resource against which we'll merge the discovery report
             resource1 = new Resource("parent" + System.currentTimeMillis(), "name", resourceType1);
             resource1.setUuid("" + new Random().nextInt());
+            resource1.setInventoryStatus(InventoryStatus.COMMITTED);
             em.persist(resource1);
 
             // Install packages on the resource

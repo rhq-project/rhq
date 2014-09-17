@@ -48,11 +48,8 @@ import org.rhq.core.domain.resource.Resource;
 @Entity
 @NamedQueries({
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_SET_OF_IDS, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.id IN ( :packageIds )"),
-    @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_SET_OF_PACKAGE_VER_IDS, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.packageVersion.id IN ( :packageIds )"),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.resource.id = :resourceId"),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.resource.id = :resourceId AND ip.packageVersion.id = :packageVersionId"),
-    @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_RESOURCE_AND_PACKAGE, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.resource.id = :resourceId AND ip.packageVersion.generalPackage.id = :packageId  "),
-    @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_RESOURCE_AND_PACKAGE_VER, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.resource.id = :resourceId AND ip.packageVersion.id = :packageVersionId  "),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE, query = "SELECT new org.rhq.core.domain.content.composite.PackageListItemComposite(ip.id, gp.name, pt.displayName, ip.packageVersion.version, ip.packageVersion.displayVersion, ip.installationDate ) "
         + " FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv LEFT JOIN pv.generalPackage gp LEFT JOIN gp.packageType pt "
         + "WHERE res.id = :resourceId "
@@ -65,9 +62,8 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = InstalledPackage.QUERY_FIND_PACKAGE_LIST_VERSIONS, query = "SELECT DISTINCT pv.version "
         + "    FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv "
         + "   WHERE res.id = :resourceId " + "ORDER BY pv.version"),
-    @NamedQuery(name = InstalledPackage.QUERY_FIND_INSTALLED_PACKAGE_HISTORY, query = "SELECT ip "
-        + "FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv LEFT JOIN pv.generalPackage gp LEFT JOIN gp.packageType pt "
-        + "WHERE res.id = :resourceId " + "  AND gp.id = :generalPackageId"),
+    @NamedQuery(name = InstalledPackage.QUERY_DELETE_BY_IDS, query = "DELETE FROM InstalledPackage ip "
+        + " WHERE ip.id IN ( :ids )"),
     @NamedQuery(name = InstalledPackage.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM InstalledPackage ip "
         + " WHERE ip.resource.id IN ( :resourceIds )") })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_INSTALLED_PACKAGE_ID_SEQ", sequenceName = "RHQ_INSTALLED_PACKAGE_ID_SEQ")
@@ -78,16 +74,18 @@ public class InstalledPackage implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_BY_SET_OF_IDS = "InstalledPackage.findBySetOfIds";
-    public static final String QUERY_FIND_BY_SET_OF_PACKAGE_VER_IDS = "InstalledPackage.findBySetOfPackageVerIds";
-    public static final String QUERY_FIND_BY_RESOURCE_ID = "InstalledPackage.findByResourceId";
-    public static final String QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID = "InstalledPackage.findByResourceIdAndPackageVersionId";
-    public static final String QUERY_FIND_BY_RESOURCE_AND_PACKAGE = "InstalledPackage.findByResourceAndPackage";
-    public static final String QUERY_FIND_BY_RESOURCE_AND_PACKAGE_VER = "InstalledPackage.findByResourceAndPackageVer";
+
     public static final String QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE = "InstalledPackage.findPackageListItemComposite";
     public static final String QUERY_FIND_PACKAGE_LIST_TYPES = "InstalledPackage.findPackageListTypes";
     public static final String QUERY_FIND_PACKAGE_LIST_VERSIONS = "InstalledPackage.findPackageListVersions";
-    public static final String QUERY_FIND_INSTALLED_PACKAGE_HISTORY = "InstalledPackage.findInstalledPackageHistory";
+    public static final String QUERY_DELETE_BY_IDS = "InstalledPackage.deleteByIds";
+
+    // TODO: this is unindexed but used in resource bulk delete, should we add index on resId? Or maybe re-write query
     public static final String QUERY_DELETE_BY_RESOURCES = "InstalledPackage.deleteByResources";
+
+    // Unindexed queries (used for testing)
+    public static final String QUERY_FIND_BY_RESOURCE_ID = "InstalledPackage.findByResourceId";
+    public static final String QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID = "InstalledPackage.findByResourceIdAndPackageVersionId";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_INSTALLED_PACKAGE_ID_SEQ")

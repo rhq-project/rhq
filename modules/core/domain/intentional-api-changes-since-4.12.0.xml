@@ -59,4 +59,47 @@
     <justification>Method renamed for build identifier.</justification>
   </difference>
 
+  <difference>
+    <className>org/rhq/core/domain/content/InstalledPackage</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_BY_SET_OF_PACKAGE_VER_IDS</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/content/InstalledPackage</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_BY_RESOURCE_AND_PACKAGE</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/content/InstalledPackage</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_INSTALLED_PACKAGE_HISTORY</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/content/InstalledPackage</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_BY_RESOURCE_AND_PACKAGE_VER</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/content/PackageVersion</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_BY_PACKAGE_SHA</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/content/PackageVersion</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_REPOS</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/content/PackageVersion</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_PACKAGE_BY_FILENAME</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
 </differences>

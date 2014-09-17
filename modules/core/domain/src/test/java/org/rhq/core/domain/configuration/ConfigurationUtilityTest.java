@@ -23,6 +23,10 @@
 
 package org.rhq.core.domain.configuration;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -359,5 +363,82 @@ public class ConfigurationUtilityTest {
 
         assert childMap2.getName().equals(mapRequired2.getName());
         assert childMap3.getName().equals(mapRequiredDefault2.getName());
+    }
+
+    public void testAdaptConfiguration() {
+        ConfigurationDefinition def = new ConfigurationDefinition("test", null);
+
+        PropertyDefinitionSimple writableOptional = new PropertyDefinitionSimple("writable-optional", null, false,
+            PropertySimpleType.STRING);
+        PropertyDefinitionSimple writableRequired = new PropertyDefinitionSimple("writable-required", null, true,
+            PropertySimpleType.STRING);
+        PropertyDefinitionSimple readonlyRequiredWithDefault = new PropertyDefinitionSimple("readonly-required-default",
+            null, true, PropertySimpleType.STRING);
+        readonlyRequiredWithDefault.setDefaultValue("readonly-required-default-definition");
+        readonlyRequiredWithDefault.setReadOnly(true);
+
+        PropertyDefinitionSimple listMember = new PropertyDefinitionSimple("list-member", null, true,
+            PropertySimpleType.STRING);
+        listMember.setDefaultValue("list-member-definition");
+        listMember.setReadOnly(true);
+
+        PropertyDefinitionList list = new PropertyDefinitionList("list-optional", null, false,
+            listMember);
+
+        PropertyDefinitionSimple mapMember1 = new PropertyDefinitionSimple("mm1", null, true,
+            PropertySimpleType.BOOLEAN);
+        PropertyDefinitionSimple mapMember2 = new PropertyDefinitionSimple("mm2", null, false,
+            PropertySimpleType.STRING);
+
+        PropertyDefinitionMap map = new PropertyDefinitionMap("map-required", null, true, mapMember1, mapMember2);
+
+        def.put(writableOptional);
+        def.put(writableRequired);
+        def.put(readonlyRequiredWithDefault);
+        def.put(list);
+        def.put(map);
+
+        Configuration existing = new Configuration();
+        existing.put(new PropertySimple("writable-required", "writable-required-existing"));
+        existing.put(new PropertySimple("readonly-required-default", "readonly-required-default-existing"));
+        existing.put(new PropertySimple("prop-from-old-def", "kachny"));
+        existing
+            .put(new PropertyList("list-optional", new PropertySimple("list-member", "list-member-existing")));
+
+        Configuration adapted = ConfigurationUtility.adaptConfiguration(existing, def, false);
+
+        PropertySimple adaptedWritableRequired = adapted.getSimple("writable-required");
+        assertNotNull(adaptedWritableRequired);
+        assertEquals(adaptedWritableRequired.getStringValue(), "writable-required-existing");
+
+        PropertySimple adaptedReadonlyRequiredWithDefault = adapted.getSimple("readonly-required-default");
+        assertNotNull(adaptedReadonlyRequiredWithDefault);
+        assertEquals("readonly-required-default-definition", adaptedReadonlyRequiredWithDefault.getStringValue());
+
+        PropertyList adaptedList = adapted.getList("list-optional");
+        assertNotNull(adaptedList);
+        assertEquals(1, adaptedList.getList().size());
+        assertEquals(((PropertySimple) adaptedList.getList().get(0)).getStringValue(), "list-member-definition");
+
+        assertNull(adapted.get("prop-from-old-def"));
+
+
+
+        adapted = ConfigurationUtility.adaptConfiguration(existing, def, true);
+
+        adaptedWritableRequired = adapted.getSimple("writable-required");
+        assertNotNull(adaptedWritableRequired);
+        assertEquals(adaptedWritableRequired.getStringValue(), "writable-required-existing");
+
+        adaptedReadonlyRequiredWithDefault = adapted.getSimple("readonly-required-default");
+        assertNotNull(adaptedReadonlyRequiredWithDefault);
+        assertEquals("readonly-required-default-existing", adaptedReadonlyRequiredWithDefault.getStringValue());
+
+        adaptedList = adapted.getList("list-optional");
+        assertNotNull(adaptedList);
+        assertEquals(1, adaptedList.getList().size());
+        assertEquals(((PropertySimple) adaptedList.getList().get(0)).getStringValue(), "list-member-existing");
+
+        assertNull(adapted.get("prop-from-old-def"));
     }
 }

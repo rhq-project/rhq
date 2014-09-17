@@ -22,11 +22,9 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
 
@@ -67,46 +65,15 @@ public class GetDeploymentConfigStep extends AbstractWizardStep {
                 editor.addMember(label);
             } else {
                 // otherwise, pop up the config editor to get the needed config
-                Configuration startingConfig;
-                BundleDeployment liveDeployment = wizard.getLiveDeployment();
-                boolean useLiveConfig = false;
+                Configuration liveConfig =
+                    wizard.getLiveDeployment() == null ? null : wizard.getLiveDeployment().getConfiguration();
 
-                if (liveDeployment != null) {
-                    // If we have a live deployment but it didn't have configuration before
-                    // then make sure we don't start with a completely empty config.
-                    // In that case, we need to ask for the config from the default template.
-                    // But if our live deployment DID have a previous non-empty config, we'll use it
-                    // to allow the user to see the previous config values used in the live deployment.
-                    Configuration liveConfig = liveDeployment.getConfiguration();
-                    if (liveConfig != null) {
-                        useLiveConfig = !liveConfig.getMap().isEmpty();
-                    }
-                }
-
-                if (useLiveConfig == false) {
-                    ConfigurationTemplate defaultTemplate = configDef.getDefaultTemplate();
-                    startingConfig = (defaultTemplate != null) ? defaultTemplate.createConfiguration()
-                        : new Configuration();
-                } else {
-                    startingConfig = getNormalizedLiveConfig(configDef);
-                }
+                Configuration startingConfig = ConfigurationUtility.adaptConfiguration(liveConfig, configDef, false);
                 editor = new ConfigurationEditor(configDef, startingConfig);
             }
         }
 
         return editor;
-    }
-
-    private Configuration getNormalizedLiveConfig(ConfigurationDefinition configDef) {
-        Configuration config = wizard.getLiveDeployment().getConfiguration();
-        if (null == config) {
-            config = new Configuration();
-        } else {
-            config = config.deepCopy(false);
-            ConfigurationUtility.normalizeConfiguration(config, configDef, true, false);
-        }
-
-        return config;
     }
 
     public boolean nextPage() {

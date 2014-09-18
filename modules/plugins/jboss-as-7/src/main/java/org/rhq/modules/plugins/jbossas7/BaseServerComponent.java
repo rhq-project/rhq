@@ -204,6 +204,32 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             }
         }
 
+        // Validate the config dir (e.g. /opt/jboss-as-7.1.1.Final/standalone/configuration).
+        File runtimeConfigDir;
+        File configDir = null;
+        try {
+            String runtimeConfigDirString = readAttribute(getEnvironmentAddress(), getConfigDirAttributeName());
+            // Canonicalize both paths before comparing them!
+            runtimeConfigDir = new File(runtimeConfigDirString).getCanonicalFile();
+            File configDirTmp = serverPluginConfig.getConfigDir();
+            if (configDirTmp != null) { // may be null for manually added servers
+                configDir = configDirTmp.getCanonicalFile();
+            }
+        } catch (Exception e) {
+            runtimeConfigDir = null;
+            configDir = null;
+            LOG.error("Failed to validate config dir for " + getResourceDescription() + ".", e);
+        }
+        if ((runtimeConfigDir != null) && (configDir != null)) {
+            if (!runtimeConfigDir.equals(configDir)) {
+                throw new InvalidPluginConfigurationException("The server listening on "
+                        + serverPluginConfig.getHostname() + ":" + serverPluginConfig.getPort() + " has config dir ["
+                        + runtimeConfigDir + "], but the config dir we expected was [" + configDir
+                        + "]. Perhaps the management hostname or port has been changed for the server with config dir ["
+                        + configDir + "].");
+            }
+        }
+
         // Validate the mode (e.g. STANDALONE or DOMAIN).
         String runtimeMode;
         try {
@@ -789,6 +815,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
     @NotNull
     protected abstract String getBaseDirAttributeName();
+
+    @NotNull
+    protected abstract String getConfigDirAttributeName();
 
     /**
      * Default implentation. Override in concrete subclasses and return the the temporary directory attribute name,

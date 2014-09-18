@@ -218,22 +218,24 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
                 // Now we are at map level which matches the operations results
 
                 PropertyList list = new PropertyList(propertyName);
+                if (results != null) {
+                    for (Map.Entry<String, Object> entry : results.entrySet()) {
+                        Object val = entry.getValue();
+                        String key = entry.getKey();
 
-                for (Map.Entry<String, Object> entry : results.entrySet()) {
-                    Object val = entry.getValue();
-                    String key = entry.getKey();
+                        PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, val, key);
 
-                    PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, val, key);
+                        if (nameFromPathProperty != null) {
+                            // We need to fill that property as well
+                            PropertySimple ps = new PropertySimple(nameFromPathProperty, key);
+                            propertyMap.put(ps);
+                        }
 
-                    if (nameFromPathProperty != null) {
-                        // We need to fill that property as well
-                        PropertySimple ps = new PropertySimple(nameFromPathProperty, key);
-                        propertyMap.put(ps);
+                        if (propertyMap != null)
+                            list.add(propertyMap);
                     }
-
-                    if (propertyMap != null)
-                        list.add(propertyMap);
                 }
+
 
                 config.put(list);
             } else if (propDef instanceof PropertyDefinitionMap && (propertyName.startsWith("*"))) {

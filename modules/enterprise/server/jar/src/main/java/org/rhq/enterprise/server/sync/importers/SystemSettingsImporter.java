@@ -82,7 +82,7 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
                 "The names of the properties that should be imported. Note that these are the INTERNAL names as used in the RHQ database." +
                     " If you include any property that stores a password (such as CAM_LDAP_BIND_PW)," +
                     " you need to make sure the values are OBFUSCATED. You can obtain an obfuscated value of your" +
-                    " password by running the \"rhq-encode-password.(sh|bat)\" script located in the \"bin\" directory" +
+                    " password by running the \"rhq-encode-value.(sh|bat)\" script located in the \"bin\" directory" +
                     " of your RHQ server installation.",
                 true, PropertySimpleType.STRING);
         props.setDefaultValue(DEFAULT_IMPORTED_PROPERTIES_LIST);

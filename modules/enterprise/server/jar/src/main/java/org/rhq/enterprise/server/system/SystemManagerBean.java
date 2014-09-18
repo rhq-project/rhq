@@ -515,7 +515,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
      * Call this to transform a system setting to a more appropriate value.
      * Importantly, this (de)obfuscates the password fields as they go from and to the DB. We use the
      * @{link PicketBoxObfuscator} so that people are able encode their passwords in the system settings export files
-     * using the "rhq-encode-password.sh" script.
+     * using the "rhq-encode-value.{sh|bat}" script.
      */
     private String transformSystemConfigurationPropertyFromDb(SystemSetting prop, String value, boolean unobfuscate) {
         // to support Oracle (whose booleans may be 1 or 0) transform the boolean settings properly
@@ -572,7 +572,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
      * Call this to transform a system setting to a more appropriate value.
      * Importantly, this (de)obfuscates the password fields as they go from and to the DB. We use the
      * @{link PicketBoxObfuscator} so that people are able encode their passwords in the system settings export files
-     * using the "rhq-encode-password.sh" script.
+     * using the "rhq-encode-value.{sh|bat}" script.
      */
     private String transformSystemConfigurationPropertyToDb(SystemSetting prop, String newValue, String oldValue) {
         //the 0,1 -> true false scenario is no problem here, because the values are stored

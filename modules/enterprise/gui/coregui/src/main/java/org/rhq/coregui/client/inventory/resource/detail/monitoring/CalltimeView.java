@@ -19,20 +19,28 @@
 
 package org.rhq.coregui.client.inventory.resource.detail.monitoring;
 
+import com.google.gwt.user.client.Timer;
+
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
+import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
+import org.rhq.coregui.client.inventory.common.graph.Refreshable;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Thomas Segismont
  */
-public class CalltimeView extends EnhancedVLayout {
-    private final CalltimeTableView calltimeTableaView;
+public class CalltimeView extends EnhancedVLayout implements Refreshable, AutoRefresh {
+    private final CalltimeTableView calltimeTableView;
     private final ButtonBarDateTimeRangeEditor timeRangeEditor;
+    private Timer refreshTimer;
+    private boolean isRefreshing;
 
     public CalltimeView(EntityContext entityContext) {
-        calltimeTableaView = new CalltimeTableView(entityContext);
-        timeRangeEditor = new ButtonBarDateTimeRangeEditor(calltimeTableaView);
+        calltimeTableView = new CalltimeTableView(entityContext);
+        timeRangeEditor = new ButtonBarDateTimeRangeEditor(this);
+        startRefreshCycle();
     }
 
     @Override
@@ -40,6 +48,40 @@ public class CalltimeView extends EnhancedVLayout {
         super.onDraw();
         removeMembers(getMembers());
         addMember(timeRangeEditor);
-        addMember(calltimeTableaView);
+        addMember(calltimeTableView);
+    }
+
+    @Override
+    public void startRefreshCycle() {
+        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
+    }
+
+    @Override
+    public boolean isRefreshing() {
+        return isRefreshing;
+    }
+
+    @Override
+    public void refresh() {
+        if (isVisible() && !isRefreshing()) {
+            isRefreshing = true;
+            try {
+                timeRangeEditor.updateTimeRangeToNow();
+                refreshData();
+            } finally {
+                isRefreshing = false;
+            }
+        }
+    }
+
+    @Override
+    public void refreshData() {
+        calltimeTableView.refresh(false);
+    }
+
+    @Override
+    protected void onDestroy() {
+        AutoRefreshUtil.onDestroy(refreshTimer);
+        super.onDestroy();
     }
 }

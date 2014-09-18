@@ -2230,7 +2230,7 @@
 
       <plugin-configuration>
         <c:group name="general" displayName="General">
-          <c:simple-property name="deploymentName" description="The name of this EAR" readOnly="true" />
+          <c:simple-property name="deploymentKey" default="--unknown--" description="The profile service key for this EAR" readOnly="true" />
         </c:group>
         <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
           <c:simple-property name="extension" default="ear" readOnly="true" />
@@ -2276,7 +2276,7 @@
 
       <plugin-configuration>
         <c:group name="general" displayName="General">
-          <c:simple-property name="deploymentName" description="the name of this WAR" readOnly="true" />
+          <c:simple-property name="deploymentKey" default="--unknown--" description="The profile service key for this WAR" readOnly="true" />
           <!-- setting to required=false since this is not usually set properly at discovery time -->
           <c:simple-property name="contextPath" description="this WAR's context path (e.g. /admin-console)"
             required="false" readOnly="false" />
@@ -2351,7 +2351,7 @@
 
       <plugin-configuration>
         <c:group name="general" displayName="General">
-          <c:simple-property name="deploymentName" description="the name of this WAR" readOnly="true" />
+          <c:simple-property name="deploymentKey" default="--unknown--" description="The profile service key for this WAR" readOnly="true" />
           <!-- setting to required=false since this is not usually set properly at discovery time -->
           <c:simple-property name="contextPath" description="this WAR's context path (e.g. /admin-console"
             required="false" readOnly="false" />
@@ -2414,7 +2414,7 @@
 
       <plugin-configuration>
         <c:group name="general" displayName="General">
-          <c:simple-property name="deploymentName" description="the name of this EJB JAR" readOnly="true" />
+          <c:simple-property name="deploymentKey" default="--unknown--" description="The profile service key for this EJB JAR" readOnly="true" />
         </c:group>
         <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
           <c:simple-property name="extension" default="jar" readOnly="true" />
@@ -2494,7 +2494,7 @@
 
       <plugin-configuration>
         <c:group name="general" displayName="General">
-          <c:simple-property name="deploymentName" description="the name of this EJB JAR" readOnly="true" />
+          <c:simple-property name="deploymentKey" default="--unknown--" description="The profile service key for this EJB JAR" readOnly="true" />
         </c:group>
         <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
           <c:simple-property name="extension" default="jar" readOnly="true" />
@@ -2553,7 +2553,7 @@
 
       <plugin-configuration>
         <c:group name="general" displayName="General">
-          <c:simple-property name="deploymentName" description="the name of this EJB JAR" readOnly="true" />
+          <c:simple-property name="deploymentKey" default="--unknown--" description="The profile service key for this EJB JAR" readOnly="true" />
         </c:group>
         <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
           <c:simple-property name="extension" default="jar" readOnly="true" />
@@ -2616,7 +2616,7 @@
 
       <plugin-configuration>
         <c:group name="general" displayName="General">
-          <c:simple-property name="deploymentName" description="the name of this EJB JAR" readOnly="true" />
+          <c:simple-property name="deploymentKey" default="--unknown--" description="The profile service key for this EJB JAR" readOnly="true" />
         </c:group>
         <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
           <c:simple-property name="extension" default="jar" readOnly="true" />
@@ -2667,7 +2667,7 @@
 
       <plugin-configuration>
         <c:group name="general" displayName="General">
-          <c:simple-property name="deploymentName" description="the name of this RAR" readOnly="true" />
+          <c:simple-property name="deploymentKey" default="--unknown--" description="The profile service key for this RAR" readOnly="true" />
         </c:group>
         <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
           <c:simple-property name="extension" default="rar" readOnly="true" />
@@ -2705,7 +2705,7 @@
 
       <plugin-configuration>
         <c:group name="general" displayName="General">
-          <c:simple-property name="deploymentName" description="the name of this RAR" readOnly="true" />
+          <c:simple-property name="deploymentKey" default="--unknown--" description="The profile service key for this RAR" readOnly="true" />
         </c:group>
         <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
           <c:simple-property name="extension" default="rar" readOnly="true" />

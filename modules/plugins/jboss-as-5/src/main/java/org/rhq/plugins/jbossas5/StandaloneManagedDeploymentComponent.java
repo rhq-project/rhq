@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.plugins.jbossas5;
 
 import java.io.BufferedInputStream;
@@ -66,6 +67,7 @@ import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.ContentFileInfo;
 import org.rhq.core.util.file.JarContentFileInfo;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
 /**
@@ -75,8 +77,16 @@ import org.rhq.plugins.jbossas5.util.DeploymentUtils;
  */
 public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploymentComponent implements
     MeasurementFacet, ContentFacet, DeleteResourceFacet {
+
+    private static final Log LOG = LogFactory.getLog(StandaloneManagedDeploymentComponent.class);
+
     private static final String CUSTOM_PATH_TRAIT = "custom.path";
     private static final String CUSTOM_EXPLODED_TRAIT = "custom.exploded";
+
+    /**
+     * @deprecated as of 4.13. No longer used, at least since 4.12.
+     */
+    @Deprecated
     public static final String RHQ_SHA256 = "RHQ-Sha256";
 
     /**
@@ -92,8 +102,6 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
      */
     private static final String ARCHITECTURE = "noarch";
 
-    private final Log log = LogFactory.getLog(this.getClass());
-
     private static final ProfileKey FARM_PROFILE_KEY = new ProfileKey("farm");
     private static final ProfileKey APPLICATIONS_PROFILE_KEY = new ProfileKey("applications");
 
@@ -105,10 +113,10 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
             if (metricName.equals(CUSTOM_PATH_TRAIT)) {
-                MeasurementDataTrait trait = new MeasurementDataTrait(request, this.deploymentFile.getPath());
+                MeasurementDataTrait trait = new MeasurementDataTrait(request, deploymentFile.getPath());
                 report.addData(trait);
             } else if (metricName.equals(CUSTOM_EXPLODED_TRAIT)) {
-                boolean exploded = this.deploymentFile.isDirectory();
+                boolean exploded = deploymentFile.isDirectory();
                 MeasurementDataTrait trait = new MeasurementDataTrait(request, (exploded) ? "yes" : "no");
                 report.addData(trait);
             } else {
@@ -120,6 +128,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
     // ------------ ContentFacet implementation -------------
 
+    @Override
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
         File packageFile = new File(packageDetails.getName());
         File fileToSend;
@@ -131,8 +140,8 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
              * path making its use invalid here.   
              */
             // If the file isn't real then lets fall-back to this ManagedDeploymentComponent's file name and hope its valid
-            if (!packageFile.exists() && this.deploymentFile != null) {
-                packageFile = this.deploymentFile;
+            if (!packageFile.exists() && deploymentFile != null) {
+                packageFile = deploymentFile;
             }
             if (packageFile.isDirectory()) {
                 fileToSend = File.createTempFile("rhq", ".zip");
@@ -145,13 +154,14 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         }
     }
 
+    @Override
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType packageType) {
-        if (!this.deploymentFile.exists())
-            throw new IllegalStateException("Deployment file '" + this.deploymentFile + "' for "
-                + getResourceDescription() + " does not exist.");
+        if (!deploymentFile.exists())
+            throw new IllegalStateException("Deployment file '" + deploymentFile + "' for " + getResourceDescription()
+                + " does not exist.");
 
-        String fileName = this.deploymentFile.getName();
-        String sha256 = getSHA256(this.deploymentFile);
+        String fileName = deploymentFile.getName();
+        String sha256 = getSHA256(deploymentFile);
         String version = getVersion(sha256);
         String displayVersion = getDisplayVersion(deploymentFile);
 
@@ -159,9 +169,9 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
         ResourcePackageDetails packageDetails = new ResourcePackageDetails(key);
         packageDetails.setFileName(fileName);
-        packageDetails.setLocation(this.deploymentFile.getPath());
-        if (!this.deploymentFile.isDirectory())
-            packageDetails.setFileSize(this.deploymentFile.length());
+        packageDetails.setLocation(deploymentFile.getPath());
+        if (!deploymentFile.isDirectory())
+            packageDetails.setFileSize(deploymentFile.length());
         packageDetails.setFileCreatedDate(null); // TODO: get created date via SIGAR
         packageDetails.setSHA256(sha256);
         packageDetails.setInstallationTimestamp(Long.valueOf(System.currentTimeMillis()));
@@ -184,11 +194,10 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         try {
             FileContentDelegate fileContentDelegate = new FileContentDelegate();
-            sha256 = fileContentDelegate.retrieveDeploymentSHA(file, this.getResourceContext()
-                .getResourceDataDirectory());
+            sha256 = fileContentDelegate.retrieveDeploymentSHA(file, getResourceContext().getResourceDataDirectory());
         } catch (Exception iex) {
-            if (log.isDebugEnabled()) {
-                log.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
             }
         }
 
@@ -213,22 +222,25 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         return contentFileInfo.getVersion(null);
     }
 
+    @Override
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
         throw new UnsupportedOperationException("Cannot remove the package backing an EAR/WAR resource.");
     }
 
+    @Override
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
         // Intentional - there are no steps involved in installing an EAR or WAR.
         return null;
     }
 
+    @Override
     public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
         String resourceTypeName = getResourceContext().getResourceType().getName();
 
         // You can only update the one application file referenced by this resource, so punch out if multiple are
         // specified.
         if (packages.size() != 1) {
-            log.warn("Request to update " + resourceTypeName + " file contained multiple packages: " + packages);
+            LOG.warn("Request to update " + resourceTypeName + " file contained multiple packages: " + packages);
             DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
             response.setOverallRequestErrorMessage("Only one " + resourceTypeName + " can be updated at a time.");
             return response;
@@ -236,14 +248,16 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         ResourcePackageDetails packageDetails = packages.iterator().next();
 
-        log.debug("Updating EAR/WAR file '" + this.deploymentFile + "' using [" + packageDetails + "]...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Updating EAR/WAR file '" + deploymentFile + "' using [" + packageDetails + "]...");
+        }
         // Find location of existing application.
-        if (!this.deploymentFile.exists()) {
-            return failApplicationDeployment(
-                "Could not find application to update at location: " + this.deploymentFile, packageDetails);
+        if (!deploymentFile.exists()) {
+            return failApplicationDeployment("Could not find application to update at location: " + deploymentFile,
+                packageDetails);
         }
 
-        log.debug("Writing new EAR/WAR bits to temporary file...");
+        LOG.debug("Writing new EAR/WAR bits to temporary file...");
         File tempFile;
         try {
             tempFile = writeNewAppBitsToTempFile(contentServices, packageDetails);
@@ -251,35 +265,46 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
             return failApplicationDeployment("Error writing new application bits to temporary file - cause: " + e,
                 packageDetails);
         }
-        log.debug("Wrote new EAR/WAR bits to temporary file '" + tempFile + "'.");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Wrote new EAR/WAR bits to temporary file '" + tempFile + "'.");
+        }
 
-        boolean deployExploded = this.deploymentFile.isDirectory();
+        boolean deployExploded = deploymentFile.isDirectory();
 
         // Backup the original app file/dir.
         File tempDir = getResourceContext().getTemporaryDirectory();
         File backupDir = new File(tempDir, "deployBackup" + UUID.randomUUID().getLeastSignificantBits());
-        File backupOfOriginalFile = new File(backupDir, this.deploymentFile.getName());
-        log.debug("Backing up existing EAR/WAR '" + this.deploymentFile + "' to '" + backupOfOriginalFile + "'...");
+        File backupOfOriginalFile = new File(backupDir, deploymentFile.getName());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Backing up existing EAR/WAR '" + deploymentFile + "' to '" + backupOfOriginalFile + "'...");
+        }
         try {
             if (backupOfOriginalFile.exists()) {
                 FileUtils.forceDelete(backupOfOriginalFile);
             }
-            if (this.deploymentFile.isDirectory()) {
-                FileUtils.copyDirectory(this.deploymentFile, backupOfOriginalFile, true);
+            if (deploymentFile.isDirectory()) {
+                FileUtils.copyDirectory(deploymentFile, backupOfOriginalFile, true);
             } else {
-                FileUtils.copyFile(this.deploymentFile, backupOfOriginalFile, true);
+                FileUtils.copyFile(deploymentFile, backupOfOriginalFile, true);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to backup existing " + resourceTypeName + "'" + this.deploymentFile
+            throw new RuntimeException("Failed to backup existing " + resourceTypeName + "'" + deploymentFile
                 + "' to '" + backupOfOriginalFile + "'.");
         }
 
-        DeploymentManager deploymentManager = getConnection().getDeploymentManager();
+        ProfileServiceConnection connection = getConnection();
+        if (connection == null) {
+            DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
+            response.setOverallRequestErrorMessage("No profile service connection available");
+            return response;
+        }
+
+        DeploymentManager deploymentManager = connection.getDeploymentManager();
 
         // as crazy as it might sound, there is apparently no way for you to ask the profile service
         // if a deployment was deployed to the farm profile. Thus, we must resort to a poor man's solution:
         // if the deployment name has the "farm/" directory in it, assume it needs to be deployed to the farm
-        boolean deployFarmed = this.deploymentName.contains("/farm/");
+        boolean deployFarmed = getDeploymentKey().contains("/farm/");
         if (deployFarmed) {
             Collection<ProfileKey> profileKeys = deploymentManager.getProfiles();
             boolean farmSupported = false;
@@ -301,45 +326,56 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
             try {
                 deploymentManager.loadProfile(FARM_PROFILE_KEY);
             } catch (Exception e) {
-                log.info("Failed to switch to farm profile - could not update " + resourceTypeName + " file '"
-                    + this.deploymentFile + "' using [" + packageDetails + "].");
+                LOG.info("Failed to switch to farm profile - could not update " + resourceTypeName + " file '"
+                    + deploymentFile + "' using [" + packageDetails + "].");
                 String errorMessage = ThrowableUtil.getAllMessages(e);
                 return failApplicationDeployment(errorMessage, packageDetails);
             }
         }
 
+        String deploymentName = getDeploymentName();
+        if (deploymentName == null) {
+            DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
+            response.setOverallRequestErrorMessage("Did not find deployment with key [" + getDeploymentKey() + "]");
+            return response;
+        }
+
         // Now stop the original app.
         try {
-            DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
+            DeploymentProgress progress = deploymentManager.stop(deploymentName);
             DeploymentUtils.run(progress);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to stop deployment [" + this.deploymentName + "].", e);
+            throw new RuntimeException("Failed to stop deployment [" + deploymentName + "].", e);
         }
 
         // And then remove it (this will delete the physical file/dir from the deploy dir).
         try {
-            DeploymentProgress progress = deploymentManager.remove(this.deploymentName);
+            DeploymentProgress progress = deploymentManager.remove(deploymentName);
             DeploymentUtils.run(progress);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to remove deployment [" + this.deploymentName + "].", e);
+            throw new RuntimeException("Failed to remove deployment [" + deploymentName + "].", e);
         }
 
         // Deploy away!
         try {
-            log.debug("Deploying '" + tempFile + "'...");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Deploying '" + tempFile + "'...");
+            }
             DeploymentUtils.deployArchive(deploymentManager, tempFile, deployExploded);
         } catch (Exception e) {
             // Deploy failed - rollback to the original app file...
-            log.debug("Redeploy failed - rolling back to original archive...", e);
+            LOG.debug("Redeploy failed - rolling back to original archive...", e);
             String errorMessage = ThrowableUtil.getAllMessages(e);
             try {
                 // Try to delete the new app file, which failed to deploy, if it still exists.
-                if (this.deploymentFile.exists()) {
+                if (deploymentFile.exists()) {
                     try {
-                        FileUtils.forceDelete(this.deploymentFile);
+                        FileUtils.forceDelete(deploymentFile);
                     } catch (IOException e1) {
-                        log.debug("Failed to delete application file '" + this.deploymentFile
-                            + "' that failed to deploy.", e1);
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Failed to delete application file '" + deploymentFile
+                                + "' that failed to deploy.", e1);
+                        }
                     }
                 }
                 // Now redeploy the original file - this generally should succeed.
@@ -350,7 +386,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 deleteTemporaryFile(backupDir);
                 // If the redeployment fails the original backup is preserved on disk until agent restart
             } catch (Exception e1) {
-                log.debug("Rollback failed!", e1);
+                LOG.debug("Rollback failed!", e1);
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
                     + ThrowableUtil.getAllMessages(e1);
             }
@@ -358,8 +394,8 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
             //since the deployment failed remove the temp application downloaded for deployment
             deleteTemporaryFile(tempFile);
 
-            log.info("Failed to update " + resourceTypeName + " file '" + this.deploymentFile + "' using ["
-                + packageDetails + "].");
+            LOG.info("Failed to update " + resourceTypeName + " file '" + deploymentFile + "' using [" + packageDetails
+                + "].");
             return failApplicationDeployment(errorMessage, packageDetails);
         } finally {
             // Make sure to switch back to the 'applications' profile if we switched to the 'farm' profile above.
@@ -367,15 +403,15 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 try {
                     deploymentManager.loadProfile(APPLICATIONS_PROFILE_KEY);
                 } catch (Exception e) {
-                    log.debug("Failed to switch back to applications profile from farm profile", e);
+                    LOG.debug("Failed to switch back to applications profile from farm profile", e);
                 }
             }
         }
 
         // Store SHA256 in the agent file if deployment was exploded
-        if (this.deploymentFile.isDirectory()) {
+        if (deploymentFile.isDirectory()) {
             FileContentDelegate fileContentDelegate = new FileContentDelegate();
-            fileContentDelegate.saveDeploymentSHA(tempFile, deploymentFile, this.getResourceContext()
+            fileContentDelegate.saveDeploymentSHA(tempFile, deploymentFile, getResourceContext()
                 .getResourceDataDirectory());
         }
 
@@ -388,43 +424,64 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
             ContentResponseResult.SUCCESS);
         response.addPackageResponse(packageResponse);
 
-        log.debug("Updated " + resourceTypeName + " file '" + this.deploymentFile
-            + "' successfully - returning response [" + response + "]...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Updated " + resourceTypeName + " file '" + deploymentFile
+                + "' successfully - returning response [" + response + "]...");
+        }
 
         return response;
     }
 
     // ------------ DeleteResourceFacet implementation -------------
 
+    @Override
     public void deleteResource() throws Exception {
-        log.debug("Deleting " + getResourceDescription() + "...");
-        DeploymentManager deploymentManager = getConnection().getDeploymentManager();
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Deleting " + getResourceDescription() + "...");
+        }
+
+        ProfileServiceConnection connection = getConnection();
+        if (connection == null) {
+            throw new Exception("No profile service connection available");
+        }
+
+        DeploymentManager deploymentManager = connection.getDeploymentManager();
         try {
             getManagedDeployment();
         } catch (Exception e) {
             // The deployment no longer exists, so there's nothing for us to do. Someone most likely undeployed it
             // outside of Jopr or EmbJopr, e.g. via the jmx-console or by deleting the app file from the deploy dir.
-            log.warn("Cannot delete the deployment [" + this.deploymentName + "], since it no longer exists");
+            LOG.warn("Cannot delete the deployment [" + getDeploymentKey() + "], since it no longer exists");
             return;
         }
 
-        log.debug("Stopping deployment [" + this.deploymentName + "]...");
-        DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Stopping deployment [" + getDeploymentKey() + "]...");
+        }
+
+        String deploymentName = getDeploymentName();
+        if (deploymentName == null) {
+            throw new IllegalStateException("Deployment " + getDeploymentKey() + " has vanished");
+        }
+
+        DeploymentProgress progress = deploymentManager.stop(deploymentName);
         DeploymentStatus stopStatus = DeploymentUtils.run(progress);
         if (stopStatus.isFailed()) {
-            log.error("Failed to stop deployment '" + this.deploymentName + "'.", stopStatus.getFailure());
-            throw new Exception("Failed to stop deployment '" + this.deploymentName + "' - cause: "
+            LOG.error("Failed to stop deployment '" + deploymentName + "'.", stopStatus.getFailure());
+            throw new Exception("Failed to stop deployment '" + deploymentName + "' - cause: "
                 + stopStatus.getFailure());
         }
-        log.debug("Removing deployment [" + this.deploymentName + "]...");
-        progress = deploymentManager.remove(this.deploymentName);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Removing deployment [" + deploymentName + "]...");
+        }
+        progress = deploymentManager.remove(deploymentName);
         DeploymentStatus removeStatus = DeploymentUtils.run(progress);
         if (removeStatus.isFailed()) {
-            log.error("Failed to remove deployment '" + this.deploymentName + "'.", removeStatus.getFailure());
-            throw new Exception("Failed to remove deployment '" + this.deploymentName + "' - cause: "
+            LOG.error("Failed to remove deployment '" + deploymentName + "'.", removeStatus.getFailure());
+            throw new Exception("Failed to remove deployment '" + deploymentName + "' - cause: "
                 + removeStatus.getFailure());
         }
-        ManagementView managementView = getConnection().getManagementView();
+        ManagementView managementView = connection.getManagementView();
         managementView.load();
     }
 
@@ -448,12 +505,14 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
     }
 
     private void deleteTemporaryFile(File temporaryFile) {
-        log.debug("Deleting temporary file '" + temporaryFile + "'...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Deleting temporary file '" + temporaryFile + "'...");
+        }
         try {
             FileUtils.forceDelete(temporaryFile);
         } catch (Exception e) {
             // not critical.
-            log.warn("Failed to temporary file: " + temporaryFile);
+            LOG.warn("Failed to temporary file: " + temporaryFile);
         }
     }
 
@@ -463,28 +522,30 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
             + UUID.randomUUID().getLeastSignificantBits());
         tempDir.mkdirs();
 
-        File tempFile = new File(tempDir, this.deploymentFile.getName());
+        File tempFile = new File(tempDir, deploymentFile.getName());
 
         OutputStream tempOutputStream = null;
         try {
             tempOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
             long bytesWritten = contentServices.downloadPackageBits(getResourceContext().getContentContext(),
                 packageDetails.getKey(), tempOutputStream, true);
-            log.debug("Wrote " + bytesWritten + " bytes to '" + tempFile + "'.");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Wrote " + bytesWritten + " bytes to '" + tempFile + "'.");
+            }
         } catch (IOException e) {
-            log.error("Error writing updated application bits to temporary location: " + tempFile, e);
+            LOG.error("Error writing updated application bits to temporary location: " + tempFile, e);
             throw e;
         } finally {
             if (tempOutputStream != null) {
                 try {
                     tempOutputStream.close();
                 } catch (IOException e) {
-                    log.error("Error closing temporary output stream", e);
+                    LOG.error("Error closing temporary output stream", e);
                 }
             }
         }
         if (!tempFile.exists()) {
-            log.error("Temporary file for application update not written to: " + tempFile);
+            LOG.error("Temporary file for application update not written to: " + tempFile);
             throw new Exception();
         }
         return tempFile;

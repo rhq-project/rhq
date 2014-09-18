@@ -30,13 +30,9 @@ import static org.rhq.modules.plugins.jbossas7.JBossProductType.WILDFLY8;
 import static org.rhq.modules.plugins.jbossas7.util.ProcessExecutionLogger.logExecutionResults;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -44,11 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
-
-import javax.xml.namespace.QName;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamReader;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -111,13 +102,11 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private AvailabilityType previousAvailabilityType;
     private String releaseVersion;
     private String aSHostName;
-    private XMLInputFactory xmlInputFactory;
     private long lastManagementInterfaceReply = 0;
 
     @Override
     public void start(ResourceContext<T> resourceContext) throws Exception {
         super.start(resourceContext);
-        xmlInputFactory = XMLInputFactory.newInstance();
         serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
         serverPluginConfig.validate();
         connection = new ASConnection(ASConnectionParams.createFrom(serverPluginConfig));
@@ -144,18 +133,11 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 availabilityType = UP;
                 lastManagementInterfaceReply = new Date().getTime();
             } catch (ResultFailedException e) {
-                LOG.warn("Domain host name seems to be changed, re-reading from  "
-                    + getServerPluginConfiguration().getHostConfigFile());
+                LOG.warn("Domain host name seems to be changed");
                 setASHostName(findASDomainHostName());
                 LOG.info("Detected domain host name [" + getASHostName() + "]");
-                try {
-                    readAttribute(getHostAddress(), "name");
-                    availabilityType = UP;
-                } catch (ResultFailedException rfe) {
-                    throw new InvalidPluginConfigurationException(
-                        "Plugin is unable to manage this resource because attribute 'name' in root element of Host Controller configuratin file is missing. Please update "
-                            + getServerPluginConfiguration().getHostConfigFile() + ".");
-                }
+                readAttribute(getHostAddress(), "name");
+                availabilityType = UP;
             }
         } catch (TimeoutException e) {
             long now = new Date().getTime();
@@ -170,8 +152,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                     availabilityType = DOWN;
                 }
             }
-        } catch (InvalidPluginConfigurationException ipce) {
-            throw ipce; // rethrow in case it happened in code above
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug(getResourceDescription() + ": exception while checking availability", e);
@@ -398,7 +378,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         }
 
         ProcessExecutionResults results = ServerControl
-            .onServer(context.getPluginConfiguration(), getMode(), context.getSystemInformation(), xmlInputFactory)
+            .onServer(context.getPluginConfiguration(), getMode(), context.getSystemInformation())
             .lifecycle().startServer();
         logExecutionResults(results);
 
@@ -439,8 +419,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             result.setErrorMessage("waitTime parameter must be positive integer");
             return result;
         }
-        ServerControl.Cli cli = ServerControl.onServer(context.getPluginConfiguration(), getMode(),
-            context.getSystemInformation(), xmlInputFactory).waitingFor(waitTime * 1000)
+        ServerControl.Cli cli = ServerControl
+            .onServer(context.getPluginConfiguration(), getMode(), context.getSystemInformation())
+            .waitingFor(waitTime * 1000)
             .killingOnTimeout(Boolean.parseBoolean(parameters.getSimpleValue("killOnTimeout", "false"))).cli();
 
         ProcessExecutionResults results;
@@ -778,8 +759,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 .onServer( //
                         getServerPluginConfiguration().getPluginConfig(), //
                         getMode(), //
-                        context.getSystemInformation(), //
-                        xmlInputFactory //
+                    context.getSystemInformation() //
                 ) //
                 .waitingFor(waitTime) //
                 .killingOnTimeout(killOnTimeout) //
@@ -865,85 +845,28 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     }
 
     /**
-     * @see #findASDomainHostName(javax.xml.stream.XMLInputFactory, org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration)
+     * @see #findASDomainHostName(ASConnection)
      */
     protected String findASDomainHostName() {
         if (getMode().equals(AS7Mode.STANDALONE)) {
             return null;
         }
-
-        return findASDomainHostName(xmlInputFactory, getServerPluginConfiguration());
+        return findASDomainHostName(getASConnection());
     }
 
     /**
-     * Reads <host name= attribute from host.xml file.
+     * Reads local-host-name attribute
      *
-     * @return name attribute from host.xml file
+     * @return name current host within EAP domain or null if we failed to read it
      */
-    public static String findASDomainHostName(XMLInputFactory xmlInputFactory, ServerPluginConfiguration serverPluginConfig) {
-        File hostXmlFile = serverPluginConfig.getHostConfigFile();
-        if (hostXmlFile == null) {
-            return null;
+    public static String findASDomainHostName(ASConnection connection) {
+        ReadAttribute op = new ReadAttribute(new Address(), "local-host-name");
+        op.includeDefaults(true);
+        Result result = connection.execute(op);
+        if (result.isSuccess()) {
+            return result.getResult().toString();
         }
-        String hostName = null;
-        try {
-            InputStream is = new FileInputStream(hostXmlFile);
-            XMLStreamReader rdr = null;
-            try {
-                rdr = xmlInputFactory.createXMLStreamReader(is);
-                boolean cont = true;
-                while (rdr.hasNext() && cont) {
-                    int event = rdr.nextTag();
-                    switch (event) {
-                    case XMLStreamConstants.START_ELEMENT:
-                        QName tag = rdr.getName();
-                        if ("host".equals(tag.getLocalPart()) && tag.getNamespaceURI().startsWith("urn:jboss:domain")) {
-                            for (int i = 0; i < rdr.getAttributeCount(); ++i) {
-                                QName attr = rdr.getAttributeName(i);
-                                if ("name".equals(attr.getLocalPart()) &&
-                                    (attr.getNamespaceURI().isEmpty() || attr.getNamespaceURI().startsWith("urn:jboss:domain"))) {
-                                    hostName = rdr.getAttributeValue(i);
-                                }
-                            }
-                        }
-                        cont = false;
-                        break;
-                    }
-                }
-            } finally {
-                if (rdr != null) {
-                    rdr.close();
-                }
-                StreamUtil.safeClose(is);
-            }
-        } catch (Exception e) {
-            LOG.error(e.getMessage());
-        }
-        if (hostName == null || hostName.equals("")) {
-            LOG.warn("Failed to read domain host name from [" + hostXmlFile + "] auto-detecting...");
-            String qualifiedHostName = System.getenv("HOSTNAME");
-            if (qualifiedHostName == null) {
-                qualifiedHostName = System.getenv("COMPUTERNAME");
-            }
-            if (qualifiedHostName == null) {
-                try {
-                    qualifiedHostName = InetAddress.getLocalHost().getHostName();
-                    if (qualifiedHostName != null && qualifiedHostName.matches("^\\d+\\.\\d+\\.\\d+\\.\\d+$|:")) {
-                        // IP address is not acceptable
-                        qualifiedHostName = null;
-                    }
-                } catch (UnknownHostException e) {
-                    qualifiedHostName = null;
-                }
-            }
-            if (qualifiedHostName == null) {
-                qualifiedHostName = "unknown-host.unknown-domain";
-            }
-            final int idx = qualifiedHostName.indexOf('.');
-            hostName = idx == -1 ? qualifiedHostName : qualifiedHostName.substring(0, idx);
-            LOG.info("Domain host name was detected as [" + hostName + "]");
-        }
-        return hostName;
+        return null;
     }
 
     private HostConfiguration getHostConfig() {
@@ -1073,8 +996,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             }
         }
 
-        ProcessExecutionResults results = ServerControl.onServer(context.getPluginConfiguration(), getMode(),
-            context.getSystemInformation(), xmlInputFactory).cli().disconnected(true).executeCliCommand(command.toString());
+        ProcessExecutionResults results = ServerControl
+            .onServer(context.getPluginConfiguration(), getMode(), context.getSystemInformation()).cli()
+            .disconnected(true).executeCliCommand(command.toString());
 
         if (results.getError() != null || results.getExitCode() == null || results.getExitCode() != 0) {
             String message = "Applying the patch failed ";

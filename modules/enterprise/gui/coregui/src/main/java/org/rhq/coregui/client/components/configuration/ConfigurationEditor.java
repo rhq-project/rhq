@@ -164,7 +164,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
 
     private ValuesManager topLevelPropertiesValuesManager = new ValuesManager();
 
-    private Label loadingLabel = new Label( MSG.common_msg_loading() );
+    private Label loadingLabel = new Label(MSG.common_msg_loading());
 
     private int resourceId;
     private int resourceTypeId;
@@ -509,7 +509,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
         }
         if (!this.invalidPropertyNameToDisplayNameMap.isEmpty()) {
             PropertyValueChangeEvent event = new PropertyValueChangeEvent(null, null, true,
-                    this.invalidPropertyNameToDisplayNameMap);
+                this.invalidPropertyNameToDisplayNameMap);
             firePropertyChangedEvent(event);
         }
     }
@@ -602,7 +602,6 @@ public class ConfigurationEditor extends EnhancedVLayout {
         form.setCellPadding(5);
         form.setColWidths(190, 28, 210);
         form.setStyleName("propertiesForm");
-
 
         List<FormItem> fields = new ArrayList<FormItem>();
         addHeaderItems(fields);
@@ -760,8 +759,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
     protected StaticTextItem buildNameItem(PropertyDefinition propertyDefinition) {
         StaticTextItem nameItem = new StaticTextItem();
         nameItem.setStartRow(true);
-        String title =  (propertyDefinition.getDisplayName() != null ? propertyDefinition.getDisplayName() : propertyDefinition
-                .getName());
+        String title = (propertyDefinition.getDisplayName() != null ? propertyDefinition.getDisplayName()
+            : propertyDefinition.getName());
         nameItem.setValue(title);
         nameItem.setShowTitle(false);
         return nameItem;
@@ -1020,7 +1019,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
                 PropertyMap memberPropertyMap = (PropertyMap) record.getPropertyMap();
                 Log.debug("Editing property map: " + memberPropertyMap);
                 displayMapEditor(summaryTable, errorPanel, record, propertyDefinitionList, propertyList,
-                        memberPropertyDefinitionMap, memberPropertyMap, mapReadOnly);
+                    memberPropertyDefinitionMap, memberPropertyMap, mapReadOnly);
             }
         });
         fieldsList.add(editField);
@@ -1050,7 +1049,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
                                         .getRecord();
                                     propertyList.getList().remove(recordToBeDeleted.getIndex());
                                     ListGridRecord[] rows = buildSummaryRecords(propertyList, propertyDefinitions);
-                                    boolean listGridRecordCountValid = isListGridRecordCountValid(rows, listMin, listMax);
+                                    boolean listGridRecordCountValid = isListGridRecordCountValid(rows, listMin,
+                                        listMax);
                                     if (errorPanel.isVisible() && listGridRecordCountValid) {
                                         errorPanel.setVisible(false);
                                     }
@@ -1089,7 +1089,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
                         return;
                     }
                     displayMapEditor(summaryTable, errorPanel, null, propertyDefinitionList, propertyList,
-                            memberPropertyDefinitionMap, null, mapReadOnly);
+                        memberPropertyDefinitionMap, null, mapReadOnly);
                 }
             });
             toolStrip.addMember(addRowButton);
@@ -1769,9 +1769,9 @@ public class ConfigurationEditor extends EnhancedVLayout {
     }
 
     private void displayMapEditor(final ListGrid summaryTable, final Canvas errorPanel,
-                                  final PropertyMapListGridRecord existingRecord, final PropertyDefinitionList propertyDefinitionList,
-                                  final PropertyList propertyList, PropertyDefinitionMap memberMapDefinition, final PropertyMap memberMap,
-                                  final boolean mapReadOnly) {
+        final PropertyMapListGridRecord existingRecord, final PropertyDefinitionList propertyDefinitionList,
+        final PropertyList propertyList, PropertyDefinitionMap memberMapDefinition, final PropertyMap memberMap,
+        final boolean mapReadOnly) {
 
         final List<PropertyDefinition> memberDefinitions = new ArrayList<PropertyDefinition>(
             memberMapDefinition.getOrderedPropertyDefinitions());
@@ -1819,10 +1819,9 @@ public class ConfigurationEditor extends EnhancedVLayout {
                         existingRecord.refresh();
                         summaryTable.updateData(existingRecord);
                     }
-                    boolean listGridRecordCountValid = isListGridRecordCountValid(summaryTable.getRecords(), propertyDefinitionList.getMin(),
-                            propertyDefinitionList.getMax());
-                    if (errorPanel.isVisible()
-                            && listGridRecordCountValid) {
+                    boolean listGridRecordCountValid = isListGridRecordCountValid(summaryTable.getRecords(),
+                        propertyDefinitionList.getMin(), propertyDefinitionList.getMax());
+                    if (errorPanel.isVisible() && listGridRecordCountValid) {
                         errorPanel.setVisible(false);
                     }
                     firePropertyChangedEvent(propertyList, propertyDefinitionList, listGridRecordCountValid);
@@ -1887,7 +1886,14 @@ public class ConfigurationEditor extends EnhancedVLayout {
             PropertySimple propertySimple = ((PropertySimple) sourceMap.get(subDefSimple.getName()));
             String newValue = (propertySimple != null) ? propertySimple.getStringValue() : null;
             PropertySimple existingProp = targetMap.getSimple(subDefSimple.getName());
-            existingProp.setStringValue(newValue);
+            if (null == existingProp) {
+                if (null != newValue) {
+                    existingProp = new PropertySimple(subDefSimple.getName(), newValue);
+                    targetMap.put(existingProp);
+                }
+            } else {
+                existingProp.setStringValue(newValue);
+            }
         }
     }
 
@@ -1895,13 +1901,13 @@ public class ConfigurationEditor extends EnhancedVLayout {
         if (value instanceof String) {
             item.setValue((String) value);
         } else if (value instanceof Boolean) {
-            item.setValue((Boolean) value);
+            item.setValue(value);
         } else if (value instanceof Integer) {
-            item.setValue((Integer) value);
+            item.setValue(value);
         } else if (value instanceof Float) {
-            item.setValue((Float) value);
+            item.setValue(value);
         } else if (value instanceof Double) {
-            item.setValue((Double) value);
+            item.setValue(value);
         } else if (value instanceof Date) {
             item.setValue((Date) value);
         } else {

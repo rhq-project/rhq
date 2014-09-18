@@ -130,7 +130,7 @@ public class CassandraIntegrationTest {
         String cql =
             "SELECT schedule_id, time, type, value " +
             "FROM " + MetricsTable.AGGREGATE + " " +
-            "WHERE schedule_id = ? AND bucket = ?" +
+            "WHERE schedule_id = ? AND bucket = ? " +
             "ORDER BY time, type";
         PreparedStatement statement = session.prepare(cql);
         BoundStatement boundStatement = statement.bind(scheduleId, bucket.toString());

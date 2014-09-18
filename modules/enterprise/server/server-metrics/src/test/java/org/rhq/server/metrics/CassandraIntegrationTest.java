@@ -48,6 +48,7 @@ import org.rhq.cassandra.ShutdownCluster;
 import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.NumericMetric;
 import org.rhq.server.metrics.domain.ResultSetMapper;
@@ -125,14 +126,14 @@ public class CassandraIntegrationTest {
         return dateTimeService.hour0().plusHours(hours);
     }
 
-    protected Iterable<AggregateNumericMetric> findAggregateMetrics(MetricsTable table, int scheduleId) {
+    protected Iterable<AggregateNumericMetric> findAggregateMetrics(Bucket bucket, int scheduleId) {
         String cql =
             "SELECT schedule_id, time, type, value " +
-                "FROM " + table + " " +
-                "WHERE schedule_id = ? " +
-                "ORDER BY time, type";
+            "FROM " + MetricsTable.AGGREGATE + " " +
+            "WHERE schedule_id = ? AND bucket = ? " +
+            "ORDER BY time, type";
         PreparedStatement statement = session.prepare(cql);
-        BoundStatement boundStatement = statement.bind(scheduleId);
+        BoundStatement boundStatement = statement.bind(scheduleId, bucket.toString());
 
         return new SimplePagedResult<AggregateNumericMetric>(boundStatement, new AggregateNumericMetricMapper(),
             storageSession);

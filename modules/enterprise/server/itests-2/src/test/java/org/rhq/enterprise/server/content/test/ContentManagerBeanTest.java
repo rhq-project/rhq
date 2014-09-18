@@ -58,6 +58,7 @@ import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -1343,6 +1344,69 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         } finally {
             getTransactionManager().rollback();
         }
+    }
+
+    @Test(enabled = ENABLE_TESTS)
+    public void testInventoryMergePerf() throws Exception {
+        // remove existing packages
+        InstalledPackageCriteria criteria = new InstalledPackageCriteria();
+        criteria.addFilterResourceId(resource1.getId());
+        criteria.clearPaging();
+        List<InstalledPackage> installedPackages = contentManager.findInstalledPackagesByCriteria(
+            subjectManager.getOverlord(), criteria);
+        if (!installedPackages.isEmpty()) {
+            int[] ids = new int[installedPackages.size()];
+            int i = 0;
+            for (InstalledPackage ip : installedPackages) {
+                ids[i++] = ip.getId();
+            }
+
+            // send empty report to remove the existing IPs
+            ContentDiscoveryReport report = new ContentDiscoveryReport();
+            report.setResourceId(resource1.getId());
+            contentManager.mergeDiscoveredPackages(report);
+
+            installedPackages = contentManager.findInstalledPackagesByCriteria(subjectManager.getOverlord(), criteria);
+            assert (installedPackages.isEmpty());
+        }
+
+        // Report a bunch of discovered packages
+        int numPackages = 500;
+        ContentDiscoveryReport report = new ContentDiscoveryReport();
+        report.setResourceId(resource1.getId());
+
+        for (Integer i = 0; i < numPackages; ++i) {
+            PackageDetailsKey key = new PackageDetailsKey(this.getClass().getSimpleName() + "-" + i, i.toString(),
+                package1.getPackageType().getName(), architecture1.getName());
+            ResourcePackageDetails pd = new ResourcePackageDetails(key);
+            report.addDeployedPackage(pd);
+        }
+
+        long start = System.currentTimeMillis();
+        contentManager.mergeDiscoveredPackages(report);
+        System.out.println("PERF: testInventoryMergePerf merge-1=" + (System.currentTimeMillis() - start) + "ms");
+
+        installedPackages = contentManager.findInstalledPackagesByCriteria(subjectManager.getOverlord(), criteria);
+        assertEquals(numPackages, installedPackages.size());
+
+        // Remove the first 100 and add 200 more
+        int startPackage = 100;
+        int endPackage = numPackages + 200;
+        report = new ContentDiscoveryReport();
+        report.setResourceId(resource1.getId());
+
+        for (Integer i = startPackage; i < endPackage; ++i) {
+            PackageDetailsKey key = new PackageDetailsKey(this.getClass().getSimpleName() + "-" + i, i.toString(),
+                package1.getPackageType().getName(), architecture1.getName());
+            ResourcePackageDetails pd = new ResourcePackageDetails(key);
+            report.addDeployedPackage(pd);
+        }
+
+        start = System.currentTimeMillis();
+        contentManager.mergeDiscoveredPackages(report);
+        System.out.println("PERF: testInventoryMergePerf merge-2=" + (System.currentTimeMillis() - start) + "ms");
+        installedPackages = contentManager.findInstalledPackagesByCriteria(subjectManager.getOverlord(), criteria);
+        assertEquals(numPackages + 100, installedPackages.size());
     }
 
     // Private  --------------------------------------------

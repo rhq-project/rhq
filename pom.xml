@@ -41,6 +41,7 @@
     <!-- the below path is relative to {rhq-trunk} -->
     <rhq.defaultDevContainerPath>dev-container</rhq.defaultDevContainerPath>
     <rhq.devContainerServerPath>${rhq.defaultDevContainerPath}/rhq-server</rhq.devContainerServerPath>
+    <rhq.devContainerAgentPath>${rhq.defaultDevContainerPath}/rhq-agent</rhq.devContainerAgentPath>
     <!-- path relative to under dev container path where the EAR is deployed -->
     <rhq.earDeployDir>modules/org/rhq/server-startup/main/deployments/${rhq.earName}</rhq.earDeployDir>
     <!-- path relative to under dev container path where other things are stored -->

@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.EXECUTION;
@@ -406,6 +407,12 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
     @Override
     protected String getBaseDirAttributeName() {
         return "domain-base-dir";
+    }
+
+    @NotNull
+    @Override
+    protected String getConfigDirAttributeName() {
+        return "domain-config-dir";
     }
 
     @Override

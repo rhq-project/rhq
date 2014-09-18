@@ -24,9 +24,6 @@ import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.E
 import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.INVALID_ACTION;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,8 +56,6 @@ import org.rhq.core.pluginapi.support.SnapshotReportRequest;
 import org.rhq.core.pluginapi.support.SnapshotReportResults;
 import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.core.system.OperatingSystemType;
-import org.rhq.core.system.ProcessExecutionResults;
-import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOpts;
 import org.rhq.modules.plugins.jbossas7.helper.JdrReportRunner;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
@@ -371,6 +366,12 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
     @Override
     protected String getBaseDirAttributeName() {
         return "base-dir";
+    }
+
+    @NotNull
+    @Override
+    protected String getConfigDirAttributeName() {
+        return "config-dir";
     }
 
     @Override

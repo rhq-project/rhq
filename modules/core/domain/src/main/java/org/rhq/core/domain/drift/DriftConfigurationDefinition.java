@@ -392,7 +392,8 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createInterval(ConfigurationDefinition configDef) {
         String name = PROP_INTERVAL;
-        String description = "The frequency in seconds in which drift detection should run. Defaults to 1800 seconds (i.e. 30 minutes)";
+        String description = "The frequency in seconds in which drift detection should run. Defaults to 1800 seconds (i.e. 30 minutes). This value must be" +
+                "higher than (or equal to) agent's interval.";
         boolean required = false;
         PropertySimpleType type = PropertySimpleType.LONG;
 

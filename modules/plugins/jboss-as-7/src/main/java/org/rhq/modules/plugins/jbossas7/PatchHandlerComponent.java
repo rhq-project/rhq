@@ -539,7 +539,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
                 "Failed to check availability of patch command using the 'help --commands' command. The execution timed out with the output: " +
                     results.getCapturedOutput();
         case OK:
-            if (results.getCapturedOutput() == null || !results.getCapturedOutput().contains(" patch ")) {
+            if (results.getCapturedOutput() == null || !(results.getCapturedOutput().contains(" patch ") || results.getCapturedOutput().contains("\npatch"))) {
                 return "The underlying server does not support the patch command. Cannot perform the patch operation.";
             }
             break;

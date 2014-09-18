@@ -29,8 +29,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import javax.xml.stream.XMLInputFactory;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -71,7 +69,6 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
     private static final String PATCH_ROLLBACK_COMMAND = "patch rollback --reset-configuration=false --patch-id=";
 
     private ResourceContext<ResourceComponent<?>> context;
-    private XMLInputFactory xmlInputFactory;
 
     @Override
     public AvailabilityType getAvailability() {
@@ -171,9 +168,8 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
     public BundlePurgeResult purgeBundle(BundlePurgeRequest request) {
         BundlePurgeResult result = new BundlePurgeResult();
 
-        ServerControl control = ServerControl
-            .onServer(request.getReferencedConfiguration(), AS7Mode.valueOf(request.getDestinationTarget().getPath()),
-                context.getSystemInformation(), xmlInputFactory);
+        ServerControl control = ServerControl.onServer(request.getReferencedConfiguration(),
+            AS7Mode.valueOf(request.getDestinationTarget().getPath()), context.getSystemInformation());
 
         String errorMessage = sanityCheck(control, request.getReferencedConfiguration(),
             request.getBundleManagerProvider(), request.getLiveResourceDeployment());
@@ -304,7 +300,6 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
     @Override
     public void start(ResourceContext<ResourceComponent<?>> context) {
         this.context = context;
-        this.xmlInputFactory = XMLInputFactory.newInstance();
     }
 
     @Override
@@ -389,8 +384,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
 
     private ServerControl onServer(BundleDeployRequest request) {
         return ServerControl.onServer(request.getReferencedConfiguration(),
-            AS7Mode.valueOf(request.getDestinationTarget().getPath()),
-            context.getSystemInformation(), xmlInputFactory);
+            AS7Mode.valueOf(request.getDestinationTarget().getPath()), context.getSystemInformation());
     }
 
     private String rollbackPatches(ServerControl control, BundleManagerProvider bmp, BundleResourceDeployment rd,

@@ -140,16 +140,19 @@ public class AvailabilityProxyConcurrencyTest implements AvailabilityFacet {
 
     @Override
     public synchronized AvailabilityType getAvailability() {
+        final int facetCall = numberOfFacetCalls.incrementAndGet();
         try {
-            System.out.println("~~~AVAILABILITY FACET CALL #" + numberOfFacetCalls.incrementAndGet());
-            Thread.sleep(350); // just make it slow enough so a few proxy calls are done concurrently while this method is running
+            System.out.println("~~~AVAILABILITY FACET CALL #" + facetCall + " at " + new Date());
+            // make it just slow enough so a few proxy calls are done concurrently while this method is running
+            Thread.sleep(350);
         } catch (Exception e) {
-            System.out.println("~~~AVAILABILITY SLEEP WAS ABORTED: " + e);
+            System.out.println("~~~AVAILABILITY SLEEP WAS ABORTED FOR FACET CALL # " + facetCall + ": " + e);
         }
         return UP;
     }
 
-    // for our test, we want to ensure the sync avail check doesn't time out - so increase the timeout limit
+    // for our test, we want to ensure the sync avail check doesn't time out - so increase the timeout limit to a
+    // value > numThreads * getAvail's sleep time (at time of writing 15threads * 350ms = 5.25s).
     private class TestAvailabilityProxy extends AvailabilityProxy {
         public TestAvailabilityProxy(ResourceContainer rc) {
             super(rc);
@@ -157,7 +160,7 @@ public class AvailabilityProxyConcurrencyTest implements AvailabilityFacet {
 
         @Override
         protected long getSyncTimeout() {
-            return 5000L;
+            return 6000L;
         }
     }
 }

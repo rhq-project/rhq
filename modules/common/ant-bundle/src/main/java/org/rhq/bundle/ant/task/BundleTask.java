@@ -140,8 +140,6 @@ public class BundleTask extends AbstractBundleTask {
         }
         getProject().setDeploymentPhase(deploymentPhase);
 
-        cleanPropertyFilesFromBaseDir(deploymentUnit);
-
         String dryRunString = (String) projectProps.get(DeployPropertyNames.DEPLOY_DRY_RUN);
         boolean dryRun = Boolean.valueOf(dryRunString);
         getProject().setDryRun(dryRun);
@@ -273,23 +271,6 @@ public class BundleTask extends AbstractBundleTask {
     protected void validateTypes() throws BuildException {
         if (this.deploymentUnits.isEmpty()) {
             throw new BuildException("At least one 'rhq:deploymentUnit' child element must be specified.");
-        }
-    }
-
-    private void cleanPropertyFilesFromBaseDir(DeploymentUnitType deploymentUnit) {
-        for (Property p : properties) {
-            if (p instanceof PropertyTask) {
-                if (((PropertyTask) p).isRelativeToDeployDir()) {
-                    continue;
-                }
-            }
-
-            if (p.getFile() != null && !deploymentUnit.getFiles().containsKey(p.getFile().getAbsoluteFile())
-                && isSubPath(p.getFile(), getProject().getBaseDir())) {
-
-                //noinspection ResultOfMethodCallIgnored
-                p.getFile().delete();
-            }
         }
     }
 

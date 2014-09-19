@@ -100,7 +100,6 @@ public class RhAccessView extends FullHTMLPane implements BookmarkableView {
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterId(resourceId);
-        criteria.fetchTags(true);
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
                 @Override
@@ -147,27 +146,38 @@ public class RhAccessView extends FullHTMLPane implements BookmarkableView {
 
                 public void onSuccess(List<MeasurementDataTrait> result) {
                     String productName = "";
-                    String productVersion = "";
-                    for (MeasurementDataTrait trait : result) {
-                        Log.info(trait.getName());
-                        if (trait.getName().equals("Product Version")) {
-                            productVersion = trait.getValue();
-                            Log.info(trait.getValue());
-                        }
-                        if (trait.getName().equals("Product Name")) {
-                            productName = trait.getValue();
-                            Log.info(trait.getValue());
-                        }
-                    }
-                    if ("EAP".equals(productName)) {
-                        productName = "Red Hat JBoss Enterprise Application Platform";
+                    String productVersion = resource.getVersion();
 
+                    if ("JBossAS7".equals(resource.getResourceType().getPlugin())) {
+                        // for EAP6-based products we rely on trait values
+                        for (MeasurementDataTrait trait : result) {
+                            Log.info(trait.getName());
+                            if (trait.getName().equals("Product Version")) {
+                                productVersion = trait.getValue();
+                                Log.info(trait.getValue());
+                            }
+                            if (trait.getName().equals("Product Name")) {
+                                productName = trait.getValue();
+                                Log.info(trait.getValue());
+                            }
+                        }
+
+                        if ("EAP".equals(productName)) {
+                            productName = "Red Hat JBoss Enterprise Application Platform";
+                        }
+                        if ("Data Grid".equals(productName)) {
+                            productName = "Red Hat JBoss Data Grid";
+                        }
+                        // we need to strip down .GA suffix, since it is not present in RHA
+                        productVersion = productVersion.replaceAll("\\.GA.*", "");
                     }
-                    if ("Data Grid".equals(productName)) {
-                        productName = "Red Hat JBoss Data Grid";
+                    if ("JBossFuse".equals(resource.getResourceType().getPlugin())) {
+                        if ("JBoss Fuse Container".equals(resource.getResourceType().getName())) {
+                            productName = "Red Hat JBoss Fuse";
+                            productVersion = productVersion.replaceAll("\\.redhat.*", "");
+                        }
                     }
-                    // we need to strip down .GA suffix, since it is not present in RHA
-                    productVersion = productVersion.replaceAll("\\.GA.*", "");
+
                     String sessionId = String.valueOf("&sid=" + UserSessionManager.getSessionSubject().getSessionId());
                     setContentsURL("/rha/support.html#/resource-case/?resourceId=" + resourceId + "&product="
                         + productName + "&version=" + productVersion + sessionId);

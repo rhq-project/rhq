@@ -662,7 +662,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         for (String name : memberDefinitions.keySet()) {
             PropertyDefinition memberDefinition = memberDefinitions.get(name);
 
-            if (memberDefinition.isReadOnly())
+            if (!createChildRequested && memberDefinition.isReadOnly())
                 continue;
 
             if (memberDefinition instanceof PropertyDefinitionSimple) {
@@ -672,6 +672,16 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                     continue;
                 if (ps!=null)
                     results.put(name,ps.getStringValue());
+            }
+            else if (memberDefinition instanceof PropertyDefinitionMap) {
+               PropertyDefinitionMap pdm = (PropertyDefinitionMap) memberDefinition;
+               PropertyMap pm = (PropertyMap) property.get(name);
+               if ((pm==null || pm.getMap().isEmpty()) && !pdm.isRequired())
+                  continue;
+               if (pm != null) {
+                  Map<String, Object> innerMap = preparePropertyMap(pm, pdm);
+                  results.put(name, innerMap);
+               }
             }
             else {
                 log.error(" *** not yet supported *** : " + memberDefinition.getName());

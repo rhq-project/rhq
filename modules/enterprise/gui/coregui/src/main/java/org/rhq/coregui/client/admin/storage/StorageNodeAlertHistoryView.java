@@ -65,7 +65,7 @@ import org.rhq.coregui.client.util.message.Message;
 
 /**
  * The view for presenting alerts on storage node resource and its children.
- * 
+ *
  * @author Jirka Kremser
  */
 public class StorageNodeAlertHistoryView extends AlertHistoryView {
@@ -76,25 +76,83 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
     private Map<Integer, String> storageNodeIdToAddressMap;
     private Date startDateAux;
     private Date endDateAux;
+    private boolean initialized;
 
     public StorageNodeAlertHistoryView(String tableTitle, Map<Integer, Integer> resourceIdToStorageNodeIdMap) {
         this(tableTitle, ArrayUtils.unwrapArray(resourceIdToStorageNodeIdMap.keySet().toArray(new Integer[] {})), null,
-            -1);
-        this.resourceIdToStorageNodeIdMap = resourceIdToStorageNodeIdMap;
+            -1, resourceIdToStorageNodeIdMap);
     }
 
     public StorageNodeAlertHistoryView(String tableTitle, int[] resourceIds, HTMLFlow header, int storageNodeId) {
+        this(tableTitle, resourceIds, header, storageNodeId, null);
+    }
+
+    public StorageNodeAlertHistoryView(String tableTitle, int[] resourceIds, HTMLFlow header, int storageNodeId,
+        Map<Integer, Integer> resourceIdToStorageNodeIdMap) {
         super(tableTitle, resourceIds);
         this.header = header;
         this.storageNodeId = storageNodeId;
         this.allStorageNodes = storageNodeId == -1;
-        storageNodeIdToAddressMap = new HashMap<Integer, String>();
+        this.resourceIdToStorageNodeIdMap = resourceIdToStorageNodeIdMap;
+
+        this.initialized = false;
+        this.storageNodeIdToAddressMap = new HashMap<Integer, String>();
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return super.isInitialized() && this.initialized;
     }
 
     @Override
     protected void onInit() {
         super.onInit();
-        fetchAddresses();
+        initAddresses();
+    }
+
+    private void initAddresses() {
+        if (header != null && !allStorageNodes) {
+            StorageNodeCriteria criteria = new StorageNodeCriteria();
+            criteria.addFilterId(storageNodeId);
+            GWTServiceLookup.getStorageService().findStorageNodesByCriteria(criteria,
+                new AsyncCallback<PageList<StorageNode>>() {
+                    public void onSuccess(final PageList<StorageNode> storageNodes) {
+                        if (storageNodes == null || storageNodes.isEmpty() || storageNodes.size() != 1) {
+                            Message msg = new Message(MSG.view_adminTopology_message_fetchServerFail(String
+                                .valueOf(storageNodeId)), Message.Severity.Error);
+                            CoreGUI.goToView(StorageNodeTableView.VIEW_PATH, msg);
+                            return;
+                        }
+                        final StorageNode node = storageNodes.get(0);
+                        header.setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'>"
+                            + MSG.view_adminTopology_storageNodes_node() + " (" + node.getAddress() + ")</div>");
+                        initialized = true;
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)) + " "
+                                + caught.getMessage(), caught);
+                    }
+                });
+        } else { // fetch the addresses of all storage nodes
+            GWTServiceLookup.getStorageService().getStorageNodes(new AsyncCallback<List<StorageNode>>() {
+                public void onSuccess(final List<StorageNode> storageNodes) {
+                    if (storageNodes != null && !storageNodes.isEmpty()) {
+                        for (StorageNode node : storageNodes) {
+                            storageNodeIdToAddressMap.put(node.getId(), node.getAddress());
+                        }
+                    }
+                    initialized = true;
+                }
+
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)) + " "
+                            + caught.getMessage(), caught);
+                }
+            });
+        }
     }
 
     @Override
@@ -241,50 +299,6 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
         CoreGUI.goToView(getDetailUrlFromRecord(record));
     }
 
-    private void fetchAddresses() {
-        if (header != null && !allStorageNodes) {
-            StorageNodeCriteria criteria = new StorageNodeCriteria();
-            criteria.addFilterId(storageNodeId);
-            GWTServiceLookup.getStorageService().findStorageNodesByCriteria(criteria,
-                new AsyncCallback<PageList<StorageNode>>() {
-                    public void onSuccess(final PageList<StorageNode> storageNodes) {
-                        if (storageNodes == null || storageNodes.isEmpty() || storageNodes.size() != 1) {
-                            Message msg = new Message(MSG.view_adminTopology_message_fetchServerFail(String
-                                .valueOf(storageNodeId)), Message.Severity.Error);
-                            CoreGUI.goToView(StorageNodeTableView.VIEW_PATH, msg);
-                            return;
-                        }
-                        final StorageNode node = storageNodes.get(0);
-                        header.setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'>"
-                            + MSG.view_adminTopology_storageNodes_node() + " (" + node.getAddress() + ")</div>");
-                    }
-
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)) + " "
-                                + caught.getMessage(), caught);
-                    }
-                });
-        } else { // fetch the addresses of all storage nodes
-            GWTServiceLookup.getStorageService().getStorageNodes(new AsyncCallback<List<StorageNode>>() {
-                public void onSuccess(final List<StorageNode> storageNodes) {
-                    if (storageNodes != null && !storageNodes.isEmpty()) {
-                        for (StorageNode node : storageNodes) {
-                            storageNodeIdToAddressMap.put(node.getId(), node.getAddress());
-                        }
-                    }
-                }
-
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)) + " "
-                            + caught.getMessage(), caught);
-                }
-            });
-
-        }
-    }
-
     private String getDetailUrlFromRecord(ListGridRecord record) {
         if (record == null) {
             throw new IllegalArgumentException("'record' parameter is null.");
@@ -305,52 +319,52 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
     protected void setupTableInteractions(final boolean hasWriteAccess) {
         // We override this method, because button enablement implementation from super class for "Delete All"
         // and "Acknowledge All" doesn't work correctly for table with using grouping. Also adding additional
-        // button for enabling / disabling the alerts grouping. 
+        // button for enabling / disabling the alerts grouping.
 
         addTableAction(MSG.common_button_delete(), MSG.view_alerts_delete_confirm(), ButtonColor.RED,
             new ResourceAuthorizedTableAction(StorageNodeAlertHistoryView.this, TableActionEnablement.ANY,
                 (hasWriteAccess ? null : Permission.MANAGE_ALERTS), new RecordExtractor<Integer>() {
-                public Collection<Integer> extract(Record[] records) {
-                    List<Integer> result = new ArrayList<Integer>(records.length);
-                    for (Record record : records) {
-                        result.add(record.getAttributeAsInt("resourceId"));
+                    public Collection<Integer> extract(Record[] records) {
+                        List<Integer> result = new ArrayList<Integer>(records.length);
+                        for (Record record : records) {
+                            result.add(record.getAttributeAsInt("resourceId"));
+                        }
+                        return result;
                     }
-                    return result;
-                }
-            }) {
+                }) {
 
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                delete(selection);
-            }
-        });
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    delete(selection);
+                }
+            });
         addTableAction(MSG.common_button_ack(), MSG.view_alerts_ack_confirm(), ButtonColor.BLUE,
             new ResourceAuthorizedTableAction(StorageNodeAlertHistoryView.this, TableActionEnablement.ANY,
-                (hasWriteAccess ? null                : Permission.MANAGE_ALERTS), new RecordExtractor<Integer>() {
-                public Collection<Integer> extract(Record[] records) {
-                    List<Integer> result = new ArrayList<Integer>(records.length);
-                    for (Record record : records) {
-                        result.add(record.getAttributeAsInt("resourceId"));
+                (hasWriteAccess ? null : Permission.MANAGE_ALERTS), new RecordExtractor<Integer>() {
+                    public Collection<Integer> extract(Record[] records) {
+                        List<Integer> result = new ArrayList<Integer>(records.length);
+                        for (Record record : records) {
+                            result.add(record.getAttributeAsInt("resourceId"));
+                        }
+                        return result;
                     }
-                    return result;
-                }
-            }) {
+                }) {
 
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                acknowledge(selection);
-            }
-        });
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    acknowledge(selection);
+                }
+            });
         addTableAction(MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(), ButtonColor.RED,
             new TableAction() {
-            public boolean isEnabled(ListGridRecord[] selection) {
-                ListGrid grid = getListGrid();
-                ListGridRecord[] records = (null != grid) ? grid.getRecords() : null;
-                return (hasWriteAccess && grid != null && records != null && records.length > 0);
-            }
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    ListGrid grid = getListGrid();
+                    ListGridRecord[] records = (null != grid) ? grid.getRecords() : null;
+                    return (hasWriteAccess && grid != null && records != null && records.length > 0);
+                }
 
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                deleteAll();
-            }
-        });
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    deleteAll();
+                }
+            });
         addTableAction(MSG.common_button_ack_all(), MSG.view_alerts_ack_confirm_all(), new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 ListGrid grid = getListGrid();
@@ -369,18 +383,18 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
         items.put("Off", false);
         addTableAction(MSG.view_adminTopology_storageNodes_groupAlerts(), null, items, ButtonColor.GRAY,
             new AbstractTableAction(TableActionEnablement.ALWAYS) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                setGrouping((Boolean) actionValue);
-            }
-        });
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    setGrouping((Boolean) actionValue);
+                }
+            });
     }
-    
+
     private void setGrouping(boolean grouping) {
         if (grouping == getListGrid().isGrouped()) {
             refreshTableInfo();
             return;
         }
-        
+
         if (grouping) {
             getListGrid().groupBy("name");
             // save the values
@@ -398,9 +412,9 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
             startDateFilter.show();
             endDateFilter.show();
         }
-        // refresh the table manually, calling refresh() doesn't work here because the listgrid has set the 
+        // refresh the table manually, calling refresh() doesn't work here because the listgrid has set the
         // autoFetchData flag to true and invalidateCache() doesn't do the fetching as mentioned in the refresh()
-        // method. 
+        // method.
         final ListGrid listGrid = getListGrid();
         Criteria criteria = getCurrentCriteria();
         listGrid.setCriteria(criteria);

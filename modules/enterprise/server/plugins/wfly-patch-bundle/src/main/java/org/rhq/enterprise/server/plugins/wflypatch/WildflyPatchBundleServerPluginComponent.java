@@ -108,7 +108,7 @@ public class WildflyPatchBundleServerPluginComponent implements ServerPluginComp
 
                 for (PatchBundle.Element p : patchBundle) {
                     lastPatch = p.getPatch();
-                    allPatchIds.append(p.getPatch().getId()).append("|");
+                    allPatchIds.append(p.getPatch().getId()).append("#");
                 }
                 allPatchIds.replace(allPatchIds.length() - 1, allPatchIds.length(), "");
 
@@ -121,7 +121,7 @@ public class WildflyPatchBundleServerPluginComponent implements ServerPluginComp
 
                 ConfigurationDefinition config = new ConfigurationDefinition("wildfly-patch", null);
                 PropertyDefinitionSimple allPatchIdsProp = new PropertyDefinitionSimple("allPatchIds",
-                    "Pipe-separated list of all individual patches the patch bundle is composed of.", true,
+                    "Hash-separated list of all individual patches the patch bundle is composed of.", true,
                     PropertySimpleType.STRING);
                 allPatchIdsProp.setDefaultValue(allPatchIds.toString());
                 allPatchIdsProp.setReadOnly(true);

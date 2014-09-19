@@ -19,7 +19,10 @@
 
 package org.rhq.modules.plugins.jbossas7;
 
+import static org.rhq.core.util.file.FileUtil.writeFile;
+
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +37,7 @@ import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.util.PropertyReplacer;
 
@@ -51,6 +55,7 @@ final class ServerControl {
 
     private final ServerPluginConfiguration serverPluginConfig;
     private final Configuration pluginConfiguration;
+    private final String startScriptPrefix;
     private final Map<String, String> startScriptEnv;
     private final AS7Mode serverMode;
     private final SystemInfo systemInfo;
@@ -59,12 +64,16 @@ final class ServerControl {
     private boolean killOnTimeout;
 
     private ServerControl(Configuration pluginConfiguration, AS7Mode serverMode, SystemInfo systemInfo) {
-        this.serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
         this.pluginConfiguration = pluginConfiguration;
         this.serverMode = serverMode;
         this.systemInfo = systemInfo;
-        this.startScriptEnv = new StartScriptConfiguration(pluginConfiguration).getStartScriptEnv();
+        serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
 
+        StartScriptConfiguration startScriptConfiguration = new StartScriptConfiguration(pluginConfiguration);
+
+        startScriptPrefix = startScriptConfiguration.getStartScriptPrefix();
+
+        startScriptEnv = startScriptConfiguration.getStartScriptEnv();
         for (String envVarName : startScriptEnv.keySet()) {
             String envVarValue = startScriptEnv.get(envVarName);
             envVarValue = PropertyReplacer.replacePropertyPatterns(envVarValue, pluginConfiguration);
@@ -105,12 +114,11 @@ final class ServerControl {
         return new Cli();
     }
 
-    private ProcessExecutionResults execute(File executable, String... args) {
+    private ProcessExecutionResults execute(String prefix, File executable, String... args) {
         File homeDir = serverPluginConfig.getHomeDir();
         File startScriptFile = executable.isAbsolute() ? executable : new File(homeDir, executable.getPath());
 
-        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(null,
-            startScriptFile);
+        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(prefix, startScriptFile);
 
         processExecution.setEnvironmentVariables(startScriptEnv);
 
@@ -120,7 +128,7 @@ final class ServerControl {
             processExecution.setArguments(arguments);
         }
 
-        for(String arg : args) {
+        for (String arg : args) {
             if (arg != null) {
                 arguments.add(arg);
             }
@@ -172,7 +180,7 @@ final class ServerControl {
             try {
                 //we really don't want to wait for the server start, because, hopefully, it will keep on running ;)
                 waitTime = -1;
-                return execute(startScriptFile, startScriptArgs);
+                return execute(startScriptPrefix, startScriptFile, startScriptArgs);
             } finally {
                 waitTime = origWaitTime;
             }
@@ -198,7 +206,6 @@ final class ServerControl {
                 command += " --host=" + host;
                 connection.shutdown();
             }
-
 
             return cli().disconnected(false).executeCliCommand(command);
         }
@@ -228,6 +235,7 @@ final class ServerControl {
          * @return the execution results
          */
         public ProcessExecutionResults executeCliCommand(String commands) {
+            File executable = new File("bin", serverMode.getCliScriptFileName());
             String connect = disconnected ? null : "--connect";
             commands = commands.replace('\n', ',');
             String user = disconnected ? null : "--user=" + serverPluginConfig.getUser();
@@ -235,8 +243,11 @@ final class ServerControl {
             String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
                 + serverPluginConfig.getNativePort();
 
-            return execute(new File("bin", serverMode.getCliScriptFileName()), connect, commands, user, password,
-                controller);
+            if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) {
+                return execute(null, executable, connect, commands, user, password, controller);
+            }
+            WinCliHelper cliHelper = new WinCliHelper(executable, connect, commands, user, password, controller);
+            return cliHelper.execute();
         }
 
         /**
@@ -247,12 +258,11 @@ final class ServerControl {
          */
         public ProcessExecutionResults executeCliScript(File scriptFile) {
             File homeDir = serverPluginConfig.getHomeDir();
-
             File script = scriptFile;
             if (!script.isAbsolute()) {
                 script = new File(homeDir, scriptFile.getPath());
             }
-
+            File executable = new File("bin", serverMode.getCliScriptFileName());
             String connect = disconnected ? null : "--connect";
             String file = "--file=" + script.getAbsolutePath();
             String user = disconnected ? null : "--user=" + serverPluginConfig.getUser();
@@ -260,8 +270,46 @@ final class ServerControl {
             String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
                 + serverPluginConfig.getNativePort();
 
-            return execute(new File("bin", serverMode.getCliScriptFileName()), connect, file, user, password,
-                controller);
+            if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) {
+                return execute(null, executable, connect, file, user, password, controller);
+            }
+            WinCliHelper cliHelper = new WinCliHelper(executable, connect, file, user, password, controller);
+            return cliHelper.execute();
         }
+    }
+
+    private class WinCliHelper {
+        static final String JBOSS_CLI_WRAPPER_BAT = "jboss-cli-wrapper.bat";
+        static final String CLI_WRAPPER = "cli-wrapper";
+        static final String BAT = ".bat";
+
+        final File executable;
+        final String[] args;
+
+        protected WinCliHelper(File executable, String... args) {
+            this.executable = executable;
+            this.args = args;
+        }
+
+        ProcessExecutionResults execute() {
+            String prefix = null;
+            File windowsCliWrapper = null;
+            // Calling "cmd /c jboss-cli.bat" will always return 0 even if an error occurs in the CLI
+            // Calling it through the wrapper solves the issue
+            // See WFLY-3578 https://issues.jboss.org/browse/WFLY-3578
+            try {
+                windowsCliWrapper = File.createTempFile(CLI_WRAPPER, BAT);
+                writeFile(Cli.class.getClassLoader().getResourceAsStream(JBOSS_CLI_WRAPPER_BAT), windowsCliWrapper);
+                prefix = windowsCliWrapper.getAbsolutePath();
+            } catch (IOException e) {
+                LOG.warn("Could not create EAP CLI Wrapper. The CLI exit code may not be reported correctly", e);
+            }
+            try {
+                return ServerControl.this.execute(prefix, executable, args);
+            } finally {
+                FileUtil.purge(windowsCliWrapper, true);
+            }
+        }
+
     }
 }

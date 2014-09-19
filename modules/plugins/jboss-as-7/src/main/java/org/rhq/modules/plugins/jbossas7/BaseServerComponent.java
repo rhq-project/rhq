@@ -460,29 +460,30 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
             results = cli.executeCliScript(script);
         }
+
         logExecutionResults(results);
+        result.setSimpleResult(results.getCapturedOutput());
 
         if (results.getError() != null) {
             result.setErrorMessage(results.getError().getMessage());
-        } else if (results.getExitCode() == null) {
-            result.setErrorMessage("jboss-cli execution timed out, captured output:\n" + results.getCapturedOutput());
             return result;
-        } else if (results.getExitCode() != 0) {
-            result.setErrorMessage("jboss-cli execution failed with error code " + results.getExitCode() + ":\n"
-                + results.getCapturedOutput());
-        } else {
-            result.setSimpleResult(results.getCapturedOutput());
         }
-        if (result.getErrorMessage() == null) {
-            PropertySimple avail = parameters.getSimple("triggerAvailability");
-            if (avail != null && avail.getBooleanValue()) {
-                context.getAvailabilityContext().requestAvailabilityCheck();
-            }
-            PropertySimple disc = parameters.getSimple("triggerDiscovery");
-            if (disc != null && disc.getBooleanValue()) {
-                context.getInventoryContext().requestDeferredChildResourcesDiscovery();
-            }
+        if (results.getExitCode() == null) {
+            result.setErrorMessage("jboss-cli execution timed out");
+            return result;
         }
+        if (results.getExitCode() != 0) {
+            result.setErrorMessage("jboss-cli execution failed with error code " + results.getExitCode());
+            return result;
+        }
+
+        if (Boolean.parseBoolean(parameters.getSimpleValue("triggerAvailability", null))) {
+            context.getAvailabilityContext().requestAvailabilityCheck();
+        }
+        if (Boolean.parseBoolean(parameters.getSimpleValue("triggerDiscovery", null))) {
+            context.getInventoryContext().requestDeferredChildResourcesDiscovery();
+        }
+
         return result;
     }
 

@@ -19,22 +19,29 @@
 package org.rhq.coregui.client.inventory.resource.detail;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.help.RhAccessView;
 
 public class OpenSupportCaseMenuItem extends MenuItem {
 
-    private static final List<String> SUPPORTED_TYPES = Arrays.asList("JBossAS7 Host Controller",
-        "JBossAS7 Standalone Server", "Managed Server");
+    private static final Map<String,List<String>> SUPPORTED_TYPES = new HashMap<String, List<String>>();
     private final ResourceComposite resourceComposite;
+
+    static {
+        SUPPORTED_TYPES.put("JBossAS7",
+            Arrays.asList("JBossAS7 Host Controller", "JBossAS7 Standalone Server", "Managed Server"));
+        SUPPORTED_TYPES.put("JBossFuse", Arrays.asList("JBoss Fuse Container"));
+    }
 
     public OpenSupportCaseMenuItem(ResourceComposite rc) {
         super(RhAccessView.PAGE_RESOURCE_CASE.getTitle());
@@ -53,13 +60,9 @@ public class OpenSupportCaseMenuItem extends MenuItem {
         if (CoreGUI.isRHQ()) {
             return false;
         }
-        Resource resource = resourceComposite.getResource();
-        if (resource.getResourceType().getPlugin().equals("JBossAS7")) {
-            if (SUPPORTED_TYPES.contains(resource.getResourceType().getName())) {
-                return true;
-            }
-        }
-        return false;
+        ResourceType type = resourceComposite.getResource().getResourceType();
+        List<String> types = SUPPORTED_TYPES.get(type.getPlugin());
+        return types != null && types.contains(type.getName());
     }
 
 }

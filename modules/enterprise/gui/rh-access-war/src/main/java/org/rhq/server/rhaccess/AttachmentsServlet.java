@@ -72,8 +72,9 @@ public class AttachmentsServlet extends HttpServlet {
 
         PageList<Resource> resources = LookupUtil.getResourceManager().findResourcesByCriteria(
             LookupUtil.getSubjectManager().getOverlord(), rc);
+
+        StringBuilder options = new StringBuilder();
         if (resources.size() > 0) {
-            StringBuilder options = new StringBuilder();
             Resource r = resources.get(0);
             String checked = "true";
             if (!r.getCurrentAvailability().equals(AvailabilityType.UP)) {
@@ -93,11 +94,9 @@ public class AttachmentsServlet extends HttpServlet {
                         + "?checked=" + checked + "\n");
                 }
             }
-            return options.toString();
 
         }
-
-        return null;
+        return options.toString();
     }
 
     private boolean isAuthorized(HttpServletRequest request) {

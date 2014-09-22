@@ -282,6 +282,7 @@
     <service name="EnabledStages" sourcePlugin="Cassandra" sourceType="EnabledStages" singleton="true"/>
 
     <service name="ConfigurableInternalServerMetrics" sourcePlugin="Cassandra" sourceType="ConfigurableInternalServerMetrics"
+             supportsMissingAvailabilityType="true"
              singleton="true"/>
 
     <service name="EnabledInternalServerMetrics" sourcePlugin="Cassandra" sourceType="EnabledInternalServerMetrics"

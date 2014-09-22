@@ -471,7 +471,8 @@
 
     <service name="ConfigurableInternalServerMetrics"
              discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
-             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             class="org.rhq.plugins.cassandra.AntiEntropySessionsComponent"
+             supportsMissingAvailabilityType="true"
              singleton="true"
              subCategory="Internal Server Metrics">
 

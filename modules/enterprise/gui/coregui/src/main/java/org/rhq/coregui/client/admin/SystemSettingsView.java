@@ -374,7 +374,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 pd.setDescription(MSG.view_admin_systemSettings_EnableLoginWithoutRoles_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_EnableLoginWithoutRoles_name());
                 pd.setPropertyGroupDefinition(generalGroup);
-                pd.setDefaultValue("false");
+                pd.setDefaultValue("true");
                 break;
             case EXPERIMENTAL_FEATURES_ENABLED:
                 pd.setDescription(MSG.view_admin_systemSettings_EnableExperimentalFeatures_desc());

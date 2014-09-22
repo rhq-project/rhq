@@ -52,6 +52,7 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
 
 import org.jboss.sasl.util.UsernamePasswordHashUtil;
@@ -72,6 +73,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
+import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.util.PropertiesFileUpdate;
@@ -694,7 +696,12 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             if (requestName.equals("startTime")) {
                 collectStartTimeTrait(report, request);
             } else {
-                if (tempDirAttributeName != null && requestName.equals(tempDirAttributeName)) {
+                if ("active-patches".equals(requestName)) {
+                    String patches = collectPatches();
+                    if (patches != null) {
+                        report.addData(new MeasurementDataTrait(request, patches));
+                    }
+                } else if (tempDirAttributeName != null && requestName.equals(tempDirAttributeName)) {
                     collectEnvironmentTrait(report, request);
                 } else if (requestName.startsWith("_skm:")) { // handled below
                     skmRequests.add(request);
@@ -1087,5 +1094,77 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         }
 
         return null;
+    }
+
+    protected String collectPatches() {
+        ProcessExecutionResults results = ServerControl.onServer(context.getPluginConfiguration(), getMode(),
+            context.getSystemInformation())
+            .cli().disconnected(true).executeCliCommand("patch info");
+
+        if (results.getError() != null) {
+            LOG.info("Failed to determine the list of installed patches on " + context.getResourceDetails() +
+                ". The execution of JBoss CLI failed.", results.getError());
+
+            return null;
+        } else if (results.getExitCode() == null) {
+            LOG.info("Failed to determine the list of installed patches on " + context.getResourceDetails() +
+                ". The execution of JBoss CLI timed out.");
+
+            return null;
+        } else if (results.getExitCode() != 0) {
+            LOG.info("Failed to determine the list of installed patches on " + context.getResourceDetails() +
+                ". The execution of JBoss CLI exited with code " + results.getExitCode() + ".");
+
+            return null;
+        } else {
+            String json = results.getCapturedOutput();
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            Result result;
+            try {
+                result = mapper.readValue(json, Result.class);
+            } catch (IOException e) {
+                LOG.warn("Failed to parse the output of the 'patch info' command with message '" + e.getMessage() +
+                    "'.", e);
+                return null;
+            }
+
+            if (!result.isSuccess()) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("'patch info' command didn't succeed: " + result);
+                }
+
+                return null;
+            }
+
+            if (!(result.getResult() instanceof Map)) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Unexpected patch info results. Expected map but found " +
+                        (result.getResult() == null ? "null" : result.getResult().getClass().toString()));
+                }
+
+                return null;
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> info = (Map<String, Object>) result.getResult();
+
+            if (info.isEmpty()) {
+                return null;
+            }
+
+            String cp = (String) info.get("cumulative-patch-id");
+            @SuppressWarnings("unchecked")
+            List<String> oneOffs = (List<String>) info.get("patches");
+
+            StringBuilder ret = new StringBuilder(cp);
+
+            for (String oneOff : oneOffs) {
+                ret.append(", ").append(oneOff);
+            }
+
+            return ret.toString();
+        }
     }
 }

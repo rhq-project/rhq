@@ -168,6 +168,12 @@ public class RhAccessView extends FullHTMLPane implements BookmarkableView {
                         if ("Data Grid".equals(productName)) {
                             productName = "Red Hat JBoss Data Grid";
                         }
+                        if ("BRMS".equals(productName)) {
+                            productName = "Red Hat JBoss BRMS";
+                        }
+                        if ("Portal".equals(productName)) {
+                            productName = "Red Hat JBoss Portal";
+                        }
                         // we need to strip down .GA suffix, since it is not present in RHA
                         productVersion = productVersion.replaceAll("\\.GA.*", "");
                     }
@@ -175,6 +181,12 @@ public class RhAccessView extends FullHTMLPane implements BookmarkableView {
                         if ("JBoss Fuse Container".equals(resource.getResourceType().getName())) {
                             productName = "Red Hat JBoss Fuse";
                             productVersion = productVersion.replaceAll("\\.redhat.*", "");
+                        }
+                    }
+                    if ("Tomcat".equals(resource.getResourceType().getPlugin())) {
+                        if ("Tomcat Server".equals(resource.getResourceType().getName())) {
+                            productName = "Red Hat JBoss Web Server";
+                            productVersion = ""; // we can't really detect EWS version from tomcat instance
                         }
                     }
 

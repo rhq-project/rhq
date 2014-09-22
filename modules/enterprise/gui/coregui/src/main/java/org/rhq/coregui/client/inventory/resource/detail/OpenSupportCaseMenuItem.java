@@ -41,6 +41,7 @@ public class OpenSupportCaseMenuItem extends MenuItem {
         SUPPORTED_TYPES.put("JBossAS7",
             Arrays.asList("JBossAS7 Host Controller", "JBossAS7 Standalone Server", "Managed Server"));
         SUPPORTED_TYPES.put("JBossFuse", Arrays.asList("JBoss Fuse Container"));
+        SUPPORTED_TYPES.put("Tomcat", Arrays.asList("Tomcat Server"));
     }
 
     public OpenSupportCaseMenuItem(ResourceComposite rc) {

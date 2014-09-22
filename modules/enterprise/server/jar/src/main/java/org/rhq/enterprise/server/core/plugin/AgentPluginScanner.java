@@ -105,7 +105,11 @@ public class AgentPluginScanner {
                 }
                 else {
                     log.debug("Hot deploying agent plugin [" + di.url + "]...");
-                    this.agentPluginDeployer.pluginDetected(di);
+                    try {
+                        this.agentPluginDeployer.pluginDetected(di);
+                    } catch (Exception e) {
+                        log.error("Failed to process plugin at [" + di.url + "]. If it was obsolete and was deleted, this can be ignored. Otherwise, something is wrong with the plugin file and cannot be processed.", e);
+                    }
                 }
             }
 

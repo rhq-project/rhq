@@ -429,8 +429,6 @@ public class SSHInstallUtility {
      *         if the agent port was not known and thus the connection attempt was never made).
      */
     private Boolean checkAgentConnection(AgentInstallInfo info, int retries) {
-        // If we know the port the agent is going to listen to, see if we can ping it.
-        // If we don't know the port, then just skip this test and set the confirm connection flag to null.
         if (info.getAgentPort() > 0) {
             info.setConfirmedAgentConnection(false);
             for (int attempt = 0; attempt < retries && !info.isConfirmedAgentConnection(); attempt++) {
@@ -448,7 +446,7 @@ public class SSHInstallUtility {
                 }
             }
         } else {
-            info.setConfirmedAgentConnection(null); // indicates we didn't try to ping the agent
+            info.setConfirmedAgentConnection(false);
         }
 
         return info.isConfirmedAgentConnection();

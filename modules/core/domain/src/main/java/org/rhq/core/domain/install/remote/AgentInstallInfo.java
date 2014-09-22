@@ -41,7 +41,7 @@ public class AgentInstallInfo implements Serializable {
 
     private List<AgentInstallStep> steps = new ArrayList<AgentInstallStep>();
     private String customAgentConfigFile = null;
-    private Boolean confirmedAgentConnection = null;
+    private Boolean confirmedAgentConnection = Boolean.FALSE;
 
     public static final String SETUP_PROP = "rhq.agent.configuration-setup-flag";
 

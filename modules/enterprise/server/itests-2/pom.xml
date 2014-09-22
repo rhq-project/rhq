@@ -330,7 +330,7 @@
                       toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
                 <copy file="${settings.localRepository}/org/apache/thrift/libthrift/${cassandra.thrift.version}/libthrift-${cassandra.thrift.version}.jar"
                       toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
-                <copy file="${settings.localRepository}/com/google/guava/guava/14.0.1/guava-14.0.1.jar"
+                <copy file="${settings.localRepository}/com/google/guava/guava/16.0.1/guava-16.0.1.jar"
                       toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
                 <copy file="${settings.localRepository}/com/yammer/metrics/metrics-core/2.2.0/metrics-core-2.2.0.jar"
                       toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
@@ -349,7 +349,7 @@
         <resource-root path="cassandra-all-${cassandra.version}.jar"/>
         <resource-root path="cassandra-thrift-${cassandra.version}.jar"/>
         <resource-root path="libthrift-${cassandra.thrift.version}.jar"/>
-        <resource-root path="guava-14.0.1.jar"/>
+        <resource-root path="guava-16.0.1.jar"/>
         <resource-root path="metrics-core-2.2.0.jar"/>
         <resource-root path="slf4j-api-1.7.2.jar"/>
         <resource-root path="slf4j-log4j12-1.7.2.jar"/>

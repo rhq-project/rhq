@@ -44,10 +44,6 @@ public class StorageResultSetFuture implements ListenableFuture<ResultSet> {
         return wrapperFuture.isDone();
     }
 
-    public void setException(Throwable t) {
-        wrapperFuture.setException(t);
-    }
-
     /**
      * Delegates to {@link com.datastax.driver.core.ResultSetFuture#getUninterruptibly()}
      */

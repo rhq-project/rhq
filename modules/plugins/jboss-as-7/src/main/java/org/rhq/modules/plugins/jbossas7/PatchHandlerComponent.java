@@ -652,7 +652,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
                     "Could not determine the list of patch ids from the bundle configuration while performing " +
                         operation);
             }
-            pids = allPatchIdsProp.getStringValue().split("\\|");
+            pids = allPatchIdsProp.getStringValue().split("#");
             //we need to return the pids in the same order as patch history - i.e. in the reversed deployment order
             Collections.reverse(Arrays.asList(pids));
         } else {

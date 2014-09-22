@@ -34,6 +34,8 @@ import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.DataArrivedEvent;
@@ -151,12 +153,28 @@ public class GetDestinationStep extends AbstractWizardStep {
                 }
             });
 
-            this.selector = new SingleCompatibleResourceGroupSelector("group", MSG.common_title_resource_group());
+            this.selector = new SingleCompatibleResourceGroupSelector("group", MSG.common_title_resource_group(),
+                wizard.getBundle().getBundleType().getName());
+
             this.selector.setWidth(300);
             this.selector.setRequired(true);
             Validator validator = new IsIntegerValidator();
             validator.setErrorMessage(MSG.view_bundle_deployWizard_error_8());
             this.selector.setValidators(validator);
+            // BZ 1134486 - for some reason, we are getting spurious "null" change events in certain circumstances - ignore them
+            this.selector.addChangeHandler(new ChangeHandler() {
+                @Override
+                public void onChange(ChangeEvent event) {
+                    if (event.getValue() == null) {
+                        if (event.getOldValue() != null) {
+                            event.cancel();
+                            if (event.getOldValue() instanceof Integer) {
+                                groupSelectionChanged((Integer) event.getOldValue());
+                            }
+                        }
+                    }
+                }
+            });
             this.selector.addChangedHandler(new ChangedHandler() {
                 @Override
                 public void onChanged(ChangedEvent event) {
@@ -165,9 +183,10 @@ public class GetDestinationStep extends AbstractWizardStep {
                     // If the selection is an actual group name, the event value will be
                     // an integer (the group ID) and that is our indication that the selection
                     // of an actual group has been made
+                    Object eventValue = event.getValue();
                     Integer selectedGroupId = null;
-                    if (event.getValue() instanceof Integer) {
-                        selectedGroupId = (Integer) event.getValue();
+                    if (eventValue instanceof Integer) {
+                        selectedGroupId = (Integer) eventValue;
                     }
                     groupSelectionChanged(selectedGroupId);
                 }
@@ -263,6 +282,11 @@ public class GetDestinationStep extends AbstractWizardStep {
         destSpecItem.clearValue();
         destSpecItem.setValueMap((String[]) null);
 
+        // BZ 1134486 - for some reason, the selector gets new null events if it keeps focus - blur it to avoid this bug
+        if (selectedGroupId != null) {
+            selector.blurItem();
+        }
+
         // this will be null if there is no true group actually selected (e.g. user is typing a partial name to search)
         if (selectedGroupId != null) {
             bundleServer.getResourceTypeBundleConfiguration(selectedGroupId.intValue(),
@@ -272,7 +296,9 @@ public class GetDestinationStep extends AbstractWizardStep {
                         LinkedHashMap<String, String> menuItems = null;
                         if (result != null) {
                             Set<BundleDestinationSpecification> destSpecs;
-                            destSpecs = result.getBundleDestinationSpecifications();
+                            destSpecs = result.getAcceptableBundleDestinationSpecifications(
+                                wizard.getBundle().getBundleType().getName());
+
                             if (destSpecs != null && destSpecs.size() > 0) {
                                 String defaultSelectedItem = null;
                                 menuItems = new LinkedHashMap<String, String>(destSpecs.size());

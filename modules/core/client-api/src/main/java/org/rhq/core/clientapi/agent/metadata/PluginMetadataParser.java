@@ -39,8 +39,10 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.descriptor.plugin.Bundle;
 import org.rhq.core.clientapi.descriptor.plugin.BundleConfigFullCopy;
 import org.rhq.core.clientapi.descriptor.plugin.BundleConfigPropertyReference;
+import org.rhq.core.clientapi.descriptor.plugin.BundleDestination;
+import org.rhq.core.clientapi.descriptor.plugin.BundleDestinationBaseDir;
+import org.rhq.core.clientapi.descriptor.plugin.BundleDestinationDefinition;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor.DestinationBaseDir;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTraitReference;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.DiscoveryCallbacksType;
@@ -56,6 +58,7 @@ import org.rhq.core.clientapi.descriptor.plugin.ProcessScanDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ResourceCreateDeletePolicy;
 import org.rhq.core.clientapi.descriptor.plugin.ResourceCreationData;
 import org.rhq.core.clientapi.descriptor.plugin.ResourceDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ResourceUpgradeCallbackType;
 import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
@@ -92,6 +95,7 @@ public class PluginMetadataParser {
     private Map<ResourceType, String> componentClasses = new HashMap<ResourceType, String>();
 
     private Map<ResourceType, List<String>> discoveryCallbackClasses = null;
+    private Map<ResourceType, List<String>> resourceUpgradeCallbackClasses = null;
 
     // a map keyed on plugin name that contains the parsers for all other known plugin descriptors
     // this map is managed by this parser's PluginMetadataManager and is how the manager shares information
@@ -140,6 +144,10 @@ public class PluginMetadataParser {
         return discoveryCallbackClasses;
     }
 
+    public Map<ResourceType, List<String>> getResourceUpgradeCallbackClasses() {
+        return resourceUpgradeCallbackClasses;
+    }
+
     public void parseDescriptor() throws InvalidPluginDescriptorException {
         ResourceType type;
 
@@ -171,7 +179,34 @@ public class PluginMetadataParser {
         // case we are defining callbacks on types in our own plugin
         parseDiscoveryCallbacks();
 
-        return;
+        parseBundleTypeTargets();
+    }
+
+    private void parseBundleTypeTargets() {
+        parseBundleTypeTarget(pluginDescriptor.getPlatforms());
+        parseBundleTypeTarget(pluginDescriptor.getServers());
+        parseBundleTypeTarget(pluginDescriptor.getServices());
+    }
+
+    private void parseBundleTypeTarget(List<? extends ResourceDescriptor> resourceTypes) {
+        for (ResourceDescriptor d : resourceTypes) {
+            if (d.getBundle() != null) {
+                ResourceType rt = getResourceTypeFromPlugin(d.getName(), pluginDescriptor.getName());
+                BundleType bt = rt.getBundleType();
+                parseBundleTypeTarget(bt, d.getBundle().getTargets());
+            }
+        }
+    }
+
+    private void parseBundleTypeTarget(BundleType bundleType, Bundle.Targets target) {
+        if (target == null) {
+            return;
+        }
+
+        for (Bundle.Targets.ResourceType ref : target.getResourceType()) {
+            ResourceType rt = getResourceTypeFromPlugin(ref.getName(), ref.getPlugin());
+            bundleType.addTargetedResourceType(rt);
+        }
     }
 
     private void parseDiscoveryCallbacks() throws InvalidPluginDescriptorException {
@@ -180,53 +215,101 @@ public class PluginMetadataParser {
             return;
         }
 
-        List<DiscoveryTypeCallbackType> jaxbCallbacksList = jaxbCallbacks.getTypeCallback();
+        List<Object> jaxbCallbacksList = jaxbCallbacks.getTypeCallbackOrUpgradeCallback();
         if (jaxbCallbacksList == null || jaxbCallbacksList.isEmpty()) {
             return;
         }
 
-        for (DiscoveryTypeCallbackType jaxbCallback : jaxbCallbacksList) {
-            String plugin = jaxbCallback.getPlugin();
-            String type = jaxbCallback.getType();
-            String callbackClass = jaxbCallback.getCallbackClass();
-
-            LOG.debug("Plugin [" + pluginDescriptor.getName() + "] defined a discovery class [" + callbackClass
-                + "] to listen for discovery details for type [{" + plugin + "}" + type + "].");
-
-            if (callbackClass == null || callbackClass.length() == 0) {
-                // this should never happen - the XML parser should have failed to even get this far
-                throw new InvalidPluginDescriptorException("Missing discovery class in plugin ["
-                        + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type);
+        for (Object jaxbCallback : jaxbCallbacksList) {
+            if (jaxbCallback instanceof DiscoveryTypeCallbackType) {
+                parseDiscoveryCallback((DiscoveryTypeCallbackType) jaxbCallback);
+            } else {
+                parseResourceUpgradeCallback((ResourceUpgradeCallbackType) jaxbCallback);
             }
+        }
+    }
 
-            if (plugin == null || plugin.length() == 0 || type == null || type.length() == 0) {
-                // this should never happen - the XML parser should have failed to even get this far
-                throw new InvalidPluginDescriptorException("Both plugin and type must be defined for discovery callbacks in plugin ["
-                    + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type + ":" + callbackClass);
-            }
+    private void parseDiscoveryCallback(DiscoveryTypeCallbackType jaxbCallback) throws InvalidPluginDescriptorException {
+        String plugin = jaxbCallback.getPlugin();
+        String type = jaxbCallback.getType();
+        String callbackClass = jaxbCallback.getCallbackClass();
 
-            ResourceType resourceType = getResourceTypeFromPlugin(type, plugin);
-            if (resourceType == null) {
-                LOG.warn("There is no type named [" + type + "] from a plugin named [" + plugin
-                        + "]. This is probably because that plugin is missing. The discovery callback will be ignored");
-                continue;
-            }
+        LOG.debug("Plugin [" + pluginDescriptor.getName() + "] defined a discovery class [" + callbackClass
+            + "] to listen for discovery details for type [{" + plugin + "}" + type + "].");
 
-            if (discoveryCallbackClasses == null) {
-                discoveryCallbackClasses = new HashMap<ResourceType, List<String>>();
-            }
-
-            List<String> callbacksList = discoveryCallbackClasses.get(resourceType);
-            if (callbacksList == null) {
-                callbacksList = new ArrayList<String>(1);
-                discoveryCallbackClasses.put(resourceType, callbacksList);
-            }
-
-            String fqcn = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), callbackClass);
-            callbacksList.add(fqcn);
+        if (callbackClass == null || callbackClass.length() == 0) {
+            // this should never happen - the XML parser should have failed to even get this far
+            throw new InvalidPluginDescriptorException("Missing discovery class in plugin ["
+                + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type);
         }
 
-        return;
+        if (plugin == null || plugin.length() == 0 || type == null || type.length() == 0) {
+            // this should never happen - the XML parser should have failed to even get this far
+            throw new InvalidPluginDescriptorException("Both plugin and type must be defined for discovery callbacks in plugin ["
+                + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type + ":" + callbackClass);
+        }
+
+        ResourceType resourceType = getResourceTypeFromPlugin(type, plugin);
+        if (resourceType == null) {
+            LOG.warn("There is no type named [" + type + "] from a plugin named [" + plugin
+                + "]. This is probably because that plugin is missing. The discovery callback will be ignored");
+            return;
+        }
+
+        if (discoveryCallbackClasses == null) {
+            discoveryCallbackClasses = new HashMap<ResourceType, List<String>>();
+        }
+
+        List<String> callbacksList = discoveryCallbackClasses.get(resourceType);
+        if (callbacksList == null) {
+            callbacksList = new ArrayList<String>(1);
+            discoveryCallbackClasses.put(resourceType, callbacksList);
+        }
+
+        String fqcn = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), callbackClass);
+        callbacksList.add(fqcn);
+    }
+
+
+    private void parseResourceUpgradeCallback(ResourceUpgradeCallbackType jaxbCallback) throws InvalidPluginDescriptorException {
+        String plugin = jaxbCallback.getPlugin();
+        String type = jaxbCallback.getType();
+        String callbackClass = jaxbCallback.getCallbackClass();
+
+        LOG.debug("Plugin [" + pluginDescriptor.getName() + "] defined a resource upgrade callback class [" + callbackClass
+            + "] to listen for resource upgrade results for type [{" + plugin + "}" + type + "].");
+
+        if (callbackClass == null || callbackClass.length() == 0) {
+            // this should never happen - the XML parser should have failed to even get this far
+            throw new InvalidPluginDescriptorException("Missing resource upgrade class in plugin ["
+                + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type);
+        }
+
+        if (plugin == null || plugin.length() == 0 || type == null || type.length() == 0) {
+            // this should never happen - the XML parser should have failed to even get this far
+            throw new InvalidPluginDescriptorException("Both plugin and type must be defined for resource upgrade callbacks in plugin ["
+                + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type + ":" + callbackClass);
+        }
+
+        ResourceType resourceType = getResourceTypeFromPlugin(type, plugin);
+        if (resourceType == null) {
+            LOG.warn("There is no type named [" + type + "] from a plugin named [" + plugin
+                + "]. This is probably because that plugin is missing. The resource upgrade callback will be ignored");
+            return;
+        }
+
+        if (resourceUpgradeCallbackClasses == null) {
+            resourceUpgradeCallbackClasses = new HashMap<ResourceType, List<String>>();
+        }
+
+        List<String> callbacksList = resourceUpgradeCallbackClasses.get(resourceType);
+        if (callbacksList == null) {
+            callbacksList = new ArrayList<String>(1);
+            resourceUpgradeCallbackClasses.put(resourceType, callbacksList);
+        }
+
+        String fqcn = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), callbackClass);
+        callbacksList.add(fqcn);
     }
 
     private ResourceType parsePlatformDescriptor(PlatformDescriptor platformDescriptor)
@@ -613,30 +696,39 @@ public class PluginMetadataParser {
             if (bundle != null) {
                 String typeName = bundle.getType();
                 resourceType.setBundleType(new BundleType(typeName, resourceType));
+                // do NOT parse the target types of bundle type right now so that we don't
+                // require the plugin writer to order the types herself
             }
 
             BundleTargetDescriptor bundleTarget = resourceDescriptor.getBundleTarget();
             if (bundleTarget != null) {
-                List<Object> destDefs = bundleTarget.getDestinationBaseDirOrDestinationDefinition();
+                List<BundleDestination> destDefs = bundleTarget.getDestinationBaseDirOrDestinationDefinition();
                 if (destDefs != null && destDefs.size() > 0) {
                     Configuration c = new Configuration();
                     ResourceTypeBundleConfiguration bundleConfiguration = new ResourceTypeBundleConfiguration(c);
-                    for (Object destDef : destDefs) {
-                        if (destDef instanceof DestinationBaseDir) {
-                            DestinationBaseDir destBaseDir = (DestinationBaseDir) destDef;
+                    for (BundleDestination destDef : destDefs) {
+                        if (destDef instanceof BundleDestinationBaseDir) {
+                            BundleDestinationBaseDir destBaseDir = (BundleDestinationBaseDir) destDef;
                             String name = destBaseDir.getName();
                             String valueContext = destBaseDir.getValueContext();
                             String valueName = destBaseDir.getValueName();
                             String description = destBaseDir.getDescription();
+                            List<String> accepts = new ArrayList<String>();
+                            for(BundleDestination.Accepts accept : destBaseDir.getAccepts()) {
+                                accepts.add(accept.getBundleType());
+                            }
                             bundleConfiguration.addBundleDestinationBaseDirectory(name, valueContext, valueName,
-                                description);
-                        } else if (destDef instanceof BundleTargetDescriptor.DestinationDefinition) {
-                            BundleTargetDescriptor.DestinationDefinition def =
-                                (BundleTargetDescriptor.DestinationDefinition) destDef;
+                                description, accepts);
+                        } else if (destDef instanceof BundleDestinationDefinition) {
+                            BundleDestinationDefinition def = (BundleDestinationDefinition) destDef;
 
                             ResourceTypeBundleConfiguration.BundleDestinationDefinition.Builder bld = bundleConfiguration
                                 .createDestinationDefinitionBuilder(def.getName());
                             bld.withDescription(def.getDescription()).withConnectionString(def.getConnection());
+
+                            for (BundleDestination.Accepts accept : def.getAccepts()) {
+                                bld.addAcceptedBundleType(accept.getBundleType());
+                            }
 
                             for (JAXBElement<?> ref : def.getReferencedConfiguration()
                                 .getMapPropertyRefOrListPropertyRefOrSimplePropertyRef()) {

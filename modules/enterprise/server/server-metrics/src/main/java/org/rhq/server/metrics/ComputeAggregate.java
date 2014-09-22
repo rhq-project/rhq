@@ -7,6 +7,7 @@ import com.google.common.base.Function;
 
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
+import org.rhq.server.metrics.domain.Bucket;
 
 /**
  * @author John Sanda
@@ -17,8 +18,11 @@ public class ComputeAggregate implements Function<ResultSet, AggregateNumericMet
 
     private long timestamp;
 
-    public ComputeAggregate(long timestamp) {
+    private Bucket bucket;
+
+    public ComputeAggregate(long timestamp, Bucket bucket) {
         this.timestamp = timestamp;
+        this.bucket = bucket;
         mapper = new AggregateNumericMetricMapper();
     }
 
@@ -46,6 +50,6 @@ public class ComputeAggregate implements Function<ResultSet, AggregateNumericMet
 
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
-        return new AggregateNumericMetric(0, mean.getArithmeticMean(), min, max, timestamp);
+        return new AggregateNumericMetric(0, bucket, mean.getArithmeticMean(), min, max, timestamp);
     }
 }

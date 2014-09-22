@@ -52,6 +52,30 @@ public class VaultJBossASClient extends JBossASClient {
     }
 
     /**
+     * Attempts to retrieve the configured class for the vault. This method will
+     * return null if no vault is configured or if the vault does not have a custom
+     * vault class.
+     *
+     * @return vault configured class
+     * @throws Exception
+     */
+    public String getVaultClass() throws Exception {
+        Address addr = Address.root().add(CORE_SERVICE, VAULT);
+
+        ModelNode vaultNode = readResource(addr);
+        if (vaultNode == null) {
+            return null;
+        }
+
+        ModelNode codeNode = vaultNode.get("code");
+        if (codeNode == null) {
+            return null;
+        }
+
+        return codeNode.asString();
+    }
+
+    /**
      * Returns a ModelNode that can be used to create the vault.
      * Callers are free to tweak the queue request that is returned,
      * if they so choose, before asking the client to execute the request.

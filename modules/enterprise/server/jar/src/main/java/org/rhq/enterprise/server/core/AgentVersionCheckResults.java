@@ -39,7 +39,7 @@ public class AgentVersionCheckResults implements Serializable {
 
     public AgentVersionCheckResults(boolean isSupported, AgentVersion latestAgentVersion) {
         this.isSupported = isSupported;
-        this.latestAgentVersion = (AgentVersion) ((latestAgentVersion != null) ? latestAgentVersion : new AgentVersion("", ""));
+        this.latestAgentVersion = (AgentVersion) ((latestAgentVersion != null) ? latestAgentVersion : new AgentVersion("",""));
 
     }
 

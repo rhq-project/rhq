@@ -20,7 +20,6 @@
 package org.rhq.core.pc.inventory;
 
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pluginapi.inventory.InventoryContext;
 
 /**
@@ -28,11 +27,11 @@ import org.rhq.core.pluginapi.inventory.InventoryContext;
  */
 public class InventoryContextImpl implements InventoryContext {
     private final Resource resource;
-    private final PluginContainer pluginContainer;
+    private final InventoryManager inventoryManager;
 
-    public InventoryContextImpl(Resource resource, PluginContainer pluginContainer) {
+    public InventoryContextImpl(Resource resource, InventoryManager inventoryManager) {
         this.resource = resource;
-        this.pluginContainer = pluginContainer;
+        this.inventoryManager = inventoryManager;
     }
 
     /* (non-Javadoc)
@@ -40,7 +39,7 @@ public class InventoryContextImpl implements InventoryContext {
      */
     @Override
     public void requestDeferredChildResourcesDiscovery() {
-        pluginContainer.getInventoryManager().executeServiceScanDeferred(resource.getId());
+        inventoryManager.executeServiceScanDeferred(resource.getId());
     }
 
     /* (non-Javadoc)
@@ -48,6 +47,6 @@ public class InventoryContextImpl implements InventoryContext {
      */
     @Override
     public void requestChildResourcesDiscovery() {
-        pluginContainer.getInventoryManager().executeServiceScanImmediately(resource);
+        inventoryManager.executeServiceScanImmediately(resource);
     }
 }

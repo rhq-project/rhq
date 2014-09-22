@@ -129,12 +129,14 @@ public class MenuBarView extends EnhancedVLayout {
         new MenuItem(BundleTopView.VIEW_ID),
         new MenuItem(AdministrationView.VIEW_ID)
             .subItems(
-                new MenuItem(AdministrationView.SECTION_SECURITY_VIEW_ID,AdministrationView.VIEW_ID)
+            new MenuItem(UsersView.VIEW_ID.withTitle(AdministrationView.SECTION_SECURITY_VIEW_ID.getTitle()),
+                AdministrationView.VIEW_ID, AdministrationView.SECTION_SECURITY_VIEW_ID)
                 .subItems(
                     new MenuItem(UsersView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_SECURITY_VIEW_ID),
                     new MenuItem(RolesView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_SECURITY_VIEW_ID)
                  ),
-                new MenuItem(AdministrationView.SECTION_TOPOLOGY_VIEW_ID,Permission.MANAGE_SETTINGS,AdministrationView.VIEW_ID)
+                 new MenuItem(ServerTableView.VIEW_ID.withTitle(AdministrationView.SECTION_TOPOLOGY_VIEW_ID.getTitle()),
+                     AdministrationView.VIEW_ID, AdministrationView.SECTION_TOPOLOGY_VIEW_ID)
                     .subItems(
                         new MenuItem(ServerTableView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_TOPOLOGY_VIEW_ID),
                         new MenuItem(StorageNodeAdminView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_TOPOLOGY_VIEW_ID),
@@ -142,7 +144,9 @@ public class MenuBarView extends EnhancedVLayout {
                         new MenuItem(AffinityGroupTableView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_TOPOLOGY_VIEW_ID),
                         new MenuItem(PartitionEventTableView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_TOPOLOGY_VIEW_ID)
                      ),
-                new MenuItem(AdministrationView.SECTION_CONFIGURATION_VIEW_ID,AdministrationView.VIEW_ID)
+                 new MenuItem(
+                     DownloadsView.VIEW_ID.withTitle(AdministrationView.SECTION_CONFIGURATION_VIEW_ID.getTitle()),
+                     Permission.MANAGE_SETTINGS, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID)
                     .subItems(
                         new MenuItem(SystemSettingsView.VIEW_ID,Permission.MANAGE_SETTINGS, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
                         new MenuItem(AlertDefinitionTemplateTypeView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
@@ -154,7 +158,9 @@ public class MenuBarView extends EnhancedVLayout {
                         new MenuItem(AgentPluginTableView.VIEW_ID, Permission.MANAGE_SETTINGS, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
                         new MenuItem(ServerPluginTableView.VIEW_ID, Permission.MANAGE_SETTINGS, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID)
                     ),
-                new MenuItem(AdministrationView.SECTION_CONTENT_VIEW_ID,AdministrationView.VIEW_ID)
+                new MenuItem(
+                    AdministrationView.PAGE_REPOS_VIEW_ID.withTitle(AdministrationView.SECTION_CONTENT_VIEW_ID.getTitle()),
+                    Permission.MANAGE_REPOSITORIES, AdministrationView.VIEW_ID, AdministrationView.SECTION_CONTENT_VIEW_ID)
                     .subItems(
                         new MenuItem(AdministrationView.PAGE_CONTENT_SOURCES_VIEW_ID, Permission.MANAGE_REPOSITORIES, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONTENT_VIEW_ID),
                         new MenuItem(AdministrationView.PAGE_REPOS_VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONTENT_VIEW_ID)
@@ -207,7 +213,7 @@ public class MenuBarView extends EnhancedVLayout {
         if (item.getPermission() != null) {
             item.setHidden(!globalPermissions.contains(item.getPermission()));
         }
-        if (item.getView().equals(TaggedView.VIEW_ID)) { // Reports->Tags shown only for RHQ
+        if (TaggedView.VIEW_ID.getName().equals(item.getView().getName())) { // Reports->Tags shown only for RHQ
             item.setHidden(!CoreGUI.isTagsEnabledForUI());
         }
         for (MenuItem child : item.getSubItems()) {

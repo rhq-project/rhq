@@ -1,0 +1,13 @@
+<updatePlan>
+  <step>
+    CREATE TABLE rhq.aggregate_metrics (
+      schedule_id int,
+      bucket text,
+      time timestamp,
+      avg double,
+      max double,
+      min double,
+      PRIMARY KEY ((schedule_id, bucket), time)
+    ) WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
+  </step>
+</updatePlan>

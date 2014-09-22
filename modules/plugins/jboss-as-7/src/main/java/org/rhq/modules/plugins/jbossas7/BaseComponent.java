@@ -141,7 +141,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
     @Override
     public void stop() {
-        return;
     }
 
     /**
@@ -150,15 +149,22 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
      */
     @Override
     public AvailabilityType getAvailability() {
-        ReadResource op = new ReadResource(address);
-        Result res = getASConnection().execute(op, AVAIL_OP_TIMEOUT_SECONDS);
+        ReadResource readResourceOperation = new ReadResource(address);
+        /*
+         * Make the operation return minimum information. We just want to make sure we can read the resource. There's no
+         * need to read the children names, evaluate defaults, and retrieve runtime attributes.
+         */
+        readResourceOperation.attributesOnly(true);
+        readResourceOperation.includeDefaults(false);
+        readResourceOperation.includeRuntime(false);
 
+        Result res = getASConnection().execute(readResourceOperation, AVAIL_OP_TIMEOUT_SECONDS);
         if (res != null && res.isSuccess()) {
             return AvailabilityType.UP;
-        } else if (res != null && !res.isSuccess() && res.isTimedout()) {
+        }
+        if (res != null && res.isTimedout()) {
             return AvailabilityType.UNKNOWN;
         }
-
         return AvailabilityType.DOWN;
     }
 
@@ -224,9 +230,10 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
             Result res = getASConnection().execute(op);
             if (!res.isSuccess()) {
-                getLog().warn(
-                    "Getting metric [" + req.getName() + "] at [ " + address + "] failed: "
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Getting metric [" + req.getName() + "] at [ " + address + "] failed: "
                         + res.getFailureDescription());
+                }
                 return ReadMetricResult.RequestFailed;
             }
 
@@ -250,7 +257,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                         addMetric2Report(report, req, val, resolveExpression);
                     }
                 } catch (NumberFormatException e) {
-                    getLog().warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Non numeric input for [" + req.getName() + "] : [" + val + "]");
+                    }
                     return ReadMetricResult.ResolveFailed;
                 }
             } else if (req.getDataType() == DataType.TRAIT) {
@@ -260,11 +269,10 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                     ResolveExpression resolveExpressionOperation = new ResolveExpression(expression);
                     Result result = getASConnection().execute(resolveExpressionOperation);
                     if (!result.isSuccess()) {
-                        if (getLog().isWarnEnabled()) {
-                            getLog().warn(
-                                "Skipping trait [" + req.getName()
-                                    + "] in measurement report. Could not resolve expression [" + expression
-                                    + "], failureDescription:" + result.getFailureDescription());
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Skipping trait [" + req.getName()
+                                            + "] in measurement report. Could not resolve expression [" + expression
+                                            + "], failureDescription:" + result.getFailureDescription());
                             return ReadMetricResult.ResolveFailed;
                         }
                     }
@@ -286,9 +294,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             ResolveExpression resolveExpressionOperation = new ResolveExpression(expression);
             Result result = getASConnection().execute(resolveExpressionOperation);
             if (!result.isSuccess()) {
-                if (getLog().isWarnEnabled()) {
-                    getLog().warn(
-                        "Skipping metric [" + req.getName() + "] in measurement report. Could not resolve expression ["
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Skipping metric [" + req.getName() + "] in measurement report. Could not resolve expression ["
                             + expression + "], failureDescription:" + result.getFailureDescription());
                     return;
                 }
@@ -393,8 +400,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
     @Override
     public void deleteResource() throws Exception {
-        if (getLog().isDebugEnabled()) {
-            getLog().debug("Removing AS7 resource [" + path + "]...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Removing AS7 resource [" + path + "]...");
         }
 
         if (context.getResourceType().getName().equals(MANAGED_SERVER)) {
@@ -498,7 +505,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         } catch (Exception e) {
             uploadConnection.cancelUpload();
             report.setStatus(CreateResourceStatus.FAILURE);
-            getLog().debug("Failed to pull package from server", e);
+            LOG.debug("Failed to pull package from server", e);
             report.setErrorMessage("An error occured while the agent was uploading the content for ["
                 + details.getKey() + "]");
             return report;
@@ -515,7 +522,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
         JsonNode uploadResult = uploadConnection.finishUpload();
         if (verbose) {
-            getLog().info(uploadResult);
+            LOG.info(uploadResult);
         }
 
         if (ASUploadConnection.isErrorReply(uploadResult)) {
@@ -550,7 +557,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         String deploymentName, String hash) {
 
         boolean toServerGroup = context.getResourceKey().contains("server-group=");
-        getLog().info(
+        LOG.info(
             "Deploying [" + deploymentName + " (runtimeName=" + runtimeName + ")] (toDomainOnly=" + !toServerGroup
                 + ")...");
 
@@ -602,7 +609,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             resourceKey = serverGroupAddress.getPath();
 
             if (verbose) {
-                getLog().info("Deploy operation: " + cop);
+                LOG.info("Deploy operation: " + cop);
             }
 
             result = connection.execute(cop, 300);
@@ -612,14 +619,14 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             String failureDescription = result.getFailureDescription();
             report.setErrorMessage(failureDescription);
             report.setStatus(CreateResourceStatus.FAILURE);
-            getLog().warn("Deploy of [" + runtimeName + "] failed: " + failureDescription);
+            LOG.warn("Deploy of [" + runtimeName + "] failed: " + failureDescription);
         } else {
             report.setStatus(CreateResourceStatus.SUCCESS);
             report.setResourceName(runtimeName);
             report.setResourceKey(resourceKey);
             report.getPackageDetails().setSHA256(hash);
             report.getPackageDetails().setInstallationTimestamp(System.currentTimeMillis());
-            getLog().info("Deploy of [" + runtimeName + "] succeeded - Resource key is [" + resourceKey + "].");
+            LOG.info("Deploy of [" + runtimeName + "] succeeded - Resource key is [" + resourceKey + "].");
         }
 
         return report;
@@ -712,7 +719,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                     }
                     operation.addAdditionalProperty(pl.getName(), items);
                 } else {
-                    getLog().error("PropertyMap for " + prop.getName() + " not yet supported");
+                    LOG.error("PropertyMap for " + prop.getName() + " not yet supported");
                 }
             }
         }
@@ -754,7 +761,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
             return getObjectForProperty(prop, pds);
         } else {
-            getLog().warn("Property [" + prop.getName() + "] is not understood yet");
+            LOG.warn("Property [" + prop.getName() + "] is not understood yet");
             return null;
         }
     }
@@ -943,7 +950,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                                 if (defaultValue != null) {
                                     multicastHost = defaultValue;
                                 } else {
-                                    getLog().error(
+                                    LOG.error(
                                         "Failed to resolve expression value [" + expressionValue
                                             + "] of 'multicast-address' attribute.");
                                 }

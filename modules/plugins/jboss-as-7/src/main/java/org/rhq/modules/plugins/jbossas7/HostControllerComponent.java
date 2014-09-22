@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.EXECUTION;
@@ -47,7 +48,6 @@ import org.rhq.core.pluginapi.bundle.BundleHandoverRequest;
 import org.rhq.core.pluginapi.bundle.BundleHandoverResponse;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
@@ -84,7 +84,7 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
     }
 
     @Override
-    public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext<T> resourceContext) throws Exception {
         super.start(resourceContext);
         setDomainController(PROCESS_TYPE_DC.equals(getProcessTypeAttrValue()));
     }
@@ -117,8 +117,7 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
     }
 
     @Override
-    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
-        Exception {
+    public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
 
         OperationResult operationResult;
         if (name.equals("start")) {
@@ -312,6 +311,9 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             if (handoverRequest.getAction().equals("execute-script")) {
                 return handleExecuteScript(handoverRequest);
             }
+            if (handoverRequest.getAction().equals("patch")) {
+                return deployPatch(handoverRequest);
+            }
             return BundleHandoverResponse.failure(INVALID_ACTION);
         } catch (Exception e) {
             return BundleHandoverResponse.failure(EXECUTION, "Unexpected handover failure", e);
@@ -354,7 +356,7 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
 
         Address serverGroupDeploymentAddress = new Address();
         serverGroupDeploymentAddress.add("server-group", serverGroup);
-        serverGroupDeploymentAddress.add("deployment", runtimeName);
+        serverGroupDeploymentAddress.add("deployment", filename);
 
         Operation addToServerGroupStep = new Operation("add", serverGroupDeploymentAddress);
         addToServerGroupStep.addAdditionalProperty("runtime-name", runtimeName);
@@ -405,6 +407,12 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
     @Override
     protected String getBaseDirAttributeName() {
         return "domain-base-dir";
+    }
+
+    @NotNull
+    @Override
+    protected String getConfigDirAttributeName() {
+        return "domain-config-dir";
     }
 
     @Override

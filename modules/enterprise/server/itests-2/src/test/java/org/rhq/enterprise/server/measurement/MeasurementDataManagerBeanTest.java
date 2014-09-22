@@ -51,6 +51,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
+import org.rhq.cassandra.schema.Table;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
@@ -89,8 +90,7 @@ import org.rhq.enterprise.server.util.ResourceTreeHelper;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageSession;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.AggregateType;
-import org.rhq.server.metrics.domain.MetricsTable;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.test.AssertUtils;
 
 /**
@@ -516,12 +516,9 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     private void purgeMetricsTables() {
         try {
             StorageSession session = storageClientManager.getSession();
-
-            session.execute("TRUNCATE " + MetricsTable.RAW);
-            session.execute("TRUNCATE " + MetricsTable.ONE_HOUR);
-            session.execute("TRUNCATE " + MetricsTable.SIX_HOUR);
-            session.execute("TRUNCATE " + MetricsTable.TWENTY_FOUR_HOUR);
-            session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE);
+            for (Table table : Table.values()) {
+                session.execute("TRUNCATE " + table.getTableName());
+            }
         } catch (NoHostAvailableException e) {
             throw new RuntimeException("An error occurred while purging metrics tables", e);
         }
@@ -530,12 +527,8 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     private void insert1HourData(List<AggregateTestData> data) {
         List<AggregateNumericMetric> metrics = new ArrayList<AggregateNumericMetric>(data.size());
         for (AggregateTestData datum : data) {
-            metricsDAO.insertOneHourData(datum.getScheduleId(), datum.getTimestamp(), AggregateType.MIN,
-                datum.getMin());
-            metricsDAO.insertOneHourData(datum.getScheduleId(), datum.getTimestamp(), AggregateType.AVG,
-                datum.getAvg());
-            metricsDAO.insertOneHourData(datum.getScheduleId(), datum.getTimestamp(), AggregateType.MAX,
-                datum.getMax());
+            metricsDAO.insert1HourData(new AggregateNumericMetric(datum.getScheduleId(), Bucket.ONE_HOUR,
+                datum.getAvg(), datum.getMin(), datum.getMax(), datum.getTimestamp()));
         }
     }
 

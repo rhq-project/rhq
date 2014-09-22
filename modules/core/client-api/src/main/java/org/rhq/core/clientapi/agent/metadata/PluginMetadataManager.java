@@ -86,7 +86,11 @@ public class PluginMetadataManager {
     // need to be funneled through callbacks. The value is a map whose key is plugin names and whose values are
     // discovery callback implementation classes defined in the plugins.
     private Map<ResourceType, Map<String, List<String>>> discoveryCallbacks = new HashMap<ResourceType, Map<String, List<String>>>();
-    private final Object discoveryCallbacksLock = new Object();
+    // similar map for the resource upgrade callbacks
+    private Map<ResourceType, Map<String, List<String>>> resourceUpgradeCallbacks = new HashMap<ResourceType, Map<String, List<String>>>();
+
+    //this lock is shared for filling up both the discoveryCallbacks and resourceUpgradeCallbacks.
+    private final Object discoveryAndResourceUpgradeCallbacksLock = new Object();
 
     public PluginMetadataManager() {
     }
@@ -209,15 +213,14 @@ public class PluginMetadataManager {
                 findDisabledResourceTypesInAllPlugins();
             }
 
-            // squirrel away all the discovery callbacks
-            Map<ResourceType, List<String>> discoveryCallbacksMap = parser.getDiscoveryCallbackClasses();
-            if (discoveryCallbacksMap != null) {
-                for (Map.Entry<ResourceType, List<String>> entry : discoveryCallbacksMap.entrySet()) {
-                    ResourceType resourceType = entry.getKey();
-                    for (String className : entry.getValue()) {
-                        addDiscoveryCallbackClassName(resourceType, pluginDescriptor.getName(), className);
-                    }
-                }
+            synchronized (discoveryAndResourceUpgradeCallbacksLock) {
+                // squirrel away all the discovery callbacks
+                Map<ResourceType, List<String>> discoveryCallbacksMap = parser.getDiscoveryCallbackClasses();
+                addCallbacks(discoveryCallbacksMap, pluginDescriptor.getName(), discoveryCallbacks);
+
+                //and the same for the resource upgrade callbacks
+                Map<ResourceType, List<String>> resourceUpgradCallbacksMap = parser.getResourceUpgradeCallbackClasses();
+                addCallbacks(resourceUpgradCallbacksMap, pluginDescriptor.getName(), resourceUpgradeCallbacks);
             }
 
             // return the top root types from the descriptor
@@ -517,30 +520,53 @@ public class PluginMetadataManager {
      * @return the collection of callbacks, grouped by the plugins that defined them (may be null)
      */
     public Map<String, List<String>> getDiscoveryCallbacks(ResourceType resourceType) {
-        synchronized (discoveryCallbacksLock) {
+        synchronized (discoveryAndResourceUpgradeCallbacksLock) {
             Map<String, List<String>> map = discoveryCallbacks.get(resourceType);
             return map;
         }
     }
 
-    private void addDiscoveryCallbackClassName(ResourceType resourceType, String pluginName, String className) {
-        synchronized (discoveryCallbacksLock) {
-            Map<String, List<String>> map = discoveryCallbacks.get(resourceType);
-            if (map == null) {
-                map = new HashMap<String, List<String>>(1);
-                discoveryCallbacks.put(resourceType, map);
-            }
+    /**
+     * Given a resource type, this will return any resource upgrade callbacks that are required to be invoked
+     * when a resource of that resource type is being upgraded.
+     * @param resourceType the type whose resource upgrade callbacks should be returned
+     * @return the collection of callbacks, grouped by the plugins that defined them (may be null)
+     */
+    public Map<String, List<String>> getResourceUpgradeCallbacks(ResourceType resourceType) {
+        synchronized(disabledIgnoredTypesLock) {
+            return resourceUpgradeCallbacks.get(resourceType);
+        }
+    }
 
-            List<String> callbackListForPlugin = map.get(pluginName);
-            if (callbackListForPlugin == null) {
-                callbackListForPlugin = new ArrayList<String>(1);
-                map.put(pluginName, callbackListForPlugin);
-            }
+    private void addCallbacks(Map<ResourceType, List<String>> callbacksMap, String pluginName,
+        Map<ResourceType, Map<String, List<String>>> targetMap) {
 
-            callbackListForPlugin.add(className);
+        if (callbacksMap != null) {
+            for (Map.Entry<ResourceType, List<String>> entry : callbacksMap.entrySet()) {
+                ResourceType resourceType = entry.getKey();
+                for (String className : entry.getValue()) {
+                    addCallbackClassName(resourceType, pluginName, className, targetMap);
+                }
+            }
+        }
+    }
+
+    private void addCallbackClassName(ResourceType resourceType, String pluginName, String className, Map<ResourceType,
+        Map<String, List<String>>> callbacks) {
+
+        Map<String, List<String>> map = callbacks.get(resourceType);
+        if (map == null) {
+            map = new HashMap<String, List<String>>(1);
+            callbacks.put(resourceType, map);
         }
 
-        return;
+        List<String> callbackListForPlugin = map.get(pluginName);
+        if (callbackListForPlugin == null) {
+            callbackListForPlugin = new ArrayList<String>(1);
+            map.put(pluginName, callbackListForPlugin);
+        }
+
+        callbackListForPlugin.add(className);
     }
 
     public void cleanupDescriptors() {

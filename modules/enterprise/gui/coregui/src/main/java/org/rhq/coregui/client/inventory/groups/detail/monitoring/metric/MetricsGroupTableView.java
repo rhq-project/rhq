@@ -55,6 +55,7 @@ import com.smartgwt.client.widgets.grid.events.SortEvent;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
@@ -86,6 +87,7 @@ import org.rhq.coregui.client.util.message.Message;
  */
 public class MetricsGroupTableView extends Table<MetricsGroupViewDataSource> implements Refreshable {
 
+    private final EntityContext entityContext;
     private final ResourceGroup resourceGroup;
     private final AbstractD3GraphListView abstractD3GraphListView;
     private ToolStrip toolStrip;
@@ -98,9 +100,10 @@ public class MetricsGroupTableView extends Table<MetricsGroupViewDataSource> imp
     private MetricsTableListGrid metricsTableListGrid;
     private int selectedMetricDefinitionId;
 
-    public MetricsGroupTableView(ResourceGroup resourceGroup, AbstractD3GraphListView abstractD3GraphListView,
-        Set<Integer> expandedRows) {
+    public MetricsGroupTableView(EntityContext entityContext, ResourceGroup resourceGroup,
+        AbstractD3GraphListView abstractD3GraphListView, Set<Integer> expandedRows) {
         super();
+        this.entityContext = entityContext;
         this.resourceGroup = resourceGroup;
         this.abstractD3GraphListView = abstractD3GraphListView;
         dashboardMenuMap = new LinkedHashMap<String, String>();
@@ -127,7 +130,9 @@ public class MetricsGroupTableView extends Table<MetricsGroupViewDataSource> imp
             @Override
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE) {
-                    addToDashboardButton.enable();
+                    if (null != addToDashboardButton) {
+                        addToDashboardButton.enable();
+                    }
                     ListGridRecord selectedRecord = selectionEvent.getSelectedRecord();
                     if (null != selectedRecord) {
                         selectedMetricDefinitionId = selectedRecord.getAttributeAsInt(METRIC_DEF_ID.getValue());
@@ -140,7 +145,9 @@ public class MetricsGroupTableView extends Table<MetricsGroupViewDataSource> imp
             toolStrip = createToolstrip();
         }
         addExtraWidget(toolStrip, false);
-        addToDashboardButton.disable();
+        if (null != addToDashboardButton) {
+            addToDashboardButton.disable();
+        }
         return metricsTableListGrid;
     }
 
@@ -155,38 +162,40 @@ public class MetricsGroupTableView extends Table<MetricsGroupViewDataSource> imp
         toolStrip.setMembersMargin(15);
         toolStrip.setPadding(5);
         toolStrip.addSpacer(10);
-        addToDashboardButton = new IButton(MSG.chart_metrics_add_to_dashboard_button());
-        addToDashboardButton.setWidth(80);
-        dashboardSelectItem = new SelectItem();
-        dashboardSelectItem.setTitle(MSG.chart_metrics_add_to_dashboard_label());
-        dashboardSelectItem.setWidth(240);
-        dashboardSelectItem.setWrapTitle(false);
-        populateDashboardMenu();
-        toolStrip.addFormItem(dashboardSelectItem);
-        toolStrip.addMember(addToDashboardButton);
+        if (!(entityContext.isAutoGroup() || entityContext.isAutoCluster())) {
+            addToDashboardButton = new IButton(MSG.chart_metrics_add_to_dashboard_button());
+            addToDashboardButton.setWidth(80);
+            dashboardSelectItem = new SelectItem();
+            dashboardSelectItem.setTitle(MSG.chart_metrics_add_to_dashboard_label());
+            dashboardSelectItem.setWidth(240);
+            dashboardSelectItem.setWrapTitle(false);
+            populateDashboardMenu();
+            toolStrip.addFormItem(dashboardSelectItem);
+            toolStrip.addMember(addToDashboardButton);
 
-        dashboardSelectItem.addChangeHandler(new ChangeHandler() {
-            @Override
-            public void onChange(ChangeEvent changeEvent) {
-                Integer selectedDashboardId = Integer.valueOf((String) changeEvent.getValue());
-                selectedDashboard = dashboardMap.get(selectedDashboardId);
-            }
-        });
-        addToDashboardButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-            @Override
-            public void onClick(ClickEvent clickEvent) {
-                for (MeasurementDefinition measurementDefinition : resourceGroup.getResourceType()
-                    .getMetricDefinitions()) {
-                    if (measurementDefinition.getId() == selectedMetricDefinitionId) {
-                        Log.debug("Add to Dashboard -- Storing: " + measurementDefinition.getDisplayName() + " in "
-                            + selectedDashboard.getName());
+            dashboardSelectItem.addChangeHandler(new ChangeHandler() {
+                @Override
+                public void onChange(ChangeEvent changeEvent) {
+                    Integer selectedDashboardId = Integer.valueOf((String) changeEvent.getValue());
+                    selectedDashboard = dashboardMap.get(selectedDashboardId);
+                }
+            });
+            addToDashboardButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                @Override
+                public void onClick(ClickEvent clickEvent) {
+                    for (MeasurementDefinition measurementDefinition : resourceGroup.getResourceType()
+                        .getMetricDefinitions()) {
+                        if (measurementDefinition.getId() == selectedMetricDefinitionId) {
+                            Log.debug("Add to Dashboard -- Storing: " + measurementDefinition.getDisplayName() + " in "
+                                + selectedDashboard.getName());
 
-                        storeDashboardMetric(selectedDashboard, resourceGroup.getId(), measurementDefinition);
-                        break;
+                            storeDashboardMetric(selectedDashboard, resourceGroup.getId(), measurementDefinition);
+                            break;
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
         return toolStrip;
     }
 

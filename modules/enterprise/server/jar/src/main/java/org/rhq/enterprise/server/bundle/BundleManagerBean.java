@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.bundle;
 
 import java.io.ByteArrayInputStream;
@@ -28,6 +29,7 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -66,7 +68,6 @@ import org.rhq.core.clientapi.agent.bundle.BundlePurgeRequest;
 import org.rhq.core.clientapi.agent.bundle.BundlePurgeResponse;
 import org.rhq.core.clientapi.agent.bundle.BundleScheduleRequest;
 import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -85,6 +86,7 @@ import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Package;
@@ -106,6 +108,7 @@ import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.StringUtils;
 import org.rhq.core.util.NumberUtil;
@@ -144,10 +147,10 @@ import org.rhq.enterprise.server.util.QuartzUtil;
  */
 @Stateless
 public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemote {
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final Log LOG = LogFactory.getLog(BundleManagerBean.class);
 
-    private final String AUDIT_ACTION_DEPLOYMENT = "Deployment";
-    private final String AUDIT_ACTION_DEPLOYMENT_REQUESTED = "Deployment Requested";
+    private static final String AUDIT_ACTION_DEPLOYMENT = "Deployment";
+    private static final String AUDIT_ACTION_DEPLOYMENT_REQUESTED = "Deployment Requested";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -213,18 +216,40 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public BundleResourceDeploymentHistory addBundleResourceDeploymentHistoryInNewTrans(Subject subject,
-        int bundleDeploymentId, BundleResourceDeploymentHistory history) throws Exception {
+        int resourceDeploymentId, BundleResourceDeploymentHistory history) throws Exception {
 
         BundleResourceDeployment resourceDeployment = entityManager.find(BundleResourceDeployment.class,
-            bundleDeploymentId);
+            resourceDeploymentId);
         if (null == resourceDeployment) {
-            throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
+            throw new IllegalArgumentException("Invalid resourceDeploymentId: " + resourceDeploymentId);
         }
 
         resourceDeployment.addBundleResourceDeploymentHistory(history);
         this.entityManager.persist(resourceDeployment);
 
         return history;
+    }
+
+    @Override
+    public List<BundleResourceDeploymentHistory> getBundleResourceDeploymentHistories(Subject subject,
+        int resourceDeploymentId) {
+
+        // First check if this user can actually see this resource deployment
+        // by calling #findBundleResourceDeploymentsByCriteria)
+        BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
+        criteria.addFilterId(resourceDeploymentId);
+        criteria.fetchHistories(true);
+        criteria.setPageControl(PageControl.getSingleRowInstance());
+        PageList<BundleResourceDeployment> bundleResourceDeploymentsByCriteria = findBundleResourceDeploymentsByCriteria(
+            subject, criteria);
+
+        if (bundleResourceDeploymentsByCriteria.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        BundleResourceDeployment resourceDeployment = bundleResourceDeploymentsByCriteria.iterator().next();
+
+        return new ArrayList<BundleResourceDeploymentHistory>(resourceDeployment.getBundleResourceDeploymentHistories());
     }
 
     @Override
@@ -275,7 +300,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         bundle.setDescription(description);
         bundle.setPackageType(packageType);
 
-        log.info("Creating bundle: " + bundle);
+        LOG.info("Creating bundle: " + bundle);
         entityManager.persist(bundle);
 
         for (BundleGroup bundleGroup : bundleGroups) {
@@ -333,7 +358,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                     "Missing Configuration. Configuration is required when the specified BundleVersion defines Configuration Properties.");
             }
             List<String> errors = ConfigurationUtility.validateConfiguration(configuration, configDef);
-            if (null != errors && !errors.isEmpty()) {
+            if (!errors.isEmpty()) {
                 throw new IllegalArgumentException("Invalid Configuration: " + errors.toString());
             }
         }
@@ -377,6 +402,37 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         ResourceGroup group = entityManager.find(ResourceGroup.class, groups.get(0).getId());
 
         checkDeployBundleAuthz(subject, bundle.getId(), groupId);
+
+        // check that the resource group is compatible with the bundle type
+        Set<ResourceType> targetedResourceTypes = bundle.getBundleType().getExplicitlyTargetedResourceTypes();
+
+        if (!targetedResourceTypes.isEmpty() && !targetedResourceTypes.contains(group.getResourceType())) {
+            // the bundle type defines that it explicitly targets certain resource types but the current group
+            // is not of that resource type.
+            throw new IllegalArgumentException("Bundle of type [" + bundle.getBundleType().getName()
+                + "] is incompatible with resource type " + group.getResourceType());
+        }
+
+        // check that the destination specification is compatible with the bundle type
+        String bundleType = bundle.getBundleType().getName();
+        ResourceType rt = group.getResourceType();
+        ResourceTypeBundleConfiguration bundleConfig = rt.getResourceTypeBundleConfiguration();
+        boolean found = false;
+        for (ResourceTypeBundleConfiguration.BundleDestinationSpecification spec : bundleConfig
+            .getAcceptableBundleDestinationSpecifications(bundleType)) {
+
+            if (destinationSpecification.equals(spec.getName())) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            throw new IllegalArgumentException("Destination specification '" + destinationSpecification
+                + "' from resource type '" + rt.getName() + "' (plugin '" + rt.getPlugin()
+                + "') is not compatible with bundle type '" + bundleType + "'.");
+
+        }
 
         BundleDestination dest = new BundleDestination(bundle, name, group, destinationSpecification, deployDir);
         dest.setDescription(description);
@@ -442,7 +498,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 deploy = Integer.valueOf(liveName.substring(iStart, iEnd)) + 1;
             } catch (Exception e) {
                 // if any odd error happens here, don't abort since this is only needed for the human readable name
-                log.warn("Cannot determine next deployment number. Using -1. liveDeployment=" + liveDeployment);
+                LOG.warn("Cannot determine next deployment number. Using -1. liveDeployment=" + liveDeployment);
                 deploy = -1;
             }
         }
@@ -543,8 +599,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         // now create the bundle version with the bundle we either found or created
-        return createBundleVersionInternal(bundle, bundleVersionName, version, bundleVersionDescription,
-            recipe, results.getConfigurationDefinition());
+        return createBundleVersionInternal(bundle, bundleVersionName, version, bundleVersionDescription, recipe,
+            results.getConfigurationDefinition());
     }
 
     /**
@@ -741,9 +797,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 bundleGroupIds);
             return bundleVersion;
         } finally {
-            if (tmpFile != null) {
-                tmpFile.delete();
-            }
+            tmpFile.delete();
         }
     }
 
@@ -784,8 +838,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         try {
             file = downloadFile(distributionFileUrl, username, password);
 
-            log.debug("Copied [" + file.length() + "] bytes from [" + distributionFileUrl + "] into [" + file.getPath()
-                + "]");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Copied [" + file.length() + "] bytes from [" + distributionFileUrl + "] into ["
+                    + file.getPath() + "]");
+            }
 
             return createBundleVersionViaFileImpl(subject, file, mustBeInitialVersion, initialBundleGroupIds);
         } finally {
@@ -805,8 +861,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         try {
             file = downloadFile(distributionFileUrl, username, password);
 
-            log.debug("Copied [" + file.length() + "] bytes from [" + distributionFileUrl + "] into [" + file.getPath()
-                + "]");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Copied [" + file.length() + "] bytes from [" + distributionFileUrl + "] into ["
+                    + file.getPath() + "]");
+            }
 
             return createBundleVersionViaFileImpl(subject, file, false, null);
 
@@ -814,7 +872,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             if (null != e.getCause() && e.getCause() instanceof BundleNotFoundException) {
                 deleteFile = false;
                 // This application exception indicates the special token handling workflow
-                throw new BundleNotFoundException("[" + file.getName() + "]");
+                throw new BundleNotFoundException("[" + distributionFileUrl + "]");
             } else {
                 throw e;
             }
@@ -873,8 +931,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // !!!! NEW BEHAVIOR SINCE 4.13 - we fail the bundle version creation when we cannot determine the set
         // of the files the bundle version should be comprised of.
         if (info.getBundleFiles() == null && info.getRecipeParseResults().getBundleFileNames() == null) {
-            throw new IllegalArgumentException("Cannot create a bundle version without files determined by the recipe" +
-                " or provided explicitly during bundle version creation.");
+            throw new IllegalArgumentException("Cannot create a bundle version without files determined by the recipe"
+                + " or provided explicitly during bundle version creation.");
         }
 
         BundleType bundleType = bundleManager.getBundleType(subject, info.getBundleTypeName());
@@ -911,8 +969,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         // now create the bundle version with the bundle we either found or created
-        BundleVersion bundleVersion = bundleManager.createBundleVersionInternal(bundle, name, version, description, recipe,
-            info.getRecipeParseResults().getConfigurationDefinition());
+        BundleVersion bundleVersion = bundleManager.createBundleVersionInternal(bundle, name, version, description,
+            recipe, info.getRecipeParseResults().getConfigurationDefinition());
 
         // now that we have the bundle version we can actually create the bundle files that were provided in
         // the bundle distribution
@@ -928,7 +986,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                         // to refer to existing versions of a file.
                         BundleFile bundleFile = bundleManager.addBundleFile(subject, bundleVersion.getId(), fileName,
                             bundleVersion.getVersion(), null, is);
-                        log.debug("Added bundle file [" + bundleFile + "] to BundleVersion [" + bundleVersion + "]");
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Added bundle file [" + bundleFile + "] to BundleVersion [" + bundleVersion + "]");
+                        }
                     } finally {
                         safeClose(is);
                         if (null != file) {
@@ -942,12 +1002,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             // did not fully get its bundle data persisted, we need to abort the entire effort. Let's delete
             // the bundle version including the bundle definition if we were the ones that initially created it
             // (thus this should completely wipe the database of any knowledge of what we just did previously)
-            log.error("Failed to add bundle file to new bundle version [" + bundleVersion
+            LOG.error("Failed to add bundle file to new bundle version [" + bundleVersion
                 + "], will not create the new bundle", e);
             try {
                 bundleManager.deleteBundleVersion(subjectManager.getOverlord(), bundleVersion.getId(), createdBundle);
             } catch (Exception e1) {
-                log.error("Failed to delete the partially created bundle version: " + bundleVersion, e1);
+                LOG.error("Failed to delete the partially created bundle version: " + bundleVersion, e1);
             }
             throw e;
         }
@@ -988,7 +1048,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             }
             bundleVersion.setBundleDeployments(new ArrayList<BundleDeployment>());
         } else {
-            log.error("Failed to obtain the full bundle version, returning only what we currently know about it: "
+            LOG.error("Failed to obtain the full bundle version, returning only what we currently know about it: "
                 + bundleVersion);
         }
 
@@ -1268,7 +1328,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new Exception("Failed to purge [" + failedPurges + "] of [" + totalDeployments
                 + "] remote resource deployments");
         }
-        return;
     }
 
     @Override
@@ -1288,11 +1347,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             int failedPurges = failedToPurge.size();
             if (failedPurges < totalDeployments) {
                 bundleDeployment.setStatus(BundleDeploymentStatus.MIXED); // some deployments were purged, so show MIXED status
-                errorStr.append("Failed to purge [" + failedPurges + "] of [" + totalDeployments
-                    + "] remote resource deployments");
+                errorStr.append("Failed to purge [").append(failedPurges).append("] of [").append(totalDeployments)
+                    .append("] remote resource deployments");
             } else {
                 bundleDeployment.setStatus(BundleDeploymentStatus.FAILURE); // all deployments failed to be purged
-                errorStr.append("Failed to purge all [" + failedPurges + "] remote resource deployments");
+                errorStr.append("Failed to purge all [").append(failedPurges).append("] remote resource deployments");
             }
 
             // key is the resource deployment that failed to be purged; value is the error message
@@ -1303,8 +1362,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
             bundleDeployment.setErrorMessage(errorStr.toString());
         }
-
-        return;
     }
 
     @Override
@@ -1382,7 +1439,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             quartzScheduler.scheduleJob(jobDetail, trigger);
 
         } catch (Exception e) {
-            log.error("Failed to schedule bundle deployment status check job for deployment:" + newDeployment, e);
+            LOG.error("Failed to schedule bundle deployment status check job for deployment:" + newDeployment, e);
         }
 
         return newDeployment;
@@ -1414,7 +1471,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             try {
                 scheduleBundleResourceDeployment(subject, newDeployment, groupMember, isCleanDeployment, isRevert);
             } catch (Throwable t) {
-                log.error("Failed to complete scheduling of bundle deployment to [" + groupMember
+                LOG.error("Failed to complete scheduling of bundle deployment to [" + groupMember
                     + "]. Other bundle deployments to other resources may have been scheduled. ", t);
             }
         }
@@ -1495,7 +1552,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             } catch (Throwable t) {
                 // fail the unlaunched resource deployment
                 BundleResourceDeploymentHistory failureHistory = new BundleResourceDeploymentHistory(subject.getName(),
-                    this.AUDIT_ACTION_DEPLOYMENT, deployment.getName(), null,
+                    AUDIT_ACTION_DEPLOYMENT, deployment.getName(), null,
                     BundleResourceDeploymentHistory.Status.FAILURE, "Failed to schedule, agent on [" + bundleTarget
                         + "] may be down: " + t, null);
                 bundleManager.addBundleResourceDeploymentHistoryInNewTrans(subject, resourceDeployment.getId(),
@@ -1672,8 +1729,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
             result = parseResults.getBundleFileNames();
         } catch (Exception e) {
-            log.debug("Failed to parse the recipe of bundle version " + bundleVersionId +
-                " while trying to get the list of bundle file names: " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to parse the recipe of bundle version " + bundleVersionId
+                    + " while trying to get the list of bundle file names: " + e.getMessage());
+            }
         }
 
         if (result == null) {
@@ -1738,8 +1797,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
             return result;
         } catch (Exception e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Failed to obtain the bundle files of a bundle version: " + bundleVersionId);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to obtain the bundle files of a bundle version: " + bundleVersionId);
             }
             return new HashMap<String, Boolean>(0);
         }
@@ -2107,7 +2166,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // to break the FK dependency with nulls.
         Query q = entityManager.createNamedQuery(BundleDeployment.QUERY_UPDATE_FOR_VERSION_REMOVE);
         q.setParameter("bundleVersionId", bundleVersionId);
-        int rowsUpdated = q.executeUpdate();
+        q.executeUpdate();
         entityManager.flush();
 
         // remove the bundle version - cascade remove the deployments which will cascade remove the resource deployments.
@@ -2130,8 +2189,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             q.setParameter("versionOrder", doomedBundleVersionOrder);
             q.executeUpdate();
         }
-
-        return;
     }
 
     private void safeClose(InputStream is) {
@@ -2139,7 +2196,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             try {
                 is.close();
             } catch (Exception e) {
-                log.warn("Failed to close InputStream", e);
+                LOG.warn("Failed to close InputStream", e);
             }
         }
     }
@@ -2150,7 +2207,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             try {
                 os.close();
             } catch (Exception e) {
-                log.warn("Failed to close OutputStream", e);
+                LOG.warn("Failed to close OutputStream", e);
             }
         }
     }
@@ -2321,12 +2378,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 String msg = "Subject ["
                     + subject.getName()
                     + "] requires either Global.CREATE_BUNDLES + BundleGroup.VIEW_BUNDLES_IN_GROUP, or BundleGroup.CREATE_BUNDLES_IN_GROUP, to create or update a bundle in bundle group ["
-                    + bundleGroupIds + "].";
+                    + Arrays.toString(bundleGroupIds) + "].";
                 throw new PermissionException(msg);
             }
         }
-
-        return;
     }
 
     /**
@@ -2423,8 +2478,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 throw new PermissionException(msg);
             }
         }
-
-        return;
     }
 
     /**
@@ -2480,8 +2533,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 throw new PermissionException(msg);
             }
         }
-
-        return;
     }
 
     /**
@@ -2519,8 +2570,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 + "] and VIEW permission for bundle [" + bundleId + "]";
             throw new PermissionException(msg);
         }
-
-        return;
     }
 
     /**

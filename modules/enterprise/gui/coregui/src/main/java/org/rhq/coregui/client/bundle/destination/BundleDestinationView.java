@@ -1,30 +1,34 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.client.bundle.destination;
+
+import static org.rhq.coregui.client.CoreGUI.getErrorHandler;
+import static org.rhq.coregui.client.CoreGUI.getMessageCenter;
+import static org.rhq.coregui.client.CoreGUI.goToView;
+import static org.rhq.coregui.client.CoreGUI.isTagsEnabledForUI;
 
 import java.util.Date;
 import java.util.HashSet;
 
+import com.google.gwt.core.client.Duration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.util.BooleanCallback;
@@ -45,10 +49,8 @@ import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.BookmarkableView;
-import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.LinkManager;
-import org.rhq.coregui.client.ViewId;
 import org.rhq.coregui.client.ViewPath;
 import org.rhq.coregui.client.bundle.deploy.BundleDeployWizard;
 import org.rhq.coregui.client.bundle.deployment.BundleDeploymentListView;
@@ -62,8 +64,8 @@ import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -72,8 +74,6 @@ import org.rhq.coregui.client.util.message.Message;
 public class BundleDestinationView extends EnhancedVLayout implements BookmarkableView {
     private BundleDestination destination;
     private Bundle bundle;
-
-    private Canvas detail;
 
     private boolean canDelete;
     private boolean canDeploy;
@@ -89,7 +89,7 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         //setMargin(10); // do not set margin, we already have our margin set outside of us
     }
 
-    private void viewBundleDestination(BundleDestination bundleDestination, ViewId current) {
+    private void viewBundleDestination(BundleDestination bundleDestination) {
         // Whenever a new view request comes in, make sure to clean house to avoid ID conflicts for sub-widgets
         this.destroyMembers();
 
@@ -102,7 +102,7 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         HeaderLabel header = new HeaderLabel(Canvas.getImgURL(IconEnum.BUNDLE_DESTINATION.getIcon24x24Path()),
             StringUtility.escapeHtml(destination.getName()));
 
-        detail = new Canvas();
+        Canvas detail = new Canvas();
         detail.setHeight("50%");
         detail.hide();
 
@@ -110,7 +110,7 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         addMember(header);
 
         //conditionally add tags. Defaults to true, not available in JON builds.
-        if (CoreGUI.isTagsEnabledForUI()) {
+        if (isTagsEnabledForUI()) {
             addMember(createTagEditor());
         }
 
@@ -166,15 +166,18 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
     private TagEditorView createTagEditor() {
         boolean readOnly = !this.canTag;
         TagEditorView tagEditor = new TagEditorView(destination.getTags(), readOnly, new TagsChangedCallback() {
+            @Override
             public void tagsChanged(HashSet<Tag> tags) {
                 GWTServiceLookup.getTagService().updateBundleDestinationTags(destination.getId(), tags,
                     new AsyncCallback<Void>() {
+                        @Override
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(MSG.view_bundle_dest_tagUpdateFailure(), caught);
+                            getErrorHandler().handleError(MSG.view_bundle_dest_tagUpdateFailure(), caught);
                         }
 
+                        @Override
                         public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
+                            getMessageCenter().notify(
                                 new Message(MSG.view_bundle_dest_tagUpdateSuccessful(), Message.Severity.Info));
                         }
                     });
@@ -190,6 +193,7 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         IButton deployButton = new EnhancedIButton(MSG.view_bundle_deploy(), ButtonColor.BLUE);
         //deployButton.setIcon(IconEnum.BUNDLE_DEPLOY.getIcon16x16Path());
         deployButton.addClickHandler(new ClickHandler() {
+            @Override
             public void onClick(ClickEvent clickEvent) {
                 new BundleDeployWizard(destination).startWizard();
             }
@@ -199,8 +203,10 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         IButton revertButton = new EnhancedIButton(MSG.view_bundle_revert(), ButtonColor.RED);
         //revertButton.setIcon(IconEnum.BUNDLE_REVERT.getIcon16x16Path());
         revertButton.addClickHandler(new ClickHandler() {
+            @Override
             public void onClick(ClickEvent clickEvent) {
                 SC.ask(MSG.view_bundle_dest_revertConfirm(), new BooleanCallback() {
+                    @Override
                     public void execute(Boolean aBoolean) {
                         if (aBoolean) {
                             new BundleRevertWizard(destination).startWizard();
@@ -214,26 +220,28 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         IButton purgeButton = new EnhancedIButton(MSG.view_bundle_purge(), ButtonColor.RED);
         //purgeButton.setIcon(IconEnum.BUNDLE_DESTINATION_PURGE.getIcon16x16Path());
         purgeButton.addClickHandler(new ClickHandler() {
+            @Override
             public void onClick(ClickEvent clickEvent) {
                 SC.ask(MSG.view_bundle_dest_purgeConfirm(), new BooleanCallback() {
+                    @Override
                     public void execute(Boolean aBoolean) {
                         if (aBoolean) {
                             BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService(600000); // 10m should be enough right?
                             bundleService.purgeBundleDestination(destination.getId(), new AsyncCallback<Void>() {
                                 @Override
                                 public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(
+                                    getErrorHandler().handleError(
                                         MSG.view_bundle_dest_purgeFailure(destination.getName()), caught);
                                 }
 
                                 @Override
                                 public void onSuccess(Void result) {
-                                    CoreGUI.getMessageCenter().notify(
+                                    getMessageCenter().notify(
                                         new Message(MSG.view_bundle_dest_purgeSuccessful(destination.getName()),
                                             Message.Severity.Info));
                                     // Bundle destination is purged, go back to bundle destination view
-                                    CoreGUI.goToView(
-                                        LinkManager.getBundleDestinationLink(bundle.getId(), destination.getId()), true);
+                                    goToView(LinkManager.getBundleDestinationLink(bundle.getId(), destination.getId()),
+                                        true);
                                 }
                             });
                         }
@@ -250,23 +258,10 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
             @Override
             public void onClick(ClickEvent event) {
                 SC.ask(MSG.view_bundle_dest_deleteConfirm(), new BooleanCallback() {
-                    public void execute(Boolean aBoolean) {
-                        if (aBoolean) {
-                            BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
-                            bundleService.deleteBundleDestination(destination.getId(), new AsyncCallback<Void>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_bundle_dest_deleteFailure(destination.getName()), caught);
-                                }
-
-                                public void onSuccess(Void result) {
-                                    CoreGUI.getMessageCenter().notify(
-                                        new Message(MSG.view_bundle_dest_deleteSuccessful(destination.getName()),
-                                            Message.Severity.Info));
-                                    // Bundle destination is deleted, go back to bundle destinations root view
-                                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), 0), true);
-                                }
-                            });
+                    @Override
+                    public void execute(Boolean confirmed) {
+                        if (confirmed) {
+                            doDeleteBundleDestination();
                         }
                     }
                 });
@@ -287,15 +282,54 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         return actionLayout;
     }
 
+    private void doDeleteBundleDestination() {
+        String deleteSubmittedMessage = MSG.view_bundle_dest_deleteSubmitted(destination.getName(), destination
+            .getBundle().getName());
+        getMessageCenter().notify(new Message(deleteSubmittedMessage, Message.Severity.Info));
+        final Duration duration = new Duration();
+        BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
+        bundleService.deleteBundleDestination(destination.getId(), new AsyncCallback<Void>() {
+            @Override
+            public void onFailure(final Throwable caught) {
+                Timer timer = new Timer() {
+                    @Override
+                    public void run() {
+                        String message = MSG.view_bundle_dest_deleteFailure(destination.getName());
+                        getErrorHandler().handleError(message, caught);
+                    }
+                };
+                // Delay the showing of the result to give the user some time to see the deleteSubmitted notif
+                timer.schedule(Math.max(0, 3 * 1000 - duration.elapsedMillis()));
+            }
+
+            @Override
+            public void onSuccess(Void result) {
+                Timer timer = new Timer() {
+                    @Override
+                    public void run() {
+                        String message = MSG.view_bundle_dest_deleteSuccessful(destination.getName());
+                        getMessageCenter().notify(new Message(message, Message.Severity.Info));
+                        // Bundle destination is deleted, go back to bundle destinations root view
+                        goToView(LinkManager.getBundleDestinationLink(bundle.getId(), 0), true);
+                    }
+                };
+                // Delay the showing of the result to give the user some time to see the deleteSubmitted notif
+                timer.schedule(Math.max(0, 3 * 1000 - duration.elapsedMillis()));
+            }
+        });
+    }
+
     private void checkIfDisabled(final IButton purgeButton) {
         BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
         BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
         criteria.addFilterDestinationId(destination.getId());
         bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
+            @Override
             public void onFailure(Throwable caught) {
                 purgeButton.setDisabled(false);
             }
 
+            @Override
             public void onSuccess(PageList<BundleDeployment> result) {
                 for (BundleDeployment deployment : result) {
                     if (deployment.isLive()) {
@@ -317,6 +351,7 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         return deployments;
     }
 
+    @Override
     public void renderView(final ViewPath viewPath) {
         int bundleDestinationId = Integer.parseInt(viewPath.getCurrent().getPath());
 
@@ -328,13 +363,15 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
 
         BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
         bundleService.findBundleDestinationsByCriteria(criteria, new AsyncCallback<PageList<BundleDestination>>() {
+            @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_dest_loadFailure(), caught);
+                getErrorHandler().handleError(MSG.view_bundle_dest_loadFailure(), caught);
             }
 
+            @Override
             public void onSuccess(PageList<BundleDestination> result) {
                 final BundleDestination destination = result.get(0);
-                viewBundleDestination(destination, viewPath.getCurrent());
+                viewBundleDestination(destination);
             }
         });
     }

@@ -183,6 +183,11 @@
           </parameters>
       </operation>
 
+      <operation name="updateAgent"
+                 displayName="Update Agent"
+                 description="Requests that the agent begin to update itself. This attempts to pull down and install a new agent. The currently running agent will eventually shutdown and the new one will start up.">
+      </operation>
+
       <metric property="Trait.SigarVersion"
               displayName="SIGAR Version"
               dataType="trait"

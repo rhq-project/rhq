@@ -24,9 +24,6 @@ import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.E
 import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.INVALID_ACTION;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,8 +56,6 @@ import org.rhq.core.pluginapi.support.SnapshotReportRequest;
 import org.rhq.core.pluginapi.support.SnapshotReportResults;
 import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.core.system.OperatingSystemType;
-import org.rhq.core.system.ProcessExecutionResults;
-import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOpts;
 import org.rhq.modules.plugins.jbossas7.helper.JdrReportRunner;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
@@ -373,6 +368,12 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         return "base-dir";
     }
 
+    @NotNull
+    @Override
+    protected String getConfigDirAttributeName() {
+        return "config-dir";
+    }
+
     @Override
     protected String getTempDirAttributeName() {
         return TEMP_DIR_TRAIT;
@@ -430,92 +431,4 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         throw new Exception("Cannot obtain report, resource is not UP");
     }
 
-    private BundleHandoverResponse deployPatch(BundleHandoverRequest request) {
-        //download the file to a temp location
-        File patchFile = null;
-        try {
-            try {
-                patchFile = File.createTempFile("rhq-jboss-as-7-", ".patch");
-            } catch (IOException e) {
-                return BundleHandoverResponse
-                    .failure(BundleHandoverResponse.FailureType.EXECUTION,
-                        "Failed to create a temp file to copy patch to.");
-            }
-
-            try {
-                StreamUtil.copy(request.getContent(), new FileOutputStream(patchFile));
-            } catch (FileNotFoundException e) {
-                return BundleHandoverResponse.failure(EXECUTION, "Failed to copy patch to local storage.");
-            }
-
-            Map<String, String> parameters = request.getParams();
-
-            //param validation
-            if (parameters != null) {
-                for (Map.Entry<String, String> e : parameters.entrySet()) {
-                    String name = e.getKey();
-                    String value = e.getValue();
-
-                    if (!("override".equals(name) || "override-all".equals(name) || "preserve".equals(name) ||
-                        "override-modules".equals(name))) {
-                        return BundleHandoverResponse.failure(BundleHandoverResponse.FailureType.INVALID_PARAMETER,
-                            "'" + name +
-                                "' is not a supported parameter. Only 'override', 'override-all', 'preserve' and 'override-modules' are supported.");
-                    }
-                }
-            }
-
-            String errorMessage = deployPatch(patchFile, parameters);
-
-            return errorMessage == null ? BundleHandoverResponse.success() :
-                BundleHandoverResponse.failure(EXECUTION, errorMessage);
-        } finally {
-            if (patchFile != null) {
-                //noinspection ResultOfMethodCallIgnored
-                patchFile.delete();
-            }
-        }
-    }
-
-    /**
-     * Deploys a patch, returning an error message, if any.
-     *
-     * @param patchFile the local file containing the path
-     * @return error message or null if patching succeeded
-     */
-    private String deployPatch(File patchFile, Map<String, String> additionalParams) {
-        StringBuilder command = new StringBuilder("patch apply --path=");
-        command.append(patchFile.getAbsolutePath());
-
-        if (additionalParams != null) {
-            for (Map.Entry<String, String> e : additionalParams.entrySet()) {
-                command.append(" --").append(e.getKey());
-                if (e.getValue() != null) {
-                    command.append("=").append(e.getValue());
-                }
-            }
-        }
-
-        ProcessExecutionResults results = ServerControl.onServer(context.getPluginConfiguration(), getMode(),
-            context.getSystemInformation()).cli().disconnected(true).executeCliCommand(command.toString());
-
-        if (results.getError() != null || results.getExitCode() == null || results.getExitCode() != 0) {
-            String message = "Applying the patch failed ";
-            if (results.getError() != null) {
-                message += "with an exception: " + results.getError().getMessage();
-            } else {
-                if (results.getExitCode() == null) {
-                    message += "with a timeout.";
-                } else {
-                    message += "with exit code " + results.getExitCode();
-                }
-
-                message += " The attempt produced the following output:\n" + results.getCapturedOutput();
-            }
-
-            return message;
-        }
-
-        return null;
-    }
 }

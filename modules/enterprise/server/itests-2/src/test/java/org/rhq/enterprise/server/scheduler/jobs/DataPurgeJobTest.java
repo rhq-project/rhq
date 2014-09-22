@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -127,6 +127,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     public void testPurge() throws Throwable {
         addDataToBePurged();
         triggerDataPurgeJobNow();
+        triggerDataCalcJobNow();
         makeSureDataIsPurged();
     }
 
@@ -298,7 +299,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         final CountDownLatch latch = new CountDownLatch(1);
 
         SchedulerLocal schedulerBean = LookupUtil.getSchedulerBean();
-        schedulerBean.scheduleSimpleCronJob(DataPurgeJob.class, true, false, "0 0 0 1 1 ? 2099");
+        schedulerBean.scheduleSimpleCronJob(DataPurgeJob.class, true, false, "0 0 0 1 1 ? 2099", null);
 
         schedulerBean.addGlobalJobListener(new JobListener() {
             @Override
@@ -330,6 +331,45 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             assertTrue("Data purge job didn't complete in a timely fashion", latch.await(60, TimeUnit.SECONDS));
         } finally {
             schedulerBean.deleteJob(DataPurgeJob.class.getName(), DataPurgeJob.class.getName());
+        }
+    }
+
+    private void triggerDataCalcJobNow() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        SchedulerLocal schedulerBean = LookupUtil.getSchedulerBean();
+        schedulerBean.scheduleSimpleCronJob(DataCalcJob.class, true, false, "0 0 0 1 1 ? 2099", null);
+
+        schedulerBean.addGlobalJobListener(new JobListener() {
+            @Override
+            public String getName() {
+                return "DataCalcJobTestListener";
+            }
+
+            @Override
+            public void jobExecutionVetoed(JobExecutionContext arg0) {
+            }
+
+            @Override
+            public void jobToBeExecuted(JobExecutionContext arg0) {
+            }
+
+            @Override
+            public void jobWasExecuted(JobExecutionContext c, JobExecutionException e) {
+                if (c.getJobDetail().getJobClass().getName().equals(DataCalcJob.class.getName())) {
+                    latch.countDown(); // the data calc job is finished! let our test continue
+                }
+            }
+        });
+
+        try {
+            // trigger the data calc job so it executes immediately - this does not block
+            DataCalcJob.calcNow();
+
+            // wait for the job to finish - abort the test if it takes too long
+            assertTrue("Data calc job didn't complete in a timely fashion", latch.await(60, TimeUnit.SECONDS));
+        } finally {
+            schedulerBean.deleteJob(DataCalcJob.class.getName(), DataCalcJob.class.getName());
         }
 
     }

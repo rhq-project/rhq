@@ -428,6 +428,9 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
         Map<String, MeasurementDefinition> measurementDefMap, VLayout layout) {
         if (!results.isEmpty() && !measurementDefMap.isEmpty()) {
             boolean someChartedData = false;
+
+            layout.setWidth100();
+
             //iterate over the retrieved charting data
             for (int index = 0; index < displayOrder.length; index++) {
                 //retrieve the correct measurement definition
@@ -452,7 +455,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 }
                 DynamicForm row = new DynamicForm();
                 row.setNumCols(3);
-                row.setColWidths(65, 250, "*" );
+                row.setColWidths(65, "*", 100);
                 row.setWidth100();
                 row.setAutoHeight();
                 row.setOverflow(Overflow.VISIBLE);
@@ -471,13 +474,11 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 graphContainer.setCanvas(graph);
 
                 final String title = md.getDisplayName();
-                LinkItem link = AbstractActivityView.newLinkItem(title, null);
-                link.setTooltip(title);
-                link.setTitleVAlign(VerticalAlignment.TOP);
-                link.setAlign(Alignment.LEFT);
-                link.setClipValue(true);
-                link.setWrap(false);
-                link.setWidth(250);
+                LinkItem link = new LinkItem();
+                link.setLinkTitle(title);
+                link.setShowTitle(false);
+                link.setClipValue(false);
+                link.setWrap(true);
                 if (!BrowserUtility.isBrowserPreIE9()) {
 
                     link.addClickHandler(new ClickHandler() {
@@ -498,7 +499,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 value.setWidth("100%");
 
                 row.setItems(graphContainer, link, value);
-                row.setWidth100();
+
                 //if graph content returned
                 if ((!md.getName().trim().contains("Trait.")) && (lastValue != -1)) {
                     layout.addMember(row);

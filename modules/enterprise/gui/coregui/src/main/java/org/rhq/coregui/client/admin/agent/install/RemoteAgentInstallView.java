@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,7 @@ import com.smartgwt.client.types.ExpansionMode;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Dialog;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -99,7 +100,8 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private ButtonItem findAgentInstallPathButton;
     private ButtonItem statusCheckButton;
     private CheckboxItem rememberMeCheckbox;
-    private VLayout agentInfoLayout;
+
+    private Dialog dialog;
 
     private final boolean showInstallButton;
     private final boolean showUninstallButton;
@@ -165,11 +167,6 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         layout.addMember(header);
         layout.addMember(getButtons());
 
-        agentInfoLayout = new VLayout();
-        agentInfoLayout.setWidth100();
-        agentInfoLayout.setHeight100();
-        agentInfoLayout.setMembersMargin(1);
-        layout.addMember(agentInfoLayout);
         addMember(layout);
 
     }
@@ -267,13 +264,9 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             }
         });
 
-        agentStatusText = new StaticTextItem("agentStatus", MSG.view_remoteAgentInstall_agentStatus());
-        agentStatusText.setDefaultValue(MSG.view_remoteAgentInstall_agentStatusDefault());
-        agentStatusText.setRedrawOnChange(true);
-        agentStatusText.setStartRow(true);
-        agentStatusText.setEndRow(false);
+        createAgentStatusTextItem();
 
-        statusCheckButton = new ButtonItem("updateStatus", MSG.view_remoteAgentInstall_updateStatus());
+        statusCheckButton = new ButtonItem("updateStatus", MSG.common_title_updateStatus());
         statusCheckButton.setStartRow(false);
         statusCheckButton.setEndRow(true);
         if (findAgentInstallPathButton.getTitle().length() < 15) { //i18n may prolong the title
@@ -327,6 +320,15 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         return connectionForm;
     }
 
+    private void createAgentStatusTextItem() {
+        agentStatusText = new StaticTextItem("agentStatus", MSG.view_remoteAgentInstall_agentStatus());
+        agentStatusText.setDefaultValue(MSG.view_remoteAgentInstall_agentStatusDefault());
+        agentStatusText.setRedrawOnChange(true);
+        agentStatusText.setStartRow(true);
+        agentStatusText.setEndRow(false);
+    }
+
+
     private Layout getButtons() {
         buttonsForm = new HLayout();
 
@@ -370,7 +372,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             }
         });
 
-        startButton = new EnhancedIButton(MSG.view_remoteAgentInstall_startAgent());
+        startButton = new EnhancedIButton(MSG.common_label_startAgent());
         startButton.setExtraSpace(10);
         startButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -429,6 +431,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private void doneProcessing() {
         disableButtons(false);
         hostAuthorized = false; // if the ssh fingerprint changes under us this forces the user to re-authorize again
+        dialog.markForDestroy();
     }
 
     private void displayError(String msg) {
@@ -438,7 +441,27 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private void displayError(String msg, Throwable caught) {
         CoreGUI.getErrorHandler().handleError(msg, caught);
         String rootCause = ErrorHandler.getRootCauseMessage(caught);
-        String fullMsg = (rootCause == null) ? msg : msg + ": " + rootCause;
+
+        // JSch returns very bad error messages, transform them here before returning to the customer
+        String fullMsg = null;
+        if(rootCause != null && msg != null) {
+            String runtimeException = "java.lang.RuntimeException";
+            if("com.jcraft.jsch.JSchException:Auth cancel".equals(rootCause)) {
+                fullMsg = MSG.view_remoteAgentInstall_error_authFailed();
+            } else if(rootCause.indexOf("java.net.UnknownHostException") != -1) {
+                fullMsg = MSG.view_remoteAgentInstall_error_unknownHost();
+            } else if("java.net.ConnectException:Connection refused".equals(rootCause)) {
+                fullMsg = MSG.view_remoteAgentInstall_error_connRefused();
+            } else if(rootCause.indexOf(runtimeException) != -1) {
+                int exceptionEnd = rootCause.indexOf(runtimeException) + runtimeException.length() + 1; // remove : also
+                fullMsg = rootCause.substring(exceptionEnd);
+            }
+        }
+
+        // Fallback
+        if(fullMsg == null) {
+            fullMsg = (rootCause == null) ? msg : msg + ": " + rootCause;
+        }
         SC.warn(fullMsg);
     }
 
@@ -448,7 +471,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     }
 
     private void setAgentStatusText(String msg) {
-        if (agentStatusText != null && agentStatusText.isDrawn()) {
+        if (agentStatusText != null) {
             agentStatusText.setValue(msg);
         }
     }
@@ -501,6 +524,8 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
         final String parentPath = getAgentInstallPath();
 
+        createWaitingWindow(MSG.view_remoteAgentInstall_findAgentWait(), true);
+
         remoteInstallService.findAgentInstallPath(getRemoteAccessInfo(), parentPath, new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
                 displayError(MSG.view_remoteAgentInstall_error_1(), caught);
@@ -541,13 +566,17 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         });
     }
 
+    private void createWaitingWindow(String text, boolean show) {
+        dialog = new Dialog();
+        dialog.setMessage(text);
+        dialog.setIcon("[SKIN]notify.png");
+        dialog.draw();
+        dialog.setTitle(MSG.view_remoteAgentInstall_dialogTitle());
+        dialog.setShowCloseButton(false);
+    }
+
     private void installAgent() {
         disableButtons(true);
-
-        // clear any old information that was from a prior attempt
-        for (Canvas child : agentInfoLayout.getChildren()) {
-            child.destroy();
-        }
 
         // FOR TESTING WITHOUT DOING A REAL INSTALL - START
         //        AgentInstallInfo result = new AgentInstallInfo("mypath", "myown", "1.1", "localHOST", "serverHOST");
@@ -584,7 +613,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             return;
         }
 
-        SC.showPrompt(MSG.view_remoteAgentInstall_waitForUpload());
+        createWaitingWindow(MSG.view_remoteAgentInstall_waitForUpload(), true);
 
         Scheduler.get().scheduleEntry(new RepeatingCommand() {
             @Override
@@ -601,7 +630,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                     return true; // keep waiting, call us back later
                 }
 
-                SC.clearPrompt();
+                dialog.destroy();
                 reallyInstallAgent();
                 return false; // upload is done, we can stop calling ourselves
             }
@@ -611,6 +640,9 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private void reallyInstallAgent() {
         disableButtons(true);
         setAgentStatusText(MSG.view_remoteAgentInstall_installingPleaseWait());
+
+        createWaitingWindow(MSG.view_remoteAgentInstall_installingPleaseWait(), true);
+
         SC.ask(MSG.view_remoteAgentInstall_overwriteAgentTitle(), MSG.view_remoteAgentInstall_overwriteAgentQuestion(),
             new BooleanCallback() {
                 @Override
@@ -645,8 +677,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                                             result.getAgentAddress(), String.valueOf(result.getAgentPort())));
                                     }
 
-                                    buildInstallInfoCanvas(agentInfoLayout, result);
-                                    agentInfoLayout.markForRedraw();
+                                    buildInstallInfoCanvas(result);
                                     agentStatusCheck(); // we are relying on this to call doneProcessing(), we shouldn't do it here
                                 }
 
@@ -661,7 +692,9 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private void uninstallAgent() {
         disableButtons(true);
 
-        remoteInstallService.uninstallAgent(getRemoteAccessInfo(), new AsyncCallback<String>() {
+        createWaitingWindow(MSG.view_remoteAgentInstall_uninstallingPleaseWait(), true);
+
+        remoteInstallService.uninstallAgent(getRemoteAccessInfo(), getAgentInstallPath(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
                 displayError(MSG.view_remoteAgentInstall_error_7(), caught);
                 setAgentStatusText(MSG.view_remoteAgentInstall_error_7());
@@ -686,6 +719,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
     private void startAgent() {
         disableButtons(true);
+        createWaitingWindow(MSG.view_remoteAgentInstall_startAgentPleaseWait(), true);
         remoteInstallService.startAgent(getRemoteAccessInfo(), getAgentInstallPath(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
                 displayError(MSG.view_remoteAgentInstall_error_5(), caught);
@@ -704,6 +738,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
     private void stopAgent() {
         disableButtons(true);
+        createWaitingWindow(MSG.view_remoteAgentInstall_stopAgentPleaseWait(), true);
         remoteInstallService.stopAgent(getRemoteAccessInfo(), getAgentInstallPath(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
                 displayError(MSG.view_remoteAgentInstall_error_6(), caught);
@@ -720,7 +755,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         });
     }
 
-    private void buildInstallInfoCanvas(VLayout installInfo, AgentInstallInfo info) {
+    private void buildInstallInfoCanvas(AgentInstallInfo info) {
         DynamicForm infoForm = new DynamicForm();
         infoForm.setMargin(20);
         infoForm.setWidth100();
@@ -735,7 +770,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         StaticTextItem path = new StaticTextItem("path", MSG.common_title_path());
         path.setValue(info.getPath());
 
-        StaticTextItem owner = new StaticTextItem("owner", MSG.view_remoteAgentInstall_owner());
+        StaticTextItem owner = new StaticTextItem("owner", MSG.common_title_owner());
         owner.setValue(info.getOwner());
 
         StaticTextItem config = new StaticTextItem("config", MSG.common_title_configuration());
@@ -772,10 +807,18 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         listLayout.addMember(listGrid);
         listCanvas.setCanvas(listLayout);
 
-        infoForm.setFields(infoHeader, version, path, owner, config, listCanvas);
-        installInfo.addMember(infoForm);
+        // Replace the current info with just the install steps
+        for (Canvas canvas : this.getChildren()) {
+            canvas.markForDestroy();
+        }
 
-        return;
+        createAgentStatusTextItem();
+        infoForm.setFields(infoHeader, version, path, owner, config, agentStatusText, listCanvas);
+
+        addMember(infoForm);
+
+        this.setMembersMargin(1);
+        this.markForRedraw();
     }
 
     private ListGridRecord[] getStepRecords(AgentInstallInfo info) {

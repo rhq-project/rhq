@@ -1,0 +1,3 @@
+<updatePlan>
+  <step class="org.rhq.cassandra.schema.MigrateAggregateMetrics"/>
+</updatePlan>

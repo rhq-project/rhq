@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -294,12 +294,9 @@ public class SSHInstallUtility {
 
         log.info("Copying agent binary update distribution file to [" + accessInfo.getHost() + "]...");
 
-        long start = System.currentTimeMillis();
-        boolean fileSent = SSHFileSend.sendFile(session, agentPath, parentPath);
-        AgentInstallStep scpStep = new AgentInstallStep("ssh copy '" + agentPath + "' -> '" + parentPath + "'",
-            "Remote copy the agent binary update distribution", 0, fileSent ? "Success" : "Failed", getTimeDiff(start));
+        AgentInstallStep scpStep = sendFile(agentPath, parentPath, "Remote copy the agent binary update distribution");
         info.addStep(scpStep);
-        if (!fileSent) {
+        if(scpStep.getResultCode() != 0) {
             return info; // abort and return what we did - no sense continuing if the agent distro failed to copy
         }
 
@@ -312,15 +309,13 @@ public class SSHInstallUtility {
 
         if (customData.getAgentConfigurationXmlFile() != null) {
             log.info("Copying custom agent configuration file...");
-            start = System.currentTimeMillis();
-            fileSent = SSHFileSend.sendFile(session, customData.getAgentConfigurationXmlFile(), agentConfigXmlFilename);
-            AgentInstallStep step = new AgentInstallStep("ssh copy '" + customData.getAgentConfigurationXmlFile()
-                + "' -> '" + agentConfigXmlFilename + "'", "Remote copy the agent configuration file", 0,
-                fileSent ? "Success" : "Failed", getTimeDiff(start));
+
+            AgentInstallStep step = sendFile(customData.getAgentConfigurationXmlFile(), agentConfigXmlFilename, "Remote copy the agent configuration file");
             info.addStep(step);
-            if (!fileSent) {
+            if(step.getResultCode() != 0) {
                 return info; // abort and return what we did - no sense continuing if the custom config file failed to copy
             }
+
             log.info("Custom agent configuration file copied.");
 
             // tell the info object - this is needed so it adds the --config command line option
@@ -337,27 +332,25 @@ public class SSHInstallUtility {
         try {
             int port = Integer.parseInt(portStr.trim());
             info.setAgentPort(port);
-        } catch (NumberFormatException nfe) {
+        } catch (Exception e) {
             info.setAgentPort(0); // indicate that we don't know it
         }
 
         if (customData.getRhqAgentEnvFile() != null) {
             log.info("Copying custom agent environment script...");
             String destFilename = parentPath + "/rhq-agent/bin/rhq-agent-env.sh";
-            start = System.currentTimeMillis();
-            fileSent = SSHFileSend.sendFile(session, customData.getRhqAgentEnvFile(), destFilename);
-            AgentInstallStep step = new AgentInstallStep("ssh copy '" + customData.getRhqAgentEnvFile()
-                + "' -> '" + destFilename + "'", "Remote copy the agent environment script file", 0,
-                fileSent ? "Success" : "Failed", getTimeDiff(start));
+
+            AgentInstallStep step = sendFile(customData.getRhqAgentEnvFile(), destFilename, "Remote copy the agent environment script file");
             info.addStep(step);
-            if (!fileSent) {
+            if (step.getResultCode() != 0) {
                 return info; // abort and return what we did - no sense continuing if the custom env script file failed to copy
             }
+
             log.info("Custom agent environment script copied.");
         }
 
         // Do a quick check to see if there is something already listening on the agent's port.
-        start = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
         Boolean squatterCheck = checkAgentConnection(info, 1);
         if (squatterCheck != null) { // if this is null, we weren't even able to check
             if (squatterCheck.booleanValue()) {
@@ -402,6 +395,28 @@ public class SSHInstallUtility {
         }
 
         return info;
+    }
+
+    private AgentInstallStep sendFile(String sourceFilename, String destFilename, String description) {
+        long start = System.currentTimeMillis();
+        int scpReturnCode = 0;
+        String scpMessage = "Success";
+
+        try {
+            SSHFileSend.sendFile(session, sourceFilename, destFilename);
+        } catch (IOException e) {
+            scpReturnCode = 1;
+            scpMessage = e.getMessage();
+        } catch (JSchException e) {
+            scpReturnCode = 1;
+            scpMessage = e.getMessage();
+        }
+
+        AgentInstallStep step = new AgentInstallStep("ssh copy '" + sourceFilename
+                + "' -> '" + destFilename + "'", description, scpReturnCode,
+                scpMessage, getTimeDiff(start));
+
+        return step;
     }
 
     /**

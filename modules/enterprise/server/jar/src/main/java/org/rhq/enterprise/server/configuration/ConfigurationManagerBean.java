@@ -2546,22 +2546,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         PageList<GroupResourceConfigurationUpdate> updates = queryRunner.execute();
 
-        /*Set<String> fetchFields = new HashSet<String>(generator.getFetchFields(criteria));
-        if (fetchFields.contains(AbstractGroupConfigurationUpdateCriteria.FETCH_FIELD_CONFIGURATION_UPDATES)) {
-            // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
-            entityManager.clear();
-            for (GroupResourceConfigurationUpdate update : updates) {
-                List<ResourceConfigurationUpdate> memberUpdates = update.getConfigurationUpdates();
-                // Mask the configurations before returning the updates.
-                for (ResourceConfigurationUpdate memberUpdate : memberUpdates) {
-                    Configuration configuration = memberUpdate.getConfiguration();
-                    ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
-                        subjectManager.getOverlord(), memberUpdate.getResource().getResourceType().getId());
-                    ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
-                }
-            }
-        }*/
-
         return updates;
     }
 
@@ -2578,22 +2562,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             criteria, generator, entityManager);
 
         PageList<GroupPluginConfigurationUpdate> updates = queryRunner.execute();
-
-        /*Set<String> fetchFields = new HashSet<String>(generator.getFetchFields(criteria));
-        if (fetchFields.contains(AbstractGroupConfigurationUpdateCriteria.FETCH_FIELD_CONFIGURATION_UPDATES)) {
-            // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
-            entityManager.clear();
-            for (GroupPluginConfigurationUpdate update : updates) {
-                List<PluginConfigurationUpdate> memberUpdates = update.getConfigurationUpdates();
-                // Mask the configurations before returning the updates.
-                for (PluginConfigurationUpdate memberUpdate : memberUpdates) {
-                    Configuration configuration = memberUpdate.getConfiguration();
-                    ConfigurationDefinition configurationDefinition = getPluginConfigurationDefinitionForResourceType(
-                        subjectManager.getOverlord(), memberUpdate.getResource().getResourceType().getId());
-                    ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
-                }
-            }
-        }*/
 
         return updates;
     }

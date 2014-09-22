@@ -539,8 +539,8 @@
         <!-- The component class manually handles this property which is read-only on the server side  -->
         <c:simple-property name="enabled" type="boolean" readOnly="false" default="true" required="false" description="Specifies if the datasource should be enabled"/>
         <c:simple-property name="jta" type="boolean" readOnly="false" required="false" default="true" description="Enable JTA integration"/>
-        <c:simple-property name="max-pool-size" type="integer" readOnly="false" required="false" defaultValue="20" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
-        <c:simple-property name="min-pool-size" type="integer" readOnly="false" required="false" defaultValue="0" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
+        <c:simple-property name="max-pool-size" displayName="Max Pool Size" type="string" readOnly="false" required="false" defaultValue="20" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
+        <c:simple-property name="min-pool-size" displayName="Min Pool Size" type="string" readOnly="false" required="false" defaultValue="0" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
         <c:simple-property name="pool-prefill" type="boolean" readOnly="false" required="false" defaultValue="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
         <c:simple-property name="pool-use-strict-min" type="boolean" readOnly="false" required="false" defaultValue="false" description="Define if the min-pool-size should be considered a strictly."/>
         <c:simple-property name="security-domain" required="false" type="string" readOnly="false" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
@@ -1072,6 +1072,14 @@
       <c:simple-property name="logDir" type="file" description="the directory where log files will be written for this host controller" displayName="Log Directory" readOnly="true" required="false"/>
       <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain (Deprecated, use 'name' trait)"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
+        <c:simple-property name="supportsPatching" type="boolean" readOnly="false" required="true"
+                           default="__UNINITIALIZED_VALUE__(should be replaced by agent automatically)">
+            <c:description>
+                Whether this EAP server supports patching. This should be automatically deduced by the agent. It is highly
+                recommended to leave this with the discovered value. However, you will need to manually update this value
+                if you manually upgrade your server from a version that does not support patching to a version that does.
+            </c:description>
+        </c:simple-property>
 
       &startScriptPluginConfigGroup;
       &logSources;
@@ -1216,6 +1224,14 @@
         <value-context>measurementTrait</value-context>
         <value-name>domain-temp-dir</value-name>
       </destination-base-dir>
+      <destination-definition name="Patches">
+          <accepts bundle-type="Wildfly Patch"/>
+          <description>Use this location to apply patches to the server</description>
+          <connection>DOMAIN</connection>
+          <referenced-configuration>
+              <all of="pluginConfiguration"/>
+          </referenced-configuration>
+      </destination-definition>
     </bundle-target>
 
     <help>
@@ -1354,7 +1370,7 @@
 
     <service name="DomainDeployment"
              class="DomainDeploymentComponent"
-             discovery="DomainDeploymentDiscovery"
+             discovery="VersionedDomainDeploymentDiscovery"
              createDeletePolicy="both"
              creationDataType="content">
 
@@ -1438,6 +1454,14 @@
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
       <c:simple-property name="logDir" type="file" description="the directory where log files will be written for this server" displayName="Log Directory" readOnly="true" required="false"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
+      <c:simple-property name="supportsPatching" type="boolean" readOnly="false" required="true"
+                         default="__UNINITIALIZED_VALUE__(should be replaced by agent automatically)">
+        <c:description>
+          Whether this EAP server supports patching. This should be automatically deduced by the agent. It is highly
+          recommended to leave this with the discovered value. However, you will need to manually update this value
+          if you manually upgrade your server from a version that does not support patching to a version that does.
+        </c:description>
+      </c:simple-property>
 
       <c:group name="operations">
         <c:simple-property name="startScript" displayName="Start Script Path" type="file" required="false">
@@ -1686,6 +1710,7 @@
         <value-name>temp-dir</value-name>
       </destination-base-dir>
       <destination-definition name="Patches">
+        <accepts bundle-type="Wildfly Patch"/>
         <description>Use this location to apply patches to the server</description>
         <connection>STANDALONE</connection>
         <referenced-configuration>
@@ -2018,7 +2043,7 @@
         <c:option-source target="resource" expression="type=SocketBindingGroup" expressionScope="baseResource"/>
       </c:simple-property>
       <c:simple-property name="socket-binding-port-offset" readOnly="false" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
-      <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean"/>
+      <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean" description="Whether or not this server should be started when the Host Controller starts."/>
       <!--
               <c:simple-property name="jmv" displayName="JVM" defaultValue="default" type="string" description="JVM definition to use with this server">
                 <c:option-source target="resource" expression="type='JVM Definition' plugin=&pluginName;"/>
@@ -2925,7 +2950,16 @@
             <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="true" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
             <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
               <c:simple-property name="time" type="long" readOnly="true" description="The time"/>
-              <c:simple-property name="unit" type="string" readOnly="true" description="The time unit"/>
+              <c:simple-property name="unit" type="string" readOnly="true" description="The time unit">
+                <c:property-options>
+                  <c:option value="NANOSECONDS"/>
+                  <c:option value="MILLISECONDS"/>
+                  <c:option value="SECONDS"/>
+                  <c:option value="MINUTES"/>
+                  <c:option value="HOURS"/>
+                  <c:option value="DAYS"/>
+                </c:property-options>
+              </c:simple-property>
             </c:map-property>
             <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="true" displayName="Max Threads" description="The maximum thread pool size."/>
             <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -2952,7 +2986,16 @@
             <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="true" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
             <c:map-property name="keepalive-time" readOnly="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
               <c:simple-property name="time" type="long" readOnly="true" description="The time"/>
-              <c:simple-property name="unit" type="string" readOnly="true" description="The time unit"/>
+              <c:simple-property name="unit" type="string" readOnly="true" description="The time unit">
+                <c:property-options>
+                  <c:option value="NANOSECONDS"/>
+                  <c:option value="MILLISECONDS"/>
+                  <c:option value="SECONDS"/>
+                  <c:option value="MINUTES"/>
+                  <c:option value="HOURS"/>
+                  <c:option value="DAYS"/>
+                </c:property-options>
+              </c:simple-property>
             </c:map-property>
             <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="true" displayName="Max Threads" description="The maximum thread pool size."/>
             <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -3158,8 +3201,8 @@
             <c:simple-property name="idle-timeout-minutes:expr" required="false" type="long" readOnly="true" displayName="Idle Timeout Minutes" description="The idle&#45;timeout&#45;minutes elements specifies the maximum time, in minutes, a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is half of the smallest idle&#45;timeout&#45;minutes value of any pool. Changing this value requires a server restart."/>
             <c:simple-property name="interleaving" required="false" type="boolean" readOnly="true" defaultValue="false" description="An element to enable interleaving for XA connections. The default value is false."/>
             <c:simple-property name="jndi-name" required="false" type="string" readOnly="true" description="Specifies the JNDI name for the connection factory or admin object"/>
-            <c:simple-property name="max-pool-size:expr" required="false" type="integer" readOnly="true" defaultValue="20" displayName="Max Pool Size" description="The max&#45;pool&#45;size element specifies the maximum number of connections for a pool. No more connections will be created in each sub&#45;pool. The default value is 20."/>
-            <c:simple-property name="min-pool-size:expr" required="false" type="integer" readOnly="true" defaultValue="0" displayName="Min Pool Size" description="The min&#45;pool&#45;size element specifies the minimum number of connections for a pool. The default value is 0."/>
+            <c:simple-property name="max-pool-size" required="false" type="string" readOnly="true" defaultValue="20" displayName="Max Pool Size" description="The max&#45;pool&#45;size element specifies the maximum number of connections for a pool. No more connections will be created in each sub&#45;pool. The default value is 20."/>
+            <c:simple-property name="min-pool-size" required="false" type="string" readOnly="true" defaultValue="0" displayName="Min Pool Size" description="The min&#45;pool&#45;size element specifies the minimum number of connections for a pool. The default value is 0."/>
             <c:simple-property name="no-recovery" required="false" type="boolean" readOnly="true" description="Specifies if the connection pool should be excluded from recovery"/>
             <c:simple-property name="no-tx-separate-pool" required="false" type="boolean" readOnly="true" defaultValue="false" description="Oracle does not like XA connections getting used both inside and outside a JTA transaction. To workaround the problem you can create separate sub&#45;pools for the different contexts. The default value is false."/>
             <c:simple-property name="pad-xid" required="false" type="boolean" readOnly="true" defaultValue="false" description="Should the Xid be padded. The default value is false."/>
@@ -3268,7 +3311,16 @@
         <resource-configuration>
           <c:map-property name="keepalive-time" readOnly="true" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
             <c:simple-property name="time" type="long" readOnly="true" description="The time"/>
-            <c:simple-property name="unit" type="string" readOnly="true" description="The time unit"/>
+            <c:simple-property name="unit" type="string" readOnly="true" description="The time unit">
+              <c:property-options>
+                <c:option value="NANOSECONDS"/>
+                <c:option value="MILLISECONDS"/>
+                <c:option value="SECONDS"/>
+                <c:option value="MINUTES"/>
+                <c:option value="HOURS"/>
+                <c:option value="DAYS"/>
+              </c:property-options>
+            </c:simple-property>
           </c:map-property>
           <c:simple-property name="max-threads:expr" displayName="Max Threads" required="false" type="string" readOnly="true" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -3487,7 +3539,16 @@
         <resource-configuration>
           <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
             <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+              <c:property-options>
+                <c:option value="NANOSECONDS"/>
+                <c:option value="MILLISECONDS"/>
+                <c:option value="SECONDS"/>
+                <c:option value="MINUTES"/>
+                <c:option value="HOURS"/>
+                <c:option value="DAYS"/>
+              </c:property-options>
+            </c:simple-property>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -5883,7 +5944,16 @@
             &sharedThreadPoolResourceConfig;
             <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
               <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-              <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
+              <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+                <c:property-options>
+                  <c:option value="NANOSECONDS"/>
+                  <c:option value="MILLISECONDS"/>
+                  <c:option value="SECONDS"/>
+                  <c:option value="MINUTES"/>
+                  <c:option value="HOURS"/>
+                  <c:option value="DAYS"/>
+                </c:property-options>
+              </c:simple-property>
             </c:map-property>
             <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
             <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -5906,7 +5976,16 @@
             &sharedThreadPoolResourceConfig;
             <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
               <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-              <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
+              <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+                <c:property-options>
+                  <c:option value="NANOSECONDS"/>
+                  <c:option value="MILLISECONDS"/>
+                  <c:option value="SECONDS"/>
+                  <c:option value="MINUTES"/>
+                  <c:option value="HOURS"/>
+                  <c:option value="DAYS"/>
+                </c:property-options>
+              </c:simple-property>
             </c:map-property>
             <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
             <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -6097,7 +6176,16 @@
         <resource-configuration>
           <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
             <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+              <c:property-options>
+                <c:option value="NANOSECONDS"/>
+                <c:option value="MILLISECONDS"/>
+                <c:option value="SECONDS"/>
+                <c:option value="MINUTES"/>
+                <c:option value="HOURS"/>
+                <c:option value="DAYS"/>
+              </c:property-options>
+            </c:simple-property>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="false" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -6314,7 +6402,16 @@
         <resource-configuration>
           <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
             <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+              <c:property-options>
+                <c:option value="NANOSECONDS"/>
+                <c:option value="MILLISECONDS"/>
+                <c:option value="SECONDS"/>
+                <c:option value="MINUTES"/>
+                <c:option value="HOURS"/>
+                <c:option value="DAYS"/>
+              </c:property-options>
+            </c:simple-property>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -10726,7 +10823,16 @@
           &sharedThreadPoolResourceConfig;
           <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
             <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+              <c:property-options>
+                <c:option value="NANOSECONDS"/>
+                <c:option value="MILLISECONDS"/>
+                <c:option value="SECONDS"/>
+                <c:option value="MINUTES"/>
+                <c:option value="HOURS"/>
+                <c:option value="DAYS"/>
+              </c:property-options>
+            </c:simple-property>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -10753,7 +10859,16 @@
           &sharedThreadPoolResourceConfig;
           <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
             <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+              <c:property-options>
+                <c:option value="NANOSECONDS"/>
+                <c:option value="MILLISECONDS"/>
+                <c:option value="SECONDS"/>
+                <c:option value="MINUTES"/>
+                <c:option value="HOURS"/>
+                <c:option value="DAYS"/>
+              </c:property-options>
+            </c:simple-property>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -11316,7 +11431,16 @@
       <resource-configuration>
         <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
           <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-          <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
+          <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+            <c:property-options>
+              <c:option value="NANOSECONDS"/>
+              <c:option value="MILLISECONDS"/>
+              <c:option value="SECONDS"/>
+              <c:option value="MINUTES"/>
+              <c:option value="HOURS"/>
+              <c:option value="DAYS"/>
+            </c:property-options>
+          </c:simple-property>
         </c:map-property>
         <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -11380,7 +11504,16 @@
       <resource-configuration>
         <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
           <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-          <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
+          <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+            <c:property-options>
+              <c:option value="NANOSECONDS"/>
+              <c:option value="MILLISECONDS"/>
+              <c:option value="SECONDS"/>
+              <c:option value="MINUTES"/>
+              <c:option value="HOURS"/>
+              <c:option value="DAYS"/>
+            </c:property-options>
+          </c:simple-property>
         </c:map-property>
         <c:simple-property name="max-threads:expr" required="false" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -13704,7 +13837,12 @@
           <parent-resource-type name="Mac OS X" plugin="Platforms"/>
       </runs-inside>
 
-      <bundle type="Wildfly Patch" />
+      <bundle type="Wildfly Patch">
+          <targets>
+              <resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+              <resource-type name="JBossAS7 Host Controller" plugin="&pluginName;"/>
+          </targets>
+      </bundle>
   </service>
 
   <help >
@@ -13844,7 +13982,8 @@
     <strong>action = deployment: deploys the content to a server group</strong><br>
     Required parameters:<br>
     <ul>
-        <li>serverGroup: The name of the server group this deployment should be deployed to</li>
+        <li>serverGroup: The name of the server group this deployment should be deployed to; this is the EAP domain
+        server group, do not confuse it with RHQ's bundle destination resource group</li>
     </ul>
     Optional parameters:<br>
     <ul>
@@ -13856,6 +13995,25 @@
     <ul>
         <li>waitTime (in seconds): how long to wait for completion; defaults to an hour</li>
         <li>killOnTimeout (true/false): should the CLI process be killed if timeout is reached; defaults to false</li>
+    </ul>
+    <br>
+    <strong>action = patch: installs a patch on the host controller</strong><br>
+    Optional parameters:<br>
+    <ul>
+        <li>override: The value is a comma-separated list of the miscellaneous
+                      items in the patch that can be overridden on the server
+                      whether the item reports a conflict or not.</li>
+        <li>preserve: The value is a comma-separated list of the miscellaneous
+                      items that must be preserved and not modified by
+                      applying or rolling back a patch.</li>
+        <li>override-all: The argument does not expect any value and is
+                          optional. The default is 'false'.
+                          It signifies to bypass any content verification on the
+                          miscellaneous items changed by the patch.</li>
+        <li>override-modules: The argument does not expect any value and is
+                              optional. The default is 'false'.
+                              It signifies to bypass any content verification on the
+                              modules and OSGi bundles affected by the patch.</li>
     </ul>
     <br>
     <p>Sample ANT bundle recipe</p>

@@ -29,6 +29,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
+import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -50,6 +51,21 @@ public class HibernatePersistenceUnitComponent extends BaseComponent {
     };
     private static final int BATCH_SIZE = 10;
     private static final int MANAGEMENT_QUERY_TIMEOUT = 60;
+    private static final String ENABLED_ATTRIBUTE = "enabled";
+
+    @Override
+    public Configuration loadResourceConfiguration() throws Exception {
+        ReadAttribute readAttributeOp = new ReadAttribute(getAddress(), ENABLED_ATTRIBUTE);
+        Result result = getASConnection().execute(readAttributeOp);
+        if (!result.isSuccess()) {
+            throw new Exception(result.getFailureDescription(), result.getRhqThrowable());
+        }
+        Configuration configuration = new Configuration();
+        PropertySimple enabledProperty = new PropertySimple(ENABLED_ATTRIBUTE, result.getResult());
+        configuration.put(enabledProperty);
+        includeOOBMessages(result, configuration);
+        return configuration;
+    }
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {

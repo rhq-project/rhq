@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.core.domain.criteria;
 
 import java.io.Serializable;
@@ -35,7 +36,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -43,6 +43,8 @@ import org.rhq.core.domain.util.PageOrdering;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class Criteria implements Serializable, BaseCriteria {
+    private static final String[] EMPTY_STRING_ARRAY = new String[0];
+
     public enum Type {
         FILTER(new String[] { "filterId", "filterIds" }), FETCH(), SORT(new String[] { "sortId" });
 
@@ -80,7 +82,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
      * Note: Typically a null value is analogous to OFF.
      */
     public enum NonBindingOverrideFilter {
-        ON, OFF;
+        ON, OFF
     }
 
     /**
@@ -88,15 +90,17 @@ public abstract class Criteria implements Serializable, BaseCriteria {
      */
     public enum Restriction {
         /**
-         * This returns an empty {@link PageList} result whose {@link PageList#getTotalSize()} method otherwise
+         * This returns an empty {@link org.rhq.core.domain.util.PageList} result
+         * whose {@link org.rhq.core.domain.util.PageList#getTotalSize()} method otherwise
          * contains the correct value.
          */
         COUNT_ONLY,
         /**
-         * This will return the {@link PageList} result whose {@link PageList#isUnbounded()} returned true, meaning
-         * that the value contained within {@link PageList#getTotalSize()} is invalid / undefined.
+         * This will return the {@link org.rhq.core.domain.util.PageList} result
+         * whose {@link org.rhq.core.domain.util.PageList#isUnbounded()} returned true, meaning
+         * that the value contained within {@link org.rhq.core.domain.util.PageList#getTotalSize()} is invalid/undefined.
          */
-        COLLECTION_ONLY;
+        COLLECTION_ONLY
     }
 
     private static final long serialVersionUID = 2L;
@@ -106,8 +110,10 @@ public abstract class Criteria implements Serializable, BaseCriteria {
 
     private boolean filtersOptional;
     private boolean caseSensitive;
+    private String[] caseSensitiveFilters;
     private List<Permission> requiredPermissions;
     private boolean strict;
+    private String[] strictFilters;
     private Restriction restriction = null;
     private boolean supportsAddSortId = true;
 
@@ -157,6 +163,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
         return pageSize;
     }
 
+    @Override
     public List<String> getOrderingFieldNames() {
         return orderingFieldNames;
     }
@@ -169,10 +176,12 @@ public abstract class Criteria implements Serializable, BaseCriteria {
         return sortOverrides.get(fieldName);
     }
 
+    @Override
     public PageControl getPageControlOverrides() {
         return pageControlOverrides;
     }
 
+    @Override
     public void addSortId(PageOrdering sortId) {
         if (isSupportsAddSortId()) {
             addSortField("id");
@@ -205,7 +214,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
      * By default all Criteria support sort on ID.  And this sort is applied implicitly to criteria
      * queries involving paging, to ensure consistent ordering of query results. If for some unlikely reason
      * the caller needs to disable the implicit ID sort then call this, setting the value to false.
-     *  
+     *
      * @param supportsAddSortId
      */
     public void setSupportsAddSortId(boolean supportsAddSortId) {
@@ -235,6 +244,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
      * @param pageNumber The page to fetch. This is 0-based.
      * @param pageSize The number of items to return.
      */
+    @Override
     public void setPaging(int pageNumber, int pageSize) {
         this.pageNumber = pageNumber;
         this.pageSize = pageSize;
@@ -293,15 +303,65 @@ public abstract class Criteria implements Serializable, BaseCriteria {
     }
 
     /**
-     * If set to true, string-based filters will use exact string matches;
-     * Default is 'false', which means we'll fuzzy match
+     * Used when only a subset of active string-filters should use case-sensitive matching. Specify only the filter
+     * names that should use case-sensitive matching, all other string-filters will use case-insensitive matching.
+     * This setting is ignored if {@link #setCaseSensitive(boolean)} is set to 'true'.  As an example, if you want to
+     * get every resource with uppercase "RHQ" in its name (case-sensitive, fuzzy match the resource name) and
+     * with "storage" in the description (case-insensitive, fuzzy match the description):
+     * <pre>
+     *   resourceCriteria.addFilterName("RHQ");
+     *   resourceCriteria.addFilterDescription("storage");
+     *   resourceCriteria.setCaseSensitiveFilters("name");
+     * </pre>
      */
+    public void setCaseSensitiveFilters(String... caseSensitiveFilters) {
+        this.caseSensitiveFilters = caseSensitiveFilters;
+    }
+
+    public String[] getCaseSensitiveFilters() {
+        if (caseSensitiveFilters == null) {
+            return EMPTY_STRING_ARRAY;
+        }
+        return caseSensitiveFilters;
+    }
+
+    /**
+     * If set to true, string-based filters will use exact string matches;
+     * Default is 'false', which means we'll fuzzy match.  If 'true' this applies to all string-based
+     * filters and overrides {@link #setStrictFilters(String...)}.
+     */
+    @Override
     public void setStrict(boolean strict) {
         this.strict = strict;
     }
 
+    @Override
     public boolean isStrict() {
         return this.strict;
+    }
+
+    /**
+     * Used when only a subset of active string-filters should use strict equality. Specify only the filter names
+     * that should use strict equality, all other string-filters will use fuzzy match.  This setting is ignored
+     * if {@link #setStrict(boolean)} is set to 'true'. As an example, if you want to get every resource with
+     * "rhq" in its name (fuzzy match the resource name) but you want to ensure you only get resources associated
+     * with a single plugin, for which you have the exact name:
+     * <pre>
+     *   resourceCriteria.addFilterName("rhq");
+     *   resourceCriteria.addFilterPluginName(someExactPluginName);
+     *   resourceCriteria.setStrictFilters("pluginName");
+     * </pre>
+     *
+     */
+    public void setStrictFilters(String... strictFilters) {
+        this.strictFilters = strictFilters;
+    }
+
+    public String[] getStrictFilters() {
+        if (strictFilters == null) {
+            return EMPTY_STRING_ARRAY;
+        }
+        return strictFilters;
     }
 
     /**

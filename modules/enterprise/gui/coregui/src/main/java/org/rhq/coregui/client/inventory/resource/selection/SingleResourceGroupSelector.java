@@ -22,6 +22,7 @@ package org.rhq.coregui.client.inventory.resource.selection;
 import com.smartgwt.client.types.SelectionStyle;
 
 import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
  * This forces the user to only be able to select a single resource group.
@@ -57,5 +58,12 @@ public class SingleResourceGroupSelector extends ResourceGroupSelector {
         if (assignedGrid.getTotalRows() == 0) {
             super.addSelectedRows();
         }
+    }
+    
+    public ResourceGroup getSelectedGroup() {
+        if (assignedGrid.getTotalRows() != 0) {
+            return getDataSource().copyValues(assignedGrid.getRecord(0));
+        }
+        return null;
     }
 }

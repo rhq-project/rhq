@@ -23,6 +23,7 @@
 package org.rhq.core.domain.alert.composite;
 
 import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
 
 /**
  * @author Joseph Marques
@@ -31,8 +32,10 @@ public class AlertConditionEventCategoryComposite extends AbstractAlertCondition
 
     private final Integer resourceId;
 
-    public AlertConditionEventCategoryComposite(AlertCondition condition, Integer resourceId) {
-        super(condition);
+    public AlertConditionEventCategoryComposite(
+            int cid, AlertConditionCategory ccategory, String cname, String ccomparator, Double cthreshold, String coption, Integer triggerId,
+            Integer resourceId) {
+        super(new AlertCondition(cid, ccategory, cname, ccomparator, cthreshold, coption, triggerId));
         this.resourceId = resourceId;
     }
 

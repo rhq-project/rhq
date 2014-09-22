@@ -1,6 +1,6 @@
 /*
 * RHQ Management Platform
-* Copyright (C) 2005-2008 Red Hat, Inc.
+* Copyright (C) 2005-2014 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -69,13 +69,15 @@ public class SystemInfoFactory {
         @Override
         public Thread newThread(Runnable r) {
             Thread t = new Thread(r);
+            // There's no need to block the JVM while waiting for a process completion or pumping process streams
+            t.setDaemon(true);
             t.setName("systeminfo-" + threadNumber.getAndIncrement());
             return t;
         }
     };
 
     /**
-     * Used for mainly process execution within the plugin container.
+     * Used to execute tasks watching for process completion or pumping process streams within the plugin container.
      * This should be 'final' but shutdown() is not really final either.
      */
     private static ExecutorService executor = Executors.newCachedThreadPool(threadFactory);

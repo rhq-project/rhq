@@ -29,7 +29,7 @@ public class ConfigEditor {
 
     private Map config;
 
-    public ConfigEditor(File cassandraYamlFile)  {
+    public ConfigEditor(File cassandraYamlFile) {
         configFile = cassandraYamlFile;
         backupFile = new File(configFile.getParent(), "." + configFile.getName() + ".bak");
         DumperOptions options = new DumperOptions();
@@ -56,12 +56,21 @@ public class ConfigEditor {
 
     public void save() {
         createBackup();
+        FileWriter fw = null;
         try {
-            yaml.dump(config, new FileWriter(configFile));
+            fw = new FileWriter(configFile);
+            yaml.dump(config, fw);
             backupFile.delete();
             config = null;
         } catch (Exception e) {
             throw new ConfigEditorException("Failed to save changes to " + configFile, e);
+        } finally {
+            if (null != fw) {
+                try {
+                    fw.close();
+                } catch (IOException e) {
+                }
+            }
         }
     }
 
@@ -194,6 +203,10 @@ public class ConfigEditor {
             os.close();
             is.close();
         }
+    }
+
+    public File getConfigFile() {
+        return configFile;
     }
 
 }

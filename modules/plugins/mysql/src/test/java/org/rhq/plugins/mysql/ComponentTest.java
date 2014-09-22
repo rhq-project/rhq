@@ -152,8 +152,8 @@ public abstract class ComponentTest {
     private final File temporaryDirectory = temp;
     private final File dataDirectory = temp;
     private final String pluginContainerName = "rhq";
-    private final OperationContext operationContext = new OperationContextImpl(0, pluginContainer);
-    private final ContentContext contentContext = new ContentContextImpl(0, pluginContainer);
+    private final OperationContext operationContext = new OperationContextImpl(0);
+    private final ContentContext contentContext = new ContentContextImpl(0);
     private PluginContainerDeployment pluginContainerDeployment = null;
     private Resource platform;
     private ResourceContainer platformContainer;
@@ -294,9 +294,9 @@ public abstract class ComponentTest {
         ResourceComponent component = (ResourceComponent) Class.forName(rclassname).newInstance();
 
         AvailabilityContext availContext = new AvailabilityContextImpl(cresource, pluginContainer.getInventoryManager());
-        InventoryContext inventoryContext = new InventoryContextImpl(cresource, pluginContainer);
+        InventoryContext inventoryContext = new InventoryContextImpl(cresource, pluginContainer.getInventoryManager());
 
-        EventContext eventContext = new EventContextImpl(resource, pluginContainer);
+        EventContext eventContext = new EventContextImpl(resource, eventManager);
         ResourceContext context = new ResourceContext(cresource, parentComponent,
                 null, rdc, systemInfo, temporaryDirectory, dataDirectory,
                 pluginContainerName, eventContext, operationContext, contentContext,

@@ -331,6 +331,12 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
             <skipTests>true</skipTests>
+            <properties>
+              <property>
+                <name>listener</name>
+                <value>org.rhq.test.testng.StdoutReporter</value>
+              </property>
+            </properties>
         </configuration>
         <executions>
             <execution>

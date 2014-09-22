@@ -133,8 +133,10 @@ public class ParallelOperationsTest {
         if (jobsCompleted == null || jobsCompleted.isEmpty()) {
             println("jobsCompleted is null/empty");
         } else {
-            for (String op : jobsCompleted.keySet()) {
-                println(op + " completed at " + formatTime(jobsCompleted.get(op)));
+            synchronized (jobsCompleted) {
+                for (String op : jobsCompleted.keySet()) {
+                    println(op + " completed at " + formatTime(jobsCompleted.get(op)));
+                }
             }
         }
     }

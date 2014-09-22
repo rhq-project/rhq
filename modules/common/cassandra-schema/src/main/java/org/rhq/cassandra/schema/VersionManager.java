@@ -47,7 +47,7 @@ class VersionManager extends AbstractManager {
 
     private final Log log = LogFactory.getLog(VersionManager.class);
 
-    private enum Task {
+    static enum Task {
         Drop("drop"),
         Create("create"),
         Update("update");
@@ -63,9 +63,10 @@ class VersionManager extends AbstractManager {
         }
     }
 
-    public VersionManager(String username, String password, String[] nodes, int cqlPort, SessionManager sessionManager)
+    public VersionManager(String username, String password, String[] nodes, int cqlPort, SessionManager sessionManager,
+        UpdateFolderFactory updateFolderFactory)
         throws Exception {
-        super(username, password, nodes, cqlPort, sessionManager);
+        super(username, password, nodes, cqlPort, sessionManager, updateFolderFactory);
     }
 
     /**
@@ -79,13 +80,14 @@ class VersionManager extends AbstractManager {
         log.info("Preparing to install storage schema");
 
         try {
+            // Drop the existing connection so we don't use stale session
+            shutdownClusterConnection();
             initClusterSession();
         } catch (AuthenticationException e) {
             log.debug("Authentication exception. Will now attempt to create the storage schema.");
             log.debug(e);
             create();
         }
-
         update(properties);
     }
 
@@ -112,7 +114,7 @@ class VersionManager extends AbstractManager {
             //re-initialize the cluster connection with default cassandra password
             initClusterSession(DEFAULT_CASSANDRA_USER, DEFAULT_CASSANDRA_PASSWORD);
 
-            updateFolder = new UpdateFolder(Task.Create.getFolder());
+            updateFolder = updateFolderFactory.newUpdateFolder(Task.Create.getFolder());
 
             properties = new Properties(System.getProperties());
             properties.put("replication_factor", calculateNewReplicationFactor() + "");
@@ -150,7 +152,7 @@ class VersionManager extends AbstractManager {
             throw new RuntimeException("Storage schema not installed propertly, cannot apply schema updates.");
         }
 
-        UpdateFolder updateFolder = new UpdateFolder(Task.Update.getFolder());
+        UpdateFolder updateFolder = updateFolderFactory.newUpdateFolder(Task.Update.getFolder());
 
         int installedSchemaVersion = getInstalledSchemaVersion();
         log.info("Installed storage schema version is " + installedSchemaVersion);
@@ -200,7 +202,7 @@ class VersionManager extends AbstractManager {
     public void drop() throws Exception {
         log.info("Preparing to drop storage schema.");
 
-        UpdateFolder updateFolder = new UpdateFolder(Task.Drop.getFolder());
+        UpdateFolder updateFolder = updateFolderFactory.newUpdateFolder(Task.Drop.getFolder());
         Properties properties = new Properties(System.getProperties());
         properties.put("rhq_admin_username", getUsername());
 
@@ -263,7 +265,7 @@ class VersionManager extends AbstractManager {
 
             int installedSchemaVersion = this.getInstalledSchemaVersion();
 
-            UpdateFolder folder = new UpdateFolder(Task.Update.getFolder());
+            UpdateFolder folder = updateFolderFactory.newUpdateFolder(Task.Update.getFolder());
             int requiredSchemaVersion = folder.getLatestVersion();
 
             if (installedSchemaVersion < requiredSchemaVersion) {

@@ -38,6 +38,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Future;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -135,7 +136,7 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    protected void waitForRHQServerToInitialize() throws Exception {
+    protected void waitForRHQServerToInitialize(Future<Integer> installerExitCode) throws Exception {
         try {
             final long messageInterval = 30000L;
             final long problemMessageInterval = 120000L;
@@ -144,6 +145,11 @@ public abstract class AbstractInstall extends ControlCommand {
 
             while (!isRHQServerInitialized()) {
                 Long now = System.currentTimeMillis();
+
+                if(installerExitCode.isDone() && installerExitCode.get().intValue() != RHQControl.EXIT_CODE_OK) {
+                    stopServer();
+                    throw new RuntimeException("Installer failed with code " + installerExitCode.get().intValue() + ", shut down server");
+                }
 
                 if ((now - intervalStart) > messageInterval) {
                     long totalWait = (now - timerStart);
@@ -176,21 +182,40 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    @SuppressWarnings("resource")
+    protected ModelControllerClient getModelControllerClient() throws IOException {
+        ModelControllerClient mcc = null;
+
+        File propsFile = getServerPropertiesFile();
+        BufferedReader reader = new BufferedReader(new FileReader(propsFile));
+        Properties props = new Properties();
+
+        try {
+            props.load(reader);
+        } finally {
+            try {
+                reader.close();
+            } catch (Exception e) {
+                // best effort
+            }
+        }
+
+        String host = (String) props.get("jboss.bind.address.management");
+        if ("0.0.0.0".equals(host)) {
+            host = "127.0.0.1"; // use the loopback address if the management address is bound to all addressed (the client can't use 0.0.0.0)
+        }
+
+        int port = Integer.valueOf((String) props.get("jboss.management.native.port")).intValue();
+        mcc = MCCHelper.createModelControllerClient(host, port);
+        return mcc;
+    }
+
     protected boolean isRHQServerInitialized() throws IOException {
 
         BufferedReader reader = null;
         ModelControllerClient mcc = null;
-        Properties props = new Properties();
 
         try {
-            File propsFile = getServerPropertiesFile();
-            reader = new BufferedReader(new FileReader(propsFile));
-            props.load(reader);
-
-            String host = (String) props.get("jboss.bind.address.management");
-            int port = Integer.valueOf((String) props.get("jboss.management.native.port")).intValue();
-            mcc = MCCHelper.createModelControllerClient(host, port);
+            mcc = getModelControllerClient();
             DeploymentJBossASClient client = new DeploymentJBossASClient(mcc);
             boolean isDeployed = client.isDeployment("rhq.ear");
             return isDeployed;
@@ -335,18 +360,17 @@ public abstract class AbstractInstall extends ControlCommand {
         log.debug("Stopping RHQ server...");
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "stop");
 
-        int rValue = RHQControl.EXIT_CODE_OK;
-
+        int rValue;
         if (isWindows()) {
             try {
-                rValue = Math.max(rValue, ExecutorAssist.execute(serverBinDir, commandLine));
+                rValue = ExecutorAssist.execute(serverBinDir, commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to stop server service", e);
                 rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            rValue = Math.max(rValue, ExecutorAssist.execute(serverBinDir, commandLine));
+            rValue = ExecutorAssist.execute(serverBinDir, commandLine);
         }
         return rValue;
     }
@@ -355,6 +379,7 @@ public abstract class AbstractInstall extends ControlCommand {
         int rValue = RHQControl.EXIT_CODE_OK;
 
         try {
+            validateServerPropertiesFile();
             log.info("The RHQ Server must be started to complete its installation. Starting the RHQ server in preparation of running the server installer...");
 
             // when you unzip the distro, you are getting a fresh, unadulterated, out-of-box EAP installation, which by default listens
@@ -385,7 +410,7 @@ public abstract class AbstractInstall extends ControlCommand {
             } else {
                 // For *nix, just start the server in the background
                 commandLine = getCommandLine("rhq-server", "start");
-                rValue = Math.max(rValue, ExecutorAssist.execute(getBinDir(), commandLine, true));
+                ExecutorAssist.executeAsync(getBinDir(), commandLine, null);
             }
 
             addUndoTaskToStopComponent("--server"); // if any errors occur after now, we need to stop the server
@@ -421,34 +446,29 @@ public abstract class AbstractInstall extends ControlCommand {
         return rValue;
     }
 
-    protected int runRHQServerInstaller() throws IOException {
-        try {
-            log.info("Installing RHQ server");
+    protected Future<Integer> runRHQServerInstaller() throws Exception {
+        log.info("Installing RHQ server");
 
-            // If the install fails, we will remove the install marker file allowing the installer to be able to run again.
-            // We also need to revert mgmt-users.properties
-            File mgmtUserPropertiesFile = new File(getBaseDir(),
+        // If the install fails, we will remove the install marker file allowing the installer to be able to run again.
+        // We also need to revert mgmt-users.properties
+        File mgmtUserPropertiesFile = new File(getBaseDir(),
                 "jbossas/standalone/configuration/mgmt-users.properties");
-            final FileReverter mgmtUserPropertiesReverter = new FileReverter(mgmtUserPropertiesFile);
-            addUndoTask(new ControlCommand.UndoTask("Removing server-installed marker file and management user") {
-                public void performUndoWork() throws Exception {
-                    getServerInstalledMarkerFile(getBaseDir()).delete();
-                    mgmtUserPropertiesReverter.revert();
-                }
-            });
+        File standaloneXmlFile = new File(getBaseDir(), "jbossas/standalone/configuration/standalone-full.xml");
+        final FileReverter mgmtUserPropertiesReverter = new FileReverter(mgmtUserPropertiesFile);
+        final FileReverter standaloneXmlFileReverter = new FileReverter(standaloneXmlFile);
+        addUndoTask(new ControlCommand.UndoTask(
+            "Removing server-installed marker file and management user and reverting to original standalone-full.xml") {
+            public void performUndoWork() throws Exception {
+                getServerInstalledMarkerFile(getBaseDir()).delete();
+                mgmtUserPropertiesReverter.revert();
+                standaloneXmlFileReverter.revert();
+            }
+        });
 
-            /**
-             * @TODO There's no way this could catch the resultValue..
-             */
-
-            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
-            ExecutorAssist.execute(getBinDir(), commandLine, true);
-            log.info("The server installer is running");
-            return RHQControl.EXIT_CODE_OK; // the installer really didn't exit yet, so we don't know the result
-        } catch (Exception e) {
-            log.error("An error occurred while starting the server installer: " + e.getMessage());
-            return RHQControl.EXIT_CODE_NOT_INSTALLED;
-        }
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
+        Future<Integer> integerFuture = ExecutorAssist.executeAsync(getBinDir(), commandLine, null);
+        log.info("The server installer is running");
+        return integerFuture;
     }
 
     private class StorageDataDirectories {

@@ -69,7 +69,7 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
     }
 
     private String getManagementNodeName() {
-        String managementNodeName = context.getResourceKey();
+        String managementNodeName = context.getPluginConfiguration().getSimpleValue("path");
         return managementNodeName.substring(managementNodeName.indexOf("=") + 1);
     }
 

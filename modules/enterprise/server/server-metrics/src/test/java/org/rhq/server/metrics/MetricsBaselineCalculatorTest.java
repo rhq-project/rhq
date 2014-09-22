@@ -1,8 +1,7 @@
 /*
  * RHQ Management Platform
- * Copyright 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,9 +29,11 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -43,8 +44,8 @@ import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.MeasurementBaseline;
-import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
-import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.Bucket;
 
 /**
  * @author Stefan Negrea
@@ -71,23 +72,24 @@ public class MetricsBaselineCalculatorTest {
         PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(StorageSession.class, MetricsConfiguration.class)
             .withArguments(eq(mockSession), eq(metricsConfiguration)).thenReturn(mockMetricsDAO);
 
-        when(mockMetricsDAO.findAggregatedSimpleOneHourMetric(eq(1), eq(0), eq(1))).thenReturn(
-            new ArrayList<AggregateSimpleNumericMetric>());
+        when(mockMetricsDAO.findAggregateMetrics(eq(1), eq(Bucket.ONE_HOUR), eq(0), eq(1))).thenReturn(
+            new ArrayList<AggregateNumericMetric>());
 
-        int expectedScheduleId = 2567;
+        Set expectedScheduleId = new HashSet(1);
+        expectedScheduleId.add(2567);
 
         //create object to test and inject required dependencies
         MetricsBaselineCalculator objectUnderTest = new MetricsBaselineCalculator(new MetricsDAO(mockSession,
             metricsConfiguration));
 
         //run code under test
-        List<MeasurementBaseline> result = objectUnderTest.calculateBaselines(Arrays.asList(expectedScheduleId), 0, 1);
+        Map<Integer, MeasurementBaseline> result = objectUnderTest.calculateBaselines(expectedScheduleId, 0, 1);
 
         //verify the results (Assert and mock verification)
         assertEquals(result.size(), 0, "No baselines expected");
 
-        verify(mockMetricsDAO, times(1)).findAggregatedSimpleOneHourMetric(any(Integer.class), any(Integer.class),
-            any(Integer.class));
+        verify(mockMetricsDAO, times(1)).findAggregateMetrics(any(Integer.class), eq(Bucket.ONE_HOUR),
+            any(Integer.class), any(Integer.class));
         verifyNoMoreInteractions(mockMetricsDAO);
     }
 
@@ -95,33 +97,24 @@ public class MetricsBaselineCalculatorTest {
     public void randomDataTest() throws Exception {
         //generate random data
         Random random = new Random();
-        List<AggregateSimpleNumericMetric> randomData = new ArrayList<AggregateSimpleNumericMetric>();
+        List<AggregateNumericMetric> randomData = new ArrayList<AggregateNumericMetric>();
 
         for (int i = 0; i < 123; i++) {
-            randomData.add(new AggregateSimpleNumericMetric(1, random.nextDouble() * 1000, AggregateType.AVG));
-            randomData.add(new AggregateSimpleNumericMetric(1, random.nextDouble() * 1000, AggregateType.MAX));
-            randomData.add(new AggregateSimpleNumericMetric(1, random.nextDouble() * 1000, AggregateType.MIN));
+            randomData.add(new AggregateNumericMetric(1, Bucket.ONE_HOUR, random.nextDouble() * 1000,
+                random.nextDouble() * 1000, random.nextDouble() * 1000, System.currentTimeMillis()));
         }
 
-        double average = 0;
-        for (AggregateSimpleNumericMetric metric : randomData) {
-            if (AggregateType.AVG.equals(metric.getType())) {
-                average += metric.getValue();
+        ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
+        double expectedMax = randomData.get(0).getMax();
+        double expectedMin = randomData.get(0).getMin();
+
+        for (AggregateNumericMetric metric : randomData) {
+            mean.add(metric.getAvg());
+            if (metric.getMax() > expectedMax) {
+                expectedMax = metric.getMax();
             }
-        }
-        average = average / 123;
-
-        double expectedMax = Double.MIN_VALUE;
-        for (AggregateSimpleNumericMetric metric : randomData) {
-            if (AggregateType.MAX.equals(metric.getType()) && expectedMax < metric.getValue()) {
-                expectedMax = metric.getValue();
-            }
-        }
-
-        double expectedMin = Double.MAX_VALUE;
-        for (AggregateSimpleNumericMetric metric : randomData) {
-            if (AggregateType.MIN.equals(metric.getType()) && expectedMin > metric.getValue()) {
-                expectedMin = metric.getValue();
+            if (metric.getMin() < expectedMin) {
+                expectedMin = metric.getMin();
             }
         }
 
@@ -129,6 +122,8 @@ public class MetricsBaselineCalculatorTest {
         long expectedStartTime = 135;
         long expectedEndTime = 246;
         long beforeComputeTime = System.currentTimeMillis();
+        Set expectedScheduleIdSet = new HashSet(1);
+        expectedScheduleIdSet.add(expectedScheduleId);
 
         //tell the method story as it happens: mock dependencies and configure
         //those dependencies to get the method under test to completion.
@@ -138,7 +133,7 @@ public class MetricsBaselineCalculatorTest {
             .withArguments(eq(mockSession), eq(metricsConfiguration)).thenReturn(mockMetricsDAO);
 
         when(
-            mockMetricsDAO.findAggregatedSimpleOneHourMetric(eq(expectedScheduleId), eq(expectedStartTime),
+            mockMetricsDAO.findAggregateMetrics(eq(expectedScheduleId), eq(Bucket.ONE_HOUR), eq(expectedStartTime),
                 eq(expectedEndTime))).thenReturn(randomData);
 
         //create object to test and inject required dependencies
@@ -146,14 +141,14 @@ public class MetricsBaselineCalculatorTest {
             metricsConfiguration));
 
         //run code under test
-        List<MeasurementBaseline> result = objectUnderTest.calculateBaselines(Arrays.asList(expectedScheduleId),
+        Map<Integer, MeasurementBaseline> result = objectUnderTest.calculateBaselines(expectedScheduleIdSet,
             expectedStartTime, expectedEndTime);
 
         //verify the results (Assert and mock verification)
         Assert.assertEquals(result.size(), 1);
 
-        MeasurementBaseline baselineResult = result.get(0);
-        Assert.assertEquals(baselineResult.getMean(), average, TEST_PRECISION);
+        MeasurementBaseline baselineResult = result.get(Integer.valueOf(expectedScheduleId));
+        Assert.assertEquals(baselineResult.getMean(), mean.getArithmeticMean(), TEST_PRECISION);
         Assert.assertEquals(baselineResult.getMax(), expectedMax, TEST_PRECISION);
         Assert.assertEquals(baselineResult.getMin(), expectedMin, TEST_PRECISION);
         Assert.assertEquals(baselineResult.getScheduleId(), expectedScheduleId);
@@ -164,7 +159,7 @@ public class MetricsBaselineCalculatorTest {
             Assert.fail("Back compute time, the computation was backdated.");
         }
 
-        verify(mockMetricsDAO, times(1)).findAggregatedSimpleOneHourMetric(eq(expectedScheduleId),
+        verify(mockMetricsDAO, times(1)).findAggregateMetrics(eq(expectedScheduleId), eq(Bucket.ONE_HOUR),
             eq(expectedStartTime), eq(expectedEndTime));
         verifyNoMoreInteractions(mockMetricsDAO);
     }
@@ -173,22 +168,31 @@ public class MetricsBaselineCalculatorTest {
     public void noMinMaxDataTest() throws Exception {
         //generate random data
         Random random = new Random();
-        List<AggregateSimpleNumericMetric> randomData = new ArrayList<AggregateSimpleNumericMetric>();
+        List<AggregateNumericMetric> randomData = new ArrayList<AggregateNumericMetric>();
 
         for (int i = 0; i < 123; i++) {
-            randomData.add(new AggregateSimpleNumericMetric(1, random.nextDouble() * 1000, AggregateType.AVG));
+            double value = random.nextDouble() * 1000;
+            randomData.add(new AggregateNumericMetric(1, Bucket.ONE_HOUR, value, value, value,
+                System.currentTimeMillis()));
         }
 
-        double average = 0;
-        for (AggregateSimpleNumericMetric metric : randomData) {
-            average += metric.getValue();
+        ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
+        for (AggregateNumericMetric metric : randomData) {
+            mean.add(metric.getAvg());
         }
-        average = average / 123;
+
+//        double average = 0;
+//        for (AggregateSimpleNumericMetric metric : randomData) {
+//            average += metric.getValue();
+//        }
+//        average = average / 123;
 
         double expectedMinMax = Double.NaN;
         int expectedScheduleId = 567;
         long expectedStartTime = 135;
         long expectedEndTime = 246;
+        Set expectedScheduleIdSet = new HashSet(1);
+        expectedScheduleIdSet.add(expectedScheduleId);
 
         //tell the method story as it happens: mock dependencies and configure
         //those dependencies to get the method under test to completion.
@@ -198,7 +202,7 @@ public class MetricsBaselineCalculatorTest {
             .withArguments(eq(mockSession), eq(metricsConfiguration)).thenReturn(mockMetricsDAO);
 
         when(
-            mockMetricsDAO.findAggregatedSimpleOneHourMetric(eq(expectedScheduleId), eq(expectedStartTime),
+            mockMetricsDAO.findAggregateMetrics(eq(expectedScheduleId), eq(Bucket.ONE_HOUR), eq(expectedStartTime),
                 eq(expectedEndTime))).thenReturn(randomData);
 
         //create object to test and inject required dependencies
@@ -206,13 +210,13 @@ public class MetricsBaselineCalculatorTest {
             metricsConfiguration));
 
         //run code under test
-        List<MeasurementBaseline> result = objectUnderTest.calculateBaselines(Arrays.asList(expectedScheduleId),
+        Map<Integer, MeasurementBaseline> result = objectUnderTest.calculateBaselines(expectedScheduleIdSet,
             expectedStartTime, expectedEndTime);
 
         //verify the results (Assert and mock verification)
-        Assert.assertEquals(result.size(), 0);
+        Assert.assertEquals(result.size(), 1);
 
-        verify(mockMetricsDAO, times(1)).findAggregatedSimpleOneHourMetric(eq(expectedScheduleId),
+        verify(mockMetricsDAO, times(1)).findAggregateMetrics(eq(expectedScheduleId), eq(Bucket.ONE_HOUR),
             eq(expectedStartTime), eq(expectedEndTime));
         verifyNoMoreInteractions(mockMetricsDAO);
     }

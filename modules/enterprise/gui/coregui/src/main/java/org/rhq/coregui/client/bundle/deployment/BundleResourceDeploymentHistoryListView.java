@@ -1,31 +1,30 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.client.bundle.deployment;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.types.DateDisplayFormat;
@@ -52,8 +51,11 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
+import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ErrorMessageWindow;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
@@ -63,6 +65,7 @@ public class BundleResourceDeploymentHistoryListView extends EnhancedVLayout {
 
     private BundleResourceDeployment resourceDeployment;
     private HashMap<String, String> statusIcons;
+    private ListGrid grid;
 
     public BundleResourceDeploymentHistoryListView(BundleResourceDeployment resourceDeployment) {
         super();
@@ -86,7 +89,7 @@ public class BundleResourceDeploymentHistoryListView extends EnhancedVLayout {
     protected void onInit() {
         super.onInit();
 
-        final ListGrid grid = new ListGrid();
+        grid = new ListGrid();
         grid.setWidth100();
         grid.setHeight100();
         grid.setSelectionType(SelectionStyle.SINGLE);
@@ -95,6 +98,7 @@ public class BundleResourceDeploymentHistoryListView extends EnhancedVLayout {
         grid.setDetailField("message");
         grid.setSortField("timestamp");
         grid.setSortDirection(SortDirection.ASCENDING);
+        grid.setEmptyMessage(MSG.common_msg_loading());
 
         ListGridField action = new ListGridField("action", MSG.view_bundle_deploy_action());
         action.setAutoFitWidth(true);
@@ -125,18 +129,19 @@ public class BundleResourceDeploymentHistoryListView extends EnhancedVLayout {
         details.setIconHeight(11);
         details.setIconWidth(11);
         details.setCellFormatter(new CellFormatter() {
+            @Override
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return "<img src=\"images/subsystems/bundle/Details_11.png\"/>";
             }
         });
         details.addRecordClickHandler(new RecordClickHandler() {
+            @Override
             public void onRecordClick(RecordClickEvent recordClickEvent) {
                 showDetails((ListGridRecord) recordClickEvent.getRecord());
             }
         });
 
         grid.setFields(action, message, timestamp, status, user, details);
-        grid.setData(buildRecords());
 
         grid.addDoubleClickHandler(new DoubleClickHandler() {
             @Override
@@ -146,6 +151,26 @@ public class BundleResourceDeploymentHistoryListView extends EnhancedVLayout {
         });
 
         addMember(grid);
+
+        loadData();
+    }
+
+    private void loadData() {
+        BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService(30000);
+        bundleService.getBundleResourceDeploymentHistories(resourceDeployment.getId(),
+            new AsyncCallback<List<BundleResourceDeploymentHistory>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_tree_loadFailure(), caught);
+                    grid.setShowEmptyMessage(false);
+                }
+
+                @Override
+                public void onSuccess(List<BundleResourceDeploymentHistory> result) {
+                    grid.setData(buildRecords(result));
+                    grid.setShowEmptyMessage(false);
+                }
+            });
     }
 
     private void showDetails(ListGridRecord record) {
@@ -187,30 +212,29 @@ public class BundleResourceDeploymentHistoryListView extends EnhancedVLayout {
         form.setItems(timestamp, action, category, user, status, info, message, detail);
         form.editRecord(record);
 
-        Window win = new ErrorMessageWindow(MSG.view_bundle_deploy_installDetails(),
-            form);
+        Window win = new ErrorMessageWindow(MSG.view_bundle_deploy_installDetails(), form);
         win.setWidth(500);
         win.show();
     }
 
-    public ListGridRecord[] buildRecords() {
+    private static ListGridRecord[] buildRecords(List<BundleResourceDeploymentHistory> histories) {
         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
 
-        for (BundleResourceDeploymentHistory step : resourceDeployment.getBundleResourceDeploymentHistories()) {
+        for (BundleResourceDeploymentHistory history : histories) {
             ListGridRecord record = new ListGridRecord();
-            record.setAttribute("id", step.getId());
-            record.setAttribute("action", step.getAction());
-            record.setAttribute("info", step.getInfo());
+            record.setAttribute("id", history.getId());
+            record.setAttribute("action", history.getAction());
+            record.setAttribute("info", history.getInfo());
 
-            if (step.getCategory() != null) {
-                record.setAttribute("category", step.getCategory().toString());
+            if (history.getCategory() != null) {
+                record.setAttribute("category", history.getCategory().toString());
             }
 
-            record.setAttribute("message", step.getMessage());
-            record.setAttribute("attachment", step.getAttachment());
-            record.setAttribute("status", step.getStatus().name());
-            record.setAttribute("timestamp", new Date(step.getAuditTime()));
-            record.setAttribute("user", step.getSubjectName());
+            record.setAttribute("message", history.getMessage());
+            record.setAttribute("attachment", history.getAttachment());
+            record.setAttribute("status", history.getStatus().name());
+            record.setAttribute("timestamp", new Date(history.getAuditTime()));
+            record.setAttribute("user", history.getSubjectName());
             records.add(record);
         }
 

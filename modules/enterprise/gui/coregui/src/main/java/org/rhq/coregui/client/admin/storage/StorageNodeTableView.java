@@ -98,29 +98,9 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         super.configureTable();
         List<ListGridField> fields = getDataSource().getListGridFields();
 
-        // this needs to be added here instead of the DS because of the Canvas.imgHTML method
-        for (ListGridField field : fields) {
-            if (FIELD_AVAILABILITY.propertyName().equals(field.getName())) {
-                field.setCellFormatter(new CellFormatter() {
-                    public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
-                        return imgHTML(ImageManager
-                            .getAvailabilityIconFromAvailType(value == null ? AvailabilityType.UNKNOWN
-                                : (AvailabilityType) value), 16,16);
-                    }
-                });
-            }
-        }
-
-        ListGrid listGrid = getListGrid();
-        listGrid.setAutoSaveEdits(false);
-        listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
-        listGrid.sort(FIELD_ADDRESS.propertyName(), SortDirection.ASCENDING);
-        listGrid.setHoverWidth(200);
-        showCommonActions();
-
         for (ListGridField field : fields) {
             // adding the cell formatter for name field (clickable link)
-            if (field.getName() == FIELD_ADDRESS.propertyName()) {
+            if (field.getName().equals(FIELD_ADDRESS.propertyName())) {
                 field.setCellFormatter(new CellFormatter() {
                     @Override
                     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
@@ -130,10 +110,9 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                         String detailsUrl = "#" + VIEW_PATH + "/" + getId(record);
                         String formattedValue = StringUtility.escapeHtml(value.toString());
                         return LinkManager.getHref(detailsUrl, formattedValue);
-
                     }
                 });
-            } else if (field.getName() == FIELD_RESOURCE_ID.propertyName()) {
+            } else if (field.getName().equals(FIELD_RESOURCE_ID.propertyName())) {
                 // adding the cell formatter for resource id field (clickable link)
                 field.setCellFormatter(new CellFormatter() {
                     @Override
@@ -156,6 +135,13 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                 });
             }
         }
+
+        ListGrid listGrid = getListGrid();
+        listGrid.setAutoSaveEdits(false);
+        listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
+        listGrid.sort(FIELD_ADDRESS.propertyName(), SortDirection.ASCENDING);
+        listGrid.setHoverWidth(200);
+        showCommonActions();
     }
 
     @SuppressWarnings("unused")
@@ -250,17 +236,20 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
 
         addTableAction(MSG.view_adminTopology_storageNodes_run_undeploySelected(), null, ButtonColor.RED,
             new AuthorizedTableAction(this, TableActionEnablement.SINGLE, Permission.MANAGE_SETTINGS) {
+            
+                private String availabilityIcon = ImageManager.getAvailabilityIconFromAvailType(AvailabilityType.UP);
 
-            @Override
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return StorageNodeTableView.this.isUndeployable(super.isEnabled(selection), selection);
-            }
+                @Override
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    return StorageNodeTableView.this.isUndeployable(super.isEnabled(selection), selection, availabilityIcon);
+                }
 
-            @Override
-            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                executeBulkAction(selections, actionValue, question, success, failure, StorageNodeOperation.UNDEPLOY);
-            }
-        });
+                @Override
+                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                    executeBulkAction(selections, actionValue, question, success, failure,
+                        StorageNodeOperation.UNDEPLOY);
+                }
+            });
     }
 
     private void addDeployAction() {
@@ -286,16 +275,16 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         addTableAction(MSG.view_adminTopology_storageNodes_run_deploySelected(), null, ButtonColor.BLUE,
             new AuthorizedTableAction(this, TableActionEnablement.SINGLE, Permission.MANAGE_SETTINGS) {
 
-            @Override
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return StorageNodeTableView.this.isDeployable(super.isEnabled(selection), selection);
-            }
+                @Override
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    return StorageNodeTableView.this.isDeployable(super.isEnabled(selection), selection);
+                }
 
-            @Override
-            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                executeBulkAction(selections, actionValue, question, success, failure, StorageNodeOperation.DEPLOY);
-            }
-        });
+                @Override
+                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                    executeBulkAction(selections, actionValue, question, success, failure, StorageNodeOperation.DEPLOY);
+                }
+            });
     }
 
     private void addInvokeOperationsAction() {
@@ -502,7 +491,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         return true;
     }
 
-    private boolean isUndeployable(boolean parentsOpinion, ListGridRecord[] selection) {
+    private boolean isUndeployable(boolean parentsOpinion, ListGridRecord[] selection, String availIcon) {
         if (!parentsOpinion || !isEnabled(parentsOpinion, selection)) {
             return false;
         }
@@ -526,8 +515,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
             }
             if (StorageNode.Status.NORMAL.toString().equals(
                 storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                && AvailabilityType.UP
-                    .equals(storageNodeRecord.getAttributeAsObject(FIELD_AVAILABILITY.propertyName()))) {
+                && availIcon.equals(storageNodeRecord.getAttributeAsObject(FIELD_AVAILABILITY.propertyName()))) {
                 nodesInNormalCouner++;
             }
         }

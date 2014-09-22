@@ -45,6 +45,7 @@ import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -91,7 +92,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     private final ScheduledThreadPoolExecutor senderThreadPool;
 
     private final MeasurementSenderRunner measurementSenderRunner;
-    MeasurementCollectorRunner measurementCollectorRunner;
+    private final MeasurementCollectorRunner measurementCollectorRunner;
 
     private final PluginContainerConfiguration configuration;
 
@@ -117,9 +118,31 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     private final AtomicLong lateCollections = new AtomicLong(0);
     private final AtomicLong failedCollection = new AtomicLong(0);
 
-    public MeasurementManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter, InventoryManager inventoryManager) {
+    public MeasurementManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter,
+        InventoryManager inventoryManager) {
+
         super(MeasurementAgentService.class, streamRemoter);
+
         this.configuration = configuration;
+        this.inventoryManager = inventoryManager;
+
+        if (configuration.isInsideAgent()) {
+            int threadPoolSize = configuration.getMeasurementCollectionThreadPoolSize();
+            collectorThreadPool = new ScheduledThreadPoolExecutor(threadPoolSize, new LoggingThreadFactory(
+                COLLECTOR_THREAD_POOL_NAME, true));
+            senderThreadPool = new ScheduledThreadPoolExecutor(2, new LoggingThreadFactory(SENDER_THREAD_POOL_NAME,
+                true));
+            measurementSenderRunner = new MeasurementSenderRunner(this);
+            measurementCollectorRunner = new MeasurementCollectorRunner(this);
+        } else {
+            senderThreadPool = null;
+            collectorThreadPool = null;
+            measurementSenderRunner = null;
+            measurementCollectorRunner = null;
+        }
+    }
+
+    public void initialize() {
         LOG.info("Initializing Measurement Manager...");
 
         if (configuration.isStartManagementBean()) {
@@ -131,41 +154,24 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             }
         }
 
-        this.inventoryManager = inventoryManager;
-
-        int threadPoolSize = configuration.getMeasurementCollectionThreadPoolSize();
-        long collectionInitialDelaySecs = configuration.getMeasurementCollectionInitialDelay();
-
         if (configuration.isInsideAgent()) {
-            this.collectorThreadPool = new ScheduledThreadPoolExecutor(threadPoolSize, new LoggingThreadFactory(
-                COLLECTOR_THREAD_POOL_NAME, true));
-
-            this.senderThreadPool = new ScheduledThreadPoolExecutor(2, new LoggingThreadFactory(
-                SENDER_THREAD_POOL_NAME, true));
-
-            this.measurementSenderRunner = new MeasurementSenderRunner(this);
-            this.measurementCollectorRunner = new MeasurementCollectorRunner(this);
+            long collectionInitialDelaySecs = configuration.getMeasurementCollectionInitialDelay();
 
             // Schedule the measurement sender to send measurement reports periodically.
-            this.senderThreadPool.scheduleAtFixedRate(measurementSenderRunner, collectionInitialDelaySecs, 30,
+            senderThreadPool.scheduleAtFixedRate(measurementSenderRunner, collectionInitialDelaySecs, 30,
                 TimeUnit.SECONDS);
             // Schedule the measurement collector to collect metrics periodically, whenever there are one or more
             // metrics due to be collected.
-            this.collectorThreadPool.schedule(new MeasurementCollectionRequester(), collectionInitialDelaySecs,
+            collectorThreadPool.schedule(new MeasurementCollectionRequester(), collectionInitialDelaySecs,
                 TimeUnit.SECONDS);
 
             // Load persistent measurement schedules from the InventoryManager and reconstitute them.
-            Resource platform = this.inventoryManager.getPlatform();
-            if (platform == null)
+            Resource platform = inventoryManager.getPlatform();
+            if (platform == null) {
                 throw new IllegalStateException("null platform");
+            }
             reschedule(platform);
-        } else {
-            senderThreadPool = null;
-            collectorThreadPool = null;
-            measurementSenderRunner = null;
-            measurementCollectorRunner = null;
         }
-
 
         LOG.info("Measurement Manager initialized.");
     }
@@ -669,7 +675,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                         + container.getResource().getName() + "] is not a trait, it is of type ["
                         + schedule.getDataType() + "]");
                 }
-                traitScheduleId = Integer.valueOf(schedule.getScheduleId());
+                traitScheduleId = schedule.getScheduleId();
             }
         }
         if (traitScheduleId == null) {
@@ -677,7 +683,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                 + container.getResource().getName() + "]");
         }
 
-        String traitValue = getCachedTraitValue(traitScheduleId.intValue());
+        String traitValue = getCachedTraitValue(traitScheduleId);
         if (traitValue == null) {
             // the trait hasn't been collected yet, so it isn't cached. We need to get its live value
             Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>();
@@ -689,6 +695,20 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                 if (value != null) {
                     traitValue = value.toString();
                 }
+            } else if (dataset.isEmpty()) {
+                // so the agent doesn't have a cached value of the trait an the resource seems to be either down
+                // or unable to collect the trait.
+                // Let's try asking the server for the last known value
+                MeasurementDataTrait value = configuration.getServerServices().getMeasurementServerService()
+                    .getLastKnownTraitValue(traitScheduleId);
+
+                if (value != null) {
+                    traitValue = value.getValue();
+                }
+            } else {
+                throw new IllegalStateException(
+                    "Asked for value of trait " + traitName + " on resource " + container.getResource() +
+                        " but got more than one value back. This is unexpected.");
             }
         }
 

@@ -218,11 +218,11 @@ public class RHQControl {
                 Properties props = pfu.loadExistingProperties();
 
                 promptForProperty(pfu, props, serverPropertiesFile.getName(),
-                    ServerProperties.PROP_AUTOINSTALL_ADMIN_PASSWORD, false, true);
+                    ServerProperties.PROP_AUTOINSTALL_ADMIN_PASSWORD, false, true, true);
                 promptForProperty(pfu, props, serverPropertiesFile.getName(), ServerProperties.PROP_DATABASE_PASSWORD,
-                    true, false);
+                    true, false, true);
                 promptForProperty(pfu, props, serverPropertiesFile.getName(), ServerProperties.PROP_JBOSS_BIND_ADDRESS,
-                    false, false);
+                    false, false, false);
 
             } catch (Throwable t) {
                 throw new RHQControlException("The rhq-server.properties file is not valid. Installation is canceled: "
@@ -258,7 +258,7 @@ public class RHQControl {
     }
 
     private void promptForProperty(PropertiesFileUpdate pfu, Properties props, String propertiesFileName,
-        String propertyName, boolean obfuscate, boolean encode) throws Exception {
+        String propertyName, boolean obfuscate, boolean encode, boolean hideInput) throws Exception {
 
         String propertyValue = props.getProperty(propertyName);
         if (StringUtil.isBlank(propertyValue)) {
@@ -278,14 +278,26 @@ public class RHQControl {
             do {
                 propertyValue = "";
                 while (StringUtil.isBlank(propertyValue)) {
-                    propertyValue = String.valueOf(console.readLine("%s", propertyName
-                        + ((obfuscate ? " (enter as plain text): " : ": "))));
+                    if (!hideInput) {
+                        propertyValue = String.valueOf(console.readLine("%s", propertyName
+                            + (((obfuscate || encode) ? " (enter as plain text): " : ": "))));
+                    } else {
+                        propertyValue = String.valueOf(console.readPassword("%s", propertyName
+                            + (((obfuscate || encode) ? " (enter as plain text): " : ": "))));
+                    }
                 }
 
-                console.format("Is [" + propertyValue + "] correct?\n");
-                response = "";
-                while (!(response.startsWith("n") || response.startsWith("y"))) {
-                    response = String.valueOf(console.readLine("%s", "yes|no: ")).toLowerCase();
+                if (!hideInput) {
+                    console.format("Is [" + propertyValue + "] correct?\n");
+                    response = "";
+                    while (!(response.startsWith("n") || response.startsWith("y"))) {
+                        response = String.valueOf(console.readLine("%s", "yes|no: ")).toLowerCase();
+                    }
+                } else {
+                    console.format("Confirm:\n");
+                    String confirmValue = String.valueOf(console.readPassword("%s", propertyName
+                        + (((obfuscate || encode) ? " (enter as plain text): " : ": "))));
+                    response = (propertyValue.equals(confirmValue) ? "yes" : "no");
                 }
             } while (response.startsWith("n"));
 

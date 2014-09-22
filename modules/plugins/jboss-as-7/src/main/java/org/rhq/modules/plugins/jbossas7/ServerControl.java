@@ -30,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
+import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
@@ -71,8 +72,7 @@ final class ServerControl {
         }
     }
 
-    public static ServerControl onServer(Configuration serverPluginConfig, AS7Mode serverMode,
-        SystemInfo systemInfo) {
+    public static ServerControl onServer(Configuration serverPluginConfig, AS7Mode serverMode, SystemInfo systemInfo) {
 
         return new ServerControl(serverPluginConfig, serverMode, systemInfo);
     }
@@ -178,13 +178,42 @@ final class ServerControl {
             }
         }
 
+        public ProcessExecutionResults shutdownServer(ASConnection connection) {
+            String command = "shutdown";
+
+            if (serverMode == AS7Mode.DOMAIN) {
+                String host = BaseServerComponent.findASDomainHostName(connection);
+                command += " --host=" + host;
+            }
+
+            return cli().disconnected(false).executeCliCommand(command);
+        }
+
         public ProcessExecutionResults shutdownServer() {
-            return cli().disconnected(false).executeCliCommand("shutdown");
+            String command = "shutdown";
+
+            if (serverMode == AS7Mode.DOMAIN) {
+                ASConnection connection = new ASConnection(ASConnectionParams.createFrom(serverPluginConfig));
+                String host = BaseServerComponent.findASDomainHostName(connection);
+                command += " --host=" + host;
+                connection.shutdown();
+            }
+
+
+            return cli().disconnected(false).executeCliCommand(command);
         }
     }
 
     final class Cli {
         private boolean disconnected;
+
+        Cli() {
+            // When running the CLI on Windows, make sure no "pause" message is shown after script execution
+            // Otherwise the CLI process will just keep running so we'll never get the exit code
+            if (systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS) {
+                startScriptEnv.put("NOPAUSE", "1");
+            }
+        }
 
         public Cli disconnected(boolean disconnected) {
             this.disconnected = disconnected;
@@ -231,7 +260,8 @@ final class ServerControl {
             String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
                 + serverPluginConfig.getNativePort();
 
-            return execute(new File("bin", serverMode.getCliScriptFileName()), connect, file, user, password, controller);
+            return execute(new File("bin", serverMode.getCliScriptFileName()), connect, file, user, password,
+                controller);
         }
     }
 }

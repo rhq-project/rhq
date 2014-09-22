@@ -132,6 +132,15 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         } else {
             findProcessInfo();
         }
+        File configFile = getConfigurationFileObject();
+        if (!configFile.exists()) {
+            LOG.warn("PostgreSQL configuration file [" + configFile + "] does not exist or is not readable. "
+                + "Make sure the user the RHQ Agent is running as has read permissions on the file "
+                + "and its parent directory.");
+        } else if (!configFile.canRead()) {
+            LOG.warn("PostgreSQL configuration file [" + configFile + "] is not readable. "
+                + "Make sure the user the RHQ Agent is running as has read permissions on the file.");
+        }
     }
 
     @Override
@@ -206,14 +215,18 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         "stats_row_level", "autovacuum" };
 
     protected PostgresqlConfFile getConfigurationFile() throws IOException {
+        File configFile = getConfigurationFileObject();
+        return new PostgresqlConfFile(configFile);
+    }
+
+    private File getConfigurationFileObject() {
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
         String dataDirPath = pluginConfig.getSimpleValue(PostgresDiscoveryComponent.PGDATA_DIR_CONFIGURATION_PROPERTY,
             null);
         String configFilePath = pluginConfig.getSimpleValue(
             PostgresDiscoveryComponent.CONFIG_FILE_CONFIGURATION_PROPERTY, null);
-        File configFile = (configFilePath != null) ? new File(configFilePath) : new File(dataDirPath,
-            DEFAULT_CONFIG_FILE_NAME);
-        return new PostgresqlConfFile(configFile);
+
+        return (configFilePath != null) ? new File(configFilePath) : new File(dataDirPath, DEFAULT_CONFIG_FILE_NAME);
     }
 
     @Override
@@ -369,17 +382,6 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         }
     }
 
-    private Double getProcessProperty(String property) {
-        property = property.substring("Process.".length());
-
-        if (property.startsWith("Memory.")) {
-            property = property.substring("Memory.".length());
-            return getObjectProperty(aggregateProcessInfo.getMemory(), property);
-        } else {
-            return getObjectProperty(aggregateProcessInfo, property);
-        }
-    }
-
     protected Object lookupAttributeProperty(Object value, String property) {
         String[] ps = property.split("\\.", 2);
 
@@ -407,6 +409,10 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         return value;
     }
 
+    /**
+     * @deprecated since RHQ4.13, unused
+     */
+    @Deprecated
     public double getObjectProperty(Object object, String name) {
         try {
             BeanInfo info = Introspector.getBeanInfo(object.getClass());
@@ -423,8 +429,7 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
     }
 
     @Override
-    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
-        Exception {
+    public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
 
         if (name.equals("listProcessStatistics")) {
 
@@ -498,7 +503,7 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         }
         report.setResourceName(resourceName);
 
-        long userOid = -1;
+        long userOid;
         try {
             userOid = getUserOid(user, getPooledConnectionProvider());
             report.setResourceKey(createResourceKey(userOid));

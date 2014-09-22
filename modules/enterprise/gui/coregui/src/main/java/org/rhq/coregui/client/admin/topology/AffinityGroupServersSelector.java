@@ -187,10 +187,8 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
             + MSG.view_adminTopology_affinityGroups_createNew());
         modalWindow.setOverflow(Overflow.VISIBLE);
         modalWindow.setWidth(800);
-        modalWindow.setHeight(400);
+        modalWindow.setHeight(450);
         modalWindow.setAutoCenter(true);
-        modalWindow.setCanDragResize(true);
-        modalWindow.setCanDragReposition(true);
 
         layout = new VLayout();
         layout.setWidth100();

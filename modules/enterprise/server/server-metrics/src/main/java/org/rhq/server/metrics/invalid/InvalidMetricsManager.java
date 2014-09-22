@@ -1,12 +1,6 @@
 package org.rhq.server.metrics.invalid;
 
 import static java.util.Arrays.asList;
-import static org.rhq.server.metrics.domain.AggregateType.AVG;
-import static org.rhq.server.metrics.domain.AggregateType.MAX;
-import static org.rhq.server.metrics.domain.AggregateType.MIN;
-import static org.rhq.server.metrics.domain.MetricsTable.ONE_HOUR;
-import static org.rhq.server.metrics.domain.MetricsTable.SIX_HOUR;
-import static org.rhq.server.metrics.domain.MetricsTable.TWENTY_FOUR_HOUR;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +18,7 @@ import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.MetricsTable;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
@@ -36,7 +30,7 @@ import org.rhq.server.metrics.domain.RawNumericMetric;
  * </p>
  *
  * <p>
- * When an invalid metric is found, it is {@link #submit(MetricsTable, AggregateNumericMetric) submitted}
+ * When an invalid metric is found, it is {@link #submit(AggregateNumericMetric) submitted}
  * to an internal queue for later processing. Metrics will be recomputed if possible;
  * otherwise, they will be deleted.
  * </p>
@@ -115,14 +109,13 @@ public class InvalidMetricsManager {
      * we need to look at all of the 1 hour, 6 hour, and 24 hour metrics; so, multiple
      * entries in the queue for the same day will only result in duplicate work.
      *
-     * @param type The type of aggregate metric
      * @param metric The invalid metric where invalid means either min > avg or max < avg
      * @return true if an invalid metric is added to the queue, false otherwise
      */
-    public boolean submit(MetricsTable type, AggregateNumericMetric metric) {
+    public boolean submit(AggregateNumericMetric metric) {
         DateTime day = dateTimeService.getTimeSlice(new DateTime(metric.getTimestamp()),
             configuration.getSixHourTimeSliceDuration());
-        InvalidMetric invalidMetric = new InvalidMetric(day, type, metric, delay);
+        InvalidMetric invalidMetric = new InvalidMetric(day, metric, delay);
 
         if (isShutdown) {
             log.info(invalidMetric + " will not be submitted since we are already shutdown.");
@@ -185,9 +178,9 @@ public class InvalidMetricsManager {
         log.info("Attempting to fix " + invalidMetric +
             ". This may include updates to 1 hour, 6 hour, and 24 hour metrics.");
 
-        if (invalidMetric.type == TWENTY_FOUR_HOUR) {
+        if (invalidMetric.metric.getBucket() == Bucket.TWENTY_FOUR_HOUR) {
             update24HourMetric(invalidMetric);
-        } else if (invalidMetric.type == SIX_HOUR) {
+        } else if (invalidMetric.metric.getBucket() == Bucket.SIX_HOUR) {
             if (DateTime.now().isAfter(invalidMetric.day.plusDays(1))) {
                 update24HourMetric(invalidMetric);
             } else {
@@ -200,8 +193,8 @@ public class InvalidMetricsManager {
             if (DateTime.now().isAfter(invalidMetric.day.plusDays(1))) {
                 update24HourMetric(invalidMetric);
             } else if (DateTime.now().isAfter(sixHourTimeSlice.plusHours(6))) {
-                List<AggregateNumericMetric> sixHourMetrics = dao.findSixHourMetrics(
-                    invalidMetric.metric.getScheduleId(), invalidMetric.day.getMillis(),
+                List<AggregateNumericMetric> sixHourMetrics = dao.findAggregateMetrics(
+                    invalidMetric.metric.getScheduleId(), Bucket.SIX_HOUR, invalidMetric.day.getMillis(),
                     invalidMetric.day.plusDays(1).getMillis());
                 update6HourMetrics(sixHourMetrics);
             } else {
@@ -217,8 +210,8 @@ public class InvalidMetricsManager {
      * followed by the 6 hour metrics, and lastly recompute the 24 hour metric.
      */
     private void update24HourMetric(InvalidMetric invalidMetric) {
-        List<AggregateNumericMetric> sixHourMetrics = dao.findSixHourMetrics(invalidMetric.metric.getScheduleId(),
-            invalidMetric.day.getMillis(), invalidMetric.day.plusDays(1).getMillis());
+        List<AggregateNumericMetric> sixHourMetrics = dao.findAggregateMetrics(invalidMetric.metric.getScheduleId(),
+            Bucket.SIX_HOUR, invalidMetric.day.getMillis(), invalidMetric.day.plusDays(1).getMillis());
 
         if (sixHourMetrics.isEmpty()) {
             // This likely means that the 6 hour data has already expired. The best
@@ -228,7 +221,7 @@ public class InvalidMetricsManager {
         } else {
             List<AggregateNumericMetric> updated6HourMetrics = update6HourMetrics(sixHourMetrics);
             AggregateNumericMetric recomputed24HourMetric = computeAggregate(updated6HourMetrics,
-                invalidMetric.metric.getScheduleId(), invalidMetric.day.getMillis());
+                invalidMetric.metric.getScheduleId(), invalidMetric.day.getMillis(), Bucket.TWENTY_FOUR_HOUR);
             persist24HourMetric(recomputed24HourMetric);
 
             log.info(invalidMetric + " has been recomputed with a new value of " + getValueText(recomputed24HourMetric));
@@ -250,8 +243,8 @@ public class InvalidMetricsManager {
         List<AggregateNumericMetric> invalid6HourMetrics = findInvalidMetrics(updated6HourMetrics);
 
         for (AggregateNumericMetric invalid6HourMetric : invalid6HourMetrics) {
-            List<AggregateNumericMetric> oneHourMetrics = dao.findOneHourMetrics(invalid6HourMetric.getScheduleId(),
-                invalid6HourMetric.getTimestamp(),
+            List<AggregateNumericMetric> oneHourMetrics = dao.findAggregateMetrics(invalid6HourMetric.getScheduleId(),
+                Bucket.ONE_HOUR, invalid6HourMetric.getTimestamp(),
                 new DateTime(invalid6HourMetric.getTimestamp()).plusHours(6).getMillis());
 
             if (oneHourMetrics.isEmpty()) {
@@ -266,7 +259,7 @@ public class InvalidMetricsManager {
                 // new 6 hour metric.
                 List<AggregateNumericMetric> updated1HourMetrics = update1HourMetrics(oneHourMetrics);
                 AggregateNumericMetric recomputed6HourMetric = computeAggregate(updated1HourMetrics,
-                    invalid6HourMetric.getScheduleId(), invalid6HourMetric.getTimestamp());
+                    invalid6HourMetric.getScheduleId(), invalid6HourMetric.getTimestamp(), Bucket.SIX_HOUR);
                 updated6HourMetrics = replace6HourMetric(invalid6HourMetric, recomputed6HourMetric,
                     sixHourMetrics);
 
@@ -321,7 +314,7 @@ public class InvalidMetricsManager {
         List<AggregateNumericMetric> nonEmptyMetrics = new ArrayList<AggregateNumericMetric>();
         for (AggregateNumericMetric metric : metrics) {
             if (isEmptyMetric(metric)) {
-                dao.delete6HourMetric(metric.getScheduleId(), metric.getTimestamp());
+                dao.deleteAggregate(metric);
             } else {
                 nonEmptyMetrics.add(metric);
             }
@@ -340,7 +333,7 @@ public class InvalidMetricsManager {
         List<AggregateNumericMetric> nonEmptyMetrics = new ArrayList<AggregateNumericMetric>();
         for (AggregateNumericMetric metric : metrics) {
             if (isEmptyMetric(metric)) {
-                dao.delete1HourMetric(metric.getScheduleId(), metric.getTimestamp());
+                dao.deleteAggregate(metric);
             } else {
                 nonEmptyMetrics.add(metric);
             }
@@ -412,12 +405,12 @@ public class InvalidMetricsManager {
 
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
-        return new AggregateNumericMetric(metric.getScheduleId(), mean.getArithmeticMean(), min, max,
-            metric.getTimestamp());
+        return new AggregateNumericMetric(metric.getScheduleId(), metric.getBucket(), mean.getArithmeticMean(), min,
+            max, metric.getTimestamp());
     }
 
     private AggregateNumericMetric computeAggregate(List<AggregateNumericMetric> metrics, int scheduleId,
-        long timestamp) {
+        long timestamp, Bucket bucket) {
         double min = Double.NaN;
         double max = min;
         int count = 0;
@@ -440,47 +433,37 @@ public class InvalidMetricsManager {
 
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
-        return new AggregateNumericMetric(scheduleId, mean.getArithmeticMean(), min, max, timestamp);
+        return new AggregateNumericMetric(scheduleId, bucket, mean.getArithmeticMean(), min, max, timestamp);
     }
 
     private List<AggregateNumericMetric> remove1HourMetric(AggregateNumericMetric metric,
         List<AggregateNumericMetric> metrics) {
-        return removeMetric(metric, metrics, ONE_HOUR);
+        return removeMetric(metric, metrics);
     }
 
     private List<AggregateNumericMetric> remove6HourMetric(AggregateNumericMetric metric,
         List<AggregateNumericMetric> metrics) {
-        return removeMetric(metric, metrics, SIX_HOUR);
+        return removeMetric(metric, metrics);
     }
 
     private void remove24HourMetric(AggregateNumericMetric metric) {
-        dao.delete24HourMetric(metric.getScheduleId(), metric.getTimestamp());
+        dao.deleteAggregate(metric);
     }
 
     private List<AggregateNumericMetric> replace1HourMetric(AggregateNumericMetric metric,
         AggregateNumericMetric newMetric, List<AggregateNumericMetric> metrics) {
-        return replaceMetric(metric, newMetric, metrics, ONE_HOUR);
+        return replaceMetric(metric, newMetric, metrics, Bucket.ONE_HOUR);
     }
 
     private List<AggregateNumericMetric> replace6HourMetric(AggregateNumericMetric metric,
         AggregateNumericMetric newMetric, List<AggregateNumericMetric> metrics) {
-        return replaceMetric(metric, newMetric, metrics, SIX_HOUR);
+        return replaceMetric(metric, newMetric, metrics, Bucket.SIX_HOUR);
     }
 
     private List<AggregateNumericMetric> removeMetric(AggregateNumericMetric metric,
-        List<AggregateNumericMetric> metrics, MetricsTable type) {
+        List<AggregateNumericMetric> metrics) {
 
-        switch (type) {
-        case ONE_HOUR:
-            dao.delete1HourMetric(metric.getScheduleId(), metric.getTimestamp());
-            break;
-        case SIX_HOUR:
-            dao.delete6HourMetric(metric.getScheduleId(), metric.getTimestamp());
-            break;
-        default:
-            throw new IllegalArgumentException(type + " cannot be used for this method");
-        }
-
+        dao.deleteAggregate(metric);
         List<AggregateNumericMetric> updatedMetrics = new ArrayList<AggregateNumericMetric>(metrics);
         updatedMetrics.remove(metric);
 
@@ -488,17 +471,17 @@ public class InvalidMetricsManager {
     }
 
     private List<AggregateNumericMetric> replaceMetric(AggregateNumericMetric metric,
-        AggregateNumericMetric newMetric, List<AggregateNumericMetric> metrics, MetricsTable type) {
+        AggregateNumericMetric newMetric, List<AggregateNumericMetric> metrics, Bucket bucket) {
 
-        switch (type) {
-        case ONE_HOUR:
-            persist1HourMetric(newMetric);
-            break;
-        case SIX_HOUR:
-            persist6HourMetric(newMetric);
-            break;
-        default:
-            throw new IllegalArgumentException(type + " cannot be used for this method");
+        switch (bucket) {
+            case ONE_HOUR:
+                persist1HourMetric(newMetric);
+                break;
+            case SIX_HOUR:
+                persist6HourMetric(newMetric);
+                break;
+            default:
+                throw new IllegalArgumentException(bucket + " cannot be used for this method");
         }
 
         List<AggregateNumericMetric> updatedMetrics = new ArrayList<AggregateNumericMetric>(metrics);
@@ -509,24 +492,15 @@ public class InvalidMetricsManager {
     }
 
     private void persist1HourMetric(AggregateNumericMetric metric) {
-        dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), MAX, metric.getMax());
-        dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), MIN, metric.getMin());
-        dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AVG, metric.getAvg());
+        dao.insert1HourData(metric).get();
     }
 
     private void persist6HourMetric(AggregateNumericMetric metric) {
-        dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), MAX, metric.getMax());
-        dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), MIN, metric.getMin());
-        dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AVG, metric.getAvg());
+        dao.insert6HourData(metric).get();
     }
 
     private void persist24HourMetric(AggregateNumericMetric metric) {
-        dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), MAX,
-            metric.getMax());
-        dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), MIN,
-            metric.getMin());
-        dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AVG,
-            metric.getAvg());
+        dao.insert24HourData(metric).get();
     }
 
     private String getValueText(AggregateNumericMetric metric) {

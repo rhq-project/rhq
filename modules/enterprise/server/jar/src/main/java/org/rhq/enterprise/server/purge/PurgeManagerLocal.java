@@ -69,4 +69,11 @@ public interface PurgeManagerLocal {
      * @param cutoffTime The reference time to determine new baselines
      */
     void removeOutdatedOOBs(long cutoffTime);
+
+    /**
+     * Deletes orphaned bundle audit messages.
+     *
+     * @return the number or audit messages deleted
+     */
+    int purgeOrphanedBundleResourceDeploymentHistory();
 }

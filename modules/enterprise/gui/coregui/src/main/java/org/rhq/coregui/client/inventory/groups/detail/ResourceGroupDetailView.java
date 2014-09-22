@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.client.inventory.groups.detail;
 
 import java.util.ArrayList;
@@ -116,7 +117,6 @@ public class ResourceGroupDetailView extends
 
     // subtabs
     private SubTab summaryActivity;
-    private SubTab summaryTimeline;
     private SubTab monitorGraphs;
     private SubTab monitorMetrics;
     private SubTab monitorTraits;
@@ -142,7 +142,6 @@ public class ResourceGroupDetailView extends
 
         summaryTab = getTabSet().getTabByName(Tab.Summary.NAME);
         summaryActivity = summaryTab.getSubTabByName(Tab.Summary.SubTab.ACTIVITY);
-        summaryTimeline = summaryTab.getSubTabByName(Tab.Summary.SubTab.TIMELINE);
 
         monitoringTab = getTabSet().getTabByName(Tab.Monitoring.NAME);
         monitorCallTime = monitoringTab.getSubTabByName(Tab.Monitoring.SubTab.CALL_TIME);
@@ -278,7 +277,7 @@ public class ResourceGroupDetailView extends
         return tabs.toArray(new TwoLevelTab[tabs.size()]);
     }
 
-    private final static Canvas viewWithoutHeader(Table t) {
+    private static Canvas viewWithoutHeader(Table t) {
       t.setShowHeader(false);
       return t;
     }
@@ -339,7 +338,8 @@ public class ResourceGroupDetailView extends
             viewFactory = (!showOnPage) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return MetricsGroupView.create(groupComposite.getResourceGroup());
+                    return MetricsGroupView.create(EntityContext.forGroup(groupComposite.getResourceGroup().getId(),
+                        isAutoCluster(), isAutoGroup()), groupComposite.getResourceGroup());
                 }
             };
 
@@ -377,7 +377,7 @@ public class ResourceGroupDetailView extends
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return viewWithoutHeader(new CalltimeView(EntityContext.forGroup(groupComposite.getResourceGroup())));
+                    return new CalltimeView(EntityContext.forGroup(groupComposite.getResourceGroup()));
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorCallTime, visible, true, viewFactory);
@@ -583,6 +583,7 @@ public class ResourceGroupDetailView extends
                     ResourceTypeRepository.MetadataType.measurements, ResourceTypeRepository.MetadataType.events,
                     ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                 new ResourceTypeRepository.TypeLoadedCallback() {
+                    @Override
                     public void onTypesLoaded(ResourceType type) {
                         // until we finish the following work we're susceptible to fast-click issues in
                         // tree navigation.  So, wait until after it's done to notify listeners that the view is

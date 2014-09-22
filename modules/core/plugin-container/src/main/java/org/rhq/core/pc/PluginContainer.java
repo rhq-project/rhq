@@ -288,18 +288,21 @@ public class PluginContainer {
 
             PluginLifecycleListenerManager pluginLifecycle = new PluginLifecycleListenerManagerImpl();
             pluginManager = new PluginManager(configuration, pluginLifecycle);
-            eventManager = new EventManager(configuration);
             inventoryManager = new InventoryManager(configuration, agentServiceStreamRemoter, pluginManager);
             inventoryManager.initialize();
+            eventManager = inventoryManager.getEventManager();
+            eventManager.initialize();
+            operationManager = inventoryManager.getOperationManager();
             measurementManager = inventoryManager.getMeasurementManager();
+            measurementManager.initialize();
+            contentManager = inventoryManager.getContentManager();
+            contentManager.initialize();
             pluginComponentFactory = inventoryManager.getPluginComponentFactory();
             ComponentService componentService = new ComponentServiceImpl(pluginManager);
             ConfigManagementFactory factory = new ConfigManagementFactoryImpl(componentService);
             configurationManager = new ConfigurationManager(configuration, componentService, factory,
                 agentServiceStreamRemoter, inventoryManager);
-            operationManager = new OperationManager(configuration, agentServiceStreamRemoter);
             resourceFactoryManager = new ResourceFactoryManager(configuration, agentServiceStreamRemoter, pluginManager);
-            contentManager = new ContentManager(configuration, agentServiceStreamRemoter, inventoryManager);
             supportManager = new SupportManager(agentServiceStreamRemoter);
             bundleManager = new BundleManager(configuration, agentServiceStreamRemoter, inventoryManager,
                 measurementManager);

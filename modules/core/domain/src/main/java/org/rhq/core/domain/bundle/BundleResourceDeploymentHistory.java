@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.core.domain.bundle;
 
 import java.io.Serializable;
@@ -48,7 +49,7 @@ import javax.xml.bind.annotation.XmlType;
  * @author Jay Shaughnessy
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = BundleResourceDeploymentHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM BundleResourceDeploymentHistory brdh "
         + " WHERE brdh.resourceDeployment IN ( SELECT brd FROM BundleResourceDeployment brd WHERE brd.resource.id IN ( :resourceIds ) ) )"),
     @NamedQuery(name = BundleResourceDeploymentHistory.QUERY_FIND_ALL, query = "SELECT brdh FROM BundleResourceDeploymentHistory brdh") //
@@ -195,14 +196,9 @@ public class BundleResourceDeploymentHistory implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("BundleDeploymentAudit: ");
-        str.append(", time=[").append(this.auditTime).append("]");
-        str.append(", rd=[").append(this.resourceDeployment).append("]");
-        str.append(", action=[").append(this.action).append("]");
-        str.append(", info=[").append(this.info).append("]");
-        str.append(", category=[").append(this.category).append("]");
-        str.append(", status=[").append(this.status).append("]");
-        return str.toString();
+        return "BundleDeploymentAudit: " + ", time=[" + this.auditTime + "]" + ", rd=[" + this.resourceDeployment + "]"
+            + ", action=[" + this.action + "]" + ", info=[" + this.info + "]" + ", category=[" + this.category + "]"
+            + ", status=[" + this.status + "]";
     }
 
     @XmlType(name = "BundleResourceDeploymentHistoryStatus")
@@ -218,6 +214,7 @@ public class BundleResourceDeploymentHistory implements Serializable {
             this.displayName = displayName;
         }
 
+        @Override
         public String toString() {
             return displayName;
         }
@@ -238,6 +235,7 @@ public class BundleResourceDeploymentHistory implements Serializable {
             this.displayName = displayName;
         }
 
+        @Override
         public String toString() {
             return displayName;
         }

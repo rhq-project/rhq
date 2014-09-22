@@ -37,6 +37,10 @@ public class ViewName {
         this.icon = icon;
     }
 
+    public ViewName withTitle(String title) {
+        this.title = title;
+        return this;
+    }
 
     private static String buildTitle(String name, String title) {
         return (null == title || "".equals(title.trim())) ? StringUtils.deCamelCase(name) : title;

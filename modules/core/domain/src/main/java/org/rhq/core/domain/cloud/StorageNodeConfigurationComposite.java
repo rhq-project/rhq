@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,18 +23,22 @@
 package org.rhq.core.domain.cloud;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Stefan Negrea
  */
 public class StorageNodeConfigurationComposite implements Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private StorageNode storageNode;
     private int jmxPort;
     private String heapSize;
     private String threadStackSize;
     private String heapNewSize;
+    private String commitLogLocation;
+    private List<String> dataLocations;
+    private String savedCachesLocation;
 
     public StorageNodeConfigurationComposite() {
         // GWT needs this
@@ -115,6 +119,48 @@ public class StorageNodeConfigurationComposite implements Serializable {
         this.heapNewSize = heapNewSize;
     }
 
+    /**
+     * @return the commitlog directory
+     */
+    public String getCommitLogLocation() {
+        return commitLogLocation;
+    }
+
+    /**
+     * @param commitLogLocation the commitlog directory to set
+     */
+    public void setCommitLogLocation(String commitLogLocation) {
+        this.commitLogLocation = commitLogLocation;
+    }
+
+    /**
+     * @return the data directory
+     */
+    public List<String> getDataLocations() {
+        return dataLocations;
+    }
+
+    /**
+     * @param dataLocations the data directory to set
+     */
+    public void setDataLocations(List<String> dataLocations) {
+        this.dataLocations = dataLocations;
+    }
+
+    /**
+     * @return the saved-caches directory
+     */
+    public String getSavedCachesLocation() {
+        return savedCachesLocation;
+    }
+
+    /**
+     * @param savedCachesLocation the saved-caches directory to set
+     */
+    public void setSavedCachesLocation(String savedCachesLocation) {
+        this.savedCachesLocation = savedCachesLocation;
+    }
+
     public boolean validate() {
         //validate heap settings
         boolean validHeap = false;
@@ -163,6 +209,25 @@ public class StorageNodeConfigurationComposite implements Serializable {
         return validHeap && validJMXPort;
     }
 
+    public boolean isDirectoriesEqual(StorageNodeConfigurationComposite other) {
+        if (commitLogLocation != null && !commitLogLocation.equals(other.getCommitLogLocation())) {
+            return false;
+        } else if (commitLogLocation == null && other.getCommitLogLocation() != null) {
+            return false;
+        }
+        if (dataLocations != null && !dataLocations.equals(other.getDataLocations())) {
+            return false;
+        } else if(dataLocations == null && other.getDataLocations() != null) {
+            return false;
+        }
+        if (savedCachesLocation != null && !savedCachesLocation.equals(other.getSavedCachesLocation())) {
+            return false;
+        } else if(savedCachesLocation == null && other.getSavedCachesLocation() != null) {
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -171,6 +236,9 @@ public class StorageNodeConfigurationComposite implements Serializable {
         result = prime * result + ((heapSize == null) ? 0 : heapSize.hashCode());
         result = prime * result + jmxPort;
         result = prime * result + ((threadStackSize == null) ? 0 : threadStackSize.hashCode());
+        result = prime * result + ((commitLogLocation == null) ? 0 : commitLogLocation.hashCode());
+        result = prime * result + ((dataLocations == null) ? 0 : dataLocations.hashCode());
+        result = prime * result + ((savedCachesLocation == null) ? 0 : savedCachesLocation.hashCode());
         return result;
     }
 
@@ -200,6 +268,9 @@ public class StorageNodeConfigurationComposite implements Serializable {
                 return false;
         } else if (!threadStackSize.equals(other.threadStackSize))
             return false;
+        if(!isDirectoriesEqual(other)) {
+            return false;
+        }
         return true;
     }
 
@@ -211,7 +282,10 @@ public class StorageNodeConfigurationComposite implements Serializable {
         builder.append("jmxPort=").append(jmxPort).append(",");
         builder.append("heapSize=").append(heapSize).append(", ");
         builder.append("heapNewSize=").append(heapSize).append(", ");
-        builder.append("threadStackSize=").append(threadStackSize).append("");
+        builder.append("threadStackSize=").append(threadStackSize).append(", ");
+        builder.append("commitlog=").append(commitLogLocation).append(", ");
+        builder.append("data=").append(dataLocations).append(", ");
+        builder.append("saved-caches=").append(savedCachesLocation).append("");
         return builder.toString();
     }
 }

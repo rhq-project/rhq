@@ -183,5 +183,4 @@ public class ErrorHandler {
             getStackTraceAsCause(t, s, nextCause, newline);
         }
     }
-
 }

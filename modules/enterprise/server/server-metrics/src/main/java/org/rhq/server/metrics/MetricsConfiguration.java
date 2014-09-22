@@ -29,8 +29,6 @@ import org.joda.time.Days;
 import org.joda.time.Duration;
 import org.joda.time.ReadablePeriod;
 
-import org.rhq.server.metrics.domain.MetricsTable;
-
 /**
  * @author John Sanda
  */
@@ -44,13 +42,13 @@ public class MetricsConfiguration {
 
     private ReadablePeriod twentyFourHourRetention = Days.days(365);
 
-    private int rawTTL = MetricsTable.RAW.getTTL();
+    private int rawTTL = Duration.standardDays(7).toStandardSeconds().getSeconds();
 
-    private int oneHourTTL = MetricsTable.ONE_HOUR.getTTL();
+    private int oneHourTTL = Duration.standardDays(14).toStandardSeconds().getSeconds();
 
-    private int sixHourTTL = MetricsTable.SIX_HOUR.getTTL();
+    private int sixHourTTL = Duration.standardDays(31).toStandardSeconds().getSeconds();
 
-    private int twentyFourHourTTL = MetricsTable.TWENTY_FOUR_HOUR.getTTL();
+    private int twentyFourHourTTL = Duration.standardDays(365).toStandardSeconds().getSeconds();
 
     private Duration rawTimeSliceDuration = Duration.standardHours(1);
 
@@ -58,70 +56,81 @@ public class MetricsConfiguration {
 
     private Duration sixHourTimeSliceDuration = Duration.standardHours(24);
 
-    private int indexPageSize = 2500;
+    private int indexPageSize = Integer.parseInt(System.getProperty("rhq.metrics.index.page-size", "2500"));
+
+    // TODO make this configurable
+    private int indexPartitions = 10;
 
     public int getRawTTL() {
         return rawTTL;
     }
 
-    public void setRawTTL(int rawTTL) {
+    public MetricsConfiguration setRawTTL(int rawTTL) {
         this.rawTTL = rawTTL;
+        return this;
     }
 
     public int getOneHourTTL() {
         return oneHourTTL;
     }
 
-    public void setOneHourTTL(int oneHourTTL) {
+    public MetricsConfiguration setOneHourTTL(int oneHourTTL) {
         this.oneHourTTL = oneHourTTL;
+        return this;
     }
 
     public int getSixHourTTL() {
         return sixHourTTL;
     }
 
-    public void setSixHourTTL(int sixHourTTL) {
+    public MetricsConfiguration setSixHourTTL(int sixHourTTL) {
         this.sixHourTTL = sixHourTTL;
+        return this;
     }
 
     public int getTwentyFourHourTTL() {
         return twentyFourHourTTL;
     }
 
-    public void setTwentyFourHourTTL(int twentyFourHourTTL) {
+    public MetricsConfiguration setTwentyFourHourTTL(int twentyFourHourTTL) {
         this.twentyFourHourTTL = twentyFourHourTTL;
+        return this;
     }
 
     public ReadablePeriod getRawRetention() {
         return rawRetention;
     }
 
-    public void setRawRetention(Duration retention) {
+    public MetricsConfiguration setRawRetention(Duration retention) {
         rawRetention = rawRetention;
+        return this;
     }
 
     public ReadablePeriod getOneHourRetention() {
         return oneHourRetention;
     }
 
-    public void setOneHourRetention(ReadablePeriod retention) {
+    public MetricsConfiguration setOneHourRetention(ReadablePeriod retention) {
         oneHourRetention = retention;
+        return this;
     }
 
     public ReadablePeriod getSixHourRetention() {
         return sixHourRetention;
     }
 
-    public void setSixHourRetention(ReadablePeriod retention) {
+    public MetricsConfiguration setSixHourRetention(ReadablePeriod retention) {
         sixHourRetention = retention;
+        return this;
     }
 
     public ReadablePeriod getTwentyFourHourRetention() {
         return twentyFourHourRetention;
     }
 
-    public void setTwentyFourHourRetention(ReadablePeriod retention) {
+    public MetricsConfiguration setTwentyFourHourRetention(ReadablePeriod retention) {
         twentyFourHourRetention = retention;
+        return this;
     }
 
     public Duration getRawTimeSliceDuration() {
@@ -136,36 +145,35 @@ public class MetricsConfiguration {
         return oneHourTimeSliceDuration;
     }
 
-    public void setOneHourTimeSliceDuration(Duration oneHourTimeSliceDuration) {
+    public MetricsConfiguration setOneHourTimeSliceDuration(Duration oneHourTimeSliceDuration) {
         this.oneHourTimeSliceDuration = oneHourTimeSliceDuration;
+        return this;
     }
 
     public Duration getSixHourTimeSliceDuration() {
         return sixHourTimeSliceDuration;
     }
 
-    public void setSixHourTimeSliceDuration(Duration sixHourTimeSliceDuration) {
+    public MetricsConfiguration setSixHourTimeSliceDuration(Duration sixHourTimeSliceDuration) {
         this.sixHourTimeSliceDuration = sixHourTimeSliceDuration;
-    }
-
-    public Duration getTimeSliceDuration(MetricsTable table) {
-        if (MetricsTable.RAW.equals(table)) {
-            return this.getRawTimeSliceDuration();
-        } else if (MetricsTable.ONE_HOUR.equals(table)) {
-            return this.getOneHourTimeSliceDuration();
-        } else if (MetricsTable.SIX_HOUR.equals(table)) {
-            return this.getSixHourTimeSliceDuration();
-        }
-
-        throw new IllegalArgumentException("Time slice duration for " + table.getTableName()
-            + " table is not supported");
+        return this;
     }
 
     public int getIndexPageSize() {
         return indexPageSize;
     }
 
-    public void setIndexPageSize(int indexPageSize) {
+    public MetricsConfiguration setIndexPageSize(int indexPageSize) {
         this.indexPageSize = indexPageSize;
+        return this;
+    }
+
+    public int getIndexPartitions() {
+        return indexPartitions;
+    }
+
+    public MetricsConfiguration setIndexPartitions(int indexPartitions) {
+        this.indexPartitions = indexPartitions;
+        return this;
     }
 }

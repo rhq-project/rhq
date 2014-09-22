@@ -46,6 +46,7 @@ abstract class AbstractManager {
     protected static final String DEFAULT_CASSANDRA_PASSWORD = "-1e4662ac0d7ddef155fd5fac8f894a49";
 
     private final Log log = LogFactory.getLog(AbstractManager.class);
+    protected UpdateFolderFactory updateFolderFactory;
 
     enum Query {
         USER_EXISTS, SCHEMA_EXISTS, VERSION_COLUMNFAMILY_EXISTS, VERSION, REPLICATION_FACTOR, INSERT_SCHEMA_VERSION;
@@ -64,7 +65,7 @@ abstract class AbstractManager {
     private final UpdateFile managementTasks;
 
     protected AbstractManager(String username, String password, String[] nodes, int cqlPort,
-        SessionManager sessionManager) {
+        SessionManager sessionManager, UpdateFolderFactory updateFolderFactory) {
 
         this.username = username;
         this.password = password;
@@ -73,11 +74,12 @@ abstract class AbstractManager {
         this.sessionManager = sessionManager;
 
         try {
-            UpdateFolder managementFolder = new UpdateFolder(MANAGEMENT_BASE_FOLDER);
+            UpdateFolder managementFolder = updateFolderFactory.newUpdateFolder(MANAGEMENT_BASE_FOLDER);
             managementTasks = managementFolder.getUpdateFiles().get(0);
         } catch (Exception e) {
             throw new RuntimeException("Unable create storage node session.", e);
         }
+        this.updateFolderFactory = updateFolderFactory;
     }
 
     /**

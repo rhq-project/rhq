@@ -100,11 +100,14 @@ import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.component.ComponentInvocationContextImpl;
 import org.rhq.core.pc.configuration.ConfigurationCheckExecutor;
 import org.rhq.core.pc.content.ContentContextImpl;
+import org.rhq.core.pc.content.ContentManager;
 import org.rhq.core.pc.drift.sync.DriftSyncManager;
 import org.rhq.core.pc.event.EventContextImpl;
+import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationContextImpl;
+import org.rhq.core.pc.operation.OperationManager;
 import org.rhq.core.pc.plugin.BlacklistedException;
 import org.rhq.core.pc.plugin.CanonicalResourceKey;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
@@ -129,6 +132,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryCallback;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.operation.OperationContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeCallback;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.system.SystemInfo;
@@ -234,7 +238,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     private final ResourceUpgradeDelegate resourceUpgradeDelegate = new ResourceUpgradeDelegate(this);
     private final PluginComponentFactory pluginFactory;
-    private MeasurementManager measurementManager;
+    private final EventManager eventManager;
+    private final OperationManager operationManager;
+    private final MeasurementManager measurementManager;
+    private final ContentManager contentManager;
 
     /**
      * Constructs a new instance.
@@ -244,10 +251,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
         PluginManager pluginManager) {
         super(DiscoveryAgentService.class, streamRemoter);
         this.configuration = configuration;
-        if (pluginManager == null)
+        if (pluginManager == null) {
             throw new NullPointerException("pluginManager is null");
+        }
         this.pluginManager = pluginManager;
-        this.pluginFactory = new PluginComponentFactory(this, pluginManager);
+        pluginFactory = new PluginComponentFactory(this, pluginManager);
+        eventManager = new EventManager(configuration);
+        operationManager = new OperationManager(configuration, getStreamRemoter());
+        measurementManager = new MeasurementManager(configuration, getStreamRemoter(), this);
+        contentManager = new ContentManager(configuration, getStreamRemoter(), this);
         availabilityExecutor = new AvailabilityExecutor(this);
         serviceScanExecutor = new RuntimeDiscoveryExecutor(this, configuration);
         serverScanExecutor = new AutoDiscoveryExecutor(null, this);
@@ -279,9 +291,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             // Discover the platform first thing.
             executePlatformScan();
-
-            // Initialize measurement manager
-            measurementManager = new MeasurementManager(configuration, getStreamRemoter(), this);
 
             //try the resource upgrade before we have any schedulers set up
             //so that we don't get any interventions from concurrently running
@@ -564,7 +573,39 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceUpgradeFacet<T> proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(
                 resourceType, component, timeout, ResourceUpgradeFacet.class, parentResourceContainer);
 
-            return proxy.upgrade(inventoriedResource);
+            ResourceUpgradeReport report = proxy.upgrade(inventoriedResource);
+
+            //funnel the report through all the optional resource upgrade callbacks
+            Map<String, List<String>> callbacks = this.pluginManager.getMetadataManager()
+                .getResourceUpgradeCallbacks(resourceType);
+
+            if (callbacks != null) {
+                //never pass a nul report to the callbacks... if it is null at the moment, just
+                //create a new "blank" one. The upgrade delegate will see that there's nothing to upgrade
+                //in it.
+                if (report == null) {
+                    report = new ResourceUpgradeReport();
+                }
+                //no timeouts or anything, just direct invocation.. let's hope plugins play nice
+                for (Map.Entry<String, List<String>> e : callbacks.entrySet()) {
+                    String pluginName = e.getKey();
+                    List<String> callbackClasses = e.getValue();
+
+                    for (String cls : callbackClasses) {
+                        ResourceUpgradeCallback<T> callback = getPluginComponentFactory()
+                            .getResourceUpgradeCallback(pluginName, cls);
+
+                        try {
+                            callback.upgrade(report, inventoriedResource);
+                        } catch (Throwable t) {
+                            log.error("Resource upgrade callback [" + cls + "] from plugin [" + pluginName +
+                                "] failed" + " on resource " + inventoriedResource.getResourceDetails());
+                        }
+                    }
+                }
+            }
+
+            return report;
         } catch (BlacklistedException e) {
             log.debug(e);
             return null;
@@ -3015,7 +3056,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         EventContext eventContext;
         if (resource.getResourceType().getEventDefinitions() != null
             && !resource.getResourceType().getEventDefinitions().isEmpty()) {
-            eventContext = new EventContextImpl(resource, PluginContainer.getInstance());
+            eventContext = new EventContextImpl(resource, eventManager);
         } else {
             eventContext = null;
         }
@@ -3032,7 +3073,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.info("Resource ID is 0! Operation features will not work until the resource is synced with server");
         }
 
-        return new OperationContextImpl(resource.getId(), PluginContainer.getInstance());
+        return new OperationContextImpl(resource.getId(), operationManager);
     }
 
     private ContentContext getContentContext(Resource resource) {
@@ -3056,7 +3097,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.info("Resource ID is 0! Content features will not work until the resource is synced with server");
         }
 
-        return new ContentContextImpl(resource.getId(), PluginContainer.getInstance());
+        return new ContentContextImpl(resource.getId(), contentManager);
     }
 
     private AvailabilityContext getAvailabilityContext(Resource resource) {
@@ -3078,7 +3119,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (null == resource.getUuid() || resource.getUuid().isEmpty()) {
             log.error("RESOURCE UUID IS NOT SET! Inventory features may not work!");
         }
-        return new InventoryContextImpl(resource, PluginContainer.getInstance());
+        return new InventoryContextImpl(resource, this);
     }
 
     private void processSyncInfo(Collection<ResourceSyncInfo> syncInfos, Set<Resource> syncedResources,
@@ -3743,7 +3784,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return pluginManager;
     }
 
+    public EventManager getEventManager() {
+        return eventManager;
+    }
+
+    public OperationManager getOperationManager() {
+        return operationManager;
+    }
+
     public MeasurementManager getMeasurementManager() {
         return measurementManager;
+    }
+
+    public ContentManager getContentManager() {
+        return contentManager;
     }
 }

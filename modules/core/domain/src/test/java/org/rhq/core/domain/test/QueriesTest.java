@@ -31,8 +31,7 @@ import java.util.TreeMap;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.testng.annotations.Test;
-
+import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
@@ -49,6 +48,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.shared.TransactionCallback;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.testng.annotations.Test;
 
 /**
  * Use this to explicitly test any of our named queries with any set of parameters. Useful to make sure these run on
@@ -88,6 +88,21 @@ public class QueriesTest extends AbstractEJB3Test {
 
         add(MeasurementBaseline.QUERY_FIND_BY_COMPUTE_TIME, new Object[] { "computeTime", 1L, "numericType",
             NumericType.DYNAMIC });
+
+        Object a[] = new Object[]{ "agentId", null };
+        Object ac[] = new Object[]{ "agentId", null, "category", null };
+        add(AlertCondition.QUERY_BY_CATEGORY_AVAILABILITY, ac);
+        add(AlertCondition.QUERY_BY_CATEGORY_BASELINE, a);
+        add(AlertCondition.QUERY_BY_CATEGORY_CHANGE, a);
+        add(AlertCondition.QUERY_BY_CATEGORY_CONTROL, a);
+        add(AlertCondition.QUERY_BY_CATEGORY_COUNT_BASELINE, a);
+        add(AlertCondition.QUERY_BY_CATEGORY_COUNT_PARAMETERIZED, ac);
+        add(AlertCondition.QUERY_BY_CATEGORY_DRIFT, a);
+        add(AlertCondition.QUERY_BY_CATEGORY_EVENT, a);
+        add(AlertCondition.QUERY_BY_CATEGORY_RANGE, a);
+        add(AlertCondition.QUERY_BY_CATEGORY_RESOURCE_CONFIG, a);
+        add(AlertCondition.QUERY_BY_CATEGORY_THRESHOLD, a);
+        add(AlertCondition.QUERY_BY_CATEGORY_TRAIT, a);
 
         //
         ////////////////////////////////////////////

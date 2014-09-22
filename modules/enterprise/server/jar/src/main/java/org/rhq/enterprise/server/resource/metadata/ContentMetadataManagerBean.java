@@ -2,6 +2,7 @@ package org.rhq.enterprise.server.resource.metadata;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +29,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
@@ -45,6 +47,9 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
     @EJB
     private BundleManagerLocal bundleMgr;
 
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeMgr;
+
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateMetadata(ResourceType existingType, ResourceType newType) {
@@ -54,20 +59,50 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
 
         // set the bundle type if one is defined
         BundleType newBundleType = newType.getBundleType();
+
         if (newBundleType != null) {
             BundleType existingBundleType = existingType.getBundleType();
-            newBundleType.setResourceType(existingType);
-            if (existingBundleType != null) {
-                newBundleType.setId(existingBundleType.getId());
-                newBundleType = entityMgr.merge(newBundleType);
+
+            Set<ResourceType> targetedResourceTypes = new HashSet<ResourceType>(
+                newBundleType.getExplicitlyTargetedResourceTypes().size());
+
+            if (!newBundleType.getExplicitlyTargetedResourceTypes().isEmpty()) {
+                for (ResourceType targetType : newBundleType.getExplicitlyTargetedResourceTypes()) {
+                    ResourceType existingTargetType = resourceTypeMgr
+                        .getResourceTypeByNameAndPlugin(targetType.getName(), targetType.getPlugin());
+
+                    if (existingTargetType == null) {
+                        throw new IllegalStateException(
+                            "Cannot find a resource type explicitly targeted by bundle type " + newBundleType +
+                                ". This should not happen because such type should always be persisted prior to the bundle type.");
+                    }
+
+                    targetedResourceTypes.add(existingTargetType);
+                }
             }
-            if (log.isDebugEnabled()) {
-                log.debug("Updating bundle type to " + newBundleType);
-            }
-            existingType.setBundleType(newBundleType);
 
             // If bundleType is not null then this in a bundle plugin and we do not need to do any further
             // processing because a bundle plugin cannot define any other content.
+
+            // Also note that ANY changes to the newBundleType need to be made in here and NOT in the code
+            // above. This is because the above code can query the database during which the changes might
+            // be flushed to the DB (if at least 1 of those changes involved associating the new bundle type
+            // with an entity from the persistence context.
+            if (existingBundleType != null) {
+                newBundleType.setId(existingBundleType.getId());
+            }
+
+            newBundleType.setResourceType(existingType);
+            newBundleType.getExplicitlyTargetedResourceTypes().clear();
+            newBundleType.getExplicitlyTargetedResourceTypes().addAll(targetedResourceTypes);
+
+            newBundleType = entityMgr.merge(newBundleType);
+
+            existingType.setBundleType(newBundleType);
+
+            if (log.isDebugEnabled()) {
+                log.debug("Updating bundle type to " + newBundleType);
+            }
             return;
         } else {
             if (log.isDebugEnabled()) {

@@ -21,7 +21,10 @@ package org.rhq.core.domain.bundle;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +42,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
  * resources that are of the given type). Rather than expect users of this object to know the internal properties stored
  * in the config, this object has strongly-typed methods to extract the properties into more easily consumable POJOs,
  * such as {@link #getBundleDestinationBaseDirectories()} and {@link #addBundleDestinationBaseDirectory(String, String,
- * String, String)}.
+ * String, String, List)}.
  *
  * @author John Mazzitelli
  * @author Lukas Krejci
@@ -49,13 +52,22 @@ public class ResourceTypeBundleConfiguration implements Serializable {
 
     // The value of these constants is kept as it was originally, even though it no longer reflects the reality.
     // This is to keep the backwards compatibility and avoid the need for a database upgrade job.
+
+    // !!!!!!!!!!! BEWARE THAT THE STRUCTURE OF THE CONFIGURATION IS ASSUMED IN THE
+    // !!!!!!!!!!! ResourceGroupCriteria.filterAcceptableTargetForBundleType.
+    // !!!!!!!!!!! If you make changes to the structure of the bundle configuration object, make sure that the above
+    // !!!!!!!!!!! criteria filter still works.
+
     private static final String BUNDLE_DEST_LIST_NAME = "bundleDestBaseDirsList";
     private static final String BUNDLE_DEST_LIST_ITEM_NAME = "bundleDestBaseDirsListItem";
 
-    private static final String BUNDLE_DEST_BASE_DIR_NAME_NAME = "name";
+    private static final String BUNDLE_DEST_NAME_NAME = "name";
+    private static final String BUNDLE_DEST_DESCRIPTION_NAME = "description";
+    private static final String BUNDLE_DEST_ACCEPTS_LIST_NAME = "accepts";
+    private static final String BUNDLE_DEST_ACCEPTS_LIST_MEMBER_NAME = "bundleType";
+
     private static final String BUNDLE_DEST_BASE_DIR_VALUE_CONTEXT_NAME = "valueContext";
     private static final String BUNDLE_DEST_BASE_DIR_VALUE_NAME_NAME = "valueName";
-    private static final String BUNDLE_DEST_BASE_DIR_DESCRIPTION_NAME = "description";
 
     private static final String BUNDLE_DEST_DEFINITION_CONNECTION_NAME = "connection";
     private static final String BUNDLE_DEST_DEFINITION_REF_LIST_NAME = "refs";
@@ -110,6 +122,50 @@ public class ResourceTypeBundleConfiguration implements Serializable {
     }
 
     /**
+     * The rules governing whether a destination is available when deploying
+     * a bundle of type "B" to a group of resources of type "T" are the following:
+     *
+     * <ol>
+     *    <li>If no destination from type "T" explicitly accepts bundle type "B", only those
+     *        destinations that don't specifically accept ANY bundle type are available
+     *        for deployment.</li>
+     *    <li>If at least one destination from type "T" accepts bundle type "B" then
+     *        only those that accept it explicitly are available for deployment.</li>
+     * </ol>
+     *
+     * These rules support the 2 main kinds of bundle types: generic, filesystem based
+     * bundle types and specific, API based bundle types.
+     * <p/>
+     * The generic types deploy to the destinations that don't explicitly accept any
+     * type, while specific types deploy to destinations specifically tailored for
+     * those types.
+     * <p/>
+     * It is supposed that a single destination will not likely be shared between
+     * the generic and specific bundle types.
+     *
+     * @param bundleType the bundle type to get the acceptable destinations for
+     * @return the set of destinations that can accept the bundles of given type
+     */
+    public Set<BundleDestinationSpecification> getAcceptableBundleDestinationSpecifications(String bundleType) {
+        Set<BundleDestinationSpecification> orig = getBundleDestinationSpecifications();
+
+        Set<BundleDestinationSpecification> generic = new HashSet<BundleDestinationSpecification>();
+        Set<BundleDestinationSpecification> specific = new HashSet<BundleDestinationSpecification>();
+
+        Iterator<BundleDestinationSpecification> it = orig.iterator();
+        while (it.hasNext()) {
+            BundleDestinationSpecification spec = it.next();
+            if (spec.getAcceptedBundleTypes().isEmpty()) {
+                generic.add(spec);
+            } else if (spec.getAcceptedBundleTypes().contains(bundleType)) {
+                specific.add(spec);
+            }
+        }
+
+        return specific.isEmpty() ? generic : specific;
+    }
+
+    /**
      * Returns the different destination base directories that can be the target for a bundle deployment.
      * If this bundle configuration doesn't have any base directories, null is returned (though this
      * should never happen if the bundle configuration has been fully prepared for a resource type).
@@ -133,12 +189,34 @@ public class ResourceTypeBundleConfiguration implements Serializable {
      * @param valueName    the name of the property found in the given context where the value
      *                     of the base directory is
      * @param description  optional explanation for what this destination location is
+     *
+     * @deprecated since 4.13, use {@link #addBundleDestinationBaseDirectory(String, String, String, String, java.util.List)}
      */
     public void addBundleDestinationBaseDirectory(String name, String valueContext, String valueName,
         String description) {
         // we create this just to make sure the context and value are valid. An exception will be thrown if they are not.
         addBundleDestinationSpecification(new BundleDestinationBaseDirectory(name, valueContext, valueName,
-            description));
+            description, Collections.<String>emptyList()));
+
+    }
+
+    /**
+     * Adds a destination base directory that can be used as a target for a bundle deployment.
+     *
+     * @param name         the name of this bundle destination base directory (must not be <code>null</code>)
+     * @param valueContext indicates where the value's name can be looked up and found. This
+     *                     must be the string form of one of the enums found
+     *                     in {@link BundleDestinationBaseDirectory.Context}
+     * @param valueName    the name of the property found in the given context where the value
+     *                     of the base directory is
+     * @param description  optional explanation for what this destination location is
+     * @param acceptedBundleTypes the list of accepted bundle types. Must not be null.
+     */
+    public void addBundleDestinationBaseDirectory(String name, String valueContext, String valueName,
+        String description, List<String> acceptedBundleTypes) {
+        // we create this just to make sure the context and value are valid. An exception will be thrown if they are not.
+        addBundleDestinationSpecification(new BundleDestinationBaseDirectory(name, valueContext, valueName,
+            description, acceptedBundleTypes));
 
     }
 
@@ -235,22 +313,25 @@ public class ResourceTypeBundleConfiguration implements Serializable {
 
         private final String name;
         private final String description;
+        private final List<String> acceptedBundleTypes;
 
-        private BundleDestinationSpecification(String name, String description) {
+        private BundleDestinationSpecification(String name, String description, List<String> acceptedBundleTypes) {
             if (name == null) {
                 throw new NullPointerException("name == null");
             }
 
             this.name = name;
             this.description = description;
+            this.acceptedBundleTypes = acceptedBundleTypes;
         }
 
         private static <T extends BundleDestinationSpecification> T from(PropertyMap map, Class<T> expectedClass) {
-            String name = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_NAME_NAME, null);
+            String name = map.getSimpleValue(BUNDLE_DEST_NAME_NAME, null);
             String valueContext = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_VALUE_CONTEXT_NAME, null);
-            String description = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_DESCRIPTION_NAME, null);
+            String description = map.getSimpleValue(BUNDLE_DEST_DESCRIPTION_NAME, null);
             String connection = map.getSimpleValue(BUNDLE_DEST_DEFINITION_CONNECTION_NAME, null);
             PropertyList refs = map.getList(BUNDLE_DEST_DEFINITION_REF_LIST_NAME);
+            PropertyList acceptProps = map.getList(BUNDLE_DEST_ACCEPTS_LIST_NAME);
 
             Class<?> determinedClass = Object.class;
             if (valueContext == null) {
@@ -263,6 +344,14 @@ public class ResourceTypeBundleConfiguration implements Serializable {
                 }
             }
 
+            //first convert accepts into a List<String>
+            List<String> accepts = new ArrayList<String>();
+            if (acceptProps != null) {
+                for (Property p : acceptProps.getList()) {
+                    PropertySimple bundleType = (PropertySimple) p;
+                    accepts.add(bundleType.getStringValue());
+                }
+            }
 
             //this would be the preferred impl, but GWT thinks otherwise :(
             //if (expectedClass.isAssignableFrom(determinedClass)) {
@@ -279,13 +368,13 @@ public class ResourceTypeBundleConfiguration implements Serializable {
                 String valueName = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_VALUE_NAME_NAME, null);
 
                 @SuppressWarnings("unchecked")
-                T ret = (T) new BundleDestinationBaseDirectory(name, valueContext, valueName, description);
+                T ret = (T) new BundleDestinationBaseDirectory(name, valueContext, valueName, description, accepts);
                 return ret;
             } else if (determinedClass.equals(BundleDestinationDefinition.class) && (expectedClass.equals(
                 BundleDestinationDefinition.class) || expectedClass.equals(BundleDestinationSpecification.class))) {
 
                 BundleDestinationDefinition.Builder bld = BundleDestinationDefinition.builder().withName(name)
-                    .withConnectionString(connection).withDescription(description);
+                    .withConnectionString(connection).withDescription(description).withAcceptedBundleTypes(accepts);
 
                 if (refs != null) {
                     for (Property p : refs.getList()) {
@@ -337,15 +426,28 @@ public class ResourceTypeBundleConfiguration implements Serializable {
             return description;
         }
 
+        /**
+         * @return the list of accepted bundle types
+         */
+        public List<String> getAcceptedBundleTypes() {
+            return acceptedBundleTypes;
+        }
+
         protected void fillPropertyMap(PropertyMap map) {
-            map.put(new PropertySimple(BUNDLE_DEST_BASE_DIR_NAME_NAME, getName()));
+            map.put(new PropertySimple(BUNDLE_DEST_NAME_NAME, getName()));
 
             if (getDescription() != null) {
-                PropertySimple descriptionProp = new PropertySimple(BUNDLE_DEST_BASE_DIR_DESCRIPTION_NAME,
+                PropertySimple descriptionProp = new PropertySimple(BUNDLE_DEST_DESCRIPTION_NAME,
                     getDescription());
                 map.put(descriptionProp);
             }
 
+            PropertyList accepts = new PropertyList(BUNDLE_DEST_ACCEPTS_LIST_NAME);
+            map.put(accepts);
+            for (String acc : acceptedBundleTypes) {
+                PropertySimple p = new PropertySimple(BUNDLE_DEST_ACCEPTS_LIST_MEMBER_NAME, acc);
+                accepts.add(p);
+            }
         }
 
         @Override
@@ -410,8 +512,10 @@ public class ResourceTypeBundleConfiguration implements Serializable {
         private final Context valueContext;
         private final String valueName;
 
-        public BundleDestinationBaseDirectory(String name, String valueContext, String valueName, String description) {
-            super(name, description);
+        public BundleDestinationBaseDirectory(String name, String valueContext, String valueName, String description,
+            List<String> acceptedBundleTypes) {
+
+            super(name, description, acceptedBundleTypes);
             this.valueContext = Context
                 .valueOf(valueContext); // will throw an exception if its not valid, which is what we want
             this.valueName = valueName;
@@ -478,8 +582,8 @@ public class ResourceTypeBundleConfiguration implements Serializable {
         }
 
         public BundleDestinationDefinition(String name, String connectionString, String description,
-            List<ConfigRef> refs) {
-            super(name, description);
+            List<ConfigRef> refs, List<String> acceptedBundleTypes) {
+            super(name, description, acceptedBundleTypes);
 
             this.connectionString = connectionString;
             this.referencedConfiguration = refs;
@@ -583,6 +687,7 @@ public class ResourceTypeBundleConfiguration implements Serializable {
             private String name;
             private String description;
             private final List<ConfigRef> refs = new ArrayList<ConfigRef>();
+            private final List<String> acceptedBundleTypes = new ArrayList<String>();
 
             private Builder(ResourceTypeBundleConfiguration targetConfig) {
                 this.targetConfig = targetConfig;
@@ -666,8 +771,21 @@ public class ResourceTypeBundleConfiguration implements Serializable {
                 return this;
             }
 
+            public Builder addAcceptedBundleType(String bundleTypeName) {
+                acceptedBundleTypes.add(bundleTypeName);
+                return this;
+            }
+
+            public Builder withAcceptedBundleTypes(Collection<String> bundleTypeNames) {
+                acceptedBundleTypes.clear();
+                acceptedBundleTypes.addAll(bundleTypeNames);
+                return this;
+            }
+
             public BundleDestinationDefinition build() {
-                BundleDestinationDefinition ret = new BundleDestinationDefinition(name, connString, description, refs);
+                BundleDestinationDefinition ret = new BundleDestinationDefinition(name, connString, description, refs,
+                    acceptedBundleTypes);
+
                 if (targetConfig != null) {
                     targetConfig.addBundleDestinationSpecification(ret);
                 }

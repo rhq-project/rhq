@@ -334,33 +334,34 @@ public class StorageClientManager implements StorageClientManagerMBean{
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public int getAggregationBatchSize() {
-        return metricsServer.getAggregationBatchSize();
+        return metricsServer.getAggregationManager().getBatchSize();
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void setAggregationBatchSize(int batchSize) {
-        metricsServer.setAggregationBatchSize(batchSize);
+        metricsServer.getAggregationManager().setBatchSize(batchSize);
         persistStorageProperty(MetricsConstants.AGGREGATION_BATCH_SIZE, Integer.toString(batchSize));
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public int getAggregationParallelism() {
-        return metricsServer.getAggregationParallelism();
+        return metricsServer.getAggregationManager().getParallelism();
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void setAggregationParallelism(int parallelism) {
-        metricsServer.setAggregationParallelism(parallelism);
+        metricsServer.getAggregationManager().setParallelism(parallelism);
         persistStorageProperty(MetricsConstants.AGGREGATION_PARALLELISM, Integer.toString(parallelism));
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public int getAggregationWorkers() {
-        return metricsServer.getNumAggregationWorkers();
+        return metricsServer.getAggregationManager().getNumWorkers();
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void setAggregationWorkers(int numWorkers) {
+        metricsServer.getAggregationManager().setNumWorkers(numWorkers);
         persistStorageProperty(MetricsConstants.AGGREGATION_WORKERS, Integer.toString(numWorkers));
     }
 
@@ -563,12 +564,7 @@ public class StorageClientManager implements StorageClientManagerMBean{
         DateTimeService dateTimeService = new DateTimeService();
         dateTimeService.setConfiguration(metricsConfiguration);
         metricsServer.setDateTimeService(dateTimeService);
-        metricsServer.setCacheActivationTime(getCacheActivationTime());
         metricsServer.init();
     }
 
-    private long getCacheActivationTime() {
-        SystemSettings settings = systemManager.getObfuscatedSystemSettings(true);
-        return Long.parseLong(settings.get(SystemSetting.METRICS_CACHE_ACTIVATION_TIME));
-    }
 }

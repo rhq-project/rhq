@@ -141,6 +141,9 @@
           <c:simple-property name="address"/>
         </c:list-property>
       </parameters>
+      <results>
+          <c:simple-property name="operationResult"/>
+      </results>
     </operation>
 
     <operation name="prepareForUpgrade" description="Prepares the storage node for upgrade (this operation consists of following steps: 1) turning off the RPC server, 2) turning off the gossiper, 3) taking the snapshot (backuping the data), 4) invoking the drain operation">
@@ -159,6 +162,19 @@
           <c:simple-property name="seed" type="string"/>
         </c:list-property>
       </parameters>
+    </operation>
+
+    <operation name="moveDataFiles" description="Move StorageNode datafiles to a new location">
+      <parameters>
+        <c:simple-property name="CommitLogLocation" description="Location of the commit log directory" required="false" type="string" />
+        <c:simple-property name="SavedCachesLocation" description="Location of the saved caches directory" required="false" type="string" />
+        <c:list-property name="AllDataFileLocations" displayName="Data File Locations" description="List of data file locations">
+          <c:simple-property name="directory" type="string" />
+        </c:list-property>
+      </parameters>
+      <results>
+        <c:simple-property name="operationResult" description="Outcome of updating the configuration."/>
+      </results>
     </operation>
 
     <operation name="takeSnapshot"
@@ -182,7 +198,7 @@
             <c:option value="Move"/>
           </c:property-options>
         </c:simple-property>
-        <c:simple-property name="location" required="false" type="string" description="Additional parameter to Deletion Strategy, specifies location to move snaphosts to, snads for L" />
+        <c:simple-property name="location" required="false" type="string" description="Additional parameter to Deletion Strategy, specifies location to move snaphosts to." />
       </parameters>
     </operation>
 
@@ -241,6 +257,13 @@
                            type="integer"
                            description="The port used for internode communication. This is a shared, cluster-wide setting."/>
 
+      </c:group>
+      <c:group name="DataFileLocations">
+        <c:simple-property name="CommitLogLocation" description="Location of the commit log directory" required="false" type="string" />
+        <c:simple-property name="SavedCachesLocation" description="Location of the saved caches directory" required="false" type="string" />
+        <c:list-property name="AllDataFileLocations" displayName="Data File Locations" description="List of data file locations">
+          <c:simple-property name="directory" type="string" />
+        </c:list-property>
       </c:group>
     </resource-configuration>
 

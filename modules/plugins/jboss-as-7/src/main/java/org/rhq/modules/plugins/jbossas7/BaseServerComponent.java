@@ -30,11 +30,9 @@ import static org.rhq.modules.plugins.jbossas7.JBossProductType.WILDFLY8;
 import static org.rhq.modules.plugins.jbossas7.util.ProcessExecutionLogger.logExecutionResults;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -43,13 +41,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
-import org.w3c.dom.Document;
 
 import org.jboss.sasl.util.UsernamePasswordHashUtil;
 
@@ -74,6 +68,7 @@ import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
@@ -105,13 +100,11 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private AvailabilityType previousAvailabilityType;
     private String releaseVersion;
     private String aSHostName;
-    private DocumentBuilderFactory docBuilderFactory;
     private long lastManagementInterfaceReply = 0;
 
     @Override
-    public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext<T> resourceContext) throws Exception {
         super.start(resourceContext);
-        docBuilderFactory = DocumentBuilderFactory.newInstance();
         serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
         serverPluginConfig.validate();
         connection = new ASConnection(ASConnectionParams.createFrom(serverPluginConfig));
@@ -138,18 +131,11 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 availabilityType = UP;
                 lastManagementInterfaceReply = new Date().getTime();
             } catch (ResultFailedException e) {
-                LOG.warn("Domain host name seems to be changed, re-reading from  "
-                    + getServerPluginConfiguration().getHostConfigFile());
+                LOG.warn("Domain host name seems to be changed");
                 setASHostName(findASDomainHostName());
                 LOG.info("Detected domain host name [" + getASHostName() + "]");
-                try {
-                    readAttribute(getHostAddress(), "name");
-                    availabilityType = UP;
-                } catch (Exception ex) {
-                    throw ex;
-                }
-            } catch (Exception ex) {
-                throw ex;
+                readAttribute(getHostAddress(), "name");
+                availabilityType = UP;
             }
         } catch (TimeoutException e) {
             long now = new Date().getTime();
@@ -215,6 +201,32 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                     + runtimeBaseDir + "], but the base dir we expected was [" + baseDir
                     + "]. Perhaps the management hostname or port has been changed for the server with base dir ["
                     + baseDir + "].");
+            }
+        }
+
+        // Validate the config dir (e.g. /opt/jboss-as-7.1.1.Final/standalone/configuration).
+        File runtimeConfigDir;
+        File configDir = null;
+        try {
+            String runtimeConfigDirString = readAttribute(getEnvironmentAddress(), getConfigDirAttributeName());
+            // Canonicalize both paths before comparing them!
+            runtimeConfigDir = new File(runtimeConfigDirString).getCanonicalFile();
+            File configDirTmp = serverPluginConfig.getConfigDir();
+            if (configDirTmp != null) { // may be null for manually added servers
+                configDir = configDirTmp.getCanonicalFile();
+            }
+        } catch (Exception e) {
+            runtimeConfigDir = null;
+            configDir = null;
+            LOG.error("Failed to validate config dir for " + getResourceDescription() + ".", e);
+        }
+        if ((runtimeConfigDir != null) && (configDir != null)) {
+            if (!runtimeConfigDir.equals(configDir)) {
+                throw new InvalidPluginConfigurationException("The server listening on "
+                        + serverPluginConfig.getHostname() + ":" + serverPluginConfig.getPort() + " has config dir ["
+                        + runtimeConfigDir + "], but the config dir we expected was [" + configDir
+                        + "]. Perhaps the management hostname or port has been changed for the server with config dir ["
+                        + configDir + "].");
             }
         }
 
@@ -431,8 +443,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             result.setErrorMessage("waitTime parameter must be positive integer");
             return result;
         }
-        ServerControl.Cli cli = ServerControl.onServer(context.getPluginConfiguration(), getMode(),
-            context.getSystemInformation()).waitingFor(waitTime * 1000)
+        ServerControl.Cli cli = ServerControl
+            .onServer(context.getPluginConfiguration(), getMode(), context.getSystemInformation())
+            .waitingFor(waitTime * 1000)
             .killingOnTimeout(Boolean.parseBoolean(parameters.getSimpleValue("killOnTimeout", "false"))).cli();
 
         ProcessExecutionResults results;
@@ -442,7 +455,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         } else {
             File script = new File(parameters.getSimpleValue("file"));
             if (!script.isAbsolute()) {
-                script = new File(serverPluginConfig.getHomeDir(), script.getPath());
+                script = new File(serverPluginConfig.getHomeDir(), script.getPath()).getAbsoluteFile();
             }
 
             results = cli.executeCliScript(script);
@@ -761,9 +774,18 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             scriptFile = File.createTempFile(handoverRequest.getFilename(), ".tmp", context.getTemporaryDirectory());
             FileUtil.writeFile(handoverRequest.getContent(), scriptFile);
 
-            ProcessExecutionResults results = ServerControl.onServer(
-                getServerPluginConfiguration().getPluginConfig(), getMode(), context.getSystemInformation())
-                .waitingFor(waitTime).killingOnTimeout(killOnTimeout).cli().executeCliScript(scriptFile);
+            ProcessExecutionResults results = ServerControl //
+                .onServer( //
+                        getServerPluginConfiguration().getPluginConfig(), //
+                        getMode(), //
+                    context.getSystemInformation() //
+                ) //
+                .waitingFor(waitTime) //
+                .killingOnTimeout(killOnTimeout) //
+                .cli() //
+                .executeCliScript(scriptFile.getAbsoluteFile());
+
+            logExecutionResults(results);
 
             Throwable error = results.getError();
             if (error != null) {
@@ -793,6 +815,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
     @NotNull
     protected abstract String getBaseDirAttributeName();
+
+    @NotNull
+    protected abstract String getConfigDirAttributeName();
 
     /**
      * Default implentation. Override in concrete subclasses and return the the temporary directory attribute name,
@@ -842,56 +867,28 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     }
 
     /**
-     * Reads <host name= attribute from host.xml file.
-     *
-     * @return name attribute from host.xml file
+     * @see #findASDomainHostName(ASConnection)
      */
     protected String findASDomainHostName() {
         if (getMode().equals(AS7Mode.STANDALONE)) {
             return null;
         }
-        File hostXmlFile = getServerPluginConfiguration().getHostConfigFile();
-        if (hostXmlFile == null) {
-            return null;
+        return findASDomainHostName(getASConnection());
+    }
+
+    /**
+     * Reads local-host-name attribute
+     *
+     * @return name current host within EAP domain or null if we failed to read it
+     */
+    public static String findASDomainHostName(ASConnection connection) {
+        ReadAttribute op = new ReadAttribute(new Address(), "local-host-name");
+        op.includeDefaults(true);
+        Result result = connection.execute(op);
+        if (result.isSuccess()) {
+            return result.getResult().toString();
         }
-        String hostName = null;
-        try {
-            DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
-            InputStream is = new FileInputStream(hostXmlFile);
-            try {
-                Document document = builder.parse(is);
-                hostName = document.getDocumentElement().getAttribute("name");
-            } finally {
-                is.close();
-            }
-        } catch (Exception e) {
-            LOG.error(e.getMessage());
-        }
-        if (hostName == null || hostName.equals("")) {
-            LOG.warn("Failed to read domain host name from [" + hostXmlFile + "] auto-detecting...");
-            String qualifiedHostName = System.getenv("HOSTNAME");
-            if (qualifiedHostName == null) {
-                qualifiedHostName = System.getenv("COMPUTERNAME");
-            }
-            if (qualifiedHostName == null) {
-                try {
-                    qualifiedHostName = InetAddress.getLocalHost().getHostName();
-                    if (qualifiedHostName != null && qualifiedHostName.matches("^\\d+\\.\\d+\\.\\d+\\.\\d+$|:")) {
-                        // IP address is not acceptable
-                        qualifiedHostName = null;
-                    }
-                } catch (UnknownHostException e) {
-                    qualifiedHostName = null;
-                }
-            }
-            if (qualifiedHostName == null) {
-                qualifiedHostName = "unknown-host.unknown-domain";
-            }
-            final int idx = qualifiedHostName.indexOf('.');
-            hostName = idx == -1 ? qualifiedHostName : qualifiedHostName.substring(0, idx);
-            LOG.info("Domain host name was detected as [" + hostName + "]");
-        }
-        return hostName;
+        return null;
     }
 
     private HostConfiguration getHostConfig() {
@@ -953,5 +950,95 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         } else if (LOG.isDebugEnabled()) {
             LOG.debug("getSKMRequests failed: " + res.getFailureDescription());
         }
+    }
+
+    protected BundleHandoverResponse deployPatch(BundleHandoverRequest request) {
+        //download the file to a temp location
+        File patchFile = null;
+        try {
+            try {
+                patchFile = File.createTempFile("rhq-jboss-as-7-", ".patch");
+            } catch (IOException e) {
+                return BundleHandoverResponse
+                    .failure(BundleHandoverResponse.FailureType.EXECUTION,
+                        "Failed to create a temp file to copy patch to.");
+            }
+
+            try {
+                StreamUtil.copy(request.getContent(), new FileOutputStream(patchFile));
+            } catch (FileNotFoundException e) {
+                return BundleHandoverResponse.failure(EXECUTION, "Failed to copy patch to local storage.");
+            }
+
+            Map<String, String> parameters = request.getParams();
+
+            //param validation
+            if (parameters != null) {
+                for (Map.Entry<String, String> e : parameters.entrySet()) {
+                    String name = e.getKey();
+                    String value = e.getValue();
+
+                    if (!("override".equals(name) || "override-all".equals(name) || "preserve".equals(name) ||
+                        "override-modules".equals(name))) {
+                        return BundleHandoverResponse.failure(INVALID_PARAMETER,
+                            "'" + name +
+                                "' is not a supported parameter. Only 'override', 'override-all', 'preserve' and 'override-modules' are supported.");
+                    }
+                }
+            }
+
+            String errorMessage = deployPatch(patchFile, parameters);
+
+            return errorMessage == null ? BundleHandoverResponse.success() :
+                BundleHandoverResponse.failure(EXECUTION, errorMessage);
+        } finally {
+            if (patchFile != null) {
+                //noinspection ResultOfMethodCallIgnored
+                patchFile.delete();
+            }
+        }
+    }
+
+    /**
+     * Deploys a patch, returning an error message, if any.
+     *
+     * @param patchFile the local file containing the path
+     * @return error message or null if patching succeeded
+     */
+    private String deployPatch(File patchFile, Map<String, String> additionalParams) {
+        StringBuilder command = new StringBuilder("patch apply --path=");
+        command.append(patchFile.getAbsolutePath());
+
+        if (additionalParams != null) {
+            for (Map.Entry<String, String> e : additionalParams.entrySet()) {
+                command.append(" --").append(e.getKey());
+                if (e.getValue() != null) {
+                    command.append("=").append(e.getValue());
+                }
+            }
+        }
+
+        ProcessExecutionResults results = ServerControl
+            .onServer(context.getPluginConfiguration(), getMode(), context.getSystemInformation()).cli()
+            .disconnected(true).executeCliCommand(command.toString());
+
+        if (results.getError() != null || results.getExitCode() == null || results.getExitCode() != 0) {
+            String message = "Applying the patch failed ";
+            if (results.getError() != null) {
+                message += "with an exception: " + results.getError().getMessage();
+            } else {
+                if (results.getExitCode() == null) {
+                    message += "with a timeout.";
+                } else {
+                    message += "with exit code " + results.getExitCode();
+                }
+
+                message += " The attempt produced the following output:\n" + results.getCapturedOutput();
+            }
+
+            return message;
+        }
+
+        return null;
     }
 }

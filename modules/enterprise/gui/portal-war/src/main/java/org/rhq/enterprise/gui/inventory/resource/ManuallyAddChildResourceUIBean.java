@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.gui.inventory.resource;
 
 import java.util.ArrayList;
@@ -32,7 +33,8 @@ import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientEx
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.resource.ImportResourceRequest;
+import org.rhq.core.domain.resource.ImportResourceResponse;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -150,10 +152,11 @@ public class ManuallyAddChildResourceUIBean {
     }
 
     public String addResource() {
-        MergeResourceResponse mergeResourceResponse = null;
+        ImportResourceResponse response = null;
+        ImportResourceRequest request = new ImportResourceRequest(getType().getId(), EnterpriseFacesContextUtility
+            .getResource().getId(), getConfiguration());
         try {
-            mergeResourceResponse = discoveryBoss.manuallyAddResource(EnterpriseFacesContextUtility.getSubject(),
-                getType(), EnterpriseFacesContextUtility.getResource().getId(), getConfiguration());
+            response = discoveryBoss.manuallyAddResource(EnterpriseFacesContextUtility.getSubject(), request);
         } catch (InvalidPluginConfigurationClientException e) {
             FacesContextUtility
                 .addMessage(
@@ -170,12 +173,12 @@ public class ManuallyAddChildResourceUIBean {
         }
 
         String outcome;
-        if (mergeResourceResponse == null) {
+        if (response == null) {
             outcome = OUTCOME_FAILURE;
         } else {
             Resource resource = LookupUtil.getResourceManager().getResourceById(
-                EnterpriseFacesContextUtility.getSubject(), mergeResourceResponse.getResourceId());
-            if (mergeResourceResponse.resourceAlreadyExisted()) {
+                EnterpriseFacesContextUtility.getSubject(), response.getResource().getId());
+            if (response.isResourceAlreadyExisted()) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "A " + getType().getName()
                     + " with the specified connection properties was already in inventory.");
             } else {

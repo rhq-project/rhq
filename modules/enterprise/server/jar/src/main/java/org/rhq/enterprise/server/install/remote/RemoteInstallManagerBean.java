@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ package org.rhq.enterprise.server.install.remote;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -36,6 +37,7 @@ import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
+import org.rhq.core.domain.install.remote.AgentInstallStep;
 import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 import org.rhq.core.domain.install.remote.SSHSecurityException;
@@ -206,6 +208,15 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
             SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
             try {
                 AgentInstallInfo info = sshUtil.installAgent(customData, String.valueOf(ai.getId()));
+
+                List<AgentInstallStep> steps = info.getSteps();
+                AgentInstallStep lastInstallStep = steps.get(steps.size() - 1);
+
+                // At the moment, SSHInstallUtility might throw RuntimeException as well if it fails. Lets unify this for now.
+                if(lastInstallStep.getResultCode() != 0) {
+                    throw new RuntimeException(lastInstallStep.getDescription() + " failed, " + lastInstallStep.getResult());
+                }
+
                 return info;
             } finally {
                 sshUtil.disconnect();
@@ -224,25 +235,26 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public String uninstallAgent(Subject subject, RemoteAccessInfo remoteAccessInfo) {
+    public String uninstallAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String agentInstallPath) {
         String agentName = remoteAccessInfo.getAgentName();
-        AgentInstall ai = agentManager.getAgentInstallByAgentName(subject, agentName);
-        if (ai == null || ai.getInstallLocation() == null || ai.getInstallLocation().trim().length() == 0) {
-            throw new IllegalArgumentException("Agent [" + agentName
-                + "] does not have a known install location. For security purposes, the uninstall will not be allowed."
-                + " You will have to manually uninstall it from that machine.");
-        }
-
-        // for security reasons, don't connect to a different machine than where the AgentInstall thinks the agent is.
-        // If there is no known host in AgentInstall, then we accept the caller's hostname.
-        if (ai.getSshHost() != null && !ai.getSshHost().equals(remoteAccessInfo.getHost())) {
-            throw new IllegalArgumentException("Agent [" + agentName + "] is not known to be on host ["
-                + remoteAccessInfo.getHost() + "] - aborting uninstall");
+        if(agentName != null) {
+            AgentInstall ai = agentManager.getAgentInstallByAgentName(subject, agentName);
+            if (ai == null || ai.getInstallLocation() == null || ai.getInstallLocation().trim().length() == 0) {
+                throw new IllegalArgumentException("Agent [" + agentName
+                        + "] does not have a known install location. For security purposes, the uninstall will not be allowed."
+                        + " You will have to manually uninstall it from that machine.");
+            }
+            // for security reasons, don't connect to a different machine than where the AgentInstall thinks the agent is.
+            // If there is no known host in AgentInstall, then we accept the caller's hostname.
+            if (ai.getSshHost() != null && !ai.getSshHost().equals(remoteAccessInfo.getHost())) {
+                throw new IllegalArgumentException("Agent [" + agentName + "] is not known to be on host ["
+                        + remoteAccessInfo.getHost() + "] - aborting uninstall");
+            }
         }
 
         SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
         try {
-            return sshUtil.uninstallAgent(ai.getInstallLocation());
+            return sshUtil.uninstallAgent(agentInstallPath);
         } finally {
             sshUtil.disconnect();
         }

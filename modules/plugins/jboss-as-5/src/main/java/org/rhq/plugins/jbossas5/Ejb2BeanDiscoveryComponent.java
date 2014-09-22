@@ -1,6 +1,6 @@
 /*
- * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,10 +20,12 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.plugins.jbossas5;
 
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.metatype.api.values.SimpleValue;
+
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas5.util.Ejb2BeanUtils;
 
@@ -52,6 +54,9 @@ public class Ejb2BeanDiscoveryComponent extends ManagedComponentDiscoveryCompone
         AbstractManagedDeploymentComponent parentDeployment = discoveryContext.getParentResourceComponent();
 
         String parentDeploymentName = parentDeployment.getDeploymentName();
+        if (parentDeploymentName == null) {
+            return false;
+        }
 
         //compare ignoring the trailing slash
         if (deploymentName.endsWith("/"))

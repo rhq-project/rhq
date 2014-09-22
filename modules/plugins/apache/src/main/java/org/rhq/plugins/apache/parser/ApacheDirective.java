@@ -7,6 +7,10 @@ import java.util.regex.Pattern;
 
 public class ApacheDirective implements Cloneable {
 
+    private static final String IF_MODULE = "<IfModule";
+    private static final String IF_DEFINE = "<IfDefine";
+    private static final String IF_VERSION = "<IfVersion";
+
     private String name;
     private List<String> values;
     private boolean isNested;
@@ -23,6 +27,10 @@ public class ApacheDirective implements Cloneable {
     private List<ApacheDirective> childNodes;
     private ApacheDirective parentNode;
     private String file;
+
+    public static boolean isConditionalDirectiveName(String name) {
+        return IF_MODULE.equalsIgnoreCase(name) || IF_DEFINE.equalsIgnoreCase(name) || IF_VERSION.equalsIgnoreCase(name);
+    }
 
     public ApacheDirective() {
         values = new ArrayList<String>();
@@ -180,6 +188,10 @@ public class ApacheDirective implements Cloneable {
             builder.append(">");
 
         return builder.toString();
+    }
+
+    public boolean isConditional() {
+        return isConditionalDirectiveName(name);
     }
 
     public int getSeq() {

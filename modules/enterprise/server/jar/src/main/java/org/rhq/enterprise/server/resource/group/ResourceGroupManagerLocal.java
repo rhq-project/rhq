@@ -24,10 +24,8 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -44,7 +42,7 @@ public interface ResourceGroupManagerLocal {
 
     /**
      * NOTE: This is only used to support AutoGroups currently but the idea may be expanded in the future.
-     *  
+     *
      * Creates a private, "user-owned" (aka "subject-owned") resource group.  This group differs from a role-owned
      * group in that it can not be assigned to a role, instead it is owned by the user that creates it.  It comprises
      * only a set of resources for which the user has, minimally, view permission.  Since a user's view permissions
@@ -56,10 +54,10 @@ public interface ResourceGroupManagerLocal {
      * to be non-recursive.
      * <br/><br/>
      * All user-owned groups are deleted if the the user is deleted.
-     * 
+     *
      * @param user The user for which the group will be created.
      * @param group The group characteristics. Any membership defined here is ignored. The recursivity setting is
-     * ignored. 
+     * ignored.
      * @return The new group.
      */
     ResourceGroup createPrivateResourceGroup(Subject user, ResourceGroup group);
@@ -68,8 +66,8 @@ public interface ResourceGroupManagerLocal {
         throws ResourceGroupNotFoundException;
 
     /**
-     * Get a summary of counts, by category, of the user's assigned, visible groups.  
-     * 
+     * Get a summary of counts, by category, of the user's assigned, visible groups.
+     *
      * @param user
      * @return A 2 element int array with counts for mixed, compatible as a[0], a[1] respectively.
      */
@@ -118,7 +116,7 @@ public interface ResourceGroupManagerLocal {
 
     ResourceGroup getByGroupDefinitionAndGroupByClause(int groupDefinitionId, String groupByClause);
 
-    void setResourceType(int resourceGroupId) throws ResourceGroupDeleteException;
+    void setResourceTypeInNewTx(int resourceGroupId) throws ResourceGroupDeleteException;
 
     int getExplicitGroupMemberCount(int resourceGroupId);
 
@@ -139,13 +137,13 @@ public interface ResourceGroupManagerLocal {
      * parameter.
      * <br/><br/>
      * For global groups requires MANAGE_INVENTORY. For private groups requires VIEW permission on all specified
-     * resources. 
-     *  
+     * resources.
+     *
      * @param subject
      * @param groupId
      * @param resourceIds
      * @param setType Set to false if the specified resourceIds will not alter the group type (compatible or
-     * mixed). Set true to have the group type (re)set automatically, based on the new group membership. 
+     * mixed). Set true to have the group type (re)set automatically, based on the new group membership.
      * @throws ResourceGroupUpdateException
      * @throws ResourceGroupDeleteException
      */
@@ -154,14 +152,14 @@ public interface ResourceGroupManagerLocal {
 
     /**
      * This method ensures that the resource will have exactly the specified set of explicit group
-     * membership. Make sure you pass the correct value for the <setType> parameter.  
-     *  
+     * membership. Make sure you pass the correct value for the <setType> parameter.
+     *
      * @param subject
      * @param resourceId
      * @param resourceGroupIds
      * @param setType Set to false if addition or removal of the specified resourceId will not alter the group
      *        type for the specified resource groups (compatible or mixed). Set true to have the group type
-     *        (re)set automatically, based on the new group membership. 
+     *        (re)set automatically, based on the new group membership.
      * @throws ResourceGroupUpdateException
      * @throws ResourceGroupDeleteException
      */

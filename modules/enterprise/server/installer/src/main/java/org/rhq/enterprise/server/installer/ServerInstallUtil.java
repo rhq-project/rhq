@@ -193,6 +193,18 @@ public class ServerInstallUtil {
         LOG.info("Logging category org.rhq set to [" + val + "]");
 
         client.setLoggerLevel("org.jboss.as.config", "INFO"); // BZ 1004730
+
+        // BZ 1026786, 1078500
+        StringBuilder sb = new StringBuilder("not(any(");
+        sb.append("match(\"JBAS015960\")");
+        sb.append(",");
+        sb.append("match(\"JBAS018567\")");
+        sb.append(",");
+        sb.append("match(\"JBAS018568\")");
+        sb.append(",");
+        sb.append("match(\"JSF1051\")");
+        sb.append("))");
+        client.setFilterSpec(sb.toString());
     }
 
     /**
@@ -386,12 +398,22 @@ public class ServerInstallUtil {
             ModelNode request = client.createNewVaultRequest(PropertyObfuscationVault.class.getName());
             ModelNode results = client.execute(request);
             if (!VaultJBossASClient.isSuccess(results)) {
-                throw new FailureException(results, "Failed to create the RHQ vault");
+                String vaultClass = client.getVaultClass();
+                if (PropertyObfuscationVault.class.getName().equals(vaultClass)) {
+                    LOG.info("RHQ Vault already configured, vault detected on the second read attempt");
+                } else {
+                    throw new FailureException(results, "Failed to create the RHQ vault");
+                }
             } else {
                 LOG.info("RHQ Vault created");
             }
         } else {
-            LOG.info("A vault already exists, skipping the creation request");
+            String vaultClass = client.getVaultClass();
+            if (PropertyObfuscationVault.class.getName().equals(vaultClass)) {
+                LOG.info("RHQ vault already configured, skipping the creation process");
+            } else {
+                throw new FailureException("Failed to create the RHQ vault; a different vault is already configured");
+            }
         }
     }
 
@@ -1531,6 +1553,29 @@ public class ServerInstallUtil {
     public static void setupWebConnectors(ModelControllerClient mcc, String configDirStr,
         HashMap<String, String> serverProperties) throws Exception {
 
+        // 6.3.0.Alpha1 (aka 7.4.0.Final-redhat-4) has a bug (BZ 1133061) that can be worked around by changing the connector protocol
+        // This bug was fixed in 6.3.0.GA (aka 7.4.0.Final-redhat-19) so we don't need the workaround for anything after that.
+        // AFAIK, it isn't bad if we install the workaround, but we want to keep the original config if we can help it so we try to
+        // determine if we don't need it - if we don't, we won't install the workaround.
+        String appServerVersion = getAppServerReleaseVersion(mcc);
+        if (appServerVersion == null) {
+            appServerVersion = "7.4.0.Final-redhat-4";
+            LOG.warn("Will assume app server release version is [" + appServerVersion + "]");
+        }
+        boolean needProtocolWorkaround = false;
+        if (appServerVersion.startsWith("7.4.0")) {
+            if (appServerVersion.endsWith("redhat-4")) {
+                needProtocolWorkaround = true;
+            }
+        }
+        if (needProtocolWorkaround) {
+            LOG.info("App server version is [" + appServerVersion
+                + "] - will apply workaround to http and https connectors as per BZ 1133061");
+        } else {
+            LOG.debug("No BZ 1133061 workaround will be applied to http and https connectors since app server version is: "
+                + appServerVersion);
+        }
+
         // out of box, we always get a non-secure connector (called "http")...
         final String connectorName = "http";
 
@@ -1573,6 +1618,10 @@ public class ServerInstallUtil {
             }
         }
 
+        if (needProtocolWorkaround) {
+            connector.setProtocol("org.apache.coyote.http11.Http11Protocol");
+        }
+
         client.addConnector("https", connector);
         LOG.info("https connector created.");
 
@@ -1581,6 +1630,10 @@ public class ServerInstallUtil {
                 buildExpression("rhq.server.startup.web.max-connections", serverProperties, true));
             client.changeConnector(connectorName, "redirect-port",
                 buildExpression("rhq.server.socket.binding.port.https", serverProperties, true));
+
+            if (needProtocolWorkaround) {
+                client.changeConnector(connectorName, "protocol", "org.apache.coyote.http11.Http11Protocol");
+            }
         } else {
             LOG.warn("There doesn't appear to be a http connector configured already - this is strange.");
         }
@@ -1887,5 +1940,22 @@ public class ServerInstallUtil {
         }
 
         return;
+    }
+
+    /**
+     * In case some things should only be installed if the underlying app server is a specific version,
+     * call this to get the release-version of the app server. Release versions are something like:
+     * 7.4.0.Final-redhat-4 (which corresponds to a EAP product-version of "6.3.0.Alpha1")
+     * 7.4.0.Final-redhat-19 (which corresponds to a EAP product-version of "6.3.0.GA")
+     *
+     * @return release version or null if not known/can't be determined
+     */
+    private static String getAppServerReleaseVersion(ModelControllerClient mcc) {
+        try {
+            return new CoreJBossASClient(mcc).getAppServerVersion();
+        } catch (Exception e) {
+            LOG.warn("Cannot determine what the underlying app server release version is - installation may not work");
+            return null;
+        }
     }
 }

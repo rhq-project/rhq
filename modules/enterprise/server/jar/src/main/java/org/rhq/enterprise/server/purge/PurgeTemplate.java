@@ -19,6 +19,14 @@
 
 package org.rhq.enterprise.server.purge;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,22 +45,21 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * A template for purging data tables.<br>
  * <br>
- * When the {@link #execute()} method is called, a range of row keys are selected. Then the corresponding rows are
- * deleted. The process is repeated until no rows matching the criteria exist.<br>
- * <br>
- * Each iteration of the process runs in its own transation.
+ * When the {@link #execute()} method is called, row keys are selected and stored in a file. Then the corresponding rows
+ * are deleted in batches.
  *
  * @author Thomas Segismont
  */
-abstract class PurgeTemplate<KEY> {
+abstract class PurgeTemplate<KEY extends Serializable> {
     private static final Log LOG = LogFactory.getLog(PurgeTemplate.class);
 
     private static final String BATCH_SIZE_SYSTEM_PROPERTY = "org.rhq.enterprise.server.purge.PurgeTemplate.BATCH_SIZE";
-    private static final int BATCH_SIZE = Integer.getInteger(BATCH_SIZE_SYSTEM_PROPERTY, 3000);
+    private static final int BATCH_SIZE = Integer.getInteger(BATCH_SIZE_SYSTEM_PROPERTY, 30000);
     static {
         LOG.info(BATCH_SIZE_SYSTEM_PROPERTY + " = " + BATCH_SIZE);
     }
@@ -76,58 +83,62 @@ abstract class PurgeTemplate<KEY> {
      */
     protected abstract String getEntityName();
 
-    /**
-     * @return the maximum number of rows to delete inside a single transaction
-     */
-    public int getBatchSize() {
-        return BATCH_SIZE;
-    }
-
     public int execute() {
         int deleted = 0;
+
+        KeysInfo keysInfo = null;
+        ObjectInputStream keysStream = null;
         try {
 
-            for (;;) {
+            keysInfo = loadKeys();
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Loaded " + keysInfo.count + " key(s) of " + getEntityName());
+            }
 
-                userTransaction.begin();
+            keysStream = new ObjectInputStream(new BufferedInputStream(new FileInputStream(keysInfo.keysFile)));
+            List<KEY> selectedKeys = new ArrayList<KEY>(BATCH_SIZE);
 
-                List<KEY> selectedKeys = findRowKeys();
-                if (selectedKeys.isEmpty()) {
-                    userTransaction.rollback();
-                    break;
+            for (int i = 1; i <= keysInfo.count; i++) {
+
+                @SuppressWarnings("unchecked")
+                KEY key = (KEY) keysStream.readObject();
+                selectedKeys.add(key);
+
+                if (selectedKeys.size() == BATCH_SIZE || i == keysInfo.count) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Deleting " + selectedKeys.size() + " row(s) of " + getEntityName());
+                    }
+                    deleted += deleteRows(selectedKeys);
+                    selectedKeys.clear();
                 }
-
-                deleted += deleteRows(selectedKeys);
-
-                userTransaction.commit();
-
-                if (selectedKeys.size() < BATCH_SIZE) {
-                    break;
-                }
-
             }
 
         } catch (Exception e) {
             LOG.error(getEntityName() + ": could not fully process the batched purge", e);
         } finally {
-            try {
-                if (userTransaction.getStatus() == Status.STATUS_ACTIVE) {
-                    userTransaction.rollback();
-                }
-            } catch (Throwable ignore) {
+            rollbackIfTransactionActive();
+            StreamUtil.safeClose(keysStream);
+            if (keysInfo != null && keysInfo.keysFile != null) {
+                keysInfo.keysFile.delete();
             }
         }
 
         return deleted;
     }
 
-    private List<KEY> findRowKeys() throws Exception {
-        List<KEY> selectedKeys = new ArrayList<KEY>(getBatchSize());
+    private KeysInfo loadKeys() throws Exception {
+        File keysFile = File.createTempFile(getClass().getSimpleName(), null);
+        int count = 0;
 
+        ObjectOutputStream objectOutputStream = null;
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
+
+            objectOutputStream = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(keysFile)));
+
+            userTransaction.begin();
 
             String findRowKeysQuery = getFindRowKeysQuery(databaseType);
 
@@ -137,38 +148,29 @@ abstract class PurgeTemplate<KEY> {
 
             resultSet = preparedStatement.executeQuery();
 
-            while (resultSet.next() && selectedKeys.size() < getBatchSize()) {
-                selectedKeys.add(getKeyFromResultSet(resultSet));
+            while (resultSet.next()) {
+                objectOutputStream.writeObject(getKeyFromResultSet(resultSet));
+                count++;
             }
 
-            return selectedKeys;
+            userTransaction.commit();
 
         } finally {
             JDBCUtil.safeClose(connection, preparedStatement, resultSet);
+            StreamUtil.safeClose(objectOutputStream);
+            rollbackIfTransactionActive();
         }
-    }
 
-    private String getFindRowKeysQuery(DatabaseType databaseType) {
-        if (DatabaseTypeFactory.isPostgres(databaseType)) {
-            return getFindRowKeysQueryPostgres();
-        } else if (DatabaseTypeFactory.isOracle(databaseType)) {
-            return getFindRowKeysQueryOracle();
-        }
-        throw new UnsupportedOperationException(databaseType.getName());
+        return new KeysInfo(keysFile, count);
     }
 
     /**
-     * @return the query selecting row keys on Postgres servers
+     * @return the query selecting row keys
      */
-    protected abstract String getFindRowKeysQueryPostgres();
+    protected abstract String getFindRowKeysQuery(DatabaseType databaseType);
 
     /**
-     * @return the query selecting row keys on Oracle servers
-     */
-    protected abstract String getFindRowKeysQueryOracle();
-
-    /**
-     * Set the row keys selection query parameters. Implementations should use the {@link #getBatchSize()} method here.
+     * Set the row keys selection query parameters.
      *
      * @param preparedStatement the prepared statement created for the row keys selection query
      *
@@ -188,6 +190,8 @@ abstract class PurgeTemplate<KEY> {
         PreparedStatement preparedStatement = null;
         try {
 
+            userTransaction.begin();
+
             String deleteRowByKeyQuery = getDeleteRowByKeyQuery(databaseType);
 
             connection = dataSource.getConnection();
@@ -200,31 +204,20 @@ abstract class PurgeTemplate<KEY> {
 
             int[] batchResults = preparedStatement.executeBatch();
 
+            userTransaction.commit();
+
             return evalDeletedRows(batchResults);
 
         } finally {
             JDBCUtil.safeClose(connection, preparedStatement, null);
+            rollbackIfTransactionActive();
         }
     }
 
-    private String getDeleteRowByKeyQuery(DatabaseType databaseType) {
-        if (DatabaseTypeFactory.isPostgres(databaseType)) {
-            return getDeleteRowByKeyQueryPostgres();
-        } else if (DatabaseTypeFactory.isOracle(databaseType)) {
-            return getDeleteRowByKeyQueryOracle();
-        }
-        throw new UnsupportedOperationException(databaseType.getName());
-    }
-
     /**
-     * @return the query deleting a row by key on Postgres servers
+     * @return the query deleting a row by key
      */
-    protected abstract String getDeleteRowByKeyQueryPostgres();
-
-    /**
-     * @return the query deleting a row by key on Oracle servers
-     */
-    protected abstract String getDeleteRowByKeyQueryOracle();
+    protected abstract String getDeleteRowByKeyQuery(DatabaseType databaseType);
 
     /**
      * Set the deletion query parameters. Implementations should use the <code>key</code> provided.
@@ -236,6 +229,15 @@ abstract class PurgeTemplate<KEY> {
      */
     protected abstract void setDeleteRowByKeyQueryParams(PreparedStatement preparedStatement, KEY key)
         throws SQLException;
+
+    private void rollbackIfTransactionActive() {
+        try {
+            if (userTransaction.getStatus() == Status.STATUS_ACTIVE) {
+                userTransaction.rollback();
+            }
+        } catch (Throwable ignore) {
+        }
+    }
 
     private int evalDeletedRows(int[] results) {
         int total = 0, failed = 0;
@@ -253,5 +255,15 @@ abstract class PurgeTemplate<KEY> {
             LOG.warn(getEntityName() + ": " + failed + " row(s) not purged");
         }
         return total;
+    }
+
+    private static class KeysInfo {
+        final File keysFile;
+        final int count;
+
+        private KeysInfo(File keysFile, int count) {
+            this.keysFile = keysFile;
+            this.count = count;
+        }
     }
 }

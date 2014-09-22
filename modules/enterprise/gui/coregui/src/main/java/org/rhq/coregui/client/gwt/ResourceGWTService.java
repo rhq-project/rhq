@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.client.gwt;
 
 import java.util.ArrayList;
@@ -30,6 +31,8 @@ import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
+import org.rhq.core.domain.resource.ImportResourceRequest;
+import org.rhq.core.domain.resource.ImportResourceResponse;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceAncestryFormat;
@@ -89,8 +92,7 @@ public interface ResourceGWTService extends RemoteService {
 
     List<ResourceInstallCount> findResourceInstallCounts(boolean groupByVersions) throws RuntimeException;
 
-    PageList<Resource> getQueuedPlatforms(ArrayList<InventoryStatus> statuses, PageControl pc)
-        throws RuntimeException;
+    PageList<Resource> getQueuedPlatforms(ArrayList<InventoryStatus> statuses, PageControl pc) throws RuntimeException;
 
     Map<Integer, String> getResourcesAncestry(Integer[] resourceIds, ResourceAncestryFormat format)
         throws RuntimeException;
@@ -101,8 +103,7 @@ public interface ResourceGWTService extends RemoteService {
 
     void importResources(int[] resourceIds) throws RuntimeException;
 
-    Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration)
-        throws RuntimeException;
+    ImportResourceResponse manuallyAddResource(ImportResourceRequest request) throws RuntimeException;
 
     void updateResource(Resource resource) throws RuntimeException;
 

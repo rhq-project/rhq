@@ -141,8 +141,8 @@ public class CreateResourceHistory implements Serializable {
     /**
      * For content backed resource creation, this indicates the type of content being created as part of this request.
      */
-    @JoinColumn(name = "INSTALLED_PACKAGE_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "INSTALLED_PACKAGE_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(cascade = CascadeType.PERSIST, optional = true)
     private InstalledPackage installedPackage;
 
     // Constructors  --------------------------------------------

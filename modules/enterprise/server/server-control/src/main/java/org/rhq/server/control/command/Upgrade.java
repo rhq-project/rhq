@@ -1,7 +1,7 @@
 /*
  *
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Future;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -171,7 +172,7 @@ public class Upgrade extends AbstractInstall {
                 return exitValue;
             }
 
-            // If any failures occur during upgrade, we know we need to reset rhq-server.properties.
+            // If any failures occur during upgrade, we know we need to reset rhq-server.properties
             final FileReverter serverPropFileReverter = new FileReverter(getServerPropertiesFile());
             addUndoTask(new ControlCommand.UndoTask("Reverting server properties file") {
                 public void performUndoWork() throws Exception {
@@ -272,7 +273,6 @@ public class Upgrade extends AbstractInstall {
                 // We need to be sure the storage is really stopped (long enough) to not get a port conflict
                 waitForProcessToStop(getStoragePid());
 
-                addUndoTaskToStopComponent("--storage");
                 // if the upgrade fails, we need to purge the new storage node basedir to allow for user to try again
                 // later
                 addUndoTask(new ControlCommand.UndoTask("Removing new storage node install directory") {
@@ -280,6 +280,7 @@ public class Upgrade extends AbstractInstall {
                         FileUtil.purge(getStorageBasedir(), true);
                     }
                 });
+                addUndoTaskToStopComponent("--storage"); // The undo tasks are done in reversed order
 
                 org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--upgrade",
                     getFromServerDir(rhqctlCommandLine).getAbsolutePath());
@@ -329,12 +330,10 @@ public class Upgrade extends AbstractInstall {
 
         // start the server, then invoke the installer and wait for the server to be completely installed
         rValue = Math.max(rValue, startRHQServerForInstallation());
-        int installerStatusCode = runRHQServerInstaller();
-        rValue = Math.max(rValue, installerStatusCode);
-        if (installerStatusCode == RHQControl.EXIT_CODE_OK) {
-            waitForRHQServerToInitialize();
-        }
+        Future<Integer> integerFuture = runRHQServerInstaller();
+        waitForRHQServerToInitialize(integerFuture);
 
+        rValue = Math.max(rValue, integerFuture.get());
         return rValue;
     }
 
@@ -426,6 +425,18 @@ public class Upgrade extends AbstractInstall {
                 File newServerEnvFile = new File(getBaseDir(), envFile);
                 File newServerEnvFileBackup = new File(getBaseDir(), (envFile + ".default"));
                 try {
+                    // If any failures occur during upgrade reset the env file to the default
+                    final FileReverter serverEnvFileReverter = new FileReverter(newServerEnvFile);
+                    addUndoTask(new ControlCommand.UndoTask("Reverting server environment file") {
+                        public void performUndoWork() throws Exception {
+                            try {
+                                serverEnvFileReverter.revert();
+                            } catch (Exception e) {
+                                throw new Exception("Cannot reset rhq-server-env.sh|bat - revert manually", e);
+                            }
+                        }
+                    });
+
                     FileUtil.copyFile(newServerEnvFile, newServerEnvFileBackup);
                     newServerEnvFile.delete();
                     FileUtil.copyFile(oldServerEnvFile, newServerEnvFile);
@@ -454,6 +465,11 @@ public class Upgrade extends AbstractInstall {
 
         oldServerProps.setProperty("rhq.autoinstall.enabled", "true"); // ensure that we always enable the installer
         oldServerProps.setProperty("rhq.autoinstall.database", "auto"); // the old value could have been "overwrite" - NOT what we want when upgrading
+
+        // For upgrades the RHQ Server super-user should already exist.  But to pass server properties file validation
+        // this property must be set.  Setting it to an invalid plain-text value will fail the upgrade if for some reason
+        // the rhqadmin user does not exist, which is, I think, what we would want to have happen.
+        oldServerProps.setProperty("rhq.autoinstall.server.admin.password", "ignored-on-upgrade");
 
         // remove some old, obsolete settings no longer needed or used
         oldServerProps.remove("rhq.server.embedded-agent.name");
@@ -551,7 +567,7 @@ public class Upgrade extends AbstractInstall {
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.keystore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.truststore.file");
 
-        // for oracle, ensure the unused properties are set to unused otherwise prop file validation may fail
+        // for oracle, ensure the unused properties are set to unused, otherwise prop file validation may fail
         String dbType = oldServerProps.getProperty("rhq.server.database.type-mapping");
         if (null != dbType && dbType.toLowerCase().contains("oracle")) {
             oldServerProps.setProperty("rhq.server.database.server-name", "unused");

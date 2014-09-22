@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,6 @@ import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  *
- *
  * @author Lukas Krejci
  */
 public class GroupMonitoringTablesView extends EnhancedVLayout implements RefreshableView {
@@ -37,7 +36,15 @@ public class GroupMonitoringTablesView extends EnhancedVLayout implements Refres
         super();
 
         metrics = new GroupMeasurementTableView(groupComposite);
-        memberHealth = new GroupMembersHealthView(groupComposite, false);
+        memberHealth = new GroupMembersHealthView(groupComposite, false) {
+            // overriding the refresh method to call the refreshData() also on the GroupMeasurementTableView component
+            // this will allow to use 1 button for refreshing both components (see bz 1028329)
+            @Override
+            public void refresh() {
+                super.refresh();
+                metrics.refreshData();
+            }
+        };
         addMember(metrics);
         addMember(memberHealth);
     }

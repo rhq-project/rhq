@@ -132,7 +132,11 @@ public class AlertConditionLog implements Serializable {
     @Deprecated
     public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT_CONDITION_LOG";
 
-    public static final int MAX_LOG_LENGTH = 250;
+    /**
+     * this is a character limit, when stored certain vendors may require the string be clipped to
+     * satisfy a byte limit (postgres can store the 4000 chars, oracle only 4000 bytes).
+     */
+    public static final int MAX_LOG_LENGTH = 4000;
 
     private static final long serialVersionUID = 1L;
 
@@ -195,11 +199,21 @@ public class AlertConditionLog implements Serializable {
         return this.value;
     }
 
+    /**
+     * Make sure the value passed to this setter goes through this process:
+     * <pre>
+     * String value = ...
+     * DatabaseType dbType = ...
+     * value = dbType.getString(value, AlertConditionLog.MAX_LOG_LENGTH);
+     * </pre>
+     * 
+     * @param value on Postgres shouldn't be longer than <code>MAX_LOG_LENGTH</code> chars,
+     *              on Oracle <code>MAX_LOG_LENGTH</code> bytes.
+     */
     public void setValue(String value) {
         if ((value != null) && (value.length() >= MAX_LOG_LENGTH)) {
             value = value.substring(0, MAX_LOG_LENGTH);
         }
-
         this.value = value;
     }
 

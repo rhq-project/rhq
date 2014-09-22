@@ -27,6 +27,7 @@ package org.rhq.server.control.command;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Future;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -168,13 +169,22 @@ public class Install extends AbstractInstall {
                 }
             }
 
-            if (startStorage || installServer) {
+            if ((startStorage || installServer) && rValue == RHQControl.EXIT_CODE_OK) {
                 startedStorage = true;
                 Start startCommand = new Start();
                 rValue = Math.max(rValue, startCommand.exec(new String[] { "--storage" }));
+
+                // More recent versions of Cassandra are taking a little longer to lay down the initial
+                // files on the first startup.  Pause for 12.5s to ensure that Cassandra is ready for the
+                // Server install to connect with the default 'cassandra' user and update the schema.
+                // Note: the default Cassandra delay to setup the default superuser is 10s.
+                if (installServer) {
+                    log.info("Pausing to ensure RHQ Storage is initialized prior to RHQ Server installation.");
+                    Thread.sleep(12500L);
+                }
             }
 
-            if (installServer) {
+            if (installServer && rValue == RHQControl.EXIT_CODE_OK) {
                 if (isServerInstalled()) {
                     log.info("The RHQ server is already installed. It will not be installed.");
 
@@ -185,15 +195,13 @@ public class Install extends AbstractInstall {
                 } else {
                     startedServer = true;
                     rValue = Math.max(rValue, startRHQServerForInstallation());
-                    int installerStatusCode = runRHQServerInstaller();
-                    rValue = Math.max(rValue, installerStatusCode);
-                    if (installerStatusCode == RHQControl.EXIT_CODE_OK) {
-                        waitForRHQServerToInitialize();
-                    }
+                    Future<Integer> integerFuture = runRHQServerInstaller();
+                    waitForRHQServerToInitialize(integerFuture);
+                    rValue = Math.max(rValue, integerFuture.get());
                 }
             }
 
-            if (installAgent) {
+            if (installAgent && rValue == RHQControl.EXIT_CODE_OK) {
                 if (isAgentInstalled()) {
                     log.info("The RHQ agent is already installed in [" + getAgentBasedir()
                         + "]. It will not be installed.");
@@ -220,7 +228,7 @@ public class Install extends AbstractInstall {
                         // update the existing agent, it may be out of date, and then move it to the proper location
                         File agentInstallerJar = getFileDownload("rhq-agent", "rhq-enterprise-agent");
 
-                        int exitValue = updateAndMoveExistingAgent(agentBasedir, fromAgentDir, agentInstallerJar);
+                        rValue = Math.max(rValue, updateAndMoveExistingAgent(agentBasedir, fromAgentDir, agentInstallerJar));
 
                         addUndoTask(new ControlCommand.UndoTask("Removing agent install directory") {
                             public void performUndoWork() {

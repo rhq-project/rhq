@@ -29,6 +29,7 @@ import java.io.File;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
@@ -71,17 +72,26 @@ public class Status extends ControlCommand {
     protected int exec(CommandLine commandLine) {
         int rValue = RHQControl.EXIT_CODE_OK;
         try {
-            final boolean isColorSupported = Boolean.parseBoolean(System.getProperty("color")); 
+            final boolean isColorSupported = Boolean.parseBoolean(System.getProperty("color"));
             // if no options specified, then check the status of whatever is installed
             if (commandLine.getOptions().length == 0) {
+                boolean servicesInstalled = false;
+
                 if (isStorageInstalled()) {
+                    servicesInstalled = true;
                     rValue = Math.max(rValue, checkStorageStatus(isColorSupported));
                 }
                 if (isServerInstalled()) {
+                    servicesInstalled = true;
                     rValue = Math.max(rValue, checkServerStatus());
                 }
                 if (isAgentInstalled()) {
+                    servicesInstalled = true;
                     rValue = Math.max(rValue, checkAgentStatus());
+                }
+
+                if (!servicesInstalled) {
+                    log.warn("No services installed. Please install the server, agent, or storage node and then re-run the command.");
                 }
             } else {
                 if (commandLine.hasOption(STORAGE_OPTION)) {

@@ -44,6 +44,8 @@ public class SchemaManager {
 
     public static final String RELATIONAL_DB_CONNECTION_FACTORY_PROP = "relational_db_connection_factory";
 
+    public static final String DATA_DIR = "data.dir";
+
     /**
      * The username that RHQ will use to connect to the storage cluster.
      */
@@ -65,6 +67,8 @@ public class SchemaManager {
     private final int cqlPort;
 
     private SessionManager sessionManager;
+
+    private UpdateFolderFactory updateFolderFactory = new UpdateFolderFactory();
 
     /**
     *
@@ -102,21 +106,20 @@ public class SchemaManager {
      * @throws Exception
      */
     public void install() throws Exception {
-        VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager);
+        VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager,
+            updateFolderFactory);
         version.install(new Properties());
     }
 
     /**
-     * Install and update the storage cluster schema.
+     * Install and update the storage cluster
      *
-     * @param factory Creates new JDBC connections to the RHQ relational database
+     * @param properties Properties to be passed to schema update steps
      * @throws Exception
      */
-    public void install(DBConnectionFactory factory) throws Exception {
-        Properties properties = new Properties();
-        properties.put(RELATIONAL_DB_CONNECTION_FACTORY_PROP, factory);
-
-        VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager);
+    public void install(Properties properties) throws Exception {
+        VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager,
+            updateFolderFactory);
         version.install(properties);
     }
 
@@ -128,7 +131,8 @@ public class SchemaManager {
      * @throws Exception
      */
     public void checkCompatibility() throws Exception {
-        VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager);
+        VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager,
+            updateFolderFactory);
         version.checkCompatibility();
     }
 
@@ -138,7 +142,8 @@ public class SchemaManager {
      * @throws Exception
      */
     public void drop() throws Exception {
-        VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager);
+        VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager,
+            updateFolderFactory);
         version.drop();
     }
 
@@ -150,7 +155,8 @@ public class SchemaManager {
      * @throws Exception
      */
     public void updateTopology() throws Exception {
-        TopologyManager topology = new TopologyManager(username, password, nodes, cqlPort, sessionManager);
+        TopologyManager topology = new TopologyManager(username, password, nodes, cqlPort, sessionManager,
+            updateFolderFactory);
         topology.updateTopology();
     }
 
@@ -169,6 +175,10 @@ public class SchemaManager {
 
     public Set<String> getStorageNodeAddresses() {
         return sessionManager.getNodeAdresses();
+    }
+
+    void setUpdateFolderFactory(UpdateFolderFactory updateFolderFactory) {
+        this.updateFolderFactory = updateFolderFactory;
     }
 
     /**

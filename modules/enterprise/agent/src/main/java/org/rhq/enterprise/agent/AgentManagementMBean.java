@@ -61,7 +61,7 @@ public interface AgentManagementMBean {
      * Identifies the name of a plugin.
      */
     String PLUGIN_INFO_NAME = "name";
-    
+
     /**
      * Identifies the display name of a plugin.
      */
@@ -81,7 +81,7 @@ public interface AgentManagementMBean {
      * Identifies the filesize of a plugin.
      */
     String PLUGIN_INFO_SIZE = "size";
-    
+
     /**
      * Identifies whether the plugin is currently being used by the agent
      */
@@ -92,6 +92,16 @@ public interface AgentManagementMBean {
      */
     String PLUGIN_INFO_MD5 = "md5";
 
+    /**
+     * Requests that the agent begin to update itself.
+     */
+    void updateAgent();
+
+    /**
+     * Switch the agent to talk to the given server.
+     *
+     * @param server server the agent should talk to
+     */
     void switchToServer(String server);
 
     /**
@@ -202,9 +212,9 @@ public interface AgentManagementMBean {
      * for JDK 1.1.x compatibility only and full names should be used.
      *
      * @param timeZone the time zone to display the date/time in
-     * 
+     *
      * @return the agent's current date/time
-     * 
+     *
      * @see TimeZone#getTimeZone(String)
      */
     String retrieveCurrentDateTime(String timeZone);
@@ -215,11 +225,11 @@ public interface AgentManagementMBean {
      * lets you debug the messaging between server and agent.
      * If the <code>enabled</code> flag is false, <code>traceMessaging</code> is ignored (i.e. all debug
      * will be disabled, including message tracing).
-     * 
+     *
      * @param enabled enable debug mode
      * @param traceMessaging if <code>true</code>, message tracing will be enabled unless <code>enabled</code> is <code>false</code>
      *
-     * @throws ExecutionException if failed to change the debug mode 
+     * @throws ExecutionException if failed to change the debug mode
      */
     void setDebugMode(Boolean enabled, Boolean traceMessaging) throws ExecutionException;
 
@@ -228,11 +238,11 @@ public interface AgentManagementMBean {
      * plus any additional command arguments, separated by spaces (just as if you typed the command
      * in the console window). The results will be a string that contains the text that you would
      * have seen in the console output had the prompt command been executed from the console.
-     * 
+     *
      * @param command the command to execute along with any command line arguments.
-     * 
+     *
      * @return the output results of the executed prompt command
-     * 
+     *
      * @throws ExecutionException if the prompt command threw an exception, this method will throw an exception
      *         whose message is the output text that was written by the prompt command up until the error
      *         occurred. The cause of the thrown exception will be the actual exception thrown by
@@ -244,7 +254,7 @@ public interface AgentManagementMBean {
     /**
      * Returns the directory that is considered the "agent home" (i.e. the directory
      * where the agent is installed).
-     * 
+     *
      * @return agent home directory
      */
     String getAgentHomeDirectory();
@@ -262,7 +272,7 @@ public interface AgentManagementMBean {
 
     /**
      * Returns the code that indicates why the agent was last restarted.
-     * 
+     *
      * @return restart code
      */
     String getReasonForLastRestart();

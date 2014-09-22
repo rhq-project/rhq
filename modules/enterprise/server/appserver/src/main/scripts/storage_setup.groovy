@@ -43,10 +43,11 @@ numNodes = (properties['rhq.storage.num-nodes'] ?: 1) as Integer
 
 heapSize = properties['rhq.storage.heap-size'] ?: '256M'
 heapNewSize = properties['rhq.storage.heap-new-size'] ?: '64M'
-dataRootDir = properties['rhq.dev.data.dir'] ?: "${properties['rhq.rootDir']}/rhq-data"
+java.nio.file.Path projectBasePath = project.basedir.toPath()
+dataRootDir = projectBasePath.resolve(properties['rhq.dev.data.dir'] ?: "${properties['rhq.rootDir']}/rhq-data").toString()
 defaultJmxPort = 7299
 
-defaultServerBasedir = properties["rhq.containerServerDir"]
+defaultServerBasedir = projectBasePath.resolve(properties["rhq.containerServerDir"]).toString()
 
 seeds = calculateSeeds()
 

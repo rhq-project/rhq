@@ -148,7 +148,7 @@ public class Installer {
         usage.append("\t--force, -f: force the installer to try to install everything").append("\n");
         usage.append("\t--listservers, -l: show list of known installed servers (install not performed)").append("\n");
         usage.append("\t--setupdb, -b: only perform database schema creation or update").append("\n");
-        usage.append("\t--encodepassword, -e: prompts for password to encode for editing rhq-server.properties");
+        usage.append("\t--encodevalue, -e: prompts for password or value to encode for editing configuration files for agent or server");
         usage.append("\n");
         LOG.info(usage);
     }
@@ -158,7 +158,7 @@ public class Installer {
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'H'),
             new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 'h'),
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
-            new LongOpt("encodepassword", LongOpt.NO_ARGUMENT, null, 'e'),
+            new LongOpt("encodevalue", LongOpt.NO_ARGUMENT, null, 'e'),
             new LongOpt("setupdb", LongOpt.NO_ARGUMENT, null, 'b'),
             new LongOpt("listservers", LongOpt.NO_ARGUMENT, null, 'l'),
             new LongOpt("force", LongOpt.NO_ARGUMENT, null, 'f'), new LongOpt("test", LongOpt.NO_ARGUMENT, null, 't') };
@@ -166,7 +166,7 @@ public class Installer {
         boolean test = false;
         boolean listservers = false;
         boolean setupdb = false;
-        String passwordToEncode = null;
+        String valueToEncode = null;
         String associatedProperty = null;
 
         Getopt getopt = new Getopt("installer", args, sopts, lopts);
@@ -231,18 +231,25 @@ public class Installer {
             }
 
             case 'e': {
-                // prompt for the password. we don't use a command line option because then the plain text password
+                // Prompt for the property and value to be encoded.
+                // Don't use a command line option because the plain text password
                 // could get captured in command history.
                 Console console = System.console();
                 if (null != console) {
-                    passwordToEncode = String.valueOf(console.readLine("%s", "Password: "));
                     associatedProperty = "rhq.autoinstall.server.admin.password";
                     if (!confirm(console, "Property " + associatedProperty)) {
                         associatedProperty = "rhq.server.database.password";
                         if (!confirm(console, "Property " + associatedProperty)) {
-                            associatedProperty = ask(console, "Property to encode: ");
+                            associatedProperty = ask(console, "Property: ");
                         }
                     }
+
+                    String prompt = "Value: ";
+                    if (associatedProperty != null && associatedProperty.toLowerCase().contains("password")) {
+                        prompt = "Password: ";
+                    }
+
+                    valueToEncode = String.valueOf(console.readLine("%s", prompt));
                 } else {
                     LOG.error("NO CONSOLE!");
                 }
@@ -272,44 +279,52 @@ public class Installer {
             }
         }
 
-        // if a password was asked to be encoded, that's all we do on the execution
-        if (passwordToEncode != null) {
-            String encodedPassword;
+        // if value encoding was asked, that's all we do on the execution
+        if (valueToEncode != null) {
+            String encodedValue;
             if ("rhq.autoinstall.server.admin.password".equals(associatedProperty)) {
-                encodedPassword = CryptoUtil.createPasswordHash("MD5", CryptoUtil.BASE64_ENCODING, null, null,
-                    passwordToEncode);
+                encodedValue = CryptoUtil.createPasswordHash("MD5", CryptoUtil.BASE64_ENCODING, null, null,
+                    valueToEncode);
             } else {
-                encodedPassword = new InstallerServiceImpl(installerConfig).obfuscatePassword(String
-                    .valueOf(passwordToEncode));
+                encodedValue = new InstallerServiceImpl(installerConfig).obfuscatePassword(String
+                    .valueOf(valueToEncode));
             }
 
+            System.out.println("     ");
+            System.out.println("     ");
+
             if ("rhq.server.database.password".equals(associatedProperty)
-                || "rhq.autoinstall.server.admin.password".equals(associatedProperty)) {
-                LOG.info("*** Encoded password for rhq-server.properties:");
-                LOG.info("***     " + associatedProperty + "=" + encodedPassword);
-                LOG.info("***     ");
-                LOG.info("*** Encoded password for standalone.xml with vault with default:");
-                LOG.info("***     NOT APPLICABLE");
-                LOG.info("***     ");
-                LOG.info("*** Encoded password for standalone.xml with vault without default:");
-                LOG.info("***     NOT APPLICABLE");
-                LOG.info("***     ");
-                LOG.info("*** Encoded password for agent-configuration.xml:");
-                LOG.info("***     NOT APPLICABLE");
+                || "rhq.autoinstall.server.admin.password".equals(associatedProperty)
+                || "rhq.storage.password".equals(associatedProperty)) {
+                System.out.println("Encoded password for rhq-server.properties:");
+                System.out.println("     " + associatedProperty + "=" + encodedValue);
+                System.out.println("     ");
             } else {
-                LOG.info("*** Encoded password for rhq-server.properties:");
-                LOG.info("***     " + associatedProperty + "=RESTRICTED::" + encodedPassword);
-                LOG.info("***     ");
-                LOG.info("*** Encoded password for standalone.xml with vault with default:");
-                LOG.info("***     ${VAULT::restricted::" + associatedProperty + "::" + encodedPassword + "}");
-                LOG.info("***     ");
-                LOG.info("*** Encoded password for standalone.xml with vault without default:");
-                LOG.info("***     ${VAULT::restricted::" + associatedProperty + ":: }");
-                LOG.info("***     ");
-                LOG.info("*** Encoded password for agent-configuration.xml:");
-                LOG.info("***     <entry key=\"" + associatedProperty + "\" value=\"RESTRICTED::" + encodedPassword
-                    + "\" />");
+                String prompt = "value";
+                if (associatedProperty != null && associatedProperty.toLowerCase().contains("password")) {
+                    prompt = "password";
+                }
+
+                System.out.println("!!! WARNING !!!");
+                System.out.println("Both standalone-full.xml and rhq-server.properties need to be updated if a property from rhq-server.properties is used in standalone-full.xml");
+                System.out.println("!!! WARNING !!!");
+                System.out.println("     ");
+                System.out.println("Encoded " + prompt + " for rhq-server.properties:");
+                System.out.println("     " + associatedProperty + "=RESTRICTED::" + encodedValue);
+                System.out.println("     ");
+                System.out.println("Encoded " + prompt + " for standalone-full.xml with selected " + prompt + " as default:");
+                System.out.println("     ${VAULT::restricted::" + associatedProperty + "::" + encodedValue + "}");
+                System.out.println("     ");
+                System.out.println("Encoded " + prompt + " for standalone-full.xml without default:");
+                System.out.println("     ${VAULT::restricted::" + associatedProperty + ":: }");
+                System.out.println("     ");
+                System.out.println("Encoded " + prompt + " for agent-configuration.xml:");
+                System.out.println("     <entry key=\"" + associatedProperty + "\" value=\"RESTRICTED::" + encodedValue + "\" />");
+                System.out.println("     ");
             }
+
+            System.out.println("Please consult the documentation for additional help.");
+            System.out.println("     ");
 
             return new WhatToDo[] { WhatToDo.DO_NOTHING };
         }

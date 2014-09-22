@@ -160,7 +160,14 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         } else if (name.equals("updateSeedsList")) {
             return updateSeedsList(parameters);
         } else if (name.equals("takeSnapshot")) {
-            return new TakeSnapshotOperation(new KeyspaceService(getEmsConnection()), parameters).invoke();
+            if (isStorageServiceReachable()) {
+                return new TakeSnapshotOperation(new KeyspaceService(getEmsConnection()), parameters).invoke();
+            } else {
+                OperationResult result = new OperationResult();
+                result.setErrorMessage("Unable to take snaphost, Storage Node is not available");
+                return result;
+            }
+
         }
 
         return null;

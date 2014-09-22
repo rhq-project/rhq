@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -53,10 +54,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageSession;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.MetricsTable;
 
-@Test
 public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     private Agent agent;
     private ResourceType platformType;
@@ -103,6 +103,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
      *
      * @throws Throwable
      */
+    @Test
     public void testAutoBaselineCalculationsWithLargeInventory() throws Throwable {
         long startingTime;
 
@@ -173,6 +174,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
      *
      * @throws Throwable
      */
+    @Test
     public void testAutoBaselineCalculations() throws Throwable {
         begin();
 
@@ -202,7 +204,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             // pass now for olderThanTime to ensure all existing baselines are deleted
             // pass 30000 for amountOfData to only include the youngest in the baseline calculation
-            long computeTime = baselineManager.calculateAutoBaselines(30000, System.currentTimeMillis());
+            long computeTime = baselineManager.calculateAutoBaselines(3000, System.currentTimeMillis());
             assert computeTime > 0;
 
             MeasurementBaseline bl1;
@@ -347,17 +349,17 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             insertMeasurementDataNumeric1H(youngest, measSched2, 1500.0, 500.0, 2500.0);
 
             List<AggregateNumericMetric> aggregates = asList(
-                new AggregateNumericMetric(measSched.getId(), 0.0, 0.0, 0.0, 0),
-                new AggregateNumericMetric(measSched.getId(), 30.0, 20.0, 40.0, eldest),
-                new AggregateNumericMetric(measSched.getId(), 5.0, 2.0, 8.0, elder),
-                new AggregateNumericMetric(measSched.getId(), 6.0, 3.0, 9.0, young),
-                new AggregateNumericMetric(measSched.getId(), 40.0, 30.0, 50.0, youngest),
+                new AggregateNumericMetric(measSched.getId(), Bucket.ONE_HOUR, 0.0, 0.0, 0.0, 0),
+                new AggregateNumericMetric(measSched.getId(), Bucket.ONE_HOUR, 30.0, 20.0, 40.0, eldest),
+                new AggregateNumericMetric(measSched.getId(), Bucket.ONE_HOUR, 5.0, 2.0, 8.0, elder),
+                new AggregateNumericMetric(measSched.getId(), Bucket.ONE_HOUR, 6.0, 3.0, 9.0, young),
+                new AggregateNumericMetric(measSched.getId(), Bucket.ONE_HOUR, 40.0, 30.0, 50.0, youngest),
 
-                new AggregateNumericMetric(measSched2.getId(), 40.0, 0.0, 0.0, 0),
-                new AggregateNumericMetric(measSched2.getId(), 5000.0, 3500.0, 6500.0, eldest),
-                new AggregateNumericMetric(measSched2.getId(), 5000.0, 3000.0, 7000.0, elder),
-                new AggregateNumericMetric(measSched2.getId(), 2000.0, 1000.0, 3000.0, young),
-                new AggregateNumericMetric(measSched2.getId(), 1500.0, 500.0, 2500.0, youngest)
+                new AggregateNumericMetric(measSched2.getId(), Bucket.ONE_HOUR, 40.0, 0.0, 0.0, 0),
+                new AggregateNumericMetric(measSched2.getId(), Bucket.ONE_HOUR, 5000.0, 3500.0, 6500.0, eldest),
+                new AggregateNumericMetric(measSched2.getId(), Bucket.ONE_HOUR, 5000.0, 3000.0, 7000.0, elder),
+                new AggregateNumericMetric(measSched2.getId(), Bucket.ONE_HOUR, 2000.0, 1000.0, 3000.0, young),
+                new AggregateNumericMetric(measSched2.getId(), Bucket.ONE_HOUR, 1500.0, 500.0, 2500.0, youngest)
             );
 
             commit();
@@ -434,11 +436,13 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
         platform = new Resource("platform1", "testAutoBaseline Platform One", platformType);
         platform.setUuid("" + new Random().nextInt());
+        platform.setInventoryStatus(InventoryStatus.COMMITTED);
         em.persist(platform);
         platform.setAgent(agent);
 
         platform2 = new Resource("platform2", "testAutoBaseline Platform Two", platformType);
         platform2.setUuid("" + new Random().nextInt());
+        platform2.setInventoryStatus(InventoryStatus.COMMITTED);
         // deleteResource removes the agent, so we can't have two direct platforms for it, make one a child of the other
         platform.addChildResource(platform2);
         em.persist(platform2);
@@ -626,31 +630,19 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
     private void insertMeasurementDataNumeric1H(long timeStamp, MeasurementSchedule schedule, double value, double min,
         double max) {
-        AggregateNumericMetric metric = new AggregateNumericMetric(schedule.getId(), value, min, max, timeStamp);
-        metricsDAO.insertOneHourData(schedule.getId(), timeStamp, AggregateType.MIN, min);
-        metricsDAO.insertOneHourData(schedule.getId(), timeStamp, AggregateType.MAX, max);
-        metricsDAO.insertOneHourData(schedule.getId(), timeStamp, AggregateType.AVG, value);
-
-//        String sql = "INSERT INTO RHQ_measurement_data_num_1h "
-//            + "(time_stamp, schedule_id, value, minvalue, maxvalue) " + "VALUES (" + timeStamp + "," + schedule.getId()
-//            + "," + value + "," + min + "," + max + ")";
-//
-//        Query q = em.createNativeQuery(sql);
-//        assert q.executeUpdate() == 1;
+        AggregateNumericMetric metric = new AggregateNumericMetric(schedule.getId(), Bucket.ONE_HOUR, value, min, max,
+            timeStamp);
+        metricsDAO.insert1HourData(metric);
     }
 
     private void deleteMeasurementDataNumeric1H(MeasurementSchedule schedule) {
-//        String sql = "DELETE FROM RHQ_measurement_data_num_1h WHERE schedule_id = " + schedule.getId();
-//
-//        Query q = em.createNativeQuery(sql);
-//        q.executeUpdate();
         try {
             StorageSession session = storageClientManager.getSession();
-            session.execute("DELETE FROM " + MetricsTable.ONE_HOUR.getTableName() + " WHERE schedule_id = " +
-                schedule.getId());
+            session.execute("DELETE FROM " + MetricsTable.AGGREGATE.getTableName() + " WHERE schedule_id = " +
+                schedule.getId() + " AND bucket = 'one_hour'");
         } catch (NoHostAvailableException e) {
-            throw new RuntimeException("An error occurred while trying to deleted data from " +
-                MetricsTable.ONE_HOUR + " for " + schedule, e);
+            throw new RuntimeException("An error occurred while trying to deleted data from "
+                + MetricsTable.AGGREGATE.getTableName() + " for " + schedule, e);
         }
     }
 }

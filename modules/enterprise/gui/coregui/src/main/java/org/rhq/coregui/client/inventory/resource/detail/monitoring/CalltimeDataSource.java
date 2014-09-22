@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.coregui.client.inventory.resource.detail.monitoring;
 
 import java.util.ArrayList;
@@ -17,12 +36,10 @@ import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.util.MeasurementConverterClient;
 import org.rhq.coregui.client.util.RPCDataSource;
-import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
-import org.rhq.coregui.client.util.preferences.UserPreferences;
 
 /**
  * A data source to read in calltime (aka response time) metric data.
@@ -65,6 +82,7 @@ public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, Cal
         ListGridField minField = new ListGridField(FIELD_MIN, MSG.common_title_monitor_minimum());
         minField.setWidth("10%");
         minField.setCellFormatter(new CellFormatter() {
+            @Override
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 return record.getAttribute(FIELD_MIN_STRING);
             }
@@ -74,6 +92,7 @@ public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, Cal
         ListGridField maxField = new ListGridField(FIELD_MAX, MSG.common_title_monitor_maximum());
         maxField.setWidth("10%");
         maxField.setCellFormatter(new CellFormatter() {
+            @Override
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 return record.getAttribute(FIELD_MAX_STRING);
             }
@@ -83,6 +102,7 @@ public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, Cal
         ListGridField avgField = new ListGridField(FIELD_AVG, MSG.common_title_monitor_average());
         avgField.setWidth("10%");
         avgField.setCellFormatter(new CellFormatter() {
+            @Override
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 return record.getAttribute(FIELD_AVG_STRING);
             }
@@ -92,6 +112,7 @@ public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, Cal
         ListGridField totalField = new ListGridField(FIELD_TOTAL, MSG.view_resource_monitor_calltime_total());
         totalField.setWidth("10%");
         totalField.setCellFormatter(new CellFormatter() {
+            @Override
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 return record.getAttribute(FIELD_TOTAL_STRING);
             }
@@ -120,7 +141,7 @@ public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, Cal
         MeasurementNumericValueAndUnits total = MeasurementConverterClient.fit(from.getTotal(),
             MeasurementUnits.MILLISECONDS);
         String totalString = MeasurementConverterClient.format(from.getTotal(), MeasurementUnits.MILLISECONDS, true);
-        
+
         ListGridRecord record = new ListGridRecord();
         record.setAttribute(FIELD_DESTINATION, from.getCallDestination());
         record.setAttribute(FIELD_REQUESTCOUNT, from.getCount());
@@ -137,18 +158,13 @@ public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, Cal
 
     @Override
     protected CallTimeDataCriteria getFetchCriteria(DSRequest request) {
-        UserPreferences prefs = UserSessionManager.getUserPreferences();
-        MeasurementUserPreferences mprefs = new MeasurementUserPreferences(prefs);
-        ArrayList<Long> range = mprefs.getMetricRangePreferences().getBeginEndTimes();
-        String destinationFilter = getFilter(request, FILTER_DESTINATION, String.class);
-
         CallTimeDataCriteria criteria = new CallTimeDataCriteria();
-        criteria.addFilterBeginTime(range.get(0));
-        criteria.addFilterEndTime(range.get(1));
+        criteria.addFilterBeginTime(CustomDateRangeState.getInstance().getStartTime());
+        criteria.addFilterEndTime(CustomDateRangeState.getInstance().getEndTime());
+        String destinationFilter = getFilter(request, FILTER_DESTINATION, String.class);
         if (destinationFilter != null && destinationFilter.length() > 0) {
             criteria.addFilterDestination(destinationFilter);
         }
-
         return criteria;
     }
 
@@ -157,10 +173,12 @@ public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, Cal
         GWTServiceLookup.getMeasurementDataService().findCallTimeDataForContext(this.entityContext, criteria,
             new AsyncCallback<PageList<CallTimeDataComposite>>() {
 
+                @Override
                 public void onSuccess(PageList<CallTimeDataComposite> result) {
                     sendSuccessResponse(request, response, result);
                 }
 
+                @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_calltime_loadFailed(), caught);
                 }

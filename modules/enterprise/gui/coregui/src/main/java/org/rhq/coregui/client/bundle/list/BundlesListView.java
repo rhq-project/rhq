@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,16 +13,23 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.client.bundle.list;
+
+import static org.rhq.coregui.client.CoreGUI.getErrorHandler;
+import static org.rhq.coregui.client.CoreGUI.getMessageCenter;
+import static org.rhq.coregui.client.CoreGUI.goToView;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.core.client.Duration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
@@ -80,7 +87,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
 
     public BundlesListView(Criteria criteria, Set<Permission> perms) {
         super(MSG.common_title_bundles(), criteria, IconEnum.BUNDLE.getIcon24x24Path());
-        this.globalPermissions = perms;
+        globalPermissions = perms;
         setDataSource(new BundlesWithLatestVersionDataSource());
     }
 
@@ -94,6 +101,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
             MSG.common_title_name());
         nameField.setWidth("33%");
         nameField.setCellFormatter(new CellFormatter() {
+            @Override
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 return "<a href=\"" + record.getAttribute(BundlesWithLatestVersionDataSource.FIELD_NAMELINK) + "\">"
                     + StringUtility.escapeHtml(String.valueOf(value)) + "</a>";
@@ -104,6 +112,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
             MSG.common_title_description());
         descField.setWidth("33%");
         descField.setCellFormatter(new CellFormatter() {
+            @Override
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 return StringUtility.escapeHtml(String.valueOf(value));
             }
@@ -129,18 +138,19 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
                 ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                 if (selectedRows != null && selectedRows.length == 1) {
                     String selectedId = selectedRows[0].getAttribute(BundlesWithLatestVersionDataSource.FIELD_ID);
-                    CoreGUI.goToView(LinkManager.getBundleLink(Integer.valueOf(selectedId)));
+                    goToView(LinkManager.getBundleLink(Integer.valueOf(selectedId)));
                 }
             }
         });
 
         // only show the buttons if we were given a set of permissions - passing in null is a way to say you only want the list, no actions 
-        if (this.globalPermissions != null) {
+        if (globalPermissions != null) {
             boolean hasGlobalDelete = globalPermissions.contains(Permission.DELETE_BUNDLES);
 
             addTableAction(MSG.common_button_new(), null, ButtonColor.BLUE, new RoleAuthorizedTableAction(
                 BundlesListView.this, Permission.CREATE_BUNDLES, Permission.CREATE_BUNDLES_IN_GROUP) {
 
+                @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     new BundleCreateWizard(globalPermissions).startWizard();
                     // we can refresh the table buttons immediately since the wizard is a dialog, the
@@ -150,81 +160,125 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
             });
 
             addTableAction(MSG.common_button_delete(), MSG.view_bundle_list_deleteConfirm(), ButtonColor.RED,
-                new BundleAuthorizedTableAction(BundlesListView.this, TableActionEnablement.ANY,
-                    (hasGlobalDelete ? null : Permission.DELETE_BUNDLES_FROM_GROUP), new RecordExtractor<Integer>() {
-                        public Collection<Integer> extract(Record[] records) {
-                            List<Integer> result = new ArrayList<Integer>(records.length);
-                            for (Record record : records) {
-                                result.add(record.getAttributeAsInt("id"));
-                            }
-                            return result;
+                new DeleteBundleTableAction(this, getDataSource(), hasGlobalDelete));
+
+            addTableAction(MSG.view_bundle_deploy(), null, ButtonColor.GRAY, new DeployBundleTableAction(this,
+                getDataSource()));
+        }
+    }
+
+    private static class DeleteBundleTableAction extends BundleAuthorizedTableAction {
+
+        final BundlesListView view;
+        final BundlesWithLatestVersionDataSource dataSource;
+
+        DeleteBundleTableAction(BundlesListView view, BundlesWithLatestVersionDataSource dataSource,
+            boolean hasGlobalDelete) {
+            super(view, TableActionEnablement.ANY, (hasGlobalDelete ? null : Permission.DELETE_BUNDLES_FROM_GROUP),
+                new RecordIdExtractor());
+            this.view = view;
+            this.dataSource = dataSource;
+        }
+
+        @Override
+        public void executeAction(ListGridRecord[] selections, Object actionValue) {
+            if (selections == null || selections.length == 0) {
+                return;
+            }
+
+            getMessageCenter().notify(new Message(MSG.view_bundle_list_deleteSubmitted(), Severity.Info));
+
+            final ArrayList<String> doomedNames = new ArrayList<String>(selections.length);
+            int[] doomedIds = new int[selections.length];
+            int i = 0;
+            for (ListGridRecord selection : selections) {
+                BundleWithLatestVersionComposite object = dataSource.copyValues(selection);
+                doomedNames.add(object.getBundleName());
+                doomedIds[i++] = object.getBundleId();
+            }
+
+            BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
+            final Duration duration = new Duration();
+            bundleManager.deleteBundles(doomedIds, new AsyncCallback<Void>() {
+                @Override
+                public void onFailure(final Throwable caught) {
+                    Timer timer = new Timer() {
+                        @Override
+                        public void run() {
+                            String conciseMessage = MSG.view_bundle_list_deletesFailure();
+                            String detailedMessage = doomedNames.toString() + "<br/>\n"
+                                + ErrorHandler.getAllMessages(caught);
+                            getMessageCenter().notify(new Message(conciseMessage, detailedMessage, Severity.Error));
                         }
-                    }) {
+                    };
+                    // Delay the showing of the result to give the user some time to see the deleteSubmitted notif
+                    timer.schedule(Math.max(0, 3 * 1000 - duration.elapsedMillis()));
+                }
 
-                    public void executeAction(ListGridRecord[] selections, Object actionValue) {
-                        if (selections == null || selections.length == 0) {
-                            return;
+                @Override
+                public void onSuccess(Void result) {
+                    Timer timer = new Timer() {
+                        @Override
+                        public void run() {
+                            String conciseMessage = MSG.view_bundle_list_deletesSuccessful();
+                            String detailedMessage = doomedNames.toString();
+                            getMessageCenter().notify(new Message(conciseMessage, detailedMessage, Severity.Info));
+                            CoreGUI.refresh();
                         }
+                    };
+                    // Delay the showing of the result to give the user some time to see the deleteSubmitted notif
+                    timer.schedule(Math.max(0, 3 * 1000 - duration.elapsedMillis()));
+                }
+            });
+        }
 
-                        BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
-                        final ArrayList<String> doomedNames = new ArrayList<String>(selections.length);
-                        int[] doomedIds = new int[selections.length];
-                        int i = 0;
-                        for (ListGridRecord selection : selections) {
-                            BundleWithLatestVersionComposite object = ds.copyValues(selection);
-                            doomedNames.add(object.getBundleName());
-                            doomedIds[i++] = object.getBundleId();
-                        }
+    }
 
-                        BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
-                        bundleManager.deleteBundles(doomedIds, new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                String names = doomedNames.toString();
-                                String error = ErrorHandler.getAllMessages(caught);
-                                Message m = new Message(MSG.view_bundle_list_deletesFailure(), names + "<br/>\n"
-                                    + error, Severity.Error);
-                                CoreGUI.getMessageCenter().notify(m);
-                            }
+    private static class RecordIdExtractor implements RecordExtractor<Integer> {
+        @Override
+        public Collection<Integer> extract(Record[] records) {
+            List<Integer> result = new ArrayList<Integer>(records.length);
+            for (Record record : records) {
+                result.add(record.getAttributeAsInt("id"));
+            }
+            return result;
+        }
+    }
 
-                            public void onSuccess(Void result) {
-                                Message m = new Message(MSG.view_bundle_list_deletesSuccessful(), doomedNames
-                                    .toString(), Severity.Info);
-                                CoreGUI.getMessageCenter().notify(m);
-                                CoreGUI.refresh();
-                            }
-                        });
+    private static class DeployBundleTableAction extends RoleAuthorizedTableAction {
+
+        final BundlesListView view;
+        final BundlesWithLatestVersionDataSource dataSource;
+
+        DeployBundleTableAction(BundlesListView view, BundlesWithLatestVersionDataSource dataSource) {
+            super(view, TableActionEnablement.SINGLE, Permission.DEPLOY_BUNDLES, Permission.DEPLOY_BUNDLES_TO_GROUP);
+            this.view = view;
+            this.dataSource = dataSource;
+        }
+
+        @Override
+        public void executeAction(ListGridRecord[] selection, Object actionValue) {
+            final BundleWithLatestVersionComposite object = dataSource.copyValues(selection[0]);
+            BundleCriteria bc = new BundleCriteria();
+            bc.addFilterId(object.getBundleId());
+            BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
+            bundleManager.findBundlesByCriteria(bc, new AsyncCallback<PageList<Bundle>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    getErrorHandler().handleError(MSG.view_bundle_list_loadFailure(object.getBundleName()), caught);
+                }
+
+                @Override
+                public void onSuccess(PageList<Bundle> result) {
+                    if (result == null || result.size() != 1) {
+                        String message = MSG.view_bundle_list_singleLoadFailure(object.getBundleName());
+                        getMessageCenter().notify(new Message(message, Severity.Error));
+                        return;
                     }
-                });
-
-            addTableAction(MSG.view_bundle_deploy(), null, ButtonColor.GRAY, new RoleAuthorizedTableAction(
-                BundlesListView.this, TableActionEnablement.SINGLE, Permission.DEPLOY_BUNDLES,
-                Permission.DEPLOY_BUNDLES_TO_GROUP) {
-
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
-                    final BundleWithLatestVersionComposite object = ds.copyValues(selection[0]);
-                    BundleCriteria bc = new BundleCriteria();
-                    bc.addFilterId(object.getBundleId());
-                    BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
-                    bundleManager.findBundlesByCriteria(bc, new AsyncCallback<PageList<Bundle>>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(
-                                MSG.view_bundle_list_loadFailure(object.getBundleName()), caught);
-                        }
-
-                        public void onSuccess(PageList<Bundle> result) {
-                            if (result == null || result.size() != 1) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_bundle_list_singleLoadFailure(object.getBundleName()),
-                                        Severity.Error));
-                                return;
-                            }
-                            new BundleDeployWizard(result.get(0).getId()).startWizard();
-                            // we can refresh the table buttons immediately since the wizard is a dialog, the
-                            // user can't access enabled buttons anyway.
-                            BundlesListView.this.refreshTableInfo();
-                        }
-                    });
+                    new BundleDeployWizard(result.get(0)).startWizard();
+                    // we can refresh the table buttons immediately since the wizard is a dialog, the
+                    // user can't access enabled buttons anyway.
+                    view.refreshTableInfo();
                 }
             });
         }

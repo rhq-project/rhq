@@ -1,10 +1,5 @@
 package org.rhq.server.metrics.invalid;
 
-import static org.rhq.server.metrics.domain.AggregateType.AVG;
-import static org.rhq.server.metrics.domain.AggregateType.MAX;
-import static org.rhq.server.metrics.domain.AggregateType.MIN;
-import static org.rhq.server.metrics.domain.MetricsTable.SIX_HOUR;
-import static org.rhq.server.metrics.domain.MetricsTable.TWENTY_FOUR_HOUR;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -16,12 +11,13 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.cassandra.schema.Table;
 import org.rhq.server.metrics.CassandraIntegrationTest;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.MetricsTable;
+import org.rhq.server.metrics.domain.Bucket;
 
 /**
  * @author John Sanda
@@ -57,12 +53,9 @@ public class InvalidMetricsManagerTest extends CassandraIntegrationTest {
     }
 
     private void purgeDB() {
-        session.execute("TRUNCATE " + MetricsTable.RAW);
-        session.execute("TRUNCATE " + MetricsTable.ONE_HOUR);
-        session.execute("TRUNCATE " + MetricsTable.SIX_HOUR);
-        session.execute("TRUNCATE " + MetricsTable.TWENTY_FOUR_HOUR);
-        session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE);
-        session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE_INDEX);
+        for (Table table : Table.values()) {
+            session.execute("TRUNCATE " + table.getTableName());
+        }
     }
 
     /**
@@ -75,50 +68,50 @@ public class InvalidMetricsManagerTest extends CassandraIntegrationTest {
     public void submitInvalid24HourAnd6HourMetricsWithEmpty1HourMetric() throws Exception {
         int scheduleId = 100;
 
-        insert1HourData(scheduleId, hour(0).minusDays(7).plusHours(12), 100, 100, 100);
-        insert1HourData(scheduleId, hour(0).minusDays(7).plusHours(13), 100, 100, 100);
-        insert1HourData(scheduleId, hour(0).minusDays(7).plusHours(14), Double.NaN, Double.NaN, 0.0);
-        insert1HourData(scheduleId, hour(0).minusDays(7).plusHours(15), 100, 100, 100);
-        insert1HourData(scheduleId, hour(0).minusDays(7).plusHours(16), 100, 100, 100);
-        insert1HourData(scheduleId, hour(0).minusDays(7).plusHours(17), 100, 100, 100);
+        dao.insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(12), 100, 100, 100)).get();
+        dao.insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(13), 100, 100, 100)).get();
+        dao.insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(14), Double.NaN, Double.NaN,
+            0.0)).get();
+        dao.insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(15), 100, 100, 100)).get();
+        dao.insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(16), 100, 100, 100)).get();
+        dao.insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(17), 100, 100, 100)).get();
 
-        insert6HourData(scheduleId, hour(0).minusDays(7), 100, 100, 100);
-        insert6HourData(scheduleId, hour(0).minusDays(7).plusHours(6), 100, 100, 100);
-        insert6HourData(scheduleId, hour(0).minusDays(7).plusHours(12), 100, 100, 83.33);
-        insert6HourData(scheduleId, hour(0).minusDays(7).plusHours(18), 100, 100, 100);
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7), 100, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(6), 100, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(12), 83.33, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(18), 100, 100, 100)).get();
 
-        insert24HourData(scheduleId, hour(0).minusDays(7), 100, 100, 95.83);
+        dao.insert24HourData(new24HourAggregate(scheduleId, hour(0).minusDays(7), 95.83, 100, 100)).get();
 
-        invalidMetricsManager.submit(TWENTY_FOUR_HOUR, new AggregateNumericMetric(scheduleId, 83.33, 100.0, 100.0,
-            hour(0).minusDays(7).getMillis()));
+        invalidMetricsManager.submit(new24HourAggregate(scheduleId, hour(0).minusDays(7), 83.33, 100.0, 100.0));
 
         waitForInvalidMetricsToBeProcessed();
 
-        List<AggregateNumericMetric> updated1HourMetrics = dao.findOneHourMetrics(scheduleId,
+        List<AggregateNumericMetric> updated1HourMetrics = dao.findAggregateMetrics(scheduleId, Bucket.ONE_HOUR,
             hour(0).minusDays(7).plusHours(14).getMillis(), hour(0).minusDays(7).plusHours(14).getMillis());
 
         assertTrue(updated1HourMetrics.isEmpty(), "Expected 1 hour metric to be deleted since it was empty");
 
-        List<AggregateNumericMetric> updated6HourMetrics = dao.findSixHourMetrics(scheduleId,
+        List<AggregateNumericMetric> updated6HourMetrics = dao.findAggregateMetrics(scheduleId, Bucket.SIX_HOUR,
             hour(0).minusDays(7).plusHours(12).getMillis(), hour(0).minusDays(7).plusHours(18).getMillis());
 
         assertEquals(updated6HourMetrics.size(), 1, "Expected to find one 6 hour metric");
 
         AggregateNumericMetric actual6HourMetric = updated6HourMetrics.get(0);
-        AggregateNumericMetric expected6HourMetric = new AggregateNumericMetric(scheduleId, 100.0, 100.0, 100.0,
-            hour(0).minusDays(7).plusHours(12).getMillis());
+        AggregateNumericMetric expected6HourMetric = new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(12),
+            100.0, 100.0, 100.0);
 
         assertEquals(actual6HourMetric, expected6HourMetric,
             "The updated 6 hour metric does not match the expected value");
 
-        List<AggregateNumericMetric> updated24HourMetrics = dao.findTwentyFourHourMetrics(scheduleId,
-            hour(0).minusDays(7).getMillis(), hour0().minusDays(6).getMillis());
+        List<AggregateNumericMetric> updated24HourMetrics = dao.findAggregateMetrics(scheduleId,
+            Bucket.TWENTY_FOUR_HOUR, hour(0).minusDays(7).getMillis(), hour0().minusDays(6).getMillis());
 
         assertEquals(updated24HourMetrics.size(), 1, "Expected to find one 24 hour metric");
 
         AggregateNumericMetric actual24HourMetric = updated24HourMetrics.get(0);
-        AggregateNumericMetric expected24HourMetric = new AggregateNumericMetric(scheduleId, 100.0, 100.0, 100.0,
-            hour(0).minusDays(7).getMillis());
+        AggregateNumericMetric expected24HourMetric = new24HourAggregate(scheduleId, hour(0).minusDays(7), 100.0,
+            100.0, 100.0);
 
         assertEquals(actual24HourMetric, expected24HourMetric,
             "The updated 24 hour metric does not match the expected value");
@@ -133,32 +126,31 @@ public class InvalidMetricsManagerTest extends CassandraIntegrationTest {
     public void submitInvalid6HourAnd24HourMetricsWhen1HourMetricsExpired() throws Exception {
         int scheduleId = 100;
 
-        insert6HourData(scheduleId, hour(0).minusDays(7), 100, 100, 100);
-        insert6HourData(scheduleId, hour(0).minusDays(7).plusHours(6), 100, 100, 100);
-        insert6HourData(scheduleId, hour(0).minusDays(7).plusHours(12), 100, 100, 83.33);
-        insert6HourData(scheduleId, hour(0).minusDays(7).plusHours(18), 100, 100, 100);
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7), 100, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(6), 100, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(12), 83.33, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(18), 100, 100, 100)).get();
 
-        insert24HourData(scheduleId, hour(0).minusDays(7), 100, 100, 95.83);
+        dao.insert24HourData(new24HourAggregate(scheduleId, hour(0).minusDays(7), 95.83, 100, 100)).get();
 
-        invalidMetricsManager.submit(SIX_HOUR, new AggregateNumericMetric(scheduleId, 83.33, 100.0, 100.0,
-            hour(0).minusDays(7).plusHours(12).getMillis()));
+        invalidMetricsManager.submit(new6HourAggregate(scheduleId, hour(0).minusDays(7), 83.33, 100.0, 100.0));
 
         waitForInvalidMetricsToBeProcessed();
 
-        List<AggregateNumericMetric> updated6HourMetrics = dao.findSixHourMetrics(scheduleId,
+        List<AggregateNumericMetric> updated6HourMetrics = dao.findAggregateMetrics(scheduleId, Bucket.SIX_HOUR,
             hour(0).minusDays(7).plusHours(12).getMillis(), hour(0).minusDays(7).plusHours(18).getMillis());
 
         assertTrue(updated6HourMetrics.isEmpty(), "Did not expect to find a 6 hour metric since its 1 hour metrics " +
             "are no longer available");
 
-        List<AggregateNumericMetric> updated24HourMetrics = dao.findTwentyFourHourMetrics(scheduleId,
-            hour(0).minusDays(7).getMillis(), hour0().minusDays(6).getMillis());
+        List<AggregateNumericMetric> updated24HourMetrics = dao.findAggregateMetrics(scheduleId,
+            Bucket.TWENTY_FOUR_HOUR, hour(0).minusDays(7).getMillis(), hour0().minusDays(6).getMillis());
 
         assertEquals(updated24HourMetrics.size(), 1, "Expected to find one 24 hour metric");
 
         AggregateNumericMetric actual24HourMetric = updated24HourMetrics.get(0);
-        AggregateNumericMetric expected24HourMetric = new AggregateNumericMetric(scheduleId, 100.0, 100.0, 100.0,
-            hour(0).minusDays(7).getMillis());
+        AggregateNumericMetric expected24HourMetric = new24HourAggregate(scheduleId, hour(0).minusDays(7), 100, 100,
+            100);
 
         assertEquals(actual24HourMetric, expected24HourMetric,
             "The updated 24 hour metric does not match the expected value");
@@ -172,15 +164,14 @@ public class InvalidMetricsManagerTest extends CassandraIntegrationTest {
     public void submitInvalid24HourMetricWhen6HourMetricsExpired() throws Exception {
         int scheduleId = 100;
 
-        insert24HourData(scheduleId, hour(0).minusDays(7), 100, 100, 95.83);
+        dao.insert24HourData(new24HourAggregate(scheduleId, hour(0).minusDays(7), 95.83, 100, 100)).get();
 
-        invalidMetricsManager.submit(TWENTY_FOUR_HOUR, new AggregateNumericMetric(scheduleId, 83.33, 100.0, 100.0,
-            hour(0).minusDays(7).getMillis()));
+        invalidMetricsManager.submit(new24HourAggregate(scheduleId, hour(0).minusDays(7), 83.33, 100.0, 100.0));
 
         waitForInvalidMetricsToBeProcessed();
 
-        List<AggregateNumericMetric> updated24HourMetrics = dao.findTwentyFourHourMetrics(scheduleId,
-            hour(0).minusDays(7).getMillis(), hour0().minusDays(6).getMillis());
+        List<AggregateNumericMetric> updated24HourMetrics = dao.findAggregateMetrics(scheduleId,
+            Bucket.TWENTY_FOUR_HOUR, hour(0).minusDays(7).getMillis(), hour0().minusDays(6).getMillis());
 
         assertTrue(updated24HourMetrics.isEmpty(), "Did not expect to find 24 hour metric since 6 hour metrics are " +
             "not available");
@@ -192,18 +183,15 @@ public class InvalidMetricsManagerTest extends CassandraIntegrationTest {
 
         invalidMetricsManager.setDelay(30000);
 
-        invalidMetricsManager.submit(SIX_HOUR, new AggregateNumericMetric(scheduleId, 83.33, 100.0, 100.0,
-            hour(6).getMillis()));
-        invalidMetricsManager.submit(SIX_HOUR, new AggregateNumericMetric(scheduleId, 83.33, 100.0, 100.0,
-            hour(12).getMillis()));
-        invalidMetricsManager.submit(TWENTY_FOUR_HOUR, new AggregateNumericMetric(scheduleId, 83.33, 100.0, 100.0,
-            hour(0).getMillis()));
+        invalidMetricsManager.submit(new6HourAggregate(scheduleId, hour(6), 83.33, 100.0, 100.0));
+        invalidMetricsManager.submit(new6HourAggregate(scheduleId, hour(12), 83.33, 100.0, 100.0));
+        invalidMetricsManager.submit(new24HourAggregate(scheduleId, hour(0), 83.33, 100.0, 100.0));
 
         assertEquals(invalidMetricsManager.getRemainingInvalidMetrics(), 1, "Expected there to be 1 invalid metric " +
             "in the queue since one element is stored for metrics falling within the same day.");
 
-        invalidMetricsManager.submit(SIX_HOUR, new AggregateNumericMetric(scheduleId, 83.33, 100.0, 100.0,
-            hour(0).minusDays(1).plusHours(6).getMillis()));
+        invalidMetricsManager.submit(new6HourAggregate(scheduleId, hour(0).minusDays(1).plusHours(6), 83.33, 100.0,
+            100.0));
 
         assertEquals(invalidMetricsManager.getRemainingInvalidMetrics(), 2, "Expected there to be 2 invalid metrics " +
             "in the queue");
@@ -215,26 +203,19 @@ public class InvalidMetricsManagerTest extends CassandraIntegrationTest {
         }
     }
 
-    private void insert1HourData(int scheduleId, DateTime time, double max, double min, double avg) {
-        dao.insertOneHourData(scheduleId, time.getMillis(), MAX, max);
-        dao.insertOneHourData(scheduleId, time.getMillis(), MIN, min);
-        dao.insertOneHourData(scheduleId, time.getMillis(), AVG, avg);
+    private AggregateNumericMetric new1HourAggregate(int scheduleId, DateTime time, double avg, double min,
+        double max) {
+        return new AggregateNumericMetric(scheduleId, Bucket.ONE_HOUR, avg, min, max, time.getMillis());
     }
 
-    private void insert6HourData(int scheduleId, DateTime time, double max, double min, double avg) {
-        dao.insertSixHourData(scheduleId, time.getMillis(), MAX, max);
-        dao.insertSixHourData(scheduleId, time.getMillis(), MIN, min);
-        dao.insertSixHourData(scheduleId, time.getMillis(), AVG, avg);
+    private AggregateNumericMetric new6HourAggregate(int scheduleId, DateTime time, double avg, double min,
+        double max) {
+        return new AggregateNumericMetric(scheduleId, Bucket.SIX_HOUR, avg, min, max, time.getMillis());
     }
 
-    private void insert24HourData(int scheduleId, DateTime time, double max, double min, double avg) {
-        dao.insertTwentyFourHourData(scheduleId, time.getMillis(), MAX, max);
-        dao.insertTwentyFourHourData(scheduleId, time.getMillis(), MIN, min);
-        dao.insertTwentyFourHourData(scheduleId, time.getMillis(), AVG, avg);
-    }
-
-    private DateTime hour(int hours) {
-        return dateTimeService.hour0().plusHours(hours);
+    private AggregateNumericMetric new24HourAggregate(int scheduleId, DateTime time, double avg, double min,
+        double max) {
+        return new AggregateNumericMetric(scheduleId, Bucket.TWENTY_FOUR_HOUR, avg, min, max, time.getMillis());
     }
 
 }

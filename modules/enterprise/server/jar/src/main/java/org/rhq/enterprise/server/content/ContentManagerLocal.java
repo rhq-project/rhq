@@ -38,17 +38,11 @@ import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
-import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.criteria.InstalledPackageCriteria;
-import org.rhq.core.domain.criteria.PackageCriteria;
-import org.rhq.core.domain.criteria.PackageVersionCriteria;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.core.domain.resource.Resource;
 
 /**
  * EJB interface to the server content subsystem.
@@ -119,10 +113,10 @@ public interface ContentManagerLocal extends ContentManagerRemote {
      * Requests the plugin translate the installation steps of the specified package.
      *
      * @param resourceId     resource against which the package is being installed
-     * @param packageDetails package being installed 
+     * @param packageDetails package being installed
      * @return list of deployment steps if the plugin specified them; <code>null</code> if they cannot be determined
      *         for this package
-     * @throws Exception if there is an error either contacting the agent or in the plugin's generation of the steps 
+     * @throws Exception if there is an error either contacting the agent or in the plugin's generation of the steps
      */
     List<DeployPackageStep> translateInstallationSteps(int resourceId, ResourcePackageDetails packageDetails)
         throws Exception;
@@ -230,7 +224,7 @@ public interface ContentManagerLocal extends ContentManagerRemote {
      * Creates a new package version in the system. If the parent package (identified by the packageName parameter) does
      * not exist, it will be created. If a package version exists with the specified version ID, a new one will not be
      * created and the existing package version instance will be returned.
-     * 
+     *
      * @param subject         the user requesting the package creation
      * @param  packageName    parent package name; uniquely identifies the package under which this version goes
      * @param  packageTypeId  identifies the type of package in case the general package needs to be created
@@ -247,7 +241,7 @@ public interface ContentManagerLocal extends ContentManagerRemote {
     /**
      * This method is essentially the same as {@link #createPackageVersion(Subject, String, int, String, int, InputStream)}
      * but will update the package bits if a package version with the provided identification already exists.
-     * 
+     *
      * @param subject the current user
      * @param packageName the name of the package (the general package will be created if none exists)
      * @param packageTypeId the id of the package type. This is ignored if the <code>newResourceTypeId</code> is not null
@@ -268,7 +262,7 @@ public interface ContentManagerLocal extends ContentManagerRemote {
      * it is not meant for general consumption.</p>
      *
      * @param pv the package version to persist
-     * 
+     *
      * @return the newly persisted package version
      */
     PackageVersion persistPackageVersion(PackageVersion pv);
@@ -295,9 +289,9 @@ public interface ContentManagerLocal extends ContentManagerRemote {
      *
      * <p>This method is here to support {@link #persistOrMergePackageSafely(Package)},
      * it is not meant for general consumption.</p>
-     * 
+     *
      * @param pkg the package to persist
-     * 
+     *
      * @return the newly persisted package
      */
     Package persistPackage(Package pkg);
@@ -312,7 +306,7 @@ public interface ContentManagerLocal extends ContentManagerRemote {
      * <p>This method is for a very specific use case - that is, when creating a package
      * in a place where, concurrently, someone else might try to create the same package.
      * It is not for general persisting/merging of packages.</p>
-     * 
+     *
      * @param pkg the package to find and possibly persist to the database
      *
      * @return the package that was found/persisted
@@ -322,7 +316,7 @@ public interface ContentManagerLocal extends ContentManagerRemote {
     /**
      * Returns the entity associated with no architecture.
      *
-     * @return no architecture entity       
+     * @return no architecture entity
      */
     Architecture getNoArchitecture();
 
@@ -342,90 +336,6 @@ public interface ContentManagerLocal extends ContentManagerRemote {
      */
     PackageType getResourceCreationPackageType(int resourceTypeId);
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    /**
-     * @see {@link createPackageVersion(Subject, String, int, String, int, byte[]);
-     */
-    PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
-        Integer architectureId, byte[] packageBytes);
-
-    /**
-     * @see {@link createPackageVersion(Subject, String, int, String, int, byte[]);
-     */
-    PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName, int packageTypeId,
-        String version, String displayVersion, Integer architectureId, byte[] packageBytes);
-
-    /**
-     * @see {@link ContentManagerRemote#deletePackages(Subject, int, int[], String)}
-     */
-    void deletePackages(Subject subject, int resourceId, int[] installedPackageIds, String requestNotes);
-
-    /**
-     * @see {@link ContentManagerRemote#deletePackageVersion(Subject, int)}
-     */
-    public void deletePackageVersion(Subject subject, int packageVersionId);
-
-    /**
-     * @see {@link ContentManagerRemote#deployPackagesWithNote(Subject, int[], int[], String)}
-     */
-    void deployPackagesWithNote(Subject subject, int[] resourceIds, int[] packageVersionIds, String requestNotes);
-
-    /**
-     * @see {@link ContentManagerRemote#findArchitectures(Subject)}
-     */
-    List<Architecture> findArchitectures(Subject subject);
-
-    /**
-     * @see {@link ContentManagerRemote#findPackageTypes(Subject, String, String)}
-     */
-    List<PackageType> findPackageTypes(Subject subject, String resourceTypeName, String pluginName)
-        throws ResourceTypeNotFoundException;
-
-    /**
-     * @see {@link ContentManagerRemote#findPackageType(Subject, Integer, String)}
-     */
-    PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName);
-
-    /**
-     * @see {@link ContentManagerRemote#findPackageTypeWithVersionFormat(Subject, Integer, String)}
-     */
-    PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(Subject subject, Integer resourceTypeId, String packageTypeName);
-
-    /**
-     * @see {@link ContentManagerRemote#findInstalledPackagesByCriteria(Subject, InstalledPackageCriteria)}
-     */
-    PageList<InstalledPackage> findInstalledPackagesByCriteria(Subject subject, InstalledPackageCriteria criteria);
-
-    /**
-     * @see {@link ContentManagerRemote#findPackageVersionsByCriteria(Subject, PackageVersionCriteria)}
-     */
-    PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria);
-
-    /**
-     * @see ContentManagerRemote#findPackagesByCriteria(Subject, PackageCriteria) 
-     */
-    PageList<Package> findPackagesByCriteria(Subject subject, PackageCriteria criteria);
-
-    /**
-     * @see ContentManagerRemote#findPackagesWithLatestVersion(Subject, PackageCriteria) 
-     */
-    PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(Subject subject, PackageCriteria criteria);
-
-    /**
-     * @see {@link ContentManagerRemote#getBackingPackageForResource(Subject, int)
-     */
-    InstalledPackage getBackingPackageForResource(Subject subject, int resourceId);
-
-    /**
-     * @see {@link ContentManagerRemote#getPackageBytes(Subject, int, int)}
-     */
-    byte[] getPackageBytes(Subject user, int resourceId, int installedPackageId);
-
     /**
      * This method is used to persist new package types that are defined on the server-side
      * by some kind of plugin.
@@ -433,7 +343,7 @@ public interface ContentManagerLocal extends ContentManagerRemote {
      * Server-side package types are used to identify data stored in the content subsystem
      * which don't have any agent-side counter-part. Such package types are required to have
      * the {@link PackageType#getResourceType() resource type} set to null.
-     * 
+     *
      * @param packageType the package type to persist
      * @return the persisted package type
      * @throws IllegalArgumentException if the supplied package type has non-null resource type
@@ -452,4 +362,11 @@ public interface ContentManagerLocal extends ContentManagerRemote {
      * @return the file denoted by this <code>temporaryContentHandle</code>
      */
     File getTemporaryContentFile(String temporaryContentHandle);
+
+    // used solely for Tx demarcation
+    void handleDiscoveredPackage(Resource resource, ResourcePackageDetails discoveredPackage,
+        Set<InstalledPackage> doomedPackages, long timestamp);
+
+    // used solely for Tx demarcation
+    void removeInstalledPackages(Resource resource, Set<InstalledPackage> doomedPackages, long timestamp);
 }

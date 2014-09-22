@@ -592,7 +592,18 @@
 
     <table name="RHQ_BUNDLE_RES_DEP_HIST">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="BUNDLE_RES_DEPLOY_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_RES_DEPLOY" />        
+        <!--
+          BREAKING THE RULE: no "references" attribute to create a foreign key on resource deployments table.
+
+          Some users may have millions of audit messages related to a single bundle. In this case, deleting the
+          bundle inside a single transaction is impossible. Dropping the foreign key allows to delete the whole
+          bundle entity hierarchy, leaving orphaned audit messages (the server has a purge task to remove them).
+
+          Audit messages are not a central part of the data model (in opposition to resource types, for example).
+          There are only a handful of methods in the codebase for inserting/querying/removing. This makes dropping the
+          foreign key exceptionally acceptable.
+        -->
+        <column name="BUNDLE_RES_DEPLOY_ID" type="INTEGER" required="true"/>
         <column name="SUBJECT_NAME" required="false" size="255" type="VARCHAR2"/>
         <column name="AUDIT_TIME" required="true" type="LONG"/>
         <column name="ACTION" required="true" size="128" type="VARCHAR2"/>
@@ -600,7 +611,11 @@
         <column name="CATEGORY" required="false" size="32" type="VARCHAR2"/>        
         <column name="STATUS" required="true" type="VARCHAR2" size="16"/>        
         <column name="MESSAGE" required="false" type="LONGVARCHAR"/>
-        <column name="ATTACHMENT" required="false" type="LONGVARCHAR"/>        
+        <column name="ATTACHMENT" required="false" type="LONGVARCHAR"/>
+
+        <index name="RHQ_BDLE_AUDIT_RESDPLY_IDX" unique="false">
+          <field ref="BUNDLE_RES_DEPLOY_ID"/>
+        </index>
     </table>
 
     <table name="RHQ_TAGGING_BUNDLE_MAP">
@@ -776,5 +791,11 @@
         </constraint>
     </table>
 
+    <!-- Many to many mapping between resource type and bundle type -
+         which bundle types target which resource types? -->
+    <table name="RHQ_BUNDLE_TYPE_TARGET_MAP">
+        <column name="BUNDLE_TYPE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_TYPE"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
+    </table>
 </dbsetup>
 

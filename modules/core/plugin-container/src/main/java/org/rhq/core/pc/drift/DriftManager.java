@@ -504,6 +504,13 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         if (container != null) {
             container.addDriftDefinition(driftDefinition);
         }
+
+        if(driftDefinition.getInterval() < pluginContainerConfiguration.getDriftDetectionPeriod()) {
+            Resource resource = inventoryManager.getResourceContainer(resourceId).getResource();
+            inventoryManager.handleInvalidPluginConfigurationResourceError(resource, new Throwable("Drift interval was set to " + driftDefinition.getInterval()
+                    + "s, which is lower than agent's minimum value of " + pluginContainerConfiguration.getDriftDetectionPeriod() + "s." +
+                    " Change the interval or agent's configuration value of rhq.agent.plugins.drift-detection.period-secs"));
+        }
     }
 
     private void unpinDefinition(final DriftDetectionSchedule schedule) {

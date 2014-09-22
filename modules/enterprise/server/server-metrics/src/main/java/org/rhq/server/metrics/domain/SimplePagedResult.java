@@ -46,7 +46,7 @@ import org.rhq.server.metrics.StorageSession;
  * @author Stefan Negrea
  *
  */
-public class SimplePagedResult<T> implements Iterable<T> {
+public class SimplePagedResult<T extends NumericMetric> implements Iterable<T> {
 
     private static final int DEFAULT_PAGE_SIZE = 200;
 

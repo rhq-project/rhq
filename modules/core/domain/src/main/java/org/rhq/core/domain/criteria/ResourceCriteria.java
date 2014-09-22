@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,10 +20,13 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.core.domain.criteria;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -59,7 +62,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private Integer filterParentResourceId; // needs overrides
     private String filterParentResourceName; // needs overrides
     private Integer filterParentResourceTypeId; // needs overrides
-    private ResourceCategory filterParentResourceCategory; // needs overrides    
+    private ResourceCategory filterParentResourceCategory; // needs overrides
     private List<InventoryStatus> filterParentInventoryStatuses; // needs overrides
     private String filterAgentName; // needs overrides
     private Integer filterAgentId; // needs overrides
@@ -68,7 +71,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private Long filterEndItime;
     private List<Integer> filterExplicitGroupIds; // requires overrides
     private List<Integer> filterImplicitGroupIds; // requires overrides
-    private Integer filterRootResourceId; // requires overrides    
+    private Integer filterRootResourceId; // requires overrides
 
     private boolean fetchResourceType;
     private boolean fetchChildResources;
@@ -109,9 +112,9 @@ public class ResourceCriteria extends TaggedCriteria {
     /**
      * Note: This constructor sets by default:
      * <pre>filterInventoryStatus = InventoryStatus.COMMITTED</pre>
-     * 
+     *
      * <p>For other implicit defaults see {@link Criteria#Criteria()}</p>
-     * 
+     *
      * @see Criteria#Criteria()
      */
     public ResourceCriteria() {
@@ -167,8 +170,8 @@ public class ResourceCriteria extends TaggedCriteria {
 
     /**
      * Note, by default this filter is set to COMMITTED.  This must be explicitly set to null to get all
-     * Resources. 
-     *  
+     * Resources.
+     *
      * @param filterInventoryStatus
      */
     public void addFilterInventoryStatus(InventoryStatus filterInventoryStatus) {
@@ -177,7 +180,7 @@ public class ResourceCriteria extends TaggedCriteria {
 
     /**
      * Note, setting this filter will set filterInventoryStatus to null since that is a mutually exclusive filter.
-     *  
+     *
      * @param filterInventoryStatuses
      */
     public void addFilterInventoryStatuses(List<InventoryStatus> filterInventoryStatuses) {
@@ -211,6 +214,26 @@ public class ResourceCriteria extends TaggedCriteria {
 
     public void addFilterPluginName(String filterPluginName) {
         this.filterPluginName = filterPluginName;
+    }
+
+    public void setStrictFilterPluginName(boolean strict) {
+        Set<String> strictFilters = new HashSet<String>(Arrays.asList(getStrictFilters()));
+        if (strict) {
+            strictFilters.add("pluginName");
+        } else {
+            strictFilters.remove("pluginName");
+        }
+        setStrictFilters(strictFilters.toArray(new String[strictFilters.size()]));
+    }
+
+    public void setCaseSensitiveFilterPluginName(boolean caseSensitive) {
+        Set<String> caseSensitiveFilters = new HashSet<String>(Arrays.asList(getCaseSensitiveFilters()));
+        if (caseSensitive) {
+            caseSensitiveFilters.add("pluginName");
+        } else {
+            caseSensitiveFilters.remove("pluginName");
+        }
+        setCaseSensitiveFilters(caseSensitiveFilters.toArray(new String[caseSensitiveFilters.size()]));
     }
 
     public void addFilterParentResourceId(Integer filterParentResourceId) {
@@ -285,6 +308,11 @@ public class ResourceCriteria extends TaggedCriteria {
         this.fetchParentResource = fetchParentResource;
     }
 
+    /**
+     * @param fetchResourceConfiguration if true fetch the current resource configuration for the Resource. The
+     * "current" configuration is that which has been most recently reported and stored server-side, the agent is not
+     * queried.  For agent-side configuration look for methods reporting "live" configuration.
+     */
     public void fetchResourceConfiguration(boolean fetchResourceConfiguration) {
         this.fetchResourceConfiguration = fetchResourceConfiguration;
     }

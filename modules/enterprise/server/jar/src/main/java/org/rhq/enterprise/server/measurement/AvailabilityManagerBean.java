@@ -912,7 +912,11 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 // has 2 or more availabilities with endTime of null, we need to delete all but the
                 // latest one (the one whose start time is the latest).  This should correct the
                 // problem and allow us to continue processing availability reports for that resource
-                log.warn("Resource [" + reported.getResource()
+
+                // This problem happens and can be helped to occur by for example forcibly killing an agent
+                // While it is a condition that shouldn't happen under normal operation, it is recoverable,
+                // so we only log on the debug level.
+                log.debug("Resource [" + reported.getResource()
                     + "] has multiple availabilities without an endtime - will attempt to remove the extra ones\n"
                     + mergeInfo.toString(false));
 

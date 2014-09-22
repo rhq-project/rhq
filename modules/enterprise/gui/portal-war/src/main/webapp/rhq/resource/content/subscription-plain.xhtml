@@ -122,7 +122,9 @@
 
       </rich:panel>
       </h:form>
-
+<script>
+  document.getElementById('currentRepoForm').setAttribute('action', window.location.href);
+</script>
 
       <!--  AVAILABLE REPOS -->
       <h:form id="availableRepoForm"
@@ -247,6 +249,9 @@
       -->
 
       </h:form>
+<script>
+  document.getElementById('availableRepoForm').setAttribute('action', window.location.href);
+</script>
 
    </ui:define>
 </ui:composition>

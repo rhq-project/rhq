@@ -81,12 +81,20 @@ esac
 # place as this script.
 # ----------------------------------------------------------------------
 
-if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then
-   # only certain platforms support the -e argument for readlink
-   _READLINK_ARG="-e"
+command -v readlink >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo >&2 'WARNING: The readlink command is not available on this platform.'
+    echo >&2 '         If this script was launched from a symbolic link, errors may occur.'
+    echo >&2 '         Consider installing readlink on this platform.'
+    _DOLLARZERO="$0"
+else
+    # only certain platforms support the -e argument for readlink
+    if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then
+       _READLINK_ARG="-e"
+    fi
+    _DOLLARZERO=`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`
 fi
 
-_DOLLARZERO=`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`
 RHQ_AGENT_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`
 
 if [ -f "${RHQ_AGENT_BIN_DIR_PATH}/rhq-agent-env.sh" ]; then

@@ -77,6 +77,7 @@ import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.validator.EmailValidator;
 
 /**
  * @author Greg Hinkle
@@ -553,9 +554,8 @@ public class LoginView extends Canvas {
                 String name = item.getName();
                 if ((name != null) && (!name.isEmpty())) {
                     if (name.equals(EMAIL)) {
-                        RegExpValidator emailValidator = new RegExpValidator();
+                        EmailValidator emailValidator = new EmailValidator();
                         emailValidator.setErrorMessage(MSG.view_login_invalidEmail());
-                        emailValidator.setExpression("^([a-zA-Z0-9_.\\-+])+@(([a-zA-Z0-9\\-])+\\.)+[a-zA-Z0-9]{2,4}$");
                         item.setValidators(emailValidator);
                     }
                 }

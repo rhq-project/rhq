@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@ package org.rhq.coregui.client.admin.storage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,6 +69,9 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
     private static String FIELD_HEAP_NEW = "heap_new";
     private static String FIELD_THREAD_STACK_SIZE = "thread_stack_size";
     private static String FIELD_JMX_PORT = "jmx_port";
+    private static String FIELD_COMMITLOG = "commitlog";
+    private static String FIELD_DATA = "data";
+    private static String FIELD_SAVED_CACHES = "saved-caches";
 
     public StorageNodeConfigurationEditor(final StorageNodeConfigurationComposite configuration) {
         super();
@@ -211,6 +215,23 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         items.addAll(buildOneFormRowWithValidator(FIELD_JMX_PORT,
             MSG.view_adminTopology_storageNodes_settings_jmxPortName(), String.valueOf(configuration.getJmxPort()),
             MSG.view_adminTopology_storageNodes_settings_jmxPortDescription(), validator));
+
+        items.addAll(buildOneFormRowWithValidator(FIELD_COMMITLOG,
+                MSG.view_adminTopology_storageNodes_settings_commitLogLocationName(), configuration.getCommitLogLocation(),
+                MSG.view_adminTopology_storageNodes_settings_commitLogLocationDescription(), null));
+
+        List<String> dataLocations = configuration.getDataLocations();
+        if(dataLocations != null && dataLocations.size() == 1) {
+            // Since we don't support more than one data directory, don't show if user has overriden our defaults
+            items.addAll(buildOneFormRowWithValidator(FIELD_DATA,
+                    MSG.view_adminTopology_storageNodes_settings_dataFilesLocationName(), dataLocations.get(0),
+                    MSG.view_adminTopology_storageNodes_settings_dataFilesLocationDescription(), null));
+        }
+
+        items.addAll(buildOneFormRowWithValidator(FIELD_SAVED_CACHES,
+                MSG.view_adminTopology_storageNodes_settings_savedCachesLocationName(), configuration.getSavedCachesLocation(),
+                MSG.view_adminTopology_storageNodes_settings_savedCachesLocationDescription(), null));
+
         form.setFields(items.toArray(new FormItem[items.size()]));
         form.setWidth100();
         form.setOverflow(Overflow.VISIBLE);
@@ -271,6 +292,13 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         configuration.setHeapNewSize(getJVMMemoryString(form.getField(FIELD_HEAP_NEW).getValue().toString()));
         configuration.setThreadStackSize(form.getValueAsString(FIELD_THREAD_STACK_SIZE));
         configuration.setJmxPort(Integer.parseInt(form.getValueAsString(FIELD_JMX_PORT)));
+        configuration.setCommitLogLocation(form.getValueAsString(FIELD_COMMITLOG));
+        configuration.setSavedCachesLocation(form.getValueAsString(FIELD_SAVED_CACHES));
+
+        List<String> newDataLocations = new LinkedList<String>();
+        newDataLocations.add(form.getValueAsString(FIELD_DATA));
+        configuration.setDataLocations(newDataLocations);
+
         return configuration;
     }
 

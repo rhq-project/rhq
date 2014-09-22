@@ -31,6 +31,7 @@ import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
@@ -174,7 +175,7 @@ public class Start extends ControlCommand {
 
     private int startRHQServer() throws Exception {
         log.debug("Starting RHQ server");
-
+        validateServerPropertiesFile();
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "start");
 
         int rValue;

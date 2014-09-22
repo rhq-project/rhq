@@ -21,7 +21,6 @@ package org.rhq.server.metrics;
 
 import static org.testng.Assert.fail;
 
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -33,7 +32,6 @@ import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.FutureCallback;
 
@@ -50,7 +48,9 @@ import org.rhq.cassandra.ShutdownCluster;
 import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
+import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.MetricsTable;
+import org.rhq.server.metrics.domain.NumericMetric;
 import org.rhq.server.metrics.domain.ResultSetMapper;
 import org.rhq.server.metrics.domain.SimplePagedResult;
 
@@ -122,38 +122,24 @@ public class CassandraIntegrationTest {
         return dateTimeService.hour0();
     }
 
-    protected Iterable<AggregateNumericMetric> findAggregateMetrics(MetricsTable table, int scheduleId) {
+    protected DateTime hour(int hours) {
+        return dateTimeService.hour0().plusHours(hours);
+    }
+
+    protected Iterable<AggregateNumericMetric> findAggregateMetrics(Bucket bucket, int scheduleId) {
         String cql =
             "SELECT schedule_id, time, type, value " +
-                "FROM " + table + " " +
-                "WHERE schedule_id = ? " +
-                "ORDER BY time, type";
+            "FROM " + MetricsTable.AGGREGATE + " " +
+            "WHERE schedule_id = ? AND bucket = ? " +
+            "ORDER BY time, type";
         PreparedStatement statement = session.prepare(cql);
-        BoundStatement boundStatement = statement.bind(scheduleId);
+        BoundStatement boundStatement = statement.bind(scheduleId, bucket.toString());
 
         return new SimplePagedResult<AggregateNumericMetric>(boundStatement, new AggregateNumericMetricMapper(),
             storageSession);
     }
 
-    protected Iterable<AggregateNumericMetric> findAggregateMetricsWithMetadata(MetricsTable table, int scheduleId,
-        long startTime, long endTime) {
-
-        try {
-            String cql =
-                "SELECT schedule_id, time, type, value, ttl(value), writetime(value) " +
-                    "FROM " + table + " " +
-                    "WHERE schedule_id = ? AND time >= ? AND time < ?";
-            PreparedStatement statement = storageSession.prepare(cql);
-            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
-
-            return new SimplePagedResult<AggregateNumericMetric>(boundStatement, new AggregateNumericMetricMapper(true),
-                storageSession);
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
-    }
-
-    protected static class WaitForRead<T> implements FutureCallback<ResultSet> {
+    protected static class WaitForRead<T extends NumericMetric> implements FutureCallback<ResultSet> {
         private final Log log = LogFactory.getLog(WaitForRead.class);
 
         private CountDownLatch latch;

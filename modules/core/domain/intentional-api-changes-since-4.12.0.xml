@@ -25,5 +25,167 @@
     <method>ResourceTypeBundleConfiguration$BundleDestinationBaseDirectory(java.lang.String, java.lang.String, java.lang.String, java.lang.String)</method>
     <justification>This is not supposed to be called publicly.</justification>
   </difference>
-</differences>
 
+  <difference>
+    <className>org/rhq/core/domain/alert/AlertConditionLog</className>
+    <differenceType>6003</differenceType> <!-- Value of compile-time constant has changed -->
+    <field>MAX_LOG_LENGTH</field>
+    <justification>Increasing the length of db column and this constant depends on it.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/common/ProductInfo</className>
+    <differenceType>7002</differenceType> <!-- method removed -->
+    <method>java.lang.String getSupportedAgentVersions()</method>
+    <justification>Method renamed for build identifier.</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/common/ProductInfo</className>void setSupportedAgentVersions(java.lang.String)'
+    <differenceType>7002</differenceType> <!-- method removed -->
+    <method>void setSupportedAgentVersions(java.lang.String)</method>
+    <justification>Method renamed for build identifier.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/common/ProductInfo</className>
+    <differenceType>7012</differenceType><!-- method added -->
+    <method>java.lang.String getSupportedAgentBuilds()</method>
+    <justification>Method renamed for build identifier.</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/common/ProductInfo</className>
+    <differenceType>7012</differenceType><!-- method added -->
+    <method>void setSupportedAgentBuilds(java.lang.String)</method>
+    <justification>Method renamed for build identifier.</justification>
+  </difference>
+
+
+    <!--
+    Covers these cases:
+    [ERROR] 7004: org.rhq.core.domain.alert.composite.AlertConditionAvailabilityCategoryComposite:
+    In method 'public AlertConditionAvailabilityCategoryComposite(org.rhq.core.domain.alert.AlertCondition,
+    java.lang.Integer, java.lang.Integer, org.rhq.core.domain.measurement.AvailabilityType)' the number of arguments
+    has changed
+    -->
+  <difference>
+    <className>org/rhq/core/domain/alert/composite/*CategoryComposite</className>
+    <differenceType>7004</differenceType>
+    <method>*CategoryComposite(org.rhq.core.domain.alert.AlertCondition, *)</method>
+    <justification>BZ1032192: Hibernate query change to be more efficient</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/alert/composite/AlertConditionAvailabilityCategoryComposite</className>
+    <differenceType>7002</differenceType>
+    <method>AlertConditionAvailabilityCategoryComposite(org.rhq.core.domain.alert.AlertCondition, java.lang.Integer, org.rhq.core.domain.measurement.AvailabilityType)</method>
+    <justification>BZ1032192: Method was deprecated and couldn't create a valid object anyway</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>java.lang.String getCommitLogLocation()</method>
+    <justification>
+      Add new updateable information to the composite model. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>void setCommitLogLocation(java.lang.String)</method>
+    <justification>
+      Add new updateable information to the composite model. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>java.lang.String getSavedCachesLocation()</method>
+    <justification>
+      Add new updateable information to the composite model. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>void setSavedCachesLocation(java.lang.String)</method>
+    <justification>
+      Add new updateable information to the composite model. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>java.util.List getDataLocations()</method>
+    <justification>
+      Add new updateable information to the composite model. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>void setDataLocations(java.util.List)</method>
+    <justification>
+      Add new updateable information to the composite model. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNodeConfigurationComposite</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>void isDirectoriesEqual(org.rhq.core.domain.cloud.StorageNodeConfigurationComposite)</method>
+    <justification>
+      Add new method to verify equality of only storage directories. https://bugzilla.redhat.com/show_bug.cgi?id=1074636
+    </justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/content/InstalledPackage</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_BY_SET_OF_PACKAGE_VER_IDS</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/content/InstalledPackage</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_BY_RESOURCE_AND_PACKAGE</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/content/InstalledPackage</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_INSTALLED_PACKAGE_HISTORY</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/content/InstalledPackage</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_BY_RESOURCE_AND_PACKAGE_VER</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/content/PackageVersion</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_BY_PACKAGE_SHA</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/content/PackageVersion</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_REPOS</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/content/PackageVersion</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_PACKAGE_BY_FILENAME</field>
+    <justification>BZ1073691: Unused and non-indexed Query</justification>
+  </difference>
+</differences>

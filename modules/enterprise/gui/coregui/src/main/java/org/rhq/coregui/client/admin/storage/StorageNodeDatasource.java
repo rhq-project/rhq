@@ -44,7 +44,6 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -57,13 +56,16 @@ import org.rhq.core.domain.cloud.StorageNodeLoadComposite.MeasurementAggregateWi
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.StorageNodeLoadCompositeDatasourceField;
+import org.rhq.coregui.client.components.table.IconField;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.Log;
@@ -120,6 +122,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         fields.add(idField);
 
         fields.add(FIELD_ADDRESS.getListGridField("*"));
+
         fields.add(FIELD_ALERTS.getListGridField("170"));
 
         ListGridField field = FIELD_MEMORY.getListGridField("120");
@@ -151,7 +154,6 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
                     return value.toString();
             }
         });
-
         field.setShowHover(true);
         field.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
@@ -172,17 +174,8 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         //        resourceIdField.setHidden(true);
         fields.add(resourceIdField);
 
-        field = FIELD_AVAILABILITY.getListGridField("65");
-        field.setAlign(Alignment.CENTER);
-        field.setShowHover(true);
-        field.setHoverCustomizer(new HoverCustomizer() {
-            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                Object availability = record.getAttribute(FIELD_AVAILABILITY.propertyName());
-                return "Storage Node is " + availability == null ? AvailabilityType.UNKNOWN.toString() : availability
-                    .toString();
-            }
-        });
-        fields.add(field);
+        IconField availabilityField = new IconField(FIELD_AVAILABILITY.propertyName(), FIELD_AVAILABILITY.title(), 70);
+        fields.add(availabilityField);
 
         return fields;
     }
@@ -245,7 +238,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             record.setAttribute(FIELD_ADDRESS.propertyName(), from.getHostname());
             record.setAttribute(FIELD_CQL_PORT.propertyName(), node.getCqlPort());
             record.setAttribute(FIELD_OPERATION_MODE.propertyName(), node.getOperationMode());
-            record.setAttribute(FIELD_STATUS.propertyName(), node.getStatus());
+            record.setAttribute(FIELD_STATUS.propertyName(), node.getStatus().toString());
             record.setAttribute(FIELD_CTIME.propertyName(), node.getCtime());
             record.setAttribute(FIELD_ERROR_MESSAGE.propertyName(), node.getErrorMessage());
             if (node.getFailedOperation() != null && node.getFailedOperation().getResource() != null) {
@@ -256,8 +249,13 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             }
             if (node.getResource() != null) {
                 record.setAttribute(FIELD_RESOURCE_ID.propertyName(), node.getResource().getId());
-                record.setAttribute(FIELD_AVAILABILITY.propertyName(), node.getResource().getCurrentAvailability()
-                    .getAvailabilityType());
+                record.setAttribute(
+                    FIELD_AVAILABILITY.propertyName(),
+                    ImageManager.getAvailabilityIconFromAvailType(node.getResource().getCurrentAvailability()
+                        .getAvailabilityType()));
+            } else {
+                record.setAttribute(FIELD_AVAILABILITY.propertyName(),
+                    ImageManager.getAvailabilityIconFromAvailType(AvailabilityType.UNKNOWN));
             }
         }
         int value = from.getUnackAlerts();
@@ -365,9 +363,9 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
                 }
             });
             fields.add(nameField);
-            fields.add(StorageNodeLoadCompositeDatasourceField.FIELD_MIN.getListGridField("130"));
-            fields.add(StorageNodeLoadCompositeDatasourceField.FIELD_AVG.getListGridField("130"));
-            fields.add(StorageNodeLoadCompositeDatasourceField.FIELD_MAX.getListGridField("130"));
+            fields.add(StorageNodeLoadCompositeDatasourceField.FIELD_MIN.getListGridField("100"));
+            fields.add(StorageNodeLoadCompositeDatasourceField.FIELD_AVG.getListGridField("100"));
+            fields.add(StorageNodeLoadCompositeDatasourceField.FIELD_MAX.getListGridField("100"));
             ListGridField hoverField = new ListGridField("hover", "hover");
             hoverField.setHidden(true);
             fields.add(hoverField);
@@ -474,26 +472,39 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
 
         private ListGridRecord makeListGridRecord(MeasurementAggregateWithUnits aggregateWithUnits, String name,
             String hover, String id) {
-            if (aggregateWithUnits == null)
-                return null;
             ListGridRecord record = new ListGridRecord();
+
             record.setAttribute("id", id);
             record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_NAME.propertyName(), name);
-            record.setAttribute(
-                StorageNodeLoadCompositeDatasourceField.FIELD_MIN.propertyName(),
-                MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMin(),
-                    aggregateWithUnits.getUnits(), true));
-            record.setAttribute("avgFloat", aggregateWithUnits.getAggregate().getAvg());
-            record.setAttribute(
-                StorageNodeLoadCompositeDatasourceField.FIELD_AVG.propertyName(),
-                MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getAvg(),
-                    aggregateWithUnits.getUnits(), true));
-            record.setAttribute(
-                StorageNodeLoadCompositeDatasourceField.FIELD_MAX.propertyName(),
-                MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMax(),
-                    aggregateWithUnits.getUnits(), true));
-            record.setAttribute("hover", hover);
+            if (aggregateWithUnits == null) {
+                record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_MIN.propertyName(),
+                    format(null, null, true));
+                record.setAttribute("avgFloat", Double.NaN);
+                record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_AVG.propertyName(),
+                    format(null, null, true));
+                record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_MAX.propertyName(),
+                    format(null, null, true));
+                record.setAttribute("hover", hover);
+            } else {
+                record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_MIN.propertyName(),
+                    format(aggregateWithUnits.getAggregate().getMin(), aggregateWithUnits.getUnits(), true));
+                record.setAttribute("avgFloat", aggregateWithUnits.getAggregate().getAvg());
+                record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_AVG.propertyName(),
+                    format(aggregateWithUnits.getAggregate().getAvg(), aggregateWithUnits.getUnits(), true));
+                record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_MAX.propertyName(),
+                    format(aggregateWithUnits.getAggregate().getMax(), aggregateWithUnits.getUnits(), true));
+                record.setAttribute("hover", hover);
+            }
             return record;
+        }
+
+        // We avoid the use of --no-data-available-- here, for BZ1071291
+        private static String format(Double value, MeasurementUnits targetUnits, boolean bestFit) {
+            if (null == value || value.isNaN()) {
+                return "NaN";
+            }
+
+            return MeasurementConverterClient.format(value, targetUnits, bestFit);
         }
 
         @Override

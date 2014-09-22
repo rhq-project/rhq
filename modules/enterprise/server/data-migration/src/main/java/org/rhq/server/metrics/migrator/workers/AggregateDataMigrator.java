@@ -53,47 +53,47 @@ public class AggregateDataMigrator extends AbstractMigrationWorker implements Ca
     private final String selectQuery;
     private final String deleteQuery;
     private final String countQuery;
-    private final MetricsTable metricsTable;
-    private final MetricsIndexUpdateAccumulator metricsIndexAccumulator;
+    private final MigrationTable migrationTable;
+    private final MetricsIndexMigrator metricsIndexAccumulator;
 
     /**
      * @param query
-     * @param metricsTable
+     * @param migrationTable
      */
-    public AggregateDataMigrator(MetricsTable metricsTable, DataMigratorConfiguration config)
+    public AggregateDataMigrator(MigrationTable migrationTable, DataMigratorConfiguration config)
         throws Exception {
 
-        this.metricsTable = metricsTable;
+        this.migrationTable = migrationTable;
         this.config = config;
 
-        if (MetricsTable.ONE_HOUR.equals(this.metricsTable)) {
+        if (MigrationTable.ONE_HOUR.equals(this.migrationTable)) {
             this.selectQuery = MigrationQuery.SELECT_1H_DATA.toString();
             this.deleteQuery = MigrationQuery.DELETE_1H_DATA.toString();
             this.countQuery = MigrationQuery.COUNT_1H_DATA.toString();
-        } else if (MetricsTable.SIX_HOUR.equals(this.metricsTable)) {
+        } else if (MigrationTable.SIX_HOUR.equals(this.migrationTable)) {
             this.selectQuery = MigrationQuery.SELECT_6H_DATA.toString();
             this.deleteQuery = MigrationQuery.DELETE_6H_DATA.toString();
             this.countQuery = MigrationQuery.COUNT_6H_DATA.toString();
-        } else if (MetricsTable.TWENTY_FOUR_HOUR.equals(this.metricsTable)) {
+        } else if (MigrationTable.TWENTY_FOUR_HOUR.equals(this.migrationTable)) {
             this.selectQuery = MigrationQuery.SELECT_1D_DATA.toString();
             this.deleteQuery = MigrationQuery.DELETE_1D_DATA.toString();
             this.countQuery = MigrationQuery.COUNT_1D_DATA.toString();
         } else {
-            throw new Exception("MetricsTable " + metricsTable.toString() + " not supported by this migrator.");
+            throw new Exception("MigrationTable " + migrationTable.toString() + " not supported by this migrator.");
         }
 
-        metricsIndexAccumulator = new MetricsIndexUpdateAccumulator(metricsTable, config);
+        metricsIndexAccumulator = new MetricsIndexMigrator(migrationTable, config);
     }
 
     @Override
     public long estimate() throws Exception {
         long recordCount = this.getRowCount(this.countQuery);
-        log.debug("Retrieved record count for table " + metricsTable.toString() + " -- " + recordCount);
+        log.debug("Retrieved record count for table " + migrationTable.toString() + " -- " + recordCount);
 
         Telemetry telemetry = this.performMigration(Task.Estimate);
         long estimatedTimeToMigrate = telemetry.getMigrationTime();
 
-        long estimation = (recordCount / (long) MAX_RECORDS_TO_LOAD_FROM_SQL / (long) NUMBER_OF_BATCHES_FOR_ESTIMATION)
+        long estimation = (recordCount / MAX_RECORDS_TO_LOAD_FROM_SQL / NUMBER_OF_BATCHES_FOR_ESTIMATION)
             * estimatedTimeToMigrate;
 
         estimation += telemetry.getNonMigrationTime();
@@ -131,9 +131,9 @@ public class AggregateDataMigrator extends AbstractMigrationWorker implements Ca
                 nativeQuery.executeUpdate();
                 session.getTransaction().commit();
                 closeSQLSession(session);
-                log.info("- " + metricsTable.toString() + " - Cleaned -");
+                log.info("- " + migrationTable.toString() + " - Cleaned -");
             } catch (Exception e) {
-                log.error("Failed to delete " + metricsTable.toString()
+                log.error("Failed to delete " + migrationTable.toString()
                     + " data. Attempting to delete data one more time...");
 
                 failureCount++;
@@ -173,7 +173,7 @@ public class AggregateDataMigrator extends AbstractMigrationWorker implements Ca
                     insertDataToCassandra(existingData);
                     break;
                 } catch (Exception e) {
-                    log.error("Failed to insert " + metricsTable.toString()
+                    log.error("Failed to insert " + migrationTable.toString()
                         + " data. Attempting to insert the current batch of data one more time");
                     log.error(e);
 
@@ -184,7 +184,7 @@ public class AggregateDataMigrator extends AbstractMigrationWorker implements Ca
                 }
             }
 
-            log.info("- " + metricsTable + " - " + lastMigratedRecord + " -");
+            log.info("- " + migrationTable + " - " + lastMigratedRecord + " -");
 
             numberOfBatchesMigrated++;
             if (Task.Estimate.equals(task) && numberOfBatchesMigrated >= NUMBER_OF_BATCHES_FOR_ESTIMATION) {
@@ -213,7 +213,7 @@ public class AggregateDataMigrator extends AbstractMigrationWorker implements Ca
         long creationTimeMillis;
         long itemTTLSeconds;
         long currentTimeMillis = System.currentTimeMillis();
-        long expectedTTLMillis = metricsTable.getTTLinMilliseconds();
+        long expectedTTLMillis = migrationTable.getTTLinMilliseconds();
 
         for (Object[] rawMeasurement : existingData) {
             creationTimeMillis = Long.parseLong(rawMeasurement[MigrationQuery.TIMESTAMP_INDEX].toString());
@@ -223,22 +223,16 @@ public class AggregateDataMigrator extends AbstractMigrationWorker implements Ca
                 int scheduleId = Integer.parseInt(rawMeasurement[MigrationQuery.SCHEDULE_INDEX].toString());
                 Date time = new Date(creationTimeMillis);
 
-                batch.add(QueryBuilder.insertInto(metricsTable.toString()).value("schedule_id", scheduleId)
-                    .value("time", time).value("type", AggregateType.AVG.ordinal())
-                    .value("value", Double.parseDouble(rawMeasurement[MigrationQuery.VALUE_INDEX].toString()))
+                batch.add(QueryBuilder.insertInto(MetricsTable.AGGREGATE.toString())
+                    .value("schedule_id", scheduleId)
+                    .value("bucket", migrationTable.getMigrationBucket().toString())
+                    .value("time", time)
+                    .value("avg", Double.parseDouble(rawMeasurement[MigrationQuery.VALUE_INDEX].toString()))
+                    .value("min", Double.parseDouble(rawMeasurement[MigrationQuery.MIN_VALUE_INDEX].toString()))
+                    .value("max", Double.parseDouble(rawMeasurement[MigrationQuery.MAX_VALUE_INDEX].toString()))
                     .using(ttl((int) itemTTLSeconds)));
 
-                batch.add(QueryBuilder.insertInto(metricsTable.toString()).value("schedule_id", scheduleId)
-                    .value("time", time).value("type", AggregateType.MIN.ordinal())
-                    .value("value", Double.parseDouble(rawMeasurement[MigrationQuery.MIN_VALUE_INDEX].toString()))
-                    .using(ttl((int) itemTTLSeconds)));
-
-                batch.add(QueryBuilder.insertInto(metricsTable.toString()).value("schedule_id", scheduleId)
-                    .value("time", time).value("type", AggregateType.MAX.ordinal())
-                    .value("value", Double.parseDouble(rawMeasurement[MigrationQuery.MAX_VALUE_INDEX].toString()))
-                    .using(ttl((int) itemTTLSeconds)));
-
-                batchSize += 3;
+                batchSize++;
 
                 metricsIndexAccumulator.add(scheduleId, creationTimeMillis);
             }

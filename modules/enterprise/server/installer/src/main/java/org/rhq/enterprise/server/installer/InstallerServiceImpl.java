@@ -563,20 +563,23 @@ public class InstallerServiceImpl implements InstallerService {
                         return DbUtil.getConnection(dbUrl, dbUsername, dbPassword);
                     }
                 };
+                Properties schemaProperties = new Properties();
+                schemaProperties.put(SchemaManager.RELATIONAL_DB_CONNECTION_FACTORY_PROP, connectionFactory);
+                schemaProperties.put(SchemaManager.DATA_DIR, getAppServerDataDir());
 
                 try {
                     storageNodeSchemaManager.checkCompatibility();
                 } catch (AuthenticationException e1) {
                     log("Install RHQ schema along with updates to storage nodes.");
-                    storageNodeSchemaManager.install(connectionFactory);
+                    storageNodeSchemaManager.install(schemaProperties);
                     storageNodeSchemaManager.updateTopology();
                 } catch (SchemaNotInstalledException e2) {
                     log("Install RHQ schema along with updates to storage nodes.");
-                    storageNodeSchemaManager.install(connectionFactory);
+                    storageNodeSchemaManager.install(schemaProperties);
                     storageNodeSchemaManager.updateTopology();
                 } catch (InstalledSchemaTooOldException e3) {
                     log("Install RHQ schema updates to storage cluster.");
-                    storageNodeSchemaManager.install(connectionFactory);
+                    storageNodeSchemaManager.install(schemaProperties);
                 }
                 storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
                 storageNodeSchemaManager.shutdown();
@@ -1100,6 +1103,11 @@ public class InstallerServiceImpl implements InstallerService {
                 String hostStr = fallbackProps.get("jboss.bind.address.management");
                 if (hostStr != null && hostStr.length() > 0 && !hostStr.equals(host)) {
                     host = hostStr;
+
+                    // BZ 1141175 - if binding address is "all addresses", then use 127.0.0.1 because 0.0.0.0 can't be used by the client
+                    if (host.equals("0.0.0.0")) {
+                        host = "127.0.0.1";
+                    }
                     differentValues = true;
                 }
                 String portStr = fallbackProps.get("jboss.management.native.port");

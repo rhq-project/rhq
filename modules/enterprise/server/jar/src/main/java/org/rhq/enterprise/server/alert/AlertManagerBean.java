@@ -974,12 +974,51 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             String severity = condition.getName();
             if (condition.getOption() != null && condition.getOption().length() > 0) {
                 String expression = condition.getOption();
-                if (isShort) {
-                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT_WITH_EXPR_SHORT, severity,
-                        expression));
+                String regexEventDetails = "", regexSourceLocation = "";
+                if (expression.contains(AlertCondition.ADHOC_SEPARATOR)) {
+                    String[] regexes = expression.split(AlertCondition.ADHOC_SEPARATOR);
+                    if (regexes.length > 0) {
+                        regexEventDetails = regexes[0];
+                        if (regexes.length > 1) {
+                            regexSourceLocation = regexes[1];
+                        }
+                    }
                 } else {
-                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT_WITH_EXPR, severity,
-                        expression));
+                    regexEventDetails = expression; // old approach -> probably working with db before rhq 4.13
+                }
+
+                if (isShort) {
+                    if (!regexEventDetails.isEmpty()) {
+                        if (!regexSourceLocation.isEmpty()) {
+                            str.append(AlertI18NFactory.getMessage(
+                                AlertI18NResourceKeys.ALERT_EVENT_WITH_EXPR_WITH_SOURCE_SHORT, severity,
+                                regexEventDetails, regexSourceLocation));
+                        } else {
+                            str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT_WITH_EXPR_SHORT,
+                                severity, regexEventDetails));
+                        }
+                    } else if (!regexSourceLocation.isEmpty()) {
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT_WITH_SOURCE_SHORT,
+                            severity, regexSourceLocation));
+                    } else {
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT_SHORT, severity));
+                    }
+                } else {
+                    if (!regexEventDetails.isEmpty()) {
+                        if (!regexSourceLocation.isEmpty()) {
+                            str.append(AlertI18NFactory.getMessage(
+                                AlertI18NResourceKeys.ALERT_EVENT_WITH_EXPR_WITH_SOURCE, severity, regexEventDetails,
+                                regexSourceLocation));
+                        } else {
+                            str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT_WITH_EXPR,
+                                severity, regexEventDetails));
+                        }
+                    } else if (!regexSourceLocation.isEmpty()) {
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT_WITH_SOURCE, severity,
+                            regexSourceLocation));
+                    } else {
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT, severity));
+                    }
                 }
             } else {
                 if (isShort) {

@@ -166,8 +166,20 @@ public interface AlertI18NResourceKeys {
     @I18NMessages({ @I18NMessage("Event With Severity [{0}] Matching Expression \"{1}\"") /*, @I18NMessage(locale = "de", value = "") */})
     String ALERT_EVENT_WITH_EXPR = "alert.condition.event-with-expr";
 
+    @I18NMessages({ @I18NMessage("Event With Severity [{0}] with Details Matching Expression \"{1}\" With Event Source Matching Expression \"{2}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_EVENT_WITH_EXPR_WITH_SOURCE = "alert.condition.event-with-expr-with-source";
+
     @I18NMessages({ @I18NMessage("[{0}] Event Matching \"{1}\"") /*, @I18NMessage(locale = "de", value = "") */})
     String ALERT_EVENT_WITH_EXPR_SHORT = "alert.condition.event-with-expr.short";
+
+    @I18NMessages({ @I18NMessage("[{0}] Event Matching \"{1}\" with Event Source Matching \"{2}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_EVENT_WITH_EXPR_WITH_SOURCE_SHORT = "alert.condition.event-with-expr-with-source.short";
+
+    @I18NMessages({ @I18NMessage("Event With Severity [{0}] With Event Source Matching Expression \"{1}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_EVENT_WITH_SOURCE = "alert.condition.event-with-source-expr";
+
+    @I18NMessages({ @I18NMessage("[{0}] Event With Event Source Matching \"{1}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_EVENT_WITH_SOURCE_SHORT = "alert.condition.event-with-source-expr.short";
 
     @I18NMessages({ @I18NMessage("Drift Detected") /*, @I18NMessage(locale = "de", value = "") */})
     String ALERT_DRIFT = "alert.condition.drift";

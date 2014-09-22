@@ -46,6 +46,8 @@ import org.rhq.core.pluginapi.availability.AvailabilityFacet;
  * every proxy. Instead, LOG is static. This should be OK for how this proxy is used.
  *
  * @author Elias Ross
+ * @author Jay Shaughnessy
+ * @author John Mazzitelli
  */
 public class AvailabilityProxy implements AvailabilityFacet, Callable<AvailabilityType> {
 
@@ -145,15 +147,18 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
     }
 
     /**
-     * Returns the current or most currently reported availability. If
-     * {@link AvailabilityType#UNKNOWN} is returned, then the availability is
-     * being computed.
+     * Returns the current or most currently reported availability. If {@link AvailabilityType#UNKNOWN} is returned,
+     * then the availability is being computed.
+     * <p/>
+     * This method is is not designed to be called concurrently, so it is synchronized to ensure one avail check
+     * completes before another is processed.  This protects against live checks (or test code) interfering with
+     * scheduled checks.
      *
-     * @throws TimeoutException
+     * @throws org.rhq.core.pc.inventory.TimeoutException
      *             if an async check exceeds AVAIL_ASYNC_TIMEOUT
      */
     @Override
-    public AvailabilityType getAvailability() {
+    synchronized public AvailabilityType getAvailability() {
         AvailabilityType avail = UNKNOWN;
 
         try {
@@ -162,7 +167,7 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
             if (availabilityFuture != null) {
                 if (availabilityFuture.isDone()) {
                     // hold onto and report the last known value if necessary
-                    avail = availabilityFuture.get();
+                    avail = processAvail(availabilityFuture.get());
 
                 } else {
                     // We are still waiting on the previously submitted async avail check - let's just return
@@ -171,7 +176,6 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
                     // In this case, throw a detailed exception to the avail checker.
                     long elapsedTime = System.currentTimeMillis() - lastSubmitTime;
                     if (elapsedTime > getAsyncTimeout()) {
-
                         Throwable t = new Throwable();
                         if (current != null) {
                             t.setStackTrace(current.getStackTrace());
@@ -185,6 +189,7 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
                         lastSubmitTime = System.currentTimeMillis();
 
                         throw new TimeoutException(msg, t);
+
                     } else {
                         return getLastAvailabilityType();
                     }
@@ -199,7 +204,7 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
             // resource and stop performing synchronous checks, which would likely fail to return fast enough anyway.
             if (availSyncConsecutiveTimeouts < getSyncTimeoutLimit()) {
                 // attempt to get availability synchronously
-                avail = availabilityFuture.get(getSyncTimeout(), TimeUnit.MILLISECONDS);
+                avail = processAvail(availabilityFuture.get(getSyncTimeout(), TimeUnit.MILLISECONDS));
 
                 // success (failure will throw exception)
                 availSyncConsecutiveTimeouts = 0;
@@ -222,16 +227,23 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
 
         } catch (ExecutionException e) {
             availabilityFuture = null; // undefine, so in next run new (no longer failed) instance is scheduled
-            throw new RuntimeException("Availability check failed : "+e.getCause().getMessage(), e.getCause());
+            throw new RuntimeException("Availability check failed : " + e.getCause().getMessage(), e.getCause());
 
         } catch (java.util.concurrent.TimeoutException e) {
             // failed to get avail synchronously. next call to the future will return availability (we hope)
             ++availSyncConsecutiveTimeouts;
         }
 
-        return processAvail(avail);
+        return avail;
     }
 
+    /**
+     * Ensure the return value of {@link AvailabilityFacet#getAvailability()} satisfies the method contract. Note
+     * that the {{@link #getAvailability()} is also allowed to return {@link AvailabilityType#UNKNOWN}.
+     *
+     * @param type
+     * @return
+     */
     private AvailabilityType processAvail(AvailabilityType type) {
         AvailabilityType result = type;
         switch (type) {
@@ -260,7 +272,6 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
                     }
                 }
                 availSyncConsecutiveTimeouts = 0;
-
             }
         }
 

@@ -19,6 +19,7 @@
 package org.rhq.core.pc.inventory;
 
 import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
@@ -88,7 +89,7 @@ public class AvailabilityProxyTest implements AvailabilityFacet {
 
         assertEquals("should be up", UP, ap.getAvailability()); // waits 1ms and returns synchronously
         timeout = 1200;
-        assertEquals("should be down", DOWN, ap.getAvailability()); // waits 1s and times out
+        assertEquals("should be down", UNKNOWN, ap.getAvailability()); // waits 1s and times out
         Thread.sleep(300); // now waited total of 1s + .3s = 1.3 sec > 1.2s
         assertEquals("should be up now", UP, ap.getAvailability()); // waits 1s and returns last reported value (UP)
 

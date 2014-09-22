@@ -26,7 +26,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 
 /**
  * Provides the basic availability checking for all managed resources.
- * 
+ *
  * @author John Mazzitelli
  */
 public interface AvailabilityFacet {
@@ -39,8 +39,9 @@ public interface AvailabilityFacet {
      * entity running inside it. Availability for all child resources would automatically be set to
      * {@link AvailabilityType#DOWN down} in this case.
      *
-     * @return {@link AvailabilityType#UP} if the resource can be accessed; otherwise {@link AvailabilityType#DOWN}.
-     * Any other return value is invalid.
+     * @return {@link AvailabilityType#UP} if the resource is responding as expected; {@link AvailabilityType#DOWN} if
+     * it is not responding as expected; {@link AvailabilityType#MISSING} if the resource type supports this feature
+     * and the resource is physically missing. Any other return value is invalid.
      */
     AvailabilityType getAvailability();
 }

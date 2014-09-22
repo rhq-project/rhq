@@ -220,9 +220,9 @@ public class MigrateAggregateMetricsTest extends SchemaUpgradeTest {
 
     private void createResource() throws Exception {
         String insertResourceType = "insert into rhq_resource_type (id, name, category, creation_data_type, " +
-            "create_delete_policy, singleton, supports_manual_add, missing_policy) values (" + RESOURCE_TYPE_ID +
-            ", 'migration-test-type', 'test', 'test', 'test', " + jdbcBooleanValue(true) + ", " +
-            jdbcBooleanValue(true) + ", 'test')";
+            "create_delete_policy, singleton, supports_manual_add, missing_policy, deleted) values (" +
+            RESOURCE_TYPE_ID + ", 'migration-test-type', 'test', 'test', 'test', " + jdbcBooleanValue(true) + ", " +
+            jdbcBooleanValue(true) + ", 'test', " + jdbcBooleanValue(false) + ")";
 
         String insertResource = "insert into rhq_resource (id, resource_type_id, uuid, resource_key) values (" +
             RESOURCE_ID + ", " + RESOURCE_TYPE_ID + ", 'migration-test', 'migration-test')";

@@ -837,7 +837,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         try {
             String setting = getUnmaskedSystemSettings(true).get(SystemSetting.LOGIN_WITHOUT_ROLES_ENABLED);
             if (setting == null) {
-                setting = "false";
+                setting = "true";
             }
             return Boolean.valueOf(setting);
         } catch (Exception t) {

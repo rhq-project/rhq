@@ -1141,6 +1141,8 @@
     <metric property="domain-temp-dir" dataType="trait" displayName="Temporary Directory" defaultInterval="600000"
             defaultOn="true"
             description="The temporary directory (usually 'domain/tmp'). May serve as deployment directory for handover bundles'"/>
+    <metric property="active-patches" displayName="Active Patches" dataType="trait" displayType="summary"
+            defaultOn="true" description="The comma-separated list of patches that are currently applied to the server. The first entry is always the cumulative patch, followed by 0 or more one-off patches." />
 
     <event name="logEntry" description="an entry in a log file"/>
 
@@ -1581,6 +1583,8 @@
     <metric property="temp-dir" dataType="trait" displayName="Temporary Directory" defaultInterval="600000"
             defaultOn="true"
             description="The temporary directory (usually 'standalone/tmp'). May serve as deployment directory for handover only bundles'"/>
+    <metric property="active-patches" displayName="Active Patches" dataType="trait" displayType="summary"
+            defaultOn="true" description="The comma-separated list of patches that are currently applied to the server. The first entry is always the cumulative patch, followed by 0 or more one-off patches." />
 
     <event name="logEntry" description="an entry in a log file"/>
 

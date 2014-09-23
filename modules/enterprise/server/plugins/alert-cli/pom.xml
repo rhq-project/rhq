@@ -19,6 +19,18 @@
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+          <groupId>org.jboss</groupId>
+          <artifactId>jboss-vfs</artifactId>
+          <version>${jboss-vfs.version}</version>
+          <scope>provided</scope> <!-- by the EAR -->
+        </dependency>
+        <dependency>
+          <groupId>org.jboss</groupId>
+          <artifactId>jandex</artifactId>
+          <version>1.0.3.Final</version>
+          <scope>provided</scope> <!-- by the container (module referenced by the EAR) -->
+        </dependency>
     </dependencies>
 
     <build>

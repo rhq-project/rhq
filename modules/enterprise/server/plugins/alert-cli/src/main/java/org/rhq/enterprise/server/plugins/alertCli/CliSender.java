@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.server.plugins.alertCli;
@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -73,6 +74,7 @@ import org.rhq.scripting.ScriptSourceProviderFactory;
  * @author Lukas Krejci
  */
 public class CliSender extends AlertSender<CliComponent> {
+    private static final Log LOG = LogFactory.getLog(CliSender.class);
 
     private static final int MAX_RESULT_SIZE = 4000;
 
@@ -82,8 +84,6 @@ public class CliSender extends AlertSender<CliComponent> {
     public static final String PROP_USER_NAME = "userName";
     public static final String PROP_USER_PASSWORD = "userPassword";
 
-    private static final Log LOG = LogFactory.getLog(CliSender.class);
-
     private static final String SUMMARY_TEMPLATE = "Ran script $packageName in version $packageVersion from repo $repoName as user $userName.";
     private static final String PREVIEW_TEMPLATE = "Run script $packageName from repo $repoName as user $userName.";
 
@@ -92,7 +92,7 @@ public class CliSender extends AlertSender<CliComponent> {
     //no more than 10 concurrently running CLI notifications..
     //is that enough?
     private static final int MAX_SCRIPT_ENGINES = 10;
-    private static Map<String, Queue<ScriptEngine>> SCRIPT_ENGINES = new HashMap<String, Queue<ScriptEngine>>();
+    private static final Map<String, Queue<ScriptEngine>> SCRIPT_ENGINES = new HashMap<String, Queue<ScriptEngine>>();
     private static int ENGINES_IN_USE = 0;
 
     /**
@@ -114,6 +114,7 @@ public class CliSender extends AlertSender<CliComponent> {
         String scriptFileExtension;
     }
 
+    @Override
     public SenderResult send(Alert alert) {
         SenderResult result = new SenderResult();
         BufferedReader reader = null;
@@ -152,7 +153,7 @@ public class CliSender extends AlertSender<CliComponent> {
                         + supportedExtensions);
             }
 
-            engine = getScriptEngine(alert, scriptOut, config, language);
+            engine = getScriptEngine(alert, scriptOut, config, language, pluginComponent.getDomainPackagesNames());
 
             reader = new BufferedReader(new InputStreamReader(packageBits));
 
@@ -165,7 +166,7 @@ public class CliSender extends AlertSender<CliComponent> {
                 @Override
                 public void run() {
                     try {
-                        e.eval(rdr);                    
+                        e.eval(rdr);
                     } catch (ScriptException e) {
                         exceptionHolder.scriptException = e;
                     } catch (Throwable e) {
@@ -195,7 +196,7 @@ public class CliSender extends AlertSender<CliComponent> {
                 int line = exceptionHolder.scriptException.getLineNumber();
                 String scriptName = createSummary(config, "script $packageName ($packageVersion) in repo $repoName");
                 throw new ScriptException(message, scriptName, line, col);
-            } else if (exceptionHolder.throwable  != null) {
+            } else if (exceptionHolder.throwable != null) {
                 LOG.info("The script execution for CLI notification of alert [" + alert + "] failed.",
                     exceptionHolder.throwable);
 
@@ -287,9 +288,8 @@ public class CliSender extends AlertSender<CliComponent> {
         return results;
     }
 
-    private static ScriptEngine getScriptEngine(Alert alert, PrintWriter output, Config config, String language)
-        throws ScriptException,
-        IOException, InterruptedException {
+    private static ScriptEngine getScriptEngine(Alert alert, PrintWriter output, Config config, String language,
+        Set<String> domainPackagesNames) throws ScriptException, IOException, InterruptedException {
         Subject user = config.subject;
 
         LocalClient client = new LocalClient(user);
@@ -297,7 +297,7 @@ public class CliSender extends AlertSender<CliComponent> {
         StandardBindings bindings = new StandardBindings(output, client);
         bindings.put("alert", alert);
 
-        ScriptEngine engine = takeEngine(bindings, language);
+        ScriptEngine engine = takeEngine(bindings, language, domainPackagesNames);
         engine.getContext().setWriter(output);
         engine.getContext().setErrorWriter(output);
 
@@ -321,6 +321,7 @@ public class CliSender extends AlertSender<CliComponent> {
         final PipedOutputStream out = new PipedOutputStream(bits);
 
         Thread reader = new Thread(new Runnable() {
+            @Override
             public void run() {
                 try {
                     csm.outputPackageVersionBits(versionToUse, out);
@@ -443,22 +444,27 @@ public class CliSender extends AlertSender<CliComponent> {
 
     private int getIntFromConfiguration(String propName, String errorMessage, String convertErrorMessage)
         throws IllegalArgumentException {
-        PropertySimple prop = alertParameters.getSimple(propName);
 
+        PropertySimple prop = alertParameters.getSimple(propName);
         if (prop == null) {
             throw new IllegalArgumentException(errorMessage);
         }
 
+        Integer integerValue;
         try {
-            return prop.getIntegerValue();
+            integerValue = prop.getIntegerValue();
         } catch (Exception e) {
             throw new IllegalArgumentException(convertErrorMessage + e.getMessage(), e);
         }
+
+        if (integerValue == null) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+        return integerValue;
     }
 
-    private static ScriptEngine takeEngine(StandardBindings bindings, String language) throws InterruptedException,
-        ScriptException,
-        IOException {
+    private static ScriptEngine takeEngine(StandardBindings bindings, String language, Set<String> domainPackagesNames)
+        throws InterruptedException, ScriptException, IOException {
         synchronized (SCRIPT_ENGINES) {
             if (ENGINES_IN_USE >= MAX_SCRIPT_ENGINES) {
                 SCRIPT_ENGINES.wait();
@@ -473,8 +479,8 @@ public class CliSender extends AlertSender<CliComponent> {
             ScriptEngine engine = q.poll();
 
             if (engine == null) {
-                engine = ScriptEngineFactory.getSecuredScriptEngine(language,
-                    new PackageFinder(Collections.<File> emptyList()), bindings, new StandardScriptPermissions());
+                engine = ScriptEngineFactory.getSecuredScriptEngine(language, new CliSenderPackageFinder(
+                    domainPackagesNames), bindings, new StandardScriptPermissions());
             }
             //TODO is this OK, or should we use a different classloader than the context classloader?
             ScriptSourceProvider[] providers = ScriptSourceProviderFactory.get(null);
@@ -515,5 +521,19 @@ public class CliSender extends AlertSender<CliComponent> {
         }
 
         return ret;
+    }
+
+    private static class CliSenderPackageFinder extends PackageFinder {
+        final Set<String> domainPackagesNames;
+
+        CliSenderPackageFinder(Set<String> domainPackagesNames) {
+            super(Collections.<File> emptyList());
+            this.domainPackagesNames = domainPackagesNames;
+        }
+
+        @Override
+        public Set<String> findPackages(String packageRoot) throws IOException {
+            return domainPackagesNames;
+        }
     }
 }

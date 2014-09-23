@@ -94,7 +94,7 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
     public static final String CFG_DEFINITION_ID = "definitionId";
 
     public ResourceGroupD3GraphPortlet() {
-        setOverflow(Overflow.HIDDEN);
+        setOverflow(Overflow.CLIP_H);
 
         addResizedHandler(new ResizedHandler() {
             public void onResized(ResizedEvent event) {
@@ -222,6 +222,12 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
                     });
             }
         });
+    }
+
+    @Override
+    protected void setupGraphDiv(HTMLFlow graphDiv) {
+        graphDiv.setHeight100();
+        graphDiv.setWidth("750px");
     }
 
     public Canvas getHelpCanvas() {

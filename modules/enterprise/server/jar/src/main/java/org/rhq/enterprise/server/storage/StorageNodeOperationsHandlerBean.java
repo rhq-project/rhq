@@ -256,6 +256,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
         performAddNodeMaintenance(subject, storageNode, runRepair,
             createPropertyListOfAddresses(SEEDS_LIST, clusterNodes), storageNode.getAddress());
+
     }
 
     @Override
@@ -287,6 +288,8 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
         scheduleOperation(subject, storageNode, params, "addNodeMaintenance", Hours.EIGHT.toStandardSeconds()
             .getSeconds());
+        StorageClusterSettings settings = storageClusterSettingsManager.getClusterSettings(subject);
+        storageNodeManager.scheduleSnapshotManagementOperationsForStorageNode(subject, storageNode, settings);
     }
 
     @Override

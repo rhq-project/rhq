@@ -199,7 +199,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                     storageNode = storageNodeManager.findStorageNodeByAddress(ipAddress);
                 }
             }
-
+            StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(subjectManager
+                .getOverlord());
             if (storageNode != null) {
                 if (log.isInfoEnabled()) {
                     log.info(storageNode + " is an existing storage node. No cluster maintenance is necessary.");
@@ -208,10 +209,10 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 storageNode.setResource(resource);
                 storageNode.setOperationMode(OperationMode.NORMAL);
                 storageNodeManager.linkExistingStorageNodeToResource(storageNode);
+                storageNodeManager.scheduleSnapshotManagementOperationsForStorageNode(subjectManager.getOverlord(),
+                    storageNode, clusterSettings);
 
             } else {
-                StorageClusterSettings clusterSettings = storageClusterSettingsManager
-                    .getClusterSettings(subjectManager.getOverlord());
                 storageNode = storageNodeManager.createStorageNode(resource, clusterSettings);
 
                 if (log.isInfoEnabled()) {
@@ -1250,17 +1251,18 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void scheduleSnapshotManagementOperationsForStorageNode(Subject subject, StorageNode node,
         StorageClusterSettings settings) {
-        Resource test = node.getResource();
+        Resource resource = node.getResource();
         RegularSnapshots rs = settings.getRegularSnapshots();
-        // TODO switch to debug log
+        log.info("Updating snapshot management schedules for " + node);
         try {
             List<ResourceOperationSchedule> schedules = operationManager.findScheduledResourceOperations(subject,
-                test.getId());
+                resource.getId());
             log.debug("Removing original scheduled operations on " + node);
             for (ResourceOperationSchedule schedule : schedules) {
                 if (REGULAR_SNAPSHOTS_SCHEDULE_DESCRIPTION.equals(schedule.getDescription())) {
-                    log.info("Found operation schedule, unscheduling " + schedule);
-                    operationManager.unscheduleResourceOperation(subject, schedule.getJobId().toString(), test.getId());
+                    log.debug("Found operation schedule, unscheduling " + schedule);
+                    operationManager.unscheduleResourceOperation(subject, schedule.getJobId().toString(),
+                        resource.getId());
                     // delete history items that have been scheduled but not yet started
                     ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
                     criteria.setPageControl(PageControl.getUnlimitedInstance());
@@ -1286,7 +1288,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                     .addSimple("location", rs.getLocation()).build();
 
                 ResourceOperationSchedule schedule = operationManager.scheduleResourceOperationUsingCron(subject,
-                    test.getId(), "takeSnapshot",
+                    resource.getId(), "takeSnapshot",
                     rs.getSchedule(), 0, parameters, REGULAR_SNAPSHOTS_SCHEDULE_DESCRIPTION);
                 log.debug("Created new " + schedule);
             }

@@ -47,6 +47,7 @@ import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.tagging.Tag;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.BookmarkableView;
 import org.rhq.coregui.client.IconEnum;
@@ -151,7 +152,7 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
             + StringUtility.escapeHtml(destination.getGroup().getName()) + "</a>");
 
         StaticTextItem baseDirName = new StaticTextItem("baseDir", MSG.view_bundle_dest_baseDirName());
-        baseDirName.setValue(destination.getDestinationBaseDirectoryName());
+        baseDirName.setValue(destination.getDestinationSpecificationName());
 
         StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_dest_deployDir());
         path.setValue(destination.getDeployDir());
@@ -323,6 +324,8 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
         BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
         criteria.addFilterDestinationId(destination.getId());
+        criteria.addFilterIsLive(Boolean.TRUE);
+        criteria.setPageControl(PageControl.getSingleRowInstance());
         bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
             @Override
             public void onFailure(Throwable caught) {
@@ -331,13 +334,8 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
 
             @Override
             public void onSuccess(PageList<BundleDeployment> result) {
-                for (BundleDeployment deployment : result) {
-                    if (deployment.isLive()) {
-                        purgeButton.setDisabled(false);
-                        return;
-                    }
-                }
-                purgeButton.setDisabled(true);
+                // If no deployment is LIVE the button is disabled, otherwise it is enabled
+                purgeButton.setDisabled(result.isEmpty());
             }
         });
     }

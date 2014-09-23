@@ -999,6 +999,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
 
         for (PropertyDefinition summaryPropDef : summaryPropertyDefinitions) {
             ListGridField field = createListGridField(summaryPropDef);
+            field.setWidth("*");
             fieldsList.add(field);
         }
 
@@ -1075,6 +1076,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
         summaryTable.setData(rows);
 
         VLayout summaryTableHolder = new EnhancedVLayout();
+        summaryTableHolder.setWidth100();
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();

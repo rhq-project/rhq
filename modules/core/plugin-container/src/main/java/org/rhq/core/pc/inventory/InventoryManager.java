@@ -41,6 +41,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -786,9 +787,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     @Override
     public void executeServiceScanDeferred(int resourceId) {
+        executeServiceScanDeferred(resourceId, 0);
+    }
+
+    public void executeServiceScanDeferred(int resourceId, long scanDelayInMillis) {
         Resource resource = getResourceContainer(resourceId).getResource();
         RuntimeDiscoveryExecutor discoveryExecutor = new RuntimeDiscoveryExecutor(this, this.configuration, resource);
-        inventoryThreadPoolExecutor.submit((Runnable) discoveryExecutor);
+        inventoryThreadPoolExecutor.schedule((Runnable) discoveryExecutor, scanDelayInMillis, TimeUnit.MILLISECONDS);
     }
 
     /**

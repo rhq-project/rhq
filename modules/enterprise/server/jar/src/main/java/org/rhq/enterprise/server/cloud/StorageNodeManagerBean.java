@@ -1,27 +1,26 @@
 /*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
  *
- *  * RHQ Management Platform
- *  * Copyright (C) 2005-2014 Red Hat, Inc.
- *  * All rights reserved.
- *  *
- *  * This program is free software; you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License, version 2, as
- *  * published by the Free Software Foundation, and/or the GNU Lesser
- *  * General Public License, version 2.1, also as published by the Free
- *  * Software Foundation.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  * GNU General Public License and the GNU Lesser General Public License
- *  * for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * and the GNU Lesser General Public License along with this program;
- *  * if not, write to the Free Software Foundation, Inc.,
- *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.enterprise.server.cloud;
 
 import static java.util.Arrays.asList;
@@ -119,8 +118,7 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
  */
 @Stateless
 public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageNodeManagerRemote {
-
-    private final Log log = LogFactory.getLog(StorageNodeManagerBean.class);
+    private static final Log log = LogFactory.getLog(StorageNodeManagerBean.class);
 
     private static final String RHQ_STORAGE_ADDRESS_PROPERTY = "host";
 
@@ -1257,10 +1255,14 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         try {
             List<ResourceOperationSchedule> schedules = operationManager.findScheduledResourceOperations(subject,
                 resource.getId());
-            log.debug("Removing original scheduled operations on " + node);
+            if (log.isDebugEnabled()) {
+                log.debug("Removing original scheduled operations on " + node);
+            }
             for (ResourceOperationSchedule schedule : schedules) {
                 if (REGULAR_SNAPSHOTS_SCHEDULE_DESCRIPTION.equals(schedule.getDescription())) {
-                    log.debug("Found operation schedule, unscheduling " + schedule);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Found operation schedule, unscheduling " + schedule);
+                    }
                     operationManager.unscheduleResourceOperation(subject, schedule.getJobId().toString(),
                         resource.getId());
                     // delete history items that have been scheduled but not yet started
@@ -1273,8 +1275,10 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                         .findResourceOperationHistoriesByCriteria(subject, criteria);
                     Iterator<ResourceOperationHistory> iter = historyItems.iterator();
                     if (iter.hasNext()) {
-                        log.debug("Wiping out " + historyItems.getTotalSize()
-                            + " scheduled but not yet started history items");
+                        if (log.isDebugEnabled()) {
+                            log.debug("Wiping out " + historyItems.getTotalSize()
+                                    + " scheduled but not yet started history items");
+                        }
                         while (iter.hasNext()) {
                             operationManager.deleteOperationHistory(subject, iter.next().getId(), true);
                         }
@@ -1290,7 +1294,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 ResourceOperationSchedule schedule = operationManager.scheduleResourceOperationUsingCron(subject,
                     resource.getId(), "takeSnapshot",
                     rs.getSchedule(), 0, parameters, REGULAR_SNAPSHOTS_SCHEDULE_DESCRIPTION);
-                log.debug("Created new " + schedule);
+                if (log.isDebugEnabled()) {
+                    log.debug("Created new " + schedule);
+                }
             }
 
         } catch (Exception e) {

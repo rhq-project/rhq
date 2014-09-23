@@ -37,9 +37,13 @@ public class ViewName {
         this.icon = icon;
     }
 
+    /**
+     * creates new instance of ViewName
+     * @param title new title
+     * @return new instance of ViewName
+     */
     public ViewName withTitle(String title) {
-        this.title = title;
-        return this;
+        return new ViewName(this.name, title);
     }
 
     private static String buildTitle(String name, String title) {

@@ -39,14 +39,17 @@ public final class ResourceUpgradeCallbackImpl implements ResourceUpgradeCallbac
         ProcessInfo processInfo = inventoriedResource.getNativeProcess();
 
         if (DiscoveryCallbackImpl.isRhqServer(processInfo)) {
+            boolean comingFromUpgradeReport = true;
             Configuration pluginConfiguration = upgradeReport.getNewPluginConfiguration();
             if (pluginConfiguration == null) {
+                comingFromUpgradeReport = false;
                 pluginConfiguration = inventoriedResource.getPluginConfiguration();
             }
 
             String currentValue = pluginConfiguration.getSimpleValue("supportsPatching");
-            if (currentValue == null) {
-                // we don't change the value if one is provided even if it is set to true.
+
+            if (comingFromUpgradeReport || currentValue == null || currentValue.startsWith("__UNINITIALIZED_")) {
+                // we don't change the value if one is provided by the user even if it is set to true.
                 // if that's the case, the user apparently wants to shoot herself in the foot, which we should not
                 // prevent.
                 pluginConfiguration.setSimpleValue("supportsPatching", "false");
@@ -58,8 +61,8 @@ public final class ResourceUpgradeCallbackImpl implements ResourceUpgradeCallbac
                 resourceName = inventoriedResource.getName();
             }
 
-            //this is not critical, we can live with the server being called a "wrong" name.
-            //report, but not enforce the change.
+            // this is not critical, we can live with the server being called a "wrong" name.
+            // report, but not enforce the change (i.e. don't use upgradeReport.setForceGenericPropertyUpgrade(true)).
             if (!resourceName.endsWith(" RHQ Server")) {
                 resourceName += " RHQ Server";
 

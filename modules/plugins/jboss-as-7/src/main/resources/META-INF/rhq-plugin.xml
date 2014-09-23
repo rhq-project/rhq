@@ -5093,9 +5093,9 @@
                 <c:simple-property name="consume" type="boolean" readOnly="true" description="This permission allows the user to consume a message from a queue bound to matching addresses."/>
                 <c:simple-property name="create-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to create a durable queue."/>
                 <c:simple-property name="delete-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to delete a durable queue."/>
-                <c:simple-property name="create-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to create a temporary queue."/>
-                <c:simple-property name="delete-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to delete a temporary queue."/>
                 <c:simple-property name="manage" type="boolean" readOnly="true" description="This permission allows the user to invoke management operations by sending management messages to the management address."/>
+                <c:simple-property name="create-non-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to create a temporary queue."/>
+                <c:simple-property name="delete-non-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to delete a temporary queue."/>
               </c:map-property>
             </c:list-property>
           </resource-configuration>
@@ -7268,9 +7268,9 @@
                 <c:simple-property name="consume" type="boolean" readOnly="true" description="This permission allows the user to consume a message from a queue bound to matching addresses."/>
                 <c:simple-property name="create-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to create a durable queue."/>
                 <c:simple-property name="delete-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to delete a durable queue."/>
-                <c:simple-property name="create-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to create a temporary queue."/>
-                <c:simple-property name="delete-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to delete a temporary queue."/>
                 <c:simple-property name="manage" type="boolean" readOnly="true" description="This permission allows the user to invoke management operations by sending management messages to the management address."/>
+                <c:simple-property name="create-non-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to create a temporary queue."/>
+                <c:simple-property name="delete-non-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to delete a temporary queue."/>
               </c:map-property>
             </c:list-property>
           </resource-configuration>
@@ -13464,9 +13464,9 @@
               <c:simple-property name="consume" type="boolean" readOnly="true" description="This permission allows the user to consume a message from a queue bound to matching addresses."/>
               <c:simple-property name="create-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to create a durable queue."/>
               <c:simple-property name="delete-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to delete a durable queue."/>
-              <c:simple-property name="create-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to create a temporary queue."/>
-              <c:simple-property name="delete-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to delete a temporary queue."/>
               <c:simple-property name="manage" type="boolean" readOnly="true" description="This permission allows the user to invoke management operations by sending management messages to the management address."/>
+              <c:simple-property name="create-non-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to create a temporary queue."/>
+              <c:simple-property name="delete-non-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to delete a temporary queue."/>
             </c:map-property>
           </c:list-property>
         </resource-configuration>

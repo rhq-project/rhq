@@ -133,12 +133,20 @@ public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVL
         }
 
         graphDiv = new HTMLFlow(divAndSvgDefs);
-        graphDiv.setWidth100();
-        graphDiv.setHeight100();
+        setupGraphDiv(graphDiv);
         addMember(graphDiv);
 
         drawJsniChart();
 
+    }
+
+    /**
+     * for subclasses to apply additional styling to graphDiv right before it get's drawn with SVG chart 
+     * @param graphDiv
+     */
+    protected void setupGraphDiv(HTMLFlow graphDiv) {
+        graphDiv.setWidth100();
+        graphDiv.setHeight100();
     }
 
     /**

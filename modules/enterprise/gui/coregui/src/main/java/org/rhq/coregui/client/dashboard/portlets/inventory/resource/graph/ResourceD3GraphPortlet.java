@@ -86,7 +86,7 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
 
     public ResourceD3GraphPortlet() {
         super();
-        setOverflow(Overflow.HIDDEN);
+        setOverflow(Overflow.CLIP_H);
 
         addResizedHandler(new ResizedHandler() {
             public void onResized(ResizedEvent event) {
@@ -211,6 +211,12 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
                     });
             }
         });
+    }
+
+    @Override
+    protected void setupGraphDiv(HTMLFlow graphDiv) {
+        graphDiv.setHeight100();
+        graphDiv.setWidth("750px");
     }
 
     @Override

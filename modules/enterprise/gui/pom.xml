@@ -36,21 +36,6 @@
         <module>rest-war</module>
         <module>rest-examples-war</module>
         <module>remoting-war</module>
-      </modules>
-    </profile>
-    
-    <profile>
-      <id>enable-rha</id>
-      <modules>
-        <module>portal-war</module>
-        <module>remote-client-war</module>
-        <module>agentupdate-war</module>
-        <module>downloads-war</module>
-        <module>content_http-war</module>
-        <module>coregui</module>
-        <module>rest-war</module>
-        <module>rest-examples-war</module>
-        <module>remoting-war</module>
         <module>rh-access-war</module>
       </modules>
     </profile>

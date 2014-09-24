@@ -19,6 +19,7 @@ import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.Bucket;
+import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
@@ -492,15 +493,25 @@ public class InvalidMetricsManager {
     }
 
     private void persist1HourMetric(AggregateNumericMetric metric) {
-        dao.insert1HourData(metric).get();
+        long ttl = configuration.getOneHourTTL() - ((System.currentTimeMillis() - metric.getTimestamp()) / 1000);
+        persistMetric(metric, ttl);
     }
 
     private void persist6HourMetric(AggregateNumericMetric metric) {
-        dao.insert6HourData(metric).get();
+        long ttl = configuration.getSixHourTTL() - ((System.currentTimeMillis() - metric.getTimestamp()) / 1000);
+        persistMetric(metric, ttl);
     }
 
     private void persist24HourMetric(AggregateNumericMetric metric) {
-        dao.insert24HourData(metric).get();
+        long ttl = configuration.getTwentyFourHourTTL() - ((System.currentTimeMillis() - metric.getTimestamp()) / 1000);
+        persistMetric(metric, ttl);
+    }
+
+    private void persistMetric(AggregateNumericMetric metric, long ttl) {
+        dao.getStorageSession().execute(
+            "INSERT INTO " + MetricsTable.AGGREGATE + " (schedule_id, bucket, time, avg, min, max) VALUES " +
+            "(" + metric.getScheduleId() + ", '" + metric.getBucket() + "', " + metric.getTimestamp() + ", " +
+            metric.getAvg() + ", " + metric.getMax() + ", " + metric.getMin() + ") USING TTL " + ttl);
     }
 
     private String getValueText(AggregateNumericMetric metric) {

@@ -77,7 +77,7 @@ public class MetricsServer {
 
     private AggregationManager aggregationManager;
     
-    private Days rawDataAgeLimit = Days.days(Integer.parseInt(System.getProperty("rhq.metrics.data.age-limit", "3")));
+    private Days rawDataAgeLimit = Days.days(Integer.parseInt(System.getProperty("rhq.metrics.data.age-limit", "7")));
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
@@ -333,10 +333,8 @@ public class MetricsServer {
         if (log.isDebugEnabled()) {
             log.debug("Inserting " + dataSet.size() + " raw metrics");
         }
-        final Stopwatch stopwatch = new Stopwatch().start();
+        final Stopwatch stopwatch = Stopwatch.createStarted();
         final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
-        // TODO add support for splitting cache index partition
-        final int partition = 0;
 
         for (final MeasurementDataNumeric data : dataSet) {
             DateTime collectionTimeSlice = dateTimeService.getTimeSlice(new DateTime(data.getTimestamp()),
@@ -347,7 +345,6 @@ public class MetricsServer {
                 callback.onSuccess(data);
                 continue;
             }
-
             StorageResultSetFuture rawFuture = dao.insertRawData(data);
             StorageResultSetFuture indexFuture = dao.updateIndex(IndexBucket.RAW, collectionTimeSlice.getMillis(),
                 data.getScheduleId());

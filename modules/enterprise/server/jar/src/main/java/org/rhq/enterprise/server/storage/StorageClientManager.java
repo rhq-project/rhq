@@ -30,18 +30,14 @@ import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TOPOLOGY_CHA
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
 import javax.ejb.LocalBean;
+import javax.ejb.Schedule;
 import javax.ejb.Singleton;
-import javax.ejb.Timeout;
-import javax.ejb.Timer;
-import javax.ejb.TimerConfig;
-import javax.ejb.TimerService;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.management.ObjectName;
@@ -76,6 +72,7 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.JMXUtil;
 import org.rhq.server.metrics.DateTimeService;
+import org.rhq.server.metrics.InsertStatements;
 import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsConstants;
 import org.rhq.server.metrics.MetricsDAO;
@@ -108,12 +105,10 @@ public class StorageClientManager implements StorageClientManagerMBean{
     @EJB
     private MeasurementScheduleManagerLocal measurementScheduleManager;
 
-    @javax.annotation.Resource
-    private TimerService timerService;
-
     private Cluster cluster;
     private StorageSession session;
     private MetricsConfiguration metricsConfiguration;
+    private InsertStatements insertStatements;
     private MetricsDAO metricsDAO;
     private MetricsServer metricsServer;
     private boolean initialized;
@@ -122,33 +117,13 @@ public class StorageClientManager implements StorageClientManagerMBean{
     private String cachedStorageUsername;
     private String cachedStoragePassword;
 
-    public void scheduleStorageSessionMaintenance() {
-        // each time the webapp is reloaded, we don't want to create duplicate jobs
-        Collection<Timer> timers = timerService.getTimers();
-        for (Timer existingTimer : timers) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Found timer - attempting to cancel: " + existingTimer.toString());
-            }
-            try {
-                existingTimer.cancel();
-            } catch (Exception e) {
-                LOG.warn("Failed in attempting to cancel timer: " + existingTimer.toString());
-            }
-        }
-
-        // timer that will trigger every 90 seconds after an initial wait of 30 seconds
-        timerService.createIntervalTimer(30000L, 90000L, new TimerConfig(null, false));
-    }
-
     /**
-     * If the session is not initialized then attempt to initialize it.
-     * If the session is initialized then verify to ensure that the
-     * session uses the latest set of credentials.
-     *
-     * @param timer
+     * If the session is not initialized then attempt to initialize it. If the session is initialized then verify to
+     * ensure that the session uses the latest set of credentials. This method runs as a non-persistent scheduled job
+     * every 90 seconds after an initial delay of 30 seconds.
      */
-    @Timeout
-    public void storageSessionMaintenance(Timer timer) {
+    @Schedule(second = "30/90", minute = "*", hour = "*", persistent = false)
+    public void storageSessionMaintenance() {
         if (!initialized) {
             this.init();
         } else {
@@ -181,9 +156,22 @@ public class StorageClientManager implements StorageClientManagerMBean{
             session.addStorageStateListener(storageClusterMonitor);
 
             metricsConfiguration = new MetricsConfiguration();
-            metricsDAO = new MetricsDAO(session, metricsConfiguration);
 
-            initMetricsServer();
+            DateTimeService dateTimeService = new DateTimeService();
+            dateTimeService.setConfiguration(metricsConfiguration);
+
+            insertStatements = new InsertStatements(session, dateTimeService, metricsConfiguration);
+            insertStatements.init();
+
+            metricsDAO = new MetricsDAO(session, metricsConfiguration, insertStatements, dateTimeService);
+
+            metricsServer = new MetricsServer();
+            metricsServer.setDAO(metricsDAO);
+            metricsServer.setConfiguration(metricsConfiguration);
+
+            metricsServer.setDateTimeService(dateTimeService);
+            metricsServer.init();
+
             JMXUtil.registerMBean(this, OBJECT_NAME);
             initialized = true;
 
@@ -209,6 +197,15 @@ public class StorageClientManager implements StorageClientManagerMBean{
         }
 
         return initialized;
+    }
+
+
+    /**
+     * Updates metrics prepared statements every day at 12:00 AM.
+     */
+    @Schedule(hour = "0", dayOfWeek = "*", info = "PreparedStatementsTimer", persistent = false)
+    public void updatePreparedStatements() {
+        insertStatements.update();
     }
 
     /**
@@ -551,20 +548,6 @@ public class StorageClientManager implements StorageClientManagerMBean{
         LOG.warn(policy + " is not a supported load balancing policy. Reverting to RoundRobin load balancing policy.");
 
         return new RoundRobinPolicy();
-    }
-
-    private void initMetricsServer() {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Initializing " + MetricsServer.class.getName());
-        }
-        metricsServer = new MetricsServer();
-        metricsServer.setDAO(metricsDAO);
-        metricsServer.setConfiguration(metricsConfiguration);
-
-        DateTimeService dateTimeService = new DateTimeService();
-        dateTimeService.setConfiguration(metricsConfiguration);
-        metricsServer.setDateTimeService(dateTimeService);
-        metricsServer.init();
     }
 
 }

@@ -1,7 +1,6 @@
 package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import com.datastax.driver.core.PreparedStatement;
@@ -104,14 +103,6 @@ public class InsertStatementsTest extends MetricsTest {
         assertTrue(insertStatements.oneHour.get(tomorrow) != null);
         assertTrue(insertStatements.sixHour.get(tomorrow) != null);
         assertTrue(insertStatements.twentyFourHour.get(tomorrow) != null);
-
-        DateTime oldest = insertStatements.raw.firstKey();
-        DateTime youngest = insertStatements.raw.lastKey();
-
-        insertStatements.update();
-
-        assertEquals(insertStatements.raw.firstKey(), oldest);
-        assertEquals(insertStatements.raw.lastKey(), youngest);
     }
 
 }

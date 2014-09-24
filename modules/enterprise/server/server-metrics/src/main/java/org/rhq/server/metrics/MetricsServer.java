@@ -77,8 +77,7 @@ public class MetricsServer {
 
     private AggregationManager aggregationManager;
     
-    private Days rawDataAgeLimit = Days.days(Math.max(7, Integer.parseInt(
-        System.getProperty("rhq.metrics.data.age-limit", "7"))));
+    private Days rawDataAgeLimit = Days.days(Integer.parseInt(System.getProperty("rhq.metrics.data.age-limit", "7")));
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
@@ -337,52 +336,43 @@ public class MetricsServer {
         final Stopwatch stopwatch = Stopwatch.createStarted();
         final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
 
-
         for (final MeasurementDataNumeric data : dataSet) {
             DateTime collectionTimeSlice = dateTimeService.getTimeSlice(new DateTime(data.getTimestamp()),
                 configuration.getRawTimeSliceDuration());
             Days days = Days.daysBetween(collectionTimeSlice, dateTimeService.now());
 
             if (days.isGreaterThan(rawDataAgeLimit)) {
-                if (log.isDebugEnabled()) {
-                    log.debug(data + " will not be inserted since it is older than the raw data age limit of " +
-                        rawDataAgeLimit.getDays() + " days");
-                }
-            } else {
-                try {
-                    StorageResultSetFuture rawFuture = dao.insertRawData(data);
-                    StorageResultSetFuture indexFuture = dao.updateIndex(IndexBucket.RAW, collectionTimeSlice.getMillis(),
-                        data.getScheduleId());
-                    ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(rawFuture, indexFuture);
-                    Futures.addCallback(insertsFuture, new FutureCallback<List<ResultSet>>() {
-                        @Override
-                        public void onSuccess(List<ResultSet> result) {
-                            callback.onSuccess(data);
-                            if (remainingInserts.decrementAndGet() == 0) {
-                                stopwatch.stop();
-                                if (log.isDebugEnabled()) {
-                                    log.debug("Finished inserting " + dataSet.size() + " raw metrics in " +
-                                        stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
-                                }
-                                callback.onFinish();
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(Throwable t) {
-                            if (log.isDebugEnabled()) {
-                                log.debug("An error occurred while inserting raw data", ThrowableUtil.getRootCause(t));
-                            } else {
-                                log.warn("An error occurred while inserting raw data: " +
-                                    ThrowableUtil.getRootMessage(t));
-                            }
-                            callback.onFailure(t);
-                        }
-                    }, tasks);
-                } catch (IllegalArgumentException e) {
-                    log.warn("Failed to insert " + data, e);
-                }
+                callback.onSuccess(data);
+                continue;
             }
+            StorageResultSetFuture rawFuture = dao.insertRawData(data);
+            StorageResultSetFuture indexFuture = dao.updateIndex(IndexBucket.RAW, collectionTimeSlice.getMillis(),
+                data.getScheduleId());
+            ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(rawFuture, indexFuture);
+            Futures.addCallback(insertsFuture, new FutureCallback<List<ResultSet>>() {
+                @Override
+                public void onSuccess(List<ResultSet> result) {
+                    callback.onSuccess(data);
+                    if (remainingInserts.decrementAndGet() == 0) {
+                        stopwatch.stop();
+                        if (log.isDebugEnabled()) {
+                            log.debug("Finished inserting " + dataSet.size() + " raw metrics in " +
+                                stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+                        }
+                        callback.onFinish();
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("An error occurred while inserting raw data", ThrowableUtil.getRootCause(t));
+                    } else {
+                        log.warn("An error occurred while inserting raw data: " + ThrowableUtil.getRootMessage(t));
+                    }
+                    callback.onFailure(t);
+                }
+            }, tasks);
         }
     }
 

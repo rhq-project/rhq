@@ -170,7 +170,7 @@ public class MetricsServerTest extends MetricsTest {
     public void doNotInsertDataThatIsTooOld() throws Exception {
         int scheduleId = 123;
         Set<MeasurementDataNumeric> data = ImmutableSet.of(new MeasurementDataNumeric(
-            today().minusDays(8).plusHours(5).minusHours(25).getMillis(), scheduleId, 3.14));
+            today().minusDays(4).plusHours(5).minusHours(25).getMillis(), scheduleId, 3.14));
         WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
 
         dateTimeService.setNow(hour(5).plusMinutes(2));
@@ -508,7 +508,7 @@ public class MetricsServerTest extends MetricsTest {
     }
 
     @Test
-    public void getSummary1HourAggregateForResource() throws Exception {
+    public void getSummary1HourAggregateForResource() {
         DateTime beginTime = now().minusDays(11);
         DateTime endTime = now();
 
@@ -526,7 +526,7 @@ public class MetricsServerTest extends MetricsTest {
             new AggregateNumericMetric(scheduleId, Bucket.ONE_HOUR, 3.0, 3.0, 3.0, bucket59Time.plusHours(2).getMillis())
         );
         for (AggregateNumericMetric metric : metrics) {
-            insert1HourData(metric).get();
+            dao.insert1HourData(metric).get();
         }
 
         AggregateNumericMetric actual = metricsServer.getSummaryAggregate(scheduleId, beginTime.getMillis(),
@@ -540,7 +540,7 @@ public class MetricsServerTest extends MetricsTest {
     }
 
     @Test
-    public void getSummaryAggregateForGroup() throws Exception {
+    public void getSummaryAggregateForGroup() {
         DateTime beginTime = now().minusDays(11);
         DateTime endTime = now();
 
@@ -559,7 +559,7 @@ public class MetricsServerTest extends MetricsTest {
             new AggregateNumericMetric(scheduleId2, Bucket.ONE_HOUR, 5.2, 5.2, 5.2, bucket59Time.getMillis())
         );
         for (AggregateNumericMetric metric : metrics) {
-            insert1HourData(metric).get();
+            dao.insert1HourData(metric).get();
         }
 
         AggregateNumericMetric actual = metricsServer.getSummaryAggregate(asList(scheduleId1, scheduleId2),
@@ -686,7 +686,7 @@ public class MetricsServerTest extends MetricsTest {
     }
 
     @Test
-    public void find1HourDataComposites() throws Exception {
+    public void find1HourDataComposites() {
         DateTime beginTime = now().minusDays(11);
         DateTime endTime = now();
 
@@ -704,7 +704,7 @@ public class MetricsServerTest extends MetricsTest {
             new AggregateNumericMetric(scheduleId, Bucket.ONE_HOUR, 3.0, 3.0, 3.0, bucket59Time.plusHours(2).getMillis())
         );
         for (AggregateNumericMetric metric : metrics) {
-            insert1HourData(metric).get();
+            dao.insert1HourData(metric).get();
         }
 
         List<MeasurementDataNumericHighLowComposite> actualData = Lists.newArrayList(metricsServer.findDataForResource(
@@ -742,7 +742,7 @@ public class MetricsServerTest extends MetricsTest {
             new AggregateNumericMetric(scheduleId, Bucket.SIX_HOUR, 5.0, 4.0, 6.0, bucket0Time.plusHours(1).getMillis())
         );
         for (AggregateNumericMetric metric : metrics) {
-            insert6HourData(metric).get();
+            dao.insert6HourData(metric).get();
         }
 
         List<MeasurementDataNumericHighLowComposite> actualData = Lists.newArrayList(metricsServer.findDataForResource(
@@ -758,7 +758,7 @@ public class MetricsServerTest extends MetricsTest {
     }
 
     @Test
-    public void find1HourDatCompositesForGroup() throws Exception {
+    public void find1HourDatCompositesForGroup() {
         DateTime beginTime = now().minusDays(11);
         DateTime endTime = now();
 
@@ -780,7 +780,7 @@ public class MetricsServerTest extends MetricsTest {
             new AggregateNumericMetric(scheduleId2, Bucket.ONE_HOUR, 4.2, 4.2, 4.2, bucket59Time.getMillis())
         );
         for (AggregateNumericMetric metric : metrics) {
-            insert1HourData(metric).get();
+            dao.insert1HourData(metric).get();
         }
 
         List<MeasurementDataNumericHighLowComposite> actual = metricsServer.findDataForGroup(
@@ -801,7 +801,7 @@ public class MetricsServerTest extends MetricsTest {
     }
 
     @Test
-    public void find6HourDataComposites() throws Exception {
+    public void find6HourDataComposites() {
         DateTime beginTime = now().minusDays(20);
         DateTime endTime = now();
 
@@ -819,7 +819,7 @@ public class MetricsServerTest extends MetricsTest {
             new AggregateNumericMetric(scheduleId, Bucket.SIX_HOUR, 3.0, 3.0, 3.0, bucket59Time.plusHours(2).getMillis())
         );
         for (AggregateNumericMetric metric : metrics) {
-            insert6HourData(metric).get();
+            dao.insert6HourData(metric).get();
         }
 
         List<MeasurementDataNumericHighLowComposite> actualData = Lists.newArrayList(metricsServer.findDataForResource(
@@ -843,7 +843,7 @@ public class MetricsServerTest extends MetricsTest {
     }
 
     @Test
-    public void find24HourDataComposites() throws Exception {
+    public void find24HourDataComposites() {
         DateTime beginTime = hour(0).minusDays(100);
         DateTime endTime = now();
 
@@ -861,7 +861,7 @@ public class MetricsServerTest extends MetricsTest {
                 bucket59Time.plusDays(2).getMillis())
         );
         for (AggregateNumericMetric metric : metrics) {
-            insert24HourData(metric).get();
+            dao.insert24HourData(metric).get();
         }
 
         List<MeasurementDataNumericHighLowComposite> actual = Lists.newArrayList(metricsServer.findDataForResource(

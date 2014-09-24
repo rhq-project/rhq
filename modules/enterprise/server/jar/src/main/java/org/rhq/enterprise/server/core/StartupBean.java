@@ -598,6 +598,7 @@ public class StartupBean implements StartupLocal {
         cacheConsistencyManager.scheduleServerCacheReloader();
         systemManager.scheduleConfigCacheReloader();
         subjectManager.scheduleSessionPurgeJob();
+        storageClientManager.scheduleStorageSessionMaintenance();
 
         try {
             // Do not check until we are up at least 1 min, and every minute thereafter.

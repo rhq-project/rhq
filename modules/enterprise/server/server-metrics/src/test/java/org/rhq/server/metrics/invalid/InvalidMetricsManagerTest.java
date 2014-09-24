@@ -7,33 +7,38 @@ import java.util.List;
 
 import org.joda.time.DateTime;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.rhq.server.metrics.MetricsTest;
+import org.rhq.cassandra.schema.Table;
+import org.rhq.server.metrics.CassandraIntegrationTest;
+import org.rhq.server.metrics.DateTimeService;
+import org.rhq.server.metrics.MetricsConfiguration;
+import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.Bucket;
 
 /**
  * @author John Sanda
  */
-public class InvalidMetricsManagerTest extends MetricsTest {
+public class InvalidMetricsManagerTest extends CassandraIntegrationTest {
 
-//    private MetricsDAO dao;
-//
-//    private DateTimeService dateTimeService;
+    private MetricsDAO dao;
+
+    private DateTimeService dateTimeService;
 
     private InvalidMetricsManager invalidMetricsManager;
 
-//    @BeforeClass
-//    public void initClass() {
-//        MetricsConfiguration configuration = new MetricsConfiguration();
-//
-//        dateTimeService = new DateTimeService();
-//        dateTimeService.setConfiguration(configuration);
-//
-//        dao = new MetricsDAO(storageSession, configuration);
-//    }
+    @BeforeClass
+    public void initClass() {
+        MetricsConfiguration configuration = new MetricsConfiguration();
+
+        dateTimeService = new DateTimeService();
+        dateTimeService.setConfiguration(configuration);
+
+        dao = new MetricsDAO(storageSession, configuration);
+    }
 
     @BeforeMethod
     public void initMethod() {
@@ -47,6 +52,12 @@ public class InvalidMetricsManagerTest extends MetricsTest {
         invalidMetricsManager.shutdown();
     }
 
+    private void purgeDB() {
+        for (Table table : Table.values()) {
+            session.execute("TRUNCATE " + table.getTableName());
+        }
+    }
+
     /**
      * This test exercises a scenario in which we wind up with both invalid 24 hour and 6
      * hour metrics. This happens due to the empty 1 hour metric from the 14:00 hour. See
@@ -57,20 +68,20 @@ public class InvalidMetricsManagerTest extends MetricsTest {
     public void submitInvalid24HourAnd6HourMetricsWithEmpty1HourMetric() throws Exception {
         int scheduleId = 100;
 
-        insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(12), 100, 100, 100)).get();
-        insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(13), 100, 100, 100)).get();
-        insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(14), Double.NaN, Double.NaN,
+        dao.insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(12), 100, 100, 100)).get();
+        dao.insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(13), 100, 100, 100)).get();
+        dao.insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(14), Double.NaN, Double.NaN,
             0.0)).get();
-        insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(15), 100, 100, 100)).get();
-        insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(16), 100, 100, 100)).get();
-        insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(17), 100, 100, 100)).get();
+        dao.insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(15), 100, 100, 100)).get();
+        dao.insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(16), 100, 100, 100)).get();
+        dao.insert1HourData(new1HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(17), 100, 100, 100)).get();
 
-        insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7), 100, 100, 100)).get();
-        insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(6), 100, 100, 100)).get();
-        insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(12), 83.33, 100, 100)).get();
-        insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(18), 100, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7), 100, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(6), 100, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(12), 83.33, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(18), 100, 100, 100)).get();
 
-        insert24HourData(new24HourAggregate(scheduleId, hour(0).minusDays(7), 95.83, 100, 100)).get();
+        dao.insert24HourData(new24HourAggregate(scheduleId, hour(0).minusDays(7), 95.83, 100, 100)).get();
 
         invalidMetricsManager.submit(new24HourAggregate(scheduleId, hour(0).minusDays(7), 83.33, 100.0, 100.0));
 
@@ -115,12 +126,12 @@ public class InvalidMetricsManagerTest extends MetricsTest {
     public void submitInvalid6HourAnd24HourMetricsWhen1HourMetricsExpired() throws Exception {
         int scheduleId = 100;
 
-        insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7), 100, 100, 100)).get();
-        insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(6), 100, 100, 100)).get();
-        insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(12), 83.33, 100, 100)).get();
-        insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(18), 100, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7), 100, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(6), 100, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(12), 83.33, 100, 100)).get();
+        dao.insert6HourData(new6HourAggregate(scheduleId, hour(0).minusDays(7).plusHours(18), 100, 100, 100)).get();
 
-        insert24HourData(new24HourAggregate(scheduleId, hour(0).minusDays(7), 95.83, 100, 100)).get();
+        dao.insert24HourData(new24HourAggregate(scheduleId, hour(0).minusDays(7), 95.83, 100, 100)).get();
 
         invalidMetricsManager.submit(new6HourAggregate(scheduleId, hour(0).minusDays(7), 83.33, 100.0, 100.0));
 
@@ -153,7 +164,7 @@ public class InvalidMetricsManagerTest extends MetricsTest {
     public void submitInvalid24HourMetricWhen6HourMetricsExpired() throws Exception {
         int scheduleId = 100;
 
-        insert24HourData(new24HourAggregate(scheduleId, hour(0).minusDays(7), 95.83, 100, 100)).get();
+        dao.insert24HourData(new24HourAggregate(scheduleId, hour(0).minusDays(7), 95.83, 100, 100)).get();
 
         invalidMetricsManager.submit(new24HourAggregate(scheduleId, hour(0).minusDays(7), 83.33, 100.0, 100.0));
 

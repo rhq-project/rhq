@@ -48,6 +48,7 @@ import org.testng.annotations.Test;
 import org.rhq.cassandra.schema.Table;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.Bucket;
 import org.rhq.server.metrics.domain.IndexBucket;
 import org.rhq.server.metrics.domain.IndexEntry;
@@ -71,18 +72,9 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     private MetricsDAO dao;
 
-    private DateTimeService dateTimeService;
-
-    private InsertStatements insertStatements;
-
     @BeforeClass
     public void initDAO() throws Exception {
-        MetricsConfiguration configuration = new MetricsConfiguration();
-        dateTimeService = new DateTimeService();
-        dateTimeService.setConfiguration(configuration);
-        insertStatements = new InsertStatements(storageSession, dateTimeService, configuration);
-        insertStatements.init();
-        dao = new MetricsDAO(storageSession, new MetricsConfiguration(), insertStatements, dateTimeService);
+        dao = new MetricsDAO(storageSession, new MetricsConfiguration());
     }
 
     @BeforeMethod
@@ -94,7 +86,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @Test(enabled = ENABLED)
     public void insertAndFindRawData() throws Exception {
-        DateTime hour0 = dateTimeService.current24HourTimeSlice();
+        DateTime hour0 = hour0();
         DateTime currentTime = hour0.plusHours(4).plusMinutes(44);
         DateTime threeMinutesAgo = currentTime.minusMinutes(3);
 
@@ -271,13 +263,13 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         AggregateNumericMetric metric1 = new AggregateNumericMetric(scheduleId, Bucket.TWENTY_FOUR_HOUR, 3.0, 3.0, 3.0,
             hour(0).getMillis());
         AggregateNumericMetric metric2 = new AggregateNumericMetric(scheduleId, Bucket.TWENTY_FOUR_HOUR, 4.0, 4.0, 4.0,
-            hour(0).minusDays(2).getMillis());
+            hour(0).plusDays(2).getMillis());
         AggregateNumericMetric metric3 = new AggregateNumericMetric(scheduleId, Bucket.TWENTY_FOUR_HOUR, 5.0, 5.0, 5.0,
-            hour(0).minusDays(3).getMillis());
+            hour(0).plusDays(3).getMillis());
         AggregateNumericMetric metric4 = new AggregateNumericMetric(scheduleId, Bucket.TWENTY_FOUR_HOUR, 6.0, 6.0, 6.0,
-            hour(0).minusDays(4).getMillis());
+            hour(0).plusDays(4).getMillis());
         AggregateNumericMetric metric5 = new AggregateNumericMetric(scheduleId + 1, Bucket.TWENTY_FOUR_HOUR, 4.0, 4.0,
-            4.0, hour(0).minusDays(2).getMillis());
+            4.0, hour(0).plusDays(2).getMillis());
 
         dao.insert24HourData(metric1).get();
         dao.insert24HourData(metric2).get();
@@ -285,17 +277,16 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         dao.insert24HourData(metric4).get();
         dao.insert24HourData(metric5).get();
 
-        List<AggregateNumericMetric> expected = asList(metric3, metric2);
+        List<AggregateNumericMetric> expected = asList(metric2, metric3);
         List<AggregateNumericMetric> actual = dao.findAggregateMetrics(scheduleId, Bucket.TWENTY_FOUR_HOUR,
-            hour(0).minusDays(3).getMillis(), hour(0).minusDays(1).getMillis());
+            hour(0).plusDays(2).getMillis(), hour(0).plusDays(4).getMillis());
 
         assertEquals(actual, expected, "Failed to find 24 hour metrics");
     }
 
     @Test(enabled = ENABLED)
     public void insertAndFindIndexEntries() {
-        dao = new MetricsDAO(storageSession, new MetricsConfiguration().setIndexPageSize(2).setIndexPartitions(1),
-            insertStatements, dateTimeService);
+        dao = new MetricsDAO(storageSession, new MetricsConfiguration().setIndexPageSize(2).setIndexPartitions(1));
 
         IndexEntry entry1 = new IndexEntry(IndexBucket.RAW, 0, hour(2).getMillis(), 100);
         IndexEntry entry2 = new IndexEntry(IndexBucket.RAW, 0, hour(2).getMillis(), 101);

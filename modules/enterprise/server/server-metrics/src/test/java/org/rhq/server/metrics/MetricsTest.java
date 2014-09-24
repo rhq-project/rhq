@@ -9,13 +9,10 @@ import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
+import com.google.common.collect.Lists;
 
 import org.joda.time.DateTime;
 import org.testng.annotations.BeforeClass;
@@ -43,35 +40,15 @@ public class MetricsTest extends CassandraIntegrationTest {
     protected MetricsDAO dao;
     protected MetricsConfiguration configuration = new MetricsConfiguration();
     protected DateTimeServiceStub dateTimeService;
-    protected PreparedStatement insert1HourData;
-    protected PreparedStatement insert6HourData;
-    protected PreparedStatement insert24HourData;
     private RawNumericMetricMapper rawMapper = new RawNumericMetricMapper();
     private AggregateNumericMetricMapper aggregateMapper = new AggregateNumericMetricMapper();
 
     @BeforeClass
     public void initClass() throws Exception {
         configuration = createConfiguration();
+        dao = new MetricsDAO(storageSession, configuration);
         dateTimeService = new DateTimeServiceStub();
         dateTimeService.setConfiguration(configuration);
-        InsertStatements insertStatements = new InsertStatements(storageSession, dateTimeService, configuration);
-        insertStatements.init();
-        dao = new MetricsDAO(storageSession, configuration, insertStatements, dateTimeService);
-
-        insert1HourData = storageSession.prepare(
-            "INSERT INTO " + MetricsTable.AGGREGATE + "(schedule_id, bucket, time, avg, max, min) " +
-            "VALUES (?, '" + Bucket.ONE_HOUR + "', ?, ?, ?, ?) " +
-            "USING TTL " + configuration.getOneHourTTL());
-
-        insert6HourData = storageSession.prepare(
-            "INSERT INTO " + MetricsTable.AGGREGATE + "(schedule_id, bucket, time, avg, max, min) " +
-            "VALUES (?, '" + Bucket.SIX_HOUR + "', ?, ?, ?, ?) " +
-            "USING TTL " + configuration.getSixHourTTL());
-
-        insert24HourData = storageSession.prepare(
-            "INSERT INTO " + MetricsTable.AGGREGATE + "(schedule_id, bucket, time, avg, max, min) " +
-            "VALUES (?, '" + Bucket.TWENTY_FOUR_HOUR + "', ?, ?, ?, ?) " +
-            "USING TTL " + configuration.getTwentyFourHourTTL());
     }
 
     protected MetricsConfiguration createConfiguration() {
@@ -159,7 +136,7 @@ public class MetricsTest extends CassandraIntegrationTest {
      * @param expected The expected values
      */
     protected void assert1HourDataEquals(int scheduleId, List<AggregateNumericMetric> expected) {
-        assertMetricDataEquals(scheduleId, Bucket.ONE_HOUR, expected);
+        assertMetricDataEquals(Bucket.ONE_HOUR, scheduleId, expected);
     }
 
     /**
@@ -179,7 +156,7 @@ public class MetricsTest extends CassandraIntegrationTest {
      * @param expected The expected values
      */
     protected void assert6HourDataEquals(int scheduleId, List<AggregateNumericMetric> expected) {
-        assertMetricDataEquals(scheduleId, Bucket.SIX_HOUR, expected);
+        assertMetricDataEquals(Bucket.SIX_HOUR, scheduleId, expected);
     }
 
     /**
@@ -189,7 +166,19 @@ public class MetricsTest extends CassandraIntegrationTest {
      * @param expected The expected values
      */
     protected void assert24HourDataEquals(int scheduleId, List<AggregateNumericMetric> expected) {
-        assertMetricDataEquals(scheduleId, Bucket.TWENTY_FOUR_HOUR, expected);
+        assertMetricDataEquals(Bucket.TWENTY_FOUR_HOUR, scheduleId, expected);
+    }
+
+    private void assertMetricDataEquals(Bucket bucket, int scheduleId,
+        List<AggregateNumericMetric> expected) {
+        List<AggregateNumericMetric> actual = Lists.newArrayList(findAggregateMetrics(bucket, scheduleId));
+        assertCollectionMatchesNoOrder("Metric data for schedule id " + scheduleId + " in table " + bucket
+            +
+            " does not match expected values", expected, actual, TEST_PRECISION);
+    }
+
+    protected void assertMetricDataEquals(int scheduleId, Bucket bucket, AggregateNumericMetric... expected) {
+        assertMetricDataEquals(scheduleId, bucket, asList(expected));
     }
 
     protected void assertMetricDataEquals(int scheduleId, Bucket bucket, List<AggregateNumericMetric> expected) {
@@ -304,24 +293,6 @@ public class MetricsTest extends CassandraIntegrationTest {
 
     protected int startScheduleId(int scheduleId) {
         return (scheduleId / PARTITION_SIZE) * PARTITION_SIZE;
-    }
-
-    protected ResultSetFuture insert1HourData(AggregateNumericMetric metric) {
-        BoundStatement statement = insert1HourData.bind(metric.getScheduleId(), new Date(metric.getTimestamp()),
-            metric.getAvg(), metric.getMax(), metric.getMin());
-        return session.executeAsync(statement);
-    }
-
-    protected ResultSetFuture insert6HourData(AggregateNumericMetric metric) {
-        BoundStatement statement = insert6HourData.bind(metric.getScheduleId(), new Date(metric.getTimestamp()),
-            metric.getAvg(), metric.getMax(), metric.getMin());
-        return session.executeAsync(statement);
-    }
-
-    protected ResultSetFuture insert24HourData(AggregateNumericMetric metric) {
-        BoundStatement statement = insert24HourData.bind(metric.getScheduleId(), new Date(metric.getTimestamp()),
-            metric.getAvg(), metric.getMax(), metric.getMin());
-        return session.executeAsync(statement);
     }
 
     static class DateTimeServiceStub extends DateTimeService {

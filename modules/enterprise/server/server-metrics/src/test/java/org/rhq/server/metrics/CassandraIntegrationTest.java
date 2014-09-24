@@ -24,10 +24,12 @@ import static org.testng.Assert.fail;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.PoolingOptions;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import com.google.common.base.Throwables;
@@ -44,8 +46,13 @@ import org.rhq.cassandra.CCMTestNGListener;
 import org.rhq.cassandra.DeployCluster;
 import org.rhq.cassandra.ShutdownCluster;
 import org.rhq.cassandra.util.ClusterBuilder;
+import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
+import org.rhq.server.metrics.domain.Bucket;
+import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.NumericMetric;
 import org.rhq.server.metrics.domain.ResultSetMapper;
+import org.rhq.server.metrics.domain.SimplePagedResult;
 
 /**
  * @author John Sanda
@@ -117,6 +124,19 @@ public class CassandraIntegrationTest {
 
     protected DateTime hour(int hours) {
         return dateTimeService.hour0().plusHours(hours);
+    }
+
+    protected Iterable<AggregateNumericMetric> findAggregateMetrics(Bucket bucket, int scheduleId) {
+        String cql =
+            "SELECT schedule_id, time, type, value " +
+            "FROM " + MetricsTable.AGGREGATE + " " +
+            "WHERE schedule_id = ? AND bucket = ? " +
+            "ORDER BY time, type";
+        PreparedStatement statement = session.prepare(cql);
+        BoundStatement boundStatement = statement.bind(scheduleId, bucket.toString());
+
+        return new SimplePagedResult<AggregateNumericMetric>(boundStatement, new AggregateNumericMetricMapper(),
+            storageSession);
     }
 
     protected static class WaitForRead<T extends NumericMetric> implements FutureCallback<ResultSet> {

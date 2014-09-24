@@ -35,7 +35,6 @@ import com.datastax.driver.core.ResultSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.joda.time.DateTime;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
@@ -60,7 +59,11 @@ public class MetricsDAO {
 
     private MetricsConfiguration configuration;
 
+    private PreparedStatement insertRawData;
     private PreparedStatement rawMetricsQuery;
+    private PreparedStatement insertOneHourData;
+    private PreparedStatement insertSixHourData;
+    private PreparedStatement insertTwentyFourHourData;
     private PreparedStatement findLatestRawMetric;
     private PreparedStatement findRawMetrics;
     private PreparedStatement findAggregateMetricsByDateRange;
@@ -70,21 +73,9 @@ public class MetricsDAO {
     private PreparedStatement deleteIndexEntry;
     private PreparedStatement deleteAggregate;
 
-    private InsertStatements insertStatements;
-    private DateTimeService dateTimeService;
-
     public MetricsDAO(StorageSession session, MetricsConfiguration configuration) {
         this.storageSession = session;
         this.configuration = configuration;
-        initPreparedStatements();
-    }
-
-    public MetricsDAO(StorageSession session, MetricsConfiguration configuration, InsertStatements insertStatements,
-        DateTimeService dateTimeService) {
-        this.storageSession = session;
-        this.configuration = configuration;
-        this.insertStatements = insertStatements;
-        this.dateTimeService = dateTimeService;
         initPreparedStatements();
     }
 
@@ -92,8 +83,35 @@ public class MetricsDAO {
         log.info("Initializing prepared statements");
         long startTime = System.currentTimeMillis();
 
+        // If we at any point decide to support configurable TTLs then some of the
+        // statements below will have to be updated and prepared again with the new TTL.
+        // So let's say the user triggers an API call to use new TTLs. Assuming this is
+        // done without requiring an RHQ server restart, then any MetricsDAO instances will
+        // have to get updated with the new TTLs. PreparedStatement object will have to be
+        // re-initialized and re-prepared with the new TTLs. None of this would be necessary
+        // if the TTL value could be a bound value.
+
+        insertRawData = storageSession.prepare(
+            "INSERT INTO " + MetricsTable.RAW + " (schedule_id, time, value) VALUES (?, ?, ?) USING TTL " +
+                configuration.getRawTTL());
+
         rawMetricsQuery = storageSession.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
             " WHERE schedule_id = ? AND time >= ? AND time < ? ORDER BY time");
+
+        insertOneHourData = storageSession.prepare(
+            "INSERT INTO " + MetricsTable.AGGREGATE + "(schedule_id, bucket, time, avg, max, min) " +
+            "VALUES (?, '" + Bucket.ONE_HOUR + "', ?, ?, ?, ?) " +
+            "USING TTL " + configuration.getOneHourTTL());
+
+        insertSixHourData = storageSession.prepare(
+            "INSERT INTO " + MetricsTable.AGGREGATE + "(schedule_id, bucket, time, avg, max, min) " +
+            "VALUES (?, '" + Bucket.SIX_HOUR + "', ?, ?, ?, ?) " +
+            "USING TTL " + configuration.getSixHourTTL());
+
+        insertTwentyFourHourData = storageSession.prepare(
+            "INSERT INTO " + MetricsTable.AGGREGATE + "(schedule_id, bucket, time, avg, max, min) " +
+            "VALUES (?, '" + Bucket.TWENTY_FOUR_HOUR + "', ?, ?, ?, ?) " +
+            "USING TTL " + configuration.getTwentyFourHourTTL());
 
         findLatestRawMetric = storageSession.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
             " WHERE schedule_id = ? ORDER BY time DESC LIMIT 1");
@@ -139,49 +157,25 @@ public class MetricsDAO {
     }
 
     public StorageResultSetFuture insertRawData(MeasurementDataNumeric data) {
-        DateTime day = dateTimeService.get24HourTimeSlice(data.getTimestamp());
-        PreparedStatement preparedStatement = insertStatements.raw.get(day);
-        if (preparedStatement == null) {
-            throw new IllegalArgumentException("No raw insert prepared statement found for {day: " + day +
-                ", data: " + data + "}");
-        }
-        BoundStatement statement = preparedStatement.bind(data.getScheduleId(), new Date(data.getTimestamp()),
+        BoundStatement statement = insertRawData.bind(data.getScheduleId(), new Date(data.getTimestamp()),
             data.getValue());
         return storageSession.executeAsync(statement);
     }
 
     public StorageResultSetFuture insert1HourData(AggregateNumericMetric metric) {
-        DateTime day = dateTimeService.get24HourTimeSlice(metric.getTimestamp());
-        PreparedStatement preparedStatement = insertStatements.oneHour.get(day);
-        if (preparedStatement == null) {
-            throw new IllegalArgumentException("No 1 hour insert prepared statement found for {day: " + day +
-                ", metric: " + metric + "}");
-        }
-        BoundStatement statement = preparedStatement.bind(metric.getScheduleId(), new Date(metric.getTimestamp()),
+        BoundStatement statement = insertOneHourData.bind(metric.getScheduleId(), new Date(metric.getTimestamp()),
             metric.getAvg(), metric.getMax(), metric.getMin());
         return storageSession.executeAsync(statement);
     }
 
     public StorageResultSetFuture insert6HourData(AggregateNumericMetric metric) {
-        DateTime day = dateTimeService.get24HourTimeSlice(metric.getTimestamp());
-        PreparedStatement preparedStatement = insertStatements.sixHour.get(day);
-        if (preparedStatement == null) {
-            throw new IllegalArgumentException("No 6 hour insert prepared statement found for {day: " + day +
-                ", metric: " + metric + "}");
-        }
-        BoundStatement statement = preparedStatement.bind(metric.getScheduleId(), new Date(metric.getTimestamp()),
+        BoundStatement statement = insertSixHourData.bind(metric.getScheduleId(), new Date(metric.getTimestamp()),
             metric.getAvg(), metric.getMax(), metric.getMin());
         return storageSession.executeAsync(statement);
     }
 
     public StorageResultSetFuture insert24HourData(AggregateNumericMetric metric) {
-        DateTime day = dateTimeService.get24HourTimeSlice(metric.getTimestamp());
-        PreparedStatement preparedStatement = insertStatements.twentyFourHour.get(day);
-        if (preparedStatement == null) {
-            throw new IllegalArgumentException("No 24 hour insert prepared statement found for {day: " + day +
-                ", metric: " + metric + "}");
-        }
-        BoundStatement statement = preparedStatement.bind(metric.getScheduleId(),
+        BoundStatement statement = insertTwentyFourHourData.bind(metric.getScheduleId(),
             new Date(metric.getTimestamp()), metric.getAvg(), metric.getMax(), metric.getMin());
         return storageSession.executeAsync(statement);
     }

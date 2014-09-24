@@ -165,7 +165,7 @@ public class ServerInstallUtil {
     private static final String RHQ_USER_SECURITY_DOMAIN = "RHQUserSecurityDomain";
     private static final String RHQ_REST_SECURITY_DOMAIN = "RHQRESTSecurityDomain";
     private static final String JDBC_LOGIN_MODULE_NAME = "org.rhq.enterprise.server.core.jaas.JDBCLoginModule";
-    private static final String DELEGATIG_LOGIN_MODULE_NAME = "org.rhq.enterprise.server.core.jaas.DelegatingLoginModule";
+    private static final String DELEGATING_LOGIN_MODULE_NAME = "org.rhq.enterprise.server.core.jaas.DelegatingLoginModule";
     private static final String JDBC_DRIVER_POSTGRES = "postgres";
     private static final String JDBC_DRIVER_ORACLE = "oracle";
     private static final String JMS_ALERT_CONDITION_QUEUE = "AlertConditionQueue";
@@ -194,15 +194,22 @@ public class ServerInstallUtil {
 
         client.setLoggerLevel("org.jboss.as.config", "INFO"); // BZ 1004730
 
-        // BZ 1026786, 1078500
         StringBuilder sb = new StringBuilder("not(any(");
-        sb.append("match(\"JBAS015960\")");
+        sb.append("match(\"JBAS015960\")"); // BZ 1026786
         sb.append(",");
-        sb.append("match(\"JBAS018567\")");
+        sb.append("match(\"JBAS018567\")"); // BZ 1026786
         sb.append(",");
-        sb.append("match(\"JBAS018568\")");
+        sb.append("match(\"JBAS018568\")"); // BZ 1026786
         sb.append(",");
-        sb.append("match(\"JSF1051\")");
+        sb.append("match(\"JSF1051\")"); // BZ 1078500
+        sb.append(",");
+        sb.append("match(\"PBOX00023\")"); // BZ 1026799, BZ 1144998
+        sb.append(",");
+        sb.append("match(\"IJ000906\")"); // BZ 1127272, waiting for fix of https://bugzilla.redhat.com/show_bug.cgi?id=1032641
+        sb.append(",");
+        sb.append("match(\"ARJUNA016009\")"); //BZ 1144998, waiting for fix of https://issues.jboss.org/browse/WFLY-2828
+        sb.append(",");
+        sb.append("match(\"JBAS014807\")"); //BZ 1144998, missing web subsystem is expected at times
         sb.append("))");
         client.setFilterSpec(sb.toString());
     }
@@ -376,7 +383,7 @@ public class ServerInstallUtil {
         options.put("roles", "rest-user");
 
         SecurityDomainJBossASClient.LoginModuleRequest loginModuleRequest = new SecurityDomainJBossASClient.LoginModuleRequest(
-            DELEGATIG_LOGIN_MODULE_NAME, AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, options);
+            DELEGATING_LOGIN_MODULE_NAME, AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, options);
 
         SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
         client.createNewSecurityDomain(RHQ_REST_SECURITY_DOMAIN, loginModuleRequest);

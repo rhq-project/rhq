@@ -125,6 +125,8 @@
                            <property name="jboss-logging.version" value="${jboss-logging.version}" />
                            <property name="jboss-remoting.version" value="${jboss-remoting.version}" />
                            <property name="jboss-javassist.version" value="${javassist.version}" />
+                           <property name="hibernate-jpa-2.0-api.version" value="${hibernate-jpa-2.0-api.version}" />
+                           <property name="hibernate.version" value="${hibernate.version}" />
                            <property name="jline.version" value="${jline.version}" />
                            <property name="log4j.version" value="${log4j.version}" />
                            <property name="testng.version" value="${testng.version}" />

@@ -61,7 +61,7 @@ public class InsertStatements {
     public void init() {
         DateTime today = dateTimeService.current24HourTimeSlice();
         DateTime endDay = today.plusDays(2);
-        DateTime day = today.minusDays(7);
+        DateTime day = today.minusDays(configuration.getRawRetention().toPeriod().getDays());
 
         while (day.isBefore(endDay)) {
             raw.put(day, session.prepare(
@@ -88,13 +88,20 @@ public class InsertStatements {
     }
 
     /**
-     * It is expected that this method is invoked by a reoccurring job that runs daily. The oldest statement, which
-     * would be from 8 days ago, is removed from each map. And then a new statement is added for tomorrow.
+     * The oldest statement, which would be from 8 days ago, is removed from each map. And then a new statement is
+     * added for tomorrow. This method is a no-op if it is invoked subsequent times on the same day. Once the caches
+     * have been updated, calling this method subsequent times will not modify them until tomorrow. This is a safe
+     * guard to ensure that the sliding window is not inadvertently advanced too far into the future.
      */
     public void update() {
+        DateTime today = dateTimeService.current24HourTimeSlice();
         DateTime oldestDay = raw.firstKey();
         DateTime day = raw.lastKey();
         DateTime tomorrow = day.plusDays(1);
+
+        if (today.isBefore(day)) {
+            return;
+        }
 
         raw.put(tomorrow, session.prepare(
             "INSERT INTO " + MetricsTable.RAW + " (schedule_id, time, value) VALUES (?, ?, ?) " +

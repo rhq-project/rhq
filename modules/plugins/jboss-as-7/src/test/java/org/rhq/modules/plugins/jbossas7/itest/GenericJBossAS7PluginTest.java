@@ -159,6 +159,12 @@ public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
         excludedMetricNamesByType.put(new ResourceType("Connector", PLUGIN_NAME, ResourceCategory.SERVICE, null),
             new String[] {"_expr:max-connections"});
 
+        // It's normal for the "active-patches" to have null value on servers that do not support patching.
+        excludedMetricNamesByType.put(new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME, ResourceCategory.SERVER,
+                null), new String[]{"active-patches"});
+        excludedMetricNamesByType.put(new ResourceType("JBossAS7 Standalone Server", PLUGIN_NAME, ResourceCategory.SERVER,
+            null), new String[]{"active-patches"});
+
         assertAllNumericMetricsAndTraitsHaveNonNullValues(excludedMetricNamesByType);
     }
 

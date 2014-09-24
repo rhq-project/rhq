@@ -61,9 +61,8 @@
       <copy file="${settings.localRepository}/org/jboss/remoting/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" tofile="${lib.home}/jboss-remoting-${jboss-remoting.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/javassist/javassist/${jboss-javassist.version}/javassist-${jboss-javassist.version}.jar" tofile="${lib.home}/javassist-${jboss-javassist.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/oswego-concurrent/concurrent/${concurrent.version}/concurrent-${concurrent.version}.jar" tofile="${lib.home}/concurrent-${concurrent.version}.jar" verbose="true" />
-      <!-- TODO: This can probaby go away after we stop using EJB classes as Exceptions in the RemoteAPI (TODO (jshaughn): add back if necessary)
-      <copy file="${settings.localRepository}/javax/persistence/persistence-api/${persistence-api.version}/persistence-api-${persistence-api.version}.jar" tofile="${lib.home}/persistence-api-${persistence-api.version}.jar" verbose="true" />      
-      -->
+      <copy file="${settings.localRepository}/org/hibernate/javax/persistence/hibernate-jpa-2.0-api/${hibernate-jpa-2.0-api.version}/hibernate-jpa-2.0-api-${hibernate-jpa-2.0-api.version}.jar" tofile="${lib.home}/hibernate-jpa-2.0-api-${hibernate-jpa-2.0-api.version}.jar" verbose="true" />
+      <copy file="${settings.localRepository}/org/hibernate/hibernate-core/${hibernate.version}/hibernate-core-${hibernate.version}.jar" tofile="${lib.home}/hibernate-core-${hibernate.version}.jar" verbose="true" />
       <copy file="${basedir}/target/${project.artifactId}-${project.version}.jar" tofile="${lib.home}/${project.artifactId}-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/net/sf/opencsv/opencsv/${opencsv.version}/opencsv-${opencsv.version}.jar" tofile="${lib.home}/opencsv-${opencsv.version}.jar" verbose="true" />
    	  <copy file="${settings.localRepository}/org/rhq/rhq-script-bindings/${project.version}/rhq-script-bindings-${project.version}.jar" tofile="${lib.home}/rhq-script-bindings-${project.version}.jar" verbose="true" />

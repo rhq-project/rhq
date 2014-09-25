@@ -64,6 +64,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -1301,7 +1302,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
                 }
             }
-            if (rs.getEnabled().booleanValue()) {
+            if (rs != null && rs.getEnabled().booleanValue()) {
                 Configuration parameters = Configuration.builder().addSimple("retentionStrategy", rs.getRetention())
                     .addSimple("count", rs.getCount()).addSimple("deletionStrategy", rs.getDeletion())
                     .addSimple("location", rs.getLocation()).build();

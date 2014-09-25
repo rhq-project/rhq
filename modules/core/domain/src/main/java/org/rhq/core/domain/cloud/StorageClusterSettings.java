@@ -134,7 +134,7 @@ public class StorageClusterSettings implements Serializable {
     public static class RegularSnapshots implements Serializable {
 
         private static final long serialVersionUID = 1L;
-        private Boolean enabled;
+        private Boolean enabled = Boolean.FALSE;
         private String schedule;
         private String retention;
         private int count;

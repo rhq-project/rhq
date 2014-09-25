@@ -24,12 +24,14 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.AbstractPlugin;
 import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.PluginConfigurationRequiredException;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
@@ -258,6 +260,9 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
                 }
                 return enabledPlugins;
             }
+        } catch (PluginConfigurationRequiredException pcre) {
+            // this is expected exception and we just want to show it's message 
+            throw new RuntimeException(pcre.getMessage());
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

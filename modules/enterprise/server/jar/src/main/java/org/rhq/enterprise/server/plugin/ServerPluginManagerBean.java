@@ -52,7 +52,12 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.plugin.PluginConfigurationRequiredException;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
@@ -226,10 +231,10 @@ public class ServerPluginManagerBean implements ServerPluginManagerLocal, Server
         }
 
         List<PluginKey> pluginKeys = new ArrayList<PluginKey>();
-
+        List<ServerPlugin> toEnable = new ArrayList<ServerPlugin>();
+        // first we read plugins from DB and check whether they are configured
+        // (such plugin would fail to load - in this case we don't enable anything and just throw PluginConfigurationRequiredException)
         for (Integer pluginId : pluginIds) {
-            serverPluginsBean.setServerPluginEnabledFlag(subject, pluginId, true);
-
             ServerPlugin plugin = null;
             try {
                 plugin = entityManager.getReference(ServerPlugin.class, pluginId);
@@ -237,18 +242,44 @@ public class ServerPluginManagerBean implements ServerPluginManagerLocal, Server
                 log.debug("Cannot enable plugin [" + pluginId + "]. Cause: " + ThrowableUtil.getAllMessages(e));
             }
             if (plugin != null) {
-                PluginKey pluginKey = new PluginKey(plugin);
-                boolean success = enableServerPluginInMasterContainer(pluginKey);
-                if (success) {
-                    pluginKeys.add(pluginKey);
-                } else {
-                    // we can't enable the plugin in the container, there must be a problem with it - disable it
-                    serverPluginsBean.setServerPluginEnabledFlag(subject, pluginId, false);
-                }
+                checkForRequiredConfiguration(plugin);
+                toEnable.add(plugin);
+            }
+        }
+        for (ServerPlugin serverPlugin : toEnable) {
+            serverPluginsBean.setServerPluginEnabledFlag(subject, serverPlugin.getId(), true);
+            PluginKey pluginKey = new PluginKey(serverPlugin);
+            boolean success = enableServerPluginInMasterContainer(pluginKey);
+            if (success) {
+                pluginKeys.add(pluginKey);
+            } else {
+                // we can't enable the plugin in the container, there must be a problem with it - disable it
+                serverPluginsBean.setServerPluginEnabledFlag(subject, serverPlugin.getId(), false);
             }
         }
 
         return pluginKeys;
+    }
+
+    /**
+     * checks if plugin configuration has set all required properties 
+     * @param plugin
+     * @throws PluginConfigurationRequiredException if plugin is missing required configuration
+     * @throws Exception in case of any other error
+     */
+    private void checkForRequiredConfiguration(ServerPlugin plugin) throws Exception {
+        ConfigurationDefinition configDef = getServerPluginConfigurationDefinition(new PluginKey(plugin));
+        Configuration configuration = plugin.getPluginConfiguration();
+        for (PropertyDefinition propDef : configDef.getPropertyDefinitions().values()) {
+            if (propDef.isRequired() && propDef instanceof PropertyDefinitionSimple) {
+                Property prop = configuration.get(propDef.getName());
+                PropertySimple simple = (PropertySimple) prop;
+                if (simple == null || simple.getStringValue() == null || "".equals(simple.getStringValue())) {
+                    throw new PluginConfigurationRequiredException("Plugin [" + plugin.getDisplayName()
+                        + "] could not be enabled, because some required configuration fields are not set.");
+                }
+            }
+        }
     }
 
     private boolean enableServerPluginInMasterContainer(PluginKey pluginKey) {

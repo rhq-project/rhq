@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,29 +13,34 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.core.domain.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A simple representation of an OSGi formatted version string.
- * 
+ *
  * All fields except the "major" part of the version can be undefined.
  *
  * @author Lukas Krejci
  */
 public class OSGiVersion implements Comparable<OSGiVersion> {
+
     private int major;
     private Integer minor;
     private Integer micro;
     private String qualifier;
 
+    @SuppressWarnings("unused")
     public OSGiVersion() {
-        
+        // GWT needs a no arg constructor
     }
-    
+
     public static boolean isValid(String version) {
         try {
             new OSGiVersion(version);
@@ -44,43 +49,73 @@ public class OSGiVersion implements Comparable<OSGiVersion> {
             return false;
         }
     }
-    
+
     /**
      * Creates new OSGiVersion instance from the version string.
-     * 
+     *
      * @param version
-     * 
      * @throws IllegalArgumentException if the version string isn't a well-formed OSGi version string.
      */
     public OSGiVersion(String version) {
-        String[] parts = version.split("\\.");
+        String[] parts = split(version);
 
         try {
             switch (parts.length) {
-            case 4: {
-                qualifier = parts[3];
-            }
+                case 4: {
+                    qualifier = parts[3];
+                }
 
-            case 3: {
-                micro = Integer.parseInt(parts[2]);
-            }
+                case 3: {
+                    micro = Integer.parseInt(parts[2]);
+                }
 
-            case 2: {
-                minor = Integer.parseInt(parts[1]);
-            }
+                case 2: {
+                    minor = Integer.parseInt(parts[1]);
+                }
 
-            case 1: {
-                major = Integer.parseInt(parts[0]);
-                break;
-            }
+                case 1: {
+                    major = Integer.parseInt(parts[0]);
+                    break;
+                }
 
-            default: {
-                throw new IllegalArgumentException("Malformed version string [" + version + "]");
-            }
+                default: {
+                    throw new IllegalArgumentException("Malformed version string [" + version + "]");
+                }
             }
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Malformed version string [" + version + "]");
         }
+    }
+
+    // Trying to be compatible with the previous impl based on String#split
+    static String[] split(final String version) {
+        if (!version.contains(".")) {
+            return new String[]{version};
+        }
+        List<String> result = new ArrayList<String>(4); // we expect 4 elements at most
+        String remaining = version;
+        for (int i; ; ) {
+            i = remaining.indexOf(".");
+            if (i == -1) {
+                result.add(remaining);
+                break;
+            }
+            if (i == 0) {
+                result.add("");
+            } else {
+                result.add(remaining.substring(0, i));
+            }
+            remaining = remaining.substring(i + 1);
+        }
+        for (int i = result.size() - 1; i > -1; i--) {
+            if (result.get(i).trim().length() == 0) {
+                result.remove(i);
+            } else {
+                break;
+            }
+
+        }
+        return result.toArray(new String[result.size()]);
     }
 
     /**
@@ -107,7 +142,7 @@ public class OSGiVersion implements Comparable<OSGiVersion> {
     public int getMinor() {
         return minor == null ? 0 : minor;
     }
-    
+
     /**
      * @param minor the minor to set
      */
@@ -125,7 +160,7 @@ public class OSGiVersion implements Comparable<OSGiVersion> {
     public Integer getMicroIfDefined() {
         return micro;
     }
-    
+
     /**
      * @param micro the micro to set
      */
@@ -179,19 +214,19 @@ public class OSGiVersion implements Comparable<OSGiVersion> {
     public String toString() {
         StringBuilder bld = new StringBuilder();
         bld.append(major);
-        
+
         if (minor != null) {
             bld.append(".").append(minor);
         }
-        
+
         if (micro != null) {
             bld.append(".").append(micro);
         }
-        
+
         if (qualifier != null) {
             bld.append(".").append(qualifier);
         }
-        
+
         return bld.toString();
     }
 }

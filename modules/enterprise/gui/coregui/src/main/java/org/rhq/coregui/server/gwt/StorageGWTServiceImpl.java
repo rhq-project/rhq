@@ -230,4 +230,13 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
             throw getExceptionToThrowToClient(t);
         }
     }
+    
+    @Override
+    public void ackFailedOperation(int storageNodeId) throws RuntimeException {
+        try {
+            storageNodeManager.ackFailedOperation(getSessionSubject(), storageNodeId);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 }

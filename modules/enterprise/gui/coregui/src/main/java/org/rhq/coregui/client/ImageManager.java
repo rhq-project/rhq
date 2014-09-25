@@ -56,6 +56,10 @@ public class ImageManager {
     public static String getStatusError() {
         return "status_error.gif";
     }
+    
+    public static String getCloseIcon() {
+        return "[SKIN]/actions/close.png";
+    }
 
     /**
      * Returns a generic "upload" icon.

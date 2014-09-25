@@ -37,11 +37,17 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
@@ -91,6 +97,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     private HTMLFlow header;
     private boolean alerts = false;
     private StaticTextItem jmxPortItem;
+    private Integer jmxPort = null;
 
     private volatile int initSectionCount = 0;
     private int unackAlerts = -1;
@@ -170,7 +177,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 
                     @Override
                     public void onSuccess(StorageNodeConfigurationComposite result) {
-                        jmxPortItem.setValue(result.getJmxPort());
+                        jmxPort = result.getJmxPort();
+                        jmxPortItem.setValue(jmxPort);
                         prepareResourceConfigEditor(result);
                     }
                 });
@@ -290,6 +298,16 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     }
 
     private void prepareDetailsSection(final StorageNode storageNode) {
+        detailsLayout = new EnhancedVLayout();
+        detailsLayout.setWidth("35%");
+        detailsLayout.addMember(buildDetailsForm(storageNode));
+        if (detailsAndLoadLayout == null) {
+            detailsAndLoadLayout = new EnhancedHLayout(0);
+        }
+        initSectionCount++;
+    }
+    
+    private DynamicForm buildDetailsForm(final StorageNode storageNode) {
         final DynamicForm form = new DynamicForm();
         form.setMargin(10);
         form.setWidth100();
@@ -372,7 +390,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
             message.append(storageNode.getErrorMessage()).append("<br />");
             isOk = false;
         } else if (storageNode.getFailedOperation() != null) {
-            message.append(MSG.view_adminTopology_storageNodes_detail_errorLastOperationFailed() + "<br />");
+            message.append(MSG.view_adminTopology_storageNodes_detail_errorLastOperationFailed());
+            isOk = false;
         }
         if (isOk) {
             message.append(MSG.view_adminTopology_storageNodes_detail_ok());
@@ -380,6 +399,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         messageItem.setValue(message.toString());
 
         StaticTextItem lastOperation = null;
+        StaticTextItem lastOperationAck = null;
         boolean isOperationFailed = storageNode.getFailedOperation() != null
             && storageNode.getFailedOperation().getResource() != null;
         if (isOperationFailed) {
@@ -403,15 +423,43 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         if (isOperationFailed) {
             formItems.add(lastOperation);
         }
+        if (null != storageNode.getErrorMessage() || null != storageNode.getFailedOperation()) {
+            lastOperationAck = new StaticTextItem("lastOpAck", "");
+            lastOperationAck.setValue("<span style='color: #0099D3;'>" + MSG.common_button_ack() + "</span>");
+            lastOperationAck.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent event) {
+                    ackFailedOperation(storageNode);
+                }
+            });
+            formItems.add(lastOperationAck);
+        }
         form.setItems(formItems.toArray(new FormItem[formItems.size()]));
 
-        detailsLayout = new EnhancedVLayout();
-        detailsLayout.setWidth("35%");
-        detailsLayout.addMember(form);
-        if (detailsAndLoadLayout == null) {
-            detailsAndLoadLayout = new EnhancedHLayout(0);
-        }
-        initSectionCount++;
+        return form;
+    }
+    
+    private void ackFailedOperation(final StorageNode storageNode) {
+        GWTServiceLookup.getStorageService().ackFailedOperation(storageNodeId, new AsyncCallback<Void>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                Message message = new Message(MSG.view_adminTopology_storageNodes_detail_loadDataFetchFail(),
+                    Message.Severity.Warning);
+                CoreGUI.getMessageCenter().notify(message);
+            }
+
+            @Override
+            public void onSuccess(Void result) {
+                storageNode.setFailedOperation(null);
+                storageNode.setErrorMessage(null);
+                detailsLayout.removeMember(detailsLayout.getMember(0));
+                detailsLayout.addMember(buildDetailsForm(storageNode));
+                if (null != jmxPort) {
+                    jmxPortItem.setValue(jmxPort);
+                }
+            }
+
+        });
     }
 
     private void prepareLoadSection(SectionStack stack, final StorageNode storageNode,

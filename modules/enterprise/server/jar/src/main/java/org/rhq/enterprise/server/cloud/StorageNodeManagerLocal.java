@@ -117,4 +117,6 @@ public interface StorageNodeManagerLocal extends StorageNodeManagerRemote {
         StorageClusterSettings settings);
 
     void scheduleSnapshotManagement(Subject subject, StorageClusterSettings clusterSettings);
+    
+    void ackFailedOperation(Subject subject, int storageNodeId);
 }

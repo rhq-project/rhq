@@ -98,4 +98,6 @@ public interface StorageGWTService extends RemoteService {
     void undeployStorageNode(StorageNode storageNode) throws RuntimeException;
     
     void deployStorageNode(StorageNode storageNode) throws RuntimeException;
+    
+    void ackFailedOperation(int storageNodeId) throws RuntimeException;
 }

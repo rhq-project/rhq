@@ -33,8 +33,6 @@ import javax.ejb.EJB;
 import javax.persistence.Query;
 import javax.transaction.Transaction;
 
-import org.testng.annotations.Test;
-
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -46,10 +44,9 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
+import org.testng.annotations.Test;
 
 /**
  * @author Jirka Kremser
@@ -61,16 +58,12 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
     private StorageNodeManagerLocal nodeManager;
 
     @EJB
-    private ResourceTypeManagerLocal typeManager;
-
-    @EJB
-    private ResourceGroupManagerLocal resourceGroupManager;
-
-    @EJB
     private SubjectManagerLocal subjectManager;
+    
+
 
     private static final String TEST_PREFIX = "test-";
-
+    
     @Test(groups = "integration.ejb3")
     public void testStorageNodeCriteriaFinder() throws Exception {
 
@@ -134,6 +127,42 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
             }
         });
     }
+    
+    @Test(groups = "integration.ejb3")
+    public void testStorageNodeAckFailedOperation() throws Exception {
+        executeInTransaction(new TransactionCallback() {
+
+            @Override
+            public void execute() throws Exception {
+                StorageNode node = new StorageNode();
+                final String address = TEST_PREFIX + "foo.com";
+                node.setAddress(address);
+                node.setOperationMode(StorageNode.OperationMode.ANNOUNCE);
+                node.setCqlPort(9142);
+                node.setErrorMessage("It is broken");
+                em.persist(node);
+                em.flush();                
+                assertEquals("The cluster status should be DOWN", StorageNode.Status.DOWN, node.getStatus());
+                
+                // we need to do this to obtain the new id
+                StorageNodeCriteria criteria = new StorageNodeCriteria();
+                criteria.addFilterAddress(address);
+                StorageNode node2 = nodeManager.findStorageNodeByAddress(address);
+                
+                nodeManager.ackFailedOperation(subjectManager.getOverlord(), node2.getId());
+                
+                criteria = new StorageNodeCriteria();
+                criteria.addFilterAddress(address);
+                StorageNode node3 = nodeManager.findStorageNodeByAddress(address);
+                
+                assertEquals("The error message should not affect the equals method", node, node2);
+                assertEquals("The error message should not affect the equals method", node2, node3);
+                assertEquals("The cluster status should be JOINING", StorageNode.Status.JOINING, node3.getStatus());
+                assertNull("The error message should be clean now", node3.getErrorMessage());
+            }
+            
+        });
+    }
 
     private void cleanDatabase() throws Exception {
         // this method is still needed, because tests calls SLSB methods that are executed in their own transaction
@@ -164,6 +193,7 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
         // resume the currently running TX
         getTransactionManager().resume(runningTransaction);
     }
+    
 
     private ResourceType createResourceType() throws Exception {
         ResourceType resourceType = new ResourceType("RHQ Storage Node", "RHQStorage", ResourceCategory.SERVER, null);

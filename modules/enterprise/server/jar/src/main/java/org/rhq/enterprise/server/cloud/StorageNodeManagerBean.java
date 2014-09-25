@@ -64,7 +64,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -1312,6 +1311,19 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         log.info("Re-scheduling snapshot management operations on StorageNode cluster");
         for (StorageNode storageNode : storageNodes) {
             scheduleSnapshotManagementOperationsForStorageNode(subject, storageNode, clusterSettings);
+        }
+    }
+    
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void ackFailedOperation(Subject subject, int storageNodeId) {
+        StorageNode existingStorageNode = entityManager.find(StorageNode.class, storageNodeId);
+        if (null != existingStorageNode) {
+            existingStorageNode.setFailedOperation(null);
+            existingStorageNode.setErrorMessage(null);
+            entityManager.merge(existingStorageNode);
+        } else {
+            log.info("Storage node did not exist. Cannot ack/clear the failed operation.");
         }
     }
 

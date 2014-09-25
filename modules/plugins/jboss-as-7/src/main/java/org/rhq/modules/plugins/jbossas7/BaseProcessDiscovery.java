@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -48,7 +47,7 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
-import org.rhq.core.domain.util.OSGiVersion;
+import org.rhq.core.domain.util.OSGiVersionComparator;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -138,14 +137,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         START_SCRIPT_OPTION_EXCLUDES.add(new CommandLineOption("Djboss.home.dir", null));
     }
 
-    private static final Pattern SPACE_PATTERN = Pattern.compile("\\s+");
-
-    private static final OSGiVersion OSGI_VERSION_6_2_0 = new OSGiVersion("6.2.0");
-    private static final OSGiVersion OSGI_VERSION_7_0_0 = new OSGiVersion("7.0.0");
-    private static final OSGiVersion OSGI_VERSION_6_3_0 = new OSGiVersion("6.3.0");
-
     // Auto-discover running AS7 instances.
-    @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
@@ -251,11 +243,11 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         String home = javaCommandLine.getSystemProperties().get(HOME_DIR_SYSPROP);
         File homeDir = new File(home);
         if (!homeDir.isAbsolute()) {
-            if (processInfo.priorSnaphot().getExecutable() == null) {
+            if (processInfo.getExecutable() == null) {
                 throw new RuntimeException(HOME_DIR_SYSPROP + " for AS7 process " + processInfo
                     + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
             }
-            String cwd = processInfo.priorSnaphot().getExecutable().getCwd();
+            String cwd = processInfo.getExecutable().getCwd();
             homeDir = new File(cwd, home);
         }
 
@@ -301,7 +293,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
     private void setUserAndPasswordPluginConfigProps(ServerPluginConfiguration serverPluginConfig,
         HostConfiguration hostConfig) {
-        Properties mgmtUsers = getManagementUsers(hostConfig, serverPluginConfig);
+        Properties mgmtUsers = getManagementUsers(hostConfig, getMode(), serverPluginConfig);
         String user;
         String password;
         if (!mgmtUsers.isEmpty()) {
@@ -338,14 +330,14 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         if (baseDirString != null) {
             baseDir = new File(baseDirString);
             if (!baseDir.isAbsolute()) {
-                if (process.priorSnaphot().getExecutable() == null) {
+                if (process.getExecutable() == null) {
                     baseDir = new File(homeDir, baseDirString);
                     if (!baseDir.exists()) {
                         throw new RuntimeException(getBaseDirSystemPropertyName() + " for AS7 process " + process
                             + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
                     }
                 } else {
-                    String cwd = process.priorSnaphot().getExecutable().getCwd();
+                    String cwd = process.getExecutable().getCwd();
                     baseDir = new File(cwd, baseDirString);
                     if (!baseDir.exists()) {
                         baseDir = new File(homeDir, baseDirString);
@@ -365,11 +357,11 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         if (configDirString != null) {
             configDir = new File(configDirString);
             if (!configDir.isAbsolute()) {
-                if (process.priorSnaphot().getExecutable() == null) {
+                if (process.getExecutable() == null) {
                     throw new RuntimeException(getConfigDirSystemPropertyName() + " for AS7 process " + process
                         + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
                 }
-                String cwd = process.priorSnaphot().getExecutable().getCwd();
+                String cwd = process.getExecutable().getCwd();
                 configDir = new File(cwd, configDirString);
             }
             configDir = new File(FileUtils.getCanonicalPath(configDir.getPath()));
@@ -385,11 +377,11 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         if (logDirString != null) {
             logDir = new File(logDirString);
             if (!logDir.isAbsolute()) {
-                if (process.priorSnaphot().getExecutable() == null) {
+                if (process.getExecutable() == null) {
                     throw new RuntimeException(getLogDirSystemPropertyName() + " for AS7 process " + process
                         + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
                 }
-                String cwd = process.priorSnaphot().getExecutable().getCwd();
+                String cwd = process.getExecutable().getCwd();
                 logDir = new File(cwd, logDirString);
             }
             logDir = new File(FileUtils.getCanonicalPath(logDir.getPath()));
@@ -584,13 +576,12 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             throw new InvalidPluginConfigurationException("Could not connect to remote server ["
                 + res.getFailureDescription() + "]. Did you enable management?");
         }
-        @SuppressWarnings("unchecked")
-        T result = (T) res.getResult();
-        return result;
+        return (T) res.getResult();
     }
 
     // never returns null
-    private Properties getManagementUsers(HostConfiguration hostConfig, ServerPluginConfiguration pluginConfig) {
+    private Properties getManagementUsers(HostConfiguration hostConfig, AS7Mode mode,
+        ServerPluginConfiguration pluginConfig) {
         String realm = hostConfig.getManagementSecurityRealm();
         File mgmUsersPropsFile = hostConfig.getSecurityPropertyFile(pluginConfig, realm);
 
@@ -719,8 +710,9 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         try {
             String versionLine = FileUtils.findString(file.getAbsolutePath(), versionPrefix);
             if (isNotBlank(versionLine)) {
-                return productType.SHORT_NAME + " "
-                    + versionLine.substring(versionLine.lastIndexOf(versionPrefix) + versionPrefix.length());
+                return new StringBuilder(productType.SHORT_NAME).append(" ")
+                    .append(versionLine.substring(versionLine.lastIndexOf(versionPrefix) + versionPrefix.length()))
+                    .toString();
             }
         } catch (IOException e) {
             if (LOG.isDebugEnabled()) {
@@ -752,26 +744,12 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             //version of the resource is SHORT_NAME space VERSION
             version = version.substring(productType.SHORT_NAME.length() + 1);
         }
-        // EAP 6.1.0 version.txt file content is: "JBoss Enterprise Application Platform - Version 6.0.1 GA"
-        // As a consequence, the version detected will be "6.0.1 GA" (notice the space instead of a dot)
-        // Give such version strings a chance to make a valid OSGiVersion instance (avoid IllegalArgumentException)
-        version = SPACE_PATTERN.matcher(version).replaceAll(".");
-        OSGiVersion osgiVersion;
-        try {
-            osgiVersion = new OSGiVersion(version);
-        } catch (IllegalArgumentException e) {
-            // If the version is still not matching the expected pattern, default to false
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Defaulting to supportsPatching = false", e);
-            }
-            return false;
-        }
 
         switch (productType) {
         case AS:
             return false;
         case EAP:
-            return OSGI_VERSION_6_2_0.compareTo(osgiVersion) <= 0;
+            return new OSGiVersionComparator().compare("6.2.0", version) <= 0;
         case WILDFLY8:
             return true;
         case JPP:
@@ -779,9 +757,9 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         case SOA:
             return false; //as of now
         case ISPN:
-            return OSGI_VERSION_7_0_0.compareTo(osgiVersion) <= 0;
+            return new OSGiVersionComparator().compare("7.0.0", version) <= 0;
         case JDG:
-            return OSGI_VERSION_6_3_0.compareTo(osgiVersion) <= 0;
+            return new OSGiVersionComparator().compare("6.3.0", version) <= 0;
         }
 
         //let's default to true for the other cases. Most servers support this and additionally plugins

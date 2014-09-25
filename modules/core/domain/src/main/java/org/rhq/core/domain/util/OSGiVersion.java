@@ -19,8 +19,6 @@
 
 package org.rhq.core.domain.util;
 
-import java.util.regex.Pattern;
-
 /**
  * A simple representation of an OSGi formatted version string.
  * 
@@ -29,8 +27,6 @@ import java.util.regex.Pattern;
  * @author Lukas Krejci
  */
 public class OSGiVersion implements Comparable<OSGiVersion> {
-    private static final Pattern DOT_PATTERN = Pattern.compile("\\.");
-
     private int major;
     private Integer minor;
     private Integer micro;
@@ -57,7 +53,7 @@ public class OSGiVersion implements Comparable<OSGiVersion> {
      * @throws IllegalArgumentException if the version string isn't a well-formed OSGi version string.
      */
     public OSGiVersion(String version) {
-        String[] parts = DOT_PATTERN.split(version);
+        String[] parts = version.split("\\.");
 
         try {
             switch (parts.length) {

@@ -135,10 +135,13 @@ public class AggregationManager {
             PersistFunctions persistFunctions = new PersistFunctions(dao, dtService);
             final Set<AggregateNumericMetric> oneHourData = new ConcurrentSkipListSet<AggregateNumericMetric>(
                 AGGREGATE_COMPARATOR);
-
             DateTime endTime = dtService.currentHour();
             DateTime end = endTime;
-            DateTime start = end.minusDays(2);
+            // We set the start time to the retention period minus 1 hour, or 6 days and 23
+            // hours ago instead of 7 days ago because if we set the start time to the full
+            // 7 days, then we could end up in a situation where data has expired and
+            // aggregate metric get overwritten with partial data.
+            DateTime start = end.minus(configuration.getRawRetention().toPeriod().minusHours(1));
             DataAggregator rawAggregator = createRawAggregator(persistFunctions);
             rawAggregator.setBatchFinishedListener(new DataAggregator.BatchFinishedListener() {
                 @Override
@@ -149,11 +152,11 @@ public class AggregationManager {
             num1Hour = rawAggregator.execute(start, end);
 
             end = dtService.get6HourTimeSlice(endTime);
-            start = dtService.get6HourTimeSlice(endTime).minusDays(7);
+            start = dtService.get6HourTimeSlice(endTime).minus(configuration.getRawRetention());
             num6Hour = create1HourAggregator(persistFunctions).execute(start, end);
 
             end = dtService.get24HourTimeSlice(endTime);
-            start = dtService.get24HourTimeSlice(endTime).minusDays(14);
+            start = dtService.get24HourTimeSlice(endTime).minus(configuration.getRawRetention());
             num24Hour = create6HourAggregator(persistFunctions).execute(start, end);
 
             return oneHourData;

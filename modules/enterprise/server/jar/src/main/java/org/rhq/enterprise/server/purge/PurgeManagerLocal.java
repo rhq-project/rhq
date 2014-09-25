@@ -76,4 +76,14 @@ public interface PurgeManagerLocal {
      * @return the number or audit messages deleted
      */
     int purgeOrphanedBundleResourceDeploymentHistory();
+
+    /**
+     * SUPPORTS JPA DRIFT SERVER PLUGIN
+     * This will remove all drift files that are no longer referenced by drift entries. This is a maintenance method
+     * to help reclaim space on the backend.
+     *
+     * @param purgeMillis orphaned drift files older than this time will be deleted
+     * @return number of orphaned drift files that were removed
+     */
+    int purgeOrphanedDriftFilesInDatabase(long purgeMillis);
 }

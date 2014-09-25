@@ -1,8 +1,7 @@
 /*
  * RHQ Management Platform
- * Copyright 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.drift;
 
 import java.io.File;
@@ -132,17 +132,6 @@ public interface JPADriftServerLocal {
      * This purges all drift entities and changeset entities associated with the drift definition.
      */
     void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception;
-
-    /**
-     * SUPPORTS JPA DRIFT SERVER PLUGIN
-     * This will remove all drift files that are no longer referenced by drift entries. This is a maintenance method
-     * to help reclaim space on the backend.
-     * 
-     * @param subject
-     * @param purgeMillis 
-     * @return number of orphaned drife files that were removed
-     */
-    int purgeOrphanedDriftFiles(Subject subject, long purgeMillis);
 
     String getDriftFileBits(String hash);
 

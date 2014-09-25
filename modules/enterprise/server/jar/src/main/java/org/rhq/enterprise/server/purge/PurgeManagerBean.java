@@ -155,4 +155,10 @@ public class PurgeManagerBean implements PurgeManagerLocal {
             userTransaction);
         return purge.execute();
     }
+
+    @Override
+    public int purgeOrphanedDriftFilesInDatabase(long purgeMillis) {
+        JPADriftFilePurge purge = new JPADriftFilePurge(dataSource, userTransaction, purgeMillis);
+        return purge.execute();
+    }
 }

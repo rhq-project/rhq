@@ -2359,7 +2359,7 @@
                 <schema-directSQL>
                     <statement desc="Setting the flag that protects user without any assigned roles to log in to false (false = not allowed to login)">
                         INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
-                        VALUES (65, 'ENABLE_LOGIN_WITHOUT_ROLES', 'false', 'false')
+                        VALUES (65, 'ENABLE_LOGIN_WITHOUT_ROLES', 'true', 'true')
                     </statement>
                 </schema-directSQL>
             </schemaSpec>

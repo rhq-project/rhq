@@ -64,7 +64,6 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
-import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.util.PropertiesFileUpdate;
@@ -81,6 +80,7 @@ import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.modules.plugins.jbossas7.json.ResultFailedException;
+import org.rhq.modules.plugins.jbossas7.json.SecurityRealmNotReadyException;
 
 /**
  * Base component for functionality that is common to Standalone Servers and Host Controllers.
@@ -127,6 +127,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     @Override
     public AvailabilityType getAvailability() {
         AvailabilityType availabilityType;
+        boolean securityRealmReady = true;
         try {
             try {
                 readAttribute(getHostAddress(), "name", AVAIL_OP_TIMEOUT_SECONDS);
@@ -138,6 +139,10 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 LOG.info("Detected domain host name [" + getASHostName() + "]");
                 readAttribute(getHostAddress(), "name");
                 availabilityType = UP;
+            } catch (SecurityRealmNotReadyException e) {
+                previousAvailabilityType = DOWN;
+                availabilityType = DOWN;
+                securityRealmReady = false;
             }
         } catch (TimeoutException e) {
             long now = new Date().getTime();
@@ -157,6 +162,11 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 LOG.debug(getResourceDescription() + ": exception while checking availability", e);
             }
             availabilityType = DOWN;
+        }
+
+        if (!securityRealmReady) {
+            throw new InvalidPluginConfigurationException("The security realm of the HTTP management interface"
+                + " is not ready to process requests. This usually indicates that no user is configured");
         }
 
         if (availabilityType == DOWN) {
@@ -291,7 +301,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         return connection;
     }
 
-    // TODO: Refactor this - we should be able to mock the ResourceContext passed to start() instead.
     @Override
     public void setConnection(ASConnection connection) {
         this.connection = connection;
@@ -383,7 +392,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 Thread.sleep(SECONDS.toMillis(1));
             }
         }
-        return notAnswering;
+        return true;
     }
 
     /**
@@ -490,10 +499,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     }
 
     public boolean isManuallyAddedServer() {
-        if (pluginConfiguration.get("manuallyAdded") != null) {
-            return true;
-        }
-        return false;
+        return pluginConfiguration.get("manuallyAdded") != null;
     }
 
     private boolean isManuallyAddedServer(OperationResult operationResult, String operation) {
@@ -578,7 +584,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 Thread.sleep(SECONDS.toMillis(1));
             }
         }
-        return up;
+        return true;
     }
 
     /**
@@ -969,7 +975,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             } catch (IOException e) {
                 return BundleHandoverResponse
                     .failure(BundleHandoverResponse.FailureType.EXECUTION,
-                        "Failed to create a temp file to copy patch to.");
+                            "Failed to create a temp file to copy patch to.");
             }
 
             try {
@@ -984,13 +990,12 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             if (parameters != null) {
                 for (Map.Entry<String, String> e : parameters.entrySet()) {
                     String name = e.getKey();
-                    String value = e.getValue();
 
                     if (!("override".equals(name) || "override-all".equals(name) || "preserve".equals(name) ||
                         "override-modules".equals(name))) {
                         return BundleHandoverResponse.failure(INVALID_PARAMETER,
-                            "'" + name +
-                                "' is not a supported parameter. Only 'override', 'override-all', 'preserve' and 'override-modules' are supported.");
+                                "'" + name +
+                                        "' is not a supported parameter. Only 'override', 'override-all', 'preserve' and 'override-modules' are supported.");
                     }
                 }
             }
@@ -1052,7 +1057,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
     protected String collectPatches() {
         ProcessExecutionResults results = ServerControl.onServer(context.getPluginConfiguration(), getMode(),
-            context.getSystemInformation())
+                context.getSystemInformation())
             .cli().disconnected(true).executeCliCommand("patch info");
 
         if (results.getError() != null) {

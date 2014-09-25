@@ -60,7 +60,6 @@ import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
@@ -78,6 +77,7 @@ import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.ResolveExpression;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.modules.plugins.jbossas7.json.ResultFailedException;
+import org.rhq.modules.plugins.jbossas7.json.SecurityRealmNotReadyException;
 
 /**
  * The base class for all AS7 resource components.
@@ -121,7 +121,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
      */
     @Override
-    public void start(ResourceContext<T> context) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext<T> context) throws Exception {
         this.context = context;
         pluginConfiguration = context.getPluginConfiguration();
         serverComponent = findServerComponent();
@@ -129,14 +129,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         address = new Address(path);
         key = context.getResourceKey();
         myServerName = context.getResourceKey().substring(context.getResourceKey().lastIndexOf("/") + 1);
-
-        PropertySimple includeRuntimeProperty = pluginConfiguration.getSimple("includeRuntime");
-        if (includeRuntimeProperty != null && includeRuntimeProperty.getBooleanValue() != null
-            && includeRuntimeProperty.getBooleanValue()) {
-            includeRuntime = true;
-        } else {
-            includeRuntime = false;
-        }
+        includeRuntime = Boolean.parseBoolean(pluginConfiguration.getSimpleValue("includeRuntime", null));
     }
 
     @Override
@@ -225,7 +218,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 complexRequest = ComplexRequest.create(reqName);
                 op = new ReadAttribute(address, complexRequest.getProp());
             } else {
-                op = new ReadAttribute(address, reqName); // TODO batching
+                op = new ReadAttribute(address, reqName);
             }
 
             Result res = getASConnection().execute(op);
@@ -246,7 +239,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                     return ReadMetricResult.Null;
                 try {
                     if (complexRequest != null) {
-                        HashMap<String, Number> myValues = (HashMap<String, Number>) val;
+                        @SuppressWarnings("unchecked")
+                        Map<String, Number> myValues = (Map<String, Number>) val;
                         for (String key : myValues.keySet()) {
                             String sub = complexRequest.getSub();
                             if (key.equals(sub)) {
@@ -308,7 +302,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     }
 
     protected String getStringValue(Object val) {
-        String realVal = "";
+        String realVal;
         if (val instanceof String)
             realVal = (String) val;
         else
@@ -418,19 +412,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         if (!res.isSuccess()) {
             throw new IllegalArgumentException("Delete for [" + path + "] failed: " + res.getFailureDescription());
         }
-        if (path.contains("server-group")) {
-            // This was a server group level deployment - TODO do we also need to remove the entry in /deployments ?
-            /*
-
-                        for (PROPERTY_VALUE val : address) {
-                            if (val.getKey().equals("deployment")) {
-                                ComplexResult res2 = connection.executeComplex(new Operation("remove",val.getKey(),val.getValue()));
-                                if (!res2.isSuccess())
-                                    throw new IllegalArgumentException("Removal of [" + path + "] falied : " + res2.getFailureDescription());
-                            }
-                        }
-            */
-        }
     }
 
     @Override
@@ -456,6 +437,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 ReadChildrenNames op = new ReadChildrenNames(address, pathProperty.getStringValue());
                 Result res = connection.execute(op);
                 if (res.isSuccess()) {
+                    @SuppressWarnings("unchecked")
                     List<String> entries = (List<String>) res.getResult();
                     if (!entries.isEmpty()) {
                         report.setErrorMessage("Resource is a singleton, but there are already children " + entries
@@ -499,7 +481,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             return report;
         }
 
-        long size = 0L;
+        long size;
         try {
             size = contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
         } catch (Exception e) {
@@ -633,8 +615,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     }
 
     @Override
-    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
-        Exception {
+    public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
 
         String what;
         String op;
@@ -647,7 +628,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             what = ""; // dummy value
             op = name;
         }
-        Operation operation = null;
+        Operation operation;
 
         Address theAddress = new Address();
 
@@ -681,7 +662,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             if (type.equals("jms-queue")) {
                 PropertySimple ps = (PropertySimple) parameters.get("durable");
                 if (ps != null) {
-                    boolean durable = ps.getBooleanValue();
+                    boolean durable = Boolean.parseBoolean(ps.getStringValue());
                     operation.addAdditionalProperty("durable", durable);
                 }
                 String selector = parameters.getSimpleValue("selector", "");
@@ -844,7 +825,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     }
 
     ///// These two are used to 'inject' the connection and the path from tests.
-    // TODO: Refactor this - we should be able to mock the ResourceContext passed to start() instead.
     public void setConnection(ASConnection connection) {
         this.testConnection = connection;
     }
@@ -874,27 +854,33 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         return readAttribute(address, name, String.class, timeoutSec);
     }
 
-    protected <T> T readAttribute(Address address, String name, Class<T> resultType) throws Exception {
+    protected <R> R readAttribute(Address address, String name, Class<R> resultType) throws Exception {
         return readAttribute(address, name, resultType, 10);
     }
 
-    protected <T> T readAttribute(Address address, String name, Class<T> resultType, int timeoutSec) throws Exception {
+    protected <R> R readAttribute(Address address, String name, Class<R> resultType, int timeoutSec) throws Exception {
         Operation op = new ReadAttribute(address, name);
         Result res = getASConnection().execute(op, timeoutSec);
+
         if (!res.isSuccess()) {
             if (res.isTimedout()) {
                 throw new TimeoutException("Read attribute operation timed out");
             }
-
-            if (res.isRolledBack() && !res.getFailureDescription().startsWith("JBAS015135")) { // this means we've connected, authenticated, but still failed
+            if (res.isRolledBack() && !res.getFailureDescription().startsWith("JBAS015135")) {
+                // this means we've connected, authenticated, but still failed
                 throw new ResultFailedException("Failed to read attribute [" + name + "] of address ["
                     + getAddress().getPath() + "] - response: " + res);
             }
-
+            if (res.isRolledBack() && res.getFailureDescription().startsWith("JBAS015135")) {
+                // this means we've connected, authenticated, but still failed
+                throw new SecurityRealmNotReadyException("Failed to read attribute [" + name + "] of address ["
+                    + getAddress().getPath() + "] - response: " + res);
+            }
             throw new Exception("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
                 + "] - response: " + res);
         }
-        return (T) res.getResult();
+
+        return resultType.cast(res.getResult());
     }
 
     protected Address getServerAddress() {
@@ -927,6 +913,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             Integer multicastPort;
             try {
                 try {
+                    @SuppressWarnings("unchecked")
                     Map<String, String> map = readAttribute(jgroupsSocketBindingAddress, "multicast-address", Map.class);
                     String expressionValue = map.get("EXPRESSION_VALUE");
                     int beginIndex = expressionValue.indexOf("${jboss.default.multicast.address");

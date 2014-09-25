@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.core.domain.drift;
 
 import java.io.Serializable;
@@ -43,27 +44,10 @@ import javax.persistence.Table;
 public class JPADriftFile extends AbstractJPADriftFile implements Serializable, DriftFile {
     private static final long serialVersionUID = 1L;
 
-    /*
-     * This should be proper JPSQL to delete drift file entities if there are no drift entities referencing them:
-     * 
-     * DELETE FROM JPADriftFile f
-     *  WHERE f.hashId NOT IN (SELECT d1.oldDriftFile FROM JPADrift d1)
-     *    AND f.hashId NOT IN (SELECT d2.newDriftFile FROM JPADrift d2)
-     *
-     * However, Hibernate erroneously translates this to:
-     * 
-     * delete from RHQ_DRIFT_FILE
-     *  where (HASH_ID not in (select jpadrift1_.OLD_DRIFT_FILE from RHQ_DRIFT jpadrift1_))
-     *    and (jpadriftfi0_.HASH_ID not in  (select jpadrift2_.NEW_DRIFT_FILE from RHQ_DRIFT jpadrift2_))
-     *
-     * Notice "jpadriftfi0_" SHOULD be the alias of RHQ_DRIFT_FILE, but it is not being defined by Hibernate.
-     * Thus, that alias is unknown and a parse error occurs in the database engine.
-     * 
-     * Therefore, we need to define a native query that we know works. This should be periodically executed
-     * in order to purge unused drift files.
-     * 
-     * Note that we also add the AND clause to also check for CTIME. 
+    /**
+     * @deprecated as of 4.13. No longer used.
      */
+    @Deprecated
     public static final String NATIVE_DELETE_ORPHANED_DRIFT_FILES = "" //
         + "DELETE FROM RHQ_DRIFT_FILE " //
         + " WHERE (HASH_ID NOT IN (SELECT OLD_DRIFT_FILE FROM RHQ_DRIFT)) " //

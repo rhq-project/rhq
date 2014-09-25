@@ -1,8 +1,7 @@
 /*
  * RHQ Management Platform
- * Copyright 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.drift;
 
 import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
@@ -94,7 +94,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  */
 @Stateless
 public class JPADriftServerBean implements JPADriftServerLocal {
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final Log LOG = LogFactory.getLog(JPADriftServerBean.class);
 
     @EJB
     AgentManagerLocal agentManager;
@@ -107,16 +107,6 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
-
-    @Override
-    @TransactionAttribute(REQUIRES_NEW)
-    public int purgeOrphanedDriftFiles(Subject subject, long purgeMillis) {
-        Query q = entityManager.createNativeQuery(JPADriftFile.NATIVE_DELETE_ORPHANED_DRIFT_FILES);
-        q.setParameter(1, purgeMillis);
-        int count = q.executeUpdate();
-        log.debug("purged [" + count + "] drift files that were orphaned (that is, no longer referenced by drift)");
-        return count;
-    }
 
     @Override
     @TransactionAttribute(REQUIRES_NEW)
@@ -142,10 +132,9 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         q.setParameter("driftDefinitionName", driftDefName);
         changeSetsDeleted = q.executeUpdate();
 
-        log.info("Purged [" + driftsDeleted + "] drift items and [" + changeSetsDeleted
-            + "] changesets associated with drift def [" + driftDefName + "] from resource [" + resourceId
-            + "]. Elapsed time=[" + timer.getElapsed() + "]ms");
-        return;
+        LOG.info("Purged [" + driftsDeleted + "] drift items and [" + changeSetsDeleted
+                + "] changesets associated with drift def [" + driftDefName + "] from resource [" + resourceId
+                + "]. Elapsed time=[" + timer.getElapsed() + "]ms");
     }
 
     @Override
@@ -321,7 +310,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
             driftFilesToRequest, headers);
 
         if (null == result) {
-            return result;
+            return null;
         }
 
         JPADriftServer.ackChangeSetInNewTransaction(subject, resourceId, headers[0], driftFilesToRequest);
@@ -345,7 +334,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                 @Override
                 public boolean visit(ZipEntry zipEntry, ZipInputStream stream) throws Exception {
 
-                    JPADriftChangeSet driftChangeSet = null;
+                    JPADriftChangeSet driftChangeSet;
 
                     ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new InputStreamReader(stream)),
                         false);
@@ -353,8 +342,8 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                     // store the new change set info (not the actual blob)
                     DriftDefinition driftDef = findDriftDefinition(resource, reader.getHeaders());
                     if (driftDef == null) {
-                        log.error("Unable to locate DriftDefinition for Resource [" + resource
-                            + "]. Change set cannot be saved.");
+                        LOG.error("Unable to locate DriftDefinition for Resource [" + resource
+                                + "]. Change set cannot be saved.");
                         return false;
                     }
                     // TODO: Commenting out the following line for now. We want to set the
@@ -433,7 +422,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
             } else {
                 msg += ("resourceId [" + resourceId + "]");
             }
-            log.error(msg, e);
+            LOG.error(msg, e);
 
             return null;
 
@@ -460,11 +449,11 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                     service.requestDriftFiles(resourceId, headers, driftFilesToRequest);
 
                 } catch (Exception e) {
-                    log.warn("Unable to inform agent of drift file request  [" + driftFilesToRequest + "]", e);
+                    LOG.warn("Unable to inform agent of drift file request  [" + driftFilesToRequest + "]", e);
                 }
             }
         } catch (Exception e) {
-            log.warn("Unable to acknowledge changeSet storage with agent for " + headers, e);
+            LOG.warn("Unable to acknowledge changeSet storage with agent for " + headers, e);
         }
     }
 
@@ -474,13 +463,11 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     }
 
     private JPADriftFile getDriftFile(String sha256, List<JPADriftFile> emptyDriftFiles, boolean addToList) {
-        JPADriftFile result = null;
-
         if (null == sha256 || "0".equals(sha256)) {
-            return result;
+            return null;
         }
 
-        result = entityManager.find(JPADriftFile.class, sha256);
+        JPADriftFile result = entityManager.find(JPADriftFile.class, sha256);
         // if the JPADriftFile is not yet in the db then persist it, and mark it requested if content is to be fetched
         // note - by immediately setting the initial status to REQUESTED we avoid a future update and a
         // potential deadlock scenario where the REQUESTED and LOADED status updates can happen simultaneously

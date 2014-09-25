@@ -1,8 +1,7 @@
 /*
  * RHQ Management Platform
- * Copyright 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,12 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.plugins.drift;
 
 import static org.rhq.enterprise.server.util.LookupUtil.getJPADriftServer;
+import static org.rhq.enterprise.server.util.LookupUtil.getPurgeManager;
 
 import java.io.File;
 
@@ -48,31 +49,34 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
  * @author John Sanda
  */
 public class JPADriftServerPluginComponent implements DriftServerPluginFacet, ServerPluginComponent {
-
-    private final Log log = LogFactory.getLog(JPADriftServerPluginComponent.class);
-
-    @SuppressWarnings("unused")
-    private ServerPluginContext context;
+    private static final Log LOG = LogFactory.getLog(JPADriftServerPluginComponent.class);
 
     @Override
     public void initialize(ServerPluginContext context) throws Exception {
-        this.context = context;
-        log.debug("The RHQ Drift plugin has been initialized!!! : " + this);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("The RHQ Drift plugin has been initialized!!! : " + this);
+        }
     }
 
     @Override
     public void start() {
-        log.debug("The RHQ Drift plugin has started!!! : " + this);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("The RHQ Drift plugin has started!!! : " + this);
+        }
     }
 
     @Override
     public void stop() {
-        log.debug("The RHQ Drift plugin has stopped!!! : " + this);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("The RHQ Drift plugin has stopped!!! : " + this);
+        }
     }
 
     @Override
     public void shutdown() {
-        log.debug("The RHQ Drift plugin has been shut down!!! : " + this);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("The RHQ Drift plugin has been shut down!!! : " + this);
+        }
     }
 
     @Override
@@ -125,7 +129,7 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
 
     @Override
     public int purgeOrphanedDriftFiles(Subject subject, long purgeMillis) {
-        return getJPADriftServer().purgeOrphanedDriftFiles(subject, purgeMillis);
+        return getPurgeManager().purgeOrphanedDriftFilesInDatabase(purgeMillis);
     }
 
     @Override

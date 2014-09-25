@@ -357,7 +357,7 @@
                            has a timestamp that is more than limit days old, then it is not stored. This prevents data
                            that is for example a year old from being stored.">
           <c:constraint>
-            <c:integer-constraint minimum="1"/>
+            <c:integer-constraint minimum="1" maximum="5"/>
           </c:constraint>
         </c:simple-property>
         <c:group name="Aggregation">

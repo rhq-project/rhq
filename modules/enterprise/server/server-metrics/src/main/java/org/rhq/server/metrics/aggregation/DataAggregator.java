@@ -144,7 +144,7 @@ class DataAggregator<T extends NumericMetric> {
         AbortedException {
 
         log.info("Starting " + bucket + " data aggregation");
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = Stopwatch.createStarted();
         try {
             IndexIterator iterator = new IndexIterator(start, end, bucket, dao, configuration);
             Batch batch = new Batch();
@@ -182,7 +182,7 @@ class DataAggregator<T extends NumericMetric> {
             taskTracker.abort("There was an unexpected error scheduling aggregation tasks: " + e.getMessage());
         } finally {
             stopwatch.stop();
-            log.info("Finished " + bucket + " data aggregation for " + schedulesCount + " measurement schedules in " +
+            log.info("Finished " + schedulesCount + " " + bucket + " data aggregations in " +
                 stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
         }
         return schedulesCount.get();
@@ -190,7 +190,7 @@ class DataAggregator<T extends NumericMetric> {
 
     protected void submitAggregationTask(Batch batch) throws InterruptedException {
         if (log.isDebugEnabled()) {
-            log.debug("Scheduling aggregation task for " + batch);
+            log.debug("Scheduling " + bucket + " aggregation task for " + batch);
         }
         permits.acquire();
         aggregationTasks.submit(new AggregationTask(batch) {
@@ -370,8 +370,8 @@ class DataAggregator<T extends NumericMetric> {
                 permits.release();
                 taskTracker.finishedTask();
                 if (log.isDebugEnabled()) {
-                    log.debug("There are " + taskTracker.getRemainingTasks() + " remaining tasks and " +
-                        permits.availablePermits() + " available permits");
+                    log.debug("There are " + taskTracker.getRemainingTasks() + " remaining " + bucket +
+                        " aggregation tasks and " + permits.availablePermits() + " available permits");
                 }
             }
         }

@@ -64,6 +64,8 @@ public class MetricsServer {
 
     private final Log log = LogFactory.getLog(MetricsServer.class);
 
+    private static final int RAW_DATA_AGE_LIMIT_MAX = 5;
+
     private DateTimeService dateTimeService = new DateTimeService();
 
     private MetricsDAO dao;
@@ -77,7 +79,8 @@ public class MetricsServer {
 
     private AggregationManager aggregationManager;
     
-    private Days rawDataAgeLimit = Days.days(Integer.parseInt(System.getProperty("rhq.metrics.data.age-limit", "3")));
+    private Days rawDataAgeLimit = Days.days(Math.min(3, Integer.parseInt(
+        System.getProperty("rhq.metrics.data.age-limit", "3"))));
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
@@ -96,6 +99,10 @@ public class MetricsServer {
     }
 
     public void setRawDataAgeLimit(int rawDataAgeLimit) {
+        if (rawDataAgeLimit > RAW_DATA_AGE_LIMIT_MAX) {
+            throw new IllegalArgumentException("The requested limit, " + rawDataAgeLimit + ", exceeds the max age " +
+                "limit of " + RAW_DATA_AGE_LIMIT_MAX);
+        }
         this.rawDataAgeLimit = Days.days(rawDataAgeLimit);
     }
 
@@ -335,8 +342,6 @@ public class MetricsServer {
         }
         final Stopwatch stopwatch = new Stopwatch().start();
         final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
-        // TODO add support for splitting cache index partition
-        final int partition = 0;
 
         for (final MeasurementDataNumeric data : dataSet) {
             DateTime collectionTimeSlice = dateTimeService.getTimeSlice(new DateTime(data.getTimestamp()),
@@ -344,38 +349,38 @@ public class MetricsServer {
             Days days = Days.daysBetween(collectionTimeSlice, dateTimeService.now());
 
             if (days.isGreaterThan(rawDataAgeLimit)) {
-                callback.onSuccess(data);
-                continue;
-            }
-
-            StorageResultSetFuture rawFuture = dao.insertRawData(data);
-            StorageResultSetFuture indexFuture = dao.updateIndex(IndexBucket.RAW, collectionTimeSlice.getMillis(),
-                data.getScheduleId());
-            ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(rawFuture, indexFuture);
-            Futures.addCallback(insertsFuture, new FutureCallback<List<ResultSet>>() {
-                @Override
-                public void onSuccess(List<ResultSet> result) {
-                    callback.onSuccess(data);
-                    if (remainingInserts.decrementAndGet() == 0) {
-                        stopwatch.stop();
-                        if (log.isDebugEnabled()) {
-                            log.debug("Finished inserting " + dataSet.size() + " raw metrics in " +
-                                stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+                log.info(data + " is older than the raw data age limit of " + rawDataAgeLimit.getDays() +
+                    " days. It will not be stored.");
+            } else {
+                StorageResultSetFuture rawFuture = dao.insertRawData(data);
+                StorageResultSetFuture indexFuture = dao.updateIndex(IndexBucket.RAW, collectionTimeSlice.getMillis(),
+                    data.getScheduleId());
+                ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(rawFuture, indexFuture);
+                Futures.addCallback(insertsFuture, new FutureCallback<List<ResultSet>>() {
+                    @Override
+                    public void onSuccess(List<ResultSet> result) {
+                        callback.onSuccess(data);
+                        if (remainingInserts.decrementAndGet() == 0) {
+                            stopwatch.stop();
+                            if (log.isDebugEnabled()) {
+                                log.debug("Finished inserting " + dataSet.size() + " raw metrics in " +
+                                    stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+                            }
+                            callback.onFinish();
                         }
-                        callback.onFinish();
                     }
-                }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("An error occurred while inserting raw data", ThrowableUtil.getRootCause(t));
-                    } else {
-                        log.warn("An error occurred while inserting raw data: " + ThrowableUtil.getRootMessage(t));
+                    @Override
+                    public void onFailure(Throwable t) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("An error occurred while inserting raw data", ThrowableUtil.getRootCause(t));
+                        } else {
+                            log.warn("An error occurred while inserting raw data: " + ThrowableUtil.getRootMessage(t));
+                        }
+                        callback.onFailure(t);
                     }
-                    callback.onFailure(t);
-                }
-            }, tasks);
+                }, tasks);
+            }
         }
     }
 

@@ -100,6 +100,7 @@ public class RhAccessView extends FullHTMLPane implements BookmarkableView {
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterId(resourceId);
+        criteria.fetchChildResources(true);
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
                 @Override
@@ -137,6 +138,23 @@ public class RhAccessView extends FullHTMLPane implements BookmarkableView {
             });
     }
 
+    /**
+     * DV6 does report itself as EAP, to detect it we need to look at it's child resources
+     * @param resource
+     * @return
+     */
+    private String workaroundDetectingDV6(Resource resource) {
+        for (Resource childResource : resource.getChildResources()) {
+            ResourceType type = childResource.getResourceType();
+            if (type != null) {
+                if ("Teiid".equals(type.getPlugin()) && "Data Virtualization".equals(type.getName())) {
+                    return "Red Hat JBoss Data Virtualization";
+                }
+            }
+        }
+        return null;
+    }
+
     private void loadTraitValues() {
         final Resource resource = resourceComposite.getResource();
         GWTServiceLookup.getMeasurementDataService().findCurrentTraitsForResource(resource.getId(),
@@ -164,6 +182,14 @@ public class RhAccessView extends FullHTMLPane implements BookmarkableView {
 
                         if ("EAP".equals(productName)) {
                             productName = "Red Hat JBoss Enterprise Application Platform";
+                            String dv = workaroundDetectingDV6(resource);
+                            if (dv != null) {
+                                productName = dv;
+                                if (productVersion.startsWith("6.1.1")) {
+                                    // DV 6 is laid down on EAP 6.1.1
+                                    productVersion = "6.0.0";
+                                }
+                            }
                         }
                         if ("Data Grid".equals(productName)) {
                             productName = "Red Hat JBoss Data Grid";

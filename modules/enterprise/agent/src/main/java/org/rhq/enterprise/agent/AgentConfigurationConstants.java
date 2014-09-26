@@ -805,7 +805,7 @@ public interface AgentConfigurationConstants {
      * Communications security keystore password
      */
     @Restricted
-    public String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_PASSWORD = "rhq.communications.connector.security.keystore.password";
+    String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_PASSWORD = "rhq.communications.connector.security.keystore.password";
 
     /**
      * Communications security actual key password

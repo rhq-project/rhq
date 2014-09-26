@@ -444,7 +444,7 @@
     <resource-configuration>
       <c:simple-property name="RequestLimit" type="double" required="false" description="Sets throttling in terms of
                          requests per second. Defaults to 30,000 if undefined. Note that this setting is automatically
-                         changed when various events such as request timeouts occur."/>
+                         changed when various events such as request timeouts occur." readOnly="true"/>
       <c:simple-property name="MinRequestLimit" type="double" displayName="Minimum Request Limit" required="false"
                          description="This sets a minimum threshold for the request limit. If the request limit is
                          automatically decreased, it will never drop below this value."/>

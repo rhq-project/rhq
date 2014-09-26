@@ -605,27 +605,27 @@ public class StorageClientManager implements StorageClientManagerMBean{
     }
 
     @Override
-    public double oneMinuteAvgRate() {
+    public double getOneMinuteAvgRate() {
         return driverMetrics.getRequestsTimer().oneMinuteRate();
     }
 
     @Override
-    public double fiveMinuteAvgRate() {
+    public double getFiveMinuteAvgRate() {
         return driverMetrics.getRequestsTimer().fiveMinuteRate();
     }
 
     @Override
-    public double fifteenMinuteAvgRate() {
+    public double getFifteenMinuteAvgRate() {
         return driverMetrics.getRequestsTimer().fifteenMinuteRate();
     }
 
     @Override
-    public double meanRate() {
+    public double getMeanRate() {
         return driverMetrics.getRequestsTimer().meanRate();
     }
 
     @Override
-    public double meanLatency() {
+    public double getMeanLatency() {
         return driverMetrics.getRequestsTimer().mean();
     }
 

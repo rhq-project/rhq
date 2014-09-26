@@ -406,13 +406,40 @@
     </plugin-configuration>
 
     <metric
-        property="RequestTimeouts"
+        property="ReadRequestTimeouts"
         measurementType="trendsup"
-        description="The number of request timeouts (client-side) this RHQ Server since it was started"/>
+        description="The number of read request timeouts (client-side) this RHQ Server since it was started"/>
+    <metric
+        property="WriteRequestTimeouts"
+        measurementType="trendsup"
+        description="The number of read request timeouts (client-side) this RHQ Server since it was started"/>
     <metric
         property="TotalRequests"
         measurementType="trendsup"
         description="The total number of requests this RHQ Server has made since it was started"/>
+
+    <metric property="OneMinuteAvgRate"
+            measurementType="dynamic" displayType="summary" description="The request rate per second during one minute interval" defaultInterval="60000" />
+
+    <metric property="FiveMinuteAvgRate"
+            measurementType="dynamic" displayType="summary" description="The request rate per second during five minute interval" defaultInterval="300000"/>
+
+    <metric property="FifteenMinuteAvgRate"
+            measurementType="dynamic" displayType="summary" description="The request rate per second during fifteen minute interval" defaultInterval="900000" />
+
+    <metric property="MeanRate"
+            measurementType="dynamic" displayType="summary" description="The mean request rate per second since server was started" />
+
+    <metric property="MeanLatency"
+            measurementType="dynamic" displayType="summary" description="The mean latency" />
+
+    <metric property="ConnectedToHosts" measurementType="dynamic" displayType="summary" description="Number of Storage nodes the driver is currently connected to (that is have at least one connection opened to)." />
+
+    <metric property="OpenConnections" measurementType="dynamic" displayType="summary" description="Total number of currently opened connections to Storage nodes." />
+
+    <metric property="Retries" measurementType="trendsup" displayType="summary" description="Number of times the request had to retried to storage node." />
+
+    <metric property="ConnectionErrors" measurementType="trendsup" displayType="summary" description="Number of times the connection failed to the storage node." />
 
     <resource-configuration>
       <c:simple-property name="RequestLimit" type="double" required="false" description="Sets throttling in terms of

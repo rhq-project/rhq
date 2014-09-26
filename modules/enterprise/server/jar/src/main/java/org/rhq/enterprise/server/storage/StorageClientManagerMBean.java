@@ -25,8 +25,22 @@ public interface StorageClientManagerMBean {
 
     void setRequestTimeoutDampening(long requestTimeoutDampening);
 
-    long getRequestTimeouts();
-
+    // Cassandra driver's exposed methods
+    int getConnectedToHosts();
+    int getKnownHosts();
+    int getOpenConnections();
+    long getReadRequestTimeouts();
+    long getWriteRequestTimeouts();
     long getTotalRequests();
 
+    // Metrics.Errors, not exposing RetryPolicy statistics
+    long getRetries();
+    long getConnectionErrors();
+
+    // Timers
+    double oneMinuteAvgRate();
+    double fiveMinuteAvgRate();
+    double fifteenMinuteAvgRate();
+    double meanRate();
+    double meanLatency();
 }

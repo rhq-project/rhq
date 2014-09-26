@@ -654,7 +654,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
             final String password = "password";
             Subject subjectWithNoRoles = new Subject(name, true, false);
             subjectWithNoRoles = subjectManager.createSubject(overlord, subjectWithNoRoles, password);
-            subjectManager.login(name, password);
+            subjectManager.loginLocal(name, password);
             fail("Exception should be thrown when logging in without any roles if it is disabled, but wasn't.");
         } catch (LoginException ex) {
             assertTrue(true);

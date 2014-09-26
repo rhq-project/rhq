@@ -355,10 +355,14 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     public Subject login(String username, String password) throws LoginException {
-        return _login(username, password, false);
+        return _login(username, password, true, true);
     }
     
-    private Subject _login(String username, String password, boolean dontCheckRoles) throws LoginException {
+    public Subject loginLocal(String username, String password) throws LoginException {
+        return _login(username, password, true, false);
+    }
+    
+    private Subject _login(String username, String password, boolean checkRoles, boolean remote) throws LoginException {
         if (password == null) {
             throw new LoginException("No password was given");
         }
@@ -375,7 +379,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 throw new LoginException("User account has been disabled.");
             }
 
-            if (!dontCheckRoles) {
+            if (checkRoles) {
                 // fetch the roles
                 int rolesNumber = subject.getRoles().size();
                 if (rolesNumber == 0) {
@@ -401,6 +405,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
             boolean isLdapAuthenticationEnabled = isLdapAuthenticationEnabled();
             if (isLdapAuthenticationEnabled) {
+                if (remote) {
+                    throw new IllegalStateException(
+                        "Use the web UI for the first log in and fill all the necessary information.");
+                }
                 subject = new Subject();
                 subject.setId(0);
                 subject.setName(username);
@@ -509,7 +517,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                                 log.info(msg);
                             }
                             logout(subject.getSessionId().intValue());
-                            subject = _login(ldapSubject.getName(), subjectPassword, true);
+                            subject = _login(ldapSubject.getName(), subjectPassword, false, false);
                             Integer sessionId = subject.getSessionId();
                             if (log.isDebugEnabled()) {
                                 log.debug("Logged in as [" + ldapSubject.getName() + "] with session id [" + sessionId
@@ -530,7 +538,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                             // one for this subject.. must be done before pulling the
                             // new subject in order to do it with his own credentials
                             logout(subject.getSessionId().intValue());
-                            subject = _login(subject.getName(), subjectPassword, true);
+                            subject = _login(subject.getName(), subjectPassword, false, false);
 
                             prepopulateLdapFields(subject);
 

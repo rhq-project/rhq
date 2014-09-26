@@ -79,7 +79,7 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
 
     public Subject login(String username, String password) throws RuntimeException {
         try {
-            return SerialUtility.prepare(subjectManager.login(username, password), "SubjectManager.login");
+            return SerialUtility.prepare(subjectManager.loginLocal(username, password), "SubjectManager.login");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

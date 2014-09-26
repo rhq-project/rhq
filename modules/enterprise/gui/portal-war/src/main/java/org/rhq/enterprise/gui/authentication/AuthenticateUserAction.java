@@ -72,7 +72,7 @@ public class AuthenticateUserAction extends TilesAction {
         try {
             // authenticate the credentials
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-            Subject subject = subjectManager.login(logonForm.getJ_username(), logonForm.getJ_password());
+            Subject subject = subjectManager.loginLocal(logonForm.getJ_username(), logonForm.getJ_password());
             Integer sessionId = subject.getSessionId(); // this is the RHQ session ID, not related to the HTTP session
 
             log.debug("Logged in as [" + logonForm.getJ_username() + "] with session id [" + sessionId + "]");

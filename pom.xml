@@ -96,8 +96,8 @@
     <augeas.zip.location>${settings.localRepository}/net/augeas/augeas-native/${augeas.version}</augeas.zip.location>
     <augeas.zip.mask>*-${augeas.classifier}.zip</augeas.zip.mask>
 
-    <cassandra.driver.netty.version>3.7.0.Final</cassandra.driver.netty.version>
-    <cassandra.driver.version>1.0.5</cassandra.driver.version>
+    <cassandra.driver.netty.version>3.9.1.Final</cassandra.driver.netty.version>
+    <cassandra.driver.version>1.0.8-jboss-1</cassandra.driver.version>
     <cassandra.snappy.version>1.0.4.1-rhq-p1</cassandra.snappy.version>
     <cassandra.snakeyaml.version>1.6</cassandra.snakeyaml.version>
     <cassandra.thrift.version>0.7.0</cassandra.thrift.version>

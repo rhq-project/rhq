@@ -1,7 +1,5 @@
 package org.rhq.enterprise.server.storage;
 
-import static org.rhq.server.metrics.StorageClientConstants.REQUEST_LIMIT;
-
 import java.net.InetAddress;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
@@ -9,7 +7,6 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.server.metrics.StorageSession;
 import org.rhq.server.metrics.StorageStateListener;
 
@@ -36,19 +33,16 @@ public class StorageClusterMonitor implements StorageStateListener {
     public void onStorageNodeUp(InetAddress address) {
         log.info("Storage node at " + address.getHostAddress() + " is up");
         isClusterAvailable = true;
-        updateRequestLimit();
     }
 
     @Override
     public void onStorageNodeDown(InetAddress address) {
         log.info("Storage node at " + address.getHostAddress() + " is down");
-        updateRequestLimit();
     }
 
     @Override
     public void onStorageNodeRemoved(InetAddress address) {
         log.info("Storage node at " + address.getHostAddress() + " has been removed from the cluster");
-        updateRequestLimit();
     }
 
     @Override
@@ -65,12 +59,7 @@ public class StorageClusterMonitor implements StorageStateListener {
 
     @Override
     public void onClientTimeout(NoHostAvailableException e) {
-        updateRequestLimit();
     }
 
-    public void updateRequestLimit() {
-        StorageClientManager storageClientManager = LookupUtil.getStorageClientManager();
-        storageClientManager.persistStorageProperty(REQUEST_LIMIT, Double.toString(session.getRequestLimit()));
-    }
 
 }

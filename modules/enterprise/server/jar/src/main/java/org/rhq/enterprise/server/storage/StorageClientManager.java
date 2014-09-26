@@ -180,7 +180,6 @@ public class StorageClientManager implements StorageClientManagerMBean{
             session = new StorageSession(wrappedSession);
 
             storageClusterMonitor = new StorageClusterMonitor(session);
-            storageClusterMonitor.updateRequestLimit();
             session.addStorageStateListener(storageClusterMonitor);
 
             metricsConfiguration = new MetricsConfiguration();

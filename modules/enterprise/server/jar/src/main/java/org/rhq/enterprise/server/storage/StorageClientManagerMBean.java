@@ -38,9 +38,9 @@ public interface StorageClientManagerMBean {
     long getConnectionErrors();
 
     // Timers
-    double oneMinuteAvgRate();
-    double fiveMinuteAvgRate();
-    double fifteenMinuteAvgRate();
-    double meanRate();
-    double meanLatency();
+    double getOneMinuteAvgRate();
+    double getFiveMinuteAvgRate();
+    double getFifteenMinuteAvgRate();
+    double getMeanRate();
+    double getMeanLatency();
 }

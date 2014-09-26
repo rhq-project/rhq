@@ -19,6 +19,8 @@
 
 package org.rhq.enterprise.server.plugin;
 
+import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,10 +29,15 @@ import javax.persistence.Query;
 import org.hibernate.LazyInitializationException;
 import org.testng.annotations.Test;
 
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.exporter.ZipExporter;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.plugin.PluginConfigurationRequiredException;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
@@ -48,6 +55,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.Generi
 public class ServerPluginsBeanTest extends AbstractEJB3Test {
 
     private static final String TEST_PLUGIN_NAME_PREFIX = "serverplugintest";
+    private static final String TEST_PLUGIN_JAR_NAME = "test-plugin.jar";
 
     private ServerPluginManagerLocal serverPluginsBean;
 
@@ -58,6 +66,16 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         prepareCustomServerPluginService(pluginService);
 
         serverPluginsBean = LookupUtil.getServerPluginManager();
+        pluginService.masterConfig.getPluginDirectory().mkdirs();
+
+        JavaArchive archive = ShrinkWrap.create(JavaArchive.class);
+        URL res = this.getClass().getClassLoader().getResource("serverplugins/simple-generic-serverplugin.xml");
+        archive.addAsResource(res, "META-INF/rhq-serverplugin.xml");
+
+        File pluginFile = new File(pluginService.masterConfig.getPluginDirectory(), TEST_PLUGIN_JAR_NAME);
+
+        archive.as(ZipExporter.class).exportTo(pluginFile, true);
+
     }
 
     @Override
@@ -160,6 +178,32 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         assert p1update.getScheduledJobsConfiguration().equals(p1.getScheduledJobsConfiguration()) : p1update;
         p1update.getPluginConfiguration().equals(p1.getPluginConfiguration());
         p1update.getScheduledJobsConfiguration().equals(p1.getScheduledJobsConfiguration());
+    }
+
+    public void testTryEnableServerPluginsWithMissingRequiredConfiguration() throws Exception {
+        ServerPlugin p1 = registerPlugin(1, Configuration.builder().addSimple("foo", "bar").build());
+        ServerPlugin p2 = registerPlugin(2);
+        PluginKey p1key = new PluginKey(p1);
+        PluginKey p2key = new PluginKey(p2);
+
+        List<Integer> ids = new ArrayList<Integer>(2);
+        ids.add(p1.getId());
+        ids.add(p2.getId());
+
+        // first disable both plugins
+        List<PluginKey> disabled = this.serverPluginsBean.disableServerPlugins(getOverlord(), ids);
+        assert disabled.size() == 2 : disabled;
+        assert disabled.contains(p1key) : disabled;
+        assert disabled.contains(p2key) : disabled;
+
+        // try to enable, but expect failure
+        boolean caught = false;
+        try {
+            this.serverPluginsBean.enableServerPlugins(getOverlord(), ids);
+        } catch (PluginConfigurationRequiredException pcre) {
+            caught = true;
+        }
+        assert caught == true : "Exception must be thrown when attempting to enable plugin without required configuration set";
     }
 
     public void testDisableEnablePlugins() throws Exception {
@@ -330,10 +374,11 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         assert !pluginKeys.contains(p2key) : pluginKeys;
     }
 
-    private ServerPlugin registerPlugin(int index) throws Exception {
-        ServerPlugin plugin = new ServerPlugin(0, TEST_PLUGIN_NAME_PREFIX + index, "path", "displayName", true,
+    private ServerPlugin registerPlugin(int index, Configuration pluginConfiguration) throws Exception {
+        ServerPlugin plugin = new ServerPlugin(0, TEST_PLUGIN_NAME_PREFIX + index, TEST_PLUGIN_JAR_NAME, "displayName",
+            true,
             PluginStatusType.INSTALLED, "description", "help", "md5", "version", "ampsVersion",
-            createPluginConfiguration(), createScheduledJobsConfiguration(), new ServerPluginType(
+            pluginConfiguration, createScheduledJobsConfiguration(), new ServerPluginType(
                 GenericPluginDescriptorType.class).stringify(), System.currentTimeMillis(), System.currentTimeMillis());
 
         plugin = this.serverPluginsBean.registerServerPlugin(getOverlord(), plugin, null);
@@ -345,6 +390,10 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         assert plugin.getScheduledJobsConfiguration() != null;
         assert plugin.getType().equals(new ServerPluginType(GenericPluginDescriptorType.class).stringify());
         return plugin;
+    }
+
+    private ServerPlugin registerPlugin(int index) throws Exception {
+        return registerPlugin(index, createPluginConfiguration());
     }
 
     private void assetLazyInitializationException(ServerPlugin plugin) {
@@ -363,6 +412,8 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
     private Configuration createPluginConfiguration() {
         Configuration config = new Configuration();
         config.put(new PropertySimple("simpleprop1", "simpleprop1value"));
+        // set this property to something as this is defined as required in simple-generic-serverplugin.xml 
+        config.put(new PropertySimple("plugin-simple-prop-1", "foo"));
         return config;
     }
 

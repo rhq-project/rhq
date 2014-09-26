@@ -67,6 +67,11 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
         return this.master;
     }
 
+    @Override
+    public File getServerPluginsDirectory() {
+        return masterConfig.getPluginDirectory();
+    }
+
     /**
      * The test master PC
      */

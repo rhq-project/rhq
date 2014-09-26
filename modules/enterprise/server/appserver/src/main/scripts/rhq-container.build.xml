@@ -897,13 +897,6 @@ rhq.storage.gossip-port=${default.rhq.storage.gossip-port}
 # communicates with the storage cluster
 #############################################################################
 
-# Sets throttling in terms of requests per second. Defaults to 30,000
-# request/sec if undefined. If specified, the value is parsed as a double. Note
-# that this setting is automatically changed when various events occur. See the
-# rhq.storage.request.limit.timeout-delta and the
-# rhq.storage.request.limit.topology-delta properties for more details.
-rhq.storage.request.limit=30000
-
 # The request limit will automatically change by this amount when there is a
 # topology change event. The change will be persisted to this file. Topology
 # change events include nodes being added/removed and nodes going up/down.

@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.storage;
 
 import static org.rhq.server.metrics.StorageClientConstants.DATA_CENTER;
 import static org.rhq.server.metrics.StorageClientConstants.LOAD_BALANCING;
-import static org.rhq.server.metrics.StorageClientConstants.REQUEST_LIMIT;
 import static org.rhq.server.metrics.StorageClientConstants.REQUEST_LIMIT_MIN;
 import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TIMEOUT_DAMPENING;
 import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TIMEOUT_DELTA;
@@ -380,13 +379,6 @@ public class StorageClientManager implements StorageClientManagerMBean{
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public double getRequestLimit() {
         return session.getRequestLimit();
-    }
-
-    @Override
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void setRequestLimit(double requestLimit) {
-        session.setRequestLimit(requestLimit);
-        persistStorageProperty(REQUEST_LIMIT, Double.toString(requestLimit));
     }
 
     @Override

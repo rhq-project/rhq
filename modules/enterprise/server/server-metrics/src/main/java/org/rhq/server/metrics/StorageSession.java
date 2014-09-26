@@ -1,6 +1,24 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.server.metrics;
 
-import static org.rhq.server.metrics.StorageClientConstants.REQUEST_LIMIT;
 import static org.rhq.server.metrics.StorageClientConstants.REQUEST_LIMIT_MIN;
 import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TIMEOUT_DAMPENING;
 import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TIMEOUT_DELTA;
@@ -44,8 +62,7 @@ public class StorageSession implements Host.StateListener {
 
     private double minRequestLimit = Double.parseDouble(System.getProperty(REQUEST_LIMIT_MIN, "5000"));
 
-    private RateLimiter permits = RateLimiter.create(Double.parseDouble(
-        System.getProperty(REQUEST_LIMIT, "30000")), 3, TimeUnit.MINUTES);
+    private RateLimiter permits = null;
 
     private double timeoutDelta = Double.parseDouble(System.getProperty(REQUEST_TIMEOUT_DELTA, "0.2"));
 
@@ -62,7 +79,7 @@ public class StorageSession implements Host.StateListener {
     public StorageSession(Session wrappedSession) {
         this.wrappedSession = wrappedSession;
         this.wrappedSession.getCluster().register(this);
-        calculateRequestLimit();
+        permits = RateLimiter.create(calculateRequestLimit(), 3, TimeUnit.MINUTES);
     }
 
     public void registerNewSession(Session newWrappedSession) {
@@ -82,22 +99,22 @@ public class StorageSession implements Host.StateListener {
         oldWrappedSession.shutdown();
     }
 
-    private void calculateRequestLimit() {
+    private double calculateRequestLimit() {
         double rate = 0.0;
         for (Host host : wrappedSession.getCluster().getMetadata().getAllHosts()) {
             if (host.isUp()) {
                 rate += topologyDelta;
             }
         }
-        permits.setRate(rate);
+        return rate;
+    }
+
+    private void setRequestLimit() {
+        permits.setRate(calculateRequestLimit());
     }
 
     public double getRequestLimit() {
         return new BigDecimal(permits.getRate(), new MathContext(2, RoundingMode.HALF_UP)).doubleValue();
-    }
-
-    public void setRequestLimit(double requestLimit) {
-        permits.setRate(requestLimit);
     }
 
     public double getTimeoutDelta() {
@@ -122,6 +139,7 @@ public class StorageSession implements Host.StateListener {
 
     public void setTopologyDelta(double delta) {
         topologyDelta = delta;
+        setRequestLimit();
     }
 
     public long getTimeoutDampening() {

@@ -125,7 +125,7 @@ public class ClusterBuilder {
 //        if (compression == null && !isIBMJRE()) {
 //            builder.withCompression(ProtocolOptions.Compression.SNAPPY);
 //        }
-        builder.withoutMetrics();
+//        builder.withoutMetrics();
         builder.withCompression(ProtocolOptions.Compression.NONE);
         return builder.build();
     }

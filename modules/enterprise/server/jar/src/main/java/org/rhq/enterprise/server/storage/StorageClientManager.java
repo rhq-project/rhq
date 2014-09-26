@@ -48,6 +48,7 @@ import javax.management.ObjectName;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.Metrics;
 import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.Session;
@@ -122,6 +123,8 @@ public class StorageClientManager implements StorageClientManagerMBean{
     private String cachedStorageUsername;
     private String cachedStoragePassword;
 
+    private Metrics driverMetrics;
+
     public void scheduleStorageSessionMaintenance() {
         // each time the webapp is reloaded, we don't want to create duplicate jobs
         Collection<Timer> timers = timerService.getTimers();
@@ -182,6 +185,7 @@ public class StorageClientManager implements StorageClientManagerMBean{
 
             metricsConfiguration = new MetricsConfiguration();
             metricsDAO = new MetricsDAO(session, metricsConfiguration);
+
 
             initMetricsServer();
             JMXUtil.registerMBean(this, OBJECT_NAME);
@@ -443,14 +447,30 @@ public class StorageClientManager implements StorageClientManagerMBean{
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public long getRequestTimeouts() {
-        return session.getTimeouts();
+    public long getReadRequestTimeouts() {
+        return driverMetrics.getErrorMetrics().getReadTimeouts().count();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public long getWriteRequestTimeouts() {
+        return driverMetrics.getErrorMetrics().getWriteTimeouts().count();
     }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public long getTotalRequests() {
-        return session.getTimeouts();
+        return driverMetrics.getRequestsTimer().count();
+    }
+
+    @Override
+    public long getRetries() {
+        return driverMetrics.getErrorMetrics().getRetries().count();
+    }
+
+    @Override
+    public long getConnectionErrors() {
+        return driverMetrics.getErrorMetrics().getConnectionErrors().count();
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
@@ -520,6 +540,8 @@ public class StorageClientManager implements StorageClientManagerMBean{
             .withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE)).withCompression(
                 ProtocolOptions.Compression.NONE).build();
 
+        driverMetrics = cluster.getMetrics();
+
         PoolingOptions poolingOptions = cluster.getConfiguration().getPoolingOptions();
         poolingOptions.setCoreConnectionsPerHost(HostDistance.LOCAL, Integer.parseInt(
             System.getProperty("rhq.storage.client.local-connections", "24")));
@@ -565,6 +587,46 @@ public class StorageClientManager implements StorageClientManagerMBean{
         dateTimeService.setConfiguration(metricsConfiguration);
         metricsServer.setDateTimeService(dateTimeService);
         metricsServer.init();
+    }
+
+    @Override
+    public int getConnectedToHosts() {
+        return driverMetrics.getConnectedToHosts().value();
+    }
+
+    @Override
+    public int getKnownHosts() {
+        return driverMetrics.getKnownHosts().value();
+    }
+
+    @Override
+    public int getOpenConnections() {
+        return driverMetrics.getOpenConnections().value();
+    }
+
+    @Override
+    public double getOneMinuteAvgRate() {
+        return driverMetrics.getRequestsTimer().oneMinuteRate();
+    }
+
+    @Override
+    public double getFiveMinuteAvgRate() {
+        return driverMetrics.getRequestsTimer().fiveMinuteRate();
+    }
+
+    @Override
+    public double getFifteenMinuteAvgRate() {
+        return driverMetrics.getRequestsTimer().fifteenMinuteRate();
+    }
+
+    @Override
+    public double getMeanRate() {
+        return driverMetrics.getRequestsTimer().meanRate();
+    }
+
+    @Override
+    public double getMeanLatency() {
+        return driverMetrics.getRequestsTimer().mean();
     }
 
 }

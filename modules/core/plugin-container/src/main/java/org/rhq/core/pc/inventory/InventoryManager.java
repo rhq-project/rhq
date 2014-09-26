@@ -41,7 +41,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -362,8 +361,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @throws Exception if the discovery component threw an exception
      */
     public Set<DiscoveredResourceDetails> invokeDiscoveryComponent(ResourceContainer parentResourceContainer,
-        ResourceDiscoveryComponent component, ResourceDiscoveryContext context) throws DiscoverySuspendedException,
-        Exception {
+        ResourceDiscoveryComponent component, ResourceDiscoveryContext context) throws Exception {
 
         Resource parentResource = parentResourceContainer == null ? null : parentResourceContainer.getResource();
 
@@ -377,7 +375,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             throw new DiscoverySuspendedException(message);
         }
 
-        long timeout = getDiscoveryComponentTimeout(context.getResourceType());
+        long timeout = getDiscoveryComponentTimeout();
 
         Set<DiscoveredResourceDetails> results;
 
@@ -473,7 +471,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             if (abortDiscovery) {
                 // provide a backdoor escape hatch - you can avoid aborting by setting this sysprop to true
-                if (Boolean.getBoolean("rhq.agent.discovery-callbacks.never-abort") == false) {
+                if (!Boolean.getBoolean("rhq.agent.discovery-callbacks.never-abort")) {
                     detailsIterator.remove(); // we do not want to process this details
                 }
             }
@@ -504,7 +502,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private DiscoveredResourceDetails discoverResource(ResourceDiscoveryComponent component,
         Configuration pluginConfig, ResourceDiscoveryContext context, ResourceContainer parentResourceContainer)
         throws Exception {
-        long timeout = getDiscoveryComponentTimeout(context.getResourceType());
+        long timeout = getDiscoveryComponentTimeout();
 
         try {
             ManualAddFacet proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(
@@ -543,7 +541,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         ResourceContext parentResourceContext = parentContainer.getResourceContext();
 
         ResourceType resourceType = resource.getResourceType();
-        long timeout = getDiscoveryComponentTimeout(resourceType);
+        long timeout = getDiscoveryComponentTimeout();
 
         ClassLoaderFacet proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(resourceType,
             component, timeout, ClassLoaderFacet.class, parentContainer);
@@ -569,7 +567,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         ResourceType resourceType, ResourceDiscoveryComponent<T> component,
         ResourceUpgradeContext<T> inventoriedResource, ResourceContainer parentResourceContainer) throws Throwable {
 
-        long timeout = getDiscoveryComponentTimeout(resourceType);
+        long timeout = getDiscoveryComponentTimeout();
         try {
             ResourceUpgradeFacet<T> proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(
                 resourceType, component, timeout, ResourceUpgradeFacet.class, parentResourceContainer);
@@ -617,7 +615,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return this.discoveryComponentProxyFactory;
     }
 
-    private long getDiscoveryComponentTimeout(ResourceType type) {
+    private long getDiscoveryComponentTimeout() {
         // TODO: remove this system property and put the timeout in the plugin descriptor;
         // use the type to find what timeout to use since each type can have metadata determining the timeout
         // default should be 300000.
@@ -1333,7 +1331,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     private void syncPlatform(PlatformSyncInfo platformSyncInfo) {
         final Set<String> allServerSideUuids = new HashSet<String>();
-        boolean hadSyncedResources = false;
         ResourceSyncInfo platformResourceSyncInfo = platformSyncInfo.getPlatform();
 
         // sync the platform because it does not get included in the top level server sync
@@ -1348,7 +1345,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         log.info("Sync Starting: Platform [" + platformSyncInfo.getPlatform().getId() + "]");
 
         log.info("Sync Starting: Platform Top level services [" + platformSyncInfo.getPlatform().getId() + "]");
-        hadSyncedResources = syncResources(platformResourceSyncInfo.getId(), syncInfos);
+        boolean hadSyncedResources = syncResources(platformResourceSyncInfo.getId(), syncInfos);
         log.info("Sync Complete: Platform Top level services [" + platformSyncInfo.getPlatform().getId()
             + "] Local inventory changed: [" + hadSyncedResources + "]");
 
@@ -1423,7 +1420,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @return true if any resources needed synchronization, false otherwise
      */
     private boolean syncResources(int rootResourceId, Collection<ResourceSyncInfo> syncInfos) {
-        boolean result = false;
         final long startTime = System.currentTimeMillis();
         final Set<Resource> syncedResources = new LinkedHashSet<Resource>();
         final Set<ResourceSyncInfo> unknownResourceSyncInfos = new LinkedHashSet<ResourceSyncInfo>();
@@ -1459,7 +1455,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     (System.currentTimeMillis() - startTime)));
             }
 
-            result = !syncedResources.isEmpty() || !unknownResources.isEmpty() || !modifiedResources.isEmpty();
+            return !syncedResources.isEmpty() || !unknownResources.isEmpty() || !modifiedResources.isEmpty();
 
         } catch (Throwable t) {
             log.warn("Failed to synchronize local inventory with Server inventory for Resource [" + rootResourceId
@@ -1467,8 +1463,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // convert to runtime exception so as not to change the api
             throw new RuntimeException(t);
         }
-
-        return result;
     }
 
     @Override
@@ -2180,7 +2174,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 // should not throw ResourceTypeNotEnabledException because we checked for that above - if it does, just handle it as an error
                 discoveryComponent = pluginFactory.getDiscoveryComponent(type, parentResourceContainer);
                 discoveryComponent = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(type,
-                    discoveryComponent, getDiscoveryComponentTimeout(type), parentResourceContainer);
+                    discoveryComponent, getDiscoveryComponentTimeout(), parentResourceContainer);
             } catch (Exception e) {
                 discoveryComponent = null;
                 log.warn("Cannot give activated resource its discovery component. Cause: " + e);
@@ -2362,6 +2356,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     boolean sendResourceErrorToServer(ResourceError resourceError) {
+        Resource resource = resourceError.getResource();
+
+        if (resource.getId() == 0) {
+            if (log.isDebugEnabled()) {
+                log.debug("Resource ID is 0!"
+                    + " Will not send resource error until the resource is synced with server. " + resource.toString());
+            }
+            return false;
+        }
+
         boolean errorSent = false;
 
         DiscoveryServerService serverService = null;
@@ -2373,7 +2377,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (serverService != null) {
             try {
                 // use light-weight proxy to Resource, so that the entire hierarchy doesn't get serialized
-                resourceError.setResource(new Resource(resourceError.getResource().getId()));
+                resourceError.setResource(new Resource(resource.getId()));
                 serverService.setResourceError(resourceError);
                 errorSent = true;
             } catch (RuntimeException e) {

@@ -25,7 +25,6 @@ import javax.persistence.EntityExistsException;
 
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.LoginException;
@@ -36,7 +35,7 @@ import org.rhq.enterprise.server.exception.LoginException;
  * @author John Mazzitelli
  */
 @Local
-public interface SubjectManagerLocal {
+public interface SubjectManagerLocal extends SubjectManagerRemote {
     /**
      * Loads in the given subject's {@link Subject#getUserConfiguration() preferences} and
      * {@link Subject#getRoles() roles}.
@@ -67,6 +66,18 @@ public interface SubjectManagerLocal {
      * @throws LoginException if failed to create a new session for the given user
      */
     Subject loginUnauthenticated(String username) throws LoginException;
+    
+    /**
+     * Logs in a user performing the authentication. The difference between this method and 
+     * {@link SubjectManagerRemote#login(String, String)} method is that the latter is meant to be used only for CLI, 
+     * because if LDAP user without any role is trying to log in (and it is disabled) this one lets the user in 
+     * because of the LDAP registration form.
+     *
+     * @param  username The user to login
+     * @return A Subject with an active session for the the user
+     * @throws LoginException if failed to create a new session for the given user
+     */
+    Subject loginLocal(String username, String password) throws LoginException;
 
     /**
      * Creates a new principal (username and password) in the internal database.
@@ -180,62 +191,6 @@ public interface SubjectManagerLocal {
      * This will schedule the periodic EJB timer to trigger a purge of all timed out sessions.
      */
     void scheduleSessionPurgeJob();
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    /**
-     * #see {@link SubjectManagerRemote#changePassword(Subject, String, String)
-     */
-    void changePassword(Subject subject, String username, String password);
-
-    /**
-     * #see {@link SubjectManagerRemote#createPrincipal(Subject, String, String)
-     */
-    void createPrincipal(Subject subject, String username, String password) throws SubjectException;
-
-    /**
-     * #see {@link SubjectManagerRemote#createSubject(Subject, Subject)
-     */
-    Subject createSubject(Subject subject, Subject subjectToCreate) throws SubjectException;
-
-    /**
-     * #see {@link SubjectManagerRemote#deleteSubjects(Subject, int[])
-     */
-    void deleteSubjects(Subject subject, int[] subjectIds);
-
-    /**
-     * @see {@link SubjectManagerRemote#getSubjectByName(String)}
-     */
-    Subject getSubjectByName(String username);
-
-    /**
-     * @see {@link SubjectManagerRemote#getSubjectByNameAndSessionId(String, int)}
-     */
-    Subject getSubjectByNameAndSessionId(String username, int sessionId) throws Exception;
-
-    /**
-     * @see SubjectManagerRemote#login(String, String)
-     */
-    Subject login(String username, String password) throws LoginException;
-
-    /**
-     * @see SubjectManagerRemote#logout(Subject)
-     */
-    void logout(Subject subject);
-
-    /**
-     * @see SubjectManagerRemote#updateSubject(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.auth.Subject)
-     */
-    Subject updateSubject(Subject subject, Subject subjectToModify);
-
-    /**
-     * @see SubjectManagerRemote#findSubjectsByCriteria(Subject, SubjectCriteria)
-     */
-    PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria);
-
+    
     Subject processSubjectForLdap(Subject subject, String subjectPassword) throws LoginException;
 }

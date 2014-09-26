@@ -72,12 +72,12 @@ public class EditPasswordAction extends BaseAction {
         // if this user cannot administer other user's passwords, make sure he gave the old password as confirmation
         if (!admin) {
             try {
-                int dummySession = subjectManager.login(userName, pForm.getCurrentPassword()).getSessionId();
+                int dummySession = subjectManager.loginLocal(userName, pForm.getCurrentPassword()).getSessionId();
                 subjectManager.logout(dummySession);
 
                 // The above killed our session for subject if subject == userToBeModified
                 if (isSameUser) {
-                    subject = subjectManager.login(userName, pForm.getCurrentPassword());
+                    subject = subjectManager.loginLocal(userName, pForm.getCurrentPassword());
                 }
             } catch (LoginException e) {
                 RequestUtils.setError(request, "admin.user.error.WrongPassword", "currentPassword");

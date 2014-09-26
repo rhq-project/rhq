@@ -102,7 +102,7 @@ public class RegisterAction extends BaseAction {
         // one for this subject.. must be done before pulling the
         // new subject in order to do it with his own credentials
         subjectManager.logout(RequestUtils.getSessionId(request).intValue());
-        newSubject = subjectManager.login(newSubject.getName(), password);
+        newSubject = subjectManager.loginLocal(newSubject.getName(), password);
 
         // we also need to create up a new web user
         webUser = new WebUser(newSubject);

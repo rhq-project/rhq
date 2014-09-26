@@ -70,20 +70,20 @@ public class MetricsPerfTests extends MetricsTest {
         metricsServer.setConfiguration(configuration);
         metricsServer.setDAO(dao);
         metricsServer.setDateTimeService(dateTimeService);
-        requestLimit = storageSession.getRequestLimit();
+        requestLimit = storageSession.getTopologyDelta();
 
         metricsServer.init();
     }
 
     private void resetRateLimits() {
-        storageSession.setRequestLimit(requestLimit);
+        storageSession.setTopologyDelta(requestLimit);
     }
 
     @Test
     public void insertRawData() throws Exception {
         Random random = new Random();
         DateTime currentHour = hour(3);
-        storageSession.setRequestLimit(10000);
+        storageSession.setTopologyDelta(NUM_SCHEDULES);
         dateTimeService.setNow(currentHour);
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
         for (int i = 0; i < NUM_SCHEDULES; ++i) {

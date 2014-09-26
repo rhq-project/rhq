@@ -19,7 +19,7 @@
 package org.rhq.enterprise.agent;
 
 import org.rhq.core.pc.PluginContainerConfiguration;
-import org.rhq.core.util.obfuscation.ObfuscatedPreferences;
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences.Restricted;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 
 /**
@@ -59,7 +59,7 @@ public interface AgentConfigurationConstants {
     /**
      * This is the current schema version that our agent configuration knows about.
      */
-    int CURRENT_CONFIG_SCHEMA_VERSION = 8;
+    int CURRENT_CONFIG_SCHEMA_VERSION = 9;
 
     /**
      * Flag to indicate if the agent's configuration has been setup.
@@ -429,13 +429,13 @@ public interface AgentConfigurationConstants {
     /**
      * The password used to access the keystore file.
      */
-    @ObfuscatedPreferences.Restricted
+    @Restricted
     String CLIENT_SENDER_SECURITY_KEYSTORE_PASSWORD = PROPERTY_NAME_PREFIX + "client.security.keystore.password";
 
     /**
      * The password to gain access to the key found in the keystore.
      */
-    @ObfuscatedPreferences.Restricted
+    @Restricted
     String CLIENT_SENDER_SECURITY_KEYSTORE_KEY_PASSWORD = PROPERTY_NAME_PREFIX
         + "client.security.keystore.key-password";
 
@@ -474,7 +474,7 @@ public interface AgentConfigurationConstants {
     /**
      * The password used to access the truststore file.
      */
-    @ObfuscatedPreferences.Restricted
+    @Restricted
     String CLIENT_SENDER_SECURITY_TRUSTSTORE_PASSWORD = PROPERTY_NAME_PREFIX + "client.security.truststore.password";
 
     /**
@@ -804,12 +804,12 @@ public interface AgentConfigurationConstants {
     /**
      * Communications security keystore password
      */
-    @ObfuscatedPreferences.Restricted
-    String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_PASSWORD = "rhq.communications.connector.security.keystore.password";
+    @Restricted
+    public String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_PASSWORD = "rhq.communications.connector.security.keystore.password";
 
     /**
      * Communications security actual key password
      */
-    @ObfuscatedPreferences.Restricted
+    @Restricted
     String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_KEY_PASSWORD = "rhq.communications.connector.security.keystore.key-password";
 }

@@ -30,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -42,6 +43,8 @@ import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileReverter;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences.RestrictedFormat;
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
@@ -575,6 +578,8 @@ public class Upgrade extends AbstractInstall {
             oldServerProps.setProperty("rhq.server.database.db-name", "unused");
         }
 
+        migrateRestrictedProperties(oldServerProps);
+
         // now merge the old settings in with the default properties from the new server install
         String newServerPropsFilePath = getServerPropertiesFile().getAbsolutePath();
         PropertiesFileUpdate newServerPropsFile = new PropertiesFileUpdate(newServerPropsFilePath);
@@ -698,6 +703,40 @@ public class Upgrade extends AbstractInstall {
         } catch (IOException e) {
             log.error("An error occurred while upgrading the agent: " + e.getMessage());
             throw e;
+        }
+    }
+
+    /**
+     * Migrates default restricted properties to the correct restricted/obfuscated format.
+     *
+     * @param properties properties to migrate
+     */
+    private void migrateRestrictedProperties(Properties properties) {
+        List<String> defaultRestrictedProperties = new ArrayList<String>();
+        defaultRestrictedProperties.add("rhq.server.client.security.keystore.password");
+        defaultRestrictedProperties.add("rhq.server.client.security.keystore.key-password");
+        defaultRestrictedProperties.add("rhq.server.client.security.truststore.password");
+        defaultRestrictedProperties.add("rhq.communications.connector.security.keystore.key-password");
+        defaultRestrictedProperties.add("rhq.communications.connector.security.keystore.password");
+        defaultRestrictedProperties.add("rhq.communications.connector.security.truststore.password");
+
+        for (String restrictedProperty : defaultRestrictedProperties) {
+            String value = (String) properties.get(restrictedProperty);
+
+            if (value == null) {
+                continue;
+            }
+
+            try {
+                if (RestrictedFormat.isRestrictedFormat(value)) {
+                    value = RestrictedFormat.retrieveValue(value);
+                    PicketBoxObfuscator.decode(value);
+                } else {
+                    throw new Exception("Value not in a restricted format");
+                    }
+            } catch (Exception ex) {
+                properties.put(restrictedProperty, RestrictedFormat.formatValue(PicketBoxObfuscator.encode(value)));
+            }
         }
     }
 

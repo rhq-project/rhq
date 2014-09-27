@@ -103,7 +103,7 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
                         discoveryDelayItem.addChangedHandler(new ChangedHandler() {
                             @Override
                             public void onChanged(ChangedEvent changedEvent) {
-                                wizard.getNewDeployment().setDiscoveryDelay((Integer) changedEvent.getValue());
+                                wizard.getNewDeploymentConfig().setSimpleValue("org.rhq.discoveryDelay", (String) changedEvent.getValue());
                             }
                         });
 
@@ -126,10 +126,11 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
 
     private String getDiscoveryDelayConfigurationValue() {
         // This could be the value from either recipe or the default one
-        Integer rValue = wizard.getNewDeployment().getDiscoveryDelay();
+        Integer rValue = Integer.valueOf(30);
 
         // If user wanted to override the value in recipe, allow it
         Property discoveryDelayProperty = wizard.getNewDeploymentConfig().get("org.rhq.discoveryDelay");
+
         if(discoveryDelayProperty == null) {
             // If there was no recipe value, assume the current value is the default one and check live-deployment
             BundleDeployment liveDeployment = wizard.getLiveDeployment();
@@ -143,6 +144,7 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
             }
         }
 
+        wizard.getNewDeploymentConfig().setSimpleValue("org.rhq.discoveryDelay", rValue.toString());
         return rValue.toString();
     }
 }

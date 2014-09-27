@@ -33,10 +33,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.StreamTokenizer;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -47,10 +49,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -64,6 +68,8 @@ import java.util.prefs.Preferences;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLEventFactory;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLEventWriter;
@@ -72,6 +78,11 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.DTD;
 import javax.xml.stream.events.XMLEvent;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
@@ -79,6 +90,9 @@ import mazz.i18n.Msg;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.jboss.remoting.security.SSLSocketBuilder;
@@ -117,6 +131,9 @@ import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.StringPropertyReplacer;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences.Restricted;
+import org.rhq.core.util.obfuscation.ObfuscatedPreferences.RestrictedFormat;
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.AgentRestartCounter.AgentRestartReason;
 import org.rhq.enterprise.agent.AgentUtils.ServerEndpoint;
@@ -3581,6 +3598,8 @@ public class AgentMain {
      * @throws Exception
      */
     private void checkInitialConfiguration() throws Exception {
+        encodeDefaultRestrictedProperties(AgentConfigurationConstants.DEFAULT_AGENT_CONFIGURATION_FILE);
+
         // Make sure we are configured properly - do this now in case a -c command line argument wasn't specified
         if (m_configuration == null) {
             // let's see if we are already pre-configured; if we are not, load in the default configuration file
@@ -3602,6 +3621,107 @@ public class AgentMain {
         AgentConfigurationUpgrade.upgradeToLatest(m_configuration.getPreferences());
 
         return;
+    }
+
+    /**
+     * Encode all default restricted properties, if they
+     * are not already in a restricted format.
+     *
+     * @param configFile config file to update
+     * @throws Exception
+     */
+    private void encodeDefaultRestrictedProperties(String configFileName) throws Exception {
+        //Find the configuration file, if no file found stop
+        File configFile = new File(configFileName);
+        if (!configFile.exists()) {
+            URL configFileResource = Thread.currentThread().getContextClassLoader().getResource(configFileName);
+            configFile = new File(configFileResource.toURI());
+
+            if (!configFile.exists()) {
+                return;
+            }
+        }
+
+        //Make an inventory of default restricted properties
+        Set<String> restrictedPreferences = new HashSet<String>();
+        for (Field field : AgentConfigurationConstants.class.getFields()) {
+            Restricted restricted = field.getAnnotation(Restricted.class);
+            if (restricted != null) {
+                try {
+                    String restrictedProperty = field.get(AgentConfigurationConstants.class).toString();
+                    restrictedPreferences.add(restrictedProperty);
+                } catch (Exception e) {
+                    //nothing to do, the field is just not accessible
+                }
+            }
+        }
+
+        //Obfuscate properties that should be restricted by default
+        //(update the config file only if an update is done to the config file)
+        InputStream inputStream = null;
+        OutputStream outputStream = null;
+
+        try {
+            boolean configFileUpdateRequired = false;
+
+            DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            inputStream = new FileInputStream(configFile);
+            Document document = documentBuilder.parse(inputStream);
+            inputStream.close();
+
+            NodeList nodeList = document.getElementsByTagName("entry");
+
+            for (int index = 0; index < nodeList.getLength(); index++) {
+                Node node = nodeList.item(index);
+                String entryKey = node.getAttributes().getNamedItem("key").getNodeValue();
+
+                if (restrictedPreferences.contains(entryKey)) {
+                    String value = node.getAttributes().getNamedItem("value").getTextContent();
+
+                    if (!RestrictedFormat.isRestrictedFormat(value)) {
+                        value = PicketBoxObfuscator.encode(value);
+                        value = RestrictedFormat.formatValue(value);
+                        node.getAttributes().getNamedItem("value").setNodeValue(value);
+
+                        configFileUpdateRequired = true;
+                    }
+                }
+            }
+
+            if (configFileUpdateRequired) {
+                document.setXmlStandalone(true);
+
+                Transformer transformer = TransformerFactory.newInstance().newTransformer();
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+                transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+                transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "http://java.sun.com/dtd/preferences.dtd");
+
+                outputStream = new FileOutputStream(configFile);
+                transformer.transform(new DOMSource(document), new StreamResult(outputStream));
+                outputStream.close();
+            }
+        } catch (Exception e) {
+            String cause = ThrowableUtil.getAllMessages(e);
+            LOG.error(AgentI18NResourceKeys.LOADING_CONFIG_FILE, cause);
+            throw e;
+        } finally {
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            } catch (Exception e) {
+                //do nothing, just trying to close the stream
+            }
+
+            try {
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+            } catch (Exception e) {
+                //do nothing, just trying to close the stream
+            }
+        }
     }
 
     /**

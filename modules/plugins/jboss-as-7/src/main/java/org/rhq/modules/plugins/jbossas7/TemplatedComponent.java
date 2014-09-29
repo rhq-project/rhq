@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
@@ -79,18 +81,19 @@ public class TemplatedComponent extends BaseComponent<ResourceComponent<?>> {
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+        ConfigurationDefinition configDefCopy = context.getResourceType().getResourceConfigurationDefinition().copy();
+        Map<String, PropertyDefinition> propDefs = configDefCopy.getPropertyDefinitions();
 
         boolean templatedComponentUpdate = false;
 
-        if (configDef.getDefaultTemplate().getConfiguration().get(TYPE_CONFIGURATION) != null) {
+        if (configDefCopy.getDefaultTemplate().getConfiguration().get(TYPE_CONFIGURATION) != null) {
             //__type is a fake property, do not attempt to save it.
-            configDef.getPropertyDefinitions().remove(TYPE_CONFIGURATION);
+            propDefs.remove(TYPE_CONFIGURATION);
             report.getConfiguration().remove(TYPE_CONFIGURATION);
             templatedComponentUpdate = true;
-        } else if (configDef.getDefaultTemplate().getConfiguration().get(NAME_CONFIGURATION) != null) {
+        } else if (configDefCopy.getDefaultTemplate().getConfiguration().get(NAME_CONFIGURATION) != null) {
             //__name is a fake property, do not attempt to save it.
-            configDef.getPropertyDefinitions().remove(NAME_CONFIGURATION);
+            propDefs.remove(NAME_CONFIGURATION);
             report.getConfiguration().remove(NAME_CONFIGURATION);
             templatedComponentUpdate = true;
         }
@@ -112,26 +115,58 @@ public class TemplatedComponent extends BaseComponent<ResourceComponent<?>> {
                 currentAttributeList = (Map<String, Object>) currentAttributes.getResult();
             }
 
-            for (PropertyDefinition propDef : configDef.getNonGroupedProperties()) {
+            for (PropertyDefinition propDef : configDefCopy.getNonGroupedProperties()) {
                 //with templated resources we should only parse the properties being used by this specific resource.
                 if (currentAttributeList != null) {
-                    //take care to strip of as7 plugin specific identifiers here when comparing attributes.
-                    if (!currentAttributeList.containsKey(removeAttributeMarkup(propDef.getName()))) {
-                        configDef.getPropertyDefinitions().remove(propDef.getName());
+                    //take care to strip off as7 plugin specific identifiers here when comparing attributes.
+                    String name = removeAttributeMarkup(propDef.getName());
+                    if (!currentAttributeList.containsKey(name)) {
+                        propDefs.remove(propDef.getName());
                         report.getConfiguration().remove(propDef.getName());
+                    } else {
+                        // BZ 1033404, because EAP sometimes has issues setting an attribute undefined (i.e. null),
+                        // don't reset to null if it's already undefined.
+                        Object current = currentAttributeList.get(name);
+                        Property update = report.getConfiguration().getAllProperties().get(propDef.getName());
+                        if ((null == current && isUndefined(update))) {
+                            propDefs.remove(propDef.getName());
+                            report.getConfiguration().remove(propDef.getName());
+                        }
                     }
                 }
             }
         }
 
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, getASConnection(), address);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDefCopy, getASConnection(), address);
         delegate.updateResourceConfiguration(report);
     }
 
-    /** Method removes attribute metadata mark up so that the attributes can be 
+    // use to optimize config update by omitting props where new and current are both "undefined"
+    private boolean isUndefined(Property property) {
+        if (null == property) {
+            return true;
+        }
+
+        if (property instanceof PropertySimple) {
+            return ((PropertySimple) property).getStringValue() == null;
+
+        } else if (property instanceof PropertyMap) {
+            for (Property p : ((PropertyMap) property).getMap().values()) {
+                if (!isUndefined(p)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // not sure what to do about lists, just return them, this whole thing is a "best-effort" optimization
+        return false;
+    }
+
+    /** Method removes attribute metadata mark up so that the attributes can be
      *  compared directly to results from stock as7/eap resources.
-     *  Ex. queue-length:expr -> queue-length.  
-     * 
+     *  Ex. queue-length:expr -> queue-length.
+     *
      * @param name : string to scrub metadata from.
      * @return String minus known metadata markup.
      */

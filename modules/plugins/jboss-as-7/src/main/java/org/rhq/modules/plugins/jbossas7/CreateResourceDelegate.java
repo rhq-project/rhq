@@ -19,6 +19,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Map;
 
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -72,7 +73,8 @@ public class CreateResourceDelegate extends ConfigurationWriteDelegate implement
                 PropertyDefinitionSimple propertyDefinition = this.configurationDefinition
                     .getPropertyDefinitionSimple(propertySimple.getName());
 
-                if (propertyDefinition==null || (!propertyDefinition.isRequired() && propertySimple.getStringValue() == null)) {
+                if (propertyDefinition == null
+                    || (!propertyDefinition.isRequired() && propertySimple.getStringValue() == null)) {
                     isEntryEligible = false;
                 } else {
                     entry = preparePropertySimple(propertySimple, propertyDefinition);
@@ -96,6 +98,7 @@ public class CreateResourceDelegate extends ConfigurationWriteDelegate implement
                     isEntryEligible = false;
                 } else {
                     entry = preparePropertyMap(propertyMap, propertyDefinition);
+                    isEntryEligible = !((Map<String, Object>) entry.getValue()).isEmpty();
                 }
             }
 

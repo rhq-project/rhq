@@ -13826,8 +13826,8 @@
 
 
   <service name="Wildfly/JBoss EAP Patch Handler"
-           discovery="PatchHandlerDiscoveryComponent"
-           class="PatchHandlerComponent"
+           discovery="org.rhq.modules.plugins.jbossas7.patching.PatchHandlerDiscoveryComponent"
+           class="org.rhq.modules.plugins.jbossas7.patching.PatchHandlerComponent"
            singleton="true"
            description="Handles installation of patches of Wildfly or JBoss EAP application servers and their variants">
 

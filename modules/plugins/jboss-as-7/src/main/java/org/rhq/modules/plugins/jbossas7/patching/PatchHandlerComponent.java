@@ -18,22 +18,19 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.modules.plugins.jbossas7;
+package org.rhq.modules.plugins.jbossas7.patching;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -57,6 +54,10 @@ import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.modules.plugins.jbossas7.AS7Mode;
+import org.rhq.modules.plugins.jbossas7.ASConnection;
+import org.rhq.modules.plugins.jbossas7.ASConnectionParams;
+import org.rhq.modules.plugins.jbossas7.ServerControl;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -67,7 +68,7 @@ import org.rhq.modules.plugins.jbossas7.util.PatchDetails;
  * @author Lukas Krejci
  * @since 4.13
  */
-public class PatchHandlerComponent implements ResourceComponent<ResourceComponent<?>>, BundleFacet {
+public final class PatchHandlerComponent implements ResourceComponent<ResourceComponent<?>>, BundleFacet {
     private static final Log LOG = LogFactory.getLog(PatchHandlerComponent.class);
 
     private static final String PATCH_ROLLBACK_COMMAND = "patch rollback --reset-configuration=false --patch-id=";
@@ -84,7 +85,8 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
         ServerControl control = onServer(request);
 
         Result<Void> check = sanityCheck(control, request.getReferencedConfiguration(),
-            request.getBundleManagerProvider(), request.getResourceDeployment());
+            request.getBundleManagerProvider(), request.getResourceDeployment(),
+            !isTakeOver(request.getResourceDeployment().getBundleDeployment().getConfiguration()));
 
         if (check.failed()) {
             BundleDeployResult result = new BundleDeployResult();
@@ -190,7 +192,7 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
             AS7Mode.valueOf(request.getDestinationTarget().getPath()), context.getSystemInformation());
 
         Result<Void> check = sanityCheck(control, request.getReferencedConfiguration(),
-            request.getBundleManagerProvider(), request.getLiveResourceDeployment());
+            request.getBundleManagerProvider(), request.getLiveResourceDeployment(), false);
         if (check.failed()) {
             result.setErrorMessage(check.errorMessage);
             return result;
@@ -529,7 +531,9 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
     }
 
     private Result<Void> sanityCheck(ServerControl serverControl, Configuration referencedConfiguration,
-        BundleManagerProvider bmp, BundleResourceDeployment resourceDeployment) {
+        BundleManagerProvider bmp, BundleResourceDeployment resourceDeployment, boolean uniqueDeploymentRequired) {
+
+        //check if patching is supported
 
         PropertySimple supportsPatching = referencedConfiguration.getSimple("supportsPatching");
 
@@ -563,6 +567,37 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
             break;
         }
 
+        if (!uniqueDeploymentRequired) {
+            return Result.with(null);
+        }
+
+        Result<MetadataFiles> metadata = MetadataFiles.getActive(referencedConfiguration);
+        if (metadata.failed()) {
+            return Result.error(metadata.errorMessage);
+        }
+
+        if (metadata.result == null) {
+            // no active deployment yet, we're cool.
+            return Result.with(null);
+        }
+
+        int destinationId = resourceDeployment.getBundleDeployment().getDestination().getId();
+        int activeDestinationId = metadata.result.getDestinationId();
+
+        if (destinationId != activeDestinationId) {
+            try {
+                String destName = metadata.result.getDestinationName();
+                return Result.error("The destination \"" + destName +
+                    "\" already deployed one or more patches to this server. You can deploy to a server using only a single destination.");
+            } catch (Exception e) {
+                //k, we just failed to read the name of the destination but we still know that the user
+                //tries to use a different destination, so let's just return a slightly less user-friendly
+                //error message.
+                return Result.error("The destination with id " + destinationId +
+                    " already handles patch deployments to this server. You can deploy to a server using only a single destination.");
+            }
+        }
+
         return Result.with(null);
     }
 
@@ -580,10 +615,28 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
             return history.errorMessage;
         }
 
-        BundleMetadata.DeploymentMetadata metadata = BundleMetadata.DeploymentMetadata
+        Result<MetadataFiles> metadataFiles = MetadataFiles.forDeployment(rd, referencedConfiguration);
+        if (metadataFiles.failed()) {
+            return metadataFiles.errorMessage;
+        }
+
+        Result<Void> saveDestinationName = metadataFiles.result.saveDestinationName(
+            rd.getBundleDeployment().getDestination().getName());
+        if (saveDestinationName.failed()) {
+            return saveDestinationName.errorMessage;
+        }
+
+        // if sanity check allowed going forward with deployment and we have multiple destinations, forget about
+        // all others...
+        Result<Void> saveAsActive = metadataFiles.result.saveAsActive();
+        if (saveAsActive.failed()) {
+            return saveAsActive.errorMessage;
+        }
+
+        BundleMetadata.DeploymentMetadata deploymentMetadata = BundleMetadata.DeploymentMetadata
             .from(historyBeforeDeployment, history.result);
 
-        Result<Void> write = metadata.persistAsNewState(rd, referencedConfiguration);
+        Result<Void> write = deploymentMetadata.persistAsNewState(rd, referencedConfiguration);
         if (write.failed()) {
             return write.errorMessage;
         }
@@ -592,9 +645,12 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
     }
 
     private String forgetState(BundleResourceDeployment rd, Configuration referencedConfiguration) {
-        File baseDir = MetadataFiles.baseDirFor(rd, referencedConfiguration);
+        Result<MetadataFiles> metadata = MetadataFiles.forDeployment(rd, referencedConfiguration);
+        if (metadata.failed()) {
+            return metadata.errorMessage;
+        }
 
-        FileUtil.purge(baseDir, true);
+        metadata.result.delete();
 
         return null;
     }
@@ -662,198 +718,14 @@ public class PatchHandlerComponent implements ResourceComponent<ResourceComponen
         return new Result<String[]>(pids, null);
     }
 
-    private static class MetadataFiles {
-        final File[] files;
-        final File baseDir;
-
-        private MetadataFiles(File baseDir, File[] files) {
-            this.baseDir = baseDir;
-            this.files = files;
+    private boolean isTakeOver(Configuration deploymentConfiguration) {
+        PropertySimple takeOver = deploymentConfiguration.getSimple("takeOver");
+        if (takeOver == null) {
+            return false;
         }
 
-        boolean exists() {
-            for (File f : files) {
-                if (!f.exists()) {
-                    return false;
-                }
-            }
+        Boolean value = takeOver.getBooleanValue();
 
-            return files.length > 0;
-        }
-
-        static Result<MetadataFiles> forDeployment(BundleResourceDeployment rd, Configuration referencedConfiguration) {
-            File destinationDir = baseDirFor(rd, referencedConfiguration);
-
-            if (!destinationDir.exists() && !destinationDir.mkdirs()) {
-                return Result.error("Failed to create metadata storage under " + destinationDir.getAbsolutePath());
-            }
-
-            File[] files = destinationDir.listFiles();
-
-            if (files == null) {
-                return Result.error("Could not list files in the destination metadata directory " + destinationDir);
-            }
-
-            // sort the files in reverse order so that the newest, current state, is on 0th index.
-            Arrays.sort(files, new Comparator<File>() {
-                @Override
-                public int compare(File o1, File o2) {
-                    return o2.getName().compareTo(o1.getName());
-                }
-            });
-
-            return Result.with(new MetadataFiles(destinationDir, files));
-        }
-
-        static File baseDirFor(BundleResourceDeployment rd, Configuration referencedConfiguration) {
-            ServerPluginConfiguration config = new ServerPluginConfiguration(referencedConfiguration);
-
-            File installationDir = new File(config.getHomeDir(), ".installation");
-
-            File rhqBaseDir = new File(installationDir, ".rhq");
-
-            File destinationDir = new File(rhqBaseDir,
-                Integer.toString(rd.getBundleDeployment().getDestination().getId()));
-
-            return destinationDir;
-        }
-    }
-
-    private static class BundleMetadata {
-        final List<DeploymentMetadata> deployments;
-
-        static class DeploymentMetadata {
-            final List<PatchDetails> applied;
-            int deploymentIndex;
-
-            private DeploymentMetadata(List<PatchDetails> applied, int deploymentIndex) {
-                this.applied = applied;
-                this.deploymentIndex = deploymentIndex;
-            }
-
-            static DeploymentMetadata from(List<PatchDetails> beforeDeployment, List<PatchDetails> afterDeployment) {
-                ArrayList<PatchDetails> currentDeployment = new ArrayList<PatchDetails>();
-
-                PatchDetails firstHistorical =
-                    beforeDeployment.isEmpty() ? null : beforeDeployment.get(0);
-
-                for (Iterator<PatchDetails> it = afterDeployment.iterator(); it.hasNext();) {
-                    PatchDetails p = it.next();
-                    if (p.equals(firstHistorical)) {
-                        break;
-                    }
-
-                    currentDeployment.add(p);
-                }
-
-                return new DeploymentMetadata(currentDeployment, -1);
-            }
-
-            Result<Void> persistAsNewState(BundleResourceDeployment rd, Configuration referencedConfiguration) {
-                try {
-                    Result<MetadataFiles> files = MetadataFiles.forDeployment(rd, referencedConfiguration);
-                    if (files.failed()) {
-                        return Result.error(files.errorMessage);
-                    }
-
-                    deploymentIndex = files.result.files.length;
-
-                    // 1000000 deployments to a single destination should be fairly safe maximum
-                    String fileNameBase = String.format("%06d-", deploymentIndex);
-
-                    String appliedPidsFileName = fileNameBase + "applied";
-
-                    StringReader rdr = new StringReader(applied.toString());
-                    PrintWriter wrt = new PrintWriter(new FileOutputStream(new File(files.result.baseDir, appliedPidsFileName)));
-
-                    StreamUtil.copy(rdr, wrt, true);
-
-                    return Result.with(null);
-                } catch (IOException e) {
-                    return Result.error("Failed to save bundle metadata for " + rd + ": " + e.getMessage());
-                }
-            }
-
-            Result<Void> forget(BundleResourceDeployment rd, Configuration referencedConfiguration) {
-                if (deploymentIndex < 0) {
-                    throw new IllegalStateException(
-                        "Tried to forget deployment metadata without index set. This should not happen");
-                }
-
-                String fileNameBase = String.format("%06d-", deploymentIndex);
-                String appliedPidsFileName = fileNameBase + "applied";
-
-                File baseDir = MetadataFiles.baseDirFor(rd, referencedConfiguration);
-
-                File applied = new File(baseDir, appliedPidsFileName);
-
-                if (!applied.delete()) {
-                    return Result
-                        .error("Failed to delete the deployment metadata file '" + applied.getAbsolutePath() + "'.");
-                }
-
-                return Result.with(null);
-            }
-        }
-        /**
-         * to be used SOLELY by the {@link #forDeployment(org.rhq.core.domain.bundle.BundleResourceDeployment,
-         * org.rhq.core.domain.configuration.Configuration)}
-         * method
-         */
-        private BundleMetadata(List<DeploymentMetadata> deployments) {
-            this.deployments = deployments;
-        }
-
-        static Result<BundleMetadata> forDeployment(BundleResourceDeployment rd, Configuration referecenedConfiguration) {
-            try {
-                Result<MetadataFiles> files = MetadataFiles.forDeployment(rd, referecenedConfiguration);
-                if (files.failed()) {
-                    return Result.error(files.errorMessage);
-                }
-
-                if (!files.result.exists()) {
-                    return Result.error("The metadata for deployment " + rd + " not found.");
-                }
-
-                List<DeploymentMetadata> deployments = new ArrayList<DeploymentMetadata>();
-
-                File[] fs = files.result.files;
-                for (int i = 0; i < fs.length; ++i) {
-                    String addedJson = StreamUtil.slurp(new InputStreamReader(new FileInputStream(fs[i])));
-
-                    List<PatchDetails> addedPatches = PatchDetails.fromJSONArray(addedJson);
-
-                    // the files returned from MetadataFiles are in the reverse order, so we need
-                    // to compute the right index here.
-                    deployments.add(new DeploymentMetadata(addedPatches, fs.length - i - 1));
-                }
-
-                return Result.with(new BundleMetadata(deployments));
-            } catch (IOException e) {
-                return Result.error("Failed to read bundle metadata for " + rd + ": " + e.getMessage());
-            }
-        }
-    }
-
-    private static class Result<T> {
-        final T result;
-        final String errorMessage;
-
-        Result(T result, String errorMessage) {
-            this.result = result;
-            this.errorMessage = errorMessage;
-        }
-
-        static <T> Result<T> with(T result) {
-            return new Result<T>(result, null);
-        }
-
-        static <T> Result<T> error(String errorMessage) {
-            return new Result<T>(null, errorMessage);
-        }
-
-        boolean failed() {
-            return errorMessage != null;
-        }
+        return value != null && value;
     }
 }

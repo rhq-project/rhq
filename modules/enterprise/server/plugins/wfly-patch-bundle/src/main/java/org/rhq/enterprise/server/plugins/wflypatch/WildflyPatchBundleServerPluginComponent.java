@@ -167,12 +167,17 @@ public class WildflyPatchBundleServerPluginComponent implements ServerPluginComp
             "This only applies if the server being deployed to is running. When true, the server is stopped before the patch application and started back up afterwards.",
         true, PropertySimpleType.BOOLEAN);
         restart.setDefaultValue(Boolean.toString(true));
+        PropertyDefinitionSimple takeOver = new PropertyDefinitionSimple("takeOver",
+            "Set this to true ONLY in cases where you want this destination to become the new originating destination for the patch deployments to the servers in the resource group. Each server can have at most 1 originating destination for its patch deployments at a time. As an example, you might want to use this in cases where a destination that was used for prior patch deployments was deleted, yet the target servers weren't purged and thus still relate to the deleted destination as their originating destination.",
+            true, PropertySimpleType.BOOLEAN);
+        takeOver.setDefaultValue(Boolean.toString(false));
 
         config.put(overrideProp);
         config.put(overrideAllProp);
         config.put(overrideModules);
         config.put(preserve);
         config.put(restart);
+        config.put(takeOver);
     }
 
     @Override

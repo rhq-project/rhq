@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,12 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.client.commands;
 
 import java.io.PrintWriter;
+import java.net.UnknownHostException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,16 +35,17 @@ import org.rhq.enterprise.clientapi.RemoteClient;
  * @author Simeon Pinder
  */
 public class LoginCommand implements ClientCommand {
-
-    private final Log log = LogFactory.getLog(LoginCommand.class);
+    private static final Log LOG = LogFactory.getLog(LoginCommand.class);
 
     //Added to switch between jbossRemoting and WS subsystems
     private String subsystem = null;
 
+    @Override
     public String getPromptCommandString() {
         return "login";
     }
 
+    @Override
     public boolean execute(ClientMain client, String[] args) {
         if (args.length < 3) {
             throw new CommandLineParseException("Too few arguments");
@@ -59,29 +62,54 @@ public class LoginCommand implements ClientCommand {
 
         PrintWriter printWriter = client.getPrintWriter();
 
-        try {
-            if (args.length == 5) {
-                host = args[3];
-                port = Integer.parseInt(args[4]);
-            } else if (args.length == 6) {
-                host = args[3];
-                port = Integer.parseInt(args[4]);
-                transport = args[5];
-            } else if (args.length == 7) {
-                host = args[3];
-                port = Integer.parseInt(args[4]);
-                transport = args[5];
-                //to activate subsystem must pass in all 7 parameters ex. ... https WSREMOTEAPI
-                subsystem = args[6];
+        int argIndex = 3;
+        if (args.length > argIndex) {
+            host = args[argIndex];
+        } else {
+            printWriter.println("Logging in with default host: [" + host + "]");
+        }
+        argIndex++;
+        if (args.length > argIndex) {
+            try {
+                port = Integer.parseInt(args[argIndex]);
+            } catch (NumberFormatException e) {
+                printWriter.println("Invalid port [" + args[argIndex] + "]");
+                return true;
             }
+        } else {
+            printWriter.println("Logging in with default port: [" + port + "]");
+        }
+        argIndex++;
+        if (args.length > argIndex) {
+            transport = args[argIndex];
+            if (!"http".equals(transport) || !"https".equals(transport)) {
+                printWriter.println("Invalid transport [" + transport + "], should be either http or https");
+                return true;
+            }
+        }
+        argIndex++;
+        if (args.length > argIndex) {
+            //to activate subsystem must pass in all 7 parameters ex. ... https WSREMOTEAPI
+            subsystem = args[argIndex];
+        }
 
+        try {
             execute(client, user, pass, host, port, transport);
-
             printWriter.println("Login successful");
         } catch (Exception e) {
-            printWriter.println("Login failed: " + e.getMessage());
+            String message = "Login failed for [" + user + "] on [" + host + ":" + port + "]";
+            Throwable cause = e.getCause();
+            String details;
+            if (cause instanceof UnknownHostException) {
+                details = "Unknown host [" + host + "]";
+            } else {
+                details = cause == null ? e.getMessage() : cause.getMessage();
+            }
+            printWriter.println(message + ": " + details);
             printWriter.println(usage());
-            log.debug("Login failed for " + user + " on " + host + ":" + port + " over transport: " + transport, e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(message + " over transport: " + transport, e);
+            }
         }
 
         return true;
@@ -95,14 +123,15 @@ public class LoginCommand implements ClientCommand {
         throws Exception {
 
         //add call to different subsystem if it exists
-        RemoteClient remoteClient = null;
+        RemoteClient remoteClient;
         if ((subsystem != null) && (subsystem.trim().equalsIgnoreCase("WSREMOTEAPI"))) {
             remoteClient = new RemoteClient(transport, host, port, subsystem);
         } else {
             remoteClient = new RemoteClient(transport, host, port);
         }
 
-        client.setTransport(remoteClient.getTransport()); // in case transport was null, let the client tell us what it'll use
+        // in case transport was null, let the client tell us what it'll use
+        client.setTransport(remoteClient.getTransport());
         client.setHost(host);
         client.setPort(port);
         client.setUser(username);
@@ -110,7 +139,16 @@ public class LoginCommand implements ClientCommand {
 
         Subject subject = remoteClient.login(username, password);
 
-        String version = remoteClient.getServerVersion() + " (" + remoteClient.getServerBuildNumber() + ")";
+        String versionUpdate = remoteClient.getServerVersionUpdate();
+        String version;
+        //Conditionally check for and apply update/patch version details
+        if ((versionUpdate != null) && (!versionUpdate.trim().isEmpty())) {
+            version = remoteClient.getServerVersion() + " " + versionUpdate + " ("
+                + remoteClient.getServerBuildNumber() + ")";
+        } else {
+            version = remoteClient.getServerVersion() + " (" + remoteClient.getServerBuildNumber() + ")";
+        }
+
         client.getPrintWriter().println("Remote server version is: " + version);
 
         // this call has the side effect of setting bindings for the new remote client and its subject
@@ -124,14 +162,17 @@ public class LoginCommand implements ClientCommand {
         return "Usage: " + getSyntax();
     }
 
+    @Override
     public String getSyntax() {
-        return getPromptCommandString() + " username password [host port [transport]]";
+        return getPromptCommandString() + " username password [host]|[host port]|[host port <http>|<https>]";
     }
 
+    @Override
     public String getHelp() {
         return "Log into a server with specified username and password";
     }
 
+    @Override
     public String getDetailedHelp() {
         return "Log into a server with the specified username and password. The server host "
             + "name and port may optionally be specified. The host name defaults to "

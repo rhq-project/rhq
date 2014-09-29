@@ -3630,16 +3630,26 @@ public class AgentMain {
      * @param configFile config file to update
      * @throws Exception
      */
-    private void encodeDefaultRestrictedProperties(String configFileName) throws Exception {
-        //Find the configuration file, if no file found stop
+    private void encodeDefaultRestrictedProperties(String configFileName) {
+        //Find the configuration file.
+        //  If    no file found OR there are errors during the retrieval process
+        //  Then  stop
         File configFile = new File(configFileName);
         if (!configFile.exists()) {
             URL configFileResource = Thread.currentThread().getContextClassLoader().getResource(configFileName);
-            configFile = new File(configFileResource.toURI());
 
-            if (!configFile.exists()) {
-                return;
+            if (configFileResource != null) {
+                try{
+                    configFile = new File(configFileResource.toURI());
+                }catch(Exception e){
+                    String cause = ThrowableUtil.getAllMessages(e);
+                    LOG.error(AgentI18NResourceKeys.LOADING_CONFIG_FILE, cause);
+                }
             }
+        }
+
+        if (configFile == null || !configFile.exists()) {
+            return;
         }
 
         //Make an inventory of default restricted properties
@@ -3704,7 +3714,8 @@ public class AgentMain {
         } catch (Exception e) {
             String cause = ThrowableUtil.getAllMessages(e);
             LOG.error(AgentI18NResourceKeys.LOADING_CONFIG_FILE, cause);
-            throw e;
+
+            //just log the error, do not let it bubble up to allow the agent startup to continue
         } finally {
             try {
                 if (inputStream != null) {

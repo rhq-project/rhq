@@ -47,7 +47,7 @@ import org.rhq.modules.plugins.jbossas7.util.PropertyReplacer;
  *
  * @since 4.12
  */
-final class ServerControl {
+public final class ServerControl {
 
     private static final Log LOG = LogFactory.getLog(ServerControl.class);
 
@@ -156,7 +156,7 @@ final class ServerControl {
         return systemInfo.executeProcess(processExecution);
     }
 
-    final class Lifecycle {
+    public final class Lifecycle {
         /**
          * This command ignores the timeout set by the {@link #waitingFor(long)} method. It starts the process and returns
          * immediately. Other means have to be used to determine if the server finished starting up.
@@ -186,17 +186,6 @@ final class ServerControl {
             }
         }
 
-        public ProcessExecutionResults shutdownServer(ASConnection connection) {
-            String command = "shutdown";
-
-            if (serverMode == AS7Mode.DOMAIN) {
-                String host = BaseServerComponent.findASDomainHostName(connection);
-                command += " --host=" + host;
-            }
-
-            return cli().disconnected(false).executeCliCommand(command);
-        }
-
         public ProcessExecutionResults shutdownServer() {
             String command = "shutdown";
 
@@ -211,7 +200,7 @@ final class ServerControl {
         }
     }
 
-    final class Cli {
+    public final class Cli {
         private boolean disconnected;
 
         Cli() {

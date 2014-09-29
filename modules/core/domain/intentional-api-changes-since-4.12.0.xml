@@ -114,4 +114,14 @@
     <method>void setDiscoveryDelay(java.lang.Integer)</method>
     <justification>BZ 970784, add new property to set delay before automatic discovery of new deployment</justification>
   </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/configuration/definition/ConfigurationDefinition</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>org.rhq.core.domain.configuration.definition.ConfigurationDefinition copy()</method>
+    <justification>Moving shared utility from plugin code to domain class.</justification>
+  </difference>
+
 </differences>
+

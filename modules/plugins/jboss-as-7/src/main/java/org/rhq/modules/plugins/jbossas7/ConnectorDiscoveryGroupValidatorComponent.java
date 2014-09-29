@@ -22,7 +22,6 @@ package org.rhq.modules.plugins.jbossas7;
 import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.FAILURE;
 import static org.rhq.core.util.StringUtil.EMPTY_STRING;
 import static org.rhq.core.util.StringUtil.isNotBlank;
-import static org.rhq.modules.plugins.jbossas7.DatasourceComponent.copyConfigurationDefinition;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,8 +87,7 @@ public class ConnectorDiscoveryGroupValidatorComponent extends BaseComponent<Res
             }
 
             // Now update the rest of the configuration attributes
-            ConfigurationDefinition configDefCopy = copyConfigurationDefinition(resourceType
-                .getResourceConfigurationDefinition());
+            ConfigurationDefinition configDefCopy = resourceType.getResourceConfigurationDefinition().copy();
             configDefCopy.getPropertyDefinitions().remove(DISCOVERY_GROUP_NAME);
             configDefCopy.getPropertyDefinitions().remove(configurationUpdateHelper.getConnectorPropertyName());
             ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDefCopy, getASConnection(),

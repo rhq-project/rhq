@@ -30,9 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.ConfigurationUtility;
@@ -41,7 +38,6 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
@@ -63,13 +59,11 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
- * Handle Datasorces (possibly jdbc-driver) related stuff
+ * Handle Datasources (possibly jdbc-driver) related stuff
  * @author Heiko W. Rupp
  */
 public class DatasourceComponent extends BaseComponent<BaseComponent<?>> implements OperationFacet, ConfigurationFacet,
     CreateChildResourceFacet {
-
-    private static final Log LOG = LogFactory.getLog(DatasourceComponent.class);
 
     private static final String NOTSET = "-notset-";
     private static final String ENABLED_ATTRIBUTE = "enabled";
@@ -266,7 +260,7 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
 
         // Make a copy of the config definition and make it look like there was no 'enabled' attribute, which is
         // manually managed by this component.
-        ConfigurationDefinition configDefCopy = copyConfigurationDefinition(configDef);
+        ConfigurationDefinition configDefCopy = configDef.copy();
         configDefCopy.getPropertyDefinitions().remove(ENABLED_ATTRIBUTE);
 
         if (getServerComponent().getServerPluginConfiguration().getProductType() == JBossProductType.AS) {
@@ -424,15 +418,6 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         MeasurementDataTrait trait = new MeasurementDataTrait(request, String.valueOf(res.isSuccess()));
 
         return trait;
-    }
-
-    static ConfigurationDefinition copyConfigurationDefinition(ConfigurationDefinition configurationDefinition) {
-        ConfigurationDefinition configDefCopy = new ConfigurationDefinition(configurationDefinition.getName(),
-            configurationDefinition.getDescription());
-        configDefCopy.setConfigurationFormat(configurationDefinition.getConfigurationFormat());
-        configDefCopy.setPropertyDefinitions(new HashMap<String, PropertyDefinition>(configurationDefinition
-            .getPropertyDefinitions()));
-        return configDefCopy;
     }
 
     // 'enabled' attribute is read/write in the plugin descriptor, but not in EAP management interface.

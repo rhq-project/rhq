@@ -91,7 +91,6 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         throw new IllegalAccessException("Please use ConfigurationLoadDelegate");
     }
 
-
     /**
      * Write the configuration back to the AS. Care must be taken, not to send properties that
      * are read-only, as AS will choke on them.
@@ -106,8 +105,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         if (!result.isSuccess()) {
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
             report.setErrorMessage(result.getFailureDescription());
-        }
-        else {
+        } else {
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
             // signal "need reload"
             if (result.isReloadRequired()) {
@@ -130,7 +128,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             updateProperty(conf, cop, propDef, address);
         }
 
-        for (PropertyGroupDefinition pgd: configurationDefinition.getGroupDefinitions()) {
+        for (PropertyGroupDefinition pgd : configurationDefinition.getGroupDefinitions()) {
             String groupName = pgd.getName();
             namePropLocator = null;
             if (groupName.startsWith("children:")) { // children, where the key in key=value from the path is known
@@ -138,58 +136,55 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 if (type.contains(":")) {
                     namePropLocator = type.substring(type.indexOf(":") + 1);
                     if (namePropLocator.endsWith("+")) { // ending in +  -> we need to :add new entries
-                        namePropLocator=namePropLocator.substring(0,namePropLocator.length()-1);
+                        namePropLocator = namePropLocator.substring(0, namePropLocator.length() - 1);
                         addNewChildren = true;
-                    }
-                    else if (namePropLocator.endsWith("+-")) { // ending in +-  -> we need to :add new entries and remove/add to modify
-                        namePropLocator=namePropLocator.substring(0,namePropLocator.length()-2);
+                    } else if (namePropLocator.endsWith("+-")) { // ending in +-  -> we need to :add new entries and remove/add to modify
+                        namePropLocator = namePropLocator.substring(0, namePropLocator.length() - 2);
                         addNewChildren = true;
                         addDeleteModifiedChildren = true;
-                    }
-                    else {
+                    } else {
                         addNewChildren = false;
                     }
                     type = type.substring(0, type.indexOf(":"));
-                }
-                else {
+                } else {
                     log.error("Group name " + groupName + " contains no property name locator ");
                     return cop;
                 }
 
                 List<PropertyDefinition> definitions = configurationDefinition.getPropertiesInGroup(groupName);
                 for (PropertyDefinition def : definitions) {
-                    updateProperty(conf,cop,def, address);
+                    updateProperty(conf, cop, def, address);
                 }
             } else if (groupName.startsWith("child:")) { // one named child resource
                 String subPath = groupName.substring("child:".length());
                 if (!subPath.contains("="))
                     throw new IllegalArgumentException("subPath of 'child:' expression has no =");
 
-                String condition=null;
+                String condition = null;
                 boolean groupEnabled = true;
                 boolean isEnabledConditionFound = false;
                 if (subPath.contains(":")) {
-                    condition = subPath.substring(subPath.indexOf(':')+1);
-                    subPath = subPath.substring(0,subPath.indexOf(':')); // strip off additional trailing options
+                    condition = subPath.substring(subPath.indexOf(':') + 1);
+                    subPath = subPath.substring(0, subPath.indexOf(':')); // strip off additional trailing options
                 }
-                if (condition!=null && condition.startsWith("enabled=")) {
+                if (condition != null && condition.startsWith("enabled=")) {
                     isEnabledConditionFound = true;
                     String tmp = condition.substring("enabled=".length());
                     if (!tmp.contains("="))
-                        throw new IllegalArgumentException("Condition " + condition + " does not have a = between key and value part (" + tmp + ")");
-                    String key = tmp.substring(0,tmp.indexOf('='));
-                    String targetValue = tmp.substring(tmp.indexOf('=')+1);
+                        throw new IllegalArgumentException("Condition " + condition
+                            + " does not have a = between key and value part (" + tmp + ")");
+                    String key = tmp.substring(0, tmp.indexOf('='));
+                    String targetValue = tmp.substring(tmp.indexOf('=') + 1);
                     PropertySimple conditionProperty = conf.getSimple(key);
-                    if (conditionProperty!=null) {
+                    if (conditionProperty != null) {
                         String realValue = conditionProperty.getStringValue();
-                        if (realValue!=null && !targetValue.equals(realValue))
-                            groupEnabled=false;
+                        if (realValue != null && !targetValue.equals(realValue))
+                            groupEnabled = false;
                     }
                 }
 
                 Address address1 = new Address(address);
                 address1.addSegment(subPath);
-
 
                 List<PropertyDefinition> definitions = configurationDefinition.getPropertiesInGroup(groupName);
                 //  if this is a single map (not list of maps), then unwind
@@ -221,8 +216,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                         for (PropertyDefinition def : definitions) {
                             createWriteAttribute(cop, address1, def, map.get(def.getName()));
                         }
-                    }
-                    else {
+                    } else {
                         // group is not enabled, but add is, so lets remove the subpath
                         Remove op = new Remove(address1);
                         Result res = connection.execute(op);
@@ -248,9 +242,8 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         return cop;
     }
 
-
     private void updateProperty(Configuration conf, CompositeOperation cop, PropertyDefinition propDef,
-                                Address baseAddress) {
+        Address baseAddress) {
 
         // Skip over read-only properties, the AS can not use them anyway
         if (propDef.isReadOnly())
@@ -265,10 +258,10 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             // check if we need to see if that property exists - get the current state of affairs from the AS
             List<String> existingPropnames = new ArrayList<String>();
             if (addNewChildren) {
-                Operation op = new ReadChildrenResources(baseAddress,type);
+                Operation op = new ReadChildrenResources(baseAddress, type);
                 Result tmp = connection.execute(op);
                 if (tmp.isSuccess()) {
-                    Map<String,Object> tmpResMap = (Map<String, Object>) tmp.getResult();
+                    Map<String, Object> tmpResMap = (Map<String, Object>) tmp.getResult();
                     existingPropnames.addAll(tmpResMap.keySet());
                 }
             }
@@ -276,17 +269,16 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             // Loop over the list - i.e. the individual rows that come from the server
             for (Property prop2 : pl.getList()) {
                 updateHandlePropertyMapSpecial(cop, (PropertyMap) prop2, (PropertyDefinitionMap) propDef, baseAddress,
-                        existingPropnames);
+                    existingPropnames);
             }
             // now check about removed properties
-            for (String existingName : existingPropnames ) {
-                boolean found=false;
+            for (String existingName : existingPropnames) {
+                boolean found = false;
                 for (Property prop2 : pl.getList()) {
                     PropertyMap propMap2 = (PropertyMap) prop2;
                     String itemName = propMap2.getSimple(namePropLocator).getStringValue();
                     if (itemName == null) {
-                        throw new IllegalArgumentException("Map contains no entry with name [" + namePropLocator
-                            + "]");
+                        throw new IllegalArgumentException("Map contains no entry with name [" + namePropLocator + "]");
                     }
                     if (itemName.equals(existingName)) {
                         found = true;
@@ -311,13 +303,12 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 if (!found) {
                     Address tmpAddr = new Address(baseAddress);
                     tmpAddr.add(type, existingName);
-                    Operation operation = new Operation("remove",tmpAddr);
+                    Operation operation = new Operation("remove", tmpAddr);
                     cop.addStep(operation);
                 }
             }
 
-        }
-        else {
+        } else {
             // Normal cases
             Property prop = conf.get(propDefName);
 
@@ -326,20 +317,15 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     }
 
     private void createWriteAttribute(CompositeOperation cop, Address baseAddress, PropertyDefinition propDef,
-                                      Property prop)
-    {
+        Property prop) {
         if (prop instanceof PropertySimple && propDef instanceof PropertyDefinitionSimple) {
             createWriteAttributePropertySimple(cop, (PropertySimple) prop, (PropertyDefinitionSimple) propDef,
                 baseAddress);
-        }
-        else if (prop instanceof PropertyList && propDef instanceof PropertyDefinitionList) {
-            createWriteAttributePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef,
-                baseAddress);
-        }
-        else if (prop instanceof PropertyMap && propDef instanceof PropertyDefinitionMap) {
+        } else if (prop instanceof PropertyList && propDef instanceof PropertyDefinitionList) {
+            createWriteAttributePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef, baseAddress);
+        } else if (prop instanceof PropertyMap && propDef instanceof PropertyDefinitionMap) {
             createWriteAttributePropertyMap(cop, (PropertyMap) prop, (PropertyDefinitionMap) propDef, baseAddress);
-        }
-        else {
+        } else {
             String s = "Property and definition are not matching:\n";
             s += "Property: " + prop + "\n";
             s += "PropDef : " + propDef;
@@ -347,9 +333,9 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         }
     }
 
-    private void updateHandlePropertyMapSpecial(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,
-                                                Address address, List<String> existingPropNames) {
-        if (prop==null)
+    private void updateHandlePropertyMapSpecial(CompositeOperation cop, PropertyMap prop,
+        PropertyDefinitionMap propDef, Address address, List<String> existingPropNames) {
+        if (prop == null)
             return;
 
         // Don't try to send this map to the server
@@ -357,15 +343,14 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             return;
 
         Map<String, Object> results = prepareSimplePropertyMap(prop, propDef);
-        if (prop.get(namePropLocator)==null) {
+        if (prop.get(namePropLocator) == null) {
             throw new IllegalArgumentException("There is no element in the map with the name " + namePropLocator);
         }
-        String key= ((PropertySimple)prop.get(namePropLocator)).getStringValue();
-
+        String key = ((PropertySimple) prop.get(namePropLocator)).getStringValue();
 
         Operation operation;
         Address addr = new Address(address);
-        addr.add(type,key);
+        addr.add(type, key);
 
         if (!addNewChildren || existingPropNames.contains(key)) {
             // update existing entry
@@ -374,31 +359,30 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 operation = new Remove(addr);
                 cop.addStep(operation);
 
-                operation = new Operation("add",addr);
-                for (Map.Entry<String,Object> entry : results.entrySet()) {
-                    String key1= entry.getKey();
+                operation = new Operation("add", addr);
+                for (Map.Entry<String, Object> entry : results.entrySet()) {
+                    String key1 = entry.getKey();
                     Object value = getValueWithType(entry, propDef);
                     if (key1.endsWith(":expr")) {
                         key1 = key1.substring(0, key1.indexOf(':'));
-                        Map<String,Object> tmp = new HashMap<String, Object>();
+                        Map<String, Object> tmp = new HashMap<String, Object>();
                         tmp.put("EXPRESSION_VALUE", value);
 
-                        operation.addAdditionalProperty(key1,tmp);
+                        operation.addAdditionalProperty(key1, tmp);
                     } else {
                         operation.addAdditionalProperty(key1, value);
                     }
                 }
                 cop.addStep(operation);
-            }
-            else {
-                for (Map.Entry<String,Object> entry : results.entrySet()) {
+            } else {
+                for (Map.Entry<String, Object> entry : results.entrySet()) {
                     String key1 = entry.getKey();
-                    Object value = getValueWithType(entry,propDef);
+                    Object value = getValueWithType(entry, propDef);
                     if (key1.endsWith(":expr")) {
                         key1 = key1.substring(0, key1.indexOf(':'));
-                        Map<String,Object> tmp = new HashMap<String, Object>();
+                        Map<String, Object> tmp = new HashMap<String, Object>();
                         tmp.put("EXPRESSION_VALUE", value);
-                        operation = new WriteAttribute(addr, key1,tmp);
+                        operation = new WriteAttribute(addr, key1, tmp);
                     } else {
                         operation = new WriteAttribute(addr, key1, value);
                     }
@@ -406,18 +390,17 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 }
             }
 
-        }
-        else {
+        } else {
             // write new child ( :name+ case )
-            operation = new Operation("add",addr);
-            for (Map.Entry<String,Object> entry : results.entrySet()) {
+            operation = new Operation("add", addr);
+            for (Map.Entry<String, Object> entry : results.entrySet()) {
                 String key1 = entry.getKey();
-                Object value = getValueWithType(entry,propDef);
+                Object value = getValueWithType(entry, propDef);
                 if (key1.endsWith(":expr")) {
                     key1 = key1.substring(0, key1.indexOf(':'));
-                    Map<String,Object> tmp = new HashMap<String, Object>();
+                    Map<String, Object> tmp = new HashMap<String, Object>();
                     tmp.put("EXPRESSION_VALUE", value);
-                    operation.addAdditionalProperty(key1,tmp);
+                    operation.addAdditionalProperty(key1, tmp);
                 } else {
                     operation.addAdditionalProperty(key1, value);
                 }
@@ -426,7 +409,6 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             cop.addStep(operation);
         }
     }
-
 
     private void createWriteAttributePropertySimple(CompositeOperation cop, PropertySimple property,
         PropertyDefinitionSimple propertyDefinition, Address address) {
@@ -463,15 +445,14 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         cop.addStep(writeAttribute);
     }
 
-
     private void createWriteAttributePropertyMap(CompositeOperation cop, PropertyMap property,
         PropertyDefinitionMap propertyDefinition, Address address) {
 
+        // A map of simples can be me an empty map if all of the simples are optional and unset
         SimpleEntry<String, Map<String, Object>> entry = this.preparePropertyMap(property, propertyDefinition);
         Operation writeAttribute = new WriteAttribute(address, entry.getKey(), entry.getValue());
         cop.addStep(writeAttribute);
     }
-
 
     /**
      * Simple property parsing.
@@ -510,30 +491,29 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             }
         } else {
             Object o;
-/*
-            If no value is given in the property and the property is required,
-            we'll take the default value from the definition. This can e.g. happen
-            when you have
-            <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" defaultValue="SYNC">
-              <c:property-options>
-                <c:option value="SYNC"/>
-                <c:option value="ASYNC"/>
-              </c:property-options>
-            </c:simple-property>
-            and the user chooses to just keep the default choice in the ui
-*/
+            /*
+                        If no value is given in the property and the property is required,
+                        we'll take the default value from the definition. This can e.g. happen
+                        when you have
+                        <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" defaultValue="SYNC">
+                          <c:property-options>
+                            <c:option value="SYNC"/>
+                            <c:option value="ASYNC"/>
+                          </c:property-options>
+                        </c:simple-property>
+                        and the user chooses to just keep the default choice in the ui
+            */
 
-            if (property.getStringValue()==null && propertyDefinition.isRequired()) {
-                o = getObjectWithType(propertyDefinition,propertyDefinition.getDefaultValue());
+            if (property.getStringValue() == null && propertyDefinition.isRequired()) {
+                o = getObjectWithType(propertyDefinition, propertyDefinition.getDefaultValue());
             } else {
-                o = getObjectWithType(propertyDefinition,property.getStringValue());
+                o = getObjectWithType(propertyDefinition, property.getStringValue());
             }
             entry = new SimpleEntry<String, Object>(name, o);
         }
 
         return entry;
     }
-
 
     /**
      * List property parsing.
@@ -547,7 +527,6 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
         PropertyDefinition memberDef = propertyDefinition.getMemberDefinition();
         List<Property> embeddedProps = property.getList();
-
 
         String propertyName = property.getName();
 
@@ -583,13 +562,12 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         return new SimpleEntry<String, List<Object>>(propertyName, values);
     }
 
-
     /**
      * Map property parsing.
      *
      * @param property raw map property
      * @param propertyDefinition property definition
-     * @return parsed map
+     * @return otherwise the parsed map, note that the map can be empty if no map properties were set
      */
     protected SimpleEntry<String, Map<String, Object>> preparePropertyMap(PropertyMap property,
         PropertyDefinitionMap propertyDefinition) {
@@ -606,7 +584,6 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         return new SimpleEntry<String, Map<String, Object>>(propName, results);
     }
 
-
     /**
      * Collapsed map property parsing.
      *
@@ -614,7 +591,8 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
      * @param propertyDefinition property definition
      * @return parsed map
      */
-    protected Map<String, Object> prepareCollapsedPropertyMap(PropertyMap property, PropertyDefinitionMap propertyDefinition) {
+    protected Map<String, Object> prepareCollapsedPropertyMap(PropertyMap property,
+        PropertyDefinitionMap propertyDefinition) {
         String key = null;
         String value = null;
 
@@ -647,18 +625,18 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         }
     }
 
-
     /**
      * Simple map property parsing.
      *
      * @param property raw map property
      * @param propertyDefinition property definition
-     * @return parsed map
+     * @return parsed map, can be empty if no members were set.
      */
-    protected Map<String, Object> prepareSimplePropertyMap(PropertyMap property, PropertyDefinitionMap propertyDefinition) {
-        Map<String,PropertyDefinition> memberDefinitions = propertyDefinition.getMap();
+    protected Map<String, Object> prepareSimplePropertyMap(PropertyMap property,
+        PropertyDefinitionMap propertyDefinition) {
+        Map<String, PropertyDefinition> memberDefinitions = propertyDefinition.getMap();
 
-        Map<String,Object> results = new HashMap<String,Object>();
+        Map<String, Object> results = new HashMap<String, Object>();
         for (String name : memberDefinitions.keySet()) {
             PropertyDefinition memberDefinition = memberDefinitions.get(name);
 
@@ -668,12 +646,11 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             if (memberDefinition instanceof PropertyDefinitionSimple) {
                 PropertyDefinitionSimple pds = (PropertyDefinitionSimple) memberDefinition;
                 PropertySimple ps = (PropertySimple) property.get(name);
-                if ((ps==null || ps.getStringValue()==null ) && !pds.isRequired())
+                if ((ps == null || ps.getStringValue() == null) && !pds.isRequired())
                     continue;
-                if (ps!=null)
-                    results.put(name,ps.getStringValue());
-            }
-            else {
+                if (ps != null)
+                    results.put(name, ps.getStringValue());
+            } else {
                 log.error(" *** not yet supported *** : " + memberDefinition.getName());
             }
         }
@@ -697,26 +674,26 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         PropertySimpleType type = pds.getType();
         Object ret;
         switch (type) {
-            case STRING:
-                ret= val;
-                break;
-            case INTEGER:
-                ret= Integer.valueOf(val);
-                break;
-            case BOOLEAN:
-                ret= Boolean.valueOf(val);
-                break;
-            case LONG:
-                ret= Long.valueOf(val);
-                break;
-            case FLOAT:
-                ret= Float.valueOf(val);
-                break;
-            case DOUBLE:
-                ret= Double.valueOf(val);
-                break;
-            default:
-                ret= val;
+        case STRING:
+            ret = val;
+            break;
+        case INTEGER:
+            ret = Integer.valueOf(val);
+            break;
+        case BOOLEAN:
+            ret = Boolean.valueOf(val);
+            break;
+        case LONG:
+            ret = Long.valueOf(val);
+            break;
+        case FLOAT:
+            ret = Float.valueOf(val);
+            break;
+        case DOUBLE:
+            ret = Double.valueOf(val);
+            break;
+        default:
+            ret = val;
         }
         return ret;
     }

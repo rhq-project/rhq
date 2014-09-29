@@ -53,8 +53,6 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import org.rhq.core.domain.configuration.Configuration;
-
 /**
  * The entire definition for a {@link Configuration}. This includes mapped property
  * definitions of arbitrary complexity, made up of {@link PropertyDefinitionSimple}s, {@link PropertyDefinitionList}s,
@@ -354,6 +352,22 @@ public class ConfigurationDefinition implements Serializable {
      */
     public Set<String> templateNamesSet() {
         return getTemplates().keySet();
+    }
+
+    /**
+     * Get a copy of this {@link ConfigurationDefinition}.  The property definitions will be returned in
+     * a new Map, which can be safely manipulated without affecting the original Map. It is not a deep copy, it
+     * is backed by the same {@link #PropertyDefinition} objects as the original and changes to the Map entries will
+     * modify the originals.  The templates Map is treated the same way.  The id is not copied.
+     *
+     * @return the copy
+     */
+    public ConfigurationDefinition copy() {
+        ConfigurationDefinition copy = new ConfigurationDefinition(this.getName(), this.getDescription());
+        copy.setPropertyDefinitions(this.getPropertyDefinitions());
+        copy.setConfigurationFormat(this.getConfigurationFormat());
+        copy.templates = new LinkedHashMap<String, ConfigurationTemplate>(this.getTemplates());
+        return copy;
     }
 
     @Override

@@ -235,7 +235,7 @@ public class MigrateAggregateMetricsTest extends SchemaUpgradeTest {
     private void createMeasurementSchedules(int count) throws Exception {
         for (int i = -1; i > -count; --i) {
             executeUpdate("insert into rhq_measurement_def (id, resource_type_id, name, data_type) values (" + i +
-                ", " + RESOURCE_TYPE_ID + ", 'migration-test-def', 0)");
+                ", " + RESOURCE_TYPE_ID + ", 'migration-test-def" + i + "', 0)");
             executeUpdate("insert into rhq_measurement_sched (id, definition, resource_id) values (" + i + ", " +
                 i + ", " + RESOURCE_ID + ")");
         }

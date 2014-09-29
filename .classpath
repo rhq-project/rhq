@@ -385,7 +385,7 @@
 	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-all/1.2.12/cassandra-all-1.2.12.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/thrift/libthrift/0.7.0/libthrift-0.7.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/commons-cli/commons-cli/1.2/commons-cli-1.2.jar"/>
-	<classpathentry kind="var" path="M2_REPO/com/google/guava/guava/14.0.1/guava-14.0.1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/google/guava/guava/16.0.1/guava-16.0.1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-thrift/1.2.12/cassandra-thrift-1.2.12.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/commons/commons-exec/1.1/commons-exec-1.1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/eclipse/jetty/aggregate/jetty-all/8.1.8.v20121106/jetty-all-8.1.8.v20121106.jar"/>
@@ -398,8 +398,10 @@
 	<classpathentry kind="var" path="M2_REPO/com/fasterxml/jackson/core/jackson-databind/2.1.1/jackson-databind-2.1.1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/fasterxml/jackson/core/jackson-core/2.1.1/jackson-core-2.1.1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/codahale/metrics/metrics-core/3.0.1/metrics-core-3.0.1.jar"/>
-	<classpathentry kind="var" path="M2_REPO/com/datastax/cassandra/cassandra-driver-core/1.0.5/cassandra-driver-core-1.0.5.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/datastax/cassandra/cassandra-driver-core/1.0.8/cassandra-driver-core-1.0.8.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/jolbox/bonecp/0.8.0.RELEASE/bonecp-0.8.0.RELEASE.jar"/>
 	<classpathentry kind="var" path="M2_REPO/io/undertow/undertow-core/1.0.15.Final/undertow-core-1.0.15.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/yammer/metrics/metrics-core/2.2.0/metrics-core-2.2.0.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/jandex/1.0.3.Final-redhat-2/jandex-1.0.3.Final-redhat-2.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

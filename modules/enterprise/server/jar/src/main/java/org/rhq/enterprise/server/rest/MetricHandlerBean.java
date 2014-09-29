@@ -56,6 +56,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -69,6 +70,7 @@ import com.wordnik.swagger.annotations.ApiParam;
 import org.jboss.resteasy.annotations.GZIP;
 
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
@@ -102,6 +104,7 @@ import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricDefinitionAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
+import org.rhq.enterprise.server.rest.domain.RHQErrorWrapper;
 import org.rhq.enterprise.server.rest.domain.StringValue;
 import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.server.metrics.MetricsDAO;
@@ -940,36 +943,76 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @Path("data/raw")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @ApiOperation(value="Submit a series of (numerical) metric values to the server",responseClass = "No response")
+    @ApiErrors({
+        @ApiError(code = 201, reason = "There are some submitted datapoints with non-existing scheduleId, API returns rejected values back to client, valid values are accepted"),
+        @ApiError(code = 403, reason = "All submitted datapoints have non-existing scheduleId, API returns rejected values back to client")
+    })
     public Response postMetricValues(Collection<NumericDataPoint> points, @Context HttpHeaders headers) {
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(points.size());
+
+        List<NumericDataPoint> rejected = new ArrayList<NumericDataPoint>();
         for (NumericDataPoint point : points) {
-            data.add(new MeasurementDataNumeric(point.getTimeStamp(), point.getScheduleId(),point.getValue()));
+            if (isScheduleAccessible(point.getScheduleId())) {
+                data.add(new MeasurementDataNumeric(point.getTimeStamp(), point.getScheduleId(), point.getValue()));
+            } else {
+                rejected.add(point);
+            }
+
         }
+        if (rejected.isEmpty()) {
+            dataManager.addNumericData(data);
+            return Response.noContent().type(mediaType).build();
+        } else {
+            Map<String, Object> resp = new HashMap<String, Object>();
+            resp.put("rejected", rejected);
+            resp.put("message", "Schedules for rejected datapoints do not exist");
+            return Response.status(data.isEmpty() ? Status.FORBIDDEN : Status.CREATED).entity(resp).build();
+        }
+    }
 
-        dataManager.addNumericData(data);
-
-        return Response.noContent().type(mediaType).build();
-
+    private boolean isScheduleAccessible(int scheduleId) {
+        // our Key is hopefully unique combination of scheduleId and caller (user) ID
+        // it cannot be just scheduleId, because different users can have access different schedules
+        CacheKey key = new CacheKey("existsScheduleForCaller", (31 * (1 + scheduleId) * 31 * (1 + caller.getId())));
+        Boolean accessible = (Boolean) cache.get(key);
+        if (accessible != null) {
+            return accessible.booleanValue();
+        } else {
+            MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+            criteria.addFilterId(scheduleId);
+            PageList<MeasurementSchedule> schedules = scheduleManager.findSchedulesByCriteria(caller, criteria);
+            if (schedules.isEmpty()) {
+                cache.put(key, Boolean.FALSE);
+                return false;
+            }
+            cache.put(key, Boolean.TRUE);
+            return true;
+        }
     }
 
     @POST
     @Path("data/raw/{resourceId}")
     @Consumes({MediaType.APPLICATION_JSON})
     @ApiOperation(value="Submit a series of (numerical) metric values for a single resource to the server",responseClass = "No response")
+    @ApiError(code = 403, reason = "Any metric from recieved dataPoints does not exist for given resource")
     public Response postMetricValues2(@PathParam("resourceId") int resourceId,
         Collection<Datapoint> points, @Context HttpHeaders headers) {
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(points.size());
         for (Datapoint point : points) {
-
-            int scheduleId = findScheduleId(resourceId, point.getMetric() );
-            if (scheduleId>0) {
+            Integer scheduleId = findScheduleId(resourceId, point.getMetric());
+            if (scheduleId != null) {
                 data.add(new MeasurementDataNumeric(point.getTimestamp(), scheduleId,point.getValue()));
+            } else {
+                return Response
+                    .status(Status.FORBIDDEN)
+                    .entity(
+                        new RHQErrorWrapper("Metric name=" + point.getMetric() + " for resourceId=" + resourceId
+                            + " does not exist")).build();
             }
-            // TODO signal bad items to the caller?
         }
 
         dataManager.addNumericData(data);
@@ -977,7 +1020,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         return Response.noContent().type(mediaType).build();
     }
 
-    private int findScheduleId(int resourceId, String metric) {
+    private Integer findScheduleId(int resourceId, String metric) {
         CacheKey key = new CacheKey("schedulesForResource",resourceId);
         @SuppressWarnings("unchecked")
         Map<String,Integer> schedulesForResource = (Map<String, Integer>) cache.get(key);

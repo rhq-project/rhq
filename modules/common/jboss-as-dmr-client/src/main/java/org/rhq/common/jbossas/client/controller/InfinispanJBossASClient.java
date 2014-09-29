@@ -106,6 +106,7 @@ public class InfinispanJBossASClient extends JBossASClient {
      * @param transactionMode if null, defaults to "NONE"
      * @param evictionStrategy if null, defaults to "LRU"
      * @param evictionMaxEntries if null, defaults to 50000
+     * @param expirationLifespan if null, defaults to -1
      * @param expirationMaxIdle if null, defaults to 100000
      * @param isolationLevel if null, defaults to REPEATABLE_READ (currently ignored)
      *
@@ -113,7 +114,7 @@ public class InfinispanJBossASClient extends JBossASClient {
      * @Throws IllegalArgumentException if cacheContainerName does not correspond to a defined container
      */
     public ModelNode createNewLocalCacheRequest(String cacheContainerName, String localCacheName,
-        String transactionMode, String evictionStrategy, Long evictionMaxEntries, Long expirationMaxIdle,
+        String transactionMode, String evictionStrategy, Long evictionMaxEntries, Long expirationLifeSpan, Long expirationMaxIdle,
         String isolationLevel) throws Exception {
 
         if (!isCacheContainer(cacheContainerName)) {
@@ -157,10 +158,12 @@ public class InfinispanJBossASClient extends JBossASClient {
             localCacheName, "expiration", "EXPIRATION");
         dmrTemplate = "" //
             + "{" //
-            + "\"max-idle\" =>  %dL " //
+            + "\"max-idle\" =>  %dL ," //
+            + "\"lifespan\" =>  %dL "
             + "}";
         dmr = String.format(dmrTemplate, //
-            ((null == expirationMaxIdle) ? 100000L : expirationMaxIdle));
+            ((null == expirationMaxIdle) ? 100000L : expirationMaxIdle),
+            ((null == expirationLifeSpan) ? -1L : expirationLifeSpan));
 
         result[2] = ModelNode.fromString(dmr);
         result[2].get(OPERATION).set(ADD);

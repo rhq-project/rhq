@@ -18,6 +18,16 @@
  */
 package org.rhq.modules.integrationTests.restApi;
 
+import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.comparesEqualTo;
+import static org.hamcrest.Matchers.emptyIterable;
+import static org.hamcrest.Matchers.isOneOf;
+import static org.hamcrest.Matchers.iterableWithSize;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,16 +46,6 @@ import org.rhq.modules.integrationTests.restApi.d.DoubleValue;
 import org.rhq.modules.integrationTests.restApi.d.Group;
 import org.rhq.modules.integrationTests.restApi.d.MDataPoint;
 import org.rhq.modules.integrationTests.restApi.d.Schedule;
-
-import static com.jayway.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.Matchers.comparesEqualTo;
-import static org.hamcrest.Matchers.emptyIterable;
-import static org.hamcrest.Matchers.isOneOf;
-import static org.hamcrest.Matchers.iterableWithSize;
 
 /**
  * Test stuff related to metrics
@@ -302,6 +302,78 @@ public class MetricsTest extends AbstractBase {
     }
 
     /**
+     * submits data points for several metrics while some of them have unexisting scheduleId
+     * @throws Exception
+     */
+    @Test
+    public void testPostRawDataRejectSome() throws Exception {
+        long now = System.currentTimeMillis();
+
+        MDataPoint dataPoint = new MDataPoint();
+        dataPoint.setScheduleId(numericScheduleId);
+        dataPoint.setTimeStamp(now);
+        dataPoint.setValue(1.5);
+        List<MDataPoint> points = new ArrayList<MDataPoint>(2);
+        points.add(dataPoint);
+
+        dataPoint = new MDataPoint();
+        dataPoint.setTimeStamp(now);
+        dataPoint.setValue(9999.0);
+        dataPoint.setScheduleId(99999);
+        points.add(dataPoint);
+
+        Response response = given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(points)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/metric/data/raw");
+
+        Map<String, Object> map = response.as(Map.class);
+        assert map.size() > 0 : "No rejected data retrieved";
+        List<Map<String, Object>> rejected = (List<Map<String, Object>>) map.get("rejected");
+        assert rejected.size() == 1 : "Got unexpected count of rejected values";
+        MDataPoint point = new MDataPoint(rejected.get(0));
+        assert point.equals(dataPoint) : "Got unexpected rejected datapoint";
+    }
+
+    /**
+     * submits data points for several metrics while some of them have unexisting scheduleId
+     * @throws Exception
+     */
+    @Test
+    public void testPostRawDataRejectAll() throws Exception {
+        long now = System.currentTimeMillis();
+
+        List<MDataPoint> points = new ArrayList<MDataPoint>(1);
+        MDataPoint dataPoint = new MDataPoint();
+        dataPoint.setTimeStamp(now);
+        dataPoint.setValue(9999.0);
+        dataPoint.setScheduleId(99999);
+        points.add(dataPoint);
+
+        Response response = given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(points)
+        .expect()
+            .statusCode(403)
+            .log().ifError()
+        .when()
+            .post("/metric/data/raw");
+
+        Map<String, Object> map = response.as(Map.class);
+        assert map.size() > 0 : "No rejected data retrieved";
+        List<Map<String, Object>> rejected = (List<Map<String, Object>>) map.get("rejected");
+        assert rejected.size() == 1 : "Got unexpected count of rejected values";
+        MDataPoint point = new MDataPoint(rejected.get(0));
+        assert point.equals(dataPoint) : "Got unexpected rejected datapoint";
+    }
+
+    /**
      * Here we submit data for a single resource, and where the
      * data points have the schedule name encoded
      * @throws Exception On error
@@ -342,6 +414,35 @@ public class MetricsTest extends AbstractBase {
 
     }
 
+    /**
+     * Here we submit data for a single resource, and where the
+     * data points have the schedule name encoded
+     * @throws Exception On error
+     */
+    @Test
+    public void testPostRawData2Reject() throws Exception {
+
+        long now = System.currentTimeMillis();
+
+        Datapoint dataPoint = new Datapoint();
+        dataPoint.setMetric(scheduleName+"foo");
+        dataPoint.setTimestamp(now);
+        dataPoint.setValue(1.5);
+        List<Datapoint> points = new ArrayList<Datapoint>(1);
+        points.add(dataPoint);
+
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .pathParam("resourceId",_platformId)
+            .body(points)
+        .expect()
+            .statusCode(403)
+            .log().ifError()
+        .when()
+            .post("/metric/data/raw/{resourceId}");
+
+    }
     /**
      * Submit data points for arbitrary metrics, identified by
      * their schedule ids. We want to exactly retrieve that one

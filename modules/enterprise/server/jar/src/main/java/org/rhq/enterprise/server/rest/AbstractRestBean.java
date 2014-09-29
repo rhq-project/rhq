@@ -109,7 +109,7 @@ public class AbstractRestBean {
 
     @PostConstruct
     public void start() {
-        this.cache = this.container.getCache("REST-API");
+        this.cache = this.container.getCache("rhqRestCache");
     }
 
     /**

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -69,16 +69,9 @@ public class ClientMain {
     private static Map<String, ClientCommand> commands = new HashMap<String, ClientCommand>();
 
     public static final int DEFAULT_CONSOLE_WIDTH = 80;
-    
-    /**
-     * This is the thread that is running the input loop; it accepts prompt commands from the user.
-     */
-    private Thread inputLoopThread;
 
     // JLine console reader
     private ConsoleReader consoleReader;
-
-    private boolean stdinInput = true;
 
     // for feedback to user.
     private PrintWriter outputWriter;
@@ -86,17 +79,17 @@ public class ClientMain {
     // Local storage of credentials for this session/client
     private String transport = null;
     private String host = null;
-    private int port = 7080;
+    private int port;
     private String user;
     private String pass;
     private String language;
     private ArrayList<String> notes = new ArrayList<String>();
-    
+
     private RemoteClient remoteClient;
 
     // The subject that will be used to carry out all requested actions
     private Subject subject;
-    
+
     private CodeCompletion codeCompletion;
 
     private boolean interactiveMode = true;
@@ -105,7 +98,7 @@ public class ClientMain {
 
     private ScriptEngine engine;
     private ScriptEngineInitializer scriptEngineInitializer;
-    
+
     private class StartupConfiguration {
         public boolean askForPassword;
         public boolean displayUsage;
@@ -113,37 +106,50 @@ public class ClientMain {
         public boolean invalidArgs;
         public boolean showVersionAndExit;
         public boolean showDetailedVersion;
-        
+
         public void process() throws Exception {
             if (invalidArgs) {
                 displayUsage();
                 throw new IllegalArgumentException(MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS));
             }
-            
+
             if (displayUsage) {
                 displayUsage();
             }
-            
+
             if (askForPassword) {
                 setPass(getConsoleReader().readLine("password: ", (char) 0));
             }
-            
+
             if (isInteractiveMode()) {
-                String version = showDetailedVersion ? Version.getProductNameAndVersionBuildInfo() : Version.getProductNameAndVersion();
+                String version = showDetailedVersion ? Version.getProductNameAndVersionBuildInfo() : Version
+                    .getProductNameAndVersion();
                 outputWriter.println(version);
                 if (showVersionAndExit) {
                     // If -v was the only option specified, exit after printing the version.
                     System.exit(0);
                 }
             }
-            
+
             if (getUser() != null && getPass() != null) {
                 ClientCommand loginCmd = getCommands().get("login");
-                if (getHost() != null) {
-                    loginCmd.execute(ClientMain.this, new String[] { "login", getUser(), getPass(), getHost(), String.valueOf(getPort()), getTransport() });
-                } else {
-                    loginCmd.execute(ClientMain.this, new String[] { "login", getUser(), getPass() });
+                List<String> argsList = new ArrayList<String>(6); // 6 args at most
+                argsList.add("login");
+                argsList.add(getUser());
+                argsList.add(getPass());
+                String host = getHost();
+                int port = getPort();
+                String transport = getTransport();
+                if (host != null) {
+                    argsList.add(host);
+                    if (port != 0) {
+                        argsList.add(String.valueOf(port));
+                        if (transport != null) {
+                            argsList.add(transport);
+                        }
+                    }
                 }
+                loginCmd.execute(ClientMain.this, argsList.toArray(new String[argsList.size()]));
                 if (!loggedIn()) {
                     if (isInteractiveMode()) {
                         return;
@@ -152,10 +158,11 @@ public class ClientMain {
                     }
                 }
             }
-            
+
             if (commandsToExec != null && !commandsToExec.isEmpty()) {
-                getCommands().get("exec").execute(ClientMain.this, commandsToExec.toArray(new String[commandsToExec.size()]));                
-            }            
+                getCommands().get("exec").execute(ClientMain.this,
+                    commandsToExec.toArray(new String[commandsToExec.size()]));
+            }
         }
     }
 
@@ -202,9 +209,9 @@ public class ClientMain {
 
     private void initScriptCommand() {
         ScriptCommand sc = (ScriptCommand) commands.get("exec");
-        sc.initClient(this);        
+        sc.initClient(this);
     }
-    
+
     private void initCodeCompletion() {
         this.codeCompletion.setScriptContext(getScriptEngine().getContext());
         this.codeCompletion.setMetadataProvider(new CLIMetadataProvider());
@@ -214,7 +221,7 @@ public class ClientMain {
         // initialize the printwriter to system.out for console conversations
         outputWriter = new PrintWriter(System.out, true);
     }
-    
+
     private void initialize() throws IOException {
         // this.inputReader = new BufferedReader(new
         // InputStreamReader(System.in));
@@ -224,18 +231,18 @@ public class ClientMain {
 
         //ScriptCommand is super special because it handles executing all the code for us
         initScriptCommand();
-        
+
         if (isInteractiveMode()) {
             // Initialize JLine console elements.
             consoleReader = new jline.ConsoleReader();
-    
+
             // Setup the command line completers for listed actions for the user before login
             // completes initial commands available
             Completor commandCompletor = new SimpleCompletor(commands.keySet().toArray(new String[commands.size()]));
             // completes help arguments (basically, help <command>)
             Completor helpCompletor = new ArgumentCompletor(new Completor[] { new SimpleCompletor("help"),
                 new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])) });
-    
+
             this.codeCompletion = ScriptEngineFactory.getCodeCompletion(getLanguage());
             if (codeCompletion == null) {
                 //the language module for this language doesn't support code completion
@@ -248,12 +255,12 @@ public class ClientMain {
             consoleReader.addCompletor(new MultiCompletor(new Completor[] {
                 new CodeCompletionCompletorWrapper(codeCompletion, outputWriter, consoleReader), helpCompletor,
                 commandCompletor }));
-                
+
             // enable pagination
             consoleReader.setUsePagination(true);
         }
     }
-    
+
     public String getUserInput(String prompt) {
 
         String input_string = "";
@@ -284,13 +291,6 @@ public class ClientMain {
             }
         }
 
-        if (input_string != null) {
-            // if we are processing a script, show the input that was just read
-            if (!stdinInput) {
-                outputWriter.println(input_string);
-            }
-        }
-
         return input_string;
     }
 
@@ -315,47 +315,10 @@ public class ClientMain {
     private void inputLoop() {
         // we need to start a new thread and run our loop in it; otherwise, our
         // shutdown hook doesn't work
-        Runnable loop_runnable = new Runnable() {
-            public void run() {
-                while (true) {
-                    String cmd;
-                    cmd = getUserInput(null);
-
-                    try {
-                        recorder.record(cmd);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    try {
-                        // parse the command into separate arguments and execute
-                        String[] cmd_args = parseCommandLine(cmd);
-                        boolean can_continue = executePromptCommand(cmd_args);
-
-                        // break the input loop if the prompt command told us to exit
-                        // if we are not in daemon mode, this really will end up killing the agent
-                        if (!can_continue) {
-                            break;
-                        }
-                    } catch (Throwable t) {
-                        // outputWriter.println(ThrowableUtil.getAllMessages(t));
-                        t.printStackTrace(outputWriter);
-                        // LOG.debug(t,
-                        // AgentI18NResourceKeys.COMMAND_FAILURE_STACK_TRACE);
-                    }
-                }
-
-                return;
-            }
-        };
-
-        // start the thread
-        inputLoopThread = new Thread(loop_runnable);
+        Thread inputLoopThread = new Thread(new LoopRunnable());
         inputLoopThread.setName("RHQ Client Prompt Input Thread");
         inputLoopThread.setDaemon(false);
         inputLoopThread.start();
-
-        return;
     }
 
     public boolean executePromptCommand(String[] args) throws Exception {
@@ -394,11 +357,7 @@ public class ClientMain {
     }
 
     private boolean shouldDisplayHelp(String[] args) {
-        if (args.length < 2) {
-            return false;
-        }
-
-        return args[1].equals("-h") || args[1].equals("--help");
+        return args.length >= 2 && (args[1].equals("-h") || args[1].equals("--help"));
     }
 
     /**
@@ -518,7 +477,7 @@ public class ClientMain {
 
     StartupConfiguration processArguments(String[] args) throws IllegalArgumentException, IOException {
         StartupConfiguration config = new StartupConfiguration();
-        
+
         String sopts = "-:hu:p:Ps:t:r:c:f:v";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("user", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
@@ -604,8 +563,8 @@ public class ClientMain {
                 }
                 break;
             }
-            case 'v': {        
-                config.showDetailedVersion  = true;
+            case 'v': {
+                config.showDetailedVersion = true;
                 if (args.length == 1) {
                     config.showVersionAndExit = true;
                 }
@@ -620,7 +579,7 @@ public class ClientMain {
         if (!interactiveMode) {
             config.commandsToExec = execCmdLine;
         }
-        
+
         return config;
     }
 
@@ -696,7 +655,7 @@ public class ClientMain {
     public String getLanguage() {
         return this.language == null ? "javascript" : this.language;
     }
-    
+
     public int getConsoleWidth() {
         //the console reader might be null when this method is asked for the output
         //width in non-interactive mode where we don't attach to stdin.
@@ -723,7 +682,7 @@ public class ClientMain {
 
         return engine;
     }
-    
+
     public String getUsefulErrorMessage(ScriptException e) {
         return scriptEngineInitializer.extractUserFriendlyErrorMessage(e);
     }
@@ -758,9 +717,42 @@ public class ClientMain {
     public void setRecorder(Recorder recorder) {
         this.recorder = recorder;
     }
-    
+
     private static File getLibDir() {
         String cwd = System.getProperty("user.dir");
         return new File(cwd, "lib");
+    }
+
+    private class LoopRunnable implements Runnable {
+        @Override
+        public void run() {
+            while (true) {
+                String cmd;
+                cmd = getUserInput(null);
+
+                try {
+                    recorder.record(cmd);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                try {
+                    // parse the command into separate arguments and execute
+                    String[] cmd_args = parseCommandLine(cmd);
+                    boolean can_continue = executePromptCommand(cmd_args);
+
+                    // break the input loop if the prompt command told us to exit
+                    // if we are not in daemon mode, this really will end up killing the agent
+                    if (!can_continue) {
+                        break;
+                    }
+                } catch (Throwable t) {
+                    // outputWriter.println(ThrowableUtil.getAllMessages(t));
+                    t.printStackTrace(outputWriter);
+                    // LOG.debug(t,
+                    // AgentI18NResourceKeys.COMMAND_FAILURE_STACK_TRACE);
+                }
+            }
+        }
     }
 }

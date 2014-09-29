@@ -61,8 +61,8 @@ import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.coregui.client.util.TableUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -507,18 +507,10 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
         for (ListGridRecord listGridRecord : treeGrid.getSelectedRecords()) {
             TreeNode node = treeGrid.getTree().findById(listGridRecord.getAttribute("id"));
             String status = node.getAttributeAsString("status");
-            TreeNode parentNode = treeGrid.getTree().getParent(node);
-            boolean isPlatform = treeGrid.getTree().isRoot(parentNode);
 
             importOk |= InventoryStatus.NEW.name().equals(status);
             unignoreOk |= InventoryStatus.IGNORED.name().equals(status);
-
-            if (!isPlatform) {
-                String parentStatus = parentNode.getAttributeAsString("status");
-                if (InventoryStatus.COMMITTED.name().equals(parentStatus)) {
-                    ignoreOk |= InventoryStatus.NEW.name().equals(status);
-                }
-            }
+            ignoreOk |= InventoryStatus.NEW.name().equals(status);
         }
 
         importButton.setDisabled(!importOk || unignoreOk);

@@ -31,7 +31,9 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ExpansionMode;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
@@ -815,9 +817,16 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         ListGridField duration = new ListGridField("duration", MSG.common_title_duration(), 90);
         listGrid.setFields(step, result, resultCode, duration);
         listGrid.setData(getStepRecords(info));
-
+        listGrid.setAutoFitData(Autofit.BOTH);
+        listGrid.setLeaveScrollbarGap(false);
+        listGrid.setShowAllRecords(true);
+        listGrid.setBodyOverflow(Overflow.CLIP_H);
+        listGrid.setOverflow(Overflow.SCROLL);
+        listLayout.setLeaveScrollbarGap(true);
         listLayout.addMember(listGrid);
         listCanvas.setCanvas(listLayout);
+        listCanvas.setOverflow(Overflow.AUTO);
+        listLayout.setOverflow(Overflow.AUTO);
 
         // Replace the current info with just the install steps
         for (Canvas canvas : this.getChildren()) {

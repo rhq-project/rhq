@@ -37,6 +37,7 @@ import java.util.Set;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AutoFitWidthApproach;
+import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.MultipleAppearance;
 import com.smartgwt.client.types.Overflow;
@@ -973,11 +974,14 @@ public class ConfigurationEditor extends EnhancedVLayout {
         listOfMapsGrids.put(propertyDefinitionList, summaryTable);
         summaryTable.setAlternateRecordStyles(true);
         summaryTable.setShowAllRecords(true);
+        summaryTable.setShowAllColumns(true);
+        summaryTable.setWidth100();
         // [BZ 822173 - Table layout problem on configuration page.]
         // setBodyOverflow(Overflow.VISIBLE) && setAutoFitFieldWidths(true) issue
-        summaryTable.setBodyOverflow(VISIBLE);
-        summaryTable.setOverflow(VISIBLE);
-        summaryTable.setWidth100();
+        //summaryTable.setBodyOverflow(VISIBLE);
+        //summaryTable.setOverflow(VISIBLE);
+        // Instead, use setAutoFitData...
+        summaryTable.setAutoFitData(Autofit.BOTH);
         summaryTable.setAutoFitFieldWidths(true);
         summaryTable.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
         summaryTable.setRecordEnabledProperty(null);
@@ -999,7 +1003,6 @@ public class ConfigurationEditor extends EnhancedVLayout {
 
         for (PropertyDefinition summaryPropDef : summaryPropertyDefinitions) {
             ListGridField field = createListGridField(summaryPropDef);
-            field.setWidth("*");
             fieldsList.add(field);
         }
 
@@ -1076,7 +1079,6 @@ public class ConfigurationEditor extends EnhancedVLayout {
         summaryTable.setData(rows);
 
         VLayout summaryTableHolder = new EnhancedVLayout();
-        summaryTableHolder.setWidth100();
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();

@@ -43,6 +43,7 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.Result;
+import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
 /**
  * A specialization of the AS component for EJB3 runtime beans. This kind of beans can collect method invocation
@@ -61,6 +62,10 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<BaseComponent<?>> {
     private static final OSGiVersion FIRST_VERSION_SUPPORTING_METHOD_STATS = new OSGiVersion("7.2.1");
 
     private OSGiVersion asVersion = null;
+    /**
+     * cached value, so we don't ask for it anytime a calltime metric is requested
+     */
+    private Boolean ejb3StatisticsEnalbed = null;
 
     private static class StatsRecord implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -121,6 +126,7 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<BaseComponent<?>> {
 
         for(MeasurementScheduleRequest request : metrics) {
             if (request.getDataType() == DataType.CALLTIME) {
+                ensureGlobalEJB3StatisticsEnabled();
                 //make a copy to pass down to super class if necessary
                 if (metricsToPassDown == metrics) {
                     metricsToPassDown = new HashSet<MeasurementScheduleRequest>(metrics);
@@ -289,5 +295,30 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<BaseComponent<?>> {
         }
 
         return asVersion;
+    }
+
+    private void ensureGlobalEJB3StatisticsEnabled() {
+        if (ejb3StatisticsEnalbed != null && ejb3StatisticsEnalbed.booleanValue()) {
+            return;
+        }
+        Address ejbAddress = new Address(getServerComponent().getServerAddress());
+        ejbAddress.add("subsystem", "ejb3");
+        try {
+            ejb3StatisticsEnalbed = readAttribute(ejbAddress, "enable-statistics", Boolean.class);
+            if (!ejb3StatisticsEnalbed) {
+                getLog().debug("Enabling global EJB3 statistics");
+                WriteAttribute op = new WriteAttribute(ejbAddress, "enable-statistics", true);
+                Result result = getASConnection().execute(op);
+                if (result.isSuccess()) {
+                    getLog()
+                        .info(
+                            "Global EJB3 statistics is now enabled, because there is a request to collect EJB Calltime metrics.");
+                } else {
+                    getLog().error("Failed to enable EJB3 statistics : " + result.getFailureDescription());
+                }
+            }
+        } catch (Exception e) {
+            getLog().error("Failed to read and enable EJB3 statistics", e);
+        }
     }
 }

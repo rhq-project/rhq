@@ -90,6 +90,7 @@ public class MenuBarView extends EnhancedVLayout {
     public static final String MSG_CENTER_BTN_CONTENT = "<span class='fa fa-flag'> ";
     public static final String BTN_FAV_ID = "fav-btn";
     public static final String BTN_MSG_CENTER_ID = "msg-center-btn";
+    public static final int Z_INDEX = MessageBar.Z_INDEX + 1;
 
     public static final MenuItem[] MENU_ITEMS = {
         new MenuItem(DashboardsView.VIEW_ID),
@@ -187,7 +188,7 @@ public class MenuBarView extends EnhancedVLayout {
     @Override
     protected void onInit() {
         super.onInit();
-        setZIndex(1);
+        setZIndex(Z_INDEX);
         messageCenter = new MessageCenterView();
         messageBar = new MessageBar();
         // messageBar.setHeight(1);

@@ -5,7 +5,7 @@
   <parent>
     <artifactId>rhq-common-parent</artifactId>
     <groupId>org.rhq</groupId>
-    <version>4.12.0.JON330ER03</version>
+    <version>4.12.0.JON330ER04</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>

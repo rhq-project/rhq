@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-core-parent</artifactId>
-        <version>4.12.0.JON330ER03</version>
+        <version>4.12.0.JON330ER04</version>
     </parent>
 
     <groupId>org.rhq</groupId>

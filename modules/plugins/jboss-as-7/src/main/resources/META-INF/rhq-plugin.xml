@@ -12227,7 +12227,7 @@
 
         <resource-configuration>
           <c:simple-property name="outbound-socket-binding-ref" required="true" type="string" readOnly="false" description="Outbound Socket binding to SMTP server">
-            <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
+            <c:option-source target="configuration" expressionScope="baseResource" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
           </c:simple-property>
           <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>
           <c:simple-property name="ssl" required="false" type="boolean" readOnly="false" defaultValue="false" description="Does server requires SSL?. The default value is false."/>

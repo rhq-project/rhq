@@ -181,6 +181,8 @@
                 <move file="${project.build.outputDirectory}/cassandra/conf" todir="${cassandra.dir}"/>
                 <delete file="${cassandra.dir}/bin/cassandra"/>
                 <move file="${project.build.outputDirectory}/cassandra/bin/cassandra" todir="${cassandra.dir}/bin"/>
+                <delete file="${cassandra.dir}/bin/cassandra.in.sh"/>
+                <move file="${project.build.outputDirectory}/cassandra/bin/cassandra.in.sh" todir="${cassandra.dir}/bin"/>
                 <delete dir="${project.build.outputDirectory}/cassandra"/>
                 <delete dir="${cassandra.dir}/javadoc"/>
                 <delete file="${cassandra.dir}/conf/cassandra-env.sh"/>

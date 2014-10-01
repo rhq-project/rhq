@@ -96,12 +96,11 @@ public class Upgrade extends AbstractInstall {
             .addOption(
                 null,
                 RUN_DATA_MIGRATION,
-                true,
+                false,
                 "This option is valid only when upgrading from older systems that did not have storage nodes. The existing metric data needs to migrate to "
-                    + "the metric storage.  The upgrade process can trigger this or give you an estimate on the duration. If you want "
-                    + "to have fine control over the process, please run the migrator on the command line. Options are none (do "
-                    + "nothing), estimate (estimate the migration time only), print-command (print the command line for a manual run), "
-                    + "do-it (run the migration)");
+                    + "the metric storage. This option completes the data migration process as part of the upgrade. If you want "
+                    + "to have fine control over the process (eg: run it a later time, get an estimate first, purge data from the SQL database after migration), "
+                    + "please run the data migrator on the command line.");
     }
 
     @Override
@@ -247,10 +246,6 @@ public class Upgrade extends AbstractInstall {
         try {
             org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-data-migration");
             commandLine.addArgument("-X");
-            if (migrationOption.equals("estimate")) {
-                commandLine.addArgument("--estimate-only");
-            }
-
             int exitValue = ExecutorAssist.execute(new File(getBaseDir(), "bin"), commandLine);
             log.info("The data migrator finished with exit value " + exitValue);
             rValue = exitValue;

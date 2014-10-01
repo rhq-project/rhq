@@ -1,20 +1,24 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 package org.rhq.core.domain.common.composite;
@@ -286,8 +290,10 @@ public enum SystemSetting {
      * the storage subsystem. The username and password should not be updated at all.
      */
     STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION("STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION",
-        PropertySimpleType.STRING, true, true, false)
-    ;
+        PropertySimpleType.STRING, true, true, false),
+
+    /** How long do we keep partition events */
+    PARTITION_EVENT_PURGE_PERIOD("PARTITION_EVENT_PURGE", PropertySimpleType.LONG, false, true, true);
 
     private final String internalName;
     private final PropertySimpleType type;

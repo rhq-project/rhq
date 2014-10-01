@@ -152,11 +152,19 @@ else
     _DOLLARZERO=`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`
 fi
 
-RHQ_AGENT_WRAPPER_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`
-debug_wrapper_msg "RHQ_AGENT_WRAPPER_BIN_DIR_PATH=$RHQ_AGENT_WRAPPER_BIN_DIR_PATH"
+
+# Define and export RHQ_AGENT_HOME, we will assume we are running
+# directly from the agent installation's bin directory
+# Note: later sourced scripts can and may override this
+RHQ_AGENT_HOME=`dirname $PWD`
+export $RHQ_AGENT_HOME
+
 
 # -------------------------------
 # Read in the rhq-agent-env.sh file so we get the configured agent environment
+
+RHQ_AGENT_WRAPPER_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`
+debug_wrapper_msg "RHQ_AGENT_WRAPPER_BIN_DIR_PATH=$RHQ_AGENT_WRAPPER_BIN_DIR_PATH"
 
 if [ -f "${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh" ]; then
    debug_wrapper_msg "Loading environment script: ${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh"
@@ -197,18 +205,11 @@ _THIS_SCRIPT="${_THIS_SCRIPT_DIR}"/`basename "$_DOLLARZERO"`
 
 # -------------------------------
 # Figure out where the RHQ Agent's home directory is and cd to it.
-# If RHQ_AGENT_HOME is not defined, we will assume we are running
-# directly from the agent installation's bin directory
+cd "${RHQ_AGENT_HOME}" || {
+   echo "Cannot go to the RHQ_AGENT_HOME directory: ${RHQ_AGENT_HOME}"
+   exit 1
+}
 
-if [ -z "$RHQ_AGENT_HOME" ]; then
-   cd ..
-   RHQ_AGENT_HOME=`pwd`
-else
-   cd "${RHQ_AGENT_HOME}" || {
-      echo "Cannot go to the RHQ_AGENT_HOME directory: ${RHQ_AGENT_HOME}"
-      exit 1
-      }
-fi
 
 # -------------------------------
 # create the logs directory
@@ -337,7 +338,7 @@ case "$1" in
            debug_wrapper_msg "Executing agent with command: ${RHQ_AGENT_START_COMMAND} ${RHQ_AGENT_CMDLINE_OPTS}"
         fi
 
-        . $RHQ_AGENT_START_COMMAND
+        eval "$RHQ_AGENT_START_COMMAND"
 
         ;;
 
@@ -375,7 +376,7 @@ case "$1" in
            debug_wrapper_msg "Executing agent with command: ${RHQ_AGENT_START_COMMAND} ${RHQ_AGENT_CMDLINE_OPTS}"
         fi
 
-        . $RHQ_AGENT_START_COMMAND
+        eval "$RHQ_AGENT_START_COMMAND"
 
         ;;
 

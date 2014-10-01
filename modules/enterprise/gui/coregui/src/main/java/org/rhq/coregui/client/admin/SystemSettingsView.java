@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.client.admin;
 
 import java.util.ArrayList;
@@ -148,6 +149,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
 
                 saveButton = new EnhancedIButton(MSG.common_button_save(), ButtonColor.BLUE);
                 saveButton.addClickHandler(new ClickHandler() {
+                    @Override
                     public void onClick(ClickEvent clickEvent) {
                         save();
                     }
@@ -340,6 +342,11 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
         proxyGroup.setOrder(5);
         proxyGroup.setDefaultHidden(false);
 
+        PropertyGroupDefinition purgeSettingsGroup = new PropertyGroupDefinition("purge");
+        purgeSettingsGroup.setDisplayName(MSG.view_admin_systemSettings_group_purge());
+        purgeSettingsGroup.setDefaultHidden(true);
+        purgeSettingsGroup.setOrder(6);
+
         for (SystemSetting prop : SystemSetting.values()) {
 
             //don't include the readonly properties in the configuration editor
@@ -425,10 +432,20 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 pd.setDefaultValue("1");
                 break;
 
+            case DATA_REINDEX_NIGHTLY:
+                pd.setDescription(MSG.view_admin_systemSettings_DataReindex_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_DataReindex_name());
+                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.setDefaultValue("false");
+                break;
+
+            ////////////////////////////////////////
+            // Advanced purge settings
+
             case AVAILABILITY_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_AvailabilityPurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_AvailabilityPurge_name());
-                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.setPropertyGroupDefinition(purgeSettingsGroup);
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("365");
                 break;
@@ -436,7 +453,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
             case ALERT_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_AlertPurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_AlertPurge_name());
-                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.setPropertyGroupDefinition(purgeSettingsGroup);
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("31");
                 break;
@@ -444,7 +461,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
             case TRAIT_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_TraitPurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_TraitPurge_name());
-                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.setPropertyGroupDefinition(purgeSettingsGroup);
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("365");
                 break;
@@ -452,7 +469,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
             case RT_DATA_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_RtDataPurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_RtDataPurge_name());
-                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.setPropertyGroupDefinition(purgeSettingsGroup);
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("31");
                 break;
@@ -460,7 +477,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
             case EVENT_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_EventPurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_EventPurge_name());
-                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.setPropertyGroupDefinition(purgeSettingsGroup);
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("14");
                 break;
@@ -468,7 +485,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
             case DRIFT_FILE_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_DriftFilePurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_DriftFilePurge_name());
-                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.setPropertyGroupDefinition(purgeSettingsGroup);
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("31");
                 break;
@@ -476,16 +493,9 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
             case OPERATION_HISTORY_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_OperationHistoryPurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_OperationHistoryPurge_name());
-                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.setPropertyGroupDefinition(purgeSettingsGroup);
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(0), null));
                 pd.setDefaultValue("0");
-                break;
-
-            case DATA_REINDEX_NIGHTLY:
-                pd.setDescription(MSG.view_admin_systemSettings_DataReindex_desc());
-                pd.setDisplayName(MSG.view_admin_systemSettings_DataReindex_name());
-                pd.setPropertyGroupDefinition(dataManagerGroup);
-                pd.setDefaultValue("false");
                 break;
 
             //////////////////////////////////////////////
@@ -658,8 +668,6 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 break;
 
             }
-
-
         }
 
         //

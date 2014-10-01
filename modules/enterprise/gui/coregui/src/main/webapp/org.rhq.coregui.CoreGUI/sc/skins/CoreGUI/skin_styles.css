@@ -1864,3 +1864,7 @@ div[eventproxy^="isc_DateChooser"] {
 .tabButtonTopDisabled {
     color: rgb(128, 128, 128);
 }
+
+.rhqHidden {
+    display: none;
+}

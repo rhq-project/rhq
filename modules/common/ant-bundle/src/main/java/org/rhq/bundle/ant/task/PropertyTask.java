@@ -38,7 +38,7 @@ public class PropertyTask extends Property {
 
                 File deployDir = ((BundleAntProject) getProject()).getDeployDir();
 
-                setFile(new File(deployDir, relativePath));
+                setFile(new File(deployDir, relativePath).getCanonicalFile());
             } catch (Exception e) {
                 throw new BuildException("Failed to figure out the relative path for file " + getFile());
             }

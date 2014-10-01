@@ -40,6 +40,7 @@ import org.hyperic.sigar.ProcCredName;
 import org.hyperic.sigar.ProcExe;
 import org.hyperic.sigar.ProcFd;
 import org.hyperic.sigar.ProcMem;
+import org.hyperic.sigar.ProcStat;
 import org.hyperic.sigar.ProcState;
 import org.hyperic.sigar.ProcTime;
 import org.hyperic.sigar.Sigar;
@@ -518,9 +519,7 @@ public class ProcessInfo {
         } else if ((procExe != null) && (procExe.getName() != null)) {
             name = procExe.getName();
         } else if ((procState != null) && (procState.getName() != null)) {
-            String stateName = procState.getName();
-            name = ((stateName.indexOf(File.separatorChar) >= 0) && (new File(stateName).exists())) ? stateName
-                : UNKNOWN_PROCESS_NAME;
+            name = procState.getName();
         } else {
             name = UNKNOWN_PROCESS_NAME;
         }

@@ -229,18 +229,7 @@ public class Upgrade extends AbstractInstall {
     }
 
     private int runDataMigration(CommandLine rhqctlCommandLine) {
-
-        String migrationOption = rhqctlCommandLine.getOptionValue(RUN_DATA_MIGRATION);
-
         int rValue;
-
-        if (migrationOption.equals("none")) {
-            log.info("No data migration will run");
-            if (!isRhq48OrLater(rhqctlCommandLine)) {
-                printDataMigrationNotice();
-            }
-            return RHQControl.EXIT_CODE_OK;
-        }
 
         // We deduct the database parameters from the server properties
         try {

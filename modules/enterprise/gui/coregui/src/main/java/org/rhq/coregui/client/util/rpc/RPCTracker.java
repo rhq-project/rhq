@@ -39,14 +39,7 @@ public class RPCTracker {
 
     private Set<TrackingRequestCallback> inProgress = new HashSet<TrackingRequestCallback>();
 
-    private Img activityIndicator;
-
     private RPCTracker() {
-        activityIndicator = new Img("/coregui/images/ajax-loader.gif", 16, 16);
-        activityIndicator.setZIndex(10000);
-        activityIndicator.setLeft(10);
-        activityIndicator.setTop(40);
-        activityIndicator.draw();
     }
 
     public static RPCTracker getInstance() {
@@ -81,7 +74,6 @@ public class RPCTracker {
     public void refresh() {
         Log.trace("RPCTracker queue depth is " + getQueueDepth());
         if (getQueueDepth() > 0) {
-            activityIndicator.show();
 
             int numberOfActiveRequests = inProgress.size();
             String message = MSG.util_rpcManager_activeRequests(String.valueOf(numberOfActiveRequests));
@@ -90,10 +82,6 @@ public class RPCTracker {
                 buf.append("<br/>");
                 buf.append(callback);
             }
-
-            activityIndicator.setTooltip(buf.toString());
-        } else {
-            activityIndicator.hide();
         }
     }
 

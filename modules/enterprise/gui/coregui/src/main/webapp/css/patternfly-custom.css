@@ -1,4 +1,5 @@
 /* PatternFly Overrides */
+/* warning JON uses different orerrides, if updating this file, don't forget to update also the JON's css file in jon git repo */
 /* login page */
 #patternFlyLogin h2 {
     font-size: 2.7em;
@@ -232,4 +233,8 @@ a.nbi-link {
     padding-right: 7px;
     padding-left: 3px;
     cursor: pointer;
+}
+
+.dropdown > .dropdown-menu {
+    z-index: 999999
 }

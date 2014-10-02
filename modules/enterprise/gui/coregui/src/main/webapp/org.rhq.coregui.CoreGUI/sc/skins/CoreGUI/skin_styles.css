@@ -20,11 +20,6 @@ hr {
     height: 1px;
 }
 
-body > div > div[eventproxy="isc_HTMLFlow_0"],
-body > div.normal {
-    z-index: auto !important;
-}
-
 /*bz1116784, bz1126923*/
 input[name="fileUploadItem"],
 input[name="textFile"] {
@@ -1867,4 +1862,19 @@ div[eventproxy^="isc_DateChooser"] {
 
 .rhqHidden {
     display: none;
+}
+
+
+/* bz 1144052, sets the z-index to auto to all related parents to reset the 'stacking context' */
+body > div > div[eventproxy*="isc_HTMLFlow_0"],
+body > div.normal[eventproxy*="HTMLFlow"],
+body > div > div[eventproxy*="isc_HTMLFlow_0"],
+body > div.normal,
+body > div[eventproxy*="CoreGUI_RootCanvas"].normal,
+body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"],
+body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"],
+body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"],
+body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"] > div.overflowVisible[eventproxy*="MenuBarView_LinkBar"],
+body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"] > div.overflowVisible[eventproxy*="MenuBarView_LinkBar"] > div[eventproxy*="MenuBarView_LinkBar"] {
+     z-index: auto !important;
 }

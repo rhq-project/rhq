@@ -225,6 +225,9 @@ public class MySqlComponent implements DatabaseComponent<ResourceComponent<?>>, 
     private long findPID() {
         long result = -1;
         String pidFile = globalVariables.get("PID_FILE");
+        if (pidFile == null) {
+            return result;
+        }
         File file = new File(pidFile);
         if (file.canRead()) {
             try {

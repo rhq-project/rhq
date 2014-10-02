@@ -5307,6 +5307,214 @@
             <c:simple-property name="factory-class" required="true" type="string" readOnly="true" description="Class name of the factory class that can instantiate the connector service."/>
           </resource-configuration>
         </service>
+
+      <service name="Runtime Queue (Managed Server)"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            supportsMissingAvailabilityType="true">
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="runtime-queue"/>
+            <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
+        </plugin-configuration>
+
+        <operation name="list-scheduled-messages-as-json" displayName="List Scheduled Messages as JSON" description="List the messages scheduled for delivery as a string in JSON format.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-messages-as-json" displayName="List Messages as JSON" description="List all messages in the queue that match the filter and return them as a string in JSON format.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="count-messages" displayName="Count Messages" description="Returns the number of the messages in the queue matching the given filter.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-consumers-as-json" displayName="List Consumers as JSON" description="Lists consumers.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="change-messages-priority" displayName="Change Messages Priority" description="Change the priority of the messages corresponding to the given filter.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+            <c:simple-property name="new-priority" required="true" type="integer" readOnly="false" description="New Priority"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+        
+        <operation name="pause" displayName="Pause" description="Pause the queue.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-message-counter-history-as-json" displayName="List Message Counter History as JSON" description="List the message counter history as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="expire-messages" displayName="Expire Messages" description="Expire the messages matching the given filter.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-messages" displayName="List Messages" description="List all messages in the queue that match the filter">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="send-message-to-dead-letter-address" displayName="Send message To Dead Letter Address" description="Send the message corresponding to the given message-id to this queue's Dead Letter Address.">
+          <parameters>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="Message ID"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="reset-message-counter" displayName="Reset Message Counters" description="Reset the message counters.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="move-message" displayName="Move Message" description="Move the message corresponding to the given message-id to another queue">
+          <parameters>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="Message ID"/>
+            <c:simple-property name="other-queue-name" required="true" type="string" readOnly="false" description="Other Queue Name"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="expire-message" displayName="Expire Message" description="Expire the message corresponding to the given message-id.">
+          <parameters>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="Message ID"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-message-counter-as-json" displayName="List Message Counter as JSON" description="List the message counter as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-message-counter-as-html" displayName="List Message Counter as HTML" description="List the message counter as a string in HTML format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="remove-messages" displayName="Remove Messages" description="Remove messages matching the given filter from the destination.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="move-messages" displayName="Move Messages" description="Move the messages corresponding to the given filter to another queue.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+            <c:simple-property name="other-queue-name" required="true" type="string" readOnly="false" description="Other Queue Name"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="integer" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-message-counter-history-as-html" displayName="List Message Counter as HTML" description="List the message counter history.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-scheduled-messages" displayName="List Scheduled Messages" description="List the messages scheduled for delivery.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="resume" displayName="Resume" description="Resume the queue.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="send-messages-to-dead-letter-address" displayName="Send Messages to Dead Letter Address" description="Send the messages corresponding to the given filter to this queue's Dead Letter Address.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="remove-message" displayName="Remove Message" description="Remove the message corresponding to the given message-id.">
+          <parameters>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="Message ID"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="change-message-priority" displayName="Change Message Priority" description="Change the priority of the message corresponding to the given message-id.">
+          <parameters>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="Message ID"/>
+            <c:simple-property name="new-priority" required="true" type="integer" readOnly="false" description="New Priority"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <metric property="consumer-count" description="The number of consumers consuming messages from this queue." />
+        <metric property="dead-letter-address" dataType="trait" description="The address to send the queue's dead messages to." />
+        <metric property="delivering-count" description="The number of messages that this queue is currently delivering to its consumers." />
+        <metric property="durable" dataType="trait" description="Defines whether the queue is durable." />
+        <metric property="expiry-address" dataType="trait" description="The address to send the queue's expired messages to." />
+        <metric property="filter" dataType="trait" description="A queue message filter definition. An undefined or empty filter will match all messages." />
+        <metric property="message-count" description="The number of messages currently in this queue." />
+        <metric property="messages-added" description="The number of messages added to this queue since it was created." />
+        <metric property="paused" dataType="trait" description="Whether the queue is paused." />
+        <metric property="queue-address" dataType="trait" description="The queue address defines what address is used for routing messages." />
+        <metric property="scheduled-count" description="The number of scheduled messages in this queue." />
+        <metric property="temporary" dataType="trait" description="Whether the queue is temporary." />
+      </service>
+
       </service>
     </service>
 
@@ -13680,6 +13888,214 @@
           <c:simple-property name="factory-class" required="true" type="string" readOnly="false" description="Class name of the factory class that can instantiate the connector service."/>
         </resource-configuration>
       </service>
+
+      <service name="Runtime Queue"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            supportsMissingAvailabilityType="true">
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="runtime-queue"/>
+            <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
+        </plugin-configuration>
+
+        <operation name="list-scheduled-messages-as-json" displayName="List Scheduled Messages as JSON" description="List the messages scheduled for delivery as a string in JSON format.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-messages-as-json" displayName="List Messages as JSON" description="List all messages in the queue that match the filter and return them as a string in JSON format.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="count-messages" displayName="Count Messages" description="Returns the number of the messages in the queue matching the given filter.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-consumers-as-json" displayName="List Consumers as JSON" description="Lists consumers.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="change-messages-priority" displayName="Change Messages Priority" description="Change the priority of the messages corresponding to the given filter.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+            <c:simple-property name="new-priority" required="true" type="integer" readOnly="false" description="New Priority"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+        
+        <operation name="pause" displayName="Pause" description="Pause the queue.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-message-counter-history-as-json" displayName="List Message Counter History as JSON" description="List the message counter history as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="expire-messages" displayName="Expire Messages" description="Expire the messages matching the given filter.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-messages" displayName="List Messages" description="List all messages in the queue that match the filter">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="send-message-to-dead-letter-address" displayName="Send message To Dead Letter Address" description="Send the message corresponding to the given message-id to this queue's Dead Letter Address.">
+          <parameters>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="Message ID"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="reset-message-counter" displayName="Reset Message Counters" description="Reset the message counters.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="move-message" displayName="Move Message" description="Move the message corresponding to the given message-id to another queue">
+          <parameters>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="Message ID"/>
+            <c:simple-property name="other-queue-name" required="true" type="string" readOnly="false" description="Other Queue Name"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="expire-message" displayName="Expire Message" description="Expire the message corresponding to the given message-id.">
+          <parameters>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="Message ID"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-message-counter-as-json" displayName="List Message Counter as JSON" description="List the message counter as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-message-counter-as-html" displayName="List Message Counter as HTML" description="List the message counter as a string in HTML format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="remove-messages" displayName="Remove Messages" description="Remove messages matching the given filter from the destination.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="move-messages" displayName="Move Messages" description="Move the messages corresponding to the given filter to another queue.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+            <c:simple-property name="other-queue-name" required="true" type="string" readOnly="false" description="Other Queue Name"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="integer" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-message-counter-history-as-html" displayName="List Message Counter as HTML" description="List the message counter history.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-scheduled-messages" displayName="List Scheduled Messages" description="List the messages scheduled for delivery.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="resume" displayName="Resume" description="Resume the queue.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="send-messages-to-dead-letter-address" displayName="Send Messages to Dead Letter Address" description="Send the messages corresponding to the given filter to this queue's Dead Letter Address.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="remove-message" displayName="Remove Message" description="Remove the message corresponding to the given message-id.">
+          <parameters>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="Message ID"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="change-message-priority" displayName="Change Message Priority" description="Change the priority of the message corresponding to the given message-id.">
+          <parameters>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="Message ID"/>
+            <c:simple-property name="new-priority" required="true" type="integer" readOnly="false" description="New Priority"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <metric property="consumer-count" description="The number of consumers consuming messages from this queue." />
+        <metric property="dead-letter-address" dataType="trait" description="The address to send the queue's dead messages to." />
+        <metric property="delivering-count" description="The number of messages that this queue is currently delivering to its consumers." />
+        <metric property="durable" dataType="trait" description="Defines whether the queue is durable." />
+        <metric property="expiry-address" dataType="trait" description="The address to send the queue's expired messages to." />
+        <metric property="filter" dataType="trait" description="A queue message filter definition. An undefined or empty filter will match all messages." />
+        <metric property="message-count" description="The number of messages currently in this queue." />
+        <metric property="messages-added" description="The number of messages added to this queue since it was created." />
+        <metric property="paused" dataType="trait" description="Whether the queue is paused." />
+        <metric property="queue-address" dataType="trait" description="The queue address defines what address is used for routing messages." />
+        <metric property="scheduled-count" description="The number of scheduled messages in this queue." />
+        <metric property="temporary" dataType="trait" description="Whether the queue is temporary." />
+      </service>
+
     </service>
 
   </service> <!-- Messaging-Provider -->

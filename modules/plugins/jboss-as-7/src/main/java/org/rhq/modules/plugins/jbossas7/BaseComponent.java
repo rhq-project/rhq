@@ -155,6 +155,12 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         if (res != null && res.isSuccess()) {
             return AvailabilityType.UP;
         }
+        if (context.getResourceType().isSupportsMissingAvailabilityType()) {
+            if (res != null && res.isRolledBack() && res.getFailureDescription().startsWith("JBAS014807")) {
+                getLog().info("Reporting MISSING resource: " + getPath());
+                return AvailabilityType.MISSING;
+            }
+        }
         if (res != null && res.isTimedout()) {
             return AvailabilityType.UNKNOWN;
         }

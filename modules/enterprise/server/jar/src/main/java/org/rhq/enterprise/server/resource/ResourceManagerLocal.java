@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,6 @@ import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
@@ -72,15 +71,6 @@ public interface ResourceManagerLocal extends ResourceManagerRemote {
      * @throws ResourceAlreadyExistsException if an equivalent resource already exists
      */
     void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException;
-
-    /**
-     * Update a Resource's editable properties (name, description, and location).
-     *
-     * @param user the user updating the Resource
-     * @param resource the Resource to be updated
-     * @return the updated (attached) resource
-     */
-    Resource updateResource(Subject user, Resource resource);
 
     /**
      * This will uninventory the resource with the given ID along with all of its child resources. Existing
@@ -277,32 +267,17 @@ public interface ResourceManagerLocal extends ResourceManagerRemote {
 
     List<ResourceIdFlyWeight> findFlyWeights(int[] resourceIds);
 
-    /**
-     * @throws ResourceGroupNotFoundException if the specified {@link ResourceGroup} does not exist
-     */
     PageList<Resource> findExplicitResourcesByResourceGroup(Subject subject, ResourceGroup group,
         PageControl pageControl);
 
-    /**
-     * @throws ResourceGroupNotFoundException if the specified {@link ResourceGroup} does not exist
-     */
     PageList<Resource> findImplicitResourcesByResourceGroup(Subject user, ResourceGroup group, PageControl pageControl);
 
-    /**
-     * @throws ResourceGroupNotFoundException if the specified {@link ResourceGroup} does not exist
-     */
     PageList<ResourceWithAvailability> findExplicitResourceWithAvailabilityByResourceGroup(Subject subject,
         ResourceGroup group, PageControl pageControl);
 
-    /**
-     * @throws ResourceGroupNotFoundException if the specified {@link ResourceGroup} does not exist
-     */
     PageList<ResourceWithAvailability> findImplicitResourceWithAvailabilityByResourceGroup(Subject subject,
         ResourceGroup group, PageControl pageControl);
 
-    /**
-     * @throws ResourceGroupNotFoundException if no {@link ResourceGroup} exists with the specified id
-     */
     PageList<Resource> findAvailableResourcesForResourceGroup(Subject user, int groupId, ResourceType type,
         ResourceCategory category, String nameFilter, int[] excludeIds, PageControl pageControl);
 
@@ -378,6 +353,14 @@ public interface ResourceManagerLocal extends ResourceManagerRemote {
     List<AutoGroupComposite> findChildrenAutoGroups(Subject user, int parentResourceId, int[] resourceTypeIds);
 
     AutoGroupComposite getResourceAutoGroup(Subject user, int resourceId);
+
+    /**
+     * INTERNAL.
+     *
+     * Our implementation of resource errors may lead to duplicates for error types which are supposed to get at most
+     * one entry per resource. The purge job will call this method to get rid of the duplicates, if any.
+     */
+    void removeResourceErrorDuplicates();
 
     Map<Integer, InventoryStatus> getResourceStatuses(int rootResourceId, boolean descendants);
 
@@ -502,8 +485,6 @@ public interface ResourceManagerLocal extends ResourceManagerRemote {
     List<Integer> findIdsByTypeIds(List<Integer> resourceTypeIds);
 
     Integer getResourceCount(List<Integer> resourceTypeIds);
-
-    Map<Integer, String> getResourcesAncestry(Subject subject, Integer[] resourceIds, ResourceAncestryFormat format);
 
     PageList<Resource> findGroupMemberCandidateResources(Subject subject, ResourceCriteria criteria,
         int[] alreadySelectedResourceIds);

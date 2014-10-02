@@ -28,13 +28,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -47,6 +47,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -105,6 +106,7 @@ import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
+import org.rhq.core.domain.resource.ResourceErrorTypeComposite;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
@@ -205,7 +207,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     + "' already exists.");
             }
         }
-        if (parent != Resource.ROOT) {
+        if (parent != null && parent != Resource.ROOT) {
             // Only set the relationships if this is not a root resource.
             // The cardinal rule is to add the relationship in both directions,
             // so the parent will have direct access to this child after the method returns.
@@ -643,10 +645,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     resourceGroupManager.deleteResourceGroups(user, backingGroupIds);
                 } catch (Throwable t) {
                     if (LOG.isDebugEnabled()) {
-                        LOG.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds, t);
+                        LOG.error(
+                            "Bulk delete error for autogroup backing group deletion for "
+                                + Arrays.toString(backingGroupIds), t);
                     } else {
-                        LOG.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds
-                            + ": " + t.getMessage());
+                        LOG.error("Bulk delete error for autogroup backing group deletion for "
+                            + Arrays.toString(backingGroupIds) + ": " + t.getMessage());
                     }
                 }
             }
@@ -683,9 +687,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // update the resource type of affected groups by calling setResouceType()
         DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
         Integer groupId = null;
-        for (int i = 0, size = rs.size(); i < size; ++i) {
+        for (Object r : rs) {
             try {
-                groupId = dbType.getInteger(rs.get(i));
+                groupId = dbType.getInteger(r);
                 resourceGroupManager.setResourceTypeInNewTx(groupId);
 
             } catch (ResourceGroupDeleteException rgde) {
@@ -858,7 +862,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             for (Resource childResource : resource.getChildResources()) {
                 updateInventoryStatus(childResource, newStatus, now);
                 childResource = entityManager.merge(childResource);
-                setResourceStatus(user, childResource, newStatus, setDescendents);
+                setResourceStatus(user, childResource, newStatus, true);
             }
         } else if (resource.getResourceType().getCategory() == ResourceCategory.PLATFORM) {
             // Commit platform services when the platform is committed.
@@ -866,7 +870,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 if (childResource.getResourceType().getCategory() == ResourceCategory.SERVICE) {
                     updateInventoryStatus(childResource, newStatus, now);
                     childResource = entityManager.merge(childResource);
-                    setResourceStatus(user, childResource, newStatus, setDescendents);
+                    setResourceStatus(user, childResource, newStatus, false);
                 }
             }
         }
@@ -1059,8 +1063,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     // because that option would require inventory manager perm)
                     child.getParentResource().getId();
                     // The query only returned viewable children, so the composite should not be locked.
-                    boolean isLocked = false;
-                    ResourceLineageComposite composite = new ResourceLineageComposite(child, isLocked);
+                    ResourceLineageComposite composite = new ResourceLineageComposite(child, false);
                     result.add(composite);
                 }
             }
@@ -1150,8 +1153,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 continue;
             }
             String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
-            for (int i = 0; i < ancestryEntries.length; ++i) {
-                String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+            for (String ancestryEntry : ancestryEntries) {
+                String[] entryTokens = ancestryEntry.split(Resource.ANCESTRY_ENTRY_DELIM);
                 int rtId = Integer.valueOf(entryTokens[0]);
                 result.add(rtId);
             }
@@ -1231,15 +1234,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     private String getResourceLongName(String resourceName, ResourceType type) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(resourceName);
-        sb.append(" [");
-        sb.append(type.getPlugin());
-        sb.append(", ");
-        sb.append(type.getName());
-        sb.append("]");
-
-        return sb.toString();
+        return resourceName + " [" + type.getPlugin() + ", " + type.getName() + "]";
     }
 
     // Used by Portal WAR only
@@ -1346,8 +1341,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @Override
     @SuppressWarnings("unchecked")
-    public PageList<Resource> findChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent, @Nullable
-    ResourceCategory category, InventoryStatus status, PageControl pageControl) {
+    public PageList<Resource> findChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent,
+        @Nullable ResourceCategory category, InventoryStatus status, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
         Query queryCount;
@@ -1458,7 +1453,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pageControl);
         Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryCountName);
 
-        if (authorizationManager.isInventoryManager(user) == false) {
+        if (!authorizationManager.isInventoryManager(user)) {
             queryCount.setParameter("subject", user);
             query.setParameter("subject", user);
         }
@@ -1515,31 +1510,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         return findResourceComposites(user, category, typeNameFilter, pluginNameFilter, parentResource, null, false,
             pageControl);
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<Resource> findResourcesByType(Subject user, ResourceType resourceType, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("res.name");
-
-        Query queryCount;
-        Query query;
-        if (authorizationManager.isInventoryManager(user)) {
-            queryCount = PersistenceUtility.createCountQuery(entityManager, Resource.QUERY_FIND_BY_TYPE_ADMIN);
-            query = PersistenceUtility.createQueryWithOrderBy(entityManager, Resource.QUERY_FIND_BY_TYPE_ADMIN,
-                pageControl);
-        } else {
-            queryCount = PersistenceUtility.createCountQuery(entityManager, Resource.QUERY_FIND_BY_TYPE);
-            query = PersistenceUtility.createQueryWithOrderBy(entityManager, Resource.QUERY_FIND_BY_TYPE, pageControl);
-            queryCount.setParameter("subject", user);
-            query.setParameter("subject", user);
-        }
-
-        queryCount.setParameter("type", resourceType);
-        long count = (Long) queryCount.getSingleResult();
-
-        query.setParameter("type", resourceType);
-        List<Resource> results = query.getResultList();
-        return new PageList<Resource>(results, (int) count, pageControl);
     }
 
     @Override
@@ -1814,7 +1784,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @Override
     public List<AutoGroupComposite> findChildrenAutoGroups(Subject user, int parentResourceId) {
-        return findChildrenAutoGroups(user, parentResourceId, (int[]) null);
+        return findChildrenAutoGroups(user, parentResourceId, null);
     }
 
     @Override
@@ -2206,7 +2176,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryCountName);
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pageControl);
 
-        if (authorizationManager.isInventoryManager(subject) == false) {
+        if (!authorizationManager.isInventoryManager(subject)) {
             queryCount.setParameter("subject", subject);
             query.setParameter("subject", subject);
         }
@@ -2293,14 +2263,20 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 + subject.getName() + "] does not have permission to operate on resource ID [" + resourceId + "].");
         }
 
-        Query q = entityManager
-            .createQuery("DELETE FROM ResourceError e WHERE e.resource.id = :resourceId AND e.errorType = :type");
+        TypedQuery<Integer> query = entityManager
+            .createNamedQuery(ResourceError.QUERY_FIND_ID_BY_RESOURCE_ID_AND_ERROR_TYPE, Integer.class) //
+            .setParameter("resourceId", resourceId) //
+            .setParameter("type", resourceErrorType);
 
-        q.setParameter("resourceId", resourceId);
-        q.setParameter("type", resourceErrorType);
+        List<Integer> entityIds = query.getResultList();
 
-        int updates = q.executeUpdate();
-        return updates;
+        int deleted = 0;
+        for (Integer entityId : entityIds) {
+            deleted += entityManager.createNamedQuery(ResourceError.QUERY_DELETE_BY_ID) //
+                .setParameter("id", entityId).executeUpdate();
+        }
+
+        return deleted;
     }
 
     @Override
@@ -2330,6 +2306,45 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
 
             entityManager.remove(error);
+        }
+    }
+
+    @Override
+    public void removeResourceErrorDuplicates() {
+        EnumSet<ResourceErrorType> typesToCheck = EnumSet.of( //
+            ResourceErrorType.INVALID_PLUGIN_CONFIGURATION, //
+            ResourceErrorType.AVAILABILITY_CHECK, //
+            ResourceErrorType.UPGRADE //
+            );
+        TypedQuery<ResourceErrorTypeComposite> invalidCompositesQuery = entityManager.createNamedQuery( //
+            ResourceError.QUERY_FIND_ALL_INVALID_RESOURCE_ERROR_TYPE_COMPOSITE, //
+            ResourceErrorTypeComposite.class //
+            ).setParameter("types", typesToCheck);
+
+        List<ResourceErrorTypeComposite> invalidComposites = invalidCompositesQuery.getResultList();
+
+        for (ResourceErrorTypeComposite invalidComposite : invalidComposites) {
+            TypedQuery<Integer> findDuplicatesQuery = entityManager.createNamedQuery( //
+                ResourceError.QUERY_FIND_ID_BY_RESOURCE_ID_AND_ERROR_TYPE_OLDER_THAN, //
+                Integer.class //
+                ) //
+                .setParameter("resourceId", invalidComposite.getResourceId()) //
+                .setParameter("type", invalidComposite.getResourceErrorType()) //
+                .setParameter("upToTime", invalidComposite.getLastOccurred());
+
+            List<Integer> duplicatesIds = findDuplicatesQuery.getResultList();
+
+            int deleted = 0;
+            for (Integer duplicateId : duplicatesIds) {
+                deleted += entityManager.createNamedQuery(ResourceError.QUERY_DELETE_BY_ID) //
+                    .setParameter("id", duplicateId).executeUpdate();
+
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Removed " + deleted + " duplicate resource errors of type ["
+                        + invalidComposite.getResourceErrorType() + "] for resource ["
+                        + invalidComposite.getResourceId() + "]");
+                }
+            }
         }
     }
 
@@ -2423,9 +2438,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             HashSet<Integer> visibleIdSet = new HashSet<Integer>(visibleResources);
 
-            ListIterator<ResourceFlyweight> iter = resources.listIterator();
-            while (iter.hasNext()) {
-                ResourceFlyweight res = iter.next();
+            for (ResourceFlyweight res : resources) {
                 res.setLocked(!visibleIdSet.contains(res.getId()));
             }
         }
@@ -2446,7 +2459,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             String resourceKey = (String) prefetched[i++];
 
             Integer parentId = (Integer) prefetched[i++];
-            String parentName = (String) prefetched[i++];
+            i++; // skip parentName
 
             AvailabilityType availType = (AvailabilityType) prefetched[i++];
 
@@ -2456,7 +2469,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             Boolean typeSingleton = (Boolean) prefetched[i++];
             ResourceCategory typeCategory = (ResourceCategory) prefetched[i++];
 
-            String subCategory = (String) prefetched[i++];
+            String subCategory = (String) prefetched[i];
 
             //we don't need the resource type reference here, only in the cache
             flyweightCache
@@ -2535,7 +2548,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         for (Object[] is : (List<Object[]>) query.getResultList()) {
             statuses.put((Integer) is[0], (InventoryStatus) is[1]);
             if (descendents) {
-                getResourceStatuses((Integer) is[0], descendents, statuses);
+                getResourceStatuses((Integer) is[0], true, statuses);
             }
         }
     }
@@ -2552,7 +2565,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         if (recursive) {
             // Recurse...
             for (Resource child : resource.getChildResources()) {
-                prefetchResource(child, recursive);
+                prefetchResource(child, true);
             }
         }
     }
@@ -2587,7 +2600,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Resource [" + resourceId + "] does not exist or has no agent assigned");
                 }
-                new IllegalStateException("No agent is associated with the resource with id [" + resourceId + "]");
+                throw new IllegalStateException("No agent is associated with the resource with id [" + resourceId + "]");
             } else if (agent.getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)
                 && agent.getAgentToken().startsWith(ResourceHandlerBean.DUMMY_AGENT_TOKEN_PREFIX)) {
                 return getResourceById(subject, resourceId).getCurrentAvailability();
@@ -2717,7 +2730,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         generator.alterProjection(compositeProjection);
 
-        if (isInventoryManager == false) {
+        if (!isInventoryManager) {
             if (criteria.isInventoryManagerRequired()) {
                 throw new PermissionException("Subject [" + subject.getName()
                     + "] requires InventoryManager permission for requested query criteria.");
@@ -2747,7 +2760,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
-        if (authorizationManager.isInventoryManager(subject) == false) {
+        if (!authorizationManager.isInventoryManager(subject)) {
             if (criteria.isInventoryManagerRequired()) {
                 throw new PermissionException("Subject [" + subject.getName()
                     + "] requires InventoryManager permission for requested query criteria.");
@@ -2779,7 +2792,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             try {
                 maxResources = Integer.parseInt(System.getProperty(
                     "rhq.server.findResourcesByCriteriaBounded.maxResources", BOUNDED_MAX_RESOURCES));
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ignored) {
             }
             if (maxResources <= 0) {
                 maxResources = Integer.parseInt(BOUNDED_MAX_RESOURCES);
@@ -2795,7 +2808,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             try {
                 maxResourcesByType = Integer.parseInt(System.getProperty(
                     "rhq.server.findResourcesByCriteriaBounded.maxResourcesByType", BOUNDED_MAX_RESOURCES_BY_TYPE));
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ignored) {
             }
             if (maxResourcesByType <= 0) {
                 maxResourcesByType = Integer.parseInt(BOUNDED_MAX_RESOURCES_BY_TYPE);
@@ -2837,14 +2850,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 resourceId = parent.getId();
             }
             parent = getParentResource(resourceId);
-            if (parent == null)
-                break;
-            if (parent.getResourceType().getCategory().equals(ResourceCategory.PLATFORM)) {
+            if (parent != null && parent.getResourceType().getCategory().equals(ResourceCategory.PLATFORM)) {
                 resource = parent;
                 parent = null;
-                break;
             }
-
         } while (parent != null);
         if (resource != null) {
             if (!authorizationManager.canViewResource(subject, resource.getId())) {

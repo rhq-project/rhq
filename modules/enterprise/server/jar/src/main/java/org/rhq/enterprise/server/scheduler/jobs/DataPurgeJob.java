@@ -50,6 +50,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.purge.PurgeManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -75,6 +76,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
     private final AlertConditionManagerLocal alertConditionManager;
     private final AlertNotificationManagerLocal alertNotificationManager;
     private final DriftManagerLocal driftManager;
+    private final ResourceManagerLocal resourceManager;
 
     public DataPurgeJob() {
         subjectManager = LookupUtil.getSubjectManager();
@@ -85,6 +87,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         alertConditionManager = LookupUtil.getAlertConditionManager();
         alertNotificationManager = LookupUtil.getAlertNotificationManager();
         driftManager = LookupUtil.getDriftManager();
+        resourceManager = LookupUtil.getResourceManager();
     }
 
     /**
@@ -138,6 +141,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeOperationHistoryData(systemSettings);
         purgeOrphanedBundleResourceDeploymentHistory();
         purgePartitionEventsData(systemSettings);
+        removeResourceErrorDuplicates();
     }
 
     private void purgeMeasurementTraitData(SystemSettings systemSettings) {
@@ -363,6 +367,19 @@ public class DataPurgeJob extends AbstractStatefulJob {
         } finally {
             long duration = System.currentTimeMillis() - timeStart;
             LOG.info("Partition event data purged [" + eventsPurged + "] - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void removeResourceErrorDuplicates() {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Resource error duplicates removal starting at " + new Date(timeStart));
+        try {
+            resourceManager.removeResourceErrorDuplicates();
+        } catch (Exception e) {
+            LOG.error("Failed to remove resource error duplicates.", e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Resource error duplicates removal completed in [" + duration + "]ms");
         }
     }
 

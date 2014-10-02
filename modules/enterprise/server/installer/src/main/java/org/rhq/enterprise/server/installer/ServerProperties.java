@@ -60,6 +60,8 @@ public class ServerProperties {
     public static final String PROP_AUTOINSTALL_ENABLE = "rhq.autoinstall.enabled";
     public static final String PROP_AUTOINSTALL_DATABASE = "rhq.autoinstall.database";
     public static final String PROP_AUTOINSTALL_PUBLIC_ADDR = "rhq.autoinstall.public-endpoint-address";
+    public static final String PROP_AUTOINSTALL_PUBLIC_PORT = "rhq.autoinstall.public-endpoint-port";
+    public static final String PROP_AUTOINSTALL_PUBLIC_SECURE_PORT = "rhq.autoinstall.public-endpoint-secure-port";
     public static final String PROP_AUTOINSTALL_ADMIN_PASSWORD = "rhq.autoinstall.server.admin.password";
 
     public static final String PROP_TOMCAT_SECURITY_CLIENT_AUTH_MOD = "rhq.server.tomcat.security.client-auth-mode";

@@ -709,6 +709,13 @@ rhq.server.socket.binding.port.txn-status-manager=3713
 # rhq.autoinstall.public-endpoint-address
 #    The public IP/hostname that all agents will use to talk to this server.
 #    If not set, a value to use is determined at auto-install time.
+# rhq.autoinstall.public-endpoint-port
+# rhq.autoinstall.public-endpoint-secure-port
+#    The public ports that all agents will use to talk to this server.
+#    If not set, values to use will be determined at auto-install time.
+#    You can normally leave these empty unless you have a special setup
+#    where the server's bind ports are exposed differently to remote
+#    clients (e.g. within a Docker container).
 # rhq.autoinstall.server.admin.password
 #    The password for the built-in "rhqadmin" superuser. If not set the
 #    password will be prompted for by the "rhqctl install" command.
@@ -721,6 +728,8 @@ rhq.server.socket.binding.port.txn-status-manager=3713
 rhq.autoinstall.enabled=true
 rhq.autoinstall.database=auto
 rhq.autoinstall.public-endpoint-address=
+rhq.autoinstall.public-endpoint-port=
+rhq.autoinstall.public-endpoint-secure-port=
 rhq.autoinstall.server.admin.password=${rhq.autoinstall.server.admin.password}
 
 #############################################################################

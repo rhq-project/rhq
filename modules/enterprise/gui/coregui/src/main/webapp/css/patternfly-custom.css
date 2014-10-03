@@ -92,6 +92,7 @@
 .navbar-pf .navbar-primary {
     background-image: -webkit-linear-gradient(top, #24323a 0%, #222e36 100%);
     background-image: linear-gradient(to bottom, #24323a 0%, #222e36 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff24323a', endColorstr='#ff222e36', GradientType=0);
     border-bottom: 1px solid #a7abb4;
     border-top: 1px solid #1b242a;
 }
@@ -109,6 +110,7 @@
 .navbar-pf .navbar-primary > li {
     border-right: 1px solid #0d0e0f;
     border-top: 1px solid #1b242a;
+    height: 44px;
 }
 
 .navbar-pf .navbar-utility > li > a {
@@ -125,6 +127,7 @@
     border-top: 1px solid #24323a;
 }
 
+.navbar-pf .navbar-nav > li.active > a,
 .navbar-pf .navbar-nav > li > a:hover,
 .navbar-pf .navbar-nav > li > a:focus {
     background-color: rgba(255, 255, 255, .1) !important;
@@ -134,6 +137,7 @@
     border-bottom-color: #575f65;
     color: #f0f0f0 !important;
     text-decoration: none !important;
+    filter: initial !important;
 }
 
 .navbar-pf .navbar-nav > .open > a,
@@ -158,12 +162,17 @@
 /* navbar special buttons (main menuitem link + caret button for dropdown */
 
 .navbar-btn-group {
-    margin-top: 13.5px;
-    margin-bottom: 15px;
+    margin-top: 10.5px;
+    padding-top: 3px;
+    -ms-transform: translateY(-3px); /* IE fix differences */
+}
+
+.navbar-btn-group.open > .dropdown-menu {
+  -ms-transform: translateY(13px); /* IE to move dropdown menu a bit lower*/
 }
 
 .navbar-btn-item {
-    padding: 11px 20px 13px;
+    padding: 11px 20px 12px;
     line-height: 1;
     text-shadow: none;
     background: transparent;
@@ -175,6 +184,7 @@
 .active a.navbar-btn-item {
     background-image: none !important;
     background-color: rgba(255, 255, 255, .1) !important;
+    border-bottom: 1px solid rgba(255,255,255,.1);
     border-top: 1px solid #575f65 !important;
     -webkit-box-shadow: none;
     box-shadow: none;
@@ -200,7 +210,7 @@
 a.navbar-btn-item:hover, a.navbar-btn-item:focus {
     background: initial !important;
     background-color: rgba(255, 255, 255, .15) !important;
-    border-bottom-color: #F1F2F3;
+    border-bottom: 1px solid rgba(255,255,255,.1);
     border-top-color: #575f65;
     color: #f0f0f0 !important;
     text-decoration: none !important;
@@ -209,6 +219,7 @@ a.navbar-btn-item:hover, a.navbar-btn-item:focus {
 .navbar-btn-item-hover a.navbar-btn-item {
     border-top: 1px solid #575f65 !important;
     background-color: rgba(255, 255, 255, .1);
+    border-bottom: 1px solid rgba(255,255,255,.1);
 }
 
 .navbar-btn-item-hover a.nbi-link {

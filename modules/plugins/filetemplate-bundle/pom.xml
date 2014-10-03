@@ -54,6 +54,7 @@
                         <artifactItem>
                            <groupId>gnu.getopt</groupId>
                            <artifactId>java-getopt</artifactId>
+                           <version>${getopt.version}</version>
                         </artifactItem>
 
                      </artifactItems>

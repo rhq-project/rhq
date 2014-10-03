@@ -170,6 +170,7 @@
                 <artifactItem>
                   <groupId>jboss</groupId>
                   <artifactId>jbpm</artifactId>
+                  <version>${jbpm.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>ant</groupId>

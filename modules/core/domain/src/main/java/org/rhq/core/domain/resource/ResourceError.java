@@ -79,8 +79,6 @@ import org.jetbrains.annotations.Nullable;
         + "     re.resource.id, re.errorType, count(*), max(re.timeOccurred) " //
         + "   ) " //
         + " FROM ResourceError re " //
-        + " WHERE " //
-        + "   re.errorType IN ( :types ) " //
         + " GROUP BY " //
         + "   re.resource.id, re.errorType " //
         + " HAVING count(*) > 1 "), //

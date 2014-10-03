@@ -2240,17 +2240,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @Override
     public void addResourceError(ResourceError resourceError) {
         ResourceErrorType resourceErrorType = resourceError.getErrorType();
-
-        if (resourceErrorType == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION
-            || resourceErrorType == ResourceErrorType.AVAILABILITY_CHECK
-            || resourceErrorType == ResourceErrorType.UPGRADE) {
-            // there should be at most one invalid plugin configuration error, availability check
-            // or upgrade error per resource, so delete any currently existing ones before we add this new one
-            Subject overlord = subjectManager.getOverlord();
-            int resourceId = resourceError.getResource().getId();
-            resourceManager.clearResourceConfigErrorByType(overlord, resourceId, resourceErrorType);
-        }
-
+        // there should be at most one invalid plugin configuration error, availability check
+        // or upgrade error per resource, so delete any currently existing ones before we add this new one
+        Subject overlord = subjectManager.getOverlord();
+        int resourceId = resourceError.getResource().getId();
+        resourceManager.clearResourceConfigErrorByType(overlord, resourceId, resourceErrorType);
         entityManager.persist(resourceError);
     }
 
@@ -2311,15 +2305,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @Override
     public void removeResourceErrorDuplicates() {
-        EnumSet<ResourceErrorType> typesToCheck = EnumSet.of( //
-            ResourceErrorType.INVALID_PLUGIN_CONFIGURATION, //
-            ResourceErrorType.AVAILABILITY_CHECK, //
-            ResourceErrorType.UPGRADE //
-            );
         TypedQuery<ResourceErrorTypeComposite> invalidCompositesQuery = entityManager.createNamedQuery( //
             ResourceError.QUERY_FIND_ALL_INVALID_RESOURCE_ERROR_TYPE_COMPOSITE, //
             ResourceErrorTypeComposite.class //
-            ).setParameter("types", typesToCheck);
+            );
 
         List<ResourceErrorTypeComposite> invalidComposites = invalidCompositesQuery.getResultList();
 

@@ -209,5 +209,30 @@
     <justification>Moving shared utility from plugin code to domain class.</justification>
   </difference>
 
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNode</className>
+    <differenceType>7012</differenceType> <!-- method added -->
+    <method>java.lang.String getVersion()</method>
+    <justification>BZ 1139735</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNode</className>
+    <differenceType>7012</differenceType> <!-- method added -->
+    <method>void setVersion(java.lang.String)</method>
+    <justification>BZ 1139735</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/Server</className>
+    <differenceType>7012</differenceType> <!-- method added -->
+    <method>java.lang.String getVersion()</method>
+    <justification>BZ 1139735</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/Server</className>
+    <differenceType>7012</differenceType> <!-- method added -->
+    <method>void setVersion(java.lang.String)</method>
+    <justification>BZ 1139735</justification>
+  </difference>
+
 </differences>
 

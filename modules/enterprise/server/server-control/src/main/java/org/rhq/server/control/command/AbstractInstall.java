@@ -146,9 +146,10 @@ public abstract class AbstractInstall extends ControlCommand {
             while (!isRHQServerInitialized()) {
                 Long now = System.currentTimeMillis();
 
-                if(installerExitCode.isDone() && installerExitCode.get().intValue() != RHQControl.EXIT_CODE_OK) {
+                if (installerExitCode.isDone() && installerExitCode.get().intValue() != RHQControl.EXIT_CODE_OK) {
                     stopServer();
-                    throw new RuntimeException("Installer failed with code " + installerExitCode.get().intValue() + ", shut down server");
+                    throw new RuntimeException("Installer failed with code " + installerExitCode.get().intValue()
+                        + ", shut down server");
                 }
 
                 if ((now - intervalStart) > messageInterval) {
@@ -209,6 +210,7 @@ public abstract class AbstractInstall extends ControlCommand {
         return mcc;
     }
 
+    @SuppressWarnings("resource")
     protected boolean isRHQServerInitialized() throws IOException {
 
         BufferedReader reader = null;
@@ -446,28 +448,62 @@ public abstract class AbstractInstall extends ControlCommand {
         return rValue;
     }
 
-    protected Future<Integer> runRHQServerInstaller() throws Exception {
-        log.info("Installing RHQ server");
+    protected enum ServerInstallerAction {
+        INSTALL("Installing"), UPGRADE("Upgrading"), UPDATESTORAGESCHEMA("Updating RHQ Storage Cluster schema"), LISTVERSIONS(
+            "Topology Versions");
 
-        // If the install fails, we will remove the install marker file allowing the installer to be able to run again.
-        // We also need to revert mgmt-users.properties
-        File mgmtUserPropertiesFile = new File(getBaseDir(),
+        public String display;
+
+        ServerInstallerAction(String display) {
+            this.display = display;
+        }
+    };
+
+    protected Future<Integer> runRHQServerInstaller(ServerInstallerAction serverInstallerAction) throws Exception {
+        Future<Integer> integerFuture = null;
+
+        switch (serverInstallerAction) {
+        case INSTALL:
+        case UPGRADE: {
+            log.info(serverInstallerAction.display + " RHQ Server");
+
+            // If the install fails, we will remove the install marker file allowing the installer to be able to run again.
+            // We also need to revert mgmt-users.properties
+            File mgmtUserPropertiesFile = new File(getBaseDir(),
                 "jbossas/standalone/configuration/mgmt-users.properties");
-        File standaloneXmlFile = new File(getBaseDir(), "jbossas/standalone/configuration/standalone-full.xml");
-        final FileReverter mgmtUserPropertiesReverter = new FileReverter(mgmtUserPropertiesFile);
-        final FileReverter standaloneXmlFileReverter = new FileReverter(standaloneXmlFile);
-        addUndoTask(new ControlCommand.UndoTask(
-            "Removing server-installed marker file and management user and reverting to original standalone-full.xml") {
-            public void performUndoWork() throws Exception {
-                getServerInstalledMarkerFile(getBaseDir()).delete();
-                mgmtUserPropertiesReverter.revert();
-                standaloneXmlFileReverter.revert();
-            }
-        });
+            File standaloneXmlFile = new File(getBaseDir(), "jbossas/standalone/configuration/standalone-full.xml");
+            final FileReverter mgmtUserPropertiesReverter = new FileReverter(mgmtUserPropertiesFile);
+            final FileReverter standaloneXmlFileReverter = new FileReverter(standaloneXmlFile);
+            addUndoTask(new ControlCommand.UndoTask(
+                "Removing server-installed marker file and management user and reverting to original standalone-full.xml") {
+                public void performUndoWork() throws Exception {
+                    getServerInstalledMarkerFile(getBaseDir()).delete();
+                    mgmtUserPropertiesReverter.revert();
+                    standaloneXmlFileReverter.revert();
+                }
+            });
 
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
-        Future<Integer> integerFuture = ExecutorAssist.executeAsync(getBinDir(), commandLine, null);
-        log.info("The server installer is running");
+            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
+            integerFuture = ExecutorAssist.executeAsync(getBinDir(), commandLine, null);
+            log.info("The RHQ Server installer is running");
+            break;
+        }
+        case UPDATESTORAGESCHEMA: {
+            log.info(serverInstallerAction.display);
+
+            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer", "--updatestorageschema");
+            integerFuture = ExecutorAssist.executeAsync(getBinDir(), commandLine, null);
+            log.info("The RHQ Storage Cluster schema update is running");
+            break;
+        }
+        case LISTVERSIONS: {
+            log.info(serverInstallerAction.display);
+
+            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer", "--listversions");
+            integerFuture = ExecutorAssist.executeAsync(getBinDir(), commandLine, null);
+            break;
+        }
+        }
         return integerFuture;
     }
 

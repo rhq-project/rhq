@@ -19,6 +19,12 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-core-dbutils</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
       <artifactId>rhq-cassandra-ccm-core</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -94,6 +100,15 @@
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-cassandra-ccm-core</artifactId>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>rhq-core-dbutils</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>i18nlog</groupId>
+                  <artifactId>i18nlog</artifactId>
                 </artifactItem>
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>

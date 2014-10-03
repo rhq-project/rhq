@@ -96,7 +96,7 @@ import org.rhq.core.domain.resource.Resource;
 @Table(name = "RHQ_STORAGE_NODE")
 public class StorageNode implements Serializable {
 
-    public static final long serialVersionUID = 1L;
+    public static final long serialVersionUID = 2L;
 
     public static final String QUERY_FIND_ALL = "StorageNode.findAll";
     public static final String QUERY_FIND_BY_ADDRESS = "StorageNode.findByAddress";
@@ -150,6 +150,9 @@ public class StorageNode implements Serializable {
     @JoinColumn(name = "RESOURCE_OP_HIST_ID", referencedColumnName = "ID", nullable = true)
     @OneToOne(optional = true, cascade = { CascadeType.REMOVE })
     private ResourceOperationHistory failedOperation;
+
+    @Column(name = "VERSION", nullable = false)
+    private String version;
 
     // required for JPA
     public StorageNode() {
@@ -261,6 +264,14 @@ public class StorageNode implements Serializable {
         return Status.DOWN;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
     public enum OperationMode {
         DECOMMISSION("Remove the storage node from service"), DOWN("This storage node is down"), //
         INSTALLED("This storage node is newly installed but not yet operational"), //
@@ -303,6 +314,8 @@ public class StorageNode implements Serializable {
     void onPersist() {
         this.ctime = System.currentTimeMillis();
         this.mtime = this.ctime;
+        // I'd like to do this bu smartgwt can't handle the getPackage() call
+        //this.version = this.getClass().getPackage().getImplementationVersion();
     }
 
     @Override

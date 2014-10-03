@@ -54,7 +54,10 @@ import org.quartz.SchedulerException;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.core.domain.criteria.ServerCriteria;
+import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -65,6 +68,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
@@ -124,6 +128,9 @@ public class StartupBean implements StartupLocal {
     private TopologyManagerLocal topologyManager;
 
     @EJB
+    private StorageNodeManagerLocal storageNodeManager;
+
+    @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
 
     @EJB
@@ -176,6 +183,8 @@ public class StartupBean implements StartupLocal {
     public void init() throws RuntimeException {
 
         checkTempDir();
+
+        checkCluster();
 
         secureNaming();
 
@@ -256,6 +265,51 @@ public class StartupBean implements StartupLocal {
         if (!tmpDir.canWrite()) {
             throw new RuntimeException("Startup failed: java.io.tmpdir [" + tmpDir.getAbsolutePath()
                 + "] is not writable");
+        }
+    }
+
+    /**
+     * Ensure all Servers and StorageNodes are at the same version.  This prevents startup when an
+     * upgrade of all cluster members is still in progress.
+     */
+    private void checkCluster() {
+        try {
+            Subject overlord = subjectManager.getOverlord();
+            String version = this.getClass().getPackage().getImplementationVersion();
+
+            ServerCriteria sc = new ServerCriteria();
+            sc.clearPaging();
+            List<Server> servers = topologyManager.findServersByCriteria(overlord, sc);
+            for (Server server : servers) {
+                if (!version.equals(server.getVersion())) {
+                    throw new RuntimeException(
+                        "Startup failed: Could not start Server because not all Servers are running the same version. This Server is running version ["
+                            + version
+                            + "] but Server ["
+                            + server.getName()
+                            + "] is running version ["
+                            + server.getVersion()
+                            + "] Please complete the upgrade for all Servers and StorageNodes before trying to start a server.");
+                }
+            }
+
+            StorageNodeCriteria snc = new StorageNodeCriteria();
+            snc.clearPaging();
+            List<StorageNode> storageNodes = storageNodeManager.findStorageNodesByCriteria(overlord, snc);
+            for (StorageNode storageNode : storageNodes) {
+                if (!version.equals(storageNode.getVersion())) {
+                    throw new RuntimeException(
+                        "Startup failed: Could not start Server because not all Storage Nodes are running the same version. This Server is running version ["
+                            + version
+                            + "] but Storage Node ["
+                            + storageNode.getAddress()
+                            + "] is running version ["
+                            + storageNode.getVersion()
+                            + "] Please complete the upgrade for all Servers and StorageNodes before trying to start a server.");
+                }
+            }
+        } catch (Throwable t) {
+            throw new RuntimeException("Startup failed: Could not validat Server or Storage Node versions", t);
         }
     }
 
@@ -352,6 +406,7 @@ public class StartupBean implements StartupLocal {
             server.setSecurePort(7443);
             server.setComputePower(1);
             server.setOperationMode(Server.OperationMode.INSTALLED);
+            server.setVersion(this.getClass().getPackage().getImplementationVersion());
             serverManager.create(server);
             log.info("Default HA server created: " + server);
         }

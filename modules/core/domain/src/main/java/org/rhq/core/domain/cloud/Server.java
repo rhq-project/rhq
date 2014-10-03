@@ -96,7 +96,7 @@ import org.rhq.core.domain.resource.Agent;
 @Table(name = "RHQ_SERVER")
 public class Server implements Serializable {
 
-    public static final long serialVersionUID = 1L;
+    public static final long serialVersionUID = 2L;
 
     public static final String QUERY_FIND_ALL = "Server.findAll";
     public static final String QUERY_FIND_ALL_COMPOSITES = "Server.findAllComposites";
@@ -150,6 +150,9 @@ public class Server implements Serializable {
 
     @Column(name = "STATUS", nullable = false)
     private int status;
+
+    @Column(name = "VERSION", nullable = false)
+    private String version;
 
     // required for JPA
     public Server() {
@@ -217,6 +220,14 @@ public class Server implements Serializable {
 
     public void setMtime(long mtime) {
         this.mtime = mtime;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     public AffinityGroup getAffinityGroup() {
@@ -374,6 +385,8 @@ public class Server implements Serializable {
     void onPersist() {
         this.ctime = System.currentTimeMillis();
         this.mtime = this.ctime;
+        // I'd like to do this bu smartgwt can't handle the getPackage() call
+        //this.version = this.getClass().getPackage().getImplementationVersion();
     }
 
     @Override

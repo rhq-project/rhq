@@ -195,7 +195,7 @@ public class Install extends AbstractInstall {
                 } else {
                     startedServer = true;
                     rValue = Math.max(rValue, startRHQServerForInstallation());
-                    Future<Integer> integerFuture = runRHQServerInstaller();
+                    Future<Integer> integerFuture = runRHQServerInstaller(ServerInstallerAction.INSTALL);
                     waitForRHQServerToInitialize(integerFuture);
                     rValue = Math.max(rValue, integerFuture.get());
                 }

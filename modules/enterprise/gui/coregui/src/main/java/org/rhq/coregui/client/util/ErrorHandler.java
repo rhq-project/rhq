@@ -77,17 +77,17 @@ public class ErrorHandler {
     }
 
     public static String getAllMessages(Throwable t) {
-        return getAllMessages(t, false, null);
+        return getAllMessages(t, false, null, false);
     }
 
-    public static String getAllMessages(Throwable t, boolean includeStackTrace, String newline) {
+    public static String getAllMessages(Throwable t, boolean includeStackTrace, String newline, boolean includeThrowableClassName) {
         StringBuilder results = new StringBuilder();
         if (newline == null) {
             newline = NL;
         }
 
         if (t != null) {
-            String[] msgs = getAllMessagesArray(t);
+            String[] msgs = getAllMessagesArray(t, includeThrowableClassName);
             results.append(msgs[0]);
 
             String indent = INDENT;
@@ -109,16 +109,11 @@ public class ErrorHandler {
         return results.toString();
     }
 
-    public static String[] getAllMessagesArray(Throwable t) {
-        return getAllMessagesArray(t, true);
-    }
-
     public static String[] getAllMessagesArray(Throwable t, boolean includeThrowableClassName) {
         ArrayList<String> list = new ArrayList<String>();
 
-        if (t != null) {
+        while(t != null && t != t.getCause()) {
             String tMessage = t.getMessage();
-
             if (includeThrowableClassName) {
                 list.add(t.getClass().getName() + ":" + tMessage);
             } else {
@@ -127,26 +122,12 @@ public class ErrorHandler {
                 } else {
                     // even though we were told not to show throwable class name,
                     // the problem is we have a null message - so the only thing we have to show is the class name
-                    list.add(t.getClass().getName());
-                }
-            }
-
-            while ((t.getCause() != null) && (t != t.getCause())) {
-                t = t.getCause();
-
-                tMessage = t.getMessage();
-                if (includeThrowableClassName) {
-                    list.add(t.getClass().getName() + ":" + tMessage);
-                } else {
-                    if (tMessage != null) {
-                        list.add(tMessage);
-                    } else {
-                        // even though we were told not to show throwable class name,
-                        // the problem is we have a null message - so the only thing we have to show is the class name
-                        list.add(t.getClass().getName());
+                    if (t.getCause() == null && t != t.getCause()) {
+                        list.add(t.getClass().getName()); // Print only if we're not coming back
                     }
                 }
             }
+            t = t.getCause();
         }
 
         return list.toArray(new String[list.size()]);

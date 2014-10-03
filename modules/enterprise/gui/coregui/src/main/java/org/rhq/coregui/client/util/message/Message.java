@@ -131,7 +131,7 @@ public class Message {
     }
 
     private static String getDetailedMessageFromThrowable(Throwable t) {
-        return PRE_OPEN + ErrorHandler.getAllMessages(t, true, BR) + PRE_CLOSE;
+        return PRE_OPEN + ErrorHandler.getAllMessages(t, true, BR, true) + PRE_CLOSE;
     }
 
     /**

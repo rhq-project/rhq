@@ -10,7 +10,7 @@
 
    <groupId>org.rhq</groupId>
    <artifactId>rhq-script-plugin</artifactId>
-   <version>4.9.0.JON320GA-redhat-1</version>
+   <version>4.12.0.JON330ER04</version>
    <packaging>jar</packaging>
 
    <name>RHQ Script Plugin</name>

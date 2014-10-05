@@ -124,6 +124,8 @@ public interface SystemManagerLocal extends SystemManagerRemote {
 
     boolean isDebugModeEnabled();
 
+    boolean isLoginWithoutRolesEnabled();
+
     boolean isExperimentalFeaturesEnabled();
 
     boolean isLdapAuthorizationEnabled();

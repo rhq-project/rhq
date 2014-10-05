@@ -287,7 +287,7 @@
     <!-- Add RHQ version properties to support update versioning -->
     <!-- spinder: 2-28-14. The following rhq.pom.version value needs to be explicitly set or causes numerous 
          recursive maven version issues. See http://stackoverflow.com/questions/3684664/maven-property-substitution-not-done-for-project-version-tag-of-pom for more. http://jira.codehaus.org/browse/MNG-624  -->
-    <rhq.pom.version>4.9.0.JON320GA</rhq.pom.version>
+    <rhq.pom.version>4.12.0.JON330ER04</rhq.pom.version>
     <rhq-code-coverage.version>${rhq.pom.version}</rhq-code-coverage.version>
     <rhq-cli-tests.version>${rhq.pom.version}</rhq-cli-tests.version>
     <rhq-ant-bundle-common.version>${rhq.pom.version}</rhq-ant-bundle-common.version>
@@ -302,21 +302,21 @@
     <rhq-cassandra-util.version>${rhq.pom.version}</rhq-cassandra-util.version>
     <rhq-common-drift.version>${rhq.pom.version}</rhq-common-drift.version>
     <rhq-filetemplate-bundle-common.version>${rhq.pom.version}</rhq-filetemplate-bundle-common.version>
-    <rhq-jboss-as-dmr-client.version>${rhq.pom.version}-redhat-1</rhq-jboss-as-dmr-client.version>
+    <rhq-jboss-as-dmr-client.version>${rhq.pom.version}</rhq-jboss-as-dmr-client.version>
     <rhq-jboss-as-common.version>${rhq.pom.version}</rhq-jboss-as-common.version>
     <rhq-common-parent.version>${rhq.pom.version}</rhq-common-parent.version>
     <rhq-core-client-api.version>${rhq.pom.version}</rhq-core-client-api.version>
     <rhq-core-comm-api.version>${rhq.pom.version}</rhq-core-comm-api.version>
     <rhq-core-dbutils.version>${rhq.pom.version}</rhq-core-dbutils.version>
-    <rhq-core-domain.version>${rhq.pom.version}-redhat-1</rhq-core-domain.version>
+    <rhq-core-domain.version>${rhq.pom.version}</rhq-core-domain.version>
     <rhq-core-gui.version>${rhq.pom.version}</rhq-core-gui.version>
-    <rhq-core-native-system.version>${rhq.pom.version}-redhat-1</rhq-core-native-system.version>
-    <rhq-core-plugin-api.version>${rhq.pom.version}-redhat-1</rhq-core-plugin-api.version>
+    <rhq-core-native-system.version>${rhq.pom.version}</rhq-core-native-system.version>
+    <rhq-core-plugin-api.version>${rhq.pom.version}</rhq-core-plugin-api.version>
     <rhq-core-plugin-container.version>${rhq.pom.version}</rhq-core-plugin-container.version>
     <rhq-plugin-validator.version>${rhq.pom.version}</rhq-plugin-validator.version>
     <rhq-core-plugindoc.version>${rhq.pom.version}</rhq-core-plugindoc.version>
     <rhq-core-parent.version>${rhq.pom.version}</rhq-core-parent.version>
-    <rhq-core-util.version>${rhq.pom.version}-redhat-1</rhq-core-util.version>
+    <rhq-core-util.version>${rhq.pom.version}</rhq-core-util.version>
     <rhq-enterprise-agent.version>${rhq.pom.version}</rhq-enterprise-agent.version>
     <rhq-enterprise-agentupdate.version>${rhq.pom.version}</rhq-enterprise-agentupdate.version>
     <rhq-script-bindings.version>${rhq.pom.version}</rhq-script-bindings.version>
@@ -333,7 +333,7 @@
     <rhq-rest.version>${rhq.pom.version}</rhq-rest.version>
     <rhq-enterprise-parent.version>${rhq.pom.version}</rhq-enterprise-parent.version>
     <rhq-remoting-cli.version>${rhq.pom.version}</rhq-remoting-cli.version>
-    <rhq-remoting-client-api.version>${rhq.pom.version}-redhat-1</rhq-remoting-client-api.version>
+    <rhq-remoting-client-api.version>${rhq.pom.version}</rhq-remoting-client-api.version>
     <remote-client-deps.version>${rhq.pom.version}</remote-client-deps.version>
     <rhq-remoting-parent.version>${rhq.pom.version}</rhq-remoting-parent.version>
     <rhq-scripting-api.version>${rhq.pom.version}</rhq-scripting-api.version>
@@ -344,9 +344,9 @@
     <rhq-server-client-api.version>${rhq.pom.version}</rhq-server-client-api.version>
     <rhq-data-migration.version>${rhq.pom.version}</rhq-data-migration.version>
     <rhq-enterprise-server-ear.version>${rhq.pom.version}</rhq-enterprise-server-ear.version>
-    <rhq-installer-util.version>${rhq.pom.version}-redhat-1</rhq-installer-util.version>
+    <rhq-installer-util.version>${rhq.pom.version}</rhq-installer-util.version>
     <rhq-server-itests-2.version>${rhq.pom.version}</rhq-server-itests-2.version>
-    <rhq-enterprise-server.version>${rhq.pom.version}-redhat-2</rhq-enterprise-server.version>
+    <rhq-enterprise-server.version>${rhq.pom.version}</rhq-enterprise-server.version>
     <alert-cli.version>${rhq.pom.version}</alert-cli.version>
     <alert-email.version>${rhq.pom.version}</alert-email.version>
     <alert-irc.version>${rhq.pom.version}</alert-irc.version>
@@ -371,8 +371,8 @@
     <rhq-serverplugin-yum.version>${rhq.pom.version}</rhq-serverplugin-yum.version>
     <rhq-enterprise-server-parent.version>${rhq.pom.version}</rhq-enterprise-server-parent.version>
     <safe-invoker.version>${rhq.pom.version}</safe-invoker.version>
-    <rhq-server-control.version>${rhq.pom.version}-redhat-1</rhq-server-control.version>
-    <rhq-server-metrics.version>${rhq.pom.version}-redhat-1</rhq-server-metrics.version>
+    <rhq-server-control.version>${rhq.pom.version}</rhq-server-control.version>
+    <rhq-server-metrics.version>${rhq.pom.version}</rhq-server-metrics.version>
     <server-startup.version>${rhq.pom.version}</server-startup.version>
     <rhq-enterprise-server-xml-schemas.version>${rhq.pom.version}</rhq-enterprise-server-xml-schemas.version>
     <bundleGen.version>${rhq.pom.version}</bundleGen.version>
@@ -413,7 +413,7 @@
     <rhq-oracle-plugin.version>${rhq.pom.version}</rhq-oracle-plugin.version>
     <pattern-plugin.version>${rhq.pom.version}</pattern-plugin.version>
     <rhq-perftest-plugin.version>${rhq.pom.version}</rhq-perftest-plugin.version>
-    <rhq-platform-plugin.version>${rhq.pom.version}-redhat-1</rhq-platform-plugin.version>
+    <rhq-platform-plugin.version>${rhq.pom.version}</rhq-platform-plugin.version>
     <rhq-plugins-parent.version>${rhq.pom.version}</rhq-plugins-parent.version>
     <rhq-postfix-plugin.version>${rhq.pom.version}</rhq-postfix-plugin.version>
     <rhq-postgres-plugin.version>${rhq.pom.version}</rhq-postgres-plugin.version>
@@ -421,7 +421,7 @@
     <rhq-rhqserver-plugin.version>${rhq.pom.version}</rhq-rhqserver-plugin.version>
     <rhq-rhqstorage-plugin.version>${rhq.pom.version}</rhq-rhqstorage-plugin.version>
     <rhq-samba-plugin.version>${rhq.pom.version}</rhq-samba-plugin.version>
-    <rhq-script-plugin.version>${rhq.pom.version}-redhat-1</rhq-script-plugin.version>
+    <rhq-script-plugin.version>${rhq.pom.version}</rhq-script-plugin.version>
     <rhq-script2-plugin.version>${rhq.pom.version}</rhq-script2-plugin.version>
     <rhq-snmptrapd-plugin.version>${rhq.pom.version}</rhq-snmptrapd-plugin.version>
     <rhq-sonarqube-plugin.version>${rhq.pom.version}</rhq-sonarqube-plugin.version>
@@ -1225,13 +1225,6 @@
        <version>${jgroups.version}</version>
        <scope>provided</scope>
      </dependency>
-
-      <!-- BZ 987652 : explicitly set jboss-ejb-client version as used by EAP -->
-      <dependency>
-         <groupId>org.jboss</groupId>
-         <artifactId>jboss-ejb-client</artifactId>
-         <version>${jboss.ejb.client.version}</version>
-      </dependency>
 
       <!-- RHQ specific versioning for components -->
       <dependency>

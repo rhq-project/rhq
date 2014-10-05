@@ -182,7 +182,6 @@
     <opencsv.version>1.8</opencsv.version>
 
     <picketbox.version>4.0.19.SP7</picketbox.version>
-    <ems.version>1.3.6-rhq</ems.version>
     <postgresql.version>9.2-1002.jdbc4</postgresql.version>
     <powermock.version>1.4.12</powermock.version>
 

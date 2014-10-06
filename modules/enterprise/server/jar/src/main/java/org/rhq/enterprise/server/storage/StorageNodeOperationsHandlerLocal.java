@@ -51,7 +51,7 @@ public interface StorageNodeOperationsHandlerLocal {
 
     void performRemoveMaintenance(Subject subject, StorageNode storageNode);
 
-    void runRepair(Subject subject, List<StorageNode> clusterNodes);
+    void runRepair(Subject subject);
 
     void handleRepair(ResourceOperationHistory operationHistory);
 

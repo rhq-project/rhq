@@ -62,8 +62,10 @@ public class JmsDestinationComponent extends ManagedComponentComponent
         if (!invalidObjectNamePropertyNames.isEmpty())
             configurationUpdateReport.setErrorMessage("The following ObjectName properties have invalid values: "
                     + invalidObjectNamePropertyNames);
-        else
-            super.updateResourceConfiguration(configurationUpdateReport);
+        else {
+            super.updateResourceConfigurationChangesOnly(configurationUpdateReport);
+        }
+
     }
 
     private static void validateObjectNameProperty(PropertySimple propertySimple) throws MalformedObjectNameException

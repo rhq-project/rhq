@@ -111,7 +111,8 @@ public class CreateChildResourceFacetDelegate implements CreateChildResourceFace
 
             if (log.isDebugEnabled())
                 log.debug("BEFORE CREATE:\n" + DebugUtils.convertPropertiesToString(template));
-            ConversionUtils.convertConfigurationToManagedProperties(managedProperties, resourceConfig, resourceType,
+            ConversionUtils.convertConfigurationToManagedProperties(managedProperties, resourceConfig,
+                resourceType.getResourceConfigurationDefinition(),
                 customProps);
             if (log.isDebugEnabled())
                 log.debug("AFTER CREATE:\n" + DebugUtils.convertPropertiesToString(template));

@@ -22,10 +22,13 @@
 */
 package org.rhq.plugins.jbossas5.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -165,8 +168,7 @@ public class ConversionUtils {
     }
 
     public static void convertConfigurationToManagedProperties(Map<String, ManagedProperty> managedProperties,
-        Configuration configuration, ResourceType resourceType, Map<String, PropertySimple> customProps) {
-        ConfigurationDefinition configDefinition = resourceType.getResourceConfigurationDefinition();
+        Configuration configuration, ConfigurationDefinition configDefinition, Map<String, PropertySimple> customProps) {
         Set<String> missingManagedPropertyNames = new HashSet<String>();
         for (Property property : configuration.getProperties()) {
             String propertyName = property.getName();
@@ -187,6 +189,14 @@ public class ConversionUtils {
                 throw new IllegalStateException("***** The following properties are defined in this plugin's "
                     + "descriptor but have no corresponding ManagedProperties: " + missingManagedPropertyNames);
         }
+        // remove all managed properties missing in configuration definition
+        List<String> toRemove = new ArrayList<String>();
+        for (Entry<String, ManagedProperty> prop : managedProperties.entrySet()) {
+            if (configDefinition.get(prop.getKey()) == null) {
+                toRemove.add(prop.getKey());
+            }
+        }
+        managedProperties.keySet().removeAll(toRemove);
         return;
     }
 

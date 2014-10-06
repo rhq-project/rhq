@@ -25,6 +25,7 @@ package org.rhq.plugins.jbossas5;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,8 +54,10 @@ import org.jboss.metatype.api.values.SimpleValue;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -207,8 +210,51 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         return resourceConfig;
     }
 
-    @Override
-    public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport) {
+    /**
+     * updates resource configuration, but only changes. This is done by loading configuration first and then comparing
+     * all the simple properties (if existing and new value equals, property is skipped)
+     * 
+     * @param configurationUpdateReport report
+     */
+    public void updateResourceConfigurationChangesOnly(ConfigurationUpdateReport configurationUpdateReport) {
+        Configuration existing = loadResourceConfiguration();
+        Configuration config = configurationUpdateReport.getConfiguration();
+        ConfigurationDefinition configDefCopy = copyConfigurationDefinition(getResourceContext().getResourceType()
+            .getResourceConfigurationDefinition());
+        // filter out unchanged values
+        for (Property prop : config.getAllProperties().values()) {
+            if (prop instanceof PropertySimple) {
+                if (prop instanceof PropertySimple) {
+                    PropertySimple propSimple = (PropertySimple) prop;
+                    String val1 = propSimple.getStringValue();
+                    String val2 = existing.getSimpleValue(propSimple.getName());
+                    if (val1 == null && val2 == null) {
+                        configDefCopy.getPropertyDefinitions().remove(propSimple.getName());
+                    }
+                    if (val1 != null) {
+                        if (val1.equals(val2)) {
+                            configDefCopy.getPropertyDefinitions().remove(propSimple.getName());
+                        }
+                    } else if (val2 != null) {
+                        if (val2.equals(val1)) {
+                            configDefCopy.getPropertyDefinitions().remove(propSimple.getName());
+                        }
+                    }
+                }
+            }
+        }
+        updateResourceConfiguration(configurationUpdateReport, configDefCopy);
+    }
+
+    /**
+     * update resource configuration. Given resourceConfigurationDefinition defines which properties will be updated. Use this 
+     * method in case you don't want to update all properties defined by resource type and supply resourceConfigurationDefinition
+     * consisting of stuff you want.
+     * @param configurationUpdateReport
+     * @param resourceConfigurationDefinition
+     */
+    protected void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport,
+        ConfigurationDefinition resourceConfigurationDefinition) {
         Configuration resourceConfig = configurationUpdateReport.getConfiguration();
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         try {
@@ -219,7 +265,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
                 LOG.debug("*** BEFORE UPDATE:\n" + DebugUtils.convertPropertiesToString(managedProperties));
             }
             ConversionUtils.convertConfigurationToManagedProperties(managedProperties, resourceConfig,
-                getResourceContext().getResourceType(), customProps);
+                resourceConfigurationDefinition, customProps);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("*** AFTER UPDATE:\n" + DebugUtils.convertPropertiesToString(managedProperties));
             }
@@ -230,6 +276,12 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
             configurationUpdateReport.setErrorMessage(ThrowableUtil.getAllMessages(e));
         }
+    }
+
+    @Override
+    public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport) {
+        updateResourceConfiguration(configurationUpdateReport, getResourceContext().getResourceType()
+            .getResourceConfigurationDefinition());
     }
 
     // DeleteResourceFacet Implementation  --------------------------------------------
@@ -600,5 +652,14 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         String interval = component.getResourceContext().getPluginConfiguration()
             .getSimpleValue("serviceAvailabilityRefreshInterval", Long.toString(AVAIL_REFRESH_INTERVAL));
         availRefreshInterval = Long.parseLong(interval) * 1000 * 60;
+    }
+
+    static ConfigurationDefinition copyConfigurationDefinition(ConfigurationDefinition configurationDefinition) {
+        ConfigurationDefinition configDefCopy = new ConfigurationDefinition(configurationDefinition.getName(),
+            configurationDefinition.getDescription());
+        configDefCopy.setConfigurationFormat(configurationDefinition.getConfigurationFormat());
+        configDefCopy.setPropertyDefinitions(new HashMap<String, PropertyDefinition>(configurationDefinition
+            .getPropertyDefinitions()));
+        return configDefCopy;
     }
 }

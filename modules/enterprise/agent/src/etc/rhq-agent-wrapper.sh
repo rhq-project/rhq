@@ -156,7 +156,11 @@ fi
 # Define and export RHQ_AGENT_HOME, we will assume we are running
 # directly from the agent installation's bin directory
 # Note: later sourced scripts can and may override this
-RHQ_AGENT_HOME=`dirname $PWD`
+if [ -z "$RHQ_AGENT_HOME" ]; then
+   TEMP_PWD=`pwd`
+   RHQ_AGENT_HOME=`dirname $TEMP_PWD`
+fi
+
 export $RHQ_AGENT_HOME
 
 

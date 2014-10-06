@@ -136,11 +136,13 @@ public class Start extends ControlCommand {
 
         int rValue;
 
-        // Cassandra looks for JAVA_HOME or then defaults to PATH.  We want it to use the Java
-        // defined for RHQ, so make sure JAVA_HOME is set, and set to the RHQ Java for the executor
-        // environment.
+        // Cassandra looks for JAVA_HOME or then defaults to PATH.  We want it to use the Java defined for RHQ,
+        // so make sure JAVA_HOME is set, and set to the RHQ Java for the executor environment.
         String javaExeFilePath = System.getProperty("rhq.java-exe-file-path");
-        String javaHome = javaExeFilePath.replace('\\', '/').replace("/bin/java", "");
+        String javaHome = javaExeFilePath.replace('\\', '/');
+        if (javaHome.endsWith("/bin/java")) {
+            javaHome = javaHome.substring(0, javaExeFilePath.lastIndexOf("/bin/java"));
+        }
 
         Map<String, String> env = new HashMap<String, String>(System.getenv());
         env.put("JAVA_HOME", javaHome);
@@ -150,8 +152,8 @@ public class Start extends ControlCommand {
             env.put("CASSANDRA_HOME", getStorageBasedir().getAbsolutePath());
             commandLine = getCommandLine("rhq-storage", "start");
             rValue = ExecutorAssist.execute(getBinDir(), commandLine, env);
-            if(rValue != RHQControl.EXIT_CODE_OK) {
-                log.debug("Failed to start storage service, return value" + rValue);                    
+            if (rValue != RHQControl.EXIT_CODE_OK) {
+                log.debug("Failed to start storage service, return value" + rValue);
             }
         } else {
             File storageBinDir = new File(getStorageBasedir(), "bin");

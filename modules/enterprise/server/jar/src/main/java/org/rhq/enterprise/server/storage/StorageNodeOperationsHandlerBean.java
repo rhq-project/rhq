@@ -606,7 +606,13 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     }
 
     @Override
-    public void runRepair(Subject subject, List<StorageNode> clusterNodes) {
+    public void runRepair(Subject subject) {
+        List<StorageNode> clusterNodes = storageNodeManager.getClusterNodes();
+        if (clusterNodes.size() == 1) {
+            log.info("Skipping scheduled repair since this is a single-node cluster");
+            return;
+        }
+
         log.info("Starting anti-entropy repair on storage cluster: " + clusterNodes);
 
         for (StorageNode node : clusterNodes) {

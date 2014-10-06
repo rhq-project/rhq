@@ -142,6 +142,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeOrphanedBundleResourceDeploymentHistory();
         purgePartitionEventsData(systemSettings);
         removeResourceErrorDuplicates();
+        removeStaleAvailabilityResourceErrors();
     }
 
     private void purgeMeasurementTraitData(SystemSettings systemSettings) {
@@ -373,13 +374,28 @@ public class DataPurgeJob extends AbstractStatefulJob {
     private void removeResourceErrorDuplicates() {
         long timeStart = System.currentTimeMillis();
         LOG.info("Resource error duplicates removal starting at " + new Date(timeStart));
+        int deleted = 0;
         try {
-            resourceManager.removeResourceErrorDuplicates();
+            deleted = resourceManager.removeResourceErrorDuplicates();
         } catch (Exception e) {
             LOG.error("Failed to remove resource error duplicates.", e);
         } finally {
             long duration = System.currentTimeMillis() - timeStart;
-            LOG.info("Resource error duplicates removal completed in [" + duration + "]ms");
+            LOG.info("Resource error duplicates removed [" + deleted + "] - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void removeStaleAvailabilityResourceErrors() {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Stale availability resource errors removal starting at " + new Date(timeStart));
+        int deleted = 0;
+        try {
+            deleted = resourceManager.removeStaleAvailabilityResourceErrors();
+        } catch (Exception e) {
+            LOG.error("Failed to remove stale availability resource errors.", e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Stale availability resource errors removed [" + deleted + "] - completed in [" + duration + "]ms");
         }
     }
 

@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -2304,7 +2303,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @Override
-    public void removeResourceErrorDuplicates() {
+    public int removeResourceErrorDuplicates() {
         TypedQuery<ResourceErrorTypeComposite> invalidCompositesQuery = entityManager.createNamedQuery( //
             ResourceError.QUERY_FIND_ALL_INVALID_RESOURCE_ERROR_TYPE_COMPOSITE, //
             ResourceErrorTypeComposite.class //
@@ -2312,6 +2311,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         List<ResourceErrorTypeComposite> invalidComposites = invalidCompositesQuery.getResultList();
 
+        int deleted = 0;
         for (ResourceErrorTypeComposite invalidComposite : invalidComposites) {
             TypedQuery<Integer> findDuplicatesQuery = entityManager.createNamedQuery( //
                 ResourceError.QUERY_FIND_ID_BY_RESOURCE_ID_AND_ERROR_TYPE_OLDER_THAN, //
@@ -2323,18 +2323,27 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             List<Integer> duplicatesIds = findDuplicatesQuery.getResultList();
 
-            int deleted = 0;
             for (Integer duplicateId : duplicatesIds) {
                 deleted += entityManager.createNamedQuery(ResourceError.QUERY_DELETE_BY_ID) //
                     .setParameter("id", duplicateId).executeUpdate();
-
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Removed " + deleted + " duplicate resource errors of type ["
-                        + invalidComposite.getResourceErrorType() + "] for resource ["
-                        + invalidComposite.getResourceId() + "]");
-                }
             }
         }
+
+        return deleted;
+    }
+
+    @Override
+    public int removeStaleAvailabilityResourceErrors() {
+        TypedQuery<Integer> query = entityManager.createNamedQuery(
+            ResourceError.QUERY_FIND_ALL_STALE_AVAILABILITY_RESOURCE_ERROR, Integer.class);
+        List<Integer> resourceIds = query.getResultList();
+        int deleted = 0;
+        for (Integer resourceId : resourceIds) {
+            deleted += clearResourceConfigErrorByType(subjectManager.getOverlord(), resourceId,
+                ResourceErrorType.AVAILABILITY_CHECK);
+        }
+        return deleted;
+
     }
 
     @Override

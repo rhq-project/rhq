@@ -82,6 +82,14 @@ import org.jetbrains.annotations.Nullable;
         + " GROUP BY " //
         + "   re.resource.id, re.errorType " //
         + " HAVING count(*) > 1 "), //
+    @NamedQuery(name = ResourceError.QUERY_FIND_ALL_STALE_AVAILABILITY_RESOURCE_ERROR, query = "" //
+        + " SELECT " //
+        + "   DISTINCT re.resource.id " //
+        + " FROM " //
+        + "   ResourceError re " //
+        + " WHERE " //
+        + "   re.errorType = org.rhq.core.domain.resource.ResourceErrorType.AVAILABILITY_CHECK " //
+        + "   AND re.resource.currentAvailability.availabilityType = org.rhq.core.domain.measurement.AvailabilityType.UP "), //
     @NamedQuery(name = ResourceError.QUERY_DELETE_BY_ID, query = "DELETE FROM ResourceError re WHERE re.id = :id") //
 })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_ERROR_ID_SEQ", sequenceName = "RHQ_RESOURCE_ERROR_ID_SEQ")
@@ -96,6 +104,7 @@ public class ResourceError implements Serializable {
     public static final String QUERY_FIND_ID_BY_RESOURCE_ID_AND_ERROR_TYPE = "ResourceError.findIdByResourceAndErrorType";
     public static final String QUERY_FIND_ID_BY_RESOURCE_ID_AND_ERROR_TYPE_OLDER_THAN = "ResourceError.findIdByResourceAndErrorTypeOlderThan";
     public static final String QUERY_FIND_ALL_INVALID_RESOURCE_ERROR_TYPE_COMPOSITE = "ResourceError.findAllInvalidResourceErrorTypeComposite";
+    public static final String QUERY_FIND_ALL_STALE_AVAILABILITY_RESOURCE_ERROR = "ResourceError.findAllStaleAvailabilityResourceError";
     public static final String QUERY_DELETE_BY_ID = "ResourceError.deleteById";
 
     private static final int MAX_SUMMARY_LENGTH = 1000;

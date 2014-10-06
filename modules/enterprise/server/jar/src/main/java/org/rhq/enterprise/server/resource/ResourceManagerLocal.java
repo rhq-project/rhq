@@ -359,8 +359,19 @@ public interface ResourceManagerLocal extends ResourceManagerRemote {
      *
      * Our implementation of resource errors may lead to duplicates for error types which are supposed to get at most
      * one entry per resource. The purge job will call this method to get rid of the duplicates, if any.
+     *
+     * @return the number of duplicates removed
      */
-    void removeResourceErrorDuplicates();
+    int removeResourceErrorDuplicates();
+
+    /**
+     * INTERNAL.
+     *
+     * Remove AVAILABILITY_CHECK resources errors for resource for resource with UP availability.
+     *
+     * @return the number of stale errors removed
+     */
+    int removeStaleAvailabilityResourceErrors();
 
     Map<Integer, InventoryStatus> getResourceStatuses(int rootResourceId, boolean descendants);
 

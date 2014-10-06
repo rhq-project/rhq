@@ -139,11 +139,9 @@ public interface InstallerService {
      *
      * @param serverProperties the server's settings to use. These will be persisted to
      *                         the server's .properties file.
-     * @param serverDetails details on the server being installed.
-     *                      If in auto-install mode, this value is ignored and can be anything.
      * @throws Exception failed to successfully prepare the database
      */
-    void updateStorageSchema(HashMap<String, String> serverProperties, ServerDetails serverDetails) throws Exception;
+    void updateStorageSchema(HashMap<String, String> serverProperties) throws Exception;
 
     /**
      * Returns a list of all registered servers in the database.

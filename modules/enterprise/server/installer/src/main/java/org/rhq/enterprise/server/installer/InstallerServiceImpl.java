@@ -75,8 +75,7 @@ public class InstallerServiceImpl implements InstallerService {
     private static final String RHQ_SUBSYSTEM_NAME = "rhq-startup";
     private static final String EAR_NAME = "rhq.ear";
     private static final String SYSPROP_PROPFILE = "rhq.server.properties-file";
-
-    private static final String UNSET = "UNSET";
+    private static final String SYSPROP_BASEDIR = "rhq.server.basedir";
 
     private final Log log = LogFactory.getLog(InstallerServiceImpl.class);
     private final InstallerConfiguration installerConfiguration;
@@ -653,7 +652,7 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     @Override
-    public void updateStorageSchema(HashMap<String, String> serverProperties, ServerDetails serverDetails)
+    public void updateStorageSchema(HashMap<String, String> serverProperties)
         throws Exception {
 
         String clearTextDbPassword;
@@ -661,7 +660,7 @@ public class InstallerServiceImpl implements InstallerService {
         obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
         clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
 
-        prepareStorageSchema(serverProperties, clearTextDbPassword, ExistingSchemaOption.KEEP, false);
+        prepareStorageSchema(serverProperties, clearTextDbPassword, ExistingSchemaOption.KEEP, true);
     }
 
     private Set<String> prepareStorageSchema(HashMap<String, String> serverProperties, String clearTextDbPassword,
@@ -898,6 +897,13 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private String getAppServerHomeDir() throws Exception {
+        File baseDir = new File(System.getProperty(SYSPROP_BASEDIR));
+        if (null != baseDir) {
+            if (baseDir.isDirectory()) {
+                return baseDir.getAbsolutePath();
+            }
+        }
+
         ModelControllerClient mcc = null;
         try {
             mcc = createModelControllerClient();
@@ -910,6 +916,14 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private String getAppServerDataDir() throws Exception {
+        File basedir = new File(System.getProperty(SYSPROP_BASEDIR));
+        if (null != basedir) {
+            File dataDir = new File(basedir, "jbossas/standalone/data");
+            if (dataDir.isDirectory()) {
+                return dataDir.getAbsolutePath();
+            }
+        }
+
         ModelControllerClient mcc = null;
         try {
             mcc = createModelControllerClient();
@@ -922,6 +936,14 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private String getAppServerConfigDir() throws Exception {
+        File basedir = new File(System.getProperty(SYSPROP_BASEDIR));
+        if (null != basedir) {
+            File confDir = new File(basedir, "jbossas/standalone/configuration");
+            if (confDir.isDirectory()) {
+                return confDir.getAbsolutePath();
+            }
+        }
+
         ModelControllerClient mcc = null;
         try {
             mcc = createModelControllerClient();

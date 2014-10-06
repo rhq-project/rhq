@@ -109,8 +109,8 @@ public class Upgrade extends AbstractInstall {
                     + "the schema update will vary depending on the schema changes being made, the runtime may be long and should not be "
                     + "interrupted.  It requires that all servers and storage nodes have already been upgraded to the desired version "
                     + "and that all nodes in the storage cluster are running. The command will fail if these prerequisites are not met. "
-                    + "Use 'rhqctl upgrade --status' to see the current upgrade status.  When specified, all other options are ignored. "
-                    + "Not all upgrades will require this step.")
+                    + "Use 'rhqctl upgrade --list-versions' to see the current upgrade status.  When specified, all other options "
+                    + "are ignored.  Not all upgrades will require this step.")
             .addOption(
                 null,
                 RUN_DATA_MIGRATION,
@@ -856,11 +856,7 @@ public class Upgrade extends AbstractInstall {
 
         int rValue = RHQControl.EXIT_CODE_OK;
         try {
-            // start the server, then invoke the installer and wait for the server to be completely installed
-            rValue = Math.max(rValue, startRHQServerForInstallation());
             Future<Integer> integerFuture = runRHQServerInstaller(ServerInstallerAction.UPDATESTORAGESCHEMA);
-            waitForRHQServerToInitialize(integerFuture);
-
             rValue = Math.max(rValue, integerFuture.get());
 
         } catch (Exception e) {

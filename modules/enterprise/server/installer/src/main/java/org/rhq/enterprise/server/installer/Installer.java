@@ -119,7 +119,7 @@ public class Installer {
                 try {
                     final InstallerService installerService = new InstallerServiceImpl(installerConfig);
                     final HashMap<String, String> serverProperties = installerService.getServerProperties();
-                    installerService.updateStorageSchema(serverProperties, null);
+                    installerService.updateStorageSchema(serverProperties);
                     LOG.info("Database setup is complete.");
                 } catch (Exception e) {
                     LOG.error(ThrowableUtil.getAllMessages(e));

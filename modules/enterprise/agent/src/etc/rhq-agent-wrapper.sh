@@ -157,11 +157,11 @@ fi
 # directly from the agent installation's bin directory
 # Note: later sourced scripts can and may override this
 if [ -z "$RHQ_AGENT_HOME" ]; then
-   TEMP_PWD=`pwd`
-   RHQ_AGENT_HOME=`dirname $TEMP_PWD`
+   RHQ_AGENT_HOME=`dirname $_DOLLARZERO`
+   RHQ_AGENT_HOME=`dirname $RHQ_AGENT_HOME`
 fi
 
-export $RHQ_AGENT_HOME
+export RHQ_AGENT_HOME
 
 
 # -------------------------------

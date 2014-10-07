@@ -51,6 +51,10 @@ import org.apache.commons.logging.LogFactory;
  */
 public class StorageSession implements Host.StateListener {
 
+    private static final int DEFAULT_WARMUP_TIME_IN_MINUTES = 3;
+    private static final int MAX_WARMUP_COUNTER = 10;
+    private int previousWarmupTime = DEFAULT_WARMUP_TIME_IN_MINUTES;
+
     private final Log log = LogFactory.getLog(StorageSession.class);
 
     private Session wrappedSession;
@@ -74,7 +78,11 @@ public class StorageSession implements Host.StateListener {
     public StorageSession(Session wrappedSession) {
         this.wrappedSession = wrappedSession;
         this.wrappedSession.getCluster().register(this);
-        permits = RateLimiter.create(calculateRequestLimit(), 3, TimeUnit.MINUTES);
+        permits = getRateLimiter(DEFAULT_WARMUP_TIME_IN_MINUTES);
+    }
+
+    private RateLimiter getRateLimiter(int warmupTime) {
+        return RateLimiter.create(calculateRequestLimit(), warmupTime, TimeUnit.MINUTES);
     }
 
     public void registerNewSession(Session newWrappedSession) {
@@ -105,6 +113,7 @@ public class StorageSession implements Host.StateListener {
     }
 
     private void setRequestLimit() {
+        permitsLastChanged = System.currentTimeMillis();
         permits.setRate(calculateRequestLimit());
     }
 
@@ -132,8 +141,10 @@ public class StorageSession implements Host.StateListener {
         return topologyDelta;
     }
 
-    public void setTopologyDelta(double delta) {
+    public synchronized void setTopologyDelta(double delta) {
         topologyDelta = delta;
+        // On delta change, reset warmup period
+        previousWarmupTime = DEFAULT_WARMUP_TIME_IN_MINUTES;
         setRequestLimit();
     }
 
@@ -216,7 +227,7 @@ public class StorageSession implements Host.StateListener {
 
     private void addOrUp(Host host, String msg) {
         log.info(host + msg);
-        increaseRequestThroughput();
+        resetRequestThroughput();
         if (!isClusterAvailable) {
             log.debug("Storage cluster is up");
         }
@@ -233,7 +244,7 @@ public class StorageSession implements Host.StateListener {
 
     @Override
     public void onDown(Host host) {
-        decreaseRequestThroughput(-topologyDelta);
+        resetRequestThroughput();
         for (StorageStateListener listener : listeners) {
             listener.onStorageNodeDown(host.getAddress());
         }
@@ -242,7 +253,7 @@ public class StorageSession implements Host.StateListener {
     @Override
     public void onRemove(Host host) {
         log.debug(host + " has been removed.");
-        decreaseRequestThroughput(-topologyDelta);
+        resetRequestThroughput();
         for (StorageStateListener listener : listeners) {
             listener.onStorageNodeRemoved(host.getAddress());
         }
@@ -250,7 +261,7 @@ public class StorageSession implements Host.StateListener {
 
     void handleNoHostAvailable(NoHostAvailableException e) {
         log.warn("Encountered " + NoHostAvailableException.class.getSimpleName() + " due to following error(s): " +
-            e.getErrors());
+                e.getErrors());
         if (isClientTimeout(e)) {
             handleTimeout();
         } else {
@@ -258,31 +269,23 @@ public class StorageSession implements Host.StateListener {
         }
     }
 
-    void handleTimeout() {
+    synchronized void handleTimeout() {
         if (System.currentTimeMillis() - permitsLastChanged > timeoutDampening) {
-            decreaseRequestThroughput((int) (getRequestLimit() * timeoutDelta));
+            int warmupTime = previousWarmupTime;
+            if(previousWarmupTime < (MAX_WARMUP_COUNTER * DEFAULT_WARMUP_TIME_IN_MINUTES)) {
+                warmupTime += DEFAULT_WARMUP_TIME_IN_MINUTES;
+                previousWarmupTime = warmupTime;
+            }
+            permits = getRateLimiter(warmupTime);
+            log.warn("Reset warmup period to " + warmupTime + " minutes after a timeout");
+            permitsLastChanged = System.currentTimeMillis();
         }
     }
 
-    private void increaseRequestThroughput() {
-        changeRequestThroughput(topologyDelta);
-    }
-
-    private void decreaseRequestThroughput(double amount) {
-        if (amount > 0) {
-            amount = amount * -1;
-        }
-        changeRequestThroughput(amount);
-    }
-
-    private void changeRequestThroughput(double delta) {
+    private synchronized void resetRequestThroughput() {
         double oldRate = getRequestLimit();
-        double newRate = oldRate + delta;
-        if (delta < 0 && newRate < minRequestLimit) {
-            newRate = minRequestLimit;
-        }
-        permits.setRate(newRate);
-        permitsLastChanged = System.currentTimeMillis();
+        double newRate = calculateRequestLimit();
+        setRequestLimit();
 
         log.info("Changing request throughput from " + oldRate + " request/sec to " + newRate + " requests/sec");
     }

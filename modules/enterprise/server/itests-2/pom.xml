@@ -64,6 +64,8 @@
                 <taskdef resource="net/sf/antcontrib/antcontrib.properties" />
                 <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
                 <property name="jboss.conf.safe" location="${jboss.conf}.safe" />
+                <property name="rhq-platform-plugin.version" value="${rhq-platform-plugin.version}" />
+                <property name="rhq-core-client-api.version" value="${rhq-core-client-api.version}" />
                 <if>
                   <available file="${jboss.unzip.location}" />
                   <then>
@@ -95,6 +97,8 @@
     <!-- FOR RHQ TESTING -->
     <system-properties>
         <property name="project.version" value="${project.version}"/>
+        <property name="rhq-core-client-api.version" value="${rhq-core-client-api.version}"/>
+        <property name="rhq-platform-plugin.version" value="${rhq-platform-plugin.version}"/>
         <property name="rhq.server.content.filesystem" value="${jboss.unzip.location}/standalone/data/packagebits" />
         <property name="jboss.socket.binding.port-offset" value="${jboss.socket.binding.port-offset}" />
         <property name="hibernate.dialect" value="${rhq.test.ds.hibernate-dialect}" />
@@ -552,9 +556,11 @@
             <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
             <clean.db>${clean.db}</clean.db>
             <log4j.configDebug>false</log4j.configDebug>
-            <project.version>${project.version}</project.version>
+            <rhq.version>${rhq.pom.version}</rhq.version>
             <rhq.skip.oracle>${skip.oracle}</rhq.skip.oracle>
             <rhq.ojdbc.version>${ojdbc6.version}</rhq.ojdbc.version>
+            <rhq-platform-plugin.version>${rhq-platform-plugin.version}</rhq-platform-plugin.version>
+            <rhq-core-client-api.version>${rhq-core-client-api.version}</rhq-core-client-api.version>
           </systemPropertyVariables>
           <additionalClasspathElements>
             <!-- The below is required for tests to run against Oracle. -->
@@ -685,14 +691,14 @@
         <dependency>
           <groupId>org.rhq</groupId>
           <artifactId>rhq-core-domain</artifactId>
-          <version>${project.version}</version>
+          <version>${rhq-core-domain.version}</version>
           <scope>test</scope>
         </dependency>
 
         <dependency>
           <groupId>${project.groupId}</groupId>
           <artifactId>rhq-core-domain</artifactId>
-          <version>${project.version}</version>
+          <version>${rhq-core-domain.version}</version>
           <type>test-jar</type>
           <scope>test</scope>
         </dependency>
@@ -700,7 +706,7 @@
         <dependency>
           <groupId>org.rhq</groupId>
           <artifactId>rhq-enterprise-server</artifactId>
-          <version>${project.version}</version>
+          <version>${rhq-enterprise-server.version}</version>
           <scope>test</scope>
         </dependency>
 
@@ -728,7 +734,7 @@
         <dependency>
           <groupId>${project.groupId}</groupId>
           <artifactId>rhq-core-client-api</artifactId>
-          <version>${project.version}</version>
+          <version>${rhq-core-client-api.version}</version>
           <type>test-jar</type>
           <scope>test</scope>
         </dependency>

@@ -12,6 +12,7 @@
 
     <groupId>org.rhq</groupId>
     <artifactId>rhq-installer-util</artifactId>
+    <version>4.13.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>RHQ Enterprise Installer Utility</name>
@@ -27,38 +28,38 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-domain</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-domain.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-util</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-util.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-dbutils</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-dbutils.version}</version>
         </dependency>
 
         <dependency>
             <!-- need this solely for SecurityUtils -->
             <groupId>org.rhq</groupId>
             <artifactId>rhq-enterprise-comm</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-enterprise-comm.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-jboss-as-dmr-client</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-jboss-as-dmr-client.version}</version>
         </dependency>
 
       <dependency>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-cassandra-schema</artifactId>
-        <version>${project.version}</version>
+        <version>${rhq-cassandra-schema.version}</version>
       </dependency>
 
         <dependency>
@@ -154,22 +155,27 @@
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-core-domain</artifactId>
+                                    <version>${rhq-core-domain.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-core-util</artifactId>
+                                    <version>${rhq-core-util.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-core-dbutils</artifactId>
+                                    <version>${rhq-core-dbutils.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-enterprise-comm</artifactId>
+                                    <version>${rhq-enterprise-comm.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-jboss-as-dmr-client</artifactId>
+                                    <version>${rhq-jboss-as-dmr-client.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>ant</groupId>
@@ -186,16 +192,17 @@
                                 <artifactItem>
                                   <groupId>org.rhq</groupId>
                                   <artifactId>rhq-cassandra-schema</artifactId>
+                                  <version>${rhq-cassandra-schema.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                   <groupId>org.rhq</groupId>
                                   <artifactId>rhq-cassandra-util</artifactId>
-                                  <version>${project.version}</version>
+                                  <version>${rhq-cassandra-util.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                   <groupId>org.rhq</groupId>
                                   <artifactId>rhq-cassandra-ccm-core</artifactId>
-                                  <version>${project.version}</version>
+                                  <version>${rhq-cassandra-ccm-core.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                 <groupId>joda-time</groupId>

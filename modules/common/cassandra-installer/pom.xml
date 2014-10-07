@@ -94,16 +94,17 @@
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-cassandra-ccm-core</artifactId>
+                  <version>${rhq-cassandra-ccm-core.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-core-util</artifactId>
-                  <version>${project.version}</version>
+                  <version>${rhq-core-util.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-cassandra-util</artifactId>
-                  <version>${project.version}</version>
+                  <version>${rhq-cassandra-util.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.yaml</groupId>

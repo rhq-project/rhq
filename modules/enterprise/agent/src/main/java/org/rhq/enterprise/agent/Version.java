@@ -231,6 +231,12 @@ public class Version {
             props.setProperty(PROP_BUILD_DATE, date.toString()); // just puts date in a more appropriate form
         }
 
+        String updateVersion = getUpdateVersion();
+        if ((updateVersion != null) && (!updateVersion.trim().isEmpty())) {
+            String current = props.getProperty("Module-Version");
+            props.setProperty("Module-Version", current + " " + updateVersion); // just postPends Ex. Update 02
+        }
+
         return StringUtil.justifyKeyValueStrings(props);
     }
 

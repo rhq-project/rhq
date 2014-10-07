@@ -21,14 +21,14 @@
     <dependency>
       <groupId>${rhq.groupId}</groupId>
       <artifactId>rhq-core-domain</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-core-domain.version}</version>
       <scope>provided</scope> <!-- rhq.ear -->
     </dependency>
 
     <dependency>
       <groupId>${rhq.groupId}</groupId>
       <artifactId>rhq-core-client-api</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-core-client-api.version}</version>
     </dependency>
 
     <dependency>

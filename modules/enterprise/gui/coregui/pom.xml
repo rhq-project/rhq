@@ -85,7 +85,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-domain</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-core-domain.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -93,7 +93,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-enterprise-server</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-enterprise-server.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -101,7 +101,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-util</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-core-util.version}</version>
       <scope>provided</scope>
     </dependency>
 

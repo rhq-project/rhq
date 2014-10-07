@@ -46,6 +46,7 @@
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-enterprise-server-ear</artifactId>
+                                    <version>${rhq-enterprise-server-ear.version}</version>
                                     <type>ear</type>
                                     <outputDirectory>${project.build.directory}/deployments/${rhq.earName}</outputDirectory>
                                 </artifactItem>
@@ -111,7 +112,7 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-enterprise-server-ear</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-enterprise-server-ear.version}</version>
             <type>ear</type>
             <scope>provided</scope>
         </dependency>

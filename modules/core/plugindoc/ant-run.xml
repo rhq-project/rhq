@@ -14,8 +14,8 @@
    <path id="run.classpath">
       <!-- include our own thirdparty libraries -->
       <fileset dir="${settings.localRepository}" id="run.classpath.fileset">
-         <include name="org/rhq/rhq-core-domain/${project.version}/rhq-core-domain-${project.version}.jar" />
-         <include name="org/rhq/rhq-core-client-api/${project.version}/rhq-core-client-api-${project.version}.jar" />
+         <include name="org/rhq/rhq-core-domain/${rhq-core-domain.version}/rhq-core-domain-${rhq-core-domain.version}.jar" />
+         <include name="org/rhq/rhq-core-client-api/${rhq-core-client-api.version}/rhq-core-client-api-${rhq-core-client-api.version}.jar" />
          <include name="commons-logging/commons-logging/1.1.0.jboss/commons-logging-1.1.0.jboss.jar" />
          <include name="commons-collections/commons-collections/3.2/commons-collections-3.2.jar" />
          <include name="commons-lang/commons-lang/2.4/commons-lang-2.4.jar" />

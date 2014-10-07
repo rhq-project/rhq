@@ -326,7 +326,15 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("org/rhq/enterprise/server/plugins/ant/recipe-no-manageRootDir.xml");
 
         // create test ear by starting with rhq.ear and thinning it
-        String projectVersion = System.getProperty("project.version");
+        String projectVersion = System.getProperty("rhq.version");
+        String rhqCoreClientApiVersion = System.getProperty("rhq-core-client-api.version");
+        if ((rhqCoreClientApiVersion == null) || rhqCoreClientApiVersion.trim().isEmpty()) {
+            rhqCoreClientApiVersion = projectVersion;
+        }
+        String rhqPlatformPluginVersion = System.getProperty("rhq-platform-plugin.version");
+        if ((rhqPlatformPluginVersion == null) || rhqPlatformPluginVersion.trim().isEmpty()) {
+            rhqPlatformPluginVersion = projectVersion;
+        }
         MavenResolverSystem earResolver = Resolvers.use(MavenResolverSystem.class);
         // this must be named rhq.ear because the "rhq" portion is used in the jndi names
         earResolver.offline();
@@ -374,7 +382,9 @@ public abstract class AbstractEJB3Test extends Arquillian {
         thirdPartyDeps.add("org.liquibase:liquibase-core");
         thirdPartyDeps.add("org.powermock:powermock-api-mockito");
         thirdPartyDeps.add("org.rhq.helpers:perftest-support:" + projectVersion);
-        thirdPartyDeps.add("org.rhq:rhq-core-client-api:jar:tests:" + projectVersion);
+        thirdPartyDeps.add("org.rhq:rhq-core-client-api:jar:tests:" + rhqCoreClientApiVersion);
+        thirdPartyDeps.add("org.rhq:rhq-platform-plugin:jar:" + rhqPlatformPluginVersion);
+
         thirdPartyDeps.add("org.rhq:test-utils:" + projectVersion);
 
         MavenResolverSystem resolver = Maven.resolver();

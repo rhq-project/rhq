@@ -11,6 +11,7 @@
   </parent>
 
   <artifactId>rhq-server-control</artifactId>
+  <version>4.13.0-SNAPSHOT</version>
   <name>RHQ Server Control</name>
   <packaging>jar</packaging>
 
@@ -23,25 +24,25 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-core-util</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-core-util.version}</version>
     </dependency>
 
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-installer-util</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-installer-util.version}</version>
     </dependency>
 
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-cassandra-installer</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-cassandra-installer.version}</version>
     </dependency>
 
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-jboss-as-dmr-client</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-jboss-as-dmr-client.version}</version>
     </dependency>
 
     <dependency>
@@ -114,21 +115,22 @@
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-core-util</artifactId>
-                  <version>${project.version}</version>
+                  <version>${rhq-core-util.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-installer-util</artifactId>
-                  <version>${project.version}</version>
+                  <version>${rhq-installer-util.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-cassandra-installer</artifactId>
-                  <version>${project.version}</version>
+                  <version>${rhq-cassandra-installer.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.rhq</groupId>
                   <artifactId>rhq-jboss-as-dmr-client</artifactId>
+                  <version>${rhq-jboss-as-dmr-client.version}</version>
                 </artifactItem>
               </artifactItems>
             </configuration>

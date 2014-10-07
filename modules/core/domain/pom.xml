@@ -9,6 +9,7 @@
    </parent>
 
    <artifactId>rhq-core-domain</artifactId>
+   <version>4.13.0-SNAPSHOT</version>
    <packaging>ejb</packaging>
 
    <name>RHQ Domain Model</name>
@@ -33,7 +34,7 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-util</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-util.version}</version>
       </dependency>
 
       <!-- provided by AS7 -->
@@ -68,7 +69,7 @@
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-dbutils</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-dbutils.version}</version>
       </dependency>
       -->
 
@@ -83,7 +84,7 @@
       <dependency>
           <groupId>${project.groupId}</groupId>
           <artifactId>test-utils</artifactId>
-          <version>${project.version}</version>
+          <version>${project.parent.version}</version>
           <scope>test</scope>
       </dependency>
 
@@ -543,7 +544,7 @@
            <dependency>
                <groupId>org.rhq</groupId>
                <artifactId>rhq-arquillian-suite-extension</artifactId>
-               <version>${project.version}</version>
+               <version>${project.parent.version}</version>
                <scope>test</scope>
              </dependency>
          </dependencies>
@@ -655,8 +656,8 @@
                            <goal>javadoc</goal>
                         </goals>
                         <configuration>
-                           <doctitle>RHQ ${project.version} Domain API</doctitle>
-                           <windowtitle>RHQ ${project.version} Domain API</windowtitle>
+                           <doctitle>RHQ ${project.parent.version} Domain API</doctitle>
+                           <windowtitle>RHQ ${project.parent.version} Domain API</windowtitle>
                            <reportOutputDirectory>${javadoc.outputDirectory}</reportOutputDirectory>
                            <destDir>domain</destDir>
                            <author>false</author>

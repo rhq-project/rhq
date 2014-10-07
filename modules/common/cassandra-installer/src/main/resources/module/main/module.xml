@@ -5,9 +5,9 @@
 
   <resources>
     <resource-root path="${project.build.finalName}.jar"/>
-    <resource-root path="rhq-cassandra-ccm-core-${project.version}.jar"/>
-    <resource-root path="rhq-core-util-${project.version}.jar"/>
-    <resource-root path="rhq-cassandra-util-${project.version}.jar"/>
+    <resource-root path="rhq-cassandra-ccm-core-${rhq-cassandra-ccm-core.version}.jar"/>
+    <resource-root path="rhq-core-util-${rhq-core-util.version}.jar"/>
+    <resource-root path="rhq-cassandra-util-${rhq-cassandra-util.version}.jar"/>
     <resource-root path="snakeyaml-${cassandra.snakeyaml.version}.jar"/>
   </resources>
 

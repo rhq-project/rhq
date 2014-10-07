@@ -75,7 +75,7 @@
     <dependency>
       <groupId>${rhq.groupId}</groupId>
       <artifactId>rhq-jmx-plugin</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-jmx-plugin.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -170,6 +170,7 @@
                 <artifactItem>
                   <groupId>jboss</groupId>
                   <artifactId>jbpm</artifactId>
+                  <version>${jbpm.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>ant</groupId>
@@ -294,9 +295,9 @@
                     <copy toDir="target/itest/plugins" flatten="true">
                       <fileset dir="${settings.localRepository}/">
                         <include
-                            name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar"/>
+                            name="org/rhq/rhq-platform-plugin/${rhq-platform-plugin.version}/rhq-platform-plugin-${rhq-platform-plugin.version}.jar"/>
                         <include
-                            name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar"/>
+                            name="org/rhq/rhq-jmx-plugin/${rhq-jmx-plugin.version}/rhq-jmx-plugin-${rhq-jmx-plugin.version}.jar"/>
                       </fileset>
                       <fileset dir="${project.build.directory}">
                         <include name="${project.artifactId}-${project.version}.jar"/>

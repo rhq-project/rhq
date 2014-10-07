@@ -11,6 +11,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-core-native-system</artifactId>
+  <version>4.13.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>RHQ Native System API</name>
@@ -27,7 +28,7 @@
     <dependency>
       <groupId>${rhq.groupId}</groupId>
       <artifactId>rhq-core-util</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-core-util.version}</version>
     </dependency>
 
     <dependency>
@@ -118,7 +119,7 @@
                    <goal>javadoc</goal>
                 </goals>
                 <configuration>
-                   <doctitle>RHQ ${project.version} System API</doctitle>
+                   <doctitle>RHQ ${project.parent.version} System API</doctitle>
                    <reportOutputDirectory>${javadoc.outputDirectory}</reportOutputDirectory>
                    <author>false</author>
                    <breakiterator>true</breakiterator>
@@ -154,8 +155,8 @@
                            <goal>javadoc</goal>
                         </goals>
                         <configuration>
-                           <doctitle>RHQ ${project.version} System API</doctitle>
-                           <windowtitle>RHQ ${project.version} System API</windowtitle>
+                           <doctitle>RHQ ${project.parent.version} System API</doctitle>
+                           <windowtitle>RHQ ${project.parent.version} System API</windowtitle>
                            <reportOutputDirectory>${javadoc.outputDirectory}</reportOutputDirectory>
                            <destDir>system</destDir>
                            <author>false</author>

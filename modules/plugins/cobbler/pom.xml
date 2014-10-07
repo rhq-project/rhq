@@ -85,7 +85,7 @@
                                  <fileset dir="${project.build.directory}" includes="${project.artifactId}-${project.version}.jar" />
                                  <!-- the plugin jars for the plugins this plugin depends on -->
                                  <fileset dir="${settings.localRepository}/">
-                                    <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
+                                    <include name="org/rhq/rhq-platform-plugin/${rhq-platform-plugin.version}/rhq-platform-plugin-${rhq-platform-plugin.version}.jar" />
                                     <include name="org/rhq/rhq-augeas-plugin/${project.version}/rhq-augeas-plugin-${project.version}.jar" />
                                  </fileset>
                               </copy>
@@ -267,9 +267,10 @@
                           <configuration>
                              <artifactItems>
                                 <artifactItem>
-							        <groupId>commons-io</groupId>
-							         <artifactId>commons-io</artifactId>
-                                </artifactItem>
+				        <groupId>commons-io</groupId>
+				        <artifactId>commons-io</artifactId>
+                                        <version>${commons-io.version}</version>
+			</artifactItem>
                              </artifactItems>
                              <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                           </configuration>

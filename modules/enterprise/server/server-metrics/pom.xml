@@ -36,6 +36,7 @@
   </parent>
 
   <artifactId>rhq-server-metrics</artifactId>
+  <version>4.13.0-SNAPSHOT</version>
   <name>RHQ Server Metrics</name>
 
   <properties>
@@ -49,7 +50,7 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-core-domain</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-core-domain.version}</version>
     </dependency>
 
     <dependency>
@@ -109,14 +110,14 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-cassandra-ccm-testng</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-cassandra-ccm-testng.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>test-utils</artifactId>
-      <version>${project.version}</version>
+      <version>${test-utils.version}</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>

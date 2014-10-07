@@ -132,7 +132,7 @@
 	        <dependency>
 	            <groupId>org.rhq</groupId>
 	            <artifactId>rhq-core-plugin-container</artifactId>
-	            <version>${project.version}</version>
+	            <version>${rhq-core-plugin-container.version}</version>
 	            <type>test-jar</type>
 	            <scope>test</scope>
 			</dependency>
@@ -171,7 +171,7 @@
                                     <fileset
                                         dir="${settings.localRepository}/">
                                         <include
-                                            name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
+                                            name="org/rhq/rhq-platform-plugin/${rhq-platform-plugin.version}/rhq-platform-plugin-${rhq-platform-plugin.version}.jar" />
                                         <include
                                             name="org/rhq/rhq-augeas-plugin/${project.version}/rhq-augeas-plugin-${project.version}.jar" />
                                         <include

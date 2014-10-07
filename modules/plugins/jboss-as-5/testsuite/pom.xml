@@ -37,14 +37,14 @@
         <dependency>
             <groupId>${rhq.groupId}</groupId>
             <artifactId>rhq-core-domain</artifactId>
-            <version>${rhq.version}</version>
+            <version>${rhq-core-domain.version}</version>
             <type>ejb</type>
         </dependency>
 
         <dependency>
             <groupId>${rhq.groupId}</groupId>
             <artifactId>rhq-core-plugin-container</artifactId>
-            <version>${rhq.version}</version>
+            <version>${rhq-core-plugin-container.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.sun.xml.bind</groupId>
@@ -56,7 +56,7 @@
         <dependency>
             <groupId>${rhq.groupId}</groupId>
             <artifactId>rhq-core-plugin-api</artifactId>
-            <version>${rhq.version}</version>
+            <version>${rhq-core-plugin-api.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.sun.xml.bind</groupId>
@@ -68,7 +68,7 @@
         <dependency>
             <groupId>${rhq.groupId}</groupId>
             <artifactId>rhq-core-native-system</artifactId>
-            <version>${rhq.version}</version>
+            <version>${rhq-core-native-system.version}</version>
         </dependency>
 
         <dependency>
@@ -151,13 +151,13 @@ to load. Cactus will still run without this JAR.     jdobies, Feb 16, 2007. -->
                                 <artifactItem>
                                     <groupId>${rhq.groupId}</groupId>
                                     <artifactId>rhq-platform-plugin</artifactId>
-                                    <version>${rhq.version}</version>
+                                    <version>${rhq-platform-plugin.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>
                                     <groupId>${rhq.groupId}</groupId>
                                     <artifactId>rhq-jmx-plugin</artifactId>
-                                    <version>${rhq.version}</version>
+                                    <version>${rhq-jmx-plugin.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>

@@ -451,7 +451,7 @@ public class Domain2Descriptor {
     }
 
     private boolean isRequired(Object attribute) {
-        if ((attribute == null) && attribute instanceof Map) {
+        if (!(attribute instanceof Map)) {
             throw new IllegalArgumentException("Attribute object passed in cannot be null and must be of type Map.");
         }
         Object isRequired = ((Map<String, Object>) attribute).get("required");

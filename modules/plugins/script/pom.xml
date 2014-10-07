@@ -10,6 +10,7 @@
 
    <groupId>org.rhq</groupId>
    <artifactId>rhq-script-plugin</artifactId>
+   <version>4.12.0.JON330ER04</version>
    <packaging>jar</packaging>
 
    <name>RHQ Script Plugin</name>
@@ -38,14 +39,14 @@
                         <phase>pre-integration-test</phase>
                         <configuration>
                            <target>
-                              <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...</echo>
+                              <echo>Setting up plugin dependencies for ${project.artifactId}-${rhq-script-plugin.version}.jar...</echo>
                               <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                               <mkdir dir="target/itest" />
                               <mkdir dir="target/itest/plugins" />
                               <mkdir dir="target/itest/lib" />
                               <copy toDir="target/itest/plugins" flatten="true">
                                  <fileset dir="${project.build.directory}">
-                                    <include name="${project.artifactId}-${project.version}.jar" />
+                                    <include name="${project.artifactId}-${rhq-script-plugin.version}.jar" />
                                  </fileset>
                               </copy>
                               <unzip dest="target/itest/lib">
@@ -96,7 +97,7 @@
                               </property>
                               <property>
                                  <name>project.version</name>
-                                 <value>${project.version}</value>
+                                 <value>${rhq-script-plugin.version}</value>
                               </property>
                            </systemProperties>
                         </configuration>

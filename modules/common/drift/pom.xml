@@ -18,14 +18,14 @@
         <dependency>
           <groupId>${project.groupId}</groupId>
           <artifactId>test-utils</artifactId>
-          <version>${project.version}</version>
+          <version>${project.parent.version}</version>
           <scope>test</scope>
         </dependency>
 
         <dependency>
           <groupId>${project.groupId}</groupId>
           <artifactId>rhq-core-domain</artifactId>
-          <version>${project.version}</version>
+          <version>${rhq-core-domain.version}</version>
           <scope>provided</scope>
         </dependency>
 

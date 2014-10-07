@@ -27,14 +27,14 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>rhq-enterprise-server</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-enterprise-server.version}</version>
             <type>ejb</type>
         </dependency>
 
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>rhq-core-domain</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-domain.version}</version>
             <type>ejb</type>
         </dependency>
 
@@ -92,7 +92,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>rhq-remoting-war</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-remoting-war.version}</version>
             <type>war</type>
         </dependency>
 
@@ -373,7 +373,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>rhq-platform-plugin</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${rhq-platform-plugin.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>
@@ -385,7 +385,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>rhq-jmx-plugin</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${rhq-jmx-plugin.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>
@@ -402,7 +402,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>rhq-cassandra-plugin</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${rhq-cassandra-plugin.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
@@ -713,7 +713,7 @@
                                         <artifactItem>
                                             <groupId>${project.groupId}</groupId>
                                             <artifactId>rhq-script-plugin</artifactId>
-                                            <version>${project.version}</version>
+                                            <version>${rhq-script-plugin.version}</version>
                                         </artifactItem>
 
                                         <artifactItem>
@@ -836,13 +836,13 @@
                                         <artifactItem>
                                             <groupId>${project.groupId}</groupId>
                                             <artifactId>rhq-database-plugin</artifactId>
-                                            <version>${project.version}</version>
+                                            <version>${rhq-database-plugin.version}</version>
                                         </artifactItem>
 
                                         <artifactItem>
                                             <groupId>${project.groupId}</groupId>
                                             <artifactId>rhq-postgres-plugin</artifactId>
-                                            <version>${project.version}</version>
+                                            <version>${rhq-postgres-plugin.version}</version>
                                         </artifactItem>
 
                                         <artifactItem>

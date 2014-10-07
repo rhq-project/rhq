@@ -18,7 +18,7 @@
         <dependency>
           <groupId>${project.groupId}</groupId>
           <artifactId>rhq-core-domain</artifactId>
-          <version>${project.version}</version>
+          <version>${rhq-core-domain.version}</version>
           <scope>provided</scope>
         </dependency>
 
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>rhq-core-native-system</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-native-system.version}</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>

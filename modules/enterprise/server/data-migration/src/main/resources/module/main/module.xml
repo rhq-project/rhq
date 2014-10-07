@@ -5,8 +5,8 @@
 
   <resources>
     <resource-root path="${project.build.finalName}.jar"/>
-    <resource-root path="rhq-core-util-${project.version}.jar"/>
-    <resource-root path="rhq-server-metrics-${project.version}.jar"/>
+    <resource-root path="rhq-core-util-${rhq-core-util.version}.jar"/>
+    <resource-root path="rhq-server-metrics-${rhq-server-metrics.version}.jar"/>
     <resource-root path="joda-time-${joda-time.version}.jar"/>
     <resource-root path="hibernate-core-${hibernate.version}.jar"/>
     <resource-root path="hibernate-entitymanager-${hibernate.version}.jar"/>

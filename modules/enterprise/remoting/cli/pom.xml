@@ -22,7 +22,7 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>rhq-remoting-client-api</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-remoting-client-api.version}</version>
       </dependency>
       
       <dependency>
@@ -133,6 +133,10 @@
                            <property name="rhq.client.build.exclude.cli.jar" value="${rhq.client.build.exclude.cli.jar}" />
                            <property name="rhq.client.build.include.client.jar" value="${rhq.client.build.include.client.jar}" />
                            <property name="rhq.bundle-additional-script-languages" value="${rhq.bundle-additional-script-languages}"/>
+                           <property name="rhq-core-domain.version" value="${rhq-core-domain.version}" />
+                           <property name="rhq-enterprise-server.version" value="${rhq-enterprise-server.version}" />
+                           <property name="rhq-core-util.version" value="${rhq-core-util.version}" />
+                           <property name="rhq-remoting-client-api.version" value="${rhq-remoting-client-api.version}" />
                         </ant>
                      </target>
                   </configuration>
@@ -208,7 +212,7 @@
            <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>rhq-core-domain</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-domain.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
            </dependency>

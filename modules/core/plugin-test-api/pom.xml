@@ -21,7 +21,7 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-plugin-container</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-plugin-container.version}</version>
       </dependency>
 
    </dependencies>
@@ -53,7 +53,7 @@
 		       <dependency>
 		           <groupId>org.rhq</groupId>
 		           <artifactId>rhq-arquillian-agent-plugin-container-embedded</artifactId>
-		           <version>${project.version}</version>
+		           <version>${rhq-arquillian-agent-plugin-container-embedded.version}</version>
 		       </dependency>
 
 		       <dependency>

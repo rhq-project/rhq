@@ -29,28 +29,28 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-domain</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-domain.version}</version>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-plugin-api</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-plugin-api.version}</version>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-client-api</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-client-api.version}</version>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-native-system</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-native-system.version}</version>
          <scope>test</scope>
       </dependency>
 
@@ -68,6 +68,10 @@
                  <value>org.rhq.test.testng.StdoutReporter</value>
               </property>
             </properties>
+            <systemPropertyVariables>
+              <rhq.version>${rhq.pom.version}</rhq.version>
+              <rhq-platform-plugin.version>${rhq-platform-plugin.version}</rhq-platform-plugin.version>
+            </systemPropertyVariables>
           </configuration>
         </plugin>
 

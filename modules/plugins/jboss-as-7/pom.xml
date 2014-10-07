@@ -39,7 +39,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-jmx-plugin</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-jmx-plugin.version}</version>
       <scope>provided</scope>
       <!-- by the plugin container -->
     </dependency>
@@ -112,6 +112,13 @@
       <groupId>org.eclipse.jetty.aggregate</groupId>
       <artifactId>jetty-all</artifactId>
       <version>8.1.8.v20121106</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-platform-plugin</artifactId>
+      <version>${rhq-platform-plugin.version}</version>
       <scope>test</scope>
     </dependency>
 

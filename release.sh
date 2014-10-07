@@ -352,6 +352,10 @@ run_release_version_and_tag_process()
    mvn versions:set versions:use-releases -DnewVersion=$RELEASE_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
    [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
 
+   # This logic updates the rhq.pom.version value used for independent versioning and cumulative patching with .Z stream.
+   echo " Updating rhq.pom.version to [$RELEASE_VERSION] in root pom as well.";
+   sed -i -e "s|\(<rhq.pom.version>\).*\(</rhq.pom.version>\)|\1$RELEASE_VERSION\2|" "pom.xml"
+
    echo "4) Perform a test build with the new version."
    mvn clean install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true
    [ "$?" -ne 0 ] && abort "Maven build for new version failed. Please see output for details, fix any issues, then try again."

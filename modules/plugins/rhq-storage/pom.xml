@@ -25,7 +25,7 @@
      <dependency>
        <groupId>${rhq.groupId}</groupId>
        <artifactId>rhq-cassandra-plugin</artifactId>
-       <version>${project.version}</version>
+       <version>${rhq-cassandra-plugin.version}</version>
      </dependency>
 
      <dependency>
@@ -37,7 +37,7 @@
      <dependency>
        <groupId>${rhq.groupId}</groupId>
        <artifactId>rhq-jmx-plugin</artifactId>
-       <version>${project.version}</version>
+       <version>${rhq-jmx-plugin.version}</version>
        <scope>provided</scope>
      </dependency>
 
@@ -71,7 +71,7 @@
      <dependency>
        <groupId>${project.groupId}</groupId>
        <artifactId>rhq-platform-plugin</artifactId>
-       <version>${project.version}</version>
+       <version>${rhq-platform-plugin.version}</version>
        <scope>test</scope>
      </dependency>
 

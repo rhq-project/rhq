@@ -10,6 +10,7 @@
 
    <groupId>org.rhq</groupId>
    <artifactId>rhq-postgres-plugin</artifactId>
+   <version>4.12.0.JON330ER04</version>
    <packaging>jar</packaging>
 
    <name>RHQ Postgres Plugin</name>
@@ -26,7 +27,7 @@
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-database-plugin</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-database-plugin.version}</version>
          <scope>provided</scope>
       </dependency>
 
@@ -49,6 +50,7 @@
                         <artifactItem>
                            <groupId>postgresql</groupId>
                            <artifactId>postgresql</artifactId>
+                           <version>${postgresql.version}</version>
                         </artifactItem>
                      </artifactItems>
                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
@@ -86,8 +88,8 @@
                               <mkdir dir="target/itest/lib" />
                               <copy toDir="target/itest/plugins" flatten="true">
                                  <fileset dir="${settings.localRepository}/">
-                                    <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
-                                    <include name="org/rhq/rhq-database-plugin/${project.version}/rhq-database-plugin-${project.version}.jar" />
+                                    <include name="org/rhq/rhq-platform-plugin/${rhq-platform-plugin.version}/rhq-platform-plugin-${rhq-platform-plugin.version}.jar" />
+                                    <include name="org/rhq/rhq-database-plugin/${rhq-database-plugin.version}/rhq-database-plugin-${rhq-database-plugin.version}.jar" />
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
                                     <include name="${project.artifactId}-${project.version}.jar" />

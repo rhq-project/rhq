@@ -52,13 +52,13 @@ ANT Script that provides ways to package the agent.
          <include name="hibernate/hibernate3/${hibernate.version}/hibernate3-${hibernate.version}.jar" />
 
          <include name="org/rhq/rhq-enterprise-client/${project.version}/rhq-enterprise-client-${project.version}.jar" />
-         <include name="org/rhq/rhq-enterprise-server/${project.version}/rhq-enterprise-server-${project.version}.jar" />
+         <include name="org/rhq/rhq-enterprise-server/${rhq-enterprise-server.version}/rhq-enterprise-server-${rhq-enterprise-server.version}.jar" />
          <include name="org/rhq/rhq-enterprise-comm/${project.version}/rhq-enterprise-comm-${project.version}.jar" />
 
-         <include name="org/rhq/rhq-core-util/${project.version}/rhq-core-util-${project.version}.jar" />
-         <include name="org/rhq/rhq-core-native-system/${project.version}/rhq-core-native-system-${project.version}.jar" />
-         <include name="org/rhq/rhq-core-domain/${project.version}/rhq-core-domain-${project.version}.jar" />
-         <include name="org/rhq/rhq-core-client-api/${project.version}/rhq-core-client-api-${project.version}.jar" />
+         <include name="org/rhq/rhq-core-util/${rhq-core-util.version}/rhq-core-util-${rhq-core-util.version}.jar" />
+         <include name="org/rhq/rhq-core-native-system/${rhq-core-native-system.version}/rhq-core-native-system-${rhq-core-native-system.version}.jar" />
+         <include name="org/rhq/rhq-core-domain/${rhq-core-domain.version}/rhq-core-domain-${rhq-core-domain.version}.jar" />
+         <include name="org/rhq/rhq-core-client-api/${rhq-core-client-api.version}/rhq-core-client-api-${rhq-core-client-api.version}.jar" />
          <include name="jline/jline/${jline.version}/jline-${jline.version}.jar" />
 
       </fileset>

@@ -17,6 +17,7 @@
 
     <groupId>org.rhq</groupId>
     <artifactId>rhq-arquillian-agent-plugin-container-embedded</artifactId>
+    <version>4.12.0.JON330ER04</version>
     <name>RHQ Arquillian Plugin Container</name>
     <description>RHQ Embedded Agent Plugin Container integration for Arquillian</description>
 
@@ -91,13 +92,13 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-shrinkwrap-agent-plugin-archive</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-shrinkwrap-agent-plugin-archive.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-plugin-container</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-plugin-container.version}</version>
         </dependency>
 
         <!-- 3rd party -->
@@ -124,7 +125,7 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-arquillian-container-test-plugin</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-arquillian-container-test-plugin.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>

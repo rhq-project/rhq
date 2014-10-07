@@ -27,13 +27,13 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-plugin-container</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-plugin-container.version}</version>
       </dependency>
 
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-platform-plugin</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-platform-plugin.version}</version>
       </dependency>
 
    	  <dependency>
@@ -194,6 +194,7 @@
                                 <artifactItem>
 							        <groupId>commons-io</groupId>
 							         <artifactId>commons-io</artifactId>
+                                                                 <version>${commons-io.version}</version>
                                 </artifactItem>
                              </artifactItems>
                              <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

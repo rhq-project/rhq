@@ -31,8 +31,10 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -231,11 +233,11 @@ public final class PatchHandlerComponent implements ResourceComponent<ResourceCo
     private BundleDeployResult handleRevert(BundleDeployRequest request) {
         BundleDeployResult result = new BundleDeployResult();
 
-        //this is what is currently deployed
-        Result<BundleMetadata> liveDeploymentMetadata = BundleMetadata
+        //this is what was recorded during prior deployments
+        Result<BundleMetadata> latestDeploymentMetadata = BundleMetadata
             .forDeployment(request.getResourceDeployment(), request.getReferencedConfiguration());
-        if (liveDeploymentMetadata.failed()) {
-            result.setErrorMessage(liveDeploymentMetadata.errorMessage);
+        if (latestDeploymentMetadata.failed()) {
+            result.setErrorMessage(latestDeploymentMetadata.errorMessage);
             return result;
         }
 
@@ -246,15 +248,24 @@ public final class PatchHandlerComponent implements ResourceComponent<ResourceCo
             return result;
         }
 
-        //determine the pids that have been deployed on top of the bundle being reverted to.
-        List<String> pidsToRollback = new ArrayList<String>();
+        // determine the pids that have been deployed on top of the bundle being reverted to.
+        // this is a linked set because it can happen that a single patch gets applied multiple times
+        // through but we obviously want to only roll it back once, at the position of the latest application.
+        // The circumstance of patch being applied multiple times can happen when:
+        // 1) patch is applied through destination A
+        // 2) patch revert fails due to an outside change
+        // 3) manual intervention in CLI recovers to the original state
+        // 4) patch is applied again
+        Set<String> pidsToRollback = new LinkedHashSet<String>();
         List<BundleMetadata.DeploymentMetadata> deploymentsToForget = new ArrayList<BundleMetadata.DeploymentMetadata>();
 
         String stopPid = pids.result[0];
-        outer: for (BundleMetadata.DeploymentMetadata dm : liveDeploymentMetadata.result.deployments) {
+        boolean stopPidFound = false;
+        outer: for (BundleMetadata.DeploymentMetadata dm : latestDeploymentMetadata.result.deployments) {
             for (PatchDetails pd : dm.applied) {
                 String pid = pd.getId();
                 if (pid.equals(stopPid)) {
+                    stopPidFound = true;
                     break outer;
                 }
                 pidsToRollback.add(pid);
@@ -263,13 +274,22 @@ public final class PatchHandlerComponent implements ResourceComponent<ResourceCo
             deploymentsToForget.add(dm);
         }
 
+        if (!stopPidFound) {
+            result.setErrorMessage("The patch to revert to (" + stopPid +
+                ") was not previously deployed by RHQ. This means that this server joined the resource group '" +
+                request.getResourceDeployment().getBundleDeployment().getDestination().getGroup().getName() +
+                "' after this patch was already deployed. To prevent accidental damage no changes will be made to the server.");
+
+            return result;
+        }
+
         ASConnection connection = new ASConnection(
             ASConnectionParams.createFrom(new ServerPluginConfiguration(request.getReferencedConfiguration())));
 
         ServerControl control = onServer(request);
 
         String errorMessage = rollbackPatches(control, request.getBundleManagerProvider(),
-            request.getResourceDeployment(), connection, "revert", pidsToRollback);
+            request.getResourceDeployment(), connection, "revert", new ArrayList<String>(pidsToRollback));
 
         if (errorMessage != null) {
             result.setErrorMessage(errorMessage);
@@ -377,35 +397,87 @@ public final class PatchHandlerComponent implements ResourceComponent<ResourceCo
         ASConnection connection, String operation, List<String> pids) {
 
         if (pids.isEmpty()) {
-            return "Nothing to rollback.";
+            return null;
         }
 
         ProcessExecutionResults results;
         ServerControl.Cli cli = control.cli().disconnected(true);
 
         Result<List<PatchDetails>> history = getPatchHistory(control, operation);
-        if (history.errorMessage != null) {
+        if (history.failed()) {
             return history.errorMessage;
         }
 
         List<PatchDetails> installedPatches = history.result;
 
-        if (!pids.get(0).equals(installedPatches.get(0).getId())) {
-            return "No patch out of " + pids + " can be rolled back. The latest applied patch on the target resource is '" +
-                installedPatches.get(0).getId() + "' but was expecting '" + pids.get(0) +
-                "' to be able to perform the " + operation + ".";
-        }
-
         List<String> pidsToRollback = new ArrayList<String>(pids);
         List<String> noLongerRemovablePids = new ArrayList<String>();
-        for (int ins = 0, rb = 0; ins < installedPatches.size() && rb < pidsToRollback.size(); ++ins) {
-            PatchDetails installed = installedPatches.get(ins);
-            String pidToRollback = pidsToRollback.get(rb);
+        Set<String> installedPids = new HashSet<String>();
+        int lastPidToRollback = 0;
+        int installedPidIdx = 0;
+        for (; installedPidIdx < installedPatches.size() &&
+            lastPidToRollback < pidsToRollback.size(); ++installedPidIdx) {
 
-            if (installed.getId().equals(pidToRollback)) {
-                rb++;
+            PatchDetails installed = installedPatches.get(installedPidIdx);
+            String pidToRollback = pidsToRollback.get(lastPidToRollback);
+
+            String installedId = installed.getId();
+
+            if (installedId.equals(pidToRollback)) {
+                lastPidToRollback++;
             } else {
-                noLongerRemovablePids.add(pidsToRollback.remove(rb));
+                while (!installedId.equals(pidToRollback) && lastPidToRollback < pidsToRollback.size()) {
+                    pidToRollback = pidsToRollback.get(lastPidToRollback);
+                    noLongerRemovablePids.add(pidsToRollback.remove(lastPidToRollback));
+                }
+                if (installedId.equals(pidToRollback)) {
+                    lastPidToRollback++;
+                }
+            }
+
+            installedPids.add(installedId);
+        }
+
+        for (; installedPidIdx < installedPatches.size(); ++installedPidIdx) {
+            installedPids.add(installedPatches.get(installedPidIdx).getId());
+        }
+
+        // remove pids that we have not seen installed
+        if (lastPidToRollback < pidsToRollback.size()) {
+            List<String> uninstalledPids = pidsToRollback.subList(lastPidToRollback, pidsToRollback.size());
+            noLongerRemovablePids.addAll(uninstalledPids);
+            uninstalledPids.clear();
+        }
+
+        boolean inconsistent = false;
+        for (String pid : noLongerRemovablePids) {
+            if (installedPids.contains(pid)) {
+                // the current patch state is inconsistent with what we're expecting, because
+                // we see pids that are still installed but are no longer on rollback-able positions
+                // even though they should.
+                // If they're no longer installed then that's actually OK, we'd be rolling them back anyway.
+                inconsistent = true;
+                break;
+            }
+        }
+
+        if (pidsToRollback.isEmpty()) {
+            if (noLongerRemovablePids.isEmpty()) {
+                audit(bmp, rd, "Rollback", "Nothing To Do", BundleResourceDeploymentHistory.Status.WARN,
+                    "None of the patches " + pids + " is installed anymore.");
+
+                return null;
+            } else {
+                String message =  "The following patches were not rolled back due to other patches having been applied in the meantime: " +
+                        noLongerRemovablePids + ". No other patches can be rolled back.";
+
+                if (inconsistent) {
+                    return message;
+                } else {
+                    audit(bmp, rd, "Rollback", "Missing patches", BundleResourceDeploymentHistory.Status.WARN,
+                        "The following patches were to be rolled back but they aren't installed anymore: " +
+                            noLongerRemovablePids + ".");
+                }
             }
         }
 
@@ -445,15 +517,28 @@ public final class PatchHandlerComponent implements ResourceComponent<ResourceCo
                 ++i;
             }
         } finally {
-            if (serverWasUp) {
-                errorMessage = startServer(connection, control, bmp, rd);
+            if (!noLongerRemovablePids.isEmpty()) {
+                if (inconsistent) {
+                    errorMessage = "The following patches were not rolled back due to other patches having been applied in the meantime: " +
+                        noLongerRemovablePids;
+                } else {
+                    audit(bmp, rd, "Rollback", "Missing patches", BundleResourceDeploymentHistory.Status.WARN,
+                        "The following patches were to be rolled back but they aren't installed anymore: " +
+                            noLongerRemovablePids + ".");
+                }
             }
-        }
 
-        if (!noLongerRemovablePids.isEmpty()) {
-            audit(bmp, rd, "Rollback", "Kept patches", BundleResourceDeploymentHistory.Status.WARN,
-                "The following patches were not rolled back due to other patches having been applied in the meantime: " +
-                    noLongerRemovablePids);
+            if (serverWasUp) {
+                String startError = startServer(connection, control, bmp, rd);
+                if (startError != null) {
+                    if (errorMessage != null) {
+                        audit(bmp, rd, "Restart", "Failure", BundleResourceDeploymentHistory.Status.FAILURE,
+                            startError);
+                    } else {
+                        errorMessage = startError;
+                    }
+                }
+            }
         }
 
         return errorMessage;

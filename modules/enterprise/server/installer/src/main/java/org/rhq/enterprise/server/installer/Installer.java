@@ -50,7 +50,7 @@ public class Installer {
     private InstallerConfiguration installerConfig;
 
     private enum WhatToDo {
-        DISPLAY_USAGE, DO_NOTHING, TEST, SETUPDB, LIST_SERVERS, INSTALL
+        DISPLAY_USAGE, DO_NOTHING, TEST, SETUPDB, LIST_SERVERS, INSTALL, UPDATESTORAGESCHEMA, LIST_VERSIONS
     }
 
     public static void main(String[] args) {
@@ -87,6 +87,10 @@ public class Installer {
                 new InstallerServiceImpl(installerConfig).listServers();
                 continue;
             }
+            case LIST_VERSIONS: {
+                new InstallerServiceImpl(installerConfig).listVersions();
+                continue;
+            }
             case TEST: {
                 try {
                     new InstallerServiceImpl(installerConfig).test();
@@ -104,6 +108,18 @@ public class Installer {
                     final InstallerService installerService = new InstallerServiceImpl(installerConfig);
                     final HashMap<String, String> serverProperties = installerService.getServerProperties();
                     installerService.prepareDatabase(serverProperties, null, null);
+                    LOG.info("Database setup is complete.");
+                } catch (Exception e) {
+                    LOG.error(ThrowableUtil.getAllMessages(e));
+                    System.exit(EXIT_CODE_INSTALLATION_ERROR);
+                }
+                continue;
+            }
+            case UPDATESTORAGESCHEMA: {
+                try {
+                    final InstallerService installerService = new InstallerServiceImpl(installerConfig);
+                    final HashMap<String, String> serverProperties = installerService.getServerProperties();
+                    installerService.updateStorageSchema(serverProperties);
                     LOG.info("Database setup is complete.");
                 } catch (Exception e) {
                     LOG.error(ThrowableUtil.getAllMessages(e));
@@ -147,25 +163,32 @@ public class Installer {
         usage.append("\t--test, -t: test the validity of the server properties (install not performed)").append("\n");
         usage.append("\t--force, -f: force the installer to try to install everything").append("\n");
         usage.append("\t--listservers, -l: show list of known installed servers (install not performed)").append("\n");
+        usage.append("\t--listversions, -v: show list of server and storage node versions (install not performed)")
+            .append("\n");
         usage.append("\t--setupdb, -b: only perform database schema creation or update").append("\n");
+        usage.append("\t--updatestorageschema, -u: only perform storage cluster schema update").append("\n");
         usage.append("\t--encodevalue, -e: prompts for password or value to encode for editing configuration files for agent or server");
         usage.append("\n");
         LOG.info(usage);
     }
 
     private WhatToDo[] processArguments(String[] args) throws Exception {
-        String sopts = "-:HD:h:p:e:bflt";
+        String sopts = "-:HD:h:p:e:buflt";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'H'),
             new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 'h'),
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
             new LongOpt("encodevalue", LongOpt.NO_ARGUMENT, null, 'e'),
             new LongOpt("setupdb", LongOpt.NO_ARGUMENT, null, 'b'),
+            new LongOpt("updatestorageschema", LongOpt.NO_ARGUMENT, null, 'u'),
             new LongOpt("listservers", LongOpt.NO_ARGUMENT, null, 'l'),
+            new LongOpt("listversions", LongOpt.NO_ARGUMENT, null, 'v'),
             new LongOpt("force", LongOpt.NO_ARGUMENT, null, 'f'), new LongOpt("test", LongOpt.NO_ARGUMENT, null, 't') };
 
         boolean test = false;
         boolean listservers = false;
+        boolean listversions = false;
         boolean setupdb = false;
+        boolean updatestorage = false;
         String valueToEncode = null;
         String associatedProperty = null;
 
@@ -262,6 +285,11 @@ public class Installer {
                 break; // don't return, in case we need to allow more args
             }
 
+            case 'u': {
+                updatestorage = true;
+                break; // don't return, in case we need to allow more args
+            }
+
             case 'f': {
                 this.installerConfig.setForceInstall(true);
                 break; // don't return, in case we need to allow more args
@@ -274,6 +302,11 @@ public class Installer {
 
             case 't': {
                 test = true;
+                break; // don't return, we need to allow more args to be processed, like -p or -h
+            }
+
+            case 'v': {
+                listversions = true;
                 break; // don't return, we need to allow more args to be processed, like -p or -h
             }
             }
@@ -329,7 +362,7 @@ public class Installer {
             return new WhatToDo[] { WhatToDo.DO_NOTHING };
         }
 
-        if (test || setupdb || listservers) {
+        if (test || setupdb || updatestorage || listservers || listversions) {
             ArrayList<WhatToDo> whatToDo = new ArrayList<WhatToDo>();
             if (test) {
                 whatToDo.add(WhatToDo.TEST);
@@ -337,8 +370,14 @@ public class Installer {
             if (setupdb) {
                 whatToDo.add(WhatToDo.SETUPDB);
             }
+            if (updatestorage) {
+                whatToDo.add(WhatToDo.UPDATESTORAGESCHEMA);
+            }
             if (listservers) {
                 whatToDo.add(WhatToDo.LIST_SERVERS);
+            }
+            if (listversions) {
+                whatToDo.add(WhatToDo.LIST_VERSIONS);
             }
             return whatToDo.toArray(new WhatToDo[whatToDo.size()]);
         }

@@ -44,10 +44,17 @@ public interface InstallerService {
     void listServers() throws Exception;
 
     /**
+     * This simply logs a list of all known registered server and storage node versions, found in the database.
+     *
+     * @throws Exception
+     */
+    void listVersions() throws Exception;
+
+    /**
      * This simply verifies the server configuration but doesn't perform the actual install.
      * You can use this to see if, for example, the database settings are correct or the installer
      * can successfully connect to the running AS instance where RHQ is to be installed.
-     * 
+     *
      * @throws AutoInstallDisabledException if the server configuration properties does not have auto-install enabled
      * @throws AlreadyInstalledException if it appears the installer was already run and the server is fully installed
      * @throws Exception some other exception that should disallow the installation from continuing
@@ -58,7 +65,7 @@ public interface InstallerService {
      * Call this prior to installing to see if we are ready to install.
      * This will do some pre-install checks - if the installation should proceed, the map of server properties is returned.
      * Exceptions are thrown if the install should not proceed.
-     * 
+     *
      * @return properties if the caller should next call {@link #install(HashMap, ServerDetails, String)}.
      *
      * @throws AutoInstallDisabledException if the server configuration properties does not have auto-install enabled
@@ -106,6 +113,10 @@ public interface InstallerService {
      * the autoinstall schema setting in serverProperties parameter will tell this method what to do.
      * NOTE: if not in auto-install mode, the database password is assumed to be in clear text (i.e. unencoded).
      * If in auto-install mode, the database password must be encoded already.
+     * <p/>
+     * This will also create or overwrite the storage cluster schema, but it will not update an existing
+     * storage cluster schema, because that is a cluster-wide operation and is handled separately. See
+     * {@link #updateStorageSchema(HashMap, ServerDetails, String)}.
      *
      * @param serverProperties the server's settings to use. These will be persisted to
      *                         the server's .properties file.
@@ -121,6 +132,18 @@ public interface InstallerService {
         String existingSchemaOption) throws Exception;
 
     /**
+     * Update the existing storage cluster schema.  All storage nodes must be up and running the bits associated
+     * with this schema.<b/>
+     * NOTE: if not in auto-install mode, the database password is assumed to be in clear text (i.e. unencoded).
+     * If in auto-install mode, the database password must be encoded already.
+     *
+     * @param serverProperties the server's settings to use. These will be persisted to
+     *                         the server's .properties file.
+     * @throws Exception failed to successfully prepare the database
+     */
+    void updateStorageSchema(HashMap<String, String> serverProperties) throws Exception;
+
+    /**
      * Returns a list of all registered servers in the database.
      *
      * @param connectionUrl
@@ -133,7 +156,7 @@ public interface InstallerService {
 
     /**
      * Returns details on all servers that are registered in the database.
-     * 
+     *
      * @param connectionUrl
      * @param username
      * @param password
@@ -145,7 +168,7 @@ public interface InstallerService {
 
     /**
      * Returns details on a specific server that is registered in the database.
-     * 
+     *
      * @param connectionUrl
      * @param username
      * @param password
@@ -158,7 +181,7 @@ public interface InstallerService {
 
     /**
      * Tests to see if there is already a schema installed.
-     * 
+     *
      * @param connectionUrl
      * @param username
      * @param password

@@ -19,7 +19,8 @@
         <column name="COMPUTE_POWER" required="true" type="INTEGER"/>        
         <column name="OPERATION_MODE" required="true" size="32" type="VARCHAR2"/>
         <column name="STATUS" type="INTEGER" required="false" default="0" />
-    
+        <column name="VERSION" required="true" size="255" type="VARCHAR2" />
+
         <!--  This index is for constraint, not performance -->    
         <index name="RHQ_SERVER_NAME_UNIQUE" unique="true">
             <field ref="NAME"/>

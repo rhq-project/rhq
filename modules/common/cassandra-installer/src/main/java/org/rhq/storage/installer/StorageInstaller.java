@@ -36,6 +36,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -71,10 +73,13 @@ import org.rhq.cassandra.DeploymentException;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.util.ConfigEditor;
+import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.DbUtil;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
@@ -118,7 +123,7 @@ public class StorageInstaller {
 
     static final String DEFAULT_SAVED_CACHES_DIR = "../../../rhq-data/saved_caches";
 
-    private final Log log = LogFactory.getLog(StorageInstaller.class);
+    static private final Log log = LogFactory.getLog(StorageInstaller.class);
 
     private Options options;
 
@@ -228,10 +233,13 @@ public class StorageInstaller {
         }
 
         InstallerInfo installerInfo = null;
+        boolean isUpgrade = cmdLine.hasOption("upgrade");
+        File upgradeFromDir = null;
 
         try {
-            if (cmdLine.hasOption("upgrade")) {
-                installerInfo = upgrade(new File(cmdLine.getOptionValue("upgrade", "")));
+            if (isUpgrade) {
+                upgradeFromDir = new File(cmdLine.getOptionValue("upgrade", ""));
+                installerInfo = upgrade(upgradeFromDir);
             } else {
                 installerInfo = install(cmdLine);
             }
@@ -254,6 +262,25 @@ public class StorageInstaller {
         properties.setProperty(StorageProperty.GOSSIP_PORT.property(), Integer.toString(installerInfo.gossipPort));
 
         serverPropertiesUpdater.update(properties);
+
+        Properties dbProperties = null;
+        if (isUpgrade) {
+            File oldServerPropsFile = new File(upgradeFromDir, "bin/rhq-server.properties");
+            dbProperties = new Properties();
+            FileInputStream oldServerPropsFileInputStream = new FileInputStream(oldServerPropsFile);
+            try {
+                dbProperties.load(oldServerPropsFileInputStream);
+            } finally {
+                oldServerPropsFileInputStream.close();
+            }
+        } else {
+            dbProperties = serverPropertiesUpdater.loadExistingProperties();
+        }
+
+        // Note, we don't have any UNDO logic for rolling back the version stamp on a failure, but it's OK
+        // to re-stamp with the same version again, so it should be OK. Also, in most cases after a failed
+        // install or upgrade the DB will be recreated or restored, respectively.
+        stampStorageNodeVersion(dbProperties, installerInfo.hostname);
 
         // start node (and install windows service) if necessary
         File binDir = null;
@@ -364,7 +391,8 @@ public class StorageInstaller {
             String seeds = cmdLine.getOptionValue(StorageProperty.SEEDS.property(), installerInfo.hostname);
             deploymentOptions.setSeeds(seeds);
 
-            String commitlogDir = cmdLine.getOptionValue(StorageProperty.COMMITLOG.property(), getDefaultCommitLogDir());
+            String commitlogDir = cmdLine
+                .getOptionValue(StorageProperty.COMMITLOG.property(), getDefaultCommitLogDir());
             String dataDir = cmdLine.getOptionValue(StorageProperty.DATA.property(), getDefaultDataDir());
             String savedCachesDir = cmdLine.getOptionValue(StorageProperty.SAVED_CACHES.property(),
                 getDefaultSavedCachesDir());
@@ -372,7 +400,6 @@ public class StorageInstaller {
             File commitLogDirFile = new File(commitlogDir);
             File dataDirFile = new File(dataDir);
             File savedCachesDirFile = new File(savedCachesDir);
-
 
             boolean verifyDataDirsEmpty = Boolean.valueOf(cmdLine.getOptionValue(
                 StorageProperty.VERIFY_DATA_DIRS_EMPTY.property(), "true"));
@@ -470,13 +497,16 @@ public class StorageInstaller {
 
     private void verifyPortStatus(CommandLine cmdLine, InstallerInfo installerInfo) throws StorageInstallerException {
         installerInfo.jmxPort = getPort(cmdLine, StorageProperty.JMX_PORT.property(), defaultJmxPort);
-        isPortBound(installerInfo.hostname, installerInfo.jmxPort, StorageProperty.JMX_PORT.property(), STATUS_JMX_PORT_CONFLICT);
+        isPortBound(installerInfo.hostname, installerInfo.jmxPort, StorageProperty.JMX_PORT.property(),
+            STATUS_JMX_PORT_CONFLICT);
 
         installerInfo.cqlPort = getPort(cmdLine, StorageProperty.CQL_PORT.property(), defaultCqlPort);
-        isPortBound(installerInfo.hostname, installerInfo.cqlPort, StorageProperty.CQL_PORT.property(), STATUS_CQL_PORT_CONFLICT);
+        isPortBound(installerInfo.hostname, installerInfo.cqlPort, StorageProperty.CQL_PORT.property(),
+            STATUS_CQL_PORT_CONFLICT);
 
         installerInfo.gossipPort = getPort(cmdLine, StorageProperty.GOSSIP_PORT.property(), defaultGossipPort);
-        isPortBound(installerInfo.hostname, installerInfo.gossipPort, StorageProperty.GOSSIP_PORT.property(), STATUS_GOSSIP_PORT_CONFLICT);
+        isPortBound(installerInfo.hostname, installerInfo.gossipPort, StorageProperty.GOSSIP_PORT.property(),
+            STATUS_GOSSIP_PORT_CONFLICT);
     }
 
     /**
@@ -630,7 +660,8 @@ public class StorageInstaller {
 
             if (dir.exists()) {
                 if (dir.isFile()) {
-                    errors.add(path + " is not a directory. Use the --" + option.getLongOpt() + " to change this value.");
+                    errors.add(path + " is not a directory. Use the --" + option.getLongOpt()
+                        + " to change this value.");
                 }
             } else {
                 File parentDir = dir.getParentFile();
@@ -639,25 +670,31 @@ public class StorageInstaller {
                 }
 
                 if (!parentDir.canWrite()) {
-                    errors.add("The user running this installer does not appear to have write permissions to "
-                        + parentDir + ". Either make sure that the user running the storage node has write permissions or use the --"
-                        + option.getLongOpt() + " to change this value.");
+                    errors
+                        .add("The user running this installer does not appear to have write permissions to "
+                            + parentDir
+                            + ". Either make sure that the user running the storage node has write permissions or use the --"
+                            + option.getLongOpt() + " to change this value.");
                 }
             }
         } catch (Exception e) {
-            errors.add("The request path cannot be constructed (path: " + path + "). "
-                + "Please use a valid and also make sure the user running the storage node has write permissions for the path.");
+            errors
+                .add("The request path cannot be constructed (path: "
+                    + path
+                    + "). "
+                    + "Please use a valid and also make sure the user running the storage node has write permissions for the path.");
         }
     }
 
-    private void isPortBound(String address, int port, String portName, int potentialErrorCode) throws StorageInstallerException {
+    private void isPortBound(String address, int port, String portName, int potentialErrorCode)
+        throws StorageInstallerException {
         ServerSocket serverSocket = null;
         try {
             serverSocket = new ServerSocket();
             serverSocket.bind(new InetSocketAddress(address, port));
         } catch (BindException e) {
-            throw new StorageInstallerException("The " + portName + " (" + address + ":" + port + ") is already in use. "
-                    + "Installation cannot proceed.", potentialErrorCode);
+            throw new StorageInstallerException("The " + portName + " (" + address + ":" + port
+                + ") is already in use. " + "Installation cannot proceed.", potentialErrorCode);
         } catch (IOException e) {
             // We only log a warning here and let the installation proceed in case the
             // exception is something that can be ignored.
@@ -681,7 +718,7 @@ public class StorageInstaller {
 
         File file = new File(sysprop);
         if (!(file.exists() && file.isFile())) {
-            throw new RuntimeException("System property [" + sysprop + "] points to in invalid file.");
+            throw new RuntimeException("System property [" + sysprop + "] points to an invalid file.");
         }
 
         return new PropertiesFileUpdate(file.getAbsolutePath());
@@ -835,20 +872,20 @@ public class StorageInstaller {
         return false;
     }
 
-    private void replaceFile(File oldFile, File newFile) throws IOException {
-        log.info("Copying " + oldFile + " to " + newFile);
-        if (!oldFile.exists()) {
-            log.warn(oldFile + " does not exist. " + newFile.getName() + " will be created.");
-        } else {
-            newFile.delete();
-            try {
-                FileUtil.copyFile(oldFile, newFile);
-            } catch (IOException e) {
-                log.error("There was an error while copying " + oldFile + " to " + " " + newFile, e);
-                throw e;
-            }
-        }
-    }
+    //    private void replaceFile(File oldFile, File newFile) throws IOException {
+    //        log.info("Copying " + oldFile + " to " + newFile);
+    //        if (!oldFile.exists()) {
+    //            log.warn(oldFile + " does not exist. " + newFile.getName() + " will be created.");
+    //        } else {
+    //            newFile.delete();
+    //            try {
+    //                FileUtil.copyFile(oldFile, newFile);
+    //            } catch (IOException e) {
+    //                log.error("There was an error while copying " + oldFile + " to " + " " + newFile, e);
+    //                throw e;
+    //            }
+    //        }
+    //    }
 
     private int parseJmxPortFromCassandrEnv(File cassandraEnvFile) {
         Integer port = null;
@@ -930,16 +967,16 @@ public class StorageInstaller {
         }
     }
 
-    /**
-     * @return The parent directory of the server
-     */
-    private File getInstallationDir() {
-        return serverBasedir.getParentFile();
-    }
+    //    /**
+    //     * @return The parent directory of the server
+    //     */
+    //    private File getInstallationDir() {
+    //        return serverBasedir.getParentFile();
+    //    }
 
-    private File getDefaultBaseDataDir() {
-        return new File(getInstallationDir(), "rhq-data");
-    }
+    //    private File getDefaultBaseDataDir() {
+    //        return new File(getInstallationDir(), "rhq-data");
+    //    }
 
     private String getDefaultCommitLogDir() {
         return DEFAULT_COMMIT_LOG_DIR;
@@ -951,6 +988,68 @@ public class StorageInstaller {
 
     private String getDefaultSavedCachesDir() {
         return DEFAULT_SAVED_CACHES_DIR;
+    }
+
+    private static void stampStorageNodeVersion(Properties dbProperties, String storageNodeAddress) throws Exception {
+        final String dbUrl = dbProperties.getProperty("rhq.server.database.connection-url");
+        final String dbUsername = dbProperties.getProperty("rhq.server.database.user-name");
+        String obfuscatedDbPassword = dbProperties.getProperty("rhq.server.database.password");
+        String clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
+
+        updateStorageNodeVersion(dbUrl, dbUsername, clearTextDbPassword, storageNodeAddress);
+    }
+
+    /**
+     * Update server version stamp with the install version.
+     *
+     * @param connectionUrl
+     * @param username
+     * @param password
+     * @param storageNodeAddress
+     *
+     * @throws Exception if failed to communicate with the database or failed to stamp version
+     */
+    private static void updateStorageNodeVersion(String connectionUrl, String username, String password,
+        String storageNodeAddress) throws Exception {
+        DatabaseType db = null;
+        Connection conn = null;
+        PreparedStatement stm = null;
+        boolean result = false;
+        String version = StorageInstaller.class.getPackage().getImplementationVersion();
+
+        try {
+            conn = DbUtil.getConnection(connectionUrl, username, password);
+            db = DatabaseTypeFactory.getDatabaseType(conn);
+
+            // For two reasons we add the column here, as opposed to db-upgrade.xml. First, a SN upgrade may
+            // happen before a Server upgrade, so db-upgrade may not have yet run.  Second, we can limit the
+            // setting of the version to the row in question, db-upgrade would not know which row to set.
+            boolean columnExists = db.checkColumnExists(conn, "rhq_storage_node", "version");
+            if (!columnExists) {
+                db.addColumn(conn, "RHQ_STORAGE_NODE", "VERSION", "VARCHAR2", "255");
+                stm = conn.prepareStatement("UPDATE rhq_storage_node SET version = ?");
+                stm.setString(1, "PRE-" + version);
+                stm.executeUpdate();
+                db.closeStatement(stm);
+                // set column not null after it's been set
+                db.alterColumn(conn, "RHQ_STORAGE_NODE", "VERSION", "VARCHAR2", null, "255", false, false);
+            }
+
+            stm = conn.prepareStatement("UPDATE rhq_storage_node SET version = ? WHERE address = ?");
+            stm.setString(1, version);
+            stm.setString(2, storageNodeAddress);
+            int rowsUpdated = stm.executeUpdate();
+            if (1 != rowsUpdated) {
+                throw new IllegalStateException("Expected [1] StorageNode update but updated [" + rowsUpdated + "].");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to update Storage Node [" + storageNodeAddress + "] to version ["
+                + version + "]", e);
+        } finally {
+            if (null != db) {
+                db.closeJDBCObjects(conn, stm, null);
+            }
+        }
     }
 
     public void printUsage() {
@@ -987,7 +1086,7 @@ public class StorageInstaller {
 
     public static void main(String[] args) throws Exception {
         StorageInstaller installer = new StorageInstaller();
-        installer.log.info("Running RHQ Storage Node installer...");
+        StorageInstaller.log.info("Running RHQ Storage Node installer...");
         try {
             CommandLineParser parser = new PosixParser();
             CommandLine cmdLine = parser.parse(installer.getOptions(), args);

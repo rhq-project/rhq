@@ -269,7 +269,7 @@ class VersionManager extends AbstractManager {
             int requiredSchemaVersion = folder.getLatestVersion();
 
             if (installedSchemaVersion < requiredSchemaVersion) {
-                log.error("Storage cluster schema version:" + installedSchemaVersion + ". Required schema version: "
+                log.warn("Storage cluster schema version:" + installedSchemaVersion + ". Required schema version: "
                     + requiredSchemaVersion + ". Please update storage cluster schema version.");
                 throw new InstalledSchemaTooOldException();
             }
@@ -277,7 +277,7 @@ class VersionManager extends AbstractManager {
             if (installedSchemaVersion > requiredSchemaVersion) {
                 log.error("Storage cluster schema version:" + installedSchemaVersion + ". Required schema version: "
                     + requiredSchemaVersion
-                    + ". Storage clutser has been updated beyond the capability of the current server installation.");
+                    + ". Storage cluster has been updated beyond the capability of the current server installation.");
                 throw new InstalledSchemaTooAdvancedException();
             }
         } catch (NoHostAvailableException e1) {

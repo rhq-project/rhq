@@ -100,7 +100,7 @@ if not defined RHQ_SERVER_INSTALLER_JAVA_OPTS set RHQ_SERVER_INSTALLER_JAVA_OPTS
 rem Add the JVM opts that we always want to specify, whether or not the user set RHQ_SERVER_INSTALLER_JAVA_OPTS.
 if defined RHQ_SERVER_DEBUG set _RHQ_LOGLEVEL=DEBUG
 if not defined RHQ_SERVER_DEBUG set _RHQ_LOGLEVEL=INFO
-set RHQ_SERVER_INSTALLER_JAVA_OPTS=%RHQ_SERVER_INSTALLER_JAVA_OPTS% -Djava.awt.headless=true -Di18nlog.logger-type=commons -Drhq.server.properties-file=%RHQ_SERVER_HOME%\bin\rhq-server.properties -Drhq.server.installer.logdir=%RHQ_SERVER_HOME%\logs -Drhq.server.installer.loglevel=%_RHQ_LOGLEVEL%
+set RHQ_SERVER_INSTALLER_JAVA_OPTS=%RHQ_SERVER_INSTALLER_JAVA_OPTS% -Djava.awt.headless=true -Di18nlog.logger-type=commons -Drhq.server.properties-file=%RHQ_SERVER_HOME%\bin\rhq-server.properties -Drhq.server.installer.logdir=%RHQ_SERVER_HOME%\logs -Drhq.server.installer.loglevel=%_RHQ_LOGLEVEL%  -Drhq.server.basedir=%RHQ_SERVER_HOME%
 
 rem Sample JPDA settings for remote socket debugging
 rem set RHQ_SERVER_INSTALLER_JAVA_OPTS=%RHQ_SERVER_INSTALLER_JAVA_OPTS% -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y

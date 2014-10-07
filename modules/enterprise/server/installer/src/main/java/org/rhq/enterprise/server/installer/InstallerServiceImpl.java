@@ -75,8 +75,7 @@ public class InstallerServiceImpl implements InstallerService {
     private static final String RHQ_SUBSYSTEM_NAME = "rhq-startup";
     private static final String EAR_NAME = "rhq.ear";
     private static final String SYSPROP_PROPFILE = "rhq.server.properties-file";
-
-    private static final String UNSET = "UNSET";
+    private static final String SYSPROP_BASEDIR = "rhq.server.basedir";
 
     private final Log log = LogFactory.getLog(InstallerServiceImpl.class);
     private final InstallerConfiguration installerConfiguration;
@@ -135,6 +134,95 @@ public class InstallerServiceImpl implements InstallerService {
             info.append("\n");
         }
         log(info.toString());
+        return;
+    }
+
+    @Override
+    public void listVersions() throws Exception {
+        String version = this.getClass().getPackage().getImplementationVersion();
+        HashMap<String, String> serverProperties = getServerProperties();
+        final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+        final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+        String obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
+        String clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
+        Map<String, String> map = ServerInstallUtil.getServerVersions(dbUrl, dbUsername, clearTextDbPassword);
+
+        if (map.isEmpty()) {
+            log("There are no known Servers currently registered");
+            return;
+        }
+
+        StringBuilder info = new StringBuilder("\n\n");
+        boolean upgradeRequired = false;
+        info.append("Installed Server Versions");
+        info.append("\n");
+        info.append("Server Name");
+        info.append("\n");
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            info.append(entry.getKey());
+            info.append("\tVersion = ");
+            info.append(entry.getValue());
+            info.append("\n");
+            upgradeRequired |= !version.equals(entry.getValue());
+        }
+
+        info.append("\n");
+
+        map = ServerInstallUtil.getStorageNodeVersions(dbUrl, dbUsername, clearTextDbPassword);
+
+        if (map.isEmpty()) {
+            log("There are no known Storage Nodes currently registered");
+            return;
+        }
+
+        info.append("Installed Storage Node Versions");
+        info.append("\n");
+        info.append("Storage Node Address");
+        info.append("\n");
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            info.append(entry.getKey());
+            info.append("\tVersion = ");
+            info.append(entry.getValue());
+            info.append("\n");
+            upgradeRequired |= !version.equals(entry.getValue());
+        }
+
+        info.append("\n");
+        if (upgradeRequired) {
+            info.append("  ==> At least one Server or Storage Node requires an upgrade to the current version!");
+
+        } else {
+            info.append("  ==> All Servers and Storage Nodes are at the same version. No upgrades required.");
+        }
+
+        info.append("\n\n");
+
+        try {
+            info.append("Checking Storage Cluster Schema Version...");
+            info.append("\n\n");
+
+            SchemaManager storageNodeSchemaManager = createStorageNodeSchemaManager(serverProperties);
+            storageNodeSchemaManager.checkCompatibility();
+            info.append("  ==> The Storage Cluster version is up to date. No update required.");
+
+        } catch (NoHostAvailableException e1) {
+            info.append("  ==> Could not connect to Storage Cluster.\n");
+            info.append("  ==> To check Storage Cluster schema version start a Storage Node and re-execute this command.");
+        } catch (InstalledSchemaTooOldException e3) {
+            info.append("  ==> The Storage Cluster version is old and requires an update!\n");
+            info.append("  ==> 1) Complete Server and Storage Node upgrades.\n");
+            info.append("  ==> 2) Start all Storage Nodes to prepare them for a schema update.\n");
+            info.append("  ==>    Use 'rhqctl start --storage'.  Servers and Agents should not be running.\n");
+            info.append("  ==> 3) Update the Storage Cluster via 'rhqctl upgrade --storage-schema.'");
+        } catch (Exception e) {
+            info.append("  ==> Failed to check Storage Cluster Version: ");
+            info.append("  ==> " + e.getMessage());
+        }
+
+        info.append("\n");
+
+        log(info.toString());
+
         return;
     }
 
@@ -340,7 +428,6 @@ public class InstallerServiceImpl implements InstallerService {
             // Set up the logging subsystem
             ServerInstallUtil.configureLogging(mcc, serverProperties);
 
-
             ServerInstallUtil.createUserSecurityDomain(mcc);
             ServerInstallUtil.createRestSecurityDomain(mcc);
 
@@ -368,6 +455,12 @@ public class InstallerServiceImpl implements InstallerService {
 
         // deploy the main EAR app subsystem - this is the thing that contains and actually deploys the EAR
         deployAppSubsystem();
+
+        // stamp the Server entry with the installed/upgraded version
+        // Note, we don't have any UNDO logic for rolling back the version stamp on a failure, but it's OK
+        // to re-stamp with the same version again, so it should be OK. Also, in most cases after a failed
+        // install or upgrade the DB will be recreated or restored, respectively.
+        stampServerVersion(serverDetails);
 
         // write a file marker so that rhqctl can easily determine that the server has been
         // installed.
@@ -531,6 +624,9 @@ public class InstallerServiceImpl implements InstallerService {
             throw new Exception("Could not complete the database schema installation", e);
         }
 
+        // install the storage schema if the schema does not yet exist. do not upgrade the schema
+        // during a single server install because storage cluster schema is a cluster-wide operation handled
+        // via another path.
         // if the storage cluster credentials are already set in the DB (typically an HA install), override
         // what's currently in the server properties file, and then continue with storage schema setup
         Map<String, String> storageProperties = ServerInstallUtil.fetchStorageClusterSettings(serverProperties,
@@ -545,18 +641,48 @@ public class InstallerServiceImpl implements InstallerService {
             }
         }
 
+        Set<String> storageNodeAddresses = prepareStorageSchema(serverProperties, clearTextDbPassword,
+            existingSchemaOptionEnum, false);
+
+        // ensure the server info is up to date and stored in the DB
+        ServerInstallUtil.storeServerDetails(serverProperties, clearTextDbPassword, serverDetails);
+        ServerInstallUtil.persistAdminPasswordIfNecessary(serverProperties, clearTextDbPassword);
+        ServerInstallUtil.persistStorageNodesIfNecessary(serverProperties, clearTextDbPassword,
+            parseNodeInformation(serverProperties, storageNodeAddresses));
+        ServerInstallUtil.persistStorageClusterSettingsIfNecessary(serverProperties, clearTextDbPassword);
+
+        // For sanity, make sure the server props file is in sync with the db settings.
+        saveServerProperties(serverProperties);
+    }
+
+    @Override
+    public void updateStorageSchema(HashMap<String, String> serverProperties)
+        throws Exception {
+
+        String clearTextDbPassword;
+        String obfuscatedDbPassword;
+        obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
+        clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
+
+        prepareStorageSchema(serverProperties, clearTextDbPassword, ExistingSchemaOption.KEEP, true);
+    }
+
+    private Set<String> prepareStorageSchema(HashMap<String, String> serverProperties, String clearTextDbPassword,
+        ExistingSchemaOption existingSchemaOptionEnum, boolean allowUpdate) throws Exception {
+
         SchemaManager storageNodeSchemaManager = null;
         Set<String> storageNodeAddresses = Collections.emptySet();
         try {
             storageNodeSchemaManager = createStorageNodeSchemaManager(serverProperties);
             if (ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
                 if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
-                    log("Storage cluster schema exists but installer was told to overwrite it - a the existing  schema will be "
-                        + "created now.");
+                    log("Storage cluster schema exists but the installer was told to overwrite it - dropping existing schema...");
                     storageNodeSchemaManager.drop();
                 }
 
                 final String dbPassword = clearTextDbPassword;
+                final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+                final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
                 DBConnectionFactory connectionFactory = new DBConnectionFactory() {
                     @Override
                     public Connection newConnection() throws SQLException {
@@ -578,8 +704,12 @@ public class InstallerServiceImpl implements InstallerService {
                     storageNodeSchemaManager.install(schemaProperties);
                     storageNodeSchemaManager.updateTopology();
                 } catch (InstalledSchemaTooOldException e3) {
-                    log("Install RHQ schema updates to storage cluster.");
-                    storageNodeSchemaManager.install(schemaProperties);
+                    if (allowUpdate) {
+                        log("Install RHQ schema updates to storage cluster.");
+                        storageNodeSchemaManager.install(schemaProperties);
+                    } else {
+                        log("When all upgrades are complete the Storage Cluster schema must then be updated using 'rhqctl upgrade --storage-schema.");
+                    }
                 }
                 storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
                 storageNodeSchemaManager.shutdown();
@@ -587,10 +717,10 @@ public class InstallerServiceImpl implements InstallerService {
                 log("Ignoring storage cluster schema - installer will assume it exists and is already up-to-date.");
             }
         } catch (NoHostAvailableException e) {
-            log.error("Failed to connect to the storage cluster. Please check the following:\n" +
-                "\t1) At least one storage node is running\n" +
-                "\t2) The rhq.storage.nodes property specifies the correct hostname/address of at least one storage node\n" +
-                "\t3) The rhq.storage.cql-port property has the correct value\n");
+            log.error("Failed to connect to the storage cluster. Please check the following:\n"
+                + "\t1) At least one storage node is running\n"
+                + "\t2) The rhq.storage.nodes property specifies the correct hostname/address of at least one storage node\n"
+                + "\t3) The rhq.storage.cql-port property has the correct value\n");
             throw new Exception("Could not connect to the storage cluster: " + ThrowableUtil.getRootMessage(e));
         } catch (IllegalArgumentException e) {
             log.error("Failed to connect to the storage cluster. Please check the following:\n"
@@ -604,15 +734,7 @@ public class InstallerServiceImpl implements InstallerService {
             throw new Exception(msg, e);
         }
 
-        // ensure the server info is up to date and stored in the DB
-        ServerInstallUtil.storeServerDetails(serverProperties, clearTextDbPassword, serverDetails);
-        ServerInstallUtil.persistAdminPasswordIfNecessary(serverProperties, clearTextDbPassword);
-        ServerInstallUtil.persistStorageNodesIfNecessary(serverProperties, clearTextDbPassword,
-            parseNodeInformation(serverProperties, storageNodeAddresses));
-        ServerInstallUtil.persistStorageClusterSettingsIfNecessary(serverProperties, clearTextDbPassword);
-
-        // For sanity, make sure the server props file is in sync with the db settings.
-        saveServerProperties(serverProperties);
+        return storageNodeAddresses;
     }
 
     @Override
@@ -779,6 +901,13 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private String getAppServerHomeDir() throws Exception {
+        File baseDir = new File(System.getProperty(SYSPROP_BASEDIR));
+        if (null != baseDir) {
+            if (baseDir.isDirectory()) {
+                return baseDir.getAbsolutePath();
+            }
+        }
+
         ModelControllerClient mcc = null;
         try {
             mcc = createModelControllerClient();
@@ -791,6 +920,14 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private String getAppServerDataDir() throws Exception {
+        File basedir = new File(System.getProperty(SYSPROP_BASEDIR));
+        if (null != basedir) {
+            File dataDir = new File(basedir, "jbossas/standalone/data");
+            if (dataDir.isDirectory()) {
+                return dataDir.getAbsolutePath();
+            }
+        }
+
         ModelControllerClient mcc = null;
         try {
             mcc = createModelControllerClient();
@@ -803,6 +940,14 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private String getAppServerConfigDir() throws Exception {
+        File basedir = new File(System.getProperty(SYSPROP_BASEDIR));
+        if (null != basedir) {
+            File confDir = new File(basedir, "jbossas/standalone/configuration");
+            if (confDir.isDirectory()) {
+                return confDir.getAbsolutePath();
+            }
+        }
+
         ModelControllerClient mcc = null;
         try {
             mcc = createModelControllerClient();
@@ -826,17 +971,17 @@ public class InstallerServiceImpl implements InstallerService {
         }
     }
 
-    private boolean isExtensionDeployed() throws Exception {
-        ModelControllerClient mcc = null;
-        try {
-            mcc = createModelControllerClient();
-            final CoreJBossASClient client = new CoreJBossASClient(mcc);
-            boolean isDeployed = client.isExtension(RHQ_EXTENSION_NAME);
-            return isDeployed;
-        } finally {
-            MCCHelper.safeClose(mcc);
-        }
-    }
+    //    private boolean isExtensionDeployed() throws Exception {
+    //        ModelControllerClient mcc = null;
+    //        try {
+    //            mcc = createModelControllerClient();
+    //            final CoreJBossASClient client = new CoreJBossASClient(mcc);
+    //            boolean isDeployed = client.isExtension(RHQ_EXTENSION_NAME);
+    //            return isDeployed;
+    //        } finally {
+    //            MCCHelper.safeClose(mcc);
+    //        }
+    //    }
 
     private String getDatabaseSetupLogDir() throws Exception {
 
@@ -1305,8 +1450,8 @@ public class InstallerServiceImpl implements InstallerService {
             throw new IllegalArgumentException(ServerProperties.PROP_STORAGE_NODES + " not set.");
         }
 
-        return parseNodeInformation(serverProps, ImmutableSet.copyOf(serverProps.get(
-            ServerProperties.PROP_STORAGE_NODES).split(",")));
+        return parseNodeInformation(serverProps,
+            ImmutableSet.copyOf(serverProps.get(ServerProperties.PROP_STORAGE_NODES).split(",")));
     }
 
     private SchemaManager createStorageNodeSchemaManager(Map<String, String> serverProps) {
@@ -1336,4 +1481,23 @@ public class InstallerServiceImpl implements InstallerService {
         File markerFile = getInstalledFileMarker();
         markerFile.createNewFile();
     }
+
+    /**
+     * @param serverDetails must include db connection information and the server name
+     * @throws Exception on any failure to stamp the version
+     */
+    private void stampServerVersion(ServerDetails serverDetails) throws Exception {
+        HashMap<String, String> serverProperties = getServerProperties();
+        final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+        final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+        String obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
+        String clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
+
+        if (null == serverDetails) {
+            serverDetails = getServerDetailsFromPropertiesOnly(serverProperties);
+        }
+
+        ServerInstallUtil.updateServerVersion(dbUrl, dbUsername, clearTextDbPassword, serverDetails.getName());
+    }
+
 }

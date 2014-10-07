@@ -257,6 +257,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         storageNode.setCqlPort(clusterSettings.getCqlPort());
         storageNode.setResource(resource);
         storageNode.setOperationMode(OperationMode.INSTALLED);
+        storageNode.setVersion(this.getClass().getPackage().getImplementationVersion());
 
         entityManager.persist(storageNode);
 
@@ -1324,7 +1325,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             scheduleSnapshotManagementOperationsForStorageNode(subject, storageNode, clusterSettings);
         }
     }
-    
+
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void ackFailedOperation(Subject subject, int storageNodeId) {

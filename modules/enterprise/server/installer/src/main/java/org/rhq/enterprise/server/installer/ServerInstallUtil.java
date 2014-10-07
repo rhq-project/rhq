@@ -33,6 +33,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -87,6 +88,11 @@ import org.rhq.enterprise.communications.util.SecurityUtil;
  */
 public class ServerInstallUtil {
     private static final Log LOG = LogFactory.getLog(ServerInstallUtil.class);
+    private static final String version;
+
+    static {
+        version = ServerInstallUtil.class.getPackage().getImplementationVersion();
+    }
 
     public enum ExistingSchemaOption {
         OVERWRITE, KEEP, SKIP
@@ -116,13 +122,13 @@ public class ServerInstallUtil {
             this.interfaceName = i;
         }
 
-        public SocketBindingInfo(String name, String sysprop, int port, String interfaceName, boolean required) {
-            this.name = name;
-            this.sysprop = sysprop;
-            this.port = port;
-            this.interfaceName = interfaceName;
-            this.required = required;
-        }
+        //        public SocketBindingInfo(String name, String sysprop, int port, String interfaceName, boolean required) {
+        //            this.name = name;
+        //            this.sysprop = sysprop;
+        //            this.port = port;
+        //            this.interfaceName = interfaceName;
+        //            this.required = required;
+        //        }
     }
 
     private static final ArrayList<SocketBindingInfo> defaultSocketBindings;
@@ -1074,8 +1080,8 @@ public class ServerInstallUtil {
                     LOG.info("Persisting to database new storage nodes for values specified in server configuration property [rhq.storage.nodes]");
 
                     insertStorageNode = connection
-                        .prepareStatement("INSERT INTO rhq_storage_node (id, address, cql_port, operation_mode, ctime, mtime, maintenance_pending) "
-                            + "VALUES (?, ?, ?, ?, ?, ?, ?)");
+                        .prepareStatement("INSERT INTO rhq_storage_node (id, address, cql_port, operation_mode, ctime, mtime, maintenance_pending, version) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
                     int id = 1001;
                     for (StorageNode storageNode : storageNodes) {
@@ -1086,6 +1092,7 @@ public class ServerInstallUtil {
                         insertStorageNode.setLong(5, System.currentTimeMillis());
                         insertStorageNode.setLong(6, System.currentTimeMillis());
                         insertStorageNode.setBoolean(7, false);
+                        insertStorageNode.setString(8, version);
 
                         insertStorageNode.executeUpdate();
                         id += 1;
@@ -1307,9 +1314,10 @@ public class ServerInstallUtil {
                 // set all new servers to operation_mode=INSTALLED
                 int i = 1;
                 if (db instanceof PostgresqlDatabaseType || db instanceof OracleDatabaseType) {
-                    stm = conn.prepareStatement("INSERT INTO rhq_server " //
-                        + " ( id, name, address, port, secure_port, ctime, mtime, operation_mode, compute_power ) " //
-                        + "VALUES ( ?, ?, ?, ?, ?, ?, ?, 'INSTALLED', 1 )");
+                    stm = conn
+                        .prepareStatement("INSERT INTO rhq_server " //
+                            + " ( id, name, address, port, secure_port, ctime, mtime, operation_mode, compute_power, version ) " //
+                            + "VALUES ( ?, ?, ?, ?, ?, ?, ?, 'INSTALLED', 1, ? )");
                     stm.setInt(i++, db.getNextSequenceValue(conn, "rhq_server", "id"));
                 } else {
                     throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
@@ -1322,6 +1330,7 @@ public class ServerInstallUtil {
                 long now = System.currentTimeMillis();
                 stm.setLong(i++, now);
                 stm.setLong(i++, now);
+                stm.setString(i++, version);
                 stm.executeUpdate();
             }
 
@@ -1675,33 +1684,33 @@ public class ServerInstallUtil {
         return connector;
     }
 
-    /**
-     * For a property whose value might be a file, return that file's absolute path. If the property
-     * has a value whose pathname is already absolute, return it. If the property has a value whose path
-     * is relative, it is considered relative to defaultRootDir and its absolute path based on that root dir
-     * is returned.
-     *
-     * @param propertyName the property whose value in properties is considered a pathname (which may
-     *                     relative or it may be absolute).
-     * @param properties where to find the named property
-     * @param defaultRootDir if the property value is a relative file path, this is what it is relative to
-     * @return the absolute path of the file
-     */
-    private static String getAbsoluteFileLocation(String propertyName, HashMap<String, String> properties,
-        String defaultRootDir) {
-
-        if (properties == null || !properties.containsKey(propertyName)) {
-            return null;
-        }
-
-        String propertyValue = properties.get(propertyName);
-        File path = new File(propertyValue);
-        if (path.isAbsolute()) {
-            return path.getAbsolutePath();
-        } else {
-            return new File(defaultRootDir, propertyValue).getAbsolutePath();
-        }
-    }
+    //    /**
+    //     * For a property whose value might be a file, return that file's absolute path. If the property
+    //     * has a value whose pathname is already absolute, return it. If the property has a value whose path
+    //     * is relative, it is considered relative to defaultRootDir and its absolute path based on that root dir
+    //     * is returned.
+    //     *
+    //     * @param propertyName the property whose value in properties is considered a pathname (which may
+    //     *                     relative or it may be absolute).
+    //     * @param properties where to find the named property
+    //     * @param defaultRootDir if the property value is a relative file path, this is what it is relative to
+    //     * @return the absolute path of the file
+    //     */
+    //    private static String getAbsoluteFileLocation(String propertyName, HashMap<String, String> properties,
+    //        String defaultRootDir) {
+    //
+    //        if (properties == null || !properties.containsKey(propertyName)) {
+    //            return null;
+    //        }
+    //
+    //        String propertyValue = properties.get(propertyName);
+    //        File path = new File(propertyValue);
+    //        if (path.isAbsolute()) {
+    //            return path.getAbsolutePath();
+    //        } else {
+    //            return new File(defaultRootDir, propertyValue).getAbsolutePath();
+    //        }
+    //    }
 
     private static String buildExpression(String propName, HashMap<String, String> defaultProperties,
         boolean supportsExpression) {
@@ -1916,5 +1925,150 @@ public class ServerInstallUtil {
         }
 
         return;
+    }
+
+    /**
+     * Update server version stamp with the install version.
+     *
+     * @param connectionUrl
+     * @param username
+     * @param password
+     * @param serverName
+     *
+     * @throws Exception if failed to communicate with the database or could not stamp version
+     */
+    public static void updateServerVersion(String connectionUrl, String username, String password, String serverName)
+        throws Exception {
+        DatabaseType db = null;
+        Connection conn = null;
+        PreparedStatement stm = null;
+        boolean result = false;
+
+        try {
+            conn = getDatabaseConnection(connectionUrl, username, password);
+            db = DatabaseTypeFactory.getDatabaseType(conn);
+
+            // For two reasons we add the column here, as opposed to db-upgrade.xml. First, a SN upgrade may
+            // happen before a Server upgrade, so db-upgrade may not have yet run.  Second, we can limit the
+            // setting of the version to the row in question, db-upgrade would not know which row to set.
+            boolean columnExists = db.checkColumnExists(conn, "rhq_server", "version");
+            if (!columnExists) {
+                db.addColumn(conn, "RHQ_SERVER", "VERSION", "VARCHAR2", "255");
+                stm = conn.prepareStatement("UPDATE rhq_server SET version = ?");
+                stm.setString(1, "PRE-" + version);
+                stm.executeUpdate();
+                db.closeStatement(stm);
+                // set column not null after it's been set
+                db.alterColumn(conn, "RHQ_SERVER", "VERSION", "VARCHAR2", null, "255", false, false);
+            }
+
+            stm = conn.prepareStatement("UPDATE rhq_server SET version = ? WHERE name = ?");
+            stm.setString(1, version);
+            stm.setString(2, serverName);
+            int rowsUpdated = stm.executeUpdate();
+            if (1 != rowsUpdated) {
+                throw new IllegalStateException("Expected [1] Server update but updated [" + rowsUpdated + "].");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to update Server [" + serverName + "] to version [" + version + "]", e);
+        } finally {
+            if (null != db) {
+                db.closeJDBCObjects(conn, stm, null);
+            }
+        }
+    }
+
+    /**
+     * Get the list of existing servers from an existing schema.
+     *
+     * @param connectionUrl
+     * @param username
+     * @param password
+     * @return LinkedHashMap<serverName, version>. Null if version field does not exist, empty if no
+     *         servers exist.  Ordered by server name asc.
+     *
+     * @throws Exception if failed to communicate with the database
+     */
+    public static LinkedHashMap<String, String> getServerVersions(String connectionUrl, String username, String password)
+        throws Exception {
+        DatabaseType db = null;
+        Connection conn = null;
+        Statement stm = null;
+        ResultSet rs = null;
+        LinkedHashMap<String, String> result = null;
+
+        try {
+            conn = getDatabaseConnection(connectionUrl, username, password);
+            db = DatabaseTypeFactory.getDatabaseType(conn);
+
+            if (db.checkColumnExists(conn, "rhq_server", "version")) {
+
+                stm = conn.createStatement();
+                rs = stm.executeQuery("SELECT name, version FROM rhq_server ORDER BY name asc");
+
+                result = new LinkedHashMap<String, String>();
+
+                while (rs.next()) {
+                    result.put(rs.getString(1), rs.getString(2));
+                }
+            }
+        } catch (IllegalStateException e) {
+            // column does not exist
+        } catch (SQLException e) {
+            LOG.info("Unable to fetch server version info: " + e.getMessage());
+        } finally {
+            if (null != db) {
+                db.closeJDBCObjects(conn, stm, rs);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Get the list of existing servers from an existing schema.
+     *
+     * @param connectionUrl
+     * @param username
+     * @param password
+     * @return LinkedHashMap<storageNodeAddress, version>. Null if version field does not exist, empty if no
+     *         storage nodes exist.  Ordered by storage node address asc.
+     *
+     * @throws Exception if failed to communicate with the database
+     */
+    public static LinkedHashMap<String, String> getStorageNodeVersions(String connectionUrl, String username,
+        String password) throws Exception {
+        DatabaseType db = null;
+        Connection conn = null;
+        Statement stm = null;
+        ResultSet rs = null;
+        LinkedHashMap<String, String> result = null;
+
+        try {
+            conn = getDatabaseConnection(connectionUrl, username, password);
+            db = DatabaseTypeFactory.getDatabaseType(conn);
+
+            if (db.checkColumnExists(conn, "rhq_storage_node", "version")) {
+
+                stm = conn.createStatement();
+                rs = stm.executeQuery("SELECT address, version FROM rhq_storage_node ORDER BY address asc");
+
+                result = new LinkedHashMap<String, String>();
+
+                while (rs.next()) {
+                    result.put(rs.getString(1), rs.getString(2));
+                }
+            }
+        } catch (IllegalStateException e) {
+            // column does not exist
+        } catch (SQLException e) {
+            LOG.info("Unable to fetch storage node version info: " + e.getMessage());
+        } finally {
+            if (null != db) {
+                db.closeJDBCObjects(conn, stm, rs);
+            }
+        }
+
+        return result;
     }
 }

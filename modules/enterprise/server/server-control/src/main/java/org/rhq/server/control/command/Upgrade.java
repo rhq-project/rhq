@@ -62,6 +62,8 @@ public class Upgrade extends AbstractInstall {
     private static final String USE_REMOTE_STORAGE_NODE = "use-remote-storage-node";
     private static final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
     private static final String RUN_DATA_MIGRATION = "run-data-migrator";
+    private static final String LIST_VERSIONS_OPTION = "list-versions";
+    private static final String STORAGE_SCHEMA_OPTION = "storage-schema";
 
     private Options options;
 
@@ -88,11 +90,27 @@ public class Upgrade extends AbstractInstall {
                     + "storage node will be upgraded and it is assumed a remote storage node is configured in rhq-server.properties.")
             .addOption(
                 null,
+                LIST_VERSIONS_OPTION,
+                false,
+                "This option prints the install versions for the Servers and Storage Nodes in the topology. This option must be run "
+                    + "from an already installed or upgraded RHQ Server node. When specified, all other options are ignored. ")
+            .addOption(
+                null,
                 STORAGE_DATA_ROOT_DIR,
                 true,
                 "This option is valid only when upgrading from older systems that did not have storage nodes. Use this option to specify a non-default base "
                     + "directory for the data directories created by the storage node. For example, if the default directory is "
                     + "not writable for the current user (/var/lib on Linux) or if you simply prefer a different location. ")
+            .addOption(
+                null,
+                STORAGE_SCHEMA_OPTION,
+                false,
+                "This option updates the storage cluster schema.  This option must be run from an RHQ Server node. The running time for "
+                    + "the schema update will vary depending on the schema changes being made, the runtime may be long and should not be "
+                    + "interrupted.  It requires that all servers and storage nodes have already been upgraded to the desired version "
+                    + "and that all nodes in the storage cluster are running. The command will fail if these prerequisites are not met. "
+                    + "Use 'rhqctl upgrade --list-versions' to see the current upgrade status.  When specified, all other options "
+                    + "are ignored.  Not all upgrades will require this step.")
             .addOption(
                 null,
                 RUN_DATA_MIGRATION,
@@ -125,6 +143,14 @@ public class Upgrade extends AbstractInstall {
 
     @Override
     protected int exec(CommandLine commandLine) {
+        if (commandLine.hasOption(LIST_VERSIONS_OPTION)) {
+            return listVersions(commandLine);
+        }
+
+        if (commandLine.hasOption(STORAGE_SCHEMA_OPTION)) {
+            return upgradeStorageSchema(commandLine);
+        }
+
         int rValue = RHQControl.EXIT_CODE_OK;
         boolean start = commandLine.hasOption(START_OPTION);
 
@@ -137,10 +163,6 @@ public class Upgrade extends AbstractInstall {
                 log.error("Exiting due to the previous errors");
                 return RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
-
-            // Attempt to shutdown any running components. A failure to shutdown a component is not a failure as it
-            // really shouldn't be running anyway. This is just an attempt to avoid upgrade problems.
-            log.info("Stopping any running RHQ components...");
 
             // If storage or server appear to be installed already then don't perform an upgrade.  It's OK
             // if the agent already exists in the default location, it may be there from a prior install.
@@ -209,6 +231,11 @@ public class Upgrade extends AbstractInstall {
             throw new RHQControlException("An error occurred while executing the upgrade command", e);
         } finally {
             try {
+                if (isServerInstalled()) {
+                    log.info("\n\n========== UPGRADE SUMMARY ==========");
+                    listVersions(commandLine);
+                }
+
                 if (!start) {
                     Stop stopCommand = new Stop();
                     stopCommand.exec(new String[] { "--server" });
@@ -289,7 +316,7 @@ public class Upgrade extends AbstractInstall {
         // don't upgrade the server if this is a storage node only install
         File oldServerDir = getFromServerDir(commandLine);
         if (!(!isRhq48OrLater(commandLine) || isServerInstalled(oldServerDir))) {
-            log.info("Ignoring server upgrade, this is a storage node only installation.");
+            log.info("Ignoring server upgrade, the '--from-server-dir' is a storage node only installation.");
             return RHQControl.EXIT_CODE_OK;
         }
 
@@ -317,7 +344,7 @@ public class Upgrade extends AbstractInstall {
 
         // start the server, then invoke the installer and wait for the server to be completely installed
         rValue = Math.max(rValue, startRHQServerForInstallation());
-        Future<Integer> integerFuture = runRHQServerInstaller();
+        Future<Integer> integerFuture = runRHQServerInstaller(ServerInstallerAction.UPGRADE);
         waitForRHQServerToInitialize(integerFuture);
 
         rValue = Math.max(rValue, integerFuture.get());
@@ -717,7 +744,7 @@ public class Upgrade extends AbstractInstall {
                     PicketBoxObfuscator.decode(value);
                 } else {
                     throw new Exception("Value not in a restricted format");
-                    }
+                }
             } catch (Exception ex) {
                 properties.put(restrictedProperty, RestrictedFormat.formatValue(PicketBoxObfuscator.encode(value)));
             }
@@ -726,6 +753,11 @@ public class Upgrade extends AbstractInstall {
 
     private List<String> validateOptions(CommandLine commandLine) {
         List<String> errors = new LinkedList<String>();
+
+        // When updating storage cluster schema everything else is ignored
+        if (commandLine.hasOption(STORAGE_SCHEMA_OPTION) || commandLine.hasOption(LIST_VERSIONS_OPTION)) {
+            return errors;
+        }
 
         if (!commandLine.hasOption(FROM_SERVER_DIR_OPTION)) {
             errors.add("Missing required option: " + FROM_SERVER_DIR_OPTION);
@@ -797,6 +829,48 @@ public class Upgrade extends AbstractInstall {
             + "Until the migration has run, that historic data is not available \n" + "in e.g. the charting views.\n\n"
             + "To run the data migration, just run rhq-data-migration.{sh|bat}\n"
             + "script located in the server bin folder.\n" + "================\n");
+    }
+
+    private int upgradeStorageSchema(CommandLine commandLine) {
+        // Only performed from a server install
+        if (!isServerInstalled()) {
+            log.info("This command can only be performed from an installed Server node. This is either a standalone Storage Node, or the Server has yet to be installed.");
+            return RHQControl.EXIT_CODE_OPERATION_FAILED;
+        }
+
+        int rValue = RHQControl.EXIT_CODE_OK;
+        try {
+            Future<Integer> integerFuture = runRHQServerInstaller(ServerInstallerAction.UPDATESTORAGESCHEMA);
+            rValue = Math.max(rValue, integerFuture.get());
+
+        } catch (Exception e) {
+            log.error("Updating the RHQ Storage Cluster schema failed: " + e.getMessage());
+            rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
+        }
+
+        return rValue;
+    }
+
+    private int listVersions(CommandLine commandLine) {
+        // Only performed from a server install
+        if (!isServerInstalled()) {
+            log.info("This command can only be performed from an installed Server node. This is either a standalone Storage Node, or the Server has yet to be installed.");
+            return RHQControl.EXIT_CODE_OPERATION_FAILED;
+        }
+
+        int rValue = RHQControl.EXIT_CODE_OK;
+        try {
+            Future<Integer> integerFuture = runRHQServerInstaller(ServerInstallerAction.LISTVERSIONS);
+            //waitForRHQServerToInitialize(integerFuture);
+
+            rValue = Math.max(rValue, integerFuture.get());
+
+        } catch (Exception e) {
+            log.error("Reporting topology status failed: " + e.getMessage());
+            rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
+        }
+
+        return rValue;
     }
 
 }

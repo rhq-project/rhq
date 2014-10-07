@@ -200,6 +200,12 @@ public class ConversionUtils {
         return;
     }
 
+    public static void convertConfigurationToManagedProperties(Map<String, ManagedProperty> managedProperties,
+        Configuration configuration, ResourceType resourceType, Map<String, PropertySimple> customProps) {
+        convertConfigurationToManagedProperties(managedProperties, configuration,
+            resourceType.getResourceConfigurationDefinition(), customProps);
+    }
+
     private static Configuration getDefaultPluginConfiguration(ResourceType resourceType) {
         Configuration defaultPluginConfig;
         if (DEFAULT_PLUGIN_CONFIG_CACHE.containsKey(resourceType.getName()))

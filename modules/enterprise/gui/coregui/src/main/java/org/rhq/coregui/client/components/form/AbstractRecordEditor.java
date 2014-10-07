@@ -50,9 +50,9 @@ import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -68,6 +68,11 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Enh
 
     private static final String FIELD_ID = "id";
     private static final String FIELD_NAME = "name";
+    /**
+     * this field can be send as {@link DSRequest} attribute to {@link #save(DSRequest)} method to non-null value to
+     * prevent refreshing all views in case {@link #save(DSRequest)} succeeds
+     */
+    protected static final String FIELD_NO_REFRESH = "!no-refresh";
 
     private static final int ID_NEW = 0;
 
@@ -247,7 +252,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Enh
         this.form.resetValues();
     }
 
-    protected void save(DSRequest requestProperties) {
+    protected void save(final DSRequest requestProperties) {
         if (!this.form.validate()) {
             Message message = new Message(MSG.widget_recordEditor_warn_validation(this.dataTypeName),
                 Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
@@ -295,7 +300,10 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Enh
                     }
 
                     message = new Message(conciseMessage, detailedMessage);
-                    CoreGUI.goToView(getListViewPath(), message, true);
+                    // only refresh if no-refresh attribute is missing
+                    boolean refresh = requestProperties.getAttribute(FIELD_NO_REFRESH) == null;
+                    CoreGUI.goToView(getListViewPath(), message, refresh);
+
                 } else if (response.getStatus() == RPCResponse.STATUS_VALIDATION_ERROR) {
                     String causes = null;
                     if (response.getErrors() != null && !response.getErrors().isEmpty()) {

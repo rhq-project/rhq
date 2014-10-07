@@ -1329,7 +1329,8 @@ public class ServerInstallUtil {
                 // set all new servers to operation_mode=INSTALLED
                 int i = 1;
                 if (db instanceof PostgresqlDatabaseType || db instanceof OracleDatabaseType) {
-                    stm = conn.prepareStatement("INSERT INTO rhq_server " //
+                    stm = conn
+                        .prepareStatement("INSERT INTO rhq_server " //
                             + " ( id, name, address, port, secure_port, ctime, mtime, operation_mode, compute_power, version ) " //
                             + "VALUES ( ?, ?, ?, ?, ?, ?, ?, 'INSTALLED', 1, ? )");
                     stm.setInt(i++, db.getNextSequenceValue(conn, "rhq_server", "id"));
@@ -2011,12 +2012,26 @@ public class ServerInstallUtil {
             conn = getDatabaseConnection(connectionUrl, username, password);
             db = DatabaseTypeFactory.getDatabaseType(conn);
 
-            if (db.checkColumnExists(conn, "rhq_server", "version")) {
+            // For two reasons we add the column here, as opposed to db-upgrade.xml. First, a SN upgrade may
+            // happen before a Server upgrade, so db-upgrade may not have yet run.  Second, we can limit the
+            // setting of the version to the row in question, db-upgrade would not know which row to set.
+            boolean columnExists = db.checkColumnExists(conn, "rhq_server", "version");
+            if (!columnExists) {
+                db.addColumn(conn, "RHQ_SERVER", "VERSION", "VARCHAR2", "255");
+                stm = conn.prepareStatement("UPDATE rhq_server SET version = ?");
+                stm.setString(1, "PRE-" + version);
+                stm.executeUpdate();
+                db.closeStatement(stm);
+            }
 
-                stm = conn.prepareStatement("UPDATE rhq_server SET version = ? WHERE name = ?");
-                stm.setString(1, version);
-                stm.setString(2, serverName);
-                result = (1 == stm.executeUpdate());
+            stm = conn.prepareStatement("UPDATE rhq_server SET version = ? WHERE name = ?");
+            stm.setString(1, version);
+            stm.setString(2, serverName);
+            result = (1 == stm.executeUpdate());
+
+            // set column not null after it's been set
+            if (!columnExists) {
+                db.alterColumn(conn, "RHQ_SERVER", "VERSION", "VARCHAR2", null, "255", false, false);
             }
         } catch (IllegalStateException e) {
             // column does not exist

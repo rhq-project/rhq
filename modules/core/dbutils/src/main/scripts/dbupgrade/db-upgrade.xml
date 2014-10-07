@@ -2569,14 +2569,6 @@
               <schema-addColumn table="RHQ_BUNDLE_DEPLOYMENT" column="DISCOVERY_DELAY" columnType="INTEGER" />
             </schemaSpec>
 
-            <schemaSpec version="2.163">
-              <schema-addColumn table="RHQ_SERVER"       column="VERSION" columnType="VARCHAR2" precision="255" />
-              <schema-addColumn table="RHQ_STORAGE_NODE" column="VERSION" columnType="VARCHAR2" precision="255" />
-              <schema-javaTask className="VersionStampUpgradeTask" />
-              <schema-alterColumn table="RHQ_SERVER" column="VERSION" nullable="false" />
-              <schema-alterColumn table="RHQ_STORAGE_NODE" column="VERSION" nullable="false" />
-            </schemaSpec>
-
         </dbupgrade>
     </target>
 </project>

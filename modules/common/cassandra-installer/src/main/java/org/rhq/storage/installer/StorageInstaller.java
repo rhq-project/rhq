@@ -1023,13 +1023,28 @@ public class StorageInstaller {
             conn = DbUtil.getConnection(connectionUrl, username, password);
             db = DatabaseTypeFactory.getDatabaseType(conn);
 
-            if (db.checkColumnExists(conn, "rhq_storage_node", "version")) {
-
-                stm = conn.prepareStatement("UPDATE rhq_storage_node SET version = ? WHERE address = ?");
-                stm.setString(1, version);
-                stm.setString(2, storageNodeAddress);
-                result = (1 == stm.executeUpdate());
+            // For two reasons we add the column here, as opposed to db-upgrade.xml. First, a SN upgrade may
+            // happen before a Server upgrade, so db-upgrade may not have yet run.  Second, we can limit the
+            // setting of the version to the row in question, db-upgrade would not know which row to set.
+            boolean columnExists = db.checkColumnExists(conn, "rhq_storage_node", "version");
+            if (!columnExists) {
+                db.addColumn(conn, "RHQ_STORAGE_NODE", "VERSION", "VARCHAR2", "255");
+                stm = conn.prepareStatement("UPDATE rhq_storage_node SET version = ?");
+                stm.setString(1, "PRE-" + version);
+                stm.executeUpdate();
+                db.closeStatement(stm);
             }
+
+            stm = conn.prepareStatement("UPDATE rhq_storage_node SET version = ? WHERE address = ?");
+            stm.setString(1, version);
+            stm.setString(2, storageNodeAddress);
+            result = (1 == stm.executeUpdate());
+
+            // set column not null after it's been set
+            if (!columnExists) {
+                db.alterColumn(conn, "RHQ_STORAGE_NODE", "VERSION", "VARCHAR2", null, "255", false, false);
+            }
+
         } catch (IllegalStateException e) {
             log.info("Unable to update storage node [" + storageNodeAddress + "] to version [" + version
                 + "], column does not exist.");

@@ -10,7 +10,7 @@
    </parent>
 
    <artifactId>rhq-remoting-client-api</artifactId>
-   <version>4.9.0.JON320GA-redhat-1</version>
+   <version>4.13.0-SNAPSHOT</version>
 
    <name>RHQ Enterprise Remote Client API</name>
    <description>a set of client APIs used to connect to an RHQ Server and invoke methods on it</description>

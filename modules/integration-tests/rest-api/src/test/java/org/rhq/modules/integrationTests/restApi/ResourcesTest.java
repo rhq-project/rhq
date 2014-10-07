@@ -24,6 +24,19 @@ package org.rhq.modules.integrationTests.restApi;
 
 
 
+import static com.jayway.restassured.RestAssured.expect;
+import static com.jayway.restassured.RestAssured.get;
+import static com.jayway.restassured.RestAssured.given;
+import static com.jayway.restassured.RestAssured.with;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.isOneOf;
+import static org.hamcrest.Matchers.iterableWithSize;
+import static org.hamcrest.Matchers.not;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,19 +59,6 @@ import org.junit.Test;
 import org.rhq.modules.integrationTests.restApi.d.Availability;
 import org.rhq.modules.integrationTests.restApi.d.CreateCBRRequest;
 import org.rhq.modules.integrationTests.restApi.d.Resource;
-
-import static com.jayway.restassured.RestAssured.expect;
-import static com.jayway.restassured.RestAssured.get;
-import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.RestAssured.with;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.Matchers.anyOf;
-import static org.hamcrest.Matchers.isOneOf;
-import static org.hamcrest.Matchers.iterableWithSize;
-import static org.hamcrest.Matchers.not;
 
 /**
  * Test the resources part
@@ -274,6 +274,26 @@ public class ResourcesTest extends AbstractBase {
             .statusCode(200)
         .when()
             .get("/resource");
+    }
+
+    @Test
+    public void testGetChildResourcesWithPaging() throws Exception {
+
+        Response r = given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("page", 1)
+            .queryParam("ps", 2)  // Unusually small to provoke having more than 1 page
+        .expect()
+            .statusCode(200)
+            .log().everything()
+           // .header("Link", allOf(containsString("page=2"), containsString("current")))
+            .header("Link", not(containsString("prev")))
+            .body("links.self", notNullValue())
+        .when()
+            .get("/resource/" + _platformId + "/children");
+        JsonPath jsonPath = r.jsonPath();
+        assert jsonPath.getList("").size() == 2;
     }
 
     @Test

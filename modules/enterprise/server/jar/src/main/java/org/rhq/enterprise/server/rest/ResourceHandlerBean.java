@@ -559,10 +559,12 @@ public class ResourceHandlerBean extends AbstractRestBean {
     @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
     public Response getChildren(
             @ApiParam("Id of the resource to get children") @PathParam("id") int id,
+            @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
+            @ApiParam("Page for paging, 0-based") @QueryParam("page") @DefaultValue("0") Integer page,
             @Context HttpHeaders headers,
             @Context UriInfo uriInfo) {
 
-        PageControl pc = new PageControl();
+        PageControl pc = new PageControl(page,pageSize);
         Resource parent;
         parent = fetchResource(id);
         List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller, parent, InventoryStatus.COMMITTED,

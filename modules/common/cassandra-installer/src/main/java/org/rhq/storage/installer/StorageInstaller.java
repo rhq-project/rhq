@@ -38,7 +38,6 @@ import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -80,7 +79,6 @@ import org.rhq.core.db.DbUtil;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.core.util.stream.StreamUtil;
 
@@ -278,7 +276,11 @@ public class StorageInstaller {
         } else {
             dbProperties = serverPropertiesUpdater.loadExistingProperties();
         }
-        stampStorageNodeVersion(dbProperties);
+
+        // Note, we don't have any UNDO logic for rolling back the version stamp on a failure, but it's OK
+        // to re-stamp with the same version again, so it should be OK. Also, in most cases after a failed
+        // install or upgrade the DB will be recreated or restored, respectively.
+        stampStorageNodeVersion(dbProperties, installerInfo.hostname);
 
         // start node (and install windows service) if necessary
         File binDir = null;
@@ -870,20 +872,20 @@ public class StorageInstaller {
         return false;
     }
 
-    private void replaceFile(File oldFile, File newFile) throws IOException {
-        log.info("Copying " + oldFile + " to " + newFile);
-        if (!oldFile.exists()) {
-            log.warn(oldFile + " does not exist. " + newFile.getName() + " will be created.");
-        } else {
-            newFile.delete();
-            try {
-                FileUtil.copyFile(oldFile, newFile);
-            } catch (IOException e) {
-                log.error("There was an error while copying " + oldFile + " to " + " " + newFile, e);
-                throw e;
-            }
-        }
-    }
+    //    private void replaceFile(File oldFile, File newFile) throws IOException {
+    //        log.info("Copying " + oldFile + " to " + newFile);
+    //        if (!oldFile.exists()) {
+    //            log.warn(oldFile + " does not exist. " + newFile.getName() + " will be created.");
+    //        } else {
+    //            newFile.delete();
+    //            try {
+    //                FileUtil.copyFile(oldFile, newFile);
+    //            } catch (IOException e) {
+    //                log.error("There was an error while copying " + oldFile + " to " + " " + newFile, e);
+    //                throw e;
+    //            }
+    //        }
+    //    }
 
     private int parseJmxPortFromCassandrEnv(File cassandraEnvFile) {
         Integer port = null;
@@ -965,16 +967,16 @@ public class StorageInstaller {
         }
     }
 
-    /**
-     * @return The parent directory of the server
-     */
-    private File getInstallationDir() {
-        return serverBasedir.getParentFile();
-    }
+    //    /**
+    //     * @return The parent directory of the server
+    //     */
+    //    private File getInstallationDir() {
+    //        return serverBasedir.getParentFile();
+    //    }
 
-    private File getDefaultBaseDataDir() {
-        return new File(getInstallationDir(), "rhq-data");
-    }
+    //    private File getDefaultBaseDataDir() {
+    //        return new File(getInstallationDir(), "rhq-data");
+    //    }
 
     private String getDefaultCommitLogDir() {
         return DEFAULT_COMMIT_LOG_DIR;
@@ -988,16 +990,13 @@ public class StorageInstaller {
         return DEFAULT_SAVED_CACHES_DIR;
     }
 
-    private static boolean stampStorageNodeVersion(Properties serverProperties) throws Exception {
-        final String dbUrl = serverProperties.getProperty("rhq.server.database.connection-url");
-        final String dbUsername = serverProperties.getProperty("rhq.server.database.user-name");
-        String obfuscatedDbPassword = serverProperties.getProperty("rhq.server.database.password");
+    private static void stampStorageNodeVersion(Properties dbProperties, String storageNodeAddress) throws Exception {
+        final String dbUrl = dbProperties.getProperty("rhq.server.database.connection-url");
+        final String dbUsername = dbProperties.getProperty("rhq.server.database.user-name");
+        String obfuscatedDbPassword = dbProperties.getProperty("rhq.server.database.password");
         String clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
 
-        boolean result = updateStorageNodeVersion(dbUrl, dbUsername, clearTextDbPassword,
-            serverProperties.getProperty("rhq.storage.nodes"));
-
-        return result;
+        updateStorageNodeVersion(dbUrl, dbUsername, clearTextDbPassword, storageNodeAddress);
     }
 
     /**
@@ -1007,11 +1006,10 @@ public class StorageInstaller {
      * @param username
      * @param password
      * @param storageNodeAddress
-     * @return true if updated, false otherwise
      *
-     * @throws Exception if failed to communicate with the database
+     * @throws Exception if failed to communicate with the database or failed to stamp version
      */
-    private static boolean updateStorageNodeVersion(String connectionUrl, String username, String password,
+    private static void updateStorageNodeVersion(String connectionUrl, String username, String password,
         String storageNodeAddress) throws Exception {
         DatabaseType db = null;
         Connection conn = null;
@@ -1033,31 +1031,25 @@ public class StorageInstaller {
                 stm.setString(1, "PRE-" + version);
                 stm.executeUpdate();
                 db.closeStatement(stm);
+                // set column not null after it's been set
+                db.alterColumn(conn, "RHQ_STORAGE_NODE", "VERSION", "VARCHAR2", null, "255", false, false);
             }
 
             stm = conn.prepareStatement("UPDATE rhq_storage_node SET version = ? WHERE address = ?");
             stm.setString(1, version);
             stm.setString(2, storageNodeAddress);
-            result = (1 == stm.executeUpdate());
-
-            // set column not null after it's been set
-            if (!columnExists) {
-                db.alterColumn(conn, "RHQ_STORAGE_NODE", "VERSION", "VARCHAR2", null, "255", false, false);
+            int rowsUpdated = stm.executeUpdate();
+            if (1 != rowsUpdated) {
+                throw new IllegalStateException("Expected [1] StorageNode update but updated [" + rowsUpdated + "].");
             }
-
-        } catch (IllegalStateException e) {
-            log.info("Unable to update storage node [" + storageNodeAddress + "] to version [" + version
-                + "], column does not exist.");
-        } catch (SQLException e) {
-            log.info("Unable to update storage node [" + storageNodeAddress + "] to version [" + version + "] "
-                + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to update Storage Node [" + storageNodeAddress + "] to version ["
+                + version + "]", e);
         } finally {
             if (null != db) {
                 db.closeJDBCObjects(conn, stm, null);
             }
         }
-
-        return result;
     }
 
     public void printUsage() {
@@ -1094,7 +1086,7 @@ public class StorageInstaller {
 
     public static void main(String[] args) throws Exception {
         StorageInstaller installer = new StorageInstaller();
-        installer.log.info("Running RHQ Storage Node installer...");
+        StorageInstaller.log.info("Running RHQ Storage Node installer...");
         try {
             CommandLineParser parser = new PosixParser();
             CommandLine cmdLine = parser.parse(installer.getOptions(), args);

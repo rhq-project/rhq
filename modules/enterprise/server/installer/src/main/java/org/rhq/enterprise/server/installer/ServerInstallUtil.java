@@ -1997,11 +1997,10 @@ public class ServerInstallUtil {
      * @param username
      * @param password
      * @param serverName
-     * @return true if updated, false otherwise
      *
-     * @throws Exception if failed to communicate with the database
+     * @throws Exception if failed to communicate with the database or could not stamp version
      */
-    public static boolean updateServerVersion(String connectionUrl, String username, String password, String serverName)
+    public static void updateServerVersion(String connectionUrl, String username, String password, String serverName)
         throws Exception {
         DatabaseType db = null;
         Connection conn = null;
@@ -2022,28 +2021,24 @@ public class ServerInstallUtil {
                 stm.setString(1, "PRE-" + version);
                 stm.executeUpdate();
                 db.closeStatement(stm);
+                // set column not null after it's been set
+                db.alterColumn(conn, "RHQ_SERVER", "VERSION", "VARCHAR2", null, "255", false, false);
             }
 
             stm = conn.prepareStatement("UPDATE rhq_server SET version = ? WHERE name = ?");
             stm.setString(1, version);
             stm.setString(2, serverName);
-            result = (1 == stm.executeUpdate());
-
-            // set column not null after it's been set
-            if (!columnExists) {
-                db.alterColumn(conn, "RHQ_SERVER", "VERSION", "VARCHAR2", null, "255", false, false);
+            int rowsUpdated = stm.executeUpdate();
+            if (1 != rowsUpdated) {
+                throw new IllegalStateException("Expected [1] Server update but updated [" + rowsUpdated + "].");
             }
-        } catch (IllegalStateException e) {
-            // column does not exist
-        } catch (SQLException e) {
-            LOG.info("Unable to update server [" + serverName + "] to version [" + version + "] " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to update Server [" + serverName + "] to version [" + version + "]", e);
         } finally {
             if (null != db) {
                 db.closeJDBCObjects(conn, stm, null);
             }
         }
-
-        return result;
     }
 
     /**

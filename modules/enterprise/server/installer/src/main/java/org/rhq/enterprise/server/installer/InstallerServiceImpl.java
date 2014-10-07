@@ -212,6 +212,7 @@ public class InstallerServiceImpl implements InstallerService {
             info.append("  ==> The Storage Cluster version is old and requires an update!\n");
             info.append("  ==> 1) Complete Server and Storage Node upgrades.\n");
             info.append("  ==> 2) Start all Storage Nodes to prepare them for a schema update.\n");
+            info.append("  ==>    Use 'rhqctl start --storage'.  Servers and Agents should not be running.\n");
             info.append("  ==> 3) Update the Storage Cluster via 'rhqctl upgrade --storage-schema.'");
         } catch (Exception e) {
             info.append("  ==> Failed to check Storage Cluster Version: ");
@@ -456,6 +457,9 @@ public class InstallerServiceImpl implements InstallerService {
         deployAppSubsystem();
 
         // stamp the Server entry with the installed/upgraded version
+        // Note, we don't have any UNDO logic for rolling back the version stamp on a failure, but it's OK
+        // to re-stamp with the same version again, so it should be OK. Also, in most cases after a failed
+        // install or upgrade the DB will be recreated or restored, respectively.
         stampServerVersion(serverDetails);
 
         // write a file marker so that rhqctl can easily determine that the server has been
@@ -1451,7 +1455,11 @@ public class InstallerServiceImpl implements InstallerService {
         markerFile.createNewFile();
     }
 
-    private boolean stampServerVersion(ServerDetails serverDetails) throws Exception {
+    /**
+     * @param serverDetails must include db connection information and the server name
+     * @throws Exception on any failure to stamp the version
+     */
+    private void stampServerVersion(ServerDetails serverDetails) throws Exception {
         HashMap<String, String> serverProperties = getServerProperties();
         final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
         final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
@@ -1462,10 +1470,7 @@ public class InstallerServiceImpl implements InstallerService {
             serverDetails = getServerDetailsFromPropertiesOnly(serverProperties);
         }
 
-        boolean result = ServerInstallUtil.updateServerVersion(dbUrl, dbUsername, clearTextDbPassword,
-            serverDetails.getName());
-
-        return result;
+        ServerInstallUtil.updateServerVersion(dbUrl, dbUsername, clearTextDbPassword, serverDetails.getName());
     }
 
 }

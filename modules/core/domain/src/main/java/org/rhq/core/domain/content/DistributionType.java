@@ -116,7 +116,7 @@ public class DistributionType implements Serializable {
             return true;
         }
 
-        if ((obj == null) || (!(obj instanceof RepoGroupType))) {
+        if ((obj == null) || (!(obj instanceof DistributionType))) {
             return false;
         }
 

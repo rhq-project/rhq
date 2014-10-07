@@ -163,6 +163,7 @@
     <jboss-system.version>4.2.3.GA</jboss-system.version>
     <jboss-vfs.version>3.1.0.Final</jboss-vfs.version>
     <jbosssx.version>4.2.3.GA</jbosssx.version>
+    <jgroups.version>3.2.13.Final</jgroups.version>
     <jbpm.version>3.1.1</jbpm.version>
     <jline.version>0.9.94</jline.version>
     <jna.version>3.2.5</jna.version>

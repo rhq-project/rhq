@@ -452,6 +452,9 @@ public abstract class AbstractOperationScheduleDetailsView extends
         FormItem notesItem = this.notesForm.getField(Field.DESCRIPTION);
         form.setValue(Field.DESCRIPTION, (String) notesItem.getValue());
 
+        // force NO-REFESH once form is saved
+        requestProperties.setAttribute(FIELD_NO_REFRESH, true);
+
         super.save(requestProperties);
     }
 

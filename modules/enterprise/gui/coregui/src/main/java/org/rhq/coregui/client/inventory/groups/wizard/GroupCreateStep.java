@@ -107,7 +107,8 @@ public class GroupCreateStep extends AbstractWizardStep {
                             } else {
                                 canContinue = true;
                                 CoreGUI.getMessageCenter().notify(
-                                    new Message("", Message.Severity.Blank, EnumSet.of(Message.Option.Transient)));
+                                    new Message(MSG.view_selector_available(MSG.common_title_name()),
+                                        Message.Severity.Blank, EnumSet.of(Message.Option.Transient)));
                             }
                         }
                     });

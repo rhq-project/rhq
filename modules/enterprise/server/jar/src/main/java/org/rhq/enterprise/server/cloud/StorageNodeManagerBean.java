@@ -788,13 +788,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void runClusterMaintenance(Subject subject) {
-        List<StorageNode> storageNodes = storageNodeManager.getClusterNodes();
-
-        if (storageNodes.size() == 1) {
-            log.info("Skipping scheduled repair since this is a single-node cluster");
-        } else {
-            storageNodeOperationsHandler.runRepair(subjectManager.getOverlord(), storageNodes);
-        }
+        storageNodeOperationsHandler.runRepair(subjectManager.getOverlord());
     }
 
     @Override

@@ -301,18 +301,20 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<BaseComponent<?>> {
         if (ejb3StatisticsEnalbed != null && ejb3StatisticsEnalbed.booleanValue()) {
             return;
         }
-        Address ejbAddress = new Address(getServerComponent().getServerAddress());
+        BaseServerComponent server = getServerComponent();
+        Address ejbAddress = new Address(server.getServerAddress());
         ejbAddress.add("subsystem", "ejb3");
         try {
             ejb3StatisticsEnalbed = readAttribute(ejbAddress, "enable-statistics", Boolean.class);
-            if (!ejb3StatisticsEnalbed) {
+            if (!Boolean.TRUE.equals(ejb3StatisticsEnalbed)) {
                 getLog().debug("Enabling global EJB3 statistics");
                 WriteAttribute op = new WriteAttribute(ejbAddress, "enable-statistics", true);
                 Result result = getASConnection().execute(op);
                 if (result.isSuccess()) {
                     getLog()
                         .info(
-                            "Global EJB3 statistics is now enabled, because there is a request to collect EJB Calltime metrics.");
+                            server.context.getResourceDetails()
+                                + " Global EJB3 statistics is now enabled, because there is a request to collect EJB Calltime metrics.");
                 } else {
                     getLog().error("Failed to enable EJB3 statistics : " + result.getFailureDescription());
                 }

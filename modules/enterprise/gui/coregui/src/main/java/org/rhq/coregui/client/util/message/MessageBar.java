@@ -53,6 +53,7 @@ import org.rhq.coregui.client.util.message.Message.Severity;
  */
 public class MessageBar extends Canvas implements MessageCenter.MessageListener, Enhanced {
 
+    public static final int Z_INDEX = 999998;
     private static final int AUTO_HIDE_DELAY_MILLIS = 30000;
     private static final String NON_BREAKING_SPACE = "&nbsp;";
 
@@ -65,7 +66,7 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
     public MessageBar() {
         super();
         setOverflow(Overflow.VISIBLE);
-        setZIndex(300000);
+        setZIndex(Z_INDEX);
         setHeight(1);
         setWidth(1);
         content = new HTMLFlow();
@@ -190,18 +191,18 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
         StringBuilder sb = new StringBuilder();
         switch (severity) {
             case Blank: {
-            sb.append("<div class='alert alert-success' style='float:right;'>");
+            sb.append("<div class='alert alert-success' style='float:right; z-index: " + Z_INDEX + ";'>");
                 sb.append("<span class='pficon pficon-ok'></span>");
                 break;
             }
             case Info: {
-            sb.append("<div class='alert alert-info' style='float:right;'>");
+            sb.append("<div class='alert alert-info' style='float:right; z-index: " + Z_INDEX + ";'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon pficon-info'></span>");
                 break;
             }
             case Warning: {
-            sb.append("<div class='alert alert-warning' style='float:right;'>");
+            sb.append("<div class='alert alert-warning' style='float:right; z-index: " + Z_INDEX + ";'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon-layered'>");
                 sb.append("  <span class='pficon pficon-warning-triangle'></span>");
@@ -209,17 +210,9 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
                 sb.append("</span>");
                 break;
             }
+            case Fatal:
             case Error: {
-            sb.append("<div class='alert alert-danger' style='float:right;'>");
-                sb.append(closeBtn);
-                sb.append("<span class='pficon-layered'>");
-                sb.append("  <span class='pficon pficon-error-octagon'></span>");
-                sb.append("  <span class='pficon pficon-error-exclamation'></span>");
-                sb.append("</span>");
-                break;
-            }
-            case Fatal: {
-                sb.append("<div class='alert alert-danger'>");
+            sb.append("<div class='alert alert-danger' style='float:right; z-index: " + Z_INDEX + ";'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon-layered'>");
                 sb.append("  <span class='pficon pficon-error-octagon'></span>");
@@ -228,7 +221,7 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
                 break;
             }
             default: {
-                sb.append("<div class='alert alert-info'>");
+                sb.append("<div class='alert alert-info' style='z-index: " + Z_INDEX + ";'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon pficon-info'></span>");
             }
@@ -258,7 +251,7 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
         content.setLeft(left);
         content.setWidth((ulWidth - left - 10) + "px");
         content.setTop("34px");
-        setZIndex(999999);
+        setZIndex(999998);
         content.redraw();
         content.show();
     }

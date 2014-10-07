@@ -1060,8 +1060,6 @@ public class InstallerServiceImpl implements InstallerService {
 
         String highAvailabilityName = serverProperties.get(ServerProperties.PROP_HIGH_AVAILABILITY_NAME);
         String publicEndpoint = serverProperties.get(ServerProperties.PROP_AUTOINSTALL_PUBLIC_ADDR);
-        int port;
-        int securePort;
 
         if (ServerInstallUtil.isEmpty(highAvailabilityName)) {
             try {
@@ -1100,7 +1098,28 @@ public class InstallerServiceImpl implements InstallerService {
             }
         }
 
-        // define the public endpoint ports.
+        int port = -1;
+        int securePort = -1;
+
+        // see if the public endpoint port/securePort was explicitly defined
+        String publicPort = serverProperties.get(ServerProperties.PROP_AUTOINSTALL_PUBLIC_PORT);
+        String publicSecurePort = serverProperties.get(ServerProperties.PROP_AUTOINSTALL_PUBLIC_SECURE_PORT);
+        if (!ServerInstallUtil.isEmpty(publicPort)) {
+            try {
+                port = Integer.parseInt(publicPort);
+            } catch (Exception e) {
+                log("Invalid public endpoint port specified - will fallback to a default value", e);
+            }
+        }
+        if (!ServerInstallUtil.isEmpty(publicSecurePort)) {
+            try {
+                securePort = Integer.parseInt(publicSecurePort);
+            } catch (Exception e) {
+                log("Invalid public endpoint secure port specified - will fallback to a default value", e);
+            }
+        }
+
+        // define the public endpoint ports if they aren't explicitly defined for us.
         // note that if using a different transport other than (ssl)servlet, we'll
         // take the connector's bind port and use it for both ports. This is to support a special deployment
         // use-case - 99% of the time, the agents will go through the web/tomcat connector and thus we'll use
@@ -1112,21 +1131,29 @@ public class InstallerServiceImpl implements InstallerService {
             if (ServerInstallUtil.isEmpty(connectorBindPort) || "0".equals(connectorBindPort.trim())) {
                 throw new Exception("Using non-servlet transport [" + connectorTransport + "] but didn't define a port");
             }
-            port = Integer.parseInt(connectorBindPort);
-            securePort = Integer.parseInt(connectorBindPort);
-        } else {
-            // this is the typical use-case - the transport is probably (ssl)servlet so use the web http/https ports
-            try {
-                port = Integer.parseInt(serverProperties.get(ServerProperties.PROP_WEB_HTTP_PORT));
-            } catch (Exception e) {
-                log("Could not determine port, will use default: " + e);
-                port = ServerDetails.DEFAULT_ENDPOINT_PORT;
+            if (port == -1) {
+                port = Integer.parseInt(connectorBindPort);
             }
-            try {
-                securePort = Integer.parseInt(serverProperties.get(ServerProperties.PROP_WEB_HTTPS_PORT));
-            } catch (Exception e) {
-                log("Could not determine secure port, will use default: " + e);
-                securePort = ServerDetails.DEFAULT_ENDPOINT_SECURE_PORT;
+            if (securePort == -1) {
+                securePort = Integer.parseInt(connectorBindPort);
+            }
+        } else {
+            if (port == -1) {
+                // this is the typical use-case - the transport is probably (ssl)servlet so use the web http/https ports
+                try {
+                    port = Integer.parseInt(serverProperties.get(ServerProperties.PROP_WEB_HTTP_PORT));
+                } catch (Exception e) {
+                    log("Could not determine port, will use default: " + e);
+                    port = ServerDetails.DEFAULT_ENDPOINT_PORT;
+                }
+            }
+            if (securePort == -1) {
+                try {
+                    securePort = Integer.parseInt(serverProperties.get(ServerProperties.PROP_WEB_HTTPS_PORT));
+                } catch (Exception e) {
+                    log("Could not determine secure port, will use default: " + e);
+                    securePort = ServerDetails.DEFAULT_ENDPOINT_SECURE_PORT;
+                }
             }
         }
 

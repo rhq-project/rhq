@@ -886,12 +886,21 @@ public abstract class AbstractInstall extends ControlCommand {
             }
         }
 
-        // the public endpoint will override anything that was done above
+        // the public endpoint settings will override anything that was done above
         String publicEndpoint = serverProps.getProperty("rhq.autoinstall.public-endpoint-address");
         if (publicEndpoint != null && publicEndpoint.trim().length() > 0) {
             endpointData.setProperty(PREF_RHQ_AGENT_SERVER_BINDADDRESS, publicEndpoint.trim());
         }
+        String publicPort;
+        if (transport.contains("ssl")) {
+            publicPort = serverProps.getProperty("rhq.autoinstall.public-endpoint-secure-port");
+        } else {
+            publicPort = serverProps.getProperty("rhq.autoinstall.public-endpoint-port");
+        }
 
+        if (publicPort != null && publicPort.trim().length() > 0) {
+            endpointData.setProperty(PREF_RHQ_AGENT_SERVER_BINDPORT, publicPort.trim());
+        }
         return endpointData;
     }
 

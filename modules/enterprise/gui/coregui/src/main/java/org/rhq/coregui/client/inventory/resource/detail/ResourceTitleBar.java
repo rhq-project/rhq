@@ -478,7 +478,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
             this.availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(resource
                 .getCurrentAvailability().getAvailabilityType()));
 
-            badge.setSrc(ImageManager.getResourceTypeIcon(this.resource.getResourceType().getCategory()));
+            badge.setSrc(ImageManager.getResourceIcon(this.resource.getResourceType().getCategory(), getResource().getAvailability()));
 
             markForRedraw();
         }

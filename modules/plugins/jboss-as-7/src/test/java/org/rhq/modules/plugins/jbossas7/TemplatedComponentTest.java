@@ -209,8 +209,11 @@ public class TemplatedComponentTest {
         ConfigurationDefinition mockConfigurationDefinition = mock(ConfigurationDefinition.class);
         when(mockResourceType.getResourceConfigurationDefinition()).thenReturn(mockConfigurationDefinition);
 
+        ConfigurationDefinition mockConfigurationDefinitionCopy = mock(ConfigurationDefinition.class);
+        when(mockConfigurationDefinition.copy()).thenReturn(mockConfigurationDefinitionCopy);
+
         ConfigurationTemplate mockConfigurationTemplate = mock(ConfigurationTemplate.class);
-        when(mockConfigurationDefinition.getDefaultTemplate()).thenReturn(mockConfigurationTemplate);
+        when(mockConfigurationDefinitionCopy.getDefaultTemplate()).thenReturn(mockConfigurationTemplate);
 
         Configuration mockConfiguration = mock(Configuration.class);
         when(mockConfigurationTemplate.getConfiguration()).thenReturn(mockConfiguration);
@@ -219,7 +222,7 @@ public class TemplatedComponentTest {
         when(mockConfiguration.get(eq("__type"))).thenReturn(mockProperty);
 
         Map<String, PropertyDefinition> mockMap = (Map<String, PropertyDefinition>) mock(Map.class);
-        when(mockConfigurationDefinition.getPropertyDefinitions()).thenReturn(mockMap);
+        when(mockConfigurationDefinitionCopy.getPropertyDefinitions()).thenReturn(mockMap);
 
         ConfigurationUpdateReport mockReport = mock(ConfigurationUpdateReport.class);
         when(mockReport.getConfiguration()).thenReturn(mockConfiguration);
@@ -266,8 +269,11 @@ public class TemplatedComponentTest {
         ConfigurationDefinition mockConfigurationDefinition = mock(ConfigurationDefinition.class);
         when(mockResourceType.getResourceConfigurationDefinition()).thenReturn(mockConfigurationDefinition);
 
+        ConfigurationDefinition mockConfigurationDefinitionCopy = mock(ConfigurationDefinition.class);
+        when(mockConfigurationDefinition.copy()).thenReturn(mockConfigurationDefinitionCopy);
+
         ConfigurationTemplate mockConfigurationTemplate = mock(ConfigurationTemplate.class);
-        when(mockConfigurationDefinition.getDefaultTemplate()).thenReturn(mockConfigurationTemplate);
+        when(mockConfigurationDefinitionCopy.getDefaultTemplate()).thenReturn(mockConfigurationTemplate);
 
         Configuration mockConfiguration = mock(Configuration.class);
         when(mockConfigurationTemplate.getConfiguration()).thenReturn(mockConfiguration);
@@ -277,7 +283,7 @@ public class TemplatedComponentTest {
         when(mockConfiguration.get(eq("__name"))).thenReturn(mockProperty);
 
         Map<String, PropertyDefinition> mockMap = (Map<String, PropertyDefinition>) mock(Map.class);
-        when(mockConfigurationDefinition.getPropertyDefinitions()).thenReturn(mockMap);
+        when(mockConfigurationDefinitionCopy.getPropertyDefinitions()).thenReturn(mockMap);
 
         ConfigurationUpdateReport mockReport = mock(ConfigurationUpdateReport.class);
         when(mockReport.getConfiguration()).thenReturn(mockConfiguration);

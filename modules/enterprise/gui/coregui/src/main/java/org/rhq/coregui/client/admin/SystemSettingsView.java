@@ -223,6 +223,25 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.view_admin_systemSettings_savedSettings(), Message.Severity.Info));
+                    //Now check to see if LDAP is enabled but just not available
+                    GWTServiceLookup.getLdapService().checkLdapServerRequiresAttention(new AsyncCallback<Boolean>() {
+
+                        @Override
+                        public void onSuccess(Boolean requiresAttention) {
+                            if (requiresAttention) {
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message(MSG.view_admin_systemSettings_ldapNeedsAttention(),
+                                        Message.Severity.Warning));
+                            }//otherwise nothing to note.
+                        }
+
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_admin_systemSettings_ldapDownCheckFail(),
+                                caught);
+                        }
+
+                    });
                 }
 
                 @Override

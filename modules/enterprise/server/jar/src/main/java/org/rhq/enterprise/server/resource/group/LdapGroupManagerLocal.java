@@ -56,4 +56,6 @@ public interface LdapGroupManagerLocal {
     Set<String> findAvailableGroupsFor(String userName);
 
     Map<String, String> findLdapUserDetails(String userName);
+
+    Boolean ldapServerRequiresAttention();
 }

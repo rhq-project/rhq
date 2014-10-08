@@ -54,23 +54,29 @@ public interface LdapGWTService extends RemoteService {
     /** In setting the LDAP groups for this role, all previous group
      *  assignments for this role are removed before most up to date
      *  list of valid LDAP groups is assigned.
-     * 
+     *
      * @param roleId
      * @param groupIds
      */
     void setLdapGroupsForRole(int roleId, List<String> groupIds) throws RuntimeException;
 
     /** Finds ldap groups already assigned to this role.
-     * 
+     *
      * @param currentRoleId
      * @return
      */
     PageList<LdapGroup> findLdapGroupsAssignedToRole(int currentRoleId) throws RuntimeException;
 
     /** Boolean response about whether ldap configured..
-     * 
+     *
      * @return
      */
     Boolean checkLdapConfiguredStatus() throws RuntimeException;
+
+    /** Boolean response about whether ldap server requires attention|unavailable..
+     *
+     * @return
+     */
+    Boolean checkLdapServerRequiresAttention() throws RuntimeException;
 
 }

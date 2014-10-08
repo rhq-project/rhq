@@ -19,9 +19,11 @@
 
 package org.rhq.plugins.postgres;
 
+import java.lang.reflect.Field;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.util.Enumeration;
+import java.util.Timer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -51,7 +53,35 @@ public class PostgresPluginLifecycleListener implements PluginLifecycleListener 
             }
         }
 
+        try {
+            // additionally, we need to work around a known classloader leak
+            // in the postgres driver (see https://github.com/pgjdbc/pgjdbc/pull/188 and
+            // https://github.com/pgjdbc/pgjdbc/pull/197)
+            cleanupDriverTimerThread();
+        } catch (Exception e) {
+            log.warn("Failed to clean up Postgresql JDBC driver classloader leak. " +
+                "If this warning appears multiple times during the lifetime of the agent, there's possibility of " +
+                "permgen depletion.", e);
+        }
+
         log.debug(this.getClass().getSimpleName() + " completed shutdown.");
-        return;
+    }
+
+    private void cleanupDriverTimerThread() throws ClassNotFoundException {
+        Class<?> driverClass = Class.forName("org.postgresql.Driver");
+        try {
+            Field cancelTimerField = driverClass.getDeclaredField("cancelTimer");
+            cancelTimerField.setAccessible(true);
+            Timer cancelTimer = (Timer) cancelTimerField.get(null);
+            if (cancelTimer != null) {
+                cancelTimer.cancel();
+            }
+        } catch (NoSuchFieldException e) {
+            // great, so the "cancelTimer" field of the driver class has disappeared - maybe we're using a new version
+            // of the driver which fixed the leak?
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                "Failed to shutdown the leaking statement cancellation timer of Postgresql JDBC driver.", e);
+        }
     }
 }

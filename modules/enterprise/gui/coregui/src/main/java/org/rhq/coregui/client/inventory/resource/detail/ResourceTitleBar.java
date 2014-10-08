@@ -78,7 +78,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
     private static final String COLLAPSED_ICON = "[SKIN]/ListGrid/row_collapsed.png";
     private static final String COLLAPSED_TOOLTIP = MSG.view_portlet_inventory_tooltip_expand();
     private static final String EXPANDED_TOOLTIP = MSG.view_portlet_inventory_tooltip_collapse();
-    private static final String PLUGIN_ERRORS_ICON = "[SKIN]/Dialog/warn.png";
+    private static final String PLUGIN_ERRORS_ICON = "subsystems/inventory/Resource_warn.png";
     //private static final String LOADING_ICON = "[SKIN]/loading.gif";
 
     private Img expandCollapseArrow;

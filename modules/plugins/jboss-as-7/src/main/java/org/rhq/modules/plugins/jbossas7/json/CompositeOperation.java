@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,13 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.json;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -31,35 +31,30 @@ import org.codehaus.jackson.annotate.JsonProperty;
  */
 public class CompositeOperation extends Operation {
 
-
-
     @JsonProperty
     List<Operation> steps = new ArrayList<Operation>();
 
-    OperationHeaders operationHeaders;
-
     public CompositeOperation(List<Operation> steps) {
-        super("composite",new Address());
+        super("composite", new Address());
         this.steps = steps;
     }
 
     public CompositeOperation() {
-        super("composite",new Address());
+        super("composite", new Address());
     }
 
     public void addStep(Operation step) {
         steps.add(step);
     }
 
+    /**
+     * @deprecated as of 4.13. Not used
+     */
+    @Deprecated
     public void setOperationHeaders(OperationHeaders headers) {
-        operationHeaders = headers;
     }
 
     private class OperationHeaders {
-        @JsonProperty("in-series")
-        List<PROPERTY_VALUE>inSeries = Collections.emptyList();
-        @JsonProperty("rollback-across-groups")
-        boolean rollbackAcrossGroups;
     }
 
     public int numberOfSteps() {
@@ -72,6 +67,6 @@ public class CompositeOperation extends Operation {
 
     @Override
     public String toString() {
-        return "CompositeOperation{steps=" + steps.size()+ "}";
+        return "CompositeOperation{steps=" + steps.size() + "}";
     }
 }

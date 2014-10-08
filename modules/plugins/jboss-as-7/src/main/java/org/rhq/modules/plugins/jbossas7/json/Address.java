@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,14 +13,16 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.json;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
@@ -29,6 +31,8 @@ import org.codehaus.jackson.annotate.JsonIgnore;
  * @author Heiko W. Rupp
  */
 public class Address {
+    private static final Pattern PATH_PATTERN = Pattern.compile("[,]+");
+    private static final Pattern SEGMENT_PATTERN = Pattern.compile("=");
 
     /** List of individual path components */
     List<PROPERTY_VALUE> path;
@@ -82,10 +86,10 @@ public class Address {
             path = path.substring(1);
         }
         if (path.endsWith("/")) {
-            path = path.substring(0,path.length()-1);
+            path = path.substring(0, path.length() - 1);
         }
         // Now split on comma boundaries
-        String[] components = path.split("[,]+");
+        String[] components = PATH_PATTERN.split(path);
         for (String component : components) {
             String tmp = component.trim();
             // Split each segment on equals sign into key and value
@@ -103,7 +107,7 @@ public class Address {
      * @return A path
      */
     private PROPERTY_VALUE pathFromSegment(String segment) {
-        String[] pair = segment.split("=");
+        String[] pair = SEGMENT_PATTERN.split(segment);
         return new PROPERTY_VALUE(pair[0], pair[1]);
     }
 

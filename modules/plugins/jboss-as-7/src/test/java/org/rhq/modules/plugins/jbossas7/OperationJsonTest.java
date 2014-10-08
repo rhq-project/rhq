@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,17 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotSame;
+import static org.testng.Assert.assertSame;
+import static org.testng.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.List;
@@ -51,14 +58,13 @@ public class OperationJsonTest {
 
         String result = mapper.writeValueAsString(operation);
         Operation op = mapper.readValue(result, Operation.class);
-        assert op != null;
-        assert op.getOperation() != null : "op.operation was null!";
-        assert op.getOperation().equals(operation.getOperation()) : "Operation is " + op.getOperation();
-        assert op.getName() != null : "op.getName is null";
-        assert op.getName().equals("socket-binding") : "attribute name  is " + op.getName()
-            + " and not 'socket-binding'";
-        assert op.getValue().equals("jndi") : "attribute value  is " + op.getValue();
-        assert op.getAddress().size() == 2 : "Address did not contain 2 parts, but " + op.getAddress().size();
+        assertNotSame(op, null);
+        assertNotSame(op.getOperation(), null, "op.operation was null!");
+        assertEquals(op.getOperation(), operation.getOperation(), "Operation is " + op.getOperation());
+        assertNotSame(op.getName(), null, "op.getName is null");
+        assertEquals("socket-binding", op.getName(), "attribute name  is " + op.getName() + " and not 'socket-binding'");
+        assertEquals(op.getValue(), "jndi", "attribute value  is " + op.getValue());
+        assertSame(op.getAddress().size(), 2, "Address did not contain 2 parts, but " + op.getAddress().size());
 
     }
 
@@ -69,8 +75,8 @@ public class OperationJsonTest {
         ObjectMapper mapper = new ObjectMapper();
         PROPERTY_VALUE pv = mapper.readValue(json, PROPERTY_VALUE.class);
 
-        assert pv.getKey().equals("myKey") : "Key is " + pv.getKey();
-        assert pv.getValue().equals("myValue") : "Value is " + pv.getValue();
+        assertEquals(pv.getKey(), "myKey", "Key is " + pv.getKey());
+        assertEquals(pv.getValue(), "myValue", "Value is " + pv.getValue());
     }
 
     public void anyPayloadTest() throws Exception {
@@ -88,17 +94,42 @@ public class OperationJsonTest {
         ObjectMapper mapper = new ObjectMapper();
 
         String result = mapper.writeValueAsString(operation);
-        System.out.println(result);
 
-        assert !result.contains("name") : "Result contains a name property but should not : " + result;
-        assert !result.contains("null") : "Result contains null values but should not : " + result;
+        assertFalse(result.contains("name"), "Result contains a name property but should not, " + result);
+        assertFalse(result.contains("null"), "Result contains null values but should not, " + result);
 
         Operation op = mapper.readValue(result, Operation.class);
-        assert op.getOperation().equals(operation.getOperation()) : "Operation is " + op.getOperation();
-        assert op.getAdditionalProperties().containsKey("someBool") : "Key someBool not found ";
+        assertEquals(op.getOperation(), operation.getOperation(), "Operation is " + op.getOperation());
+        assertTrue(op.getAdditionalProperties().containsKey("someBool"), "Key someBool not found ");
         Object someBool = op.getAdditionalProperties().get("someBool");
-        assert Boolean.valueOf((Boolean) someBool) : "someBool was not true";
+        assertTrue((Boolean) someBool, "someBool was not true");
 
+    }
+
+    public void operationHeadersTest() throws Exception {
+        Address address = new Address();
+        address.add("/server-group", "newOne");
+
+        Map<String, Object> props = new HashMap<String, Object>();
+        props.put("profile", "default");
+        props.put("someBool", true);
+
+        Operation operation = new Operation("add", address, props);
+        operation.addAdditionalProperty("foo", "bar");
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        String result = mapper.writeValueAsString(operation);
+
+        assertFalse(result.contains("operation-headers"),
+            "Result contains a operation-headers property but should not, " + result);
+
+        operation.allowResourceServiceRestart();
+
+        result = mapper.writeValueAsString(operation);
+
+        assertTrue(result.contains("operation-headers"),
+            "Result does not contain a operation-headers property but should, " + result);
     }
 
     public void addPropsTest() throws Exception {
@@ -111,8 +142,9 @@ public class OperationJsonTest {
         ObjectMapper mapper = new ObjectMapper();
 
         String result = mapper.writeValueAsString(operation);
-        System.out.println(result);
 
+        assertTrue(result.contains("\"foo\":\"bar\"".replace(" ", "")),
+            "Result does not contain property \"foo\":\"bar\", " + result);
     }
 
     public void simpleResult() throws Exception {
@@ -122,9 +154,9 @@ public class OperationJsonTest {
         ObjectMapper mapper = new ObjectMapper();
         Result result = mapper.readValue(resultString, Result.class);
 
-        assert result != null;
-        assert result.getOutcome().equals("success");
-        assert result.isSuccess();
+        assertNotSame(result, null);
+        assertEquals(result.getOutcome(), "success");
+        assertTrue(result.isSuccess());
     }
 
     public void simpleResult2() throws Exception {
@@ -134,9 +166,9 @@ public class OperationJsonTest {
         ObjectMapper mapper = new ObjectMapper();
         Result result = mapper.readValue(resultString, Result.class);
 
-        assert result != null;
-        assert result.getOutcome().equals("success");
-        assert result.isSuccess();
+        assertNotSame(result, null);
+        assertEquals(result.getOutcome(), "success");
+        assertTrue(result.isSuccess());
     }
 
     public void simpleResultWithFailure() throws Exception {
@@ -146,13 +178,13 @@ public class OperationJsonTest {
         ObjectMapper mapper = new ObjectMapper();
         Result result = mapper.readValue(resultString, Result.class);
 
-        assert result != null;
-        assert result.getOutcome().equals("failed");
-        assert !result.isSuccess();
+        assertNotSame(result, null);
+        assertEquals(result.getOutcome(), "failed");
+        assertFalse(result.isSuccess());
 
-        assert result.getResult() == null;
-        assert result.getFailureDescription() != null;
-        //        assert result.getFailureDescription().size() == 1;
+        assertSame(result.getResult(), null);
+        assertNotSame(result.getFailureDescription(), null);
+        //        assertSame(result.getFailureDescription().size(), 1);
     }
 
     public void complexResult1() throws Exception {
@@ -162,17 +194,18 @@ public class OperationJsonTest {
         ObjectMapper mapper = new ObjectMapper();
         ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
 
-        assert result != null;
-        assert result.getOutcome().equals("success");
-        assert result.isSuccess();
-        assert result.getResult().size() == 3;
+        assertNotSame(result, null);
+        assertEquals(result.getOutcome(), "success");
+        assertTrue(result.isSuccess());
+        assertSame(result.getResult().size(), 3);
         String rewrite = (String) result.getResult().get("rewrite");
-        assert rewrite == null;
+        assertSame(rewrite, null);
 
+        @SuppressWarnings("unchecked")
         List<String> aliases = (List<String>) result.getResult().get("alias");
-        assert aliases != null;
-        assert aliases.size() == 1;
-        assert aliases.get(0).equals("example.com");
+        assertNotSame(aliases, null);
+        assertSame(aliases.size(), 1);
+        assertEquals(aliases.get(0), "example.com");
     }
 
     public void arrayResult1() throws Exception {
@@ -182,14 +215,15 @@ public class OperationJsonTest {
         ObjectMapper mapper = new ObjectMapper();
         Result result = mapper.readValue(resultString, Result.class);
 
-        assert result != null;
-        assert result.getOutcome().equals("success");
-        assert result.isSuccess();
+        assertNotSame(result, null);
+        assertEquals(result.getOutcome(), "success");
+        assertTrue(result.isSuccess());
+        @SuppressWarnings("unchecked")
         List<String> stringList = (List<String>) result.getResult();
-        assert stringList.size() == 2;
-        assert stringList.get(0).equals("standard-sockets");
-        assert stringList.get(1).equals("messaging-sockets");
-        assert !result.isRolledBack();
+        assertSame(stringList.size(), 2);
+        assertEquals(stringList.get(0), "standard-sockets");
+        assertEquals(stringList.get(1), "messaging-sockets");
+        assertFalse(result.isRolledBack());
 
     }
 
@@ -200,10 +234,10 @@ public class OperationJsonTest {
         ObjectMapper mapper = new ObjectMapper();
         Result result = mapper.readValue(resultString, Result.class);
 
-        assert result != null;
-        assert result.getOutcome().equals("failed");
-        assert !result.isSuccess();
-        assert result.isRolledBack();
+        assertNotSame(result, null);
+        assertEquals(result.getOutcome(), "failed");
+        assertFalse(result.isSuccess());
+        assertTrue(result.isRolledBack());
 
     }
 
@@ -214,27 +248,21 @@ public class OperationJsonTest {
         ObjectMapper mapper = new ObjectMapper();
         Result result = mapper.readValue(resultString, Result.class);
 
-        assert result != null;
-        assert !result.isReloadRequired();
+        assertNotSame(result, null);
+        assertFalse(result.isReloadRequired());
     }
 
     public void needsReload1() throws Exception {
 
-        String resultString = "{\n" +
-                "    \"outcome\":\"success\",\n" +
-                "    \"result\":{\n" +
-                "        \"enabled\":\"true\"\n" +
-                "    },\n" +
-                "    \"response-headers\":{\n" +
-                "        \"process-state\":\"reload-required\"\n" +
-                "    }\n" +
-                "}\n";
+        String resultString = "{\n" + "    \"outcome\":\"success\",\n" + "    \"result\":{\n"
+            + "        \"enabled\":\"true\"\n" + "    },\n" + "    \"response-headers\":{\n"
+            + "        \"process-state\":\"reload-required\"\n" + "    }\n" + "}\n";
 
         ObjectMapper mapper = new ObjectMapper();
         Result result = mapper.readValue(resultString, Result.class);
 
-        assert result != null;
-        assert result.isReloadRequired();
+        assertNotSame(result, null);
+        assertTrue(result.isReloadRequired());
     }
 
     public void complexResult2() throws Exception {
@@ -289,17 +317,21 @@ public class OperationJsonTest {
         mapper.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
 
         ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
-        assert !result.isSuccess() : "Result should be 'failed', but was not";
-        assert result.getFailureDescription().startsWith("Operation was not applied successfully to any servers");
+        assertFalse(result.isSuccess(), "Result should be 'failed', but was not");
+        assertTrue(result.getFailureDescription().startsWith("Operation was not applied successfully to any servers"));
 
-        assert result.getResult().containsKey("server-groups");
+        assertTrue(result.getResult().containsKey("server-groups"));
+        @SuppressWarnings("unchecked")
         Map<String, Object> sgs = (Map<String, Object>) result.getResult().get("server-groups");
-        assert sgs.containsKey("main-server-group");
+        assertTrue(sgs.containsKey("main-server-group"));
+        @SuppressWarnings("unchecked")
         Map<String, Object> mainSg = (Map<String, Object>) sgs.get("main-server-group");
-        assert mainSg.size() == 3 : "Main server group does not have 3 servers, but " + mainSg.size();
+        assertSame(mainSg.size(), 3, "Main server group does not have 3 servers, but " + mainSg.size());
+        @SuppressWarnings("unchecked")
         Map<String, Object> s3 = (Map<String, Object>) mainSg.get("server-demo");
+        @SuppressWarnings("unchecked")
         Map<String, Object> response = (Map<String, Object>) s3.get("response");
-        assert response != null;
+        assertNotSame(response, null);
 
     }
 

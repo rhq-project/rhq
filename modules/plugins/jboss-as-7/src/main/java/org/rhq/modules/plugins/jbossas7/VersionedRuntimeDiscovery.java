@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,9 +58,12 @@ import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
  * @author Jay Shaughnessy
  */
 public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscovery implements ResourceUpgradeFacet {
+    private static final Log LOG = LogFactory.getLog(VersionedRuntimeDiscovery.class);
 
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final Pattern FORWARD_SLASH_PATTERN = Pattern.compile("/");
+    private static final Pattern COMMA_PATTERN = Pattern.compile(",");
 
+    @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BaseComponent<?>> context)
         throws Exception {
 
@@ -102,11 +106,11 @@ public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscove
 
             StringBuilder sb = new StringBuilder();
             String slash = "";
-            for (String segment : detail.getResourceName().split("/")) {
+            for (String segment : FORWARD_SLASH_PATTERN.split(detail.getResourceName())) {
                 MATCHER.reset(segment);
                 if (MATCHER.matches()) {
                     sb.append(slash);
-                    sb.append(MATCHER.group(1) + MATCHER.group(3));
+                    sb.append(MATCHER.group(1)).append(MATCHER.group(3));
                 } else {
                     sb.append(slash);
                     sb.append(segment);
@@ -117,16 +121,16 @@ public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscove
 
             sb = new StringBuilder();
             String comma = "";
-            for (String outerSegment : detail.getResourceKey().split(",")) {
+            for (String outerSegment : COMMA_PATTERN.split(detail.getResourceKey())) {
                 sb.append(comma);
                 comma = ",";
                 slash = "";
-                for (String segment : outerSegment.split("/")) {
+                for (String segment : FORWARD_SLASH_PATTERN.split(outerSegment)) {
                     sb.append(slash);
                     slash = "/";
                     MATCHER.reset(segment);
                     if (MATCHER.matches()) {
-                        sb.append(MATCHER.group(1) + MATCHER.group(3));
+                        sb.append(MATCHER.group(1)).append(MATCHER.group(3));
                     } else {
                         sb.append(segment);
                     }
@@ -142,7 +146,7 @@ public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscove
         // In this case we remove the duplicates and issue a warning so the user can hopefully rectify the situation.
         for (Map.Entry<String, Integer> entry : keyCount.entrySet()) {
             if (entry.getValue() > 1) {
-                log.warn("Discovered multiple resources with resource key [" + entry.getKey()
+                LOG.warn("Discovered multiple resources with resource key [" + entry.getKey()
                     + "].  This is not allowed and they will be removed from discovery.  This is typically caused by "
                     + "having multiple versions of the same Deployment deployed.  To solve the problem either remove "
                     + "all but one version of the problem deployment or disable versioned deployment handling by "
@@ -177,12 +181,12 @@ public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscove
         StringBuilder sb = new StringBuilder();
         String slash = "";
         boolean upgradeName = false;
-        for (String segment : inventoriedResource.getName().split("/")) {
+        for (String segment : FORWARD_SLASH_PATTERN.split(inventoriedResource.getName())) {
             MATCHER.reset(segment);
             if (MATCHER.matches()) {
                 upgradeName = true;
                 sb.append(slash);
-                sb.append(MATCHER.group(1) + MATCHER.group(3));
+                sb.append(MATCHER.group(1)).append(MATCHER.group(3));
             } else {
                 sb.append(slash);
                 sb.append(segment);
@@ -202,7 +206,7 @@ public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscove
         // resources which are logically part of the umbrella deployment.
         String parentVersion = inventoriedResource.getParentResourceContext().getVersion();
         String currentVersion = inventoriedResource.getVersion();
-        if ((currentVersion != parentVersion)
+        if ((!currentVersion.equals(parentVersion))
             && ((null == currentVersion && null != parentVersion) || !currentVersion.equals(parentVersion))) {
             if (null == result) {
                 result = new ResourceUpgradeReport();
@@ -214,17 +218,17 @@ public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscove
         sb = new StringBuilder();
         String comma = "";
         boolean upgradeKey = false;
-        for (String outerSegment : inventoriedResource.getResourceKey().split(",")) {
+        for (String outerSegment : COMMA_PATTERN.split(inventoriedResource.getResourceKey())) {
             sb.append(comma);
             comma = ",";
             slash = "";
-            for (String segment : outerSegment.split("/")) {
+            for (String segment : FORWARD_SLASH_PATTERN.split(outerSegment)) {
                 sb.append(slash);
                 slash = "/";
                 MATCHER.reset(segment);
                 if (MATCHER.matches()) {
                     upgradeKey = true;
-                    sb.append(MATCHER.group(1) + MATCHER.group(3));
+                    sb.append(MATCHER.group(1)).append(MATCHER.group(3));
                 } else {
                     sb.append(segment);
                 }
@@ -237,8 +241,8 @@ public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscove
             result.setNewResourceKey(sb.toString());
         }
 
-        if (null != result && log.isDebugEnabled()) {
-            log.debug("Requesting upgrade: " + result);
+        if (null != result && LOG.isDebugEnabled()) {
+            LOG.debug("Requesting upgrade: " + result);
         }
 
         return result;

@@ -25,6 +25,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
@@ -188,5 +189,18 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
+    }
+
+    @Override
+    public Boolean checkLdapServerRequiresAttention() throws RuntimeException {
+        boolean requiresAttention = false;
+        if (checkLdapConfiguredStatus()) {//ldap configured
+            try {
+                requiresAttention = ldapManager.ldapServerRequiresAttention();
+            } catch (Throwable t) {
+                throw getExceptionToThrowToClient(t);
+            }
+        }
+        return Boolean.valueOf(requiresAttention);
     }
 }

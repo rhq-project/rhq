@@ -161,11 +161,11 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         if (groupUsePosix == null) {
             groupUsePosix = Boolean.toString(false);//default to false
         }
-        
+
         boolean usePosixGroups = Boolean.valueOf(groupUsePosix);
         String userAttribute = getUserAttribute(options, userName, usePosixGroups);
         Set<String> ldapSet = new HashSet<String>();
-        
+
         if (groupFilter.trim().isEmpty() || groupMember.trim().isEmpty()) {
             log.warn("The ldap group filter defined is invalid. Group Filter: " + groupFilter + ", Group Member: "
                 + groupMember);
@@ -284,7 +284,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         }
         Query query = entityManager.createNamedQuery(LdapGroup.FIND_BY_ROLES_GROUP_NAMES);
         query.setParameter("names", ldapGroupNames);
-        return (List<Role>) query.getResultList();
+        return query.getResultList();
     }
 
     public void assignRolesToLdapSubject(int subjectId, List<String> ldapGroupNames) {
@@ -422,6 +422,42 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         }
     }
 
+    /** Returns boolean status about whether LDAP server
+     *  requires attention.  If server is:
+     *  -not enabled
+     *  -is enabled but communications appear fine
+     *
+     *  false is returned, otherwise true.
+     */
+    public Boolean ldapServerRequiresAttention() {
+        boolean requiresAttention = false;
+
+        //load current system properties
+        Properties systemConfig = populateProperties(systemManager.getUnmaskedSystemSettings(true));
+        // Load the LoginProperty
+        String loginProperty = (String) systemConfig.get(SystemSetting.LDAP_LOGIN_PROPERTY.name());
+        if (loginProperty == null) {
+            // Use the default
+            loginProperty = "cn";
+        }
+        // Load any information we may need to bind
+        String bindDN = (String) systemConfig.get(SystemSetting.LDAP_BIND_DN.name());
+        String bindPW = (String) systemConfig.get(SystemSetting.LDAP_BIND_PW.name());
+        if (bindDN != null) {
+            systemConfig.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
+            systemConfig.setProperty(Context.SECURITY_CREDENTIALS, bindPW);
+            systemConfig.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
+        }
+        try {
+            InitialLdapContext ctx = new InitialLdapContext(systemConfig, null);
+            ctx.close();
+        } catch (NamingException e) {
+            requiresAttention = true;
+            log.error("LDAP communication error: " + e.getMessage(), e);
+        }
+
+        return requiresAttention;
+    }
     /**
      * @throws NamingException
      * @see org.jboss.security.auth.spi.UsernamePasswordLoginModule#validatePassword(java.lang.String,java.lang.String)
@@ -623,7 +659,7 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
 
     /** Translate SystemSettings to familiar Properties instance since we're
      *  passing not one but multiple values.
-     * 
+     *
      * @param systemSettings
      * @return
      */

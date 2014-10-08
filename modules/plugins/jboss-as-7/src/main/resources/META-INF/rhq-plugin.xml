@@ -2952,7 +2952,7 @@
           <resource-configuration>
             <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="true" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
             <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="true" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-            <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+            <c:map-property name="keepalive-time" readOnly="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
               <c:simple-property name="time" type="long" readOnly="true" description="The time"/>
               <c:simple-property name="unit" type="string" readOnly="true" description="The time unit">
                 <c:property-options>
@@ -3541,9 +3541,9 @@
         <metric property="task-count" description="The approximate total number of tasks that have ever been scheduled for execution."/>
 
         <resource-configuration>
-          <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+          <c:map-property name="keepalive-time" required="false" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+            <c:simple-property name="time" type="long" required="false" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" required="false" readOnly="false" description="The time unit">
               <c:property-options>
                 <c:option value="NANOSECONDS"/>
                 <c:option value="MILLISECONDS"/>
@@ -5946,9 +5946,9 @@
 
           <resource-configuration>
             &sharedThreadPoolResourceConfig;
-            <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-              <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-              <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+            <c:map-property name="keepalive-time" required="false" readOnly="false" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+              <c:simple-property name="time" type="long" required="false" readOnly="false" description="The time"/>
+              <c:simple-property name="unit" type="string" required="false" readOnly="false" description="The time unit">
                 <c:property-options>
                   <c:option value="NANOSECONDS"/>
                   <c:option value="MILLISECONDS"/>
@@ -5978,9 +5978,9 @@
 
           <resource-configuration>
             &sharedThreadPoolResourceConfig;
-            <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-              <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-              <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+            <c:map-property name="keepalive-time" required="false" readOnly="false" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+              <c:simple-property name="time" type="long" required="false" readOnly="false" description="The time"/>
+              <c:simple-property name="unit" type="string" required="false" readOnly="false" description="The time unit">
                 <c:property-options>
                   <c:option value="NANOSECONDS"/>
                   <c:option value="MILLISECONDS"/>
@@ -6178,9 +6178,9 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+          <c:map-property name="keepalive-time" required="false" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+            <c:simple-property name="time" type="long" required="false" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" required="false" readOnly="false" description="The time unit">
               <c:property-options>
                 <c:option value="NANOSECONDS"/>
                 <c:option value="MILLISECONDS"/>
@@ -6404,9 +6404,9 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+          <c:map-property name="keepalive-time" required="false" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+            <c:simple-property name="time" type="long" required="false" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" required="false" readOnly="false" description="The time unit">
               <c:property-options>
                 <c:option value="NANOSECONDS"/>
                 <c:option value="MILLISECONDS"/>
@@ -10825,9 +10825,9 @@
 
         <resource-configuration>
           &sharedThreadPoolResourceConfig;
-          <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+          <c:map-property name="keepalive-time" required="false" readOnly="false" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+            <c:simple-property name="time" type="long" required="false" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" required="false" readOnly="false" description="The time unit">
               <c:property-options>
                 <c:option value="NANOSECONDS"/>
                 <c:option value="MILLISECONDS"/>
@@ -10861,9 +10861,9 @@
 
         <resource-configuration>
           &sharedThreadPoolResourceConfig;
-          <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+          <c:map-property name="keepalive-time" required="false" readOnly="false" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+            <c:simple-property name="time" type="long" required="false" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" required="false" readOnly="false" description="The time unit">
               <c:property-options>
                 <c:option value="NANOSECONDS"/>
                 <c:option value="MILLISECONDS"/>
@@ -11506,9 +11506,9 @@
       <metric property="task-count" description="The approximate total number of tasks that have ever been scheduled for execution."/>
 
       <resource-configuration>
-        <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-          <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
-          <c:simple-property name="unit" type="string" readOnly="false" description="The time unit">
+        <c:map-property name="keepalive-time" required="false" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+          <c:simple-property name="time" type="long" required="false" readOnly="false" description="The time"/>
+          <c:simple-property name="unit" type="string" required="false" readOnly="false" description="The time unit">
             <c:property-options>
               <c:option value="NANOSECONDS"/>
               <c:option value="MILLISECONDS"/>

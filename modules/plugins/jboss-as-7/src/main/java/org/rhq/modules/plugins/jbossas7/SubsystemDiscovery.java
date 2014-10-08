@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -60,9 +61,11 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Heiko W. Rupp
  */
 public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseComponent<?>> {
+    private static final Log LOG = LogFactory.getLog(SubsystemDiscovery.class);
 
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final Pattern CONF_PATH_PATTERN = Pattern.compile("\\|");
 
+    @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BaseComponent<?>> context)
         throws Exception {
 
@@ -78,7 +81,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         Configuration config = context.getDefaultPluginConfiguration();
         String confPath = config.getSimpleValue("path", "");
         if (confPath == null || confPath.isEmpty()) {
-            log.error("Path plugin config is null for ResourceType [" + context.getResourceType().getName() + "].");
+            LOG.error("Path plugin config is null for ResourceType [" + context.getResourceType().getName() + "].");
             return details;
         }
         // check for "/" which denotes lookup for child resources deeper in DMR tree
@@ -126,7 +129,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         }
 
         if (verbose) {
-            log.info("total path: [" + path + "]");
+            LOG.info("total path: [" + path + "]");
         }
 
         if (lookForChildren) {
@@ -135,7 +138,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             // check if there are multiple types are present
             List<String> subTypes = new ArrayList<String>();
             if (confPath.contains("|")) {
-                subTypes.addAll(Arrays.asList(confPath.split("\\|")));
+                subTypes.addAll(Arrays.asList(CONF_PATH_PATTERN.split(confPath)));
             } else
                 subTypes.add(confPath);
 
@@ -234,13 +237,13 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         boolean isJdgProduct = "JDG".equals(productType) || "ISPN".equals(productType);
 
         if (ourPluginTypeIsJdg && isJdgProduct) {
-            log.debug("Ours is JDG and product is JDG/InfinispanServer");
+            LOG.debug("Ours is JDG and product is JDG/InfinispanServer");
             return false;
         }
 
         if (!ourPluginTypeIsJdg && !isJdgProduct) {
-            if (log.isDebugEnabled()) {
-                log.debug("Ours is not JDG (" + ourType.toString() + ") and product is not JDG/InfinispanServer ("
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Ours is not JDG (" + ourType.toString() + ") and product is not JDG/InfinispanServer ("
                     + productType + ")");
             }
             return false;

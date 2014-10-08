@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,8 +44,11 @@ import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 public class VersionedDomainDeploymentDiscovery extends AbstractVersionedDomainDeploymentDiscovery implements
     ResourceUpgradeFacet {
 
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final Log LOG = LogFactory.getLog(VersionedDomainDeploymentDiscovery.class);
 
+    private static final Pattern COMMA_PATTERN = Pattern.compile(",");
+
+    @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BaseComponent<?>> context)
         throws Exception {
 
@@ -78,12 +82,12 @@ public class VersionedDomainDeploymentDiscovery extends AbstractVersionedDomainD
 
             StringBuilder sb = new StringBuilder();
             String comma = "";
-            for (String segment : detail.getResourceKey().split(",")) {
+            for (String segment : COMMA_PATTERN.split(detail.getResourceKey())) {
                 sb.append(comma);
                 comma = ",";
                 MATCHER.reset(segment);
                 if (MATCHER.matches()) {
-                    sb.append(MATCHER.group(1) + MATCHER.group(3));
+                    sb.append(MATCHER.group(1)).append(MATCHER.group(3));
                 } else {
                     sb.append(segment);
                 }
@@ -98,7 +102,7 @@ public class VersionedDomainDeploymentDiscovery extends AbstractVersionedDomainD
         // In this case we remove the duplicates and issue a warning so the user can hopefully rectify the situation.
         for (Map.Entry<String, Integer> entry : keyCount.entrySet()) {
             if (entry.getValue() > 1) {
-                log.warn("Discovered multiple resources with resource key [" + entry.getKey()
+                LOG.warn("Discovered multiple resources with resource key [" + entry.getKey()
                     + "].  This is not allowed and they will be removed from discovery.  This is typically caused by "
                     + "having multiple versions of the same Deployment deployed.  To solve the problem either remove "
                     + "all but one version of the problem deployment or disable versioned deployment handling by "
@@ -140,13 +144,13 @@ public class VersionedDomainDeploymentDiscovery extends AbstractVersionedDomainD
         StringBuilder sb = new StringBuilder();
         String comma = "";
         boolean upgradeKey = false;
-        for (String segment : inventoriedResource.getResourceKey().split(",")) {
+        for (String segment : COMMA_PATTERN.split(inventoriedResource.getResourceKey())) {
             sb.append(comma);
             comma = ",";
             MATCHER.reset(segment);
             if (MATCHER.matches()) {
                 upgradeKey = true;
-                sb.append(MATCHER.group(1) + MATCHER.group(3));
+                sb.append(MATCHER.group(1)).append(MATCHER.group(3));
             } else {
                 sb.append(segment);
             }
@@ -158,8 +162,8 @@ public class VersionedDomainDeploymentDiscovery extends AbstractVersionedDomainD
             result.setNewResourceKey(sb.toString());
         }
 
-        if (null != result && log.isDebugEnabled()) {
-            log.debug("Requesting upgrade: " + result);
+        if (null != result && LOG.isDebugEnabled()) {
+            LOG.debug("Requesting upgrade: " + result);
         }
 
         return result;

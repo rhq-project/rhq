@@ -470,11 +470,20 @@
 
     <!ENTITY datasourceEnableDisableOperations '
       <operation name="enable" description="Enables the data-source">
+        <parameters>
+          <c:simple-property name="persistent" type="boolean" required="false" default="true"
+            description="Indicates if the datasource should be enabled again after a server restart. Defaults to true."/>
+        </parameters>
         <results>
           <c:simple-property name="operationResult"/>
         </results>
       </operation>
       <operation name="disable" description="Disables the data-source">
+        <parameters>
+          <c:simple-property name="allow-resource-service-restart" type="boolean" required="false" default="false"
+            displayName="Allow service restart"
+            description="The handler for the operation will go ahead and restart the runtime service. Otherwise executing the operation will put the server into a &lt;em&gt;reload-required&lt;/em&gt; state. Defaults to false."/>
+        </parameters>
         <results>
           <c:simple-property name="operationResult"/>
         </results>
@@ -536,13 +545,12 @@
         <c:simple-property name="url-delimiter" type="string" readOnly="false" description="Specifies the delimiter for URLs in connection-url for HA datasources" required="false"/>
         <c:simple-property name="url-selector-strategy-class-name" type="string" readOnly="false" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy" required="false"/>
         <c:simple-property name="use-java-context" type="boolean" readOnly="false" required="false" default="true" description="Setting this to false will bind the DataSource into global JNDI;"/>
-        <!-- The component class manually handles this property which is read-only on the server side  -->
-        <c:simple-property name="enabled" type="boolean" readOnly="false" default="true" required="false" description="Specifies if the datasource should be enabled"/>
+        <c:simple-property name="enabled" type="boolean" readOnly="true" default="true" required="false" description="Specifies if the datasource should be enabled"/>
         <c:simple-property name="jta" type="boolean" readOnly="false" required="false" default="true" description="Enable JTA integration"/>
-        <c:simple-property name="max-pool-size" displayName="Max Pool Size" type="string" readOnly="false" required="false" defaultValue="20" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
-        <c:simple-property name="min-pool-size" displayName="Min Pool Size" type="string" readOnly="false" required="false" defaultValue="0" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
-        <c:simple-property name="pool-prefill" type="boolean" readOnly="false" required="false" defaultValue="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
-        <c:simple-property name="pool-use-strict-min" type="boolean" readOnly="false" required="false" defaultValue="false" description="Define if the min-pool-size should be considered a strictly."/>
+        <c:simple-property name="max-pool-size" displayName="Max Pool Size" type="string" readOnly="false" required="false" defaultValue="20" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool. Existing value cannot be unset."/>
+        <c:simple-property name="min-pool-size" displayName="Min Pool Size" type="string" readOnly="false" required="false" defaultValue="0" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection. Existing value cannot be unset."/>
+        <c:simple-property name="pool-prefill" type="boolean" readOnly="false" required="false" defaultValue="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart. Existing value cannot be unset."/>
+        <c:simple-property name="pool-use-strict-min" type="boolean" readOnly="false" required="false" defaultValue="false" description="Define if the min-pool-size should be considered a strictly. Existing value cannot be unset."/>
         <c:simple-property name="security-domain" required="false" type="string" readOnly="false" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
         <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="false" description="re-authentication plugin implementation provided for specific purpose (i.e vendor)"/>
         <!--
@@ -571,8 +579,8 @@
         </c:simple-property>
         <c:simple-property name="allocation-retry" type="integer" readOnly="false" required="false" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception."/>
         <c:simple-property name="allocation-retry-wait-millis" type="long" readOnly="false" required="false" description="Indicates the time in milliseconds to wait between retrying to allocate a connection."/>
-        <c:simple-property name="blocking-timeout-wait-millis" type="long" readOnly="false" required="false" defaultValue="30000" description="The blocking-timeout-millis element indicates the maximum time in milliseconds to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for a permit for a connection, and will never throw an exception if creating a new connection takes an inordinately long time."/>
-        <c:simple-property name="idle-timeout-minutes" type="long" readOnly="false" required="false" defaultValue="15" description="The idle-timeout-minutes elements indicates the maximum time in minutes a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is 1/2 the smallest idle-timeout-minutes of any pool. Changing this value require a server restart."/>
+        <c:simple-property name="blocking-timeout-wait-millis" type="long" readOnly="false" required="false" defaultValue="30000" description="The blocking-timeout-millis element indicates the maximum time in milliseconds to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for a permit for a connection, and will never throw an exception if creating a new connection takes an inordinately long time. Existing value cannot be unset."/>
+        <c:simple-property name="idle-timeout-minutes" type="long" readOnly="false" required="false" defaultValue="15" description="The idle-timeout-minutes elements indicates the maximum time in minutes a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is 1/2 the smallest idle-timeout-minutes of any pool. Changing this value require a server restart. Existing value cannot be unset."/>
         <c:simple-property name="query-timeout" type="long" readOnly="false" required="false" description="Any configured query timeout in seconds The default is no timeout"/>
         <c:simple-property name="use-try-lock" type="long" readOnly="false" required="false" description="Any configured timeout for internal locks on the resource adapter objects in seconds"/>
         <c:simple-property name="set-tx-query-timeout" type="boolean" readOnly="false" required="false" default="false" description="Whether to set the query timeout based on the time remaining until transaction timeout, any configured query timeout will be used if there is no transaction."/>
@@ -589,8 +597,8 @@
         <c:simple-property name="exception-sorter-class-name" type="string" readOnly="false" required="false" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred"/>
         <c:simple-property name="stale-connection-checker-class-name" type="string" readOnly="false" required="false" description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides a boolean isStaleConnection(SQLException e) method which if it it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
         <c:simple-property name="valid-connection-checker-class-name" type="string" readOnly="false" required="false" description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
-        <c:simple-property name="background-validation-millis" type="long" readOnly="false" required="false" defaultValue="600000" description="The background-validation-millis element specifies the amount of time, in milliseconds, that background validation will run. Changing this value require a server restart."/>
-        <c:simple-property name="background-validation" type="boolean" readOnly="false" required="false" defaultValue="false" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
+        <c:simple-property name="background-validation-millis" type="long" readOnly="false" required="false" defaultValue="600000" description="The background-validation-millis element specifies the amount of time, in milliseconds, that background validation will run. Changing this value require a server restart. Existing value cannot be unset."/>
+        <c:simple-property name="background-validation" type="boolean" readOnly="false" required="false" defaultValue="false" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart. Existing value cannot be unset."/>
         <c:simple-property name="use-fast-fail" type="boolean" readOnly="false" required="false" description="Whether fail a connection allocation on the first connection if it is invalid (true) or keep trying until the pool is exhausted of all potential connections (false)"/>
         <c:simple-property name="validate-on-match" type="boolean" readOnly="false" required="false" default="false" description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
         <c:simple-property name="spy" type="boolean" readOnly="false" required="false" defaultValue="false" description="whatever spy or not the jdbc connection"/>
@@ -696,12 +704,11 @@
         <c:simple-property name="url-delimiter" required="false" type="string" readOnly="true" description="Specifies the delimiter for URLs in connection-url for HA datasources"/>
         <c:simple-property name="url-selector-strategy-class-name" required="false" type="string" readOnly="true" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy"/>
         <c:simple-property name="use-java-context" required="false" type="boolean" readOnly="true" description="Setting this to false will bind the DataSource into global JNDI;"/>
-        <!-- The component class manually handles this property which is read-only on the server side  -->
-        <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" default="true" description="Specifies if the datasource should be enabled"/>
-        <c:simple-property name="max-pool-size" required="false" type="integer" readOnly="false" defaultValue="20" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
-        <c:simple-property name="min-pool-size" required="false" type="integer" readOnly="false" defaultValue="0" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
-        <c:simple-property name="pool-prefill" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
-        <c:simple-property name="pool-use-strict-min" required="false" type="boolean" readOnly="false" defaultValue="false" description="Define if the min-pool-size should be considered a strictly."/>
+        <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" default="true" description="Specifies if the datasource should be enabled"/>
+        <c:simple-property name="max-pool-size" required="false" type="integer" readOnly="false" defaultValue="20" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool. Existing value cannot be unset."/>
+        <c:simple-property name="min-pool-size" required="false" type="integer" readOnly="false" defaultValue="0" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection. Existing value cannot be unset."/>
+        <c:simple-property name="pool-prefill" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart. Existing value cannot be unset."/>
+        <c:simple-property name="pool-use-strict-min" required="false" type="boolean" readOnly="false" defaultValue="false" description="Define if the min-pool-size should be considered a strictly. Existing value cannot be unset."/>
         <c:simple-property name="interleaving" required="false" type="boolean" readOnly="true" description="An element to enable interleaving for XA connection factories"/>
         <c:simple-property name="no-tx-separate-pool" required="false" type="boolean" readOnly="true" description="Oracle does not like XA connections getting used both inside and outside a JTA transaction. To workaround the problem you can create separate sub-pools for the different context"/>
         <c:simple-property name="pad-xid" required="false" type="boolean" readOnly="true" description="Should the Xid be padded"/>
@@ -729,8 +736,8 @@
         <c:simple-property name="track-statements" required="false" type="string" readOnly="true" description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/return to the prepared statement cache. valid values are: false - do not track statements and results true - track statements and result sets and warn when they are not closed nowarn - track statements but do no warn about them being unclosed"/>
         <c:simple-property name="allocation-retry" required="false" type="integer" readOnly="true" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception."/>
         <c:simple-property name="allocation-retry-wait-millis" required="false" type="long" readOnly="true" description="he allocation retry wait millis element indicates the time in milliseconds to wait between retrying to allocate a connection."/>
-        <c:simple-property name="blocking-timeout-wait-millis" required="false" type="long" readOnly="false" defaultValue="30000" description="The blocking-timeout-millis element indicates the maximum time in milliseconds to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for a permit for a connection, and will never throw an exception if creating a new connection takes an inordinately long time."/>
-        <c:simple-property name="idle-timeout-minutes" required="false" type="long" readOnly="false" defaultValue="15" description="The idle-timeout-minutes elements indicates the maximum time in minutes a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is 1/2 the smallest idle-timeout-minutes of any pool. Changing this value require a server restart."/>
+        <c:simple-property name="blocking-timeout-wait-millis" required="false" type="long" readOnly="false" defaultValue="30000" description="The blocking-timeout-millis element indicates the maximum time in milliseconds to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for a permit for a connection, and will never throw an exception if creating a new connection takes an inordinately long time. Existing value cannot be unset."/>
+        <c:simple-property name="idle-timeout-minutes" required="false" type="long" readOnly="false" defaultValue="15" description="The idle-timeout-minutes elements indicates the maximum time in minutes a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is 1/2 the smallest idle-timeout-minutes of any pool. Changing this value require a server restart. Existing value cannot be unset."/>
         <c:simple-property name="query-timeout" required="false" type="long" readOnly="true" description="Any configured query timeout in seconds The default is no timeout"/>
         <c:simple-property name="use-try-lock" required="false" type="long" readOnly="true" description="Any configured timeout for internal locks on the resource adapter objects in seconds"/>
         <c:simple-property name="set-tx-query-timeout" required="false" type="boolean" readOnly="true" description="Whether to set the query timeout based on the time remaining until transaction timeout, any configured query timeout will be used if there is no transaction."/>
@@ -765,8 +772,8 @@
                             configuration
                         </c:map-property>
         -->
-        <c:simple-property name="background-validation-millis" required="false" type="long" readOnly="false" defaultValue="10" description="The background-validation-millis element specifies the amount of time, in milliseconds, that background validation will run. Changing this value require a server restart."/>
-        <c:simple-property name="background-validation" required="false" type="boolean" readOnly="false" defaultValue="false" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
+        <c:simple-property name="background-validation-millis" required="false" type="long" readOnly="false" defaultValue="10" description="The background-validation-millis element specifies the amount of time, in milliseconds, that background validation will run. Changing this value require a server restart. Existing value cannot be unset."/>
+        <c:simple-property name="background-validation" required="false" type="boolean" readOnly="false" defaultValue="false" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart. Existing value cannot be unset."/>
         <c:simple-property name="use-fast-fail" required="false" type="boolean" readOnly="false" description="Whether fail a connection allocation on the first connection if it is invalid (true) or keep trying until the pool is exhausted of all potential connections (false)"/>
         <c:simple-property name="validate-on-match" required="false" type="boolean" readOnly="true" description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
         <c:simple-property name="xa-resource-timeout" required="false" type="integer" readOnly="true" description="Passed to XAResource.setTransactionTimeout() Default is zero which does not invoke the setter. In seconds"/>
@@ -8201,7 +8208,7 @@
 
   <service name="Datasources (Standalone)"
            discovery="SubsystemDiscovery"
-           class="DatasourceComponent"
+           class="DatasourcesComponent"
            singleton="true"
            description="Datasources subsystem for Standalone servers."
            subCategory="Subsystems|Connector">
@@ -8215,21 +8222,6 @@
     </plugin-configuration>
 
     &datasourcesConfiguration;
-
-    <!-- not needed for hot-deployed drivers - only for module ones, but I am not sure we want to support that
-            <operation name="addDriver" displayName="Add a JDBC driver">
-                <parameters>
-                    <c:simple-property name="driver-name" required="true"/>
-                    <c:simple-property name="deployment-name" required="true">
-                        <c:option-source target="resource" expression="type=DomainDeployment"/>
-                    </c:simple-property>
-                    <c:simple-property name="driver-class-name" required="true"/>
-                </parameters>
-                <results>
-                    <c:simple-property name="operationResult"/>
-                </results>
-            </operation>
-    -->
 
     <service name="DataSource (Standalone)"
              discovery="SubsystemDiscovery"
@@ -8272,7 +8264,7 @@
 
   <service name="Datasources (Profile)"
            discovery="SubsystemDiscovery"
-           class="DatasourceComponent"
+           class="DatasourcesComponent"
            singleton="true"
            description="Datasources subsystem for profile."
            subCategory="Subsystems|Connector">
@@ -8320,7 +8312,7 @@
 
   <service name="Datasources (Managed)"
            discovery="SubsystemDiscovery"
-           class="DatasourceComponent"
+           class="DatasourcesComponent"
            singleton="true"
            description="Datasources subsystem for Managed servers."
            subCategory="Subsystems|Connector">
@@ -9551,7 +9543,7 @@
 
 
   <service name="Datasources Runtime"
-           class="DatasourceComponent"
+           class="DatasourcesComponent"
            discovery="VersionedRuntimeDiscovery"
            description="Runtime resources exposed by data sources included in this deployment."
            singleton="true">

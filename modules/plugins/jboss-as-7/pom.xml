@@ -724,13 +724,23 @@
                   <goal>verify</goal>
                 </goals>
               </execution>
-
-              
               <execution>
-                <id>DatasourceTest</id>
+                <id>DatasourceStandaloneTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DatasourceTest.java</include>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DatasourceStandaloneTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>DatasourceDomainTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/DatasourceDomainTest.java</include>
                   </includes>
                 </configuration>
                 <goals>

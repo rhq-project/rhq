@@ -21,6 +21,9 @@ package org.rhq.modules.plugins.jbossas7;
 
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.FAILURE;
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.NOCHANGE;
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.SUCCESS;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,177 +34,84 @@ import java.util.Map;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.resource.CreateResourceStatus;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
-import org.rhq.core.pluginapi.inventory.CreateResourceReport;
-import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
+import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
 /**
  * Handle Datasources (possibly jdbc-driver) related stuff
  * @author Heiko W. Rupp
  */
-public class DatasourceComponent extends BaseComponent<BaseComponent<?>> implements OperationFacet, ConfigurationFacet,
-    CreateChildResourceFacet {
-
-    private static final String NOTSET = "-notset-";
-    private static final String ENABLED_ATTRIBUTE = "enabled";
-    private static final String ENABLE_OPERATION = "enable";
-    private static final String DISABLE_OPERATION = "disable";
+public class DatasourceComponent extends BaseComponent<DatasourcesComponent> {
     private static final String ALLOW_MULTIPLE_USERS_ATTRIBUTE = "allow-multiple-users";
     private static final String TRACK_STATEMENTS_ATTRIBUTE = "track-statements";
+    private static final String MAX_POOL_SIZE_ATTRIBUTE = "max-pool-size";
+    private static final String MIN_POOL_SIZE_ATTRIBUTE = "min-pool-size";
     /**
      * list of metrics where we can expect expresion value instead of just number (such expression has to be resolved)
      */
-    private static final Set<String> expressionMetrics = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("max-pool-size","min-pool-size")));
+    private static final Set<String> EXPRESSION_METRICS = Collections.unmodifiableSet(new HashSet<String>(Arrays
+        .asList(MAX_POOL_SIZE_ATTRIBUTE, MIN_POOL_SIZE_ATTRIBUTE)));
+    private static final Set<String> UNSET_FORBIDDEN_ATTRIBUTES = Collections.unmodifiableSet(new HashSet<String>(
+        Arrays.asList(MAX_POOL_SIZE_ATTRIBUTE, MIN_POOL_SIZE_ATTRIBUTE, "pool-prefill", "pool-use-strict-min",
+            "blocking-timeout-wait-millis", "idle-timeout-minutes", "background-validation-millis",
+            "background-validation")));
+
+    static final String ENABLED_ATTRIBUTE = "enabled";
+    static final String ENABLE_OPERATION = "enable";
+    static final String DISABLE_OPERATION = "disable";
+    static final String CONNECTION_PROPERTIES_ATTRIBUTE = "*1";
+    static final String XA_DATASOURCE_PROPERTIES_ATTRIBUTE = "*2";
 
     @Override
-    public OperationResult invokeOperation(String operationName, Configuration parameters) throws Exception { // TODO still needed ? Check with plugin descriptor
-
-        OperationResult operationResult = new OperationResult();
-        ASConnection connection = getASConnection();
-        Operation op;
-
-        if (operationName.equals("addDriver")) { // TODO decide if we need this at all. See also the plugin-descriptor
-            String drivername = parameters.getSimpleValue("driver-name", NOTSET);
-
-            Address theAddress = new Address(address);
-            theAddress.add("jdbc-driver", drivername);
-
-            op = new Operation("add", theAddress);
-            op.addAdditionalProperty("driver-name", drivername);
-            op.addAdditionalProperty("deployment-name", parameters.getSimpleValue("deployment-name", NOTSET));
-            op.addAdditionalProperty("driver-class-name", parameters.getSimpleValue("driver-class-name", NOTSET));
-        } else {
-            /*
-             * This is a catch all for operations that are not explicitly treated above.
-             */
-            op = new Operation(operationName, address);
-        }
-
-        Result res = connection.execute(op);
-        if (res.isSuccess()) {
-            operationResult.setSimpleResult("Success");
-        } else {
-            operationResult.setErrorMessage(res.getFailureDescription());
-        }
-
-        return operationResult;
-    }
-
-    @Override
-    public CreateResourceReport createResource(CreateResourceReport createResourceReport) {
-
-        List<String> validationErrors = ConfigurationUtility.validateConfiguration(createResourceReport
-            .getResourceConfiguration(), createResourceReport.getResourceType().getResourceConfigurationDefinition());
-
-        if (!validationErrors.isEmpty()) {
-            createResourceReport.setErrorMessage(validationErrors.toString());
-            createResourceReport.setStatus(CreateResourceStatus.FAILURE);
-            return createResourceReport;
-        }
-
-        final CreateResourceReport resourceReport = super.createResource(createResourceReport);
-
-        // No success -> no point in continuing
-        if (resourceReport.getStatus() != CreateResourceStatus.SUCCESS) {
-            return resourceReport;
-        }
-
-        // outer create resource did not cater for the connection or xa properties, so lets add them now
-        String connPropAttributeNameOnAS7, connPropPluginConfigPropertyName, keyName;
-        if (createResourceReport.getResourceType().getName().toLowerCase().contains("xa")) {
-            connPropAttributeNameOnAS7 = "xa-datasource-properties";
-            connPropPluginConfigPropertyName = "*2";
-            keyName = "key";
-        } else {
-            connPropAttributeNameOnAS7 = "connection-properties";
-            connPropPluginConfigPropertyName = "*1";
-            keyName = "pname";
-        }
-        PropertyList listPropertyWrapper = createResourceReport.getResourceConfiguration().getList(
-            connPropPluginConfigPropertyName);
-        // if no conn or xa props supplied in the create resource request, skip and continue
-        if (null != listPropertyWrapper) {
-            CompositeOperation cop = new CompositeOperation();
-            for (Property p : listPropertyWrapper.getList()) {
-                PropertyMap map = (PropertyMap) p;
-                String key = map.getSimpleValue(keyName, null);
-                String value = map.getSimpleValue("value", null);
-                if (key == null || value == null) {
-                    continue;
-                }
-                Address propertyAddress = new Address(resourceReport.getResourceKey());
-                propertyAddress.add(connPropAttributeNameOnAS7, key);
-                Operation op = new Operation("add", propertyAddress);
-                op.addAdditionalProperty("value", value);
-                cop.addStep(op);
-            }
-            if (cop.numberOfSteps() > 0) {
-                Result res = getASConnection().execute(cop);
-                if (!res.isSuccess()) {
-                    resourceReport.setErrorMessage("Datasource was added, but setting " + connPropAttributeNameOnAS7
-                        + " failed: " + res.getFailureDescription());
-                    resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
-                    return resourceReport;
-                }
+    public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
+        if (name.equals(ENABLE_OPERATION)) {
+            Operation operation = new Operation(ENABLE_OPERATION, getAddress());
+            Boolean persistent = Boolean.valueOf(parameters.getSimpleValue("persistent", TRUE.toString()));
+            operation.addAdditionalProperty("persistent", persistent);
+            Result res = getASConnection().execute(operation);
+            if (res.isSuccess()) {
+                return new OperationResult();
+            } else {
+                OperationResult operationResult = new OperationResult();
+                operationResult.setErrorMessage(res.getFailureDescription());
+                return operationResult;
             }
         }
-
-        // Handle the 'enabled' property (it's a read-only attribute in management interface)
-        // See https://bugzilla.redhat.com/show_bug.cgi?id=854773
-
-        // What did the user say in the datasource creation form?
-        PropertySimple enabledProperty = createResourceReport.getResourceConfiguration().getSimple(ENABLED_ATTRIBUTE);
-        // Let's assume the user wants the datasource enabled if he/she said nothing
-        Boolean enabledPropertyValue = enabledProperty == null ? TRUE : enabledProperty.getBooleanValue();
-
-        EnabledAttributeHelper.on(new Address(resourceReport.getResourceKey())).with(getASConnection())
-            .setAttributeValue(enabledPropertyValue, new EnabledAttributeHelperCallbacks() {
-                @Override
-                public void onReadAttributeFailure(Result opResult) {
-                    resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
-                    resourceReport.setErrorMessage("Datasource was added, "
-                        + "but could not read its configuration after creation: " + opResult.getFailureDescription());
-                }
-
-                @Override
-                public void onEnableOperationFailure(Result opResult) {
-                    resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
-                    resourceReport.setErrorMessage("Datasource was added but not enabled: "
-                        + opResult.getFailureDescription());
-                }
-
-                @Override
-                public void onDisableOperationFailure(Result opResult) {
-                    resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
-                    resourceReport.setErrorMessage("Datasource was added but not disabled: "
-                        + opResult.getFailureDescription());
-                }
-            });
-
-        return resourceReport;
+        if (name.equals(DISABLE_OPERATION)) {
+            Operation operation = new Operation(DISABLE_OPERATION, getAddress());
+            boolean allowResourceServiceRestart = Boolean.parseBoolean(parameters.getSimpleValue(
+                "allow-resource-service-restart", FALSE.toString()));
+            if (allowResourceServiceRestart) {
+                operation.allowResourceServiceRestart();
+            }
+            Result res = getASConnection().execute(operation);
+            if (res.isSuccess()) {
+                return new OperationResult();
+            } else {
+                OperationResult operationResult = new OperationResult();
+                operationResult.setErrorMessage(res.getFailureDescription());
+                return operationResult;
+            }
+        }
+        return super.invokeOperation(name, parameters);
     }
 
     @Override
@@ -211,9 +121,9 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         for (MeasurementScheduleRequest request : requests) {
             if (request.getName().equals("connectionAvailable")) {
                 report.addData(getConnectionAvailable(request));
-            } else if (request.getName().equals("max-pool-size")) {
+            } else if (request.getName().equals(MAX_POOL_SIZE_ATTRIBUTE)) {
                 getRCAsMetric(report, request);
-            } else if (request.getName().equals("min-pool-size")) {
+            } else if (request.getName().equals(MIN_POOL_SIZE_ATTRIBUTE)) {
                 getRCAsMetric(report, request);
             } else {
                 metrics.add(request);
@@ -232,10 +142,12 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
             return;
 
         Map<String, Object> results = new HashMap<String, Object>();
-        Map<String, Object> statistics = (Map<String, Object>) res.getResult().get("statistics");
+        @SuppressWarnings("unchecked")
+        Map<String, Map<String, Object>> statistics = (Map<String, Map<String, Object>>) res.getResult().get(
+            "statistics");
         if (statistics != null) {
-            results.putAll((Map<? extends String, ? extends Object>) statistics.get("pool"));
-            results.putAll((Map<? extends String, ? extends Object>) statistics.get("jdbc"));
+            results.putAll(statistics.get("pool"));
+            results.putAll(statistics.get("jdbc"));
 
             for (MeasurementScheduleRequest metric : metrics) {
                 String name = metric.getName();
@@ -253,160 +165,132 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
 
     @Override
     public void updateResourceConfiguration(final ConfigurationUpdateReport configurationUpdateReport) {
-        Configuration config = configurationUpdateReport.getConfiguration();
-        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+        ResourceType resourceType = context.getResourceType();
+        ConfigurationDefinition configDef = resourceType.getResourceConfigurationDefinition();
+        Configuration newConfig = configurationUpdateReport.getConfiguration();
 
-        replacePropertiesWithDefaultValueWhenNull(config, configDef);
+        // 1. First of all, read the current configuration
+        ConfigurationLoadDelegate readDelegate = new ConfigurationLoadDelegate(configDef, getASConnection(), address,
+            includeRuntime);
+        Configuration currentConfig;
+        try {
+            currentConfig = readDelegate.loadResourceConfiguration();
+        } catch (Exception e) {
+            getLog().error("Could not read current configuration before update", e);
+            configurationUpdateReport.setStatus(FAILURE);
+            configurationUpdateReport.setErrorMessage("Could not read current configuration before update: "
+                + ThrowableUtil.getRootMessage(e));
+            return;
+        }
 
-        // Make a copy of the config definition and make it look like there was no 'enabled' attribute, which is
-        // manually managed by this component.
-        ConfigurationDefinition configDefCopy = configDef.copy();
-        configDefCopy.getPropertyDefinitions().remove(ENABLED_ATTRIBUTE);
+        // 2. We will wrap all property-simple and connection properties changes in a composite operation
+        CompositeOperation updateOperation = new CompositeOperation();
 
+        // 3. Capture property-simple changes
+        Map<String, PropertySimple> newConfigSimpleProperties = newConfig.getSimpleProperties();
+        Map<String, PropertySimple> currentConfigSimpleProperties = currentConfig.getSimpleProperties();
+
+        Set<String> allSimplePropertyNames = new HashSet<String>(newConfigSimpleProperties.size()
+            + currentConfigSimpleProperties.size());
+        allSimplePropertyNames.addAll(newConfigSimpleProperties.keySet());
+        allSimplePropertyNames.addAll(currentConfigSimpleProperties.keySet());
+        // Read-only
+        allSimplePropertyNames.remove(ENABLED_ATTRIBUTE);
         if (getServerComponent().getServerPluginConfiguration().getProductType() == JBossProductType.AS) {
-            // AS7 management model has no 'enabled' attribute so we do not take care of it
-            doUpdateAS7ResourceConfiguration(configurationUpdateReport, configDefCopy);
-            return;
+            // Only supported on EAP
+            allSimplePropertyNames.remove(ALLOW_MULTIPLE_USERS_ATTRIBUTE);
+            allSimplePropertyNames.remove(TRACK_STATEMENTS_ATTRIBUTE);
         }
 
-        PropertySimple enabledAttributeSimpleConfigValue = config.getSimple(ENABLED_ATTRIBUTE);
-        Boolean enabledAttributeConfigValue = null;
-        if(enabledAttributeSimpleConfigValue == null) {
-            // True if unset
-            enabledAttributeConfigValue = TRUE;
+        for (String simplePropertyName : allSimplePropertyNames) {
+            PropertySimple newConfigPropertySimple = newConfigSimpleProperties.get(simplePropertyName);
+            String newConfigPropertySimpleValue = newConfigPropertySimple == null ? null : newConfigPropertySimple
+                .getStringValue();
+            PropertySimple currentConfigPropertySimple = currentConfigSimpleProperties.get(simplePropertyName);
+            String currentConfigPropertySimpleValue = currentConfigPropertySimple == null ? null
+                : currentConfigPropertySimple.getStringValue();
+            boolean canUnset = !UNSET_FORBIDDEN_ATTRIBUTES.contains(simplePropertyName);
+
+            if (newConfigPropertySimpleValue == null) {
+                if (currentConfigPropertySimpleValue != null) {
+                    String val;
+                    if (canUnset) {
+                        val = null;
+                    } else {
+                        val = configDef.getPropertyDefinitionSimple(simplePropertyName).getDefaultValue();
+                    }
+                    updateOperation.addStep(new WriteAttribute(getAddress(), simplePropertyName, val));
+                }
+            } else if (!newConfigPropertySimpleValue.equals(currentConfigPropertySimpleValue)) {
+                updateOperation.addStep(new WriteAttribute(getAddress(), simplePropertyName,
+                    newConfigPropertySimpleValue));
+            }
+        }
+
+        // 4. Capture connection property changes
+        String connPropAttributeNameOnServer, connPropPluginConfigPropertyName, keyName;
+        if (isXADatasourceResource(resourceType)) {
+            connPropAttributeNameOnServer = "xa-datasource-properties";
+            connPropPluginConfigPropertyName = XA_DATASOURCE_PROPERTIES_ATTRIBUTE;
+            keyName = "key";
         } else {
-            enabledAttributeConfigValue = enabledAttributeSimpleConfigValue.getBooleanValue();
+            connPropAttributeNameOnServer = "connection-properties";
+            connPropPluginConfigPropertyName = CONNECTION_PROPERTIES_ATTRIBUTE;
+            keyName = "pname";
         }
 
-        // Check if the datasource is currently enabled
-        ReadAttribute readEnabledAttributeOperation = new ReadAttribute(address, ENABLED_ATTRIBUTE);
-        Result readEnabledAttributeResult = getASConnection().execute(readEnabledAttributeOperation);
-        if (!readEnabledAttributeResult.isSuccess()) {
-            configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
-            configurationUpdateReport.setErrorMessage("Could not determine if the Datasource is currently enabled: "
-                + readEnabledAttributeResult.getFailureDescription());
-            return;
+        Map<String, String> newConfigConnectionProperties = getConnectionPropertiesAsMap(
+            newConfig.getList(connPropPluginConfigPropertyName), keyName);
+        Map<String, String> currentConfigConnectionProperties = getConnectionPropertiesAsMap(
+            currentConfig.getList(connPropPluginConfigPropertyName), keyName);
+        Set<String> allConnectionPropertyNames = new HashSet<String>(newConfigConnectionProperties.size()
+            + currentConfigConnectionProperties.size());
+        allConnectionPropertyNames.addAll(newConfigConnectionProperties.keySet());
+        allConnectionPropertyNames.addAll(currentConfigConnectionProperties.keySet());
+
+        for (String connectionPropertyName : allConnectionPropertyNames) {
+            Address propertyAddress = new Address(getAddress());
+            propertyAddress.add(connPropAttributeNameOnServer, connectionPropertyName);
+
+            String newConfigConnectionPropertyValue = newConfigConnectionProperties.get(connectionPropertyName);
+            String currentConfigConnectionPropertyValue = currentConfigConnectionProperties.get(connectionPropertyName);
+
+            if (newConfigConnectionPropertyValue == null) {
+                updateOperation.addStep(new Operation("remove", propertyAddress));
+            } else if (currentConfigConnectionPropertyValue == null) {
+                Operation addOperation = new Operation("add", propertyAddress);
+                addOperation.addAdditionalProperty("value", newConfigConnectionPropertyValue);
+                updateOperation.addStep(addOperation);
+            } else if (!newConfigConnectionPropertyValue.equals(currentConfigConnectionPropertyValue)) {
+                updateOperation.addStep(new Operation("remove", propertyAddress));
+                Operation addOperation = new Operation("add", propertyAddress);
+                addOperation.addAdditionalProperty("value", newConfigConnectionPropertyValue);
+                updateOperation.addStep(addOperation);
+            }
         }
-        Boolean datasourceEnabled = (Boolean) readEnabledAttributeResult.getResult();
-        if (datasourceEnabled == TRUE) {
-            if (enabledAttributeConfigValue == TRUE) {
-                configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
-                configurationUpdateReport.setErrorMessage("You must disable the Datasource "
-                    + "before editing its configuration");
-                return;
+
+        // 5. Update config if needed
+        if (updateOperation.numberOfSteps() > 0) {
+            Result res = getASConnection().execute(updateOperation);
+            if (res.isSuccess()) {
+                configurationUpdateReport.setStatus(SUCCESS);
             } else {
-                EnabledAttributeHelper.on(getAddress()).with(getASConnection())
-                    .setAttributeValue(FALSE, new EnabledAttributeHelperCallbacks() {
-                        @Override
-                        public void onReadAttributeFailure(Result opResult) {
-                            configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
-                            configurationUpdateReport
-                                .setErrorMessage("Could not determine if the Datasource is currently enabled: "
-                                    + opResult.getFailureDescription());
-                        }
-
-                        @Override
-                        public void onEnableOperationFailure(Result opResult) {
-                            // Will not be called
-                        }
-
-                        @Override
-                        public void onDisableOperationFailure(Result opResult) {
-                            configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
-                            configurationUpdateReport.setErrorMessage("Could not disable the Datasource: "
-                                + opResult.getFailureDescription());
-                        }
-                    });
-                if (configurationUpdateReport.getStatus() == ConfigurationUpdateStatus.FAILURE) {
-                    // No success, return immediatly
-                    return;
-                }
+                configurationUpdateReport.setStatus(FAILURE);
+                configurationUpdateReport.setErrorMessage(res.getFailureDescription());
             }
+        } else {
+            configurationUpdateReport.setStatus(NOCHANGE);
         }
-
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDefCopy, getASConnection(), address);
-        delegate.updateResourceConfiguration(configurationUpdateReport);
-
-        if (configurationUpdateReport.getStatus() != ConfigurationUpdateStatus.SUCCESS) {
-            // No success, return immediatly
-            return;
-        }
-
-        EnabledAttributeHelper.on(address).with(getASConnection())
-            .setAttributeValue(enabledAttributeConfigValue, new EnabledAttributeHelperCallbacks() {
-                @Override
-                public void onReadAttributeFailure(Result opResult) {
-                    configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
-                    configurationUpdateReport.setErrorMessage("Datasource was updated, "
-                        + "but could not read its configuration after the update: " + opResult.getFailureDescription());
-                }
-
-                @Override
-                public void onEnableOperationFailure(Result opResult) {
-                    configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
-                    configurationUpdateReport.setErrorMessage("Datasource was updated but not enabled: "
-                        + opResult.getFailureDescription());
-                }
-
-                @Override
-                public void onDisableOperationFailure(Result opResult) {
-                    configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
-                    configurationUpdateReport.setErrorMessage("Datasource was updated but not disabled: "
-                        + opResult.getFailureDescription());
-                }
-            });
-    }
-
-    private void replacePropertiesWithDefaultValueWhenNull(Configuration config, ConfigurationDefinition configDef) {
-        // These properties cannot be undefined once set.
-        // Also the AS7 server does not accept null values even if the properties are still unset.
-        replaceWithDefaultIfNull("max-pool-size", config, configDef);
-        replaceWithDefaultIfNull("min-pool-size", config, configDef);
-        replaceWithDefaultIfNull("pool-prefill", config, configDef);
-        replaceWithDefaultIfNull("pool-use-strict-min", config, configDef);
-        replaceWithDefaultIfNull("blocking-timeout-wait-millis", config, configDef);
-        replaceWithDefaultIfNull("idle-timeout-minutes", config, configDef);
-        replaceWithDefaultIfNull("background-validation-millis", config, configDef);
-        replaceWithDefaultIfNull("background-validation-minutes", config, configDef);
-        replaceWithDefaultIfNull("background-validation", config, configDef);
-    }
-
-    /**
-     * Replace the value configured by the user with the default value from the resource descriptor if
-     * the value to be sent to the server is null or empty.
-     *
-     * @param propertyName property name
-     * @param config configuration update
-     * @param configDef configuration definition
-     */
-    private void replaceWithDefaultIfNull(String propertyName, Configuration config, ConfigurationDefinition configDef) {
-        PropertyDefinitionSimple propertyDefinition = configDef.getPropertyDefinitionSimple(propertyName);
-
-        if (propertyDefinition != null) {
-            String propertyValue = config.getSimpleValue(propertyName);
-            if (propertyValue == null || propertyValue.isEmpty()) {
-                config.put(new PropertySimple(propertyName, propertyDefinition.getDefaultValue()));
-            }
-        }
-    }
-
-    private void doUpdateAS7ResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport,
-        ConfigurationDefinition configDefCopy) {
-        // Remove these properties which are only supported on EAP.
-        configDefCopy.getPropertyDefinitions().remove(ALLOW_MULTIPLE_USERS_ATTRIBUTE);
-        configDefCopy.getPropertyDefinitions().remove(TRACK_STATEMENTS_ATTRIBUTE);
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDefCopy, getASConnection(), address);
-        delegate.updateResourceConfiguration(configurationUpdateReport);
     }
 
     private void getRCAsMetric(MeasurementReport report, MeasurementScheduleRequest request) {
-        ReadMetricResult result = getMetricValue(report, request, expressionMetrics);
+        ReadMetricResult result = getMetricValue(report, request, EXPRESSION_METRICS);
 
         if (result.equals(ReadMetricResult.Null)) { // server
             Double val = Double.valueOf(-1);
-            if (request.getName().equals("max-pool-size"))
+            if (request.getName().equals(MAX_POOL_SIZE_ATTRIBUTE))
                 val = Double.valueOf(20); // The default value
-            else if (request.getName().equals("min-pool-size"))
+            else if (request.getName().equals(MIN_POOL_SIZE_ATTRIBUTE))
                 val = Double.valueOf(0); // The default value
 
             MeasurementDataNumeric data = new MeasurementDataNumeric(request, val);
@@ -415,81 +299,32 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
     }
 
     private MeasurementDataTrait getConnectionAvailable(MeasurementScheduleRequest request) {
-        Operation op = new Operation("test-connection-in-pool", getAddress());
-        Result res = getASConnection().execute(op);
-
-        MeasurementDataTrait trait = new MeasurementDataTrait(request, String.valueOf(res.isSuccess()));
-
-        return trait;
+        Result res = getASConnection().execute(new Operation("test-connection-in-pool", getAddress()));
+        return new MeasurementDataTrait(request, String.valueOf(res.isSuccess()));
     }
 
-    // 'enabled' attribute is read/write in the plugin descriptor, but not in EAP management interface.
-    // This helper queries the current attribute value and, as needed, will invoke whether the 'enable' or 'disable'
-    // operation.
-    private static class EnabledAttributeHelper {
-
-        Address datasourceAddress;
-        ASConnection asConnection;
-
-        EnabledAttributeHelper(Address datasourceAddress) {
-            this.datasourceAddress = datasourceAddress;
-        }
-
-        static EnabledAttributeHelper on(Address datasourceAddress) {
-            return new EnabledAttributeHelper(datasourceAddress);
-        }
-
-        EnabledAttributeHelper with(ASConnection asConnection) {
-            this.asConnection = asConnection;
-            return this;
-        }
-
-        void setAttributeValue(Boolean attributeValue, EnabledAttributeHelperCallbacks callbacks) {
-            if (asConnection == null) {
-                throw new IllegalStateException("No ASConnection instance provided");
-            }
-            if (attributeValue == null) {
-                throw new IllegalArgumentException("Argument attributeValue is null");
-            }
-            ReadAttribute readAttribute = new ReadAttribute(datasourceAddress, ENABLED_ATTRIBUTE);
-            Result readAttributeResult = asConnection.execute(readAttribute);
-            if (!readAttributeResult.isSuccess()) {
-                if (callbacks != null) {
-                    callbacks.onReadAttributeFailure(readAttributeResult);
-                }
-                return;
-            }
-            Boolean currentAttributeValue = (Boolean) readAttributeResult.getResult();
-            if (currentAttributeValue != attributeValue) {
-                if (attributeValue == TRUE) {
-                    Operation operation = new Operation(ENABLE_OPERATION, datasourceAddress);
-                    Result res = asConnection.execute(operation);
-                    if (!res.isSuccess()) {
-                        if (callbacks != null) {
-                            callbacks.onEnableOperationFailure(res);
-                        }
-                        return;
-                    }
-                } else {
-                    Operation operation = new Operation(DISABLE_OPERATION, datasourceAddress);
-                    Result res = asConnection.execute(operation);
-                    if (!res.isSuccess()) {
-                        if (callbacks != null) {
-                            callbacks.onDisableOperationFailure(res);
-                        }
-                        return;
-                    }
-                }
-            }
-        }
-
+    static boolean isXADatasourceResource(ResourceType resourceType) {
+        return resourceType.getName().toLowerCase().contains("xa");
     }
 
-    interface EnabledAttributeHelperCallbacks {
-        void onReadAttributeFailure(Result opResult);
-
-        void onEnableOperationFailure(Result opResult);
-
-        void onDisableOperationFailure(Result opResult);
+    static Map<String, String> getConnectionPropertiesAsMap(PropertyList listPropertyWrapper, String keyName) {
+        if (listPropertyWrapper == null) {
+            return Collections.emptyMap();
+        }
+        List<Property> propertyList = listPropertyWrapper.getList();
+        if (propertyList.size() == 0) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> result = new HashMap<String, String>(propertyList.size());
+        for (Property p : propertyList) {
+            PropertyMap map = (PropertyMap) p;
+            String key = map.getSimpleValue(keyName, null);
+            String value = map.getSimpleValue("value", null);
+            if (key == null || value == null) {
+                continue;
+            }
+            result.put(key, value);
+        }
+        return result;
     }
 }

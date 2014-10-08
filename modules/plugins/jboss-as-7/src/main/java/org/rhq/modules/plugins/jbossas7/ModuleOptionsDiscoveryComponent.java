@@ -1,8 +1,28 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -10,7 +30,6 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.Value;
@@ -26,12 +45,13 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Simeon Pinder
  */
 public class ModuleOptionsDiscoveryComponent implements ResourceDiscoveryComponent<BaseComponent<?>> {
+    private static final Log LOG = LogFactory.getLog(ModuleOptionsDiscoveryComponent.class);
 
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final Pattern COMMA_PATTERN = Pattern.compile(",");
 
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BaseComponent<?>> context)
-        throws InvalidPluginConfigurationException, Exception {
+        throws Exception {
 
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
 
@@ -41,7 +61,7 @@ public class ModuleOptionsDiscoveryComponent implements ResourceDiscoveryCompone
         Configuration config = context.getDefaultPluginConfiguration();
         String confPath = config.getSimpleValue("path", "");
         if (confPath == null || confPath.isEmpty()) {
-            log.error("Path plugin config is null for ResourceType [" + context.getResourceType().getName() + "].");
+            LOG.error("Path plugin config is null for ResourceType [" + context.getResourceType().getName() + "].");
             return details;
         }
 
@@ -56,7 +76,7 @@ public class ModuleOptionsDiscoveryComponent implements ResourceDiscoveryCompone
             path = parentConfPath + "," + confPath;//Ex. profile=standalone-ha,subsystem=security
         }
 
-        String name = "";//name=security
+        String name;//name=security
         Address address = new Address(path);
 
         //process the specific nodes
@@ -96,12 +116,11 @@ public class ModuleOptionsDiscoveryComponent implements ResourceDiscoveryCompone
             if (result.isSuccess()) {
                 List<Value> loadedLoginModuleTypes = ModuleOptionsComponent.populateSecurityDomainModuleOptions(result,
                     ModuleOptionsComponent.loadModuleOptionType(attribute));
-                int moduleIndex = 0;
-                for (Value loginModule : loadedLoginModuleTypes) {
+                for (int moduleIndex = 0; moduleIndex < loadedLoginModuleTypes.size(); moduleIndex++) {
                     //Ex. name = "Login Module " + moduleIndex;
                     name = ModuleOptionsComponent.ModuleOptionType.readableNameMap.get(attribute) + " " + moduleIndex;
                     //Ex. subsystem=security,security-domain=testDomain2,authentication=classic,login-modules:0
-                    String currentPath = path + ":" + moduleIndex++;
+                    String currentPath = path + ":" + moduleIndex;
                     //add the discovered resource
                     addDiscoveredResource(context, details, connection, currentPath, name, address);
                 }
@@ -126,7 +145,7 @@ public class ModuleOptionsDiscoveryComponent implements ResourceDiscoveryCompone
         String attribute = null;
         if ((path != null) && (!path.trim().isEmpty())) {
             //Ex. subsystem=security,security-domain=testDomain2,authentication=classic,login-modules
-            String[] segments = path.split(",");
+            String[] segments = COMMA_PATTERN.split(path);
             //contents of last segment should be the 'attribute' value of one of the ModuleOptionTypes
             if (segments.length > 1) {
                 String last = segments[segments.length - 1];
@@ -139,11 +158,11 @@ public class ModuleOptionsDiscoveryComponent implements ResourceDiscoveryCompone
     }
 
     private boolean ifResourceIsSupportedModuleType(String path) {
-        boolean resourceIsSupported =false;
+        boolean resourceIsSupported = false;
         if ((path != null) && (!path.trim().isEmpty())) {
             //Ex. subsystem=security,security-domain=testDomain2,authentication=classic,login-modules
-           String[] segments = path.split(",");
-           //contents of last segment should be the 'attribute' value of one of the ModuleOptionTypes
+            String[] segments = COMMA_PATTERN.split(path);
+            //contents of last segment should be the 'attribute' value of one of the ModuleOptionTypes
             if (segments.length > 1) {
                 String last = segments[segments.length - 1];
                 if (ModuleOptionsComponent.ModuleOptionType.typeMap.keySet().contains(last)) {

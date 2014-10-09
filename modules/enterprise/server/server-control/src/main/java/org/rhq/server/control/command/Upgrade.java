@@ -77,11 +77,8 @@ public class Upgrade extends AbstractInstall {
                     + "exists and is not installed in the default location: <server-dir>/../rhq-agent")
             .addOption(null, FROM_SERVER_DIR_OPTION, true,
                 "Full path to install directory of the RHQ Server to be upgraded. Required.")
-            .addOption(
-                null,
-                START_OPTION,
-                false,
-                "If specified then immediately start the services after upgrade.  Note that services may be started and shut down as part of the upgrade process, but will not be started or left running by default.")
+            .addOption(null, START_OPTION, false,
+                "Deprecated.  This option has no effect and will be removed in a future version.")
             .addOption(
                 null,
                 USE_REMOTE_STORAGE_NODE,
@@ -152,7 +149,6 @@ public class Upgrade extends AbstractInstall {
         }
 
         int rValue = RHQControl.EXIT_CODE_OK;
-        boolean start = commandLine.hasOption(START_OPTION);
 
         try {
             List<String> errors = validateOptions(commandLine);
@@ -224,9 +220,6 @@ public class Upgrade extends AbstractInstall {
 
             updateWindowsAgentService(agentDir);
 
-            if (start) {
-                rValue = Math.max(rValue, startAgent(agentDir));
-            }
         } catch (Exception e) {
             throw new RHQControlException("An error occurred while executing the upgrade command", e);
         } finally {
@@ -236,12 +229,10 @@ public class Upgrade extends AbstractInstall {
                     listVersions(commandLine);
                 }
 
-                if (!start) {
-                    Stop stopCommand = new Stop();
-                    stopCommand.exec(new String[] { "--server" });
-                    if (!commandLine.hasOption(RUN_DATA_MIGRATION)) {
-                        rValue = Math.max(rValue, stopCommand.exec(new String[] { "--storage" }));
-                    }
+                Stop stopCommand = new Stop();
+                stopCommand.exec(new String[] { "--server" });
+                if (!commandLine.hasOption(RUN_DATA_MIGRATION)) {
+                    rValue = Math.max(rValue, stopCommand.exec(new String[] { "--storage" }));
                 }
             } catch (Throwable t) {
                 log.warn("Unable to stop services: " + t.getMessage());
@@ -284,6 +275,8 @@ public class Upgrade extends AbstractInstall {
         // If upgrading from a pre-cassandra then just install an initial storage node. Otherwise, upgrade
         if (isRhq48OrLater(rhqctlCommandLine)) {
             try {
+                final String fromServerPath = getFromServerDir(rhqctlCommandLine).getAbsolutePath();
+
                 // We need to be sure the storage is really stopped (long enough) to not get a port conflict
                 waitForProcessToStop(getStoragePid());
 
@@ -291,13 +284,20 @@ public class Upgrade extends AbstractInstall {
                 // later
                 addUndoTask(new ControlCommand.UndoTask("Removing new storage node install directory") {
                     public void performUndoWork() {
+                        try {
+                            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer",
+                                "--undo", fromServerPath);
+                            ExecutorAssist.execute(getBinDir(), commandLine);
+                        } catch (Exception e) {
+                            log.warn("Unable to undo version stamp for storage node: " + e.getMessage());
+                        }
                         FileUtil.purge(getStorageBasedir(), true);
                     }
                 });
                 addUndoTaskToStopComponent("--storage"); // The undo tasks are done in reversed order
 
                 org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--upgrade",
-                    getFromServerDir(rhqctlCommandLine).getAbsolutePath());
+                    fromServerPath);
 
                 rValue = ExecutorAssist.execute(getBinDir(), commandLine);
                 log.info("The storage node upgrade has finished with an exit value of " + rValue);

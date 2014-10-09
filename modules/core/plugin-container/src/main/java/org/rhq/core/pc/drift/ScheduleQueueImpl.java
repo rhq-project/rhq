@@ -17,7 +17,7 @@ public class ScheduleQueueImpl implements ScheduleQueue {
         }
     };
 
-    private PriorityQueue<DriftDetectionSchedule> queue = new PriorityQueue<DriftDetectionSchedule>();
+    private PriorityQueue<DriftDetectionSchedule> queue;
 
     private ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -26,6 +26,15 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     private Runnable deactivationTask;
 
     private Log log = LogFactory.getLog(ScheduleQueueImpl.class);
+
+    public ScheduleQueueImpl() {
+        queue = new PriorityQueue<DriftDetectionSchedule>(10, new Comparator<DriftDetectionSchedule>() {
+            @Override
+            public int compare(DriftDetectionSchedule driftDetectionSchedule, DriftDetectionSchedule driftDetectionSchedule2) {
+                return driftDetectionSchedule.getNextScan() > driftDetectionSchedule2.getNextScan() ? 1 : -1;
+            }
+        });
+    }
 
     @Override
     public DriftDetectionSchedule getNextSchedule() {

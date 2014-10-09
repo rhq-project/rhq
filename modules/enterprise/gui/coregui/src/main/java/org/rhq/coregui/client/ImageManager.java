@@ -56,7 +56,7 @@ public class ImageManager {
     public static String getStatusError() {
         return "status_error.gif";
     }
-    
+
     public static String getCloseIcon() {
         return "[SKIN]/actions/close.png";
     }
@@ -552,7 +552,7 @@ public class ImageManager {
         case PARTIAL:
             return ImageManager.getAvailabilityYellowIcon();
         case DEFERRED:
-            return "[skin]/actions/redo.png"; // for lack of a better icon
+            return "[SKIN]/actions/forward.png"; // for lack of a better icon
         case UNKNOWN:
         default:
             return ImageManager.getAvailabilityIcon(null);

@@ -297,7 +297,12 @@ public class RHQControl {
                     console.format("Confirm:\n");
                     String confirmValue = String.valueOf(console.readPassword("%s", propertyName
                         + (((obfuscate || encode) ? " (enter as plain text): " : ": "))));
-                    response = (propertyValue.equals(confirmValue) ? "yes" : "no");
+                    if (propertyValue.equals(confirmValue)) {
+                        response = "yes";
+                    } else {
+                        response = "no";
+                        console.printf("Did not match. Please try again.\n");
+                    }
                 }
             } while (response.startsWith("n"));
 

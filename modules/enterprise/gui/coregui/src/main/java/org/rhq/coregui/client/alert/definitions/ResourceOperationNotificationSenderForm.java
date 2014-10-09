@@ -368,7 +368,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
     /**
      * This assumes the user or our code selected a specific operation from the drop down list.
      * This will show the operation arguments as appropriate for the selected operation.
-     * 
+     *
      * @param operationId the selected operation; if 0 or less, selects the value of the drop down component
      */
     @SuppressWarnings("unchecked")
@@ -414,10 +414,10 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
      * Sets up the operation drop down menu by looking up the resource type and gets its operation definitions.
      * If opId is non-null, the drop down menu will default to that operation.
      * If args is non-null (and if opId is non-null), this will pre-populate the argument config editor.
-     * 
+     *
      * @param resourceTypeId the type whose operation definitions are to be shown in the operation drop down menu
      * @param selectedOpId if not-null, the selected operation
-     * @param args if not-null (and opId is not null), this will prepopulate the argument config 
+     * @param args if not-null (and opId is not null), this will prepopulate the argument config
      */
     private void setOperationDropDownMenuValues(int resourceTypeId, final Integer selectedOpId, final Configuration args) {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
@@ -446,7 +446,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                             opDefs.put(def.getId(), def);
                             valueMap.put(String.valueOf(def.getId()), def.getDisplayName());
                         }
-                        operationSelectItem.setAttribute(OPERATION_DEFS_ATTRIBUTE, (Object) new MapWrapper(opDefs));
+                        operationSelectItem.setAttribute(OPERATION_DEFS_ATTRIBUTE, new MapWrapper(opDefs));
                         operationSelectItem.setValueMap(valueMap);
                         if (selectedOpId != null && selectedOpId > 0 && opDefs.containsKey(selectedOpId)) {
                             operationSelectItem.setValue(String.valueOf(selectedOpId));
@@ -476,10 +476,10 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
 
     /**
      * For the SPECIFIC mode, sets the selected resource and optionally the operation.
-     * 
+     *
      * @param resourceId the resource selected
      * @param opId if not-null, the selected operation
-     * @param args if not-null (and opId is not null), this will prepopulate the argument config 
+     * @param args if not-null (and opId is not null), this will prepopulate the argument config
      */
     private void setSpecificResource(final int resourceId, final Integer opId, final Configuration args) {
         singleResourceTextItem.setAttribute(RESOURCE_ID_ATTRIBUTE, resourceId);
@@ -495,15 +495,14 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                         singleResourceTextItem.setValue(resource.getName());
                         setOperationDropDownMenuValues(resource.getResourceType().getId(), opId, args);
                     } else {
-                        onFailure(new Exception(MSG
-                            .view_alert_definition_notification_operation_editor_operations_loadFailed()));
+                        onFailure(new Exception(MSG.view_alert_definition_notification_editor_loadFailed_single()));
                     }
                 }
 
                 @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(
-                        MSG.view_alert_definition_notification_operation_editor_operations_loadFailed(), caught);
+                        MSG.view_alert_definition_notification_editor_loadFailed_single(), caught);
                     singleResourceTextItem.setValue(resourceId);
                     hideOperationDropDownMenu();
                 }
@@ -513,7 +512,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
     private void hideOperationDropDownMenu() {
         LinkedHashMap<Integer, OperationDefinition> ops = new LinkedHashMap<Integer, OperationDefinition>(0);
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(0);
-        operationSelectItem.setAttribute(OPERATION_DEFS_ATTRIBUTE, (Object) new MapWrapper(ops));
+        operationSelectItem.setAttribute(OPERATION_DEFS_ATTRIBUTE, new MapWrapper(ops));
         operationSelectItem.setValueMap(valueMap);
         operationSelectItem.hide();
         hideOperationArguments();

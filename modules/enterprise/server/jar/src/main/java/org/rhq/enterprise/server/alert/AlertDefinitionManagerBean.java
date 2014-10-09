@@ -982,7 +982,13 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         for (AlertNotification notif : notifications) {
             AlertSender<?> sender = alertPluginManager.getAlertSenderForNotification(notif);
             if (sender != null) {
-                previews[i++] = sender.previewConfiguration();
+                String preview = null;
+                try {
+                    preview = sender.previewConfiguration();
+                } catch (Exception e) {
+                    preview = "Error! There is a problem with this notification: " + e.getMessage();
+                }
+                previews[i++] = preview;
             } else {
                 previews[i++] = "n/a (unknown sender)";
             }

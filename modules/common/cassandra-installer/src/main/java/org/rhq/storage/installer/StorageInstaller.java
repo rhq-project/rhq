@@ -282,12 +282,12 @@ public class StorageInstaller {
             } finally {
                 oldServerPropsFileInputStream.close();
             }
+
+            String version = StorageInstaller.class.getPackage().getImplementationVersion();
+            stampStorageNodeVersion(dbProperties, installerInfo.hostname, version);
         } else {
             dbProperties = serverPropertiesUpdater.loadExistingProperties();
         }
-
-        String version = StorageInstaller.class.getPackage().getImplementationVersion();
-        stampStorageNodeVersion(dbProperties, installerInfo.hostname, version);
 
         // start node (and install windows service) if necessary
         File binDir = null;

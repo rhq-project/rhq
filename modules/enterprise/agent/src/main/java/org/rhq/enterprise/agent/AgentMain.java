@@ -35,7 +35,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StreamTokenizer;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
@@ -70,14 +69,6 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.stream.XMLEventFactory;
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLEventWriter;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.DTD;
-import javax.xml.stream.events.XMLEvent;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -1394,49 +1385,51 @@ public class AgentMain {
      * @return XML with DOCTYPE declaration, or original XML in case of errors
      */
     private String addMissingDoctypeDeclaration(String input) {
-        XMLEventReader eventReader = null;
-        XMLEventWriter eventWriter = null;
-        String output = null;
-        StringWriter writer = new StringWriter();
-
         try {
-            StringReader reader = new StringReader(input);
-            XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-            XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
-            XMLEventFactory eventFactory = XMLEventFactory.newInstance();
-            eventReader = inputFactory.createXMLEventReader(reader);
-            eventWriter = outputFactory.createXMLEventWriter(writer);
+            boolean configUpdateRequired = true;
 
-            boolean dtdWritten = false;
+            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            documentBuilderFactory.setValidating(false);
+            documentBuilderFactory.setNamespaceAware(true);
+            documentBuilderFactory.setFeature("http://xml.org/sax/features/namespaces", false);
+            documentBuilderFactory.setFeature("http://xml.org/sax/features/validation", false);
+            documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+            documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
 
-            while(eventReader.hasNext()) {
-                XMLEvent xmlEvent = eventReader.nextEvent();
-                switch(xmlEvent.getEventType()) {
-                    case XMLEvent.DTD:
-                        dtdWritten = true;
-                        eventWriter.add(xmlEvent);
-                        break;
-                    case XMLEvent.START_ELEMENT:
-                        if(!dtdWritten) {
-                            DTD dtd = eventFactory.createDTD("DOCTYPE preferences SYSTEM \"http://java.sun.com/dtd/preferences.dtd\"");
-                            eventWriter.add(dtd);
-                            dtdWritten = true;
-                        }
-                        eventWriter.add(xmlEvent);
-                        break;
-                    default:
-                        eventWriter.add(xmlEvent);
-                        break;
-                }
+            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+            InputStream inputStream = new ByteArrayInputStream(input.getBytes());
+            Document document = documentBuilder.parse(inputStream);
+            inputStream.close();
+
+            if (document.getDoctype() != null
+                && document.getDoctype().getSystemId() != null
+                && document.getDoctype().getSystemId().contains("preferences.dtd")) {
+                configUpdateRequired = false;
             }
-            eventReader.close();
-            eventWriter.close();
-            output = writer.toString();
-        } catch (XMLStreamException e) {
-            // Return input XML, we couldn't process it correctly
-            output = input;
+
+            if (configUpdateRequired) {
+                document.setXmlStandalone(true);
+
+                Transformer transformer = TransformerFactory.newInstance().newTransformer();
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+                transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+                transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "http://java.sun.com/dtd/preferences.dtd");
+
+                StringWriter writer = new StringWriter();
+                StreamResult outputStream = new StreamResult(writer);
+                transformer.transform(new DOMSource(document), outputStream);
+
+                return writer.toString();
+            }
+        } catch (Exception e) {
+            String cause = ThrowableUtil.getAllMessages(e);
+            LOG.error(AgentI18NResourceKeys.LOADING_CONFIG_FILE, cause);
+
+            //just log the error, do not let it bubble up to allow the agent startup to continue
         }
-        return output;
+
+        return input;
     }
 
     /**
@@ -3674,7 +3667,15 @@ public class AgentMain {
         try {
             boolean configFileUpdateRequired = false;
 
-            DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            documentBuilderFactory.setValidating(false);
+            documentBuilderFactory.setNamespaceAware(true);
+            documentBuilderFactory.setFeature("http://xml.org/sax/features/namespaces", false);
+            documentBuilderFactory.setFeature("http://xml.org/sax/features/validation", false);
+            documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+            documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+
+            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
             inputStream = new FileInputStream(configFile);
             Document document = documentBuilder.parse(inputStream);
             inputStream.close();

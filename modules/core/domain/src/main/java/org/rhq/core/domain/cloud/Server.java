@@ -96,7 +96,7 @@ import org.rhq.core.domain.resource.Agent;
 @Table(name = "RHQ_SERVER")
 public class Server implements Serializable {
 
-    public static final long serialVersionUID = 2L;
+    public static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL = "Server.findAll";
     public static final String QUERY_FIND_ALL_COMPOSITES = "Server.findAllComposites";

@@ -9330,7 +9330,7 @@
             </c:simple-property>
             <c:simple-property name="port:expr" displayName="Port" required="false" description="Number of the port to which the socket should be bound. ${} Expresions are allowed. Can be omitted if multicast-port is set."/>
             <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group."
-                               type="boolean" defaultValue="false"/>
+                               type="boolean" required="false"/>
             <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." required="false"/>
             <c:simple-property name="multicast-port:expr" displayName="Multicast Port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured. ${} Expresions are allowed." required="false"/>
           </c:map-property>

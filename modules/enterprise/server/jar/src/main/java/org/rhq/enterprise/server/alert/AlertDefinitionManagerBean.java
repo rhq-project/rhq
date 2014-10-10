@@ -41,6 +41,9 @@ import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.BooleanExpression;
+import org.rhq.core.domain.alert.builder.AlertNotificationTemplate;
+import org.rhq.core.domain.alert.builder.condition.AbstractCondition;
+import org.rhq.core.domain.alert.builder.AlertDefinitionTemplate;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -60,7 +63,9 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator.AuthorizationTokenType;
@@ -97,6 +102,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     @EJB
     private AlertNotificationManagerLocal alertNotificationManager;
+
+    @EJB
+    private MeasurementDefinitionManagerLocal measurementDefinitionManager;
 
     @EJB
     private SubjectManagerLocal subjectManager;
@@ -218,6 +226,41 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         AlertDefinition newAlertDefinition = createAlertDefinitionInternal(subject, alertDefinition, resourceId, false,
             false);
         return newAlertDefinition.getId();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public AlertDefinition createAlertDefinitionFromTemplate(Subject subject, AlertDefinitionTemplate template) throws InvalidAlertDefinitionException {
+
+        // Linking these two happens at createAlertDefinitionInternal, no need to replicate here
+        AlertDefinition alertDefinition = template.getAlertDefinition();
+        Integer resourceId = template.getResourceId();
+
+        // We need to modify MeasurementDefinitions here.. from id to a MeasurementDefinition
+        for (AbstractCondition conditionTemplate : template.getConditions()) {
+            AlertCondition alertCondition = conditionTemplate.getAlertCondition();
+            Integer measurementDefinitionId = conditionTemplate.getMeasurementDefinitionId();
+            if(measurementDefinitionId > 0) {
+                MeasurementDefinition measurementDefinition = measurementDefinitionManager.getMeasurementDefinition(subject, measurementDefinitionId);
+                if(measurementDefinition == null) {
+                    throw new InvalidAlertDefinitionException("No measurement was found with id " + measurementDefinitionId);
+                }
+                alertCondition.setMeasurementDefinition(measurementDefinition);
+                alertCondition.setName(measurementDefinition.getDisplayName());
+            }
+            alertDefinition.addCondition(alertCondition);
+        }
+
+        // Check that all notificationsenders are correct
+        for (AlertNotification notification : alertDefinition.getAlertNotifications()) {
+            AlertSenderInfo alertInfoForSender = alertNotificationManager.getAlertInfoForSender(notification.getSenderName());
+            if(alertInfoForSender == null) {
+                throw new InvalidAlertDefinitionException("No alertNotificationSender with name " + notification.getSenderName() + " was found");
+            }
+        }
+
+        // After transformation:
+        return createAlertDefinitionInternal(subject, alertDefinition, resourceId, true, true);
     }
 
     @Override

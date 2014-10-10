@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.alert;
 import javax.ejb.Remote;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.builder.AlertDefinitionTemplate;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -104,4 +105,14 @@ public interface AlertDefinitionManagerRemote {
      */
     String[] getAlertNotificationConfigurationPreview(Subject subject, AlertNotification[] notifications);
 
+    /**
+     * Creates a new alert definition. Note that the subject is checked to have necessary rights.
+     * <p />
+     * Requires MANAGE_ALERTS permission for the group or resource on which the alert definition is defined.
+     *
+     * @param subject the user creating the alert definition
+     * @param template definition template which is used to create new AlertDefinition
+     * @return The AlertDefinition that was just created
+     */
+    AlertDefinition createAlertDefinitionFromTemplate(Subject subject, AlertDefinitionTemplate template);
 }

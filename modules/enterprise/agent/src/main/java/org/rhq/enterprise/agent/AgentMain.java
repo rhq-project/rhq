@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StreamTokenizer;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
@@ -84,6 +85,9 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.jboss.remoting.security.SSLSocketBuilder;
@@ -1397,6 +1401,13 @@ public class AgentMain {
             documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
 
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+            documentBuilder.setEntityResolver(new EntityResolver() {
+                @Override
+                public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
+                    return new InputSource(new StringReader(""));
+                }
+            });
+
             InputStream inputStream = new ByteArrayInputStream(input.getBytes());
             Document document = documentBuilder.parse(inputStream);
             inputStream.close();
@@ -3676,6 +3687,13 @@ public class AgentMain {
             documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
 
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+            documentBuilder.setEntityResolver(new EntityResolver() {
+                @Override
+                public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
+                    return new InputSource(new StringReader(""));
+                }
+            });
+
             inputStream = new FileInputStream(configFile);
             Document document = documentBuilder.parse(inputStream);
             inputStream.close();

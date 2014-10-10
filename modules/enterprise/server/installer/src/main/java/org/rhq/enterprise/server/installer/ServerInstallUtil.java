@@ -200,6 +200,7 @@ public class ServerInstallUtil {
         LOG.info("Logging category org.rhq set to [" + val + "]");
 
         client.setLoggerLevel("org.jboss.as.config", "INFO"); // BZ 1004730
+        client.setLoggerLevel("org.rhq.enterprise.gui.common.framework", "FATAL"); // BZ 994267
 
         StringBuilder sb = new StringBuilder("not(any(");
         sb.append("match(\"JBAS015960\")"); // BZ 1026786
@@ -216,7 +217,9 @@ public class ServerInstallUtil {
         sb.append(",");
         sb.append("match(\"ARJUNA016009\")"); //BZ 1144998, waiting for fix of https://issues.jboss.org/browse/WFLY-2828
         sb.append(",");
-        sb.append("match(\"JBAS014807\")"); //BZ 1144998, missing web subsystem is expected at times
+        sb.append("match(\"JBAS014807\")"); //BZ 1144998, missing web subsystem is expected at times 
+        sb.append(",");
+        sb.append("match(\"admin/user/UserAdminPortal\")"); //BZ 994267
         sb.append("))");
         client.setFilterSpec(sb.toString());
     }

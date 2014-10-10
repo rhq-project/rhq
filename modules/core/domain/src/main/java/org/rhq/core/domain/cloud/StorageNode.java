@@ -96,7 +96,7 @@ import org.rhq.core.domain.resource.Resource;
 @Table(name = "RHQ_STORAGE_NODE")
 public class StorageNode implements Serializable {
 
-    public static final long serialVersionUID = 2L;
+    public static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL = "StorageNode.findAll";
     public static final String QUERY_FIND_BY_ADDRESS = "StorageNode.findByAddress";

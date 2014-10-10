@@ -81,9 +81,9 @@ public class DriftDetector implements Runnable {
     public void run() {
         log.debug("Starting drift detection...");
         long startTime = System.currentTimeMillis();
-        boolean updateSchedule = true;
         DriftDetectionSchedule schedule;
         while((schedule = scheduleQueue.getNextSchedule()) != null) {
+            boolean updateSchedule = true;
             try {
                 if (log.isDebugEnabled()) {
                     log.debug("Fetching next schedule from " + scheduleQueue);
@@ -102,14 +102,13 @@ public class DriftDetector implements Runnable {
                         log.debug("Skipping " + schedule + " because the drift definition is disabled.");
                     }
                     updateSchedule = false;
-                    continue;
+                    break; // We're done, rest of the queue is disabled only
                 }
 
                 if (previousSnapshotExists(schedule)) {
                     if (log.isDebugEnabled()) {
                         log.debug("Skipping " + schedule + " because server has not yet acked previous change set");
                     }
-                    updateSchedule = false;
                     continue;
                 }
 

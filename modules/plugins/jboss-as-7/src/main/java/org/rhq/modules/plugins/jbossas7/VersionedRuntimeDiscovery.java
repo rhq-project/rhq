@@ -206,7 +206,8 @@ public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscove
         // resources which are logically part of the umbrella deployment.
         String parentVersion = inventoriedResource.getParentResourceContext().getVersion();
         String currentVersion = inventoriedResource.getVersion();
-        if ((!currentVersion.equals(parentVersion))
+        //noinspection StringEquality
+        if ((currentVersion != parentVersion)
             && ((null == currentVersion && null != parentVersion) || !currentVersion.equals(parentVersion))) {
             if (null == result) {
                 result = new ResourceUpgradeReport();

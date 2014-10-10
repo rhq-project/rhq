@@ -1,15 +1,42 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.core.pc.drift;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 public class ScheduleQueueImpl implements ScheduleQueue {
+    private static final Log log = LogFactory.getLog(ScheduleQueueImpl.class);
+
 
     private static final Runnable NO_OP = new Runnable() {
         @Override
@@ -25,15 +52,8 @@ public class ScheduleQueueImpl implements ScheduleQueue {
 
     private Runnable deactivationTask;
 
-    private Log log = LogFactory.getLog(ScheduleQueueImpl.class);
-
     public ScheduleQueueImpl() {
-        queue = new PriorityQueue<DriftDetectionSchedule>(10, new Comparator<DriftDetectionSchedule>() {
-            @Override
-            public int compare(DriftDetectionSchedule driftDetectionSchedule, DriftDetectionSchedule driftDetectionSchedule2) {
-                return driftDetectionSchedule.getNextScan() > driftDetectionSchedule2.getNextScan() ? 1 : -1;
-            }
-        });
+        queue = new PriorityQueue<DriftDetectionSchedule>(10, new DriftDetectionScheduleQueueComparator());
     }
 
     @Override
@@ -49,10 +69,6 @@ public class ScheduleQueueImpl implements ScheduleQueue {
         } finally {
             lock.writeLock().unlock();
         }
-    }
-
-    private boolean isActiveSchedule(int resourceId, DriftDefinition driftDef) {
-        return isActiveSchedule(resourceId, driftDef.getName());
     }
 
     private boolean isActiveSchedule(int resourceId, String defName) {

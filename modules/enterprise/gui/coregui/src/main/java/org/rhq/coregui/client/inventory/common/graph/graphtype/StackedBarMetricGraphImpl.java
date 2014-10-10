@@ -179,6 +179,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     }));
                     lowBound = determineLowBound(min);
                     highBound = peak + ((peak - min) * 0.1);
+                    
                     oobMax = $wnd.d3.max(chartContext.data.map(function (d) {
                         if (typeof d.baselineMax === 'undefined') {
                             return 0;
@@ -191,13 +192,26 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         return (width / chartData.length - barOffset  )
                     };
 
-                    yScale = $wnd.d3.scale.linear()
+                    yScale = function() {
+                        // BZ 1146266
+                        var low = $wnd.d3.min(chartContext.data, function(d) {return d.low;}),
+                            high = $wnd.d3.max(chartContext.data, function(d) {return d.high;}),
+                            reserve;
+
+                        if (low === high) {
+                            // if both global extremes are the same, make some interval around the value to make it work
+                            // because domain() excepts an array with some interval denoting an input value space
+                            // here we create ['0.9 * the value', 1.1 * 'the value'] i.e. 10% from both sides
+                            reserve = Math.round(low * 0.1);
+                        }
+                        return $wnd.d3.scale.linear()
                             .clamp(true)
                             .rangeRound([height, 0])
-                            .domain([$wnd.d3.min(chartContext.data, function(d) {return d.low;}),$wnd.d3.max(chartContext.data, function(d) {return d.high;})]);
+                            .domain([low - (low !== high ? 0 : reserve), high + (low !== high ? 0 : reserve)]);
+                    };
 
                     yAxis = $wnd.d3.svg.axis()
-                            .scale(yScale)
+                            .scale(yScale())
                             .tickSubdivide(1)
                             .ticks(5)
                             .tickSize(4, 4, 0)
@@ -424,18 +438,18 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         })
                         .attr("y", function (d) {
                             if (d.down || d.unknown || d.nodata) {
-                                return yScale(highBound);
+                                return yScale()(highBound);
                             }
                             else {
-                                return yScale(d.low);
+                                return yScale()(d.low);
                             }
                         })
                         .attr("height", function (d) {
                             if (d.down || d.unknown || d.nodata) {
-                                return height - yScale(highBound) - pixelsOffHeight;
+                                return height - yScale()(highBound) - pixelsOffHeight;
                             }
                             else {
-                                return height - yScale(d.low) - pixelsOffHeight;
+                                return height - yScale()(d.low) - pixelsOffHeight;
                             }
                         })
                         .attr("width", function () {
@@ -483,14 +497,14 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             return timeScale(d.x);
                         })
                         .attr("y", function (d) {
-                            return isNaN(d.high) ? yScale(lowBound) : yScale(d.high);
+                            return isNaN(d.high) ? yScale()(lowBound) : yScale()(d.high);
                         })
                         .attr("height", function (d) {
                             if (d.down || d.unknown || d.nodata) {
                                 return 0;
                             }
                             else {
-                                return  yScale(d.avg) - yScale(d.high);
+                                return  yScale()(d.avg) - yScale()(d.high);
                             }
                         })
                         .attr("width", function () {
@@ -521,14 +535,14 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             return timeScale(d.x);
                         })
                         .attr("y", function (d) {
-                            return isNaN(d.avg) ? height : yScale(d.avg);
+                            return isNaN(d.avg) ? height : yScale()(d.avg);
                         })
                         .attr("height", function (d) {
                             if (d.down || d.unknown || d.nodata) {
                                 return 0;
                             }
                             else {
-                                return  yScale(d.low) - yScale(d.avg);
+                                return  yScale()(d.low) - yScale()(d.avg);
                             }
                         })
                         .attr("width", function () {
@@ -586,7 +600,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             return timeScale(d.x);
                         })
                         .attr("y", function (d) {
-                            return isNaN(d.avg) ? height : yScale(d.avg) - 2;
+                            return isNaN(d.avg) ? height : yScale()(d.avg) - 2;
                         })
                         .attr("height", function (d) {
                             if (d.down || d.unknown || d.nodata) {
@@ -594,7 +608,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             }
                             else {
                                 if (d.low === d.high) {
-                                    return  yScale(d.low) - yScale(d.avg) + 2;
+                                    return  yScale()(d.low) - yScale()(d.avg) + 2;
                                 }
                                 else {
                                     return  0;
@@ -623,7 +637,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                 // create the y axis grid lines
                 svg.append("g").classed("grid y_grid", true)
                         .call($wnd.d3.svg.axis()
-                                .scale(yScale)
+                                .scale(yScale())
                                 .orient("left")
                                 .ticks(10)
                                 .tickSize(-width, 0, 0)
@@ -676,9 +690,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                                 })
                                 .y(function (d) {
                                     if (showBarAvgTrendline) {
-                                        return yScale(d.avg);
-                                    }
-                                    else {
+                                        return yScale()(d.avg);
+                                    } else {
                                         return NaN;
                                     }
                                 });
@@ -703,7 +716,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                                     return timeScale(d.x);
                                 })
                                 .y(function (d) {
-                                    return yScale(d.baselineMin * unitsPercentMultiplier);
+                                    return yScale()(d.baselineMin * unitsPercentMultiplier);
                                 }),
                         maxBaselineLine = $wnd.d3.svg.line()
                                 .interpolate(interpolation)
@@ -711,7 +724,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                                     return timeScale(d.x);
                                 })
                                 .y(function (d) {
-                                    return yScale(d.baselineMax * unitsPercentMultiplier);
+                                    return yScale()(d.baselineMax * unitsPercentMultiplier);
                                 });
 
                 // min baseline Line

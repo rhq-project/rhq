@@ -177,8 +177,10 @@ public class ServerManagerBean implements ServerManagerLocal {
         String identity = getIdentity();
         Server result = topologyManager.getServerByName(identity);
         if (result == null) {
-            throw new ServerNotFoundException("Could not find server; is the " + RHQ_SERVER_NAME_PROPERTY
-                + " property set in rhq-server.properties?");
+            throw new ServerNotFoundException("Could not find server name [" + identity
+                + "]. If the rhq-server.properties property [" + RHQ_SERVER_NAME_PROPERTY
+                + "] is unset the server name defaults to the host name (via InetAddress.getLocalHost()). "
+                + "If this value, possibly an IP address, has changed it can cause this issue.");
         }
         return result;
     }
@@ -236,10 +238,10 @@ public class ServerManagerBean implements ServerManagerLocal {
                 log.info("Notified communication layer of server operation mode " + serverMode);
 
             } else if (Server.OperationMode.INSTALLED == serverMode
-                // The server must have just been installed and must be coming for the first time
-                // up as of this call. So, attempt to update the mode to NORMAL.
-                // This will prevent a running CloudManagerJob from resetting to DOWN before the real
-                // ServerManagerJob starts updating the heart beat regularly.
+            // The server must have just been installed and must be coming for the first time
+            // up as of this call. So, attempt to update the mode to NORMAL.
+            // This will prevent a running CloudManagerJob from resetting to DOWN before the real
+            // ServerManagerJob starts updating the heart beat regularly.
 
                 || Server.OperationMode.DOWN == serverMode) {
                 // The server can't be DOWN if this code is executing, it means the server must be coming

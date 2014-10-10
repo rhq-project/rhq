@@ -179,6 +179,7 @@ public class ServerInstallUtil {
     private static final String JMS_DRIFT_FILE_QUEUE = "DriftFileQueue";
     private static final String RHQ_CACHE_CONTAINER = "rhq";
     private static final String RHQ_CACHE = "rhqCache";
+    private static final String RHQ_REST_CACHE = "rhqRestCache";
     private static final String RHQ_MGMT_USER = "rhqadmin";
     private static final String XA_DATASOURCE_CLASS_POSTGRES = "org.postgresql.xa.PGXADataSource";
     private static final String XA_DATASOURCE_CLASS_ORACLE = "oracle.jdbc.xa.client.OracleXADataSource";
@@ -514,7 +515,7 @@ public class ServerInstallUtil {
 
         final InfinispanJBossASClient client = new InfinispanJBossASClient(mcc);
         final String cacheContainerName = RHQ_CACHE_CONTAINER;
-        final String localCacheName = RHQ_CACHE;
+        String localCacheName = RHQ_CACHE;
         if (!client.isCacheContainer(cacheContainerName)) {
             ModelNode request = client.createNewCacheContainerRequest(cacheContainerName, localCacheName);
             ModelNode results = client.execute(request);
@@ -530,7 +531,7 @@ public class ServerInstallUtil {
 
         if (!client.isLocalCache(cacheContainerName, localCacheName)) {
             ModelNode request = client.createNewLocalCacheRequest(cacheContainerName, localCacheName, null, null, null,
-                null, null);
+                null, null, null);
             ModelNode results = client.execute(request);
             if (!MessagingJBossASClient.isSuccess(results)) {
                 throw new FailureException(results, "Failed to create Local Cache [" + localCacheName + "]");
@@ -540,6 +541,20 @@ public class ServerInstallUtil {
 
         } else {
             LOG.info("Local Cache [" + localCacheName + "] already exists, skipping the creation request");
+        }
+
+        localCacheName = RHQ_REST_CACHE;
+        final long lifeSpan = 15 * 60 * 1000L; // 15min
+        final long maxIdle = 5 * 60 * 1000L; // 5min
+        if (!client.isLocalCache(cacheContainerName, localCacheName)) {
+            ModelNode request = client.createNewLocalCacheRequest(cacheContainerName, localCacheName, null, null, null,
+                lifeSpan, maxIdle, null);
+            ModelNode results = client.execute(request);
+            if (!MessagingJBossASClient.isSuccess(results)) {
+                throw new FailureException(results, "Failed to create Local Cache [" + localCacheName + "]");
+            } else {
+                LOG.info("Local Cache [" + localCacheName + "] created");
+            }
         }
     }
 

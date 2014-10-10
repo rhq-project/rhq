@@ -60,6 +60,7 @@ public class TakeSnapshotOperation {
 
     public OperationResult invoke() {
         OperationResult result = new OperationResult();
+        StringBuilder sbResult = new StringBuilder();
         String snapshotName = parameters.getSimpleValue("snapshotName", "" + System.currentTimeMillis()).trim();
         if (snapshotName.isEmpty()) {
             result.setErrorMessage("Snapshot Name parameter cannot be an empty string");
@@ -84,27 +85,6 @@ public class TakeSnapshotOperation {
                     + "] but 'location' parameter was null");
                 return result;
             }
-            File locationDir = new File(location);
-            if (!locationDir.exists()) {
-                try {
-                    if (!locationDir.mkdirs()) {
-                        result.setErrorMessage("Location [" + locationDir.getAbsolutePath()
-                            + "] did not exist and failed to be created");
-                        return result;
-                    }
-                } catch (Exception e) {
-                    result.setErrorMessage("Location [" + locationDir.getAbsolutePath()
-                        + "] did not exist and failed to be created - " + e.getMessage());
-                    return result;
-                }
-            }
-            if (!locationDir.isDirectory()) {
-                result.setErrorMessage("Location [" + locationDir.getAbsolutePath() + "] must be directory");
-                return result;
-            }
-            if (!locationDir.canWrite()) {
-                result.setErrorMessage("Location [" + locationDir.getAbsolutePath() + "] must be writable");
-            }
         }
 
         String[] keyspaces = service.getKeyspaces().toArray(new String[] {});
@@ -112,9 +92,40 @@ public class TakeSnapshotOperation {
         long startTime = System.currentTimeMillis();
         service.takeSnapshot(keyspaces, snapshotName);
         log.info("Snapshot taken in " + (System.currentTimeMillis() - startTime) + "ms");
-
+        sbResult.append("Snapshot [" + snapshotName + "] was successfully created.");
         if (R_STRATEGY_KEEP_ALL.equals(retentionStrategy)) { // do nothing
+            result.setSimpleResult(sbResult.toString());
             return result;
+        }
+
+        // verify if we can write to location to move older snapshots
+        if (D_STRATEGY_MOVE.equals(deletionStrategy)) {
+            File locationDir = new File(location);
+            if (!locationDir.exists()) {
+                try {
+                    if (!locationDir.mkdirs()) {
+                        result.setErrorMessage("Location [" + locationDir.getAbsolutePath()
+                            + "] did not exist and failed to be created");
+                        result.setSimpleResult(sbResult.toString());
+                        return result;
+                    }
+                } catch (Exception e) {
+                    result.setErrorMessage("Location [" + locationDir.getAbsolutePath()
+                        + "] did not exist and failed to be created - " + e.getMessage());
+                    result.setSimpleResult(sbResult.toString());
+                    return result;
+                }
+            }
+            if (!locationDir.isDirectory()) {
+                result.setErrorMessage("Location [" + locationDir.getAbsolutePath() + "] must be directory");
+                result.setSimpleResult(sbResult.toString());
+                return result;
+            }
+            if (!locationDir.canWrite()) {
+                result.setErrorMessage("Location [" + locationDir.getAbsolutePath() + "] must be writable");
+                result.setSimpleResult(sbResult.toString());
+                return result;
+            }
         }
 
         List<String> columnFamilyDirs = service.getColumnFamilyDirs();
@@ -126,29 +137,46 @@ public class TakeSnapshotOperation {
         if (eligibleSnapshots.isEmpty()) {
             return result;
         }
+        StringBuilder sbMoveOrDeleteErrors = new StringBuilder();
         if (D_STRATEGY_DEL.equals(deletionStrategy)) {
             log.info("Strategy [" + deletionStrategy + "] is set, deleting " + eligibleSnapshots.size() + " snapshots");
+            sbResult.append("\nDeleting " + eligibleSnapshots.size() + " directories.");
+            int deleted = 0;
             for (String[] snapPath : eligibleSnapshots) {
                 File snapDir = new File(snapPath[0], snapPath[1]);
                 log.info("Deleting " + snapDir);
                 if (!FileUtils.deleteQuietly(snapDir)) {
                     log.warn("Failed to delete " + snapDir.getAbsolutePath());
+                    sbMoveOrDeleteErrors.append("Failed to delete [" + snapDir.getAbsolutePath() + "]\n ");
+                } else {
+                    deleted++;
                 }
             }
+            sbResult.append("\nSuccessfully deleted " + deleted + " directories");
         }
         if (D_STRATEGY_MOVE.equals(deletionStrategy)) {
             log.info("Strategy [" + deletionStrategy + "] is set, moving " + eligibleSnapshots.size() + " snapshots");
+            sbResult.append("\nMoving " + eligibleSnapshots.size() + " directories to [" + location + "].");
+            int moved = 0;
             for (String[] snapPath : eligibleSnapshots) {
                 File snapDir = new File(snapPath[0], snapPath[1]);
                 File snapTargetDir = new File(location, snapPath[1]);
                 log.info("Moving  " + snapDir + " to " + snapTargetDir);
                 try {
                     FileUtils.moveDirectoryToDirectory(snapDir, snapTargetDir.getParentFile(), true);
+                    moved++;
                 } catch (IOException e) {
                     log.warn("Failed to move directory : " + e.getMessage());
+                    sbMoveOrDeleteErrors.append("Failed to move [" + snapDir.getAbsolutePath() + "] to ["
+                        + snapTargetDir.getAbsolutePath() + "]\n ");
                 }
             }
+            sbResult.append("\nSuccessfully moved " + moved + " directories.");
         }
+        if (sbMoveOrDeleteErrors.length() > 0) {
+            result.setErrorMessage(sbMoveOrDeleteErrors.toString());
+        }
+        result.setSimpleResult(sbResult.toString());
         return result;
     }
 

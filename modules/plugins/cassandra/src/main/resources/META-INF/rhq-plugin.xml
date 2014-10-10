@@ -94,6 +94,9 @@
         </c:simple-property>
         <c:simple-property name="location" required="false" type="string" description="Additional parameter to Deletion Strategy, specifies location to move snaphosts to." />
       </parameters>
+      <results>
+        <c:simple-property name="operationResult" description="Result"/>
+      </results>
     </operation>
 
     <server name="Cassandra Server JVM"

@@ -20,6 +20,9 @@
 <%@ page import="org.rhq.enterprise.server.scheduler.jobs.DataCalcJob"%>
 
 <%@ page import="javax.naming.NamingException" %>
+<%@ page import="org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal" %>
+<%@ page import="org.rhq.server.metrics.MetricsServer" %>
+<%@ page import="org.rhq.server.metrics.domain.AggregateNumericMetric" %>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -39,6 +42,8 @@
    SystemManagerLocal systemManager;
    SubjectManagerLocal subjectManager;
    SupportManagerLocal supportManager;
+   MeasurementOOBManagerLocal oobManager;
+   MetricsServer metricsServer;
 
    coreTestBean = LookupUtil.getTest();
    measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
@@ -47,6 +52,8 @@
    systemManager = LookupUtil.getSystemManager();
    subjectManager = LookupUtil.getSubjectManager();
    supportManager = LookupUtil.getSupportManager();
+   oobManager = LookupUtil.getOOBManager();
+   metricsServer = LookupUtil.getStorageClientManager().getMetricsServer();
 
    String result = null;   
    String resultNoEscape = null;   
@@ -61,7 +68,9 @@
       }
       else if ("calculateOOBs".equals(mode))
       {
-          result = "Cannot calculate OOBs currently";
+          Iterable<AggregateNumericMetric> aggregates = metricsServer.calculateAggregates();
+          oobManager.computeOOBsForLastHour(subjectManager.getOverlord(), aggregates);
+          result = "Calculate OOBs done";
       }
       else if ("checkForSuspectAgents".equals(mode))
       {

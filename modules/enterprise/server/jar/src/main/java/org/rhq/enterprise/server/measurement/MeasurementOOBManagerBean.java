@@ -38,8 +38,6 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.sql.DataSource;
 
-import com.datastax.driver.core.ResultSet;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -63,14 +61,8 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
-import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.util.QueryUtility;
-import org.rhq.server.metrics.MetricsDAO;
-import org.rhq.server.metrics.MetricsServer;
-import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
-import org.rhq.server.metrics.domain.Bucket;
 
 /**
  * Manager bean for Out-of-Bound measurements.
@@ -94,9 +86,6 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
     @EJB
     MeasurementOOBManagerLocal oobManager;
-
-    @EJB
-    StorageClientManager storageManager;
 
     /**
      * Compute oobs from the values in the 1h measurement table that just got added.
@@ -434,13 +423,11 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             }
 
             //  add outlier data
-            List<AggregateNumericMetric> datas = getOneHourDataForPKs(pks);
-            for (AggregateNumericMetric data : datas) {
+            List<MeasurementDataNumeric1H> datas = getOneHourDataForPKs(pks);
+            for (MeasurementDataNumeric1H data : datas) {
                 MeasurementDataPK pk = new MeasurementDataPK(data.getTimestamp(), data.getScheduleId());
                 MeasurementOOBComposite comp = map.get(pk);
-                comp.setDataMin(data.getMin());
-                comp.setDataMax(data.getMax());
-
+                comp.setData(data);
                 comp.calculateOutlier();
             }
 
@@ -487,13 +474,11 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
                 map.put(key, comp);
             }
             // compute and add the outlier data
-            List<AggregateNumericMetric> datas = getOneHourDataForPKs(pks);
-            for (AggregateNumericMetric data : datas) {
+            List<MeasurementDataNumeric1H> datas = getOneHourDataForPKs(pks);
+            for (MeasurementDataNumeric1H data : datas) {
                 MeasurementDataPK pk = new MeasurementDataPK(data.getTimestamp(), data.getScheduleId());
                 MeasurementOOBComposite comp = map.get(pk);
-                comp.setDataMin(data.getMin());
-                comp.setDataMax(data.getMax());
-
+                comp.setData(data);
                 comp.calculateOutlier();
             }
         }
@@ -542,13 +527,11 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
                 map.put(key, comp);
             }
             // compute and add the outlier data
-            List<AggregateNumericMetric> datas = getOneHourDataForPKs(pks);
-            for (AggregateNumericMetric data : datas) {
+            List<MeasurementDataNumeric1H> datas = getOneHourDataForPKs(pks);
+            for (MeasurementDataNumeric1H data : datas) {
                 MeasurementDataPK pk = new MeasurementDataPK(data.getTimestamp(), data.getScheduleId());
                 MeasurementOOBComposite comp = map.get(pk);
-                comp.setDataMin(data.getMin());
-                comp.setDataMax(data.getMax());
-
+                comp.setData(data);
                 comp.calculateOutlier();
             }
         }
@@ -564,30 +547,13 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * @param pks Primary keys to look up
      * @return List of 1h data
      */
-    private List<AggregateNumericMetric> getOneHourDataForPKs(List<MeasurementDataPK> pks) {
-        MetricsDAO metricsDAO = storageManager.getMetricsDAO();
+    private List<MeasurementDataNumeric1H> getOneHourDataForPKs(List<MeasurementDataPK> pks) {
 
-        List<StorageResultSetFuture> futureResults = new ArrayList<StorageResultSetFuture>();
-        for (MeasurementDataPK pk : pks) {
-            StorageResultSetFuture f = metricsDAO
-                .findAggregateMetricsAsync(pk.getScheduleId(), Bucket.ONE_HOUR, pk.getTimestamp(), pk.getTimestamp());
-            futureResults.add(f);
-        }
+        Query q = entityManager.createQuery("SELECT data FROM MeasurementDataNumeric1H data WHERE data.id IN (:pks)");
+        q.setParameter("pks", pks);
+        List<MeasurementDataNumeric1H> res = q.getResultList();
 
-        AggregateNumericMetricMapper mapper = new AggregateNumericMetricMapper();
-
-        List<AggregateNumericMetric> result = new ArrayList<AggregateNumericMetric>(pks.size());
-        for (StorageResultSetFuture f : futureResults) {
-            ResultSet r = f.get();
-
-            // this should always get exactly 1 row
-            if (!r.isExhausted()) {
-                AggregateNumericMetric aggregate = mapper.mapOne(r);
-                result.add(aggregate);
-            }
-        }
-
-        return result;
+        return res;
     }
 
 }

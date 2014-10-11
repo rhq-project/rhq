@@ -33,8 +33,11 @@ import javax.persistence.Table;
 /**
  * Subclass for numerical measurement data
  *
+ * @deprecated as of RHQ 4.13. Measurements are no longer stored in the database and this class is not used anywhere.
+ *
  * @author Greg Hinkle
  */
+@Deprecated
 @Entity
 @NamedQueries({
     @NamedQuery(name = MeasurementDataNumeric6H.GET_NUM_AGGREGATE, query = "SELECT min(nmd.min), avg(nmd.value), max(nmd.max) "

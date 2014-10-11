@@ -163,6 +163,11 @@ public class MeasurementOOBComposite implements Serializable {
         this.dataMax = dataMax;
     }
 
+    /**
+     * @deprecated the {@link MeasurementDataNumeric1H} class is being phased out. Use the {@link #setDataMin(double)}
+     * and {@link #setDataMax(double)} for equivalent usage.
+     */
+    @Deprecated
     public void setData(MeasurementDataNumeric1H data) {
         this.dataMin = data.getMin();
         this.dataMax = data.getMax();

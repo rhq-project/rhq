@@ -33,8 +33,12 @@ import javax.persistence.Table;
 /**
  * Subclass for numerical measurement data
  *
+ * @deprecated as of RHQ 4.13. The measurements are no longer stored in database and this class is not used anywhere
+ * else than in {@link org.rhq.core.domain.measurement.composite.MeasurementOOBComposite} which deprecates its usage,too.
+ *
  * @author Greg Hinkle
  */
+@Deprecated
 @Entity
 @NamedQueries({
     @NamedQuery(name = MeasurementDataNumeric1H.GET_MAX_TIMESTAMP, query = "SELECT max(nmd.id.timestamp) FROM MeasurementDataNumeric1H nmd"),

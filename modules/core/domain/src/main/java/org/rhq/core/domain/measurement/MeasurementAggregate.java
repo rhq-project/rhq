@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,21 +21,37 @@ package org.rhq.core.domain.measurement;
 import java.io.Serializable;
 
 /**
- * Simple Java Bean to hold aggregate values
+ * Simple Java Bean to hold aggregate values.
  *
- * @author  <a href="mailto:heiko.rupp@redhat.com">Heiko W. Rupp</a>
+ * @author Heiko W. Rupp
  */
 public class MeasurementAggregate implements Serializable {
 
     static final long serialVersionUID = 5673395371271765240L;
 
+    /**
+     * The minimum value of the values that are used to compute this aggregate
+     */
     Double min;
+    /**
+     * The average value of the values that are used to compute this aggregate
+     */
     Double avg;
+    /**
+     * The maximum value of the values that are used to compute this aggregate
+     */
     Double max;
 
     public MeasurementAggregate() {
     }
 
+    /**
+     * Create a new aggregate from the provided values. If one of the values is null,
+     * it is set to Double.NaN
+     * @param min Minimum value of the aggregate
+     * @param avg Average value of the aggregate
+     * @param max Maximum value of the aggregate
+     */
     public MeasurementAggregate(Double min, Double avg, Double max) {
         this.min = (min != null) ? min : Double.NaN;
         this.avg = (avg != null) ? avg : Double.NaN;

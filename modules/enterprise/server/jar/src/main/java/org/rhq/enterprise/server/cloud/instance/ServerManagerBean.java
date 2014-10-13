@@ -75,9 +75,16 @@ import org.rhq.enterprise.server.storage.StorageClientManager;
 public class ServerManagerBean implements ServerManagerLocal {
     private final Log log = LogFactory.getLog(ServerManagerBean.class);
 
-    static private final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
-
     static private Server.OperationMode lastEstablishedServerMode = null;
+
+    static private final String RHQ_SERVER_NAME_PROPERTY;
+
+    static private final String SERVER_NAME;
+
+    static {
+        RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
+        SERVER_NAME = getServerName();
+    }
 
     @Resource
     private TimerService timerService;
@@ -135,7 +142,10 @@ public class ServerManagerBean implements ServerManagerLocal {
     }
 
     public String getIdentity() {
+        return SERVER_NAME;
+    }
 
+    private static String getServerName() {
         // The property may return "" so also use "" as the default to ensure we set it to something useful
         String result = System.getProperty(RHQ_SERVER_NAME_PROPERTY, "");
 
@@ -150,19 +160,17 @@ public class ServerManagerBean implements ServerManagerLocal {
     }
 
     public List<Agent> getAgents() {
-        String identity = getIdentity();
-        List<Agent> results = topologyManager.getAgentsByServerName(identity);
+        List<Agent> results = topologyManager.getAgentsByServerName(SERVER_NAME);
         return results;
     }
 
     public List<Integer> getAndClearAgentsWithStatus() {
-        List<Integer> results = agentStatusManager.getAndClearAgentsWithStatusForServer(getIdentity());
+        List<Integer> results = agentStatusManager.getAndClearAgentsWithStatusForServer(SERVER_NAME);
         return results;
     }
 
     public boolean getAndClearServerStatus() {
-        String identity = getIdentity();
-        Server server = topologyManager.getServerByName(identity);
+        Server server = topologyManager.getServerByName(SERVER_NAME);
         if (server == null) {
             return false; // don't reload caches if we don't know who we are
         }
@@ -174,10 +182,9 @@ public class ServerManagerBean implements ServerManagerLocal {
     }
 
     public Server getServer() throws ServerNotFoundException {
-        String identity = getIdentity();
-        Server result = topologyManager.getServerByName(identity);
+        Server result = topologyManager.getServerByName(SERVER_NAME);
         if (result == null) {
-            throw new ServerNotFoundException("Could not find server name [" + identity
+            throw new ServerNotFoundException("Could not find server name [" + SERVER_NAME
                 + "]. If the rhq-server.properties property [" + RHQ_SERVER_NAME_PROPERTY
                 + "] is unset the server name defaults to the host name (via InetAddress.getLocalHost()). "
                 + "If this value, possibly an IP address, has changed it can cause this issue.");

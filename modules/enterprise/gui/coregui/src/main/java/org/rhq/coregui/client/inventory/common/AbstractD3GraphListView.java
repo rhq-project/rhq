@@ -31,6 +31,7 @@ import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
 import org.rhq.coregui.client.inventory.common.graph.Refreshable;
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -62,7 +63,7 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
 
     public abstract void refreshData();
 
-    protected abstract void queryAvailability(final EntityContext context, Long startTime, Long endTime,
+    protected abstract void queryAvailability(final EntityContext context, Moment startTime, Moment endTime,
         final CountDownLatch countDownLatch);
 
     @Override

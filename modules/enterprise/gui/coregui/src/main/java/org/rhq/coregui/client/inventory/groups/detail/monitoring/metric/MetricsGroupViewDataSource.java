@@ -60,6 +60,7 @@ import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
@@ -285,10 +286,10 @@ public class MetricsGroupViewDataSource extends RPCDataSource<MetricDisplaySumma
         }
     }
 
-    private void queryMetricDisplaySummaries(int[] measurementDefIds, Long startTime, Long endTime,
+    private void queryMetricDisplaySummaries(int[] measurementDefIds, Moment start, Moment end,
         final CountDownLatch countDownLatch) {
         GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForCompatibleGroup(
-            EntityContext.forGroup(resourceGroup), measurementDefIds, startTime, endTime, false,
+            EntityContext.forGroup(resourceGroup), measurementDefIds, start, end, false,
             new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
                 @Override
                 public void onSuccess(ArrayList<MetricDisplaySummary> metricDisplaySummaries) {

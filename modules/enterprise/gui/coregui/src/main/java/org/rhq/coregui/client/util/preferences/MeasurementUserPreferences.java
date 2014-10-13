@@ -27,6 +27,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor.MetricRangePreferences;
 import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
@@ -75,7 +76,7 @@ public class MeasurementUserPreferences {
             prefs.unit = Integer.valueOf(userPrefs.getPreferenceEmptyStringIsDefault(PREF_METRIC_RANGE_UNIT,
                 DEFAULT_VALUE_RANGE_UNIT.toString()));
 
-            List<Long> range = MeasurementUtility.calculateTimeFrame(prefs.lastN, prefs.unit);
+            List<Moment> range = MeasurementUtility.calculateTimeFrame(prefs.lastN, prefs.unit);
             prefs.begin = range.get(0);
             prefs.end = range.get(1);
         } else {
@@ -86,12 +87,12 @@ public class MeasurementUserPreferences {
                         rangeString = rangeString.replace(",", UserPreferences.PREF_LIST_DELIM);
                     }
                     String[] beginEnd = rangeString.split(UserPreferences.PREF_LIST_DELIM_REGEX);
-                    prefs.begin = Long.parseLong(beginEnd[0]);
-                    prefs.end = Long.parseLong(beginEnd[1]);
+                    prefs.begin = Moment.parseMoment(beginEnd[0]);
+                    prefs.end = Moment.parseMoment(beginEnd[1]);
                 }
             } catch (IllegalArgumentException iae) {
                 // that's OK, range will remain null and we might use the lastN / unit
-                List<Long> range = MeasurementUtility.calculateTimeFrame(DEFAULT_VALUE_RANGE_LASTN,
+                List<Moment> range = MeasurementUtility.calculateTimeFrame(DEFAULT_VALUE_RANGE_LASTN,
                     DEFAULT_VALUE_RANGE_UNIT);
                 prefs.begin = range.get(0);
                 prefs.end = range.get(1);

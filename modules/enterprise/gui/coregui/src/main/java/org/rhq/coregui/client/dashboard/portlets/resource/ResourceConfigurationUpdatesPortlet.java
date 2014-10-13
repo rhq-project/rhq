@@ -51,6 +51,7 @@ import org.rhq.coregui.client.inventory.resource.detail.configuration.ResourceCo
 import org.rhq.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.Moment;
 
 /**This portlet allows the end user to customize the Package History display
  *
@@ -262,9 +263,9 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
                                 Constant.METRIC_RANGE_LASTN_DEFAULT));
                             Integer units = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_UNIT,
                                 Constant.METRIC_RANGE_UNIT_DEFAULT));
-                            ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
-                            criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
-                            criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
+                            ArrayList<Moment> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
+                            criteria.addFilterStartTime(beginEnd.get(0).toDate().getTime());
+                            criteria.addFilterEndTime(beginEnd.get(1).toDate().getTime());
                         }
                     }
                 }

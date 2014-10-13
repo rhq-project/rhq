@@ -41,6 +41,7 @@ import org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverU
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.ExpandedRowsMomento;
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.coregui.client.util.BrowserUtility;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 
@@ -144,7 +145,7 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
 
 
     @Override
-    protected void queryAvailability(final EntityContext context, Long startTime, Long endTime, CountDownLatch notUsed) {
+    protected void queryAvailability(final EntityContext context, Moment startTime, Moment endTime, CountDownLatch notUsed) {
 
         // now return the availability
         GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResource(context.getResourceId(), startTime,

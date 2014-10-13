@@ -64,6 +64,7 @@ import org.rhq.coregui.client.inventory.groups.detail.configuration.GroupResourc
 import org.rhq.coregui.client.inventory.groups.detail.configuration.HistoryGroupResourceConfigurationTable;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
@@ -449,9 +450,9 @@ public class GroupConfigurationUpdatesPortlet extends EnhancedVLayout implements
                                 Constant.METRIC_RANGE_LASTN_DEFAULT));
                             int units = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_UNIT,
                                 Constant.METRIC_RANGE_UNIT_DEFAULT));
-                            ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
-                            criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
-                            criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
+                            ArrayList<Moment> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
+                            criteria.addFilterStartTime(beginEnd.get(0).toDate().getTime());
+                            criteria.addFilterEndTime(beginEnd.get(1).toDate().getTime());
                         }
                     }
                 }

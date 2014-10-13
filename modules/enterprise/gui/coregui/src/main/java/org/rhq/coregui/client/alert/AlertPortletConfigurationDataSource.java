@@ -41,6 +41,7 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.Moment;
 
 /** Customize the AlertDataSource to pull fetch criteria information from
  *  the Configuration object passed in.
@@ -161,9 +162,9 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
                             Constant.METRIC_RANGE_LASTN_DEFAULT));
                         Integer units = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_UNIT,
                             Constant.METRIC_RANGE_UNIT_DEFAULT));
-                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
-                        criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
-                        criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
+                        ArrayList<Moment> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
+                        criteria.addFilterStartTime(beginEnd.get(0).toDate().getTime());
+                        criteria.addFilterEndTime(beginEnd.get(1).toDate().getTime());
                     }
                 }
             }

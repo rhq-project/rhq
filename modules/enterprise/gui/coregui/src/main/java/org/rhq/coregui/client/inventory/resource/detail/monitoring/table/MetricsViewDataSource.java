@@ -69,6 +69,7 @@ import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementConverterClient;
 import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
@@ -282,8 +283,8 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                         }
                     });
 
-                    Long start = CustomDateRangeState.getInstance().getStartTime();
-                    Long end = CustomDateRangeState.getInstance().getEndTime();
+                    Moment start = CustomDateRangeState.getInstance().getStartTime();
+                    Moment end = CustomDateRangeState.getInstance().getEndTime();
                     queryResourceMetrics(resource, start, end, countDownLatch);
                     queryMetricDisplaySummaries(enabledScheduleIds, start, end, countDownLatch);
                 }
@@ -341,7 +342,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         }.schedule(150);
     }
 
-    private void queryMetricDisplaySummaries(int[] scheduleIds, Long startTime, Long endTime,
+    private void queryMetricDisplaySummaries(int[] scheduleIds, Moment startTime, Moment endTime,
         final CountDownLatch countDownLatch) {
         if (enabledScheduleIds.length == 0) {
             setMetricDisplaySummaries(Collections.<MetricDisplaySummary>emptyList());
@@ -371,7 +372,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         this.metricDisplaySummaries = metricDisplaySummaries;
     }
 
-    private void queryResourceMetrics(final Resource resource, final Long startTime, final Long endTime,
+    private void queryResourceMetrics(final Resource resource, final Moment startTime, final Moment endTime,
         final CountDownLatch countDownLatch) {
         List<MeasurementDefinition> definitions = getMetricDefinitions(resource);
         if (definitions.size() == 0) {

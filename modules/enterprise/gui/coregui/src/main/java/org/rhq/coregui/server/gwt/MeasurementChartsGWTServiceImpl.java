@@ -26,6 +26,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.coregui.client.gwt.MeasurementChartsGWTService;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -54,17 +55,23 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
 
     @Override
     public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(EntityContext context,
-        int[] defIds, long begin, long end, boolean enabledOnly) throws RuntimeException {
+        int[] defIds, Moment begin, Moment end, boolean enabledOnly) throws RuntimeException {
         Long now = System.currentTimeMillis();
-        if (now < end) {
+        long endInMillis = end.toDate().getTime();
+        if (now < end.toDate().getTime()) {
             // we can't foretell the future (this may be caused by different timezone on client's)
-            end = now;
+            endInMillis = now + 1;
         }
         try {
-            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(
-                chartsManager.getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), context, defIds, begin,
-                    end, enabledOnly));
-            return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForCompatibleGroup2");
+            if (begin.toDate().getTime() < endInMillis) {
+                ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(
+                    chartsManager.getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), context, defIds,
+                        begin.toDate().getTime(), endInMillis, enabledOnly));
+                return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForCompatibleGroup2");
+            } else {
+                throw new IllegalStateException(
+                    "End time before start time. Check the timezone settins if it is the same as on the server-side.");
+            }
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -87,17 +94,23 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
 
     @Override
     public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(int resourceId, int[] schedIds,
-        long begin, long end) throws RuntimeException {
+        Moment begin, Moment end) throws RuntimeException {
         Long now = System.currentTimeMillis();
-        if (now < end) {
+        long endInMillis = end.toDate().getTime();
+        if (now < end.toDate().getTime()) {
             // we can't foretell the future (this may be caused by different timezone on client's)
-            end = now;
+            endInMillis = now + 1;
         }
         try {
-            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(
-                chartsManager.getMetricDisplaySummariesForResource(getSessionSubject(), resourceId, schedIds, begin,
-                    end));
-            return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForResource2");
+            if (begin.toDate().getTime() < endInMillis) {
+                ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(
+                    chartsManager.getMetricDisplaySummariesForResource(getSessionSubject(), resourceId, schedIds, begin
+                        .toDate().getTime(), endInMillis));
+                return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForResource2");
+            } else {
+                throw new IllegalStateException(
+                    "End time before start time. Check the timezone settins if it is the same as on the server-side.");
+            }
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -105,17 +118,23 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
 
     @Override
     public Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(
-        int[] resourceIds, int[] measurementDefinitionIds, long begin, long end) throws RuntimeException {
+        int[] resourceIds, int[] measurementDefinitionIds, Moment begin, Moment end) throws RuntimeException {
         Long now = System.currentTimeMillis();
-        if (now < end) {
+        long endInMillis = end.toDate().getTime();
+        if (now < end.toDate().getTime()) {
             // we can't foretell the future (this may be caused by different timezone on client's)
-            end = now;
+            endInMillis = now + 1;
         }
         try {
-            Map<MeasurementDefinition, List<MetricDisplaySummary>> map = chartsManager
-                .getMetricDisplaySummariesForMetricsCompare(getSessionSubject(), resourceIds, measurementDefinitionIds,
-                    begin, end);
-            return SerialUtility.prepare(map, "MeasurementCharts.getMetricDisplaySummariesForMetricsCompare");
+            if (begin.toDate().getTime() < endInMillis) {
+                Map<MeasurementDefinition, List<MetricDisplaySummary>> map = chartsManager
+                    .getMetricDisplaySummariesForMetricsCompare(getSessionSubject(), resourceIds,
+                        measurementDefinitionIds, begin.toDate().getTime(), endInMillis);
+                return SerialUtility.prepare(map, "MeasurementCharts.getMetricDisplaySummariesForMetricsCompare");
+            } else {
+                throw new IllegalStateException(
+                    "End time before start time. Check the timezone settins if it is the same as on the server-side.");
+            }
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

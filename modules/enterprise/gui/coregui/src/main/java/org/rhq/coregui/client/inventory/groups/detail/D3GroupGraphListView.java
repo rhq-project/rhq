@@ -50,6 +50,7 @@ import org.rhq.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 
 /**
@@ -177,14 +178,14 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
         }
     }
 
-    protected void queryAvailability(final EntityContext groupContext, Long startTime, Long endTime,
+    protected void queryAvailability(final EntityContext groupContext, Moment start, Moment end,
         final CountDownLatch countDownLatch) {
 
         final long timerStart = System.currentTimeMillis();
 
         // now return the availability
-        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResourceGroup(groupContext.getGroupId(),
-            startTime, endTime, new AsyncCallback<List<ResourceGroupAvailability>>() {
+        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResourceGroup(groupContext.getGroupId(), start,
+            end, new AsyncCallback<List<ResourceGroupAvailability>>() {
                 @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);

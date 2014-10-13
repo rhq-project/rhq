@@ -61,6 +61,7 @@ import org.rhq.coregui.client.dashboard.PortletWindow;
 import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.resource.ProblemResourcesDataSource;
 import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 
 /**
@@ -311,10 +312,10 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
     public void refreshTableInfo() {
         if (isShowFooter()) {
             long begin = 0;
-            List<Long> bounds = MeasurementUtility.calculateTimeFrame(getDataSource()
+            List<Moment> bounds = MeasurementUtility.calculateTimeFrame(getDataSource()
                 .getMaximumProblemResourcesWithinHours(), MeasurementUtility.UNIT_HOURS);
-            begin = bounds.get(0);
-            long end = bounds.get(1);
+            begin = bounds.get(0).toDate().getTime();
+            long end = bounds.get(1).toDate().getTime();
 
             //if range spans greater than year then change formatter.
             if ((end - begin) > MeasurementUtility.ONE_YEAR) {

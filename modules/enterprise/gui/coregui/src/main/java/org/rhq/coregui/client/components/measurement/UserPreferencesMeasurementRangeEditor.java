@@ -22,6 +22,7 @@ package org.rhq.coregui.client.components.measurement;
 import java.util.List;
 
 import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 public class UserPreferencesMeasurementRangeEditor extends AbstractMeasurementRangeEditor {
@@ -40,7 +41,7 @@ public class UserPreferencesMeasurementRangeEditor extends AbstractMeasurementRa
      * @return begin/end epoch times in a list
      */
     @Override
-    public List<Long> getBeginEndTimes() {
+    public List<Moment> getBeginEndTimes() {
         return measurementUserPrefs.getMetricRangePreferences().getBeginEndTimes();
     }
 
@@ -54,13 +55,13 @@ public class UserPreferencesMeasurementRangeEditor extends AbstractMeasurementRa
         measurementUserPrefs.setMetricRangePreferences(prefs);
     }
 
-    public Long getStartTime(){
-        List<Long> beginEndTimes = getBeginEndTimes();
+    public Moment getStartTime(){
+        List<Moment> beginEndTimes = getBeginEndTimes();
         return beginEndTimes.get(START_TIME_INDEX);
 
     }
-    public Long getEndTime(){
-        List<Long> beginEndTimes = getBeginEndTimes();
+    public Moment getEndTime(){
+        List<Moment> beginEndTimes = getBeginEndTimes();
         return beginEndTimes.get(END_TIME_INDEX);
 
     }

@@ -18,10 +18,13 @@
  */
 package org.rhq.coregui.client.inventory.common.graph;
 
+import java.util.Date;
+
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
@@ -47,8 +50,8 @@ public class CustomDateRangeState {
     private AbstractMeasurementRangeEditor.MetricRangePreferences prefs;
     private volatile boolean persisted = true; 
     
-    private Long cachedBegin = null;
-    private Long cachedEnd= null;
+    private Moment cachedBegin = null;
+    private Moment cachedEnd= null;
     private Long cachedTimeRange= null;
 
     private CustomDateRangeState() {
@@ -75,14 +78,14 @@ public class CustomDateRangeState {
         isCustomDateRangeActive = customDateRange;
     }
 
-    public Long getStartTime() {
+    public Moment getStartTime() {
         if (null == cachedBegin) {
             cachedBegin = measurementUserPreferences.getMetricRangePreferences().begin;
         }
         return cachedBegin;
     }
 
-    public Long getEndTime() {
+    public Moment getEndTime() {
         if (null == cachedEnd) {
             cachedEnd = measurementUserPreferences.getMetricRangePreferences().end;
         }
@@ -104,7 +107,7 @@ public class CustomDateRangeState {
 //                return getTimeRange();
 //            }
 //        }
-        return getEndTime() - getStartTime();
+        return getEndTime().toDate().getTime() - getStartTime().toDate().getTime();
     }
 
     /**
@@ -129,12 +132,12 @@ public class CustomDateRangeState {
     public void saveDateRange(double startTime, double endTime, boolean allowPreferenceUpdateRefresh) {
         persisted = false;
         prefs.explicitBeginEnd = true; // default to advanced
-        if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
+        if (null != prefs.begin && null != prefs.end && prefs.begin.toDate().after(prefs.end.toDate())) {
             CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
         } else {
-            cachedBegin = prefs.begin = (long) startTime;
-            cachedEnd = prefs.end = (long) endTime;
-            cachedTimeRange = prefs.end - prefs.begin;
+            cachedBegin = prefs.begin = new Moment(new Date((long) startTime));
+            cachedEnd = prefs.end = new Moment(new Date((long) endTime));
+            cachedTimeRange = getTimeRange();
             Command callback = new Command() {
                 public void execute() {
                     persisted = true;

@@ -25,6 +25,7 @@ import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 import org.rhq.coregui.client.util.preferences.UserPreferences;
 
@@ -145,7 +146,7 @@ public class GroupMetricsTableDataSource extends MetricsTableDataSource {
 
                     UserPreferences prefs = UserSessionManager.getUserPreferences();
                     MeasurementUserPreferences mprefs = new MeasurementUserPreferences(prefs);
-                    ArrayList<Long> range = mprefs.getMetricRangePreferences().getBeginEndTimes();
+                    ArrayList<Moment> range = mprefs.getMetricRangePreferences().getBeginEndTimes();
 
                     //now retrieve metric display summaries
                     GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForCompatibleGroup(

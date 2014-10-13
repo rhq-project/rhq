@@ -49,6 +49,7 @@ import org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverU
 import org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 
@@ -140,14 +141,14 @@ public class D3GraphListView extends AbstractD3GraphListView {
     }
 
     @Override
-    protected void queryAvailability(final EntityContext context, Long startTime, Long endTime,
+    protected void queryAvailability(final EntityContext context, Moment start, Moment end,
         final CountDownLatch countDownLatch) {
 
         final long timerStart = System.currentTimeMillis();
 
         // now return the availability
-        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResource(context.getResourceId(), startTime,
-            endTime, new AsyncCallback<List<Availability>>() {
+        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResource(context.getResourceId(), start, end,
+            new AsyncCallback<List<Availability>>() {
                 @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
@@ -176,8 +177,8 @@ public class D3GraphListView extends AbstractD3GraphListView {
         final long startTimer = System.currentTimeMillis();
 
         if (showAvailabilityGraph) {
-            queryAvailability(EntityContext.forResource(resource.getId()), CustomDateRangeState.getInstance().getStartTime(),
-                CustomDateRangeState.getInstance().getEndTime(), null);
+            queryAvailability(EntityContext.forResource(resource.getId()), CustomDateRangeState.getInstance()
+                .getStartTime(), CustomDateRangeState.getInstance().getEndTime(), null);
         }
 
         final ArrayList<MeasurementDefinition> measurementDefinitions = new ArrayList<MeasurementDefinition>();

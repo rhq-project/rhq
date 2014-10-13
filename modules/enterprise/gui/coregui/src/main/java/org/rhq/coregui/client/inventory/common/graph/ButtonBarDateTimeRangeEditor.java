@@ -41,6 +41,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.coregui.client.components.measurement.RefreshIntervalMenu;
 import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
@@ -61,15 +62,11 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     private Refreshable refreshable;
     private Label dateRangeLabel;
     private DateTimeButtonBarClickHandler dateTimeButtonBarClickHandler;
-    // just a reference to pass to CustomDateRangeWindow as it must be final
-    // so 'this' won't work
-    final private ButtonBarDateTimeRangeEditor self;
     private boolean isAutoRefresh;
     private RefreshIntervalMenu refreshIntervalMenu;
     private EnhancedIButton refreshButton;
 
     public ButtonBarDateTimeRangeEditor(Refreshable refreshable) {
-        this.self = this;
         this.refreshable = refreshable;
         this.isAutoRefresh = this.refreshable instanceof AutoRefresh;
 
@@ -103,9 +100,9 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             @Override
             public void onClick(ClickEvent clickEvent) {
                 CustomDateRangeWindow customDateRangeWindow = new CustomDateRangeWindow(MSG
-                    .common_buttonbar_custom_window_title(), MSG.common_buttonbar_custom_window_subtitle(), self,
-                    new Date(CustomDateRangeState.getInstance().getStartTime()), new Date(CustomDateRangeState
-                        .getInstance().getEndTime()));
+                    .common_buttonbar_custom_window_title(), MSG.common_buttonbar_custom_window_subtitle(),
+                    ButtonBarDateTimeRangeEditor.this, CustomDateRangeState.getInstance().getStartTime(),
+                    CustomDateRangeState.getInstance().getEndTime());
                 CustomDateRangeState.getInstance().setCustomDateRangeActive(true);
                 customDateRangeWindow.show();
             }
@@ -117,8 +114,8 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         dateRangeLabel = new Label();
         dateRangeLabel.setWidth(400);
         dateRangeLabel.addStyleName("graphDateTimeRangeLabel");
-        showUserFriendlyTimeRange(CustomDateRangeState.getInstance().getStartTime(), CustomDateRangeState.getInstance()
-            .getEndTime());
+        showUserFriendlyTimeRange(CustomDateRangeState.getInstance().getStartTime().toDate().getTime(),
+            CustomDateRangeState.getInstance().getEndTime().toDate().getTime());
         toolStrip.addMember(dateRangeLabel);
 
         // Only allow auto refresh rate change in views actually performing auto refresh, otherwise offer only refresh
@@ -165,11 +162,11 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         createButtons();
     }
 
-    public Long getStartTime() {
+    public Moment getStartTime() {
         return CustomDateRangeState.getInstance().getStartTime();
     }
 
-    public Long getEndTime() {
+    public Moment getEndTime() {
         return CustomDateRangeState.getInstance().getEndTime();
     }
 
@@ -257,7 +254,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     public class CustomDateRangeWindow extends Window {
 
         public CustomDateRangeWindow(String title, String windowTitle,
-            final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor, Date startTime, Date endTime) {
+            final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor, Moment startTime, Moment endTime) {
             super();
             setTitle("");
             setShowMinimizeButton(false);

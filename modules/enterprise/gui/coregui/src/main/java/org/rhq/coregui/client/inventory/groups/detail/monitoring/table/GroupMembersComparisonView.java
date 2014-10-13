@@ -77,6 +77,7 @@ import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
@@ -297,8 +298,8 @@ public class GroupMembersComparisonView extends Table<GroupMembersComparisonData
                             definitionIds[i++] = d.getId();
                         }
 
-                        long begin = measurementUserPrefs.getMetricRangePreferences().begin;
-                        long end = measurementUserPrefs.getMetricRangePreferences().end;
+                        Moment begin = measurementUserPrefs.getMetricRangePreferences().begin;
+                        Moment end = measurementUserPrefs.getMetricRangePreferences().end;
                         GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForMetricsCompare(
                             resourceIds, definitionIds, begin, end,
                             new AsyncCallback<Map<MeasurementDefinition, List<MetricDisplaySummary>>>() {

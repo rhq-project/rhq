@@ -258,7 +258,8 @@ public class StorageNode implements Serializable {
                 return Status.DOWN;
             }
         }
-        if (operationMode == OperationMode.NORMAL) {
+        // bz 1149687 -> returning NORMAL even if the maintenance is running
+        if (operationMode == OperationMode.NORMAL || operationMode == OperationMode.MAINTENANCE) {
             return Status.NORMAL;
         }
         return Status.DOWN;

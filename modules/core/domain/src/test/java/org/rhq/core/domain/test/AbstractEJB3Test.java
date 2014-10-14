@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.core.domain.test;
 
 import java.io.File;
@@ -79,6 +98,9 @@ public abstract class AbstractEJB3Test extends Arquillian {
         // domain classes
         ejbJar = addClasses(ejbJar, new File("target/classes/org"), null);
 
+        // SetupBean class
+        ejbJar.addClass(SetupBean.class);
+
         JavaArchive testClassesJar = ShrinkWrap.create(JavaArchive.class, "test-classes.jar");
         testClassesJar = addClasses(testClassesJar, new File("target/test-classes/org"), null);
 
@@ -110,11 +132,12 @@ public abstract class AbstractEJB3Test extends Arquillian {
         //       Can pass the version in as a system prop if necessary...
 
         //load 3rd party deps explicitly
-        Collection thirdPartyDeps = new ArrayList();
+        Collection<String> thirdPartyDeps = new ArrayList<String>();
         thirdPartyDeps.add("commons-beanutils:commons-beanutils:1.8.2");
         thirdPartyDeps.add("commons-codec:commons-codec");
         thirdPartyDeps.add("commons-io:commons-io");
         thirdPartyDeps.add("org.unitils:unitils-testng:3.1");
+        thirdPartyDeps.add("org.rhq:rhq-core-dbutils:" + System.getProperty("project.version")); // needed by SetupBean
 
         MavenResolverSystem resolver = Maven.resolver();
 
@@ -165,8 +188,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         for (String filter : filters) {
             Pattern p = Pattern.compile(filter);
 
-            for (Iterator<JavaArchive> i = dependencies.iterator(); i.hasNext();) {
-                JavaArchive dependency = i.next();
+            for (JavaArchive dependency : dependencies) {
                 if (p.matcher(dependency.getName()).find()) {
                     result.add(dependency);
                 }
@@ -281,7 +303,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
             return initialContext;
         }
 
-        InitialContext result = null;
+        InitialContext result;
 
         try {
             Properties jndiProperties = new Properties();
@@ -296,7 +318,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     public TransactionManager getTransactionManager() {
-        TransactionManager result = null;
+        TransactionManager result;
 
         try {
             result = (TransactionManager) getInitialContext().lookup("java:jboss/TransactionManager");
@@ -317,7 +339,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
             return em;
         }
 
-        EntityManager result = null;
+        EntityManager result;
 
         try {
             EntityManagerFactory emf = (EntityManagerFactory) getInitialContext().lookup(
@@ -357,6 +379,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
                     rollbackTransaction();
                 }
             } catch (Exception e) {
+                //noinspection ThrowFromFinallyBlock
                 throw new RuntimeException("Failed to " + (rollback ? "rollback" : "commit") + " transaction", e);
             }
         }
@@ -394,7 +417,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         AssertJUnit.fail(message);
     }
 
-    private final long DEFAULT_OFFSET = 50;
+    private static final long DEFAULT_OFFSET = 50;
     private long referenceTime = new Date().getTime();
 
     public Date getAnotherDate() {

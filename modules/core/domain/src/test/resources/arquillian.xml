@@ -21,7 +21,7 @@
 
     <configuration>
       <property name="jbossHome">${jboss.unzip.location}</property>
-      <property name="javaVmArguments">${jboss.vm.args} ${jboss.vm.args.debug}</property>
+      <property name="javaVmArguments">${jboss.vm.args} ${jboss.vm.args.debug} -Dproject.version=${project.version}</property>
       <!-- These two properties allow Arquillian to inspect AS7 through the mgmt port, to determine the ports it needs
            to interact with when spawning the AS7 instance. This allows the AS7 to run on non-default ports. -->
       <property name="managementAddress">127.0.0.1</property>

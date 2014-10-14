@@ -1,8 +1,7 @@
 /*
  * RHQ Management Platform
- * Copyright 2012, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.server.test;
@@ -56,7 +55,9 @@ import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 @Singleton
 @Startup
 public class StrippedDownStartupBeanPreparation {
-    private Log log = LogFactory.getLog(this.getClass());
+    private static final Log LOG = LogFactory.getLog(StrippedDownStartupBeanPreparation.class);
+
+    private static final String RHQ_VERSION = System.getProperty("project.version");
 
     @EJB
     private StrippedDownStartupBean startupBean;
@@ -72,7 +73,7 @@ public class StrippedDownStartupBeanPreparation {
 
     @PostConstruct
     public void initWithTransactionBecauseAS75530() throws RuntimeException {
-        log.info("Scheduling the initialization of the testing RHQ deployment");
+        LOG.info("Scheduling the initialization of the testing RHQ deployment");
         timerService.createSingleActionTimer(1, new TimerConfig(null, false)); // call StartupBean in 1ms
 
         startupBean.purgeTestServerAndStorageNodes();
@@ -94,6 +95,7 @@ public class StrippedDownStartupBeanPreparation {
         server.setOperationMode(Server.OperationMode.INSTALLED);
         server.setPort(7080);
         server.setSecurePort(7443);
+        server.setVersion(RHQ_VERSION);
 
         serverManager.create(server);
         System.setProperty(TestConstants.RHQ_SERVER_NAME_PROPERTY, TestConstants.RHQ_TEST_SERVER_NAME);
@@ -107,12 +109,13 @@ public class StrippedDownStartupBeanPreparation {
             storageNode.setAddress(node);
             storageNode.setCqlPort(Integer.parseInt(cqlPort));
             storageNode.setOperationMode(StorageNode.OperationMode.NORMAL);
+            storageNode.setVersion(RHQ_VERSION);
             entityManager.persist(storageNode);
         }
     }
 
     public void loadCassandraConnectionProps() {
-        InputStream stream = null;
+        InputStream stream;
         try {
             stream = getClass().getResourceAsStream("/cassandra-test.properties");
             Properties props = new Properties();
@@ -132,34 +135,38 @@ public class StrippedDownStartupBeanPreparation {
         }
 
         String cqlPort = System.getProperty("rhq.storage.cql-port");
-        entityManager.createNativeQuery("update rhq_system_config set property_value = '" + cqlPort +
-            "', default_property_value = '" + cqlPort + "' where property_key = 'STORAGE_CQL_PORT'").executeUpdate();
+        entityManager.createNativeQuery(
+            "update rhq_system_config set property_value = '" + cqlPort + "', default_property_value = '" + cqlPort
+                + "' where property_key = 'STORAGE_CQL_PORT'").executeUpdate();
 
         String gossipPort = System.getProperty("rhq.storage.gossip-port");
-        entityManager.createNativeQuery("update rhq_system_config set property_value = '" + gossipPort +
-            "', default_property_value = '" + gossipPort + "' where property_key = 'STORAGE_GOSSIP_PORT'").executeUpdate();
+        entityManager.createNativeQuery(
+            "update rhq_system_config set property_value = '" + gossipPort + "', default_property_value = '"
+                + gossipPort + "' where property_key = 'STORAGE_GOSSIP_PORT'").executeUpdate();
 
         String storageUserName = System.getProperty("rhq.storage.username");
-        entityManager.createNativeQuery("update rhq_system_config set property_value = '" + storageUserName +
-            "', default_property_value = '" + storageUserName + "' where property_key = 'STORAGE_USERNAME'").executeUpdate();
+        entityManager.createNativeQuery(
+            "update rhq_system_config set property_value = '" + storageUserName + "', default_property_value = '"
+                + storageUserName + "' where property_key = 'STORAGE_USERNAME'").executeUpdate();
 
         String storagePassword = System.getProperty("rhq.storage.password");
-        entityManager.createNativeQuery("update rhq_system_config set property_value = '" + storagePassword +
-            "', default_property_value = '" + storagePassword + "' where property_key = 'STORAGE_PASSWORD'").executeUpdate();
+        entityManager.createNativeQuery(
+            "update rhq_system_config set property_value = '" + storagePassword + "', default_property_value = '"
+                + storagePassword + "' where property_key = 'STORAGE_PASSWORD'").executeUpdate();
     }
 
     @Timeout
     public void initializeServer() throws RuntimeException {
         try {
-            log.info("Initializing the testing RHQ deployment");
+            LOG.info("Initializing the testing RHQ deployment");
             this.startupBean.init();
-            log.info("Initialization complete");
+            LOG.info("Initialization complete");
         } catch (Throwable t) {
             // do NOT allow exceptions to bubble out of our method because then
             // the EJB container would simply re-trigger the timer and call us again
             // and we don't want to keep failing over and over filling the logs
             // in an infinite loop.
-            log.fatal("The server failed to start up properly", t);
+            LOG.fatal("The server failed to start up properly", t);
         }
     }
 

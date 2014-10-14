@@ -53,7 +53,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -286,7 +286,7 @@ public class MetricsGroupViewDataSource extends RPCDataSource<MetricDisplaySumma
         }
     }
 
-    private void queryMetricDisplaySummaries(int[] measurementDefIds, Moment start, Moment end,
+    private void queryMetricDisplaySummaries(int[] measurementDefIds, Instant start, Instant end,
         final CountDownLatch countDownLatch) {
         GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForCompatibleGroup(
             EntityContext.forGroup(resourceGroup), measurementDefIds, start, end, false,

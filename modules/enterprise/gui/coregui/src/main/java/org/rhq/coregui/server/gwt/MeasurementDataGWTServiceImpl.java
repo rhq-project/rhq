@@ -38,7 +38,7 @@ import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -113,7 +113,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId, int[] definitionIds,
-        Moment beginTime, Moment endTime, int numPoints) throws RuntimeException {
+        Instant beginTime, Instant endTime, int numPoints) throws RuntimeException {
         try {
             return SerialUtility.prepare(dataManager.findDataForResource(getSessionSubject(), resourceId,
                 definitionIds, beginTime.toDate().getTime(), endTime.toDate().getTime(), numPoints),
@@ -136,7 +136,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(int groupId,
-        int[] definitionIds, Moment beginTime, Moment endTime, int numPoints) throws RuntimeException {
+        int[] definitionIds, Instant beginTime, Instant endTime, int numPoints) throws RuntimeException {
         try {
             //iterate over each of the definitionIds to retrieve the display data for each.
             List<List<MeasurementDataNumericHighLowComposite>> results = new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
@@ -153,7 +153,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroupForLast(int groupId,
         int[] definitionIds, int lastN, int unit, int numPoints) throws RuntimeException {
         List<Long> beginEnd = MeasurementUtils.calculateTimeFrame(lastN, unit);
-        return findDataForCompatibleGroup(groupId, definitionIds, new Moment(new Date(beginEnd.get(1))), new Moment(
+        return findDataForCompatibleGroup(groupId, definitionIds, new Instant(new Date(beginEnd.get(1))), new Instant(
             new Date(beginEnd.get(1))), numPoints);
     }
 
@@ -433,7 +433,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
         }
     }
 
-    public MeasurementBaseline calcBaselineForDateRange(Integer measurementScheduleId, Moment startDate, Moment endDate)
+    public MeasurementBaseline calcBaselineForDateRange(Integer measurementScheduleId, Instant startDate, Instant endDate)
         throws RuntimeException {
         try {
             return SerialUtility.prepare(measurementBaselineManager.calculateAutoBaselineInNewTransaction(

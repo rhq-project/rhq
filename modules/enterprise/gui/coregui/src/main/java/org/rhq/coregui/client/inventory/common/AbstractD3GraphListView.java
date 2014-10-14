@@ -25,7 +25,7 @@ import com.smartgwt.client.widgets.Label;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.coregui.client.inventory.AutoRefresh;
@@ -63,7 +63,7 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
 
     public abstract void refreshData();
 
-    protected abstract void queryAvailability(final EntityContext context, Moment startTime, Moment endTime,
+    protected abstract void queryAvailability(final EntityContext context, Instant startTime, Instant endTime,
         final CountDownLatch countDownLatch);
 
     @Override

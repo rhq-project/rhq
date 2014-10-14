@@ -41,7 +41,7 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.components.table.TableWidget;
@@ -107,7 +107,7 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
      * as shown in the UI if the user changed the values but did not hit the set button.
      * @return begin/end epoch times in a list
      */
-    public abstract List<Moment> getBeginEndTimes();
+    public abstract List<Instant> getBeginEndTimes();
 
     public abstract MetricRangePreferences getMetricRangePreferences();
 
@@ -172,8 +172,8 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
                 if (advanced) {
                     try {
                         if (validate()) {
-                            prefs.begin = new Moment(advancedStartItem.getValueAsDate());
-                            prefs.end = new Moment(advancedEndItem.getValueAsDate());
+                            prefs.begin = new Instant(advancedStartItem.getValueAsDate());
+                            prefs.end = new Instant(advancedEndItem.getValueAsDate());
                             if (null != prefs.begin && null != prefs.end
                                 && prefs.begin.toDate().before(prefs.end.toDate())) {
                                 CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
@@ -317,16 +317,16 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
         public int unit; // see MeasurementUtility.UNIT_xxx
 
         // advanced, when readOnly is true
-        public Moment begin;
-        public Moment end;
+        public Instant begin;
+        public Instant end;
 
         /**
          * Returns a two element <code>List</code> of <code>Long</code> objects representing the begin and end times (in
          * milliseconds since the epoch) of the time frame.
          **/
-        public ArrayList<Moment> getBeginEndTimes() {
+        public ArrayList<Instant> getBeginEndTimes() {
             if (explicitBeginEnd) {
-                ArrayList<Moment> times = new ArrayList<Moment>(2);
+                ArrayList<Instant> times = new ArrayList<Instant>(2);
                 times.add(begin);
                 times.add(end);
                 return times;

@@ -46,7 +46,7 @@ import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -296,7 +296,7 @@ public abstract class AbstractRecentEventsPortlet extends EventCompositeHistoryV
                 }
 
                 //time frame
-                List<Moment> begEnd = measurementRangeEditor.getBeginEndTimes();
+                List<Instant> begEnd = measurementRangeEditor.getBeginEndTimes();
                 if (isAdvanceTimeSetting) {//advanced settings
                     portletConfig.put(new PropertySimple(Constant.METRIC_RANGE, (begEnd.get(0) + "," + begEnd.get(1))));
                 } else {
@@ -309,7 +309,7 @@ public abstract class AbstractRecentEventsPortlet extends EventCompositeHistoryV
             } else {//if disabled, reset time defaults
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, false));
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, false));
-                List<Moment> rangeArray = MeasurementUtility.calculateTimeFrame(
+                List<Instant> rangeArray = MeasurementUtility.calculateTimeFrame(
                     Integer.valueOf(Constant.METRIC_RANGE_LASTN_DEFAULT),
                     Integer.valueOf(Constant.METRIC_RANGE_UNIT_DEFAULT));
                 //                String[] range = {String.valueOf(rangeArray.get(0)),String.valueOf(rangeArray.get(1))};
@@ -435,7 +435,7 @@ public abstract class AbstractRecentEventsPortlet extends EventCompositeHistoryV
                             Constant.METRIC_RANGE_LASTN_DEFAULT));
                         Integer units = Integer.valueOf(configuration.getSimpleValue(Constant.METRIC_RANGE_UNIT,
                             Constant.METRIC_RANGE_UNIT_DEFAULT));
-                        ArrayList<Moment> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
+                        ArrayList<Instant> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
                         criteria.addFilterStartTime(beginEnd.get(0).toDate().getTime());
                         criteria.addFilterEndTime(beginEnd.get(1).toDate().getTime());
                     }

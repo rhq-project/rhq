@@ -22,7 +22,7 @@ import java.util.List;
 
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.gwt.AvailabilityGWTService;
@@ -50,7 +50,7 @@ public class AvailabilityGWTServiceImpl extends AbstractGWTServiceImpl implement
     }
 
     @Override
-    public List<Availability> getAvailabilitiesForResource(int resourceId, Moment start, Moment end)
+    public List<Availability> getAvailabilitiesForResource(int resourceId, Instant start, Instant end)
         throws RuntimeException {
         try {
             Long now = System.currentTimeMillis();
@@ -73,7 +73,7 @@ public class AvailabilityGWTServiceImpl extends AbstractGWTServiceImpl implement
     }
 
     @Override
-    public List<ResourceGroupAvailability> getAvailabilitiesForResourceGroup(int groupId, Moment start, Moment end)
+    public List<ResourceGroupAvailability> getAvailabilitiesForResourceGroup(int groupId, Instant start, Instant end)
         throws RuntimeException {
         try {
             Long now = System.currentTimeMillis();

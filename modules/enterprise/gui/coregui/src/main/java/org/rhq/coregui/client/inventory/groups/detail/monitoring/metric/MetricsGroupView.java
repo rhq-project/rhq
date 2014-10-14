@@ -30,7 +30,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.coregui.client.CoreGUI;
@@ -146,7 +146,7 @@ public class MetricsGroupView extends AbstractD3GraphListView implements
     }
 
     @Override
-    protected void queryAvailability(final EntityContext context, Moment startTime, Moment endTime, CountDownLatch notUsed) {
+    protected void queryAvailability(final EntityContext context, Instant startTime, Instant endTime, CountDownLatch notUsed) {
 
         // now return the availability
         GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResourceGroup(context.getGroupId(), startTime,

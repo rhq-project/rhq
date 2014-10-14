@@ -33,7 +33,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -178,7 +178,7 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
         }
     }
 
-    protected void queryAvailability(final EntityContext groupContext, Moment start, Moment end,
+    protected void queryAvailability(final EntityContext groupContext, Instant start, Instant end,
         final CountDownLatch countDownLatch) {
 
         final long timerStart = System.currentTimeMillis();

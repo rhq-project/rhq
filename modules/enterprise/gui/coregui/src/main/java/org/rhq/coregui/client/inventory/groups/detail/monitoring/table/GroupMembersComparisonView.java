@@ -56,7 +56,7 @@ import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -298,8 +298,8 @@ public class GroupMembersComparisonView extends Table<GroupMembersComparisonData
                             definitionIds[i++] = d.getId();
                         }
 
-                        Moment begin = measurementUserPrefs.getMetricRangePreferences().begin;
-                        Moment end = measurementUserPrefs.getMetricRangePreferences().end;
+                        Instant begin = measurementUserPrefs.getMetricRangePreferences().begin;
+                        Instant end = measurementUserPrefs.getMetricRangePreferences().end;
                         GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForMetricsCompare(
                             resourceIds, definitionIds, begin, end,
                             new AsyncCallback<Map<MeasurementDefinition, List<MetricDisplaySummary>>>() {

@@ -25,7 +25,7 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 
 public class MeasurementUtility {
 
@@ -63,8 +63,8 @@ public class MeasurementUtility {
      * @param unit  the unit of time (as defined by <code>UNIT_*</code> constants
      * @return List
      */
-    public static ArrayList<Moment> calculateTimeFrame(int lastN, int unit) {
-        ArrayList<Moment> returnList = new ArrayList<Moment>(0);
+    public static ArrayList<Instant> calculateTimeFrame(int lastN, int unit) {
+        ArrayList<Instant> returnList = new ArrayList<Instant>(0);
         if (unit == UNIT_COLLECTION_POINTS) {
             return null;
         }
@@ -96,8 +96,8 @@ public class MeasurementUtility {
             retrospective = now.getTime();
         }
 
-        returnList.add(new Moment(new Date(now.getTime() - retrospective)));
-        returnList.add(new Moment(now));
+        returnList.add(new Instant(new Date(now.getTime() - retrospective)));
+        returnList.add(new Instant(now));
 
         return returnList;
     }

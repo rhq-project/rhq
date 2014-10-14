@@ -38,7 +38,7 @@ import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
@@ -141,7 +141,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
     }
 
     @Override
-    protected void queryAvailability(final EntityContext context, Moment start, Moment end,
+    protected void queryAvailability(final EntityContext context, Instant start, Instant end,
         final CountDownLatch countDownLatch) {
 
         final long timerStart = System.currentTimeMillis();

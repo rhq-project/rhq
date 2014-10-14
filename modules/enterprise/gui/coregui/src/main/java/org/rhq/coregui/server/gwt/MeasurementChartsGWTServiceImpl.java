@@ -25,7 +25,7 @@ import java.util.Map;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.coregui.client.gwt.MeasurementChartsGWTService;
 import org.rhq.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
@@ -55,7 +55,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
 
     @Override
     public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(EntityContext context,
-        int[] defIds, Moment begin, Moment end, boolean enabledOnly) throws RuntimeException {
+        int[] defIds, Instant begin, Instant end, boolean enabledOnly) throws RuntimeException {
         Long now = System.currentTimeMillis();
         long endInMillis = end.toDate().getTime();
         if (now < end.toDate().getTime()) {
@@ -94,7 +94,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
 
     @Override
     public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(int resourceId, int[] schedIds,
-        Moment begin, Moment end) throws RuntimeException {
+        Instant begin, Instant end) throws RuntimeException {
         Long now = System.currentTimeMillis();
         long endInMillis = end.toDate().getTime();
         if (now < end.toDate().getTime()) {
@@ -118,7 +118,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
 
     @Override
     public Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(
-        int[] resourceIds, int[] measurementDefinitionIds, Moment begin, Moment end) throws RuntimeException {
+        int[] resourceIds, int[] measurementDefinitionIds, Instant begin, Instant end) throws RuntimeException {
         Long now = System.currentTimeMillis();
         long endInMillis = end.toDate().getTime();
         if (now < end.toDate().getTime()) {

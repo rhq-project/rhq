@@ -38,7 +38,7 @@ import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.coregui.client.components.measurement.RefreshIntervalMenu;
 import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.util.Log;
@@ -162,11 +162,11 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         createButtons();
     }
 
-    public Moment getStartTime() {
+    public Instant getStartTime() {
         return CustomDateRangeState.getInstance().getStartTime();
     }
 
-    public Moment getEndTime() {
+    public Instant getEndTime() {
         return CustomDateRangeState.getInstance().getEndTime();
     }
 
@@ -254,7 +254,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     public class CustomDateRangeWindow extends Window {
 
         public CustomDateRangeWindow(String title, String windowTitle,
-            final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor, Moment startTime, Moment endTime) {
+            final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor, Instant startTime, Instant endTime) {
             super();
             setTitle("");
             setShowMinimizeButton(false);

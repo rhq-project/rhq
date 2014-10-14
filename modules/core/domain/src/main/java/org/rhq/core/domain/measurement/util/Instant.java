@@ -29,7 +29,7 @@ import java.util.Date;
  *
  * @author Jirka Kremser
  */
-public class Moment implements Serializable {
+public class Instant implements Serializable {
     private static final long serialVersionUID = 1L;
     private final int year;
     private final int month;
@@ -40,7 +40,7 @@ public class Moment implements Serializable {
     private static final String SEPARATOR = "-";
     
     // GWT serialization needs this
-    public Moment() {
+    public Instant() {
         this.year = 0;
         this.month = 0;
         this.date = 0;
@@ -48,7 +48,7 @@ public class Moment implements Serializable {
         this.minutes = 0;
     }
     
-    public Moment(int year, int month, int date, int hours, int minutes) {
+    public Instant(int year, int month, int date, int hours, int minutes) {
         this.year = year;
         this.month = month;
         this.date = date;
@@ -58,7 +58,7 @@ public class Moment implements Serializable {
     
     // Calendar is not supported in GWT
     @SuppressWarnings("deprecation")
-    public Moment(Date date) {
+    public Instant(Date date) {
         this.year = date.getYear();
         this.month = date.getMonth();
         this.date = date.getDate();
@@ -66,7 +66,7 @@ public class Moment implements Serializable {
         this.minutes = date.getMinutes();
     }
     
-    public static Moment parseMoment(String stringRepresentation) {
+    public static Instant parseMoment(String stringRepresentation) {
         if (stringRepresentation == null) {
             return null;
         }
@@ -80,7 +80,7 @@ public class Moment implements Serializable {
             int date = Integer.parseInt(chunks[2]);
             int hours = Integer.parseInt(chunks[3]);
             int minutes = Integer.parseInt(chunks[4]);
-            return new Moment(year, month, date, hours, minutes);
+            return new Instant(year, month, date, hours, minutes);
         } catch (NumberFormatException nfe) {
             return null;
         }
@@ -131,7 +131,7 @@ public class Moment implements Serializable {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        Moment other = (Moment) obj;
+        Instant other = (Instant) obj;
         if (date != other.date)
             return false;
         if (hours != other.hours)

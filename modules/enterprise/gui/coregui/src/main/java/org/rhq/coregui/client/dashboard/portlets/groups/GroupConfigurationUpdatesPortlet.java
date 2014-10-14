@@ -42,7 +42,7 @@ import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -450,7 +450,7 @@ public class GroupConfigurationUpdatesPortlet extends EnhancedVLayout implements
                                 Constant.METRIC_RANGE_LASTN_DEFAULT));
                             int units = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_UNIT,
                                 Constant.METRIC_RANGE_UNIT_DEFAULT));
-                            ArrayList<Moment> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
+                            ArrayList<Instant> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
                             criteria.addFilterStartTime(beginEnd.get(0).toDate().getTime());
                             criteria.addFilterEndTime(beginEnd.get(1).toDate().getTime());
                         }

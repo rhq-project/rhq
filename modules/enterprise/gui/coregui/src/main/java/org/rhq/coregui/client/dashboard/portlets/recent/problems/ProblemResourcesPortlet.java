@@ -48,7 +48,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.components.table.IconField;
 import org.rhq.coregui.client.components.table.Table;
@@ -312,7 +312,7 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
     public void refreshTableInfo() {
         if (isShowFooter()) {
             long begin = 0;
-            List<Moment> bounds = MeasurementUtility.calculateTimeFrame(getDataSource()
+            List<Instant> bounds = MeasurementUtility.calculateTimeFrame(getDataSource()
                 .getMaximumProblemResourcesWithinHours(), MeasurementUtility.UNIT_HOURS);
             begin = bounds.get(0).toDate().getTime();
             long end = bounds.get(1).toDate().getTime();

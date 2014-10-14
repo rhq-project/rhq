@@ -61,7 +61,7 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
-import org.rhq.core.domain.measurement.util.Moment;
+import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -283,8 +283,8 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                         }
                     });
 
-                    Moment start = CustomDateRangeState.getInstance().getStartTime();
-                    Moment end = CustomDateRangeState.getInstance().getEndTime();
+                    Instant start = CustomDateRangeState.getInstance().getStartTime();
+                    Instant end = CustomDateRangeState.getInstance().getEndTime();
                     queryResourceMetrics(resource, start, end, countDownLatch);
                     queryMetricDisplaySummaries(enabledScheduleIds, start, end, countDownLatch);
                 }
@@ -342,7 +342,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         }.schedule(150);
     }
 
-    private void queryMetricDisplaySummaries(int[] scheduleIds, Moment startTime, Moment endTime,
+    private void queryMetricDisplaySummaries(int[] scheduleIds, Instant startTime, Instant endTime,
         final CountDownLatch countDownLatch) {
         if (enabledScheduleIds.length == 0) {
             setMetricDisplaySummaries(Collections.<MetricDisplaySummary>emptyList());
@@ -372,7 +372,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         this.metricDisplaySummaries = metricDisplaySummaries;
     }
 
-    private void queryResourceMetrics(final Resource resource, final Moment startTime, final Moment endTime,
+    private void queryResourceMetrics(final Resource resource, final Instant startTime, final Instant endTime,
         final CountDownLatch countDownLatch) {
         List<MeasurementDefinition> definitions = getMetricDefinitions(resource);
         if (definitions.size() == 0) {

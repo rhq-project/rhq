@@ -48,6 +48,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.components.table.IconField;
 import org.rhq.coregui.client.components.table.Table;
@@ -61,7 +62,6 @@ import org.rhq.coregui.client.dashboard.PortletWindow;
 import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.resource.ProblemResourcesDataSource;
 import org.rhq.coregui.client.util.MeasurementUtility;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 
 /**

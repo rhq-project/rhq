@@ -30,6 +30,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.coregui.client.CoreGUI;
@@ -43,7 +44,6 @@ import org.rhq.coregui.client.inventory.resource.detail.monitoring.ExpandedRowsM
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricAvailabilityView;
 import org.rhq.coregui.client.util.BrowserUtility;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 

@@ -38,6 +38,7 @@ import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
@@ -49,7 +50,6 @@ import org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverU
 import org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.coregui.client.util.Log;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 

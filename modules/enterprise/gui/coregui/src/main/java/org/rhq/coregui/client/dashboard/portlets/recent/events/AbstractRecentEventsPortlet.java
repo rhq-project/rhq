@@ -46,6 +46,7 @@ import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -64,7 +65,6 @@ import org.rhq.coregui.client.inventory.common.event.EventCompositeDatasource;
 import org.rhq.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.util.MeasurementUtility;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**

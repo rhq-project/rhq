@@ -25,9 +25,9 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor.MetricRangePreferences;
 import org.rhq.coregui.client.util.MeasurementUtility;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;

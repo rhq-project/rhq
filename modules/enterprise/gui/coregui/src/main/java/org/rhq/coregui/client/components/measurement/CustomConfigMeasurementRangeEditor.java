@@ -24,9 +24,9 @@ import java.util.List;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.coregui.client.util.MeasurementUtility;
-import org.rhq.coregui.client.util.Moment;
 
 public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRangeEditor {
 

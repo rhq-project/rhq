@@ -35,6 +35,7 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -51,7 +52,6 @@ import org.rhq.coregui.client.inventory.resource.detail.configuration.ResourceCo
 import org.rhq.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementUtility;
-import org.rhq.coregui.client.util.Moment;
 
 /**This portlet allows the end user to customize the Package History display
  *

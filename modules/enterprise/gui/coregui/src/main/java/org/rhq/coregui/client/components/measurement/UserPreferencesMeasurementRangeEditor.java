@@ -21,8 +21,8 @@ package org.rhq.coregui.client.components.measurement;
 
 import java.util.List;
 
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.coregui.client.UserSessionManager;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 public class UserPreferencesMeasurementRangeEditor extends AbstractMeasurementRangeEditor {

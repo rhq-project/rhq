@@ -22,10 +22,10 @@ import java.util.List;
 
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.gwt.AvailabilityGWTService;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;

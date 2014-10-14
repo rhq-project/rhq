@@ -42,6 +42,7 @@ import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -64,7 +65,6 @@ import org.rhq.coregui.client.inventory.groups.detail.configuration.GroupResourc
 import org.rhq.coregui.client.inventory.groups.detail.configuration.HistoryGroupResourceConfigurationTable;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementUtility;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**

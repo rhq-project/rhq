@@ -25,13 +25,13 @@ import com.smartgwt.client.widgets.Label;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
 import org.rhq.coregui.client.inventory.common.graph.Refreshable;
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 

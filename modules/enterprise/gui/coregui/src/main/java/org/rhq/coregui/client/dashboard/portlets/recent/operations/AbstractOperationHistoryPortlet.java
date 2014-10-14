@@ -23,6 +23,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
@@ -41,7 +42,6 @@ import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorCompo
 import org.rhq.coregui.client.operation.OperationHistoryDataSource;
 import org.rhq.coregui.client.operation.OperationHistoryView;
 import org.rhq.coregui.client.util.MeasurementUtility;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**

@@ -38,10 +38,10 @@ import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.coregui.client.components.measurement.RefreshIntervalMenu;
 import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.util.Log;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;

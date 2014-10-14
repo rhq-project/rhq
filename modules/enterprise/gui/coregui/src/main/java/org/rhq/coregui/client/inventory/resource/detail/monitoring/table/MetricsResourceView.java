@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
@@ -41,7 +42,6 @@ import org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverU
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.ExpandedRowsMomento;
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.coregui.client.util.BrowserUtility;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 

@@ -40,6 +40,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -63,7 +64,6 @@ import org.rhq.coregui.client.inventory.groups.detail.operation.history.GroupOpe
 import org.rhq.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementUtility;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**

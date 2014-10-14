@@ -27,6 +27,7 @@ import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
@@ -42,7 +43,6 @@ import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorCompo
 import org.rhq.coregui.client.drift.DriftDataSource;
 import org.rhq.coregui.client.drift.DriftHistoryView;
 import org.rhq.coregui.client.util.MeasurementUtility;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**

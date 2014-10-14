@@ -47,6 +47,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
@@ -65,7 +66,6 @@ import org.rhq.coregui.client.dashboard.PortletWindow;
 import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
 import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.coregui.client.util.MeasurementUtility;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**

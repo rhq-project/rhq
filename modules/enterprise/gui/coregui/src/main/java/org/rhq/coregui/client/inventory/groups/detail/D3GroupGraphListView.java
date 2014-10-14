@@ -33,6 +33,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -50,7 +51,6 @@ import org.rhq.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.util.Log;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 
 /**

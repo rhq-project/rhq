@@ -28,7 +28,7 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
-import org.rhq.coregui.client.util.Moment;
+import org.rhq.core.domain.measurement.util.Moment;
 
 @RemoteServiceRelativePath("MeasurementChartsGWTService")
 public interface MeasurementChartsGWTService extends RemoteService {

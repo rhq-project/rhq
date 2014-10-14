@@ -41,11 +41,11 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.components.table.TableWidget;
 import org.rhq.coregui.client.util.MeasurementUtility;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 

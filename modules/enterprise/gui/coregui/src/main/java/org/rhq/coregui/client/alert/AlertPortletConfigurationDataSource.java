@@ -34,6 +34,7 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -41,7 +42,6 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementUtility;
-import org.rhq.coregui.client.util.Moment;
 
 /** Customize the AlertDataSource to pull fetch criteria information from
  *  the Configuration object passed in.

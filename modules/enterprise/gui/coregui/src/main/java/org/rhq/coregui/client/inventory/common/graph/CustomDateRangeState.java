@@ -20,11 +20,11 @@ package org.rhq.coregui.client.inventory.common.graph;
 
 import java.util.Date;
 
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
-import org.rhq.coregui.client.util.Moment;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;

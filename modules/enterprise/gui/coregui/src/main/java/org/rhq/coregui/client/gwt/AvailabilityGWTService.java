@@ -24,9 +24,9 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.util.Moment;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.coregui.client.util.Moment;
 
 /**
  * @author Jay Shaughnessy

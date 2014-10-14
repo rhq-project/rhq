@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.MenuItemSeparator;
@@ -50,31 +46,26 @@ import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
-import org.rhq.coregui.client.menu.MenuBarView;
 
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  * @author John Mazzitelli
+ * @author Jay Shaughnessy
  */
-public class FavoritesButton extends IMenuButton {
+public class FavoritesMenu extends Menu {
 
     private Messages MSG = CoreGUI.getMessages();
     final Menu favoriteResourcesMenu;
     final Menu favoriteGroupsMenu;
     final Menu recentlyViewedMenu;
-    final Menu favoritesMenu;
 
-    public FavoritesButton() {
-        super(CoreGUI.getMessages().favorites());
+    public FavoritesMenu() {
+        super();
 
-        // this is the main menu - the "favorites" button shown in the UI the user initially clicks 
-        favoritesMenu = new Menu();
-        favoritesMenu.setSubmenuDirection("left");
-        setMenu(favoritesMenu);
-        setAutoFit(true);
+        setSubmenuDirection("left");
 
-        // these are the child menus directly under the main favorites button 
+        // these are the child menus directly under the main favorites button
         favoriteResourcesMenu = new Menu();
         favoriteGroupsMenu = new Menu();
         recentlyViewedMenu = new Menu();
@@ -96,30 +87,22 @@ public class FavoritesButton extends IMenuButton {
         recentlyViewedMenuItem.setSubmenu(recentlyViewedMenu);
         recentlyViewedMenu.setEmptyMessage(MSG.common_val_none());
 
-        favoritesMenu.setItems(favoriteResourcesMenuItem, favoriteGroupsMenuItem, recentlyViewedMenuItem);
-        addClickHandler(new ClickHandler() {
-
-            public void onClick(ClickEvent clickEvent) {
-                // Cancel the click event. We'll call show() on the menu ourselves only if we're able to load the
-                // favorite Resources successfully.
-                clickEvent.cancel();
-                    showMenu();
-                }
-            });
+        setItems(favoriteResourcesMenuItem, favoriteGroupsMenuItem, recentlyViewedMenuItem);
     }
 
-    public void showMenu() {
-        setLeft(DOM.getElementById(MenuBarView.BTN_FAV_ID).getAbsoluteLeft());
+    public void showMenu(int top, int left) {
+        setTop(top);
+        setLeft(left);
+
         final Set<Integer> favoriteResourceIds = UserSessionManager.getUserPreferences().getFavoriteResources();
-        final Set<Integer> favoriteGroupIds = UserSessionManager.getUserPreferences()
-            .getFavoriteResourceGroups();
+        final Set<Integer> favoriteGroupIds = UserSessionManager.getUserPreferences().getFavoriteResourceGroups();
         final List<Integer> recentResourceIds = UserSessionManager.getUserPreferences().getRecentResources();
         final List<Integer> recentGroupIds = UserSessionManager.getUserPreferences().getRecentResourceGroups();
 
         // if we have no menu items at all, then show the empty menu now
         if (favoriteGroupIds.isEmpty() && favoriteResourceIds.isEmpty() && recentResourceIds.isEmpty()
             && recentGroupIds.isEmpty()) {
-            favoritesMenu.showNextTo(FavoritesButton.this, "bottom");
+            FavoritesMenu.this.setVisible(true);
             return;
         }
 
@@ -152,23 +135,21 @@ public class FavoritesButton extends IMenuButton {
                 typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
 
                 ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
-                typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]),
-                    new TypesLoadedCallback() {
-                        @Override
-                        public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
-                            AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
+                typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
+                    @Override
+                    public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                        // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.
+                        AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
 
-                            // generate the menus
-                            buildFavoriteResourcesMenu(favorites, favoriteResourcesMenu, favoriteResourceIds,
-                                typesWrapper);
-                            buildFavoriteGroupsMenu(favorites, favoriteGroupsMenu, favoriteGroupIds);
-                            buildRecentlyViewedMenu(favorites, recentlyViewedMenu, recentResourceIds,
-                                recentGroupIds, typesWrapper);
+                        // generate the menus
+                        buildFavoriteResourcesMenu(favorites, favoriteResourcesMenu, favoriteResourceIds, typesWrapper);
+                        buildFavoriteGroupsMenu(favorites, favoriteGroupsMenu, favoriteGroupIds);
+                        buildRecentlyViewedMenu(favorites, recentlyViewedMenu, recentResourceIds, recentGroupIds,
+                            typesWrapper);
 
-                            favoritesMenu.showNextTo(FavoritesButton.this, "bottom");
-                        }
-                    });
+                        FavoritesMenu.this.setVisible(true);
+                    }
+                });
             }
         });
     }

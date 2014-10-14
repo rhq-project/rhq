@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -62,7 +62,7 @@ import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.dashboard.DashboardsView;
 import org.rhq.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.coregui.client.drift.DriftHistoryView;
-import org.rhq.coregui.client.footer.FavoritesButton;
+import org.rhq.coregui.client.footer.FavoritesMenu;
 import org.rhq.coregui.client.help.HelpView;
 import org.rhq.coregui.client.help.RhAccessView;
 import org.rhq.coregui.client.inventory.InventoryView;
@@ -90,7 +90,6 @@ public class MenuBarView extends EnhancedVLayout {
     public static final String MSG_CENTER_BTN_CONTENT = "<span class='fa fa-flag'> ";
     public static final String BTN_FAV_ID = "fav-btn";
     public static final String BTN_MSG_CENTER_ID = "msg-center-btn";
-    public static final int Z_INDEX = MessageBar.Z_INDEX + 1;
 
     public static final MenuItem[] MENU_ITEMS = {
         new MenuItem(DashboardsView.VIEW_ID),
@@ -177,7 +176,7 @@ public class MenuBarView extends EnhancedVLayout {
     private String currentlySelectedSection = DashboardsView.VIEW_ID.getName();
     private MessageBar messageBar;
     private MessageCenterView messageCenter;
-    private FavoritesButton favoritesButton;
+    private FavoritesMenu favoritesMenu;
     private Set<Permission> globalPermissions;
 
     public MenuBarView() {
@@ -188,13 +187,10 @@ public class MenuBarView extends EnhancedVLayout {
     @Override
     protected void onInit() {
         super.onInit();
-        setZIndex(Z_INDEX);
         messageCenter = new MessageCenterView();
+        favoritesMenu = new FavoritesMenu();
         messageBar = new MessageBar();
-        // messageBar.setHeight(1);
-        // messageBar.setMaxHeight(1);
         messageBar.setVisible(false);
-        favoritesButton = new FavoritesButton();
         injectMenuFunctions(this);
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
@@ -203,7 +199,9 @@ public class MenuBarView extends EnhancedVLayout {
                 for (MenuItem item : MENU_ITEMS) {
                     updateMenuVisibility(item);
                 }
-                addMember(new LinkBar());
+                LinkBar linkBar = new LinkBar();
+                messageBar.setOverridingCanvas(linkBar);
+                addMember(linkBar);
                 addMember(messageBar);
             }
         });
@@ -239,7 +237,10 @@ public class MenuBarView extends EnhancedVLayout {
 
     // called via JSNI - fav menu button
     public void showFavoritesMenu() {
-        this.favoritesButton.showMenu();
+        // lazily show the favs menu, in that way it shows up on top of the menu item bar
+        favoritesMenu.show();
+        this.favoritesMenu.showMenu(DOM.getElementById(BTN_FAV_ID).getAbsoluteBottom(), DOM.getElementById(BTN_FAV_ID)
+            .getAbsoluteLeft());
     }
 
     // called via JSNI - msgcenter menu button
@@ -334,12 +335,16 @@ public class MenuBarView extends EnhancedVLayout {
            +"<a id='"+BTN_MSG_CENTER_ID+"' onclick='__gwt_showMessageCenter(); return false;'>"+MSG_CENTER_BTN_CONTENT+"0</a>"
          +"</li>"
            +"<li class='dropdown'>"
-             +"<a href='#' class='dropdown-toggle' data-toggle='dropdown'>"
+                + "<a class='dropdown-toggle' data-toggle='dropdown'>"
                +"<span class='pficon pficon-user'></span>"
                 +user.getName()+" <b class='caret'></b>"
              +"</a>"
              +"<ul class='dropdown-menu'>"
-             + "<li><a href='#Administration/Security/Users/"+user.getId()+"'>Account Details</a></li>"
+                + "<li><a href='#Administration/Security/Users/"
+                + user.getId()
+                + "'>"
+                + MSG.common_title_settings()
+                + "</a></li>"
              + "<li class='divider'></li>"
                +"<li>"
                  +"<a href='#"+LOGOUT_VIEW_ID.getName()+"'>"+LOGOUT_VIEW_ID.getTitle()+"</a>"

@@ -134,6 +134,9 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 prop = config.getSimple(SystemSetting.PARTITION_EVENT_PURGE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
+                prop = config.getSimple(SystemSetting.RESOURCE_CONFIG_HISTORY_PURGE_PERIOD.getInternalName());
+                prop.setStringValue(convertMillisToDays(prop.getStringValue()));
+
                 prop = config.getSimple(SystemSetting.BASE_LINE_FREQUENCY.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
@@ -214,6 +217,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                     || SystemSetting.DRIFT_FILE_PURGE_PERIOD.getInternalName().equals(simple.getName())
                     || SystemSetting.OPERATION_HISTORY_PURGE_PERIOD.getInternalName().equals(simple.getName())
                     || SystemSetting.PARTITION_EVENT_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemSetting.RESOURCE_CONFIG_HISTORY_PURGE_PERIOD.getInternalName().equals(simple.getName())
                     || SystemSetting.BASE_LINE_FREQUENCY.getInternalName().equals(simple.getName())
                     || SystemSetting.BASE_LINE_DATASET.getInternalName().equals(simple.getName())) {
                     value = convertDaysToMillis(value);
@@ -505,6 +509,14 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
             case PARTITION_EVENT_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_PartitionEventPurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_PartitionEventPurge_name());
+                pd.setPropertyGroupDefinition(purgeSettingsGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(0), null));
+                pd.setDefaultValue("0");
+                break;
+
+            case RESOURCE_CONFIG_HISTORY_PURGE_PERIOD:
+                pd.setDescription(MSG.view_admin_systemSettings_ResourceConfigHistoryPurge_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_ResourceConfigHistoryPurge_name());
                 pd.setPropertyGroupDefinition(purgeSettingsGroup);
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(0), null));
                 pd.setDefaultValue("0");

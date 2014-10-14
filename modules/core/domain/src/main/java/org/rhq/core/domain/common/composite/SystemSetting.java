@@ -293,7 +293,10 @@ public enum SystemSetting {
         PropertySimpleType.STRING, true, true, false),
 
     /** How long do we keep partition events */
-    PARTITION_EVENT_PURGE_PERIOD("PARTITION_EVENT_PURGE", PropertySimpleType.LONG, false, true, true);
+    PARTITION_EVENT_PURGE_PERIOD("PARTITION_EVENT_PURGE", PropertySimpleType.LONG, false, true, true),
+
+    /** How long do we keep resource config history */
+    RESOURCE_CONFIG_HISTORY_PURGE_PERIOD("RESOURCE_CONFIG_HISTORY_PURGE", PropertySimpleType.LONG, false, true, true);
 
     private final String internalName;
     private final PropertySimpleType type;

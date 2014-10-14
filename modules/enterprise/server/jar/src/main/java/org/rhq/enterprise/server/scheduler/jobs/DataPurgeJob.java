@@ -29,6 +29,7 @@ import static org.rhq.core.domain.common.composite.SystemSetting.DRIFT_FILE_PURG
 import static org.rhq.core.domain.common.composite.SystemSetting.EVENT_PURGE_PERIOD;
 import static org.rhq.core.domain.common.composite.SystemSetting.OPERATION_HISTORY_PURGE_PERIOD;
 import static org.rhq.core.domain.common.composite.SystemSetting.PARTITION_EVENT_PURGE_PERIOD;
+import static org.rhq.core.domain.common.composite.SystemSetting.RESOURCE_CONFIG_HISTORY_PURGE_PERIOD;
 import static org.rhq.core.domain.common.composite.SystemSetting.RT_DATA_PURGE_PERIOD;
 import static org.rhq.core.domain.common.composite.SystemSetting.TRAIT_PURGE_PERIOD;
 
@@ -141,6 +142,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeOperationHistoryData(systemSettings);
         purgeOrphanedBundleResourceDeploymentHistory();
         purgePartitionEventsData(systemSettings);
+        purgeResourceConfigHistory(systemSettings);
         removeResourceErrorDuplicates();
         removeStaleAvailabilityResourceErrors();
     }
@@ -368,6 +370,29 @@ public class DataPurgeJob extends AbstractStatefulJob {
         } finally {
             long duration = System.currentTimeMillis() - timeStart;
             LOG.info("Partition event data purged [" + eventsPurged + "] - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void purgeResourceConfigHistory(SystemSettings systemSettings) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Resource configuration history purge starting at " + new Date(timeStart));
+        int configurationsPurged = 0;
+        try {
+            String purgeThresholdStr = systemSettings.get(RESOURCE_CONFIG_HISTORY_PURGE_PERIOD);
+            long purgeThreshold = purgeThresholdStr != null ? Long.parseLong(purgeThresholdStr) : 0;
+            if (purgeThreshold <= 0) {
+                LOG.info("Resource configuration history threshold set to 0, "
+                    + "skipping purge of resource configuration history data.");
+                return;
+            }
+            long deleteUpToTime = timeStart - purgeThreshold;
+            LOG.info("Purging resource configuration history data older than " + new Date(deleteUpToTime));
+            configurationsPurged = purgeManager.purgeResourceConfigHistory(deleteUpToTime);
+        } catch (Exception e) {
+            LOG.error("Failed to purge resource configuration history data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Resource configuration history purged [" + configurationsPurged + "] - completed in [" + duration + "]ms");
         }
     }
 

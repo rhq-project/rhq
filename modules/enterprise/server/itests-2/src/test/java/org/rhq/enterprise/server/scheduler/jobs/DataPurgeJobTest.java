@@ -22,7 +22,10 @@ import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.rhq.core.domain.common.composite.SystemSetting.PARTITION_EVENT_PURGE_PERIOD;
+import static org.rhq.core.domain.common.composite.SystemSetting.RESOURCE_CONFIG_HISTORY_PURGE_PERIOD;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -62,7 +65,14 @@ import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.common.composite.SystemSettings;
+import org.rhq.core.domain.configuration.AbstractConfigurationUpdate;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PartitionEventCriteria;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.event.EventSeverity;
@@ -83,10 +93,13 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
@@ -96,7 +109,6 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerPluginService;
 import org.rhq.enterprise.server.test.TransactionCallback;
-import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -106,6 +118,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class DataPurgeJobTest extends AbstractEJB3Test {
     private static final Log LOG = LogFactory.getLog(DataPurgeJobTest.class);
 
+    private static final long ONE_MONTH = MILLISECONDS.convert(30, DAYS);
+
     private SubjectManagerLocal subjectManager;
     private SystemManagerLocal systemManager;
     private MeasurementDataManagerLocal measurementDataManager;
@@ -114,13 +128,16 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     private CallTimeDataManagerLocal callTimeDataManager;
     private PartitionEventManagerLocal partitionEventManager;
     private EventManagerLocal eventManager;
+    private ConfigurationManagerLocal configurationManager;
 
     private Subject overlord;
-    private int resourceTypeId;
+    private ResourceType platformType;
     private Agent testAgent;
-    private Resource testResource;
+    private Resource testPlatform;
+    private ResourceGroup testGroup;
     private FailoverList testFailoverList;
     private String originalPartitionEventPurgePeriod;
+    private String originalResourceConfigHistoryPurgePeriod;
 
     @Override
     protected void beforeMethod() throws Exception {
@@ -141,7 +158,9 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             systemManager = LookupUtil.getSystemManager();
             SystemSettings systemSettings = systemManager.getSystemSettings(overlord);
             originalPartitionEventPurgePeriod = systemSettings.get(PARTITION_EVENT_PURGE_PERIOD);
-            systemSettings.put(PARTITION_EVENT_PURGE_PERIOD, String.valueOf(MILLISECONDS.convert(30, DAYS)));
+            systemSettings.put(PARTITION_EVENT_PURGE_PERIOD, String.valueOf(ONE_MONTH));
+            originalResourceConfigHistoryPurgePeriod = systemSettings.get(RESOURCE_CONFIG_HISTORY_PURGE_PERIOD);
+            systemSettings.put(RESOURCE_CONFIG_HISTORY_PURGE_PERIOD, String.valueOf(ONE_MONTH));
             systemManager.setSystemSettings(overlord, systemSettings);
 
             measurementDataManager = LookupUtil.getMeasurementDataManager();
@@ -150,6 +169,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             callTimeDataManager = LookupUtil.getCallTimeDataManager();
             partitionEventManager = LookupUtil.getPartitionEventManager();
             eventManager = LookupUtil.getEventManager();
+            configurationManager = LookupUtil.getConfigurationManager();
 
         } catch (Throwable t) {
             LOG.error("Cannot prepare test", t);
@@ -164,6 +184,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
             SystemSettings systemSettings = systemManager.getSystemSettings(overlord);
             systemSettings.put(PARTITION_EVENT_PURGE_PERIOD, originalPartitionEventPurgePeriod);
+            systemSettings.put(RESOURCE_CONFIG_HISTORY_PURGE_PERIOD, originalResourceConfigHistoryPurgePeriod);
             systemManager.setSystemSettings(overlord, systemSettings);
 
             deleteBaseData();
@@ -185,28 +206,52 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         makeSureDataIsPurged();
     }
 
+    public void testResourceConfigurationPurge() throws Throwable {
+        executeInTransaction(false, new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                createNewResourceConfigurationUpdates(1000);
+            }
+        });
+        triggerDataPurgeJobNow();
+        triggerDataCalcJobNow();
+        makeSureResourceConfigurationDataIsPurged();
+    }
+
+    public void testGroupResourceConfigurationPurge() throws Throwable {
+        executeInTransaction(false, new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                createNewGroupResourceConfigurationUpdates(1000);
+            }
+        });
+        triggerDataPurgeJobNow();
+        triggerDataCalcJobNow();
+        makeSureGroupResourceConfigurationDataIsPurged();
+    }
+
     public void testPurgeWhenDeleting() throws Throwable {
         addDataToBePurged();
         triggerDataPurgeJobNow();
         triggerDataCalcJobNow();
         try {
-            List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, testResource.getId());
-            resourceManager.uninventoryResourceAsyncWork(overlord, testResource.getId());
+            List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, testPlatform.getId());
+            resourceManager.uninventoryResourceAsyncWork(overlord, testPlatform.getId());
 
             assertEquals("didn't delete resource: " + deletedIds, 1, deletedIds.size());
-            assertEquals("what was deleted? : " + deletedIds, testResource.getId(), deletedIds.get(0).intValue());
+            assertEquals("what was deleted? : " + deletedIds, testPlatform.getId(), deletedIds.get(0).intValue());
 
             // I don't have the resource anymore so I can't use makeSureDataIsPurged to test
             // this test method will at least ensure no exceptions occur in resource manager
         } finally {
-            testResource = null; // so our tear-down method doesn't try to delete it again
+            testPlatform = null; // so our tear-down method doesn't try to delete it again
         }
 
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
 
-                ResourceType rt = em.find(ResourceType.class, resourceTypeId);
+                ResourceType rt = em.find(ResourceType.class, platformType.getId());
 
                 Set<EventDefinition> evDs = rt.getEventDefinitions();
                 if (evDs != null) {
@@ -240,7 +285,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             public void execute() throws Exception {
 
                 // add alerts
-                AlertDefinition ad = testResource.getAlertDefinitions().iterator().next();
+                AlertDefinition ad = testPlatform.getAlertDefinitions().iterator().next();
                 for (long timestamp = 0L; timestamp < 200L; timestamp++) {
                     Alert newAlert = createNewAlert(ad, timestamp);
                     assertEquals("bad alert persisted:" + newAlert, timestamp, newAlert.getCtime());
@@ -255,7 +300,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
                 // add availabilities
                 for (long timestamp = 0L; timestamp < 2000L; timestamp += 2L) {
-                    Availability newAvail = createNewAvailability(testResource, timestamp, timestamp + 1L);
+                    Availability newAvail = createNewAvailability(testPlatform, timestamp, timestamp + 1L);
                     assertEquals("bad avail persisted:" + newAvail, timestamp, newAvail.getStartTime().longValue());
                     assertEquals("bad avail persisted:" + newAvail, timestamp + 1, newAvail.getEndTime().longValue());
                     assertTrue("avail not persisted:" + newAvail, newAvail.getId() > 0);
@@ -268,17 +313,16 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 em.clear();
 
                 // add events
-                createNewEvents(testResource, 0, 1000);
+                createNewEvents(testPlatform, 0, 1000);
 
                 // add calltime/response times
-                createNewCalltimeData(testResource, 0, 1000);
+                createNewCalltimeData(testPlatform, 0, 1000);
 
                 // add trait data
-                createNewTraitData(testResource, 0L, 100);
+                createNewTraitData(testPlatform, 0L, 100);
 
                 // add partition event data
                 createNewPartitionEvents(1000);
-
             }
         });
     }
@@ -290,7 +334,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             public void execute() throws Exception {
 
                 Subject overlord = subjectManager.getOverlord();
-                Resource res = em.find(Resource.class, testResource.getId());
+                Resource res = em.find(Resource.class, testPlatform.getId());
 
                 // check alerts
                 Set<AlertDefinition> alertDefinitions = res.getAlertDefinitions();
@@ -347,6 +391,75 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
             }
         });
+    }
+
+    private void makeSureResourceConfigurationDataIsPurged() {
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+                criteria.addFilterResourceIds(testPlatform.getId());
+                criteria.addSortCreatedTime(PageOrdering.DESC);
+
+                PageList<ResourceConfigurationUpdate> resourceConfigUpdates = configurationManager
+                    .findResourceConfigurationUpdatesByCriteria(subjectManager.getOverlord(), criteria);
+                List<AbstractConfigurationUpdate> configUpdates = new ArrayList<AbstractConfigurationUpdate>(
+                    resourceConfigUpdates.size());
+                configUpdates.addAll(resourceConfigUpdates);
+
+                checkConfigurationUpdates(configUpdates);
+            }
+        });
+    }
+
+    private void makeSureGroupResourceConfigurationDataIsPurged() {
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                ResourceConfigurationUpdateCriteria updateCriteria = new ResourceConfigurationUpdateCriteria();
+                updateCriteria.addFilterResourceIds(testPlatform.getId());
+                updateCriteria.addFilterResourceGroupIds(testGroup.getId());
+                updateCriteria.addSortCreatedTime(PageOrdering.DESC);
+
+                PageList<ResourceConfigurationUpdate> resourceConfigUpdates = configurationManager
+                    .findResourceConfigurationUpdatesByCriteria(subjectManager.getOverlord(), updateCriteria);
+                List<AbstractConfigurationUpdate> configUpdates = new ArrayList<AbstractConfigurationUpdate>(
+                    resourceConfigUpdates.size());
+                configUpdates.addAll(resourceConfigUpdates);
+
+                checkConfigurationUpdates(configUpdates);
+
+                GroupResourceConfigurationUpdateCriteria groupUpdateCriteria = new GroupResourceConfigurationUpdateCriteria();
+                groupUpdateCriteria.addFilterResourceGroupIds(Arrays.asList(testGroup.getId()));
+                groupUpdateCriteria.addSortCreatedTime(PageOrdering.DESC);
+
+                PageList<GroupResourceConfigurationUpdate> groupResourceConfigUpdates = configurationManager
+                    .findGroupResourceConfigurationUpdatesByCriteria(subjectManager.getOverlord(), groupUpdateCriteria);
+                configUpdates = new ArrayList<AbstractConfigurationUpdate>(groupResourceConfigUpdates.size());
+                configUpdates.addAll(groupResourceConfigUpdates);
+
+                checkConfigurationUpdates(configUpdates);
+            }
+        });
+    }
+
+    private void checkConfigurationUpdates(List<AbstractConfigurationUpdate> configUpdates) {
+        assertEquals("Expected 2 config updates: " + configUpdates, 2, configUpdates.size());
+
+        Iterator<AbstractConfigurationUpdate> iterator = configUpdates.iterator();
+        long purgeUpToTime = System.currentTimeMillis() - ONE_MONTH;
+
+        AbstractConfigurationUpdate configUpdate = iterator.next();
+        assertEquals("Expected youngest update to be a failure", ConfigurationUpdateStatus.FAILURE,
+            configUpdate.getStatus());
+        assertTrue("Expected youngest update creation time to be greater than " + new Date(purgeUpToTime),
+            configUpdate.getCreatedTime() > purgeUpToTime);
+
+        configUpdate = iterator.next();
+        assertEquals("Expected oldest update to be a success", ConfigurationUpdateStatus.SUCCESS,
+            configUpdate.getStatus());
+        assertTrue("Expected oldest update creation time to be less than " + new Date(purgeUpToTime),
+            configUpdate.getCreatedTime() < purgeUpToTime);
     }
 
     private void triggerDataPurgeJobNow() throws Exception {
@@ -552,30 +665,99 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         }
     }
 
-    private void createBaseData() throws Exception {
-        testResource = executeInTransaction(false, new TransactionCallbackReturnable<Resource>() {
-            @Override
-            public Resource execute() throws Exception {
-                long now = System.currentTimeMillis();
-                ResourceType resourceType = new ResourceType("plat" + now, "test", ResourceCategory.PLATFORM, null);
+    private void createNewResourceConfigurationUpdates(int count) {
+        long now = System.currentTimeMillis();
+        long start = now - MILLISECONDS.convert(90, DAYS);
+        for (int i = 0; i < count; i++) {
+            Configuration config = new Configuration();
+            config.setSimpleValue("pipo", "molo");
+            ResourceConfigurationUpdate configUpdate = new ResourceConfigurationUpdate(testPlatform, config, "testUser");
+            configUpdate.setStatus(i % 2 == 0 ? ConfigurationUpdateStatus.SUCCESS : ConfigurationUpdateStatus.FAILURE);
+            em.persist(configUpdate);
+            em.flush();
+            if (i < count - 1) {
+                long time = start + MILLISECONDS.convert(i, HOURS);
+                int updated = em
+                    .createQuery(
+                        "update ResourceConfigurationUpdate set createdTime = :createdTime"
+                            + ", modifiedTime = :modifiedTime where id = :id").setParameter("createdTime", time)
+                    .setParameter("modifiedTime", time).setParameter("id", configUpdate.getId()).executeUpdate();
+                assertEquals(1, updated);
+            } else {
+                configUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
+                em.flush();
+            }
+        }
+    }
 
-                em.persist(resourceType);
-                resourceTypeId = resourceType.getId();
+    private void createNewGroupResourceConfigurationUpdates(int count) {
+        long now = System.currentTimeMillis();
+        long start = now - MILLISECONDS.convert(90, DAYS);
+        for (int i = 0; i < count; i++) {
+            ConfigurationUpdateStatus status = i % 2 == 0 ? ConfigurationUpdateStatus.SUCCESS
+                : ConfigurationUpdateStatus.FAILURE;
+            GroupResourceConfigurationUpdate groupConfigUpdate = new GroupResourceConfigurationUpdate(testGroup,
+                "testUser");
+            groupConfigUpdate.setStatus(status);
+            Configuration config = new Configuration();
+            config.setSimpleValue("pipo", "molo");
+            ResourceConfigurationUpdate configUpdate = new ResourceConfigurationUpdate(testPlatform, config, "testUser");
+            configUpdate.setStatus(status);
+            groupConfigUpdate.addConfigurationUpdate(configUpdate);
+            configUpdate.setGroupConfigurationUpdate(groupConfigUpdate);
+            em.persist(groupConfigUpdate);
+            em.flush();
+            if (i < count - 1) {
+                long time = start + MILLISECONDS.convert(i, HOURS);
+                int updated = em
+                    .createQuery(
+                        "update ResourceConfigurationUpdate set createdTime = :createdTime"
+                            + ", modifiedTime = :modifiedTime where id = :id").setParameter("createdTime", time)
+                    .setParameter("modifiedTime", time).setParameter("id", configUpdate.getId()).executeUpdate();
+                assertEquals(1, updated);
+                updated = em
+                    .createQuery(
+                        "update GroupResourceConfigurationUpdate set createdTime = :createdTime"
+                            + ", modifiedTime = :modifiedTime where id = :id").setParameter("createdTime", time)
+                    .setParameter("modifiedTime", time).setParameter("id", groupConfigUpdate.getId()).executeUpdate();
+                assertEquals(1, updated);
+            } else {
+                groupConfigUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
+                configUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
+                em.flush();
+            }
+        }
+    }
+
+    private void createBaseData() throws Exception {
+        executeInTransaction(false, new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+
+                long now = System.currentTimeMillis();
+
+                platformType = new ResourceType("plat" + now, "test", ResourceCategory.PLATFORM, null);
+                em.persist(platformType);
 
                 testAgent = new Agent("testagent" + now, "testaddress" + now, 1, "", "testtoken" + now);
                 em.persist(testAgent);
                 em.flush();
 
-                Resource resource = new Resource("reskey" + now, "resname", resourceType);
-                resource.setUuid("" + new Random().nextInt());
-                resource.setAgent(testAgent);
-                em.persist(resource);
+                testPlatform = new Resource("reskey" + now, "resname", platformType);
+                Random random = new Random();
+                testPlatform.setUuid("" + random.nextInt());
+                testPlatform.setAgent(testAgent);
+                em.persist(testPlatform);
+
+                testGroup = new ResourceGroup("resgroup" + now, platformType);
+                testGroup.addExplicitResource(testPlatform);
+                em.persist(testGroup);
 
                 AlertDefinition ad = new AlertDefinition();
                 ad.setName("alertTest");
                 ad.setEnabled(true);
                 ad.setPriority(AlertPriority.HIGH);
-                ad.setResource(resource);
+                ad.setResource(testPlatform);
                 ad.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
                 ad.setConditionExpression(BooleanExpression.ALL);
                 ad.setRecoveryId(0);
@@ -586,12 +768,12 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 em.persist(ac);
                 ad.addCondition(ac);
 
-                EventDefinition ed = new EventDefinition(resourceType, "DataPurgeJobTestEventDefinition");
+                EventDefinition ed = new EventDefinition(platformType, "DataPurgeJobTestEventDefinition");
                 em.persist(ed);
-                resourceType.addEventDefinition(ed);
+                platformType.addEventDefinition(ed);
 
                 // add calltime schedule
-                MeasurementDefinition def = new MeasurementDefinition(resourceType, "DataPurgeJobTestCalltimeMeasDef");
+                MeasurementDefinition def = new MeasurementDefinition(platformType, "DataPurgeJobTestCalltimeMeasDef");
                 def.setCategory(MeasurementCategory.PERFORMANCE);
                 def.setDataType(DataType.CALLTIME);
                 def.setDefaultInterval(12345);
@@ -600,13 +782,13 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 def.setDisplayName(def.getName());
                 def.setDisplayType(DisplayType.SUMMARY);
                 em.persist(def);
-                MeasurementSchedule schedule = new MeasurementSchedule(def, resource);
+                MeasurementSchedule schedule = new MeasurementSchedule(def, testPlatform);
                 em.persist(schedule);
                 def.addSchedule(schedule);
-                resource.addSchedule(schedule);
+                testPlatform.addSchedule(schedule);
 
                 // add trait schedule
-                def = new MeasurementDefinition(resourceType, "DataPurgeJobTestTraitMeasDef");
+                def = new MeasurementDefinition(platformType, "DataPurgeJobTestTraitMeasDef");
                 def.setCategory(MeasurementCategory.PERFORMANCE);
                 def.setDataType(DataType.TRAIT);
                 def.setDefaultInterval(12345);
@@ -614,13 +796,13 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 def.setDisplayName(def.getName());
                 def.setDisplayType(DisplayType.SUMMARY);
                 em.persist(def);
-                schedule = new MeasurementSchedule(def, resource);
+                schedule = new MeasurementSchedule(def, testPlatform);
                 em.persist(schedule);
                 def.addSchedule(schedule);
-                resource.addSchedule(schedule);
+                testPlatform.addSchedule(schedule);
 
                 // add normal measurment schedule
-                def = new MeasurementDefinition(resourceType, "DataPurgeJobTestNormalMeasDef");
+                def = new MeasurementDefinition(platformType, "DataPurgeJobTestNormalMeasDef");
                 def.setCategory(MeasurementCategory.PERFORMANCE);
                 def.setDataType(DataType.MEASUREMENT);
                 def.setDefaultInterval(12345);
@@ -628,12 +810,11 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 def.setDisplayName(def.getName());
                 def.setDisplayType(DisplayType.SUMMARY);
                 em.persist(def);
-                schedule = new MeasurementSchedule(def, resource);
+                schedule = new MeasurementSchedule(def, testPlatform);
                 em.persist(schedule);
                 def.addSchedule(schedule);
-                resource.addSchedule(schedule);
+                testPlatform.addSchedule(schedule);
 
-                return resource;
             }
         });
     }
@@ -660,35 +841,37 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                     em.remove(event);
                 }
                 em.flush();
+
+                if (testGroup != null) {
+                    ResourceGroup resourceGroup = em.find(ResourceGroup.class, testGroup.getId());
+                    em.remove(resourceGroup);
+                    em.flush();
+                }
             }
         });
 
-        Resource doomedResource = testResource;
-        if (doomedResource != null) {
-            // get the type and agent that we will delete after we delete the resource itself
-            final ResourceType doomedResourceType = doomedResource.getResourceType();
-            final Agent doomedAgent = doomedResource.getAgent();
+        if (testPlatform != null) {
 
-            // delete the resource itself
             Subject overlord = subjectManager.getOverlord();
-            List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, doomedResource.getId());
-            for (Integer deletedResourceId : deletedIds) {
-                resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
+            List<Integer> uninventoriedResourceIds = resourceManager
+                .uninventoryResource(overlord, testPlatform.getId());
+            for (Integer uninventoriedResourceId : uninventoriedResourceIds) {
+                resourceManager.uninventoryResourceAsyncWork(overlord, uninventoriedResourceId);
             }
 
             executeInTransaction(false, new TransactionCallback() {
                 @Override
                 public void execute() throws Exception {
 
-                    Agent agent = em.find(Agent.class, doomedAgent.getId());
+                    Agent agent = em.find(Agent.class, testPlatform.getAgent().getId());
                     if (agent != null) {
                         em.remove(agent);
                         em.flush();
                     }
 
-                    ResourceType type = em.find(ResourceType.class, doomedResourceType.getId());
-                    if (type != null) {
-                        em.remove(type);
+                    ResourceType typeToDelete = em.find(ResourceType.class, testPlatform.getResourceType().getId());
+                    if (typeToDelete != null) {
+                        em.remove(typeToDelete);
                         em.flush();
                     }
 

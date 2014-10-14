@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.installer;
 
 import java.io.ByteArrayInputStream;
@@ -71,11 +72,13 @@ import org.rhq.core.db.DbUtil;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.setup.DBSetup;
+import org.rhq.core.db.upgrade.ServerVersionColumnUpgrader;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.obfuscation.ObfuscatedPreferences.RestrictedFormat;
 import org.rhq.core.util.obfuscation.PropertyObfuscationVault;
 import org.rhq.core.util.stream.StreamUtil;
@@ -96,11 +99,11 @@ public class ServerInstallUtil {
 
     public enum ExistingSchemaOption {
         OVERWRITE, KEEP, SKIP
-    };
+    }
 
     public enum SupportedDatabaseType {
         POSTGRES, ORACLE
-    };
+    }
 
     private static class SocketBindingInfo {
         public String name;
@@ -202,6 +205,7 @@ public class ServerInstallUtil {
         client.setLoggerLevel("org.jboss.as.config", "INFO"); // BZ 1004730
         client.setLoggerLevel("org.rhq.enterprise.gui.common.framework", "FATAL"); // BZ 994267
 
+        //noinspection StringBufferReplaceableByString
         StringBuilder sb = new StringBuilder("not(any(");
         sb.append("match(\"JBAS015960\")"); // BZ 1026786
         sb.append(",");
@@ -293,7 +297,6 @@ public class ServerInstallUtil {
             throw new FailureException(response, "Failed to setup mail service");
         }
         LOG.info("Mail service has been configured.");
-        return;
     }
 
     /**
@@ -316,9 +319,9 @@ public class ServerInstallUtil {
         if (dbType == null) {
             return null;
         }
-        if (dbType.toLowerCase().indexOf("postgres") > -1) {
+        if (dbType.toLowerCase().contains("postgres")) {
             return SupportedDatabaseType.POSTGRES;
-        } else if (dbType.toLowerCase().indexOf("oracle") > -1) {
+        } else if (dbType.toLowerCase().contains("oracle")) {
             return SupportedDatabaseType.ORACLE;
         }
         return null;
@@ -499,8 +502,6 @@ public class ServerInstallUtil {
         } else {
             LOG.info("JMS Queue [" + queueName + "] already exists, skipping the creation request");
         }
-
-        return;
     }
 
     /**
@@ -698,8 +699,8 @@ public class ServerInstallUtil {
 
             xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_POSTGRES,
                 XA_DATASOURCE_CLASS_POSTGRES,
-                "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, 5, 50, (Boolean) null,
-                (Boolean) null, 75, (String) null, RHQ_DS_SECURITY_DOMAIN_XA, (String) null,
+                "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, 5, 50, null,
+                    null, 75, null, RHQ_DS_SECURITY_DOMAIN_XA, null,
                 "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
 
@@ -743,7 +744,7 @@ public class ServerInstallUtil {
 
             xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_ORACLE,
                 XA_DATASOURCE_CLASS_ORACLE, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15,
-                5, 50, (Boolean) null, Boolean.TRUE, 75, (String) null, RHQ_DS_SECURITY_DOMAIN_XA,
+                5, 50, null, Boolean.TRUE, 75, null, RHQ_DS_SECURITY_DOMAIN_XA,
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
                 "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", props);
@@ -772,10 +773,7 @@ public class ServerInstallUtil {
      */
     public static boolean isAutoinstallEnabled(HashMap<String, String> serverProperties) {
         String enableProp = serverProperties.get(ServerProperties.PROP_AUTOINSTALL_ENABLE);
-        if (enableProp != null) {
-            return Boolean.parseBoolean(enableProp);
-        }
-        return false;
+        return Boolean.parseBoolean(enableProp);
     }
 
     /**
@@ -977,8 +975,6 @@ public class ServerInstallUtil {
                 db.closeConnection(conn);
             }
         }
-
-        return;
     }
 
     /**
@@ -1190,7 +1186,7 @@ public class ServerInstallUtil {
                     + OperationMode.INSTALLED.name() + "') ");
                 resultSet = statement.executeQuery();
 
-                StringBuffer addressList = new StringBuffer();
+                StringBuilder addressList = new StringBuilder();
                 while (resultSet.next()) {
                     String address = resultSet.getString(1);
 
@@ -1394,8 +1390,6 @@ public class ServerInstallUtil {
             LOG.fatal("Cannot install the database schema - the server will not run properly.", e);
             throw e;
         }
-
-        return;
     }
 
     /**
@@ -1435,8 +1429,6 @@ public class ServerInstallUtil {
             LOG.fatal("Cannot upgrade the database schema - the server will not run properly.", e);
             throw e;
         }
-
-        return;
     }
 
     /**
@@ -1756,7 +1748,7 @@ public class ServerInstallUtil {
         boolean supportsExpression, boolean vault, boolean restricted) {
 
         if (supportsExpression) {
-            String expressionFormat = null;
+            String expressionFormat;
 
             if (!vault) {
                 if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
@@ -1941,13 +1933,16 @@ public class ServerInstallUtil {
                 }
             }
         }
-
-        return;
     }
 
     /**
      * Update server version stamp with the install version.
      *
+     * For two reasons we add the column here, as opposed to db-upgrade.xml. First, a SN upgrade may
+     * happen before a Server upgrade, so db-upgrade may not have yet run.  Second, we can limit the
+     * setting of the version to the row in question, db-upgrade would not know which row to set.
+     *
+
      * @param connectionUrl
      * @param username
      * @param password
@@ -1957,42 +1952,20 @@ public class ServerInstallUtil {
      */
     public static void updateServerVersion(String connectionUrl, String username, String password, String serverName)
         throws Exception {
-        DatabaseType db = null;
-        Connection conn = null;
-        PreparedStatement stm = null;
-        boolean result = false;
 
+        Connection connection = null;
         try {
-            conn = getDatabaseConnection(connectionUrl, username, password);
-            db = DatabaseTypeFactory.getDatabaseType(conn);
-
-            // For two reasons we add the column here, as opposed to db-upgrade.xml. First, a SN upgrade may
-            // happen before a Server upgrade, so db-upgrade may not have yet run.  Second, we can limit the
-            // setting of the version to the row in question, db-upgrade would not know which row to set.
-            boolean columnExists = db.checkColumnExists(conn, "rhq_server", "version");
-            if (!columnExists) {
-                db.addColumn(conn, "RHQ_SERVER", "VERSION", "VARCHAR2", "255");
-                stm = conn.prepareStatement("UPDATE rhq_server SET version = ?");
-                stm.setString(1, "PRE-" + version);
-                stm.executeUpdate();
-                db.closeStatement(stm);
-                // set column not null after it's been set
-                db.alterColumn(conn, "RHQ_SERVER", "VERSION", "VARCHAR2", null, "255", false, false);
-            }
-
-            stm = conn.prepareStatement("UPDATE rhq_server SET version = ? WHERE name = ?");
-            stm.setString(1, version);
-            stm.setString(2, serverName);
-            int rowsUpdated = stm.executeUpdate();
+            connection = getDatabaseConnection(connectionUrl, username, password);
+            ServerVersionColumnUpgrader versionColumnUpgrader = new ServerVersionColumnUpgrader();
+            versionColumnUpgrader.upgrade(connection, version);
+            int rowsUpdated = versionColumnUpgrader.setVersionForServerWithName(connection, version, serverName);
             if (1 != rowsUpdated) {
                 throw new IllegalStateException("Expected [1] Server update but updated [" + rowsUpdated + "].");
             }
         } catch (Exception e) {
             throw new RuntimeException("Unable to update Server [" + serverName + "] to version [" + version + "]", e);
         } finally {
-            if (null != db) {
-                db.closeJDBCObjects(conn, stm, null);
-            }
+            JDBCUtil.safeClose(connection);
         }
     }
 

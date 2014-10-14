@@ -1,26 +1,20 @@
 /*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
  *
- *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
- *  * All rights reserved.
- *  *
- *  * This program is free software; you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License, version 2, as
- *  * published by the Free Software Foundation, and/or the GNU Lesser
- *  * General Public License, version 2.1, also as published by the Free
- *  * Software Foundation.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  * GNU General Public License and the GNU Lesser General Public License
- *  * for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * and the GNU Lesser General Public License along with this program;
- *  * if not, write to the Free Software Foundation, Inc.,
- *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.storage.installer;
@@ -37,7 +31,6 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -73,12 +66,12 @@ import org.rhq.cassandra.DeploymentException;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.util.ConfigEditor;
-import org.rhq.core.db.DatabaseType;
-import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.DbUtil;
+import org.rhq.core.db.upgrade.StorageNodeVersionColumnUpgrader;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.core.util.stream.StreamUtil;
 
@@ -86,6 +79,8 @@ import org.rhq.core.util.stream.StreamUtil;
  * @author John Sanda
  */
 public class StorageInstaller {
+    private static final String STORAGE_BASEDIR = "rhq-storage";
+    private static final int RPC_PORT = 9160;
 
     public static final int STATUS_NO_ERRORS = 0;
 
@@ -113,8 +108,6 @@ public class StorageInstaller {
 
     public static final int STATUS_UNKNOWN_HOST = 11;
 
-    private final String STORAGE_BASEDIR = "rhq-storage";
-
     static final String STORAGE_LOG_FILE_PATH = "../../logs/rhq-storage.log";
 
     static final String DEFAULT_COMMIT_LOG_DIR = "../../../rhq-data/commit_log";
@@ -132,8 +125,6 @@ public class StorageInstaller {
     private File storageBasedir;
 
     private int defaultJmxPort = 7299;
-
-    private int rpcPort = 9160;
 
     private int defaultCqlPort = 9142;
 
@@ -236,7 +227,7 @@ public class StorageInstaller {
             return STATUS_SHOW_USAGE;
         }
 
-        InstallerInfo installerInfo = null;
+        InstallerInfo installerInfo;
         boolean isUpgrade = cmdLine.hasOption("upgrade");
         boolean isUndo = cmdLine.hasOption("undo");
         File undoFromDir = null;
@@ -272,7 +263,7 @@ public class StorageInstaller {
 
         serverPropertiesUpdater.update(properties);
 
-        Properties dbProperties = null;
+        Properties dbProperties;
         if (isUpgrade) {
             File oldServerPropsFile = new File(undoFromDir, "bin/rhq-server.properties");
             dbProperties = new Properties();
@@ -290,7 +281,7 @@ public class StorageInstaller {
         }
 
         // start node (and install windows service) if necessary
-        File binDir = null;
+        File binDir;
         if (isWindows()) {
             File basedir = new File(System.getProperty("rhq.server.basedir"));
             basedir = (null == basedir) ? installerInfo.basedir.getParentFile() : basedir;
@@ -443,7 +434,7 @@ public class StorageInstaller {
             deploymentOptions.setLogFileName(installerInfo.logFile);
             deploymentOptions.setLoggingLevel("INFO");
 
-            deploymentOptions.setRpcPort(rpcPort);
+            deploymentOptions.setRpcPort(RPC_PORT);
             deploymentOptions.setCqlPort(installerInfo.cqlPort);
             deploymentOptions.setGossipPort(installerInfo.gossipPort);
             deploymentOptions.setJmxPort(installerInfo.jmxPort);
@@ -529,7 +520,7 @@ public class StorageInstaller {
         DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
         InstallerInfo installerInfo = new InstallerInfo();
 
-        File existingStorageDir = null;
+        File existingStorageDir;
 
         if (!upgradeFromDir.isDirectory()) {
             log.error("The value passed to the upgrade option is not a directory. The value must be a valid "
@@ -640,7 +631,7 @@ public class StorageInstaller {
         try {
             log.info("Undoing storage node version stamp...");
 
-            File existingStorageDir = null;
+            File existingStorageDir;
 
             if (!upgradeFromDir.isDirectory()) {
                 log.error("The value passed to the upgrade option is not a directory. The value must be a valid "
@@ -665,7 +656,7 @@ public class StorageInstaller {
 
             String storageNodeAddress = oldYamlEditor.getListenAddress();
 
-            Properties dbProperties = null;
+            Properties dbProperties;
             File oldServerPropsFile = new File(upgradeFromDir, "bin/rhq-server.properties");
             dbProperties = new Properties();
             FileInputStream oldServerPropsFileInputStream = new FileInputStream(oldServerPropsFile);
@@ -890,13 +881,13 @@ public class StorageInstaller {
     boolean verifyNodeIsUp(String address, int jmxPort, int retries, long timeout) throws Exception {
         String url = "service:jmx:rmi:///jndi/rmi://" + address + ":" + jmxPort + "/jmxrmi";
         JMXServiceURL serviceURL = new JMXServiceURL(url);
-        JMXConnector connector = null;
-        MBeanServerConnection serverConnection = null;
+        JMXConnector connector;
+        MBeanServerConnection serverConnection;
 
         // Sleep a few seconds to work around https://issues.apache.org/jira/browse/CASSANDRA-5467
         try {
             Thread.sleep(3000);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignored) {
         }
 
         Map<String, String> env = new HashMap<String, String>();
@@ -996,7 +987,6 @@ public class StorageInstaller {
     }
 
     private int parseJmxPort(File cassandraJvmOptsFile) {
-        Integer port = null;
         if (isWindows()) {
             // TODO
             return defaultJmxPort;
@@ -1057,6 +1047,10 @@ public class StorageInstaller {
     /**
      * Update server version stamp with the install version.
      *
+     * For two reasons we add the column here, as opposed to db-upgrade.xml. First, a SN upgrade may
+     * happen before a Server upgrade, so db-upgrade may not have yet run.  Second, we can limit the
+     * setting of the version to the row in question, db-upgrade would not know which row to set.
+     *
      * @param connectionUrl
      * @param username
      * @param password
@@ -1066,33 +1060,13 @@ public class StorageInstaller {
      */
     private static void updateStorageNodeVersion(String connectionUrl, String username, String password,
         String storageNodeAddress, String version) throws Exception {
-        DatabaseType db = null;
-        Connection conn = null;
-        PreparedStatement stm = null;
-        boolean result = false;
-
+        Connection connection = null;
         try {
-            conn = DbUtil.getConnection(connectionUrl, username, password);
-            db = DatabaseTypeFactory.getDatabaseType(conn);
-
-            // For two reasons we add the column here, as opposed to db-upgrade.xml. First, a SN upgrade may
-            // happen before a Server upgrade, so db-upgrade may not have yet run.  Second, we can limit the
-            // setting of the version to the row in question, db-upgrade would not know which row to set.
-            boolean columnExists = db.checkColumnExists(conn, "rhq_storage_node", "version");
-            if (!columnExists) {
-                db.addColumn(conn, "RHQ_STORAGE_NODE", "VERSION", "VARCHAR2", "255");
-                stm = conn.prepareStatement("UPDATE rhq_storage_node SET version = ?");
-                stm.setString(1, "PRE-" + version);
-                stm.executeUpdate();
-                db.closeStatement(stm);
-                // set column not null after it's been set
-                db.alterColumn(conn, "RHQ_STORAGE_NODE", "VERSION", "VARCHAR2", null, "255", false, false);
-            }
-
-            stm = conn.prepareStatement("UPDATE rhq_storage_node SET version = ? WHERE address = ?");
-            stm.setString(1, version);
-            stm.setString(2, storageNodeAddress);
-            int rowsUpdated = stm.executeUpdate();
+            connection = DbUtil.getConnection(connectionUrl, username, password);
+            StorageNodeVersionColumnUpgrader versionColumnUpgrader = new StorageNodeVersionColumnUpgrader();
+            versionColumnUpgrader.upgrade(connection, version);
+            int rowsUpdated = versionColumnUpgrader.setVersionForNodeWithAddress(connection, version,
+                storageNodeAddress);
             if (1 != rowsUpdated) {
                 throw new IllegalStateException("Expected [1] StorageNode update but updated [" + rowsUpdated + "].");
             }
@@ -1100,9 +1074,7 @@ public class StorageInstaller {
             throw new RuntimeException("Unable to update Storage Node [" + storageNodeAddress + "] to version ["
                 + version + "]", e);
         } finally {
-            if (null != db) {
-                db.closeJDBCObjects(conn, stm, null);
-            }
+            JDBCUtil.safeClose(connection);
         }
     }
 

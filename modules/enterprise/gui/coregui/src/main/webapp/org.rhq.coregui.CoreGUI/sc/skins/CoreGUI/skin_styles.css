@@ -1864,8 +1864,8 @@ div[eventproxy^="isc_DateChooser"] {
     display: none;
 }
 
-
 /* bz 1144052, sets the z-index to auto to all related parents to reset the 'stacking context' */
+body > div[eventproxy*="isc_Menu"].normal > div[eventproxy*="isc_Menu"],
 body > div > div[eventproxy*="isc_HTMLFlow_0"],
 body > div.normal[eventproxy*="HTMLFlow"],
 body > div > div[eventproxy*="isc_HTMLFlow_0"],
@@ -1877,4 +1877,14 @@ body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_R
 body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"] > div.overflowVisible[eventproxy*="MenuBarView_LinkBar"],
 body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"] > div.overflowVisible[eventproxy*="MenuBarView_LinkBar"] > div[eventproxy*="MenuBarView_LinkBar"] {
      z-index: auto !important;
+}
+
+/* selector for favorites menu in the navigation bar (on the top) */
+body > div[eventproxy*="isc_Menu"].normal > div[eventproxy*="isc_Menu"] > div[eventproxy*="isc_Menu"].normal {
+    z-index: 999999 !important;
+}
+
+/* selector for favorites menu in IE (the dom is slightly different) */
+body > div[eventproxy*="isc_Menu"].normal > div[eventproxy="isc_Menu_1_body"].normal {
+    z-index: 999999 !important;
 }

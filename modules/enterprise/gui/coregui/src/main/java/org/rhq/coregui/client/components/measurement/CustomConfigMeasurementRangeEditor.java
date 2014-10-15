@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.coregui.client.util.MeasurementUtility;
 
@@ -52,11 +51,11 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
     }
 
     @Override
-    public List<Instant> getBeginEndTimes() {
-        List<Instant> beginEndTimes = new ArrayList<Instant>();
+    public List<Long> getBeginEndTimes() {
+        List<Long> beginEndTimes = new ArrayList<Long>();
         if (advanced) {
-            beginEndTimes.add(new Instant(advancedStartItem.getValueAsDate()));
-            beginEndTimes.add(new Instant(advancedEndItem.getValueAsDate()));
+            beginEndTimes.add(advancedStartItem.getValueAsDate().getTime());
+            beginEndTimes.add(advancedEndItem.getValueAsDate().getTime());
             return beginEndTimes;
         } else {
             int lastN = Integer.valueOf(simpleLastValuesItem.getValueAsString());
@@ -117,7 +116,7 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
                 //retrieve lastN units
                 metricRangePreferences.unit = config.getSimple(PREF_METRIC_RANGE_UNIT).getIntegerValue();
 
-                List<Instant> range = MeasurementUtility.calculateTimeFrame(metricRangePreferences.lastN,
+                List<Long> range = MeasurementUtility.calculateTimeFrame(metricRangePreferences.lastN,
                     metricRangePreferences.unit);
                 metricRangePreferences.begin = range.get(0);
                 metricRangePreferences.end = range.get(1);
@@ -130,12 +129,12 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
                             //userPrefs.setPreference(PREF_METRIC_RANGE, rangeString); // TODO set only if we don't support JSF anymore
                         }
                         String[] beginEnd = rangeString.split("\\|");
-                        metricRangePreferences.begin = Instant.parseMoment(beginEnd[0]);
-                        metricRangePreferences.end = Instant.parseMoment(beginEnd[1]);
+                        metricRangePreferences.begin = Long.parseLong(beginEnd[0]);
+                        metricRangePreferences.end = Long.parseLong(beginEnd[1]);
                     }
                 } catch (IllegalArgumentException iae) {
                     // that's OK, range will remain null and we might use the lastN / unit
-                    List<Instant> range = MeasurementUtility.calculateTimeFrame(DEFAULT_VALUE_RANGE_LASTN,
+                    List<Long> range = MeasurementUtility.calculateTimeFrame(DEFAULT_VALUE_RANGE_LASTN,
                         DEFAULT_VALUE_RANGE_UNIT);
                     metricRangePreferences.begin = range.get(0);
                     metricRangePreferences.end = range.get(1);
@@ -180,10 +179,10 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
         //is advanced
         boolean advanced = measurementPrefs.metricRangePreferences.explicitBeginEnd;
         if (advanced) {
-            ArrayList<Instant> beginEnd = measurementPrefs.metricRangePreferences.getBeginEndTimes();
+            ArrayList<Long> beginEnd = measurementPrefs.metricRangePreferences.getBeginEndTimes();
             if ((beginEnd != null) && (!beginEnd.isEmpty())) {
-                advancedStartItem.setValue(beginEnd.get(0).toDate());
-                advancedEndItem.setValue(beginEnd.get(1).toDate());
+                advancedStartItem.setValue(beginEnd.get(0));
+                advancedEndItem.setValue(beginEnd.get(1));
             }
         } else {//simple: set LastN and Units
             if (lastUnits.containsKey(String.valueOf(measurementPrefs.metricRangePreferences.unit))) {

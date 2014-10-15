@@ -159,8 +159,8 @@ public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, Cal
     @Override
     protected CallTimeDataCriteria getFetchCriteria(DSRequest request) {
         CallTimeDataCriteria criteria = new CallTimeDataCriteria();
-        criteria.addFilterBeginTime(CustomDateRangeState.getInstance().getStartTime().toDate().getTime());
-        criteria.addFilterEndTime(CustomDateRangeState.getInstance().getEndTime().toDate().getTime());
+        criteria.addFilterBeginTime(CustomDateRangeState.getInstance().getStartTime());
+        criteria.addFilterEndTime(CustomDateRangeState.getInstance().getEndTime());
         String destinationFilter = getFilter(request, FILTER_DESTINATION, String.class);
         if (destinationFilter != null && destinationFilter.length() > 0) {
             criteria.addFilterDestination(destinationFilter);

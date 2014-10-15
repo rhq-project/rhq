@@ -17,7 +17,6 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
-import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -146,7 +145,7 @@ public class GroupMetricsTableDataSource extends MetricsTableDataSource {
 
                     UserPreferences prefs = UserSessionManager.getUserPreferences();
                     MeasurementUserPreferences mprefs = new MeasurementUserPreferences(prefs);
-                    ArrayList<Instant> range = mprefs.getMetricRangePreferences().getBeginEndTimes();
+                    ArrayList<Long> range = mprefs.getMetricRangePreferences().getBeginEndTimes();
 
                     //now retrieve metric display summaries
                     GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForCompatibleGroup(

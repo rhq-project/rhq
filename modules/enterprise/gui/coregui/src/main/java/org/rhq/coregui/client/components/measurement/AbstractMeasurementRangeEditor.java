@@ -41,7 +41,6 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 
-import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.components.table.TableWidget;
@@ -107,7 +106,7 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
      * as shown in the UI if the user changed the values but did not hit the set button.
      * @return begin/end epoch times in a list
      */
-    public abstract List<Instant> getBeginEndTimes();
+    public abstract List<Long> getBeginEndTimes();
 
     public abstract MetricRangePreferences getMetricRangePreferences();
 
@@ -172,10 +171,9 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
                 if (advanced) {
                     try {
                         if (validate()) {
-                            prefs.begin = new Instant(advancedStartItem.getValueAsDate());
-                            prefs.end = new Instant(advancedEndItem.getValueAsDate());
-                            if (null != prefs.begin && null != prefs.end
-                                && prefs.begin.toDate().before(prefs.end.toDate())) {
+                            prefs.begin = advancedStartItem.getValueAsDate().getTime();
+                            prefs.end = advancedEndItem.getValueAsDate().getTime();
+                            if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
                                 CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
                             } else {
                                 setMetricRangeProperties(prefs);
@@ -280,8 +278,8 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
             MetricRangePreferences metricRangePrefs = getMetricRangePreferences();
             if (metricRangePrefs.explicitBeginEnd) {
                 if (metricRangePrefs.begin != null && metricRangePrefs.end != null) {
-                    advancedStartItem.setValue(metricRangePrefs.begin.toDate());
-                    advancedEndItem.setValue(metricRangePrefs.end.toDate());
+                    advancedStartItem.setValue(new Date(metricRangePrefs.begin.longValue()));
+                    advancedEndItem.setValue(new Date(metricRangePrefs.end.longValue()));
                 }
             } else {
                 if (lastUnits.containsKey(String.valueOf(metricRangePrefs.unit))) {
@@ -317,16 +315,16 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
         public int unit; // see MeasurementUtility.UNIT_xxx
 
         // advanced, when readOnly is true
-        public Instant begin;
-        public Instant end;
+        public Long begin;
+        public Long end;
 
         /**
          * Returns a two element <code>List</code> of <code>Long</code> objects representing the begin and end times (in
          * milliseconds since the epoch) of the time frame.
          **/
-        public ArrayList<Instant> getBeginEndTimes() {
+        public ArrayList<Long> getBeginEndTimes() {
             if (explicitBeginEnd) {
-                ArrayList<Instant> times = new ArrayList<Instant>(2);
+                ArrayList<Long> times = new ArrayList<Long>(2);
                 times.add(begin);
                 times.add(end);
                 return times;

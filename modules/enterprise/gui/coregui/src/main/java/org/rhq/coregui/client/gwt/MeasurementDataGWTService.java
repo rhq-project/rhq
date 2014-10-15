@@ -39,7 +39,6 @@ import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
-import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -59,13 +58,13 @@ public interface MeasurementDataGWTService extends RemoteService {
     Set<MeasurementData> findLiveDataForGroup(int groupId, int resourceId[], int[] definitionIds) throws RuntimeException;
 
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId, int[] definitionIds,
-        Instant beginTime, Instant endTime, int numPoints) throws RuntimeException;
+        long beginTime, long endTime, int numPoints) throws RuntimeException;
     
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResourceForLast(int resourceId, int[] definitionIds,
         int lastN, int unit, int numPoints) throws RuntimeException;
 
     List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(int groupId, int[] definitionIds,
-        Instant beginTime, Instant endTime, int numPoints) throws RuntimeException;
+        long beginTime, long endTime, int numPoints) throws RuntimeException;
     
     List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroupForLast(int groupId, int[] definitionIds,
         int lastN, int unit, int numPoints) throws RuntimeException;
@@ -120,6 +119,6 @@ public interface MeasurementDataGWTService extends RemoteService {
 
     void setUserBaselineMean(int resourceId, int definitionId, Double meanBaseline)  throws RuntimeException;
 
-    MeasurementBaseline calcBaselineForDateRange(Integer measurementScheduleId, Instant startDate, Instant endDate) throws RuntimeException;
+    MeasurementBaseline calcBaselineForDateRange(Integer measurementScheduleId, long startDate, long endDate) throws RuntimeException;
 
 }

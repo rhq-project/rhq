@@ -24,7 +24,6 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.core.domain.util.PageList;
 
@@ -35,10 +34,10 @@ public interface AvailabilityGWTService extends RemoteService {
 
     PageList<Availability> findAvailabilityByCriteria(AvailabilityCriteria criteria) throws RuntimeException;
 
-    List<Availability> getAvailabilitiesForResource(int resourceId, Instant startTime, Instant endTime)
+    List<Availability> getAvailabilitiesForResource(int resourceId, long startTime, long endTime)
         throws RuntimeException;
 
-    List<ResourceGroupAvailability> getAvailabilitiesForResourceGroup(int groupId, Instant startTime, Instant endTime)
+    List<ResourceGroupAvailability> getAvailabilitiesForResourceGroup(int groupId, long startTime, long endTime)
         throws RuntimeException;
 
 }

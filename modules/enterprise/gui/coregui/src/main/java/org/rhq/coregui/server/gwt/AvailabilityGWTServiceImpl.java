@@ -22,7 +22,6 @@ import java.util.List;
 
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.gwt.AvailabilityGWTService;
@@ -44,53 +43,31 @@ public class AvailabilityGWTServiceImpl extends AbstractGWTServiceImpl implement
         try {
             return SerialUtility.prepare(availabilityManager.findAvailabilityByCriteria(getSessionSubject(), criteria),
                 "AvailabilityService.findAvailabilityByCriteria");
-        } catch (Exception t) {
+        } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
     @Override
-    public List<Availability> getAvailabilitiesForResource(int resourceId, Instant start, Instant end)
+    public List<Availability> getAvailabilitiesForResource(int resourceId, long startTime, long endTime)
         throws RuntimeException {
         try {
-            Long now = System.currentTimeMillis();
-            long endInMillis = end.toDate().getTime();
-            if (now < end.toDate().getTime()) {
-                // we can't foretell the future (this may be caused by different timezone on client's)
-                endInMillis = now + 1;
-            }
-            if (start.toDate().getTime() < endInMillis) {
-                return SerialUtility.prepare(availabilityManager.getAvailabilitiesForResource(getSessionSubject(),
-                    resourceId, start.toDate().getTime(), endInMillis),
-                    "AvailabilityService.getAvailabilitiesForResource");
-            } else {
-                throw new IllegalStateException(
-                    "End time before start time. Check the timezone settins if it is the same as on the server-side.");
-            }
-        } catch (Exception t) {
+            return SerialUtility.prepare(
+                availabilityManager.getAvailabilitiesForResource(getSessionSubject(), resourceId, startTime, endTime),
+                "AvailabilityService.getAvailabilitiesForResource");
+        } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
     @Override
-    public List<ResourceGroupAvailability> getAvailabilitiesForResourceGroup(int groupId, Instant start, Instant end)
+    public List<ResourceGroupAvailability> getAvailabilitiesForResourceGroup(int groupId, long startTime, long endTime)
         throws RuntimeException {
         try {
-            Long now = System.currentTimeMillis();
-            long endInMillis = end.toDate().getTime();
-            if (now < end.toDate().getTime()) {
-                // we can't foretell the future (this may be caused by different timezone on client's)
-                endInMillis = now + 1;
-            }
-            if (start.toDate().getTime() < endInMillis) {
-                return SerialUtility.prepare(availabilityManager.getAvailabilitiesForResourceGroup(getSessionSubject(),
-                    groupId, start.toDate().getTime(), endInMillis),
-                    "AvailabilityService.getAvailabilitiesForResourceGroup");
-            } else {
-                throw new IllegalStateException(
-                    "End time before start time. Check the timezone settins if it is the same as on the server-side.");
-            }
-        } catch (Exception t) {
+            return SerialUtility
+                .prepare(availabilityManager.getAvailabilitiesForResourceGroup(getSessionSubject(), groupId, startTime,
+                    endTime), "AvailabilityService.getAvailabilitiesForResourceGroup");
+        } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }

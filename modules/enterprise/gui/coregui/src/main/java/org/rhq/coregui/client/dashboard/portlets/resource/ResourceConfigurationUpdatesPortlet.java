@@ -35,7 +35,6 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -263,9 +262,9 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
                                 Constant.METRIC_RANGE_LASTN_DEFAULT));
                             Integer units = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_UNIT,
                                 Constant.METRIC_RANGE_UNIT_DEFAULT));
-                            ArrayList<Instant> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
-                            criteria.addFilterStartTime(beginEnd.get(0).toDate().getTime());
-                            criteria.addFilterEndTime(beginEnd.get(1).toDate().getTime());
+                            ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
+                            criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
+                            criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
                         }
                     }
                 }

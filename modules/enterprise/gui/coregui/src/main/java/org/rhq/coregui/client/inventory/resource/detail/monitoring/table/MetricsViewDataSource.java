@@ -61,7 +61,6 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
-import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -283,8 +282,8 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                         }
                     });
 
-                    Instant start = CustomDateRangeState.getInstance().getStartTime();
-                    Instant end = CustomDateRangeState.getInstance().getEndTime();
+                    Long start = CustomDateRangeState.getInstance().getStartTime();
+                    Long end = CustomDateRangeState.getInstance().getEndTime();
                     queryResourceMetrics(resource, start, end, countDownLatch);
                     queryMetricDisplaySummaries(enabledScheduleIds, start, end, countDownLatch);
                 }
@@ -342,7 +341,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         }.schedule(150);
     }
 
-    private void queryMetricDisplaySummaries(int[] scheduleIds, Instant startTime, Instant endTime,
+    private void queryMetricDisplaySummaries(int[] scheduleIds, Long startTime, Long endTime,
         final CountDownLatch countDownLatch) {
         if (enabledScheduleIds.length == 0) {
             setMetricDisplaySummaries(Collections.<MetricDisplaySummary>emptyList());
@@ -372,7 +371,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         this.metricDisplaySummaries = metricDisplaySummaries;
     }
 
-    private void queryResourceMetrics(final Resource resource, final Instant startTime, final Instant endTime,
+    private void queryResourceMetrics(final Resource resource, final Long startTime, final Long endTime,
         final CountDownLatch countDownLatch) {
         List<MeasurementDefinition> definitions = getMetricDefinitions(resource);
         if (definitions.size() == 0) {

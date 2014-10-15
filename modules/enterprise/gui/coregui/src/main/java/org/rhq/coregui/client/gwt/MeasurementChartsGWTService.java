@@ -28,7 +28,6 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
-import org.rhq.core.domain.measurement.util.Instant;
 
 @RemoteServiceRelativePath("MeasurementChartsGWTService")
 public interface MeasurementChartsGWTService extends RemoteService {
@@ -37,15 +36,15 @@ public interface MeasurementChartsGWTService extends RemoteService {
         throws RuntimeException;
 
     ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(EntityContext context,
-        int[] measurementDefinitionIds, Instant begin, Instant end, boolean enabledOnly) throws RuntimeException;
+        int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws RuntimeException;
 
     ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(int resourceId, String viewName)
         throws RuntimeException;
 
     ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(int resourceId, int[] measurementScheduleIds,
-        Instant begin, Instant end) throws RuntimeException;
+        long begin, long end) throws RuntimeException;
 
     Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(
-        int[] resourceIds, int[] measurementDefinitionIds, Instant begin, Instant end) throws RuntimeException;
+        int[] resourceIds, int[] measurementDefinitionIds, long begin, long end) throws RuntimeException;
 
 }

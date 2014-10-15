@@ -19,13 +19,11 @@
 package org.rhq.coregui.client.util;
 
 import java.util.ArrayList;
-import java.util.Date;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
 
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
-import org.rhq.core.domain.measurement.util.Instant;
 
 public class MeasurementUtility {
 
@@ -54,8 +52,8 @@ public class MeasurementUtility {
     /**
      * Method calculateTimeFrame
      * <p/>
-     * Returns a two element <code>List</code> of <code>Moment</code> objects representing the begin and end times.
-     * Returns null instead if the time unit is indicated as
+     * Returns a two element <code>List</code> of <code>Long</code> objects representing the begin and end times (in
+     * milliseconds since the epoch) of the time frame. Returns null instead if the time unit is indicated as
      * <code>UNIT_COLLECTION_POINTS</code>. Ported to GWT from MeasurementUtils(i:server side dep
      * ii:old DateFormat doesn't play well with GWT).
      *
@@ -63,14 +61,13 @@ public class MeasurementUtility {
      * @param unit  the unit of time (as defined by <code>UNIT_*</code> constants
      * @return List
      */
-    public static ArrayList<Instant> calculateTimeFrame(int lastN, int unit) {
-        ArrayList<Instant> returnList = new ArrayList<Instant>(0);
+    public static ArrayList<Long> calculateTimeFrame(int lastN, int unit) {
+        ArrayList<Long> l = new ArrayList<Long>(0);
         if (unit == UNIT_COLLECTION_POINTS) {
             return null;
         }
 
-        // this is bad (client may have different timezone than server)
-        Date now = new Date();
+        long now = System.currentTimeMillis();
 
         long retrospective = lastN;
 
@@ -93,13 +90,13 @@ public class MeasurementUtility {
         }
 
         if (retrospective < 0) {//translate unlimited hrs to 0 time.
-            retrospective = now.getTime();
+            retrospective = now;
         }
 
-        returnList.add(new Instant(new Date(now.getTime() - retrospective)));
-        returnList.add(new Instant(now));
+        l.add(now - retrospective);
+        l.add(now);
 
-        return returnList;
+        return l;
     }
 
     /**Utility to return shared DateTimeFormat("MMM d, hh:mm a");

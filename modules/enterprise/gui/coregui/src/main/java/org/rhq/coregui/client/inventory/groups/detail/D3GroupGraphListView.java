@@ -33,7 +33,6 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -178,14 +177,14 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
         }
     }
 
-    protected void queryAvailability(final EntityContext groupContext, Instant start, Instant end,
+    protected void queryAvailability(final EntityContext groupContext, Long startTime, Long endTime,
         final CountDownLatch countDownLatch) {
 
         final long timerStart = System.currentTimeMillis();
 
         // now return the availability
-        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResourceGroup(groupContext.getGroupId(), start,
-            end, new AsyncCallback<List<ResourceGroupAvailability>>() {
+        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResourceGroup(groupContext.getGroupId(),
+            startTime, endTime, new AsyncCallback<List<ResourceGroupAvailability>>() {
                 @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);

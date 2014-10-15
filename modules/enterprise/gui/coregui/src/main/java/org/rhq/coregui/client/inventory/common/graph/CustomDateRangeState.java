@@ -18,9 +18,6 @@
  */
 package org.rhq.coregui.client.inventory.common.graph;
 
-import java.util.Date;
-
-import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.UserSessionManager;
@@ -50,8 +47,8 @@ public class CustomDateRangeState {
     private AbstractMeasurementRangeEditor.MetricRangePreferences prefs;
     private volatile boolean persisted = true; 
     
-    private Instant cachedBegin = null;
-    private Instant cachedEnd= null;
+    private Long cachedBegin = null;
+    private Long cachedEnd= null;
     private Long cachedTimeRange= null;
 
     private CustomDateRangeState() {
@@ -78,14 +75,14 @@ public class CustomDateRangeState {
         isCustomDateRangeActive = customDateRange;
     }
 
-    public Instant getStartTime() {
+    public Long getStartTime() {
         if (null == cachedBegin) {
             cachedBegin = measurementUserPreferences.getMetricRangePreferences().begin;
         }
         return cachedBegin;
     }
 
-    public Instant getEndTime() {
+    public Long getEndTime() {
         if (null == cachedEnd) {
             cachedEnd = measurementUserPreferences.getMetricRangePreferences().end;
         }
@@ -107,7 +104,7 @@ public class CustomDateRangeState {
 //                return getTimeRange();
 //            }
 //        }
-        return getEndTime().toDate().getTime() - getStartTime().toDate().getTime();
+        return getEndTime() - getStartTime();
     }
 
     /**
@@ -132,12 +129,12 @@ public class CustomDateRangeState {
     public void saveDateRange(double startTime, double endTime, boolean allowPreferenceUpdateRefresh) {
         persisted = false;
         prefs.explicitBeginEnd = true; // default to advanced
-        if (null != prefs.begin && null != prefs.end && prefs.begin.toDate().after(prefs.end.toDate())) {
+        if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
             CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
         } else {
-            cachedBegin = prefs.begin = new Instant(new Date((long) startTime));
-            cachedEnd = prefs.end = new Instant(new Date((long) endTime));
-            cachedTimeRange = getTimeRange();
+            cachedBegin = prefs.begin = (long) startTime;
+            cachedEnd = prefs.end = (long) endTime;
+            cachedTimeRange = prefs.end - prefs.begin;
             Command callback = new Command() {
                 public void execute() {
                     persisted = true;

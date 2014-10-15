@@ -53,7 +53,6 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
-import org.rhq.core.domain.measurement.util.Instant;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -286,10 +285,10 @@ public class MetricsGroupViewDataSource extends RPCDataSource<MetricDisplaySumma
         }
     }
 
-    private void queryMetricDisplaySummaries(int[] measurementDefIds, Instant start, Instant end,
+    private void queryMetricDisplaySummaries(int[] measurementDefIds, Long startTime, Long endTime,
         final CountDownLatch countDownLatch) {
         GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForCompatibleGroup(
-            EntityContext.forGroup(resourceGroup), measurementDefIds, start, end, false,
+            EntityContext.forGroup(resourceGroup), measurementDefIds, startTime, endTime, false,
             new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
                 @Override
                 public void onSuccess(ArrayList<MetricDisplaySummary> metricDisplaySummaries) {

@@ -145,7 +145,8 @@ public class StorageInstallerTest {
         CommandLineParser parser = new PosixParser();
         File defaultInstallDir = new File(basedir.getParentFile(), "performDefaultInstall");
         File upgradeFromServerDir = new File(defaultInstallDir, "rhq-server");
-        String[] args = { "--upgrade", upgradeFromServerDir.getAbsolutePath() };
+        // add --no-version-stamp because the test has no support for interacting with a DB
+        String[] args = { "--upgrade", upgradeFromServerDir.getAbsolutePath(), "--no-version-stamp" };
         CommandLine cmdLine = parser.parse(installer.getOptions(), args);
 
         int status = installer.run(cmdLine);
@@ -329,7 +330,9 @@ public class StorageInstallerTest {
 
         CommandLineParser parser = new PosixParser();
 
-        String[] args = { "--upgrade", rhq48ServerDir.getAbsolutePath(), "--dir", storageDir.getAbsolutePath() };
+        // add --no-version-stamp because the test has no support for interacting with a DB
+        String[] args = { "--upgrade", rhq48ServerDir.getAbsolutePath(), "--dir", storageDir.getAbsolutePath(),
+            "--no-version-stamp" };
 
         CommandLine cmdLine = parser.parse(installer.getOptions(), args);
         int status = installer.run(cmdLine);

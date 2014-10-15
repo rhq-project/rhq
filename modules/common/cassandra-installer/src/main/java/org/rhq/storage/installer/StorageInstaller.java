@@ -198,6 +198,9 @@ public class StorageInstaller {
                 + "of the heap. This value is passed directly to the -Xmn option of the Java executable. Defaults to "
                 + defaultHeapNewSize);
 
+        Option noVersionStampOption = new Option(null, "no-version-stamp", false, "If specified the DB will not be "
+            + "updated with a version stamp. This is an advanced option and should not generally be used.");
+
         Option stackSizeOption = new Option(null, StorageProperty.STACK_SIZE.property(), true,
             "The value to use for the thread stack size. "
                 + "This value is passed directly to the -Xss option of the Java executable.");
@@ -217,7 +220,8 @@ public class StorageInstaller {
             .addOption(seeds).addOption(jmxPortOption).addOption(startOption).addOption(checkStatus)
             .addOption(commitLogOption).addOption(dataDirOption).addOption(savedCachesDirOption)
             .addOption(cqlPortOption).addOption(gossipPortOption).addOption(basedirOption).addOption(heapSizeOption)
-            .addOption(heapNewSizeOption).addOption(stackSizeOption).addOption(upgradeOption).addOption(undoOption)
+            .addOption(heapNewSizeOption).addOption(noVersionStampOption).addOption(stackSizeOption)
+            .addOption(upgradeOption).addOption(undoOption)
             .addOption(verifyDataDirsEmptyOption);
     }
 
@@ -230,15 +234,16 @@ public class StorageInstaller {
         InstallerInfo installerInfo;
         boolean isUpgrade = cmdLine.hasOption("upgrade");
         boolean isUndo = cmdLine.hasOption("undo");
-        File undoFromDir = null;
+        boolean noStamp = cmdLine.hasOption("no-version-stamp");
+        File fromDir = null;
 
         try {
             if (isUpgrade) {
-                undoFromDir = new File(cmdLine.getOptionValue("upgrade", ""));
-                installerInfo = upgrade(undoFromDir);
+                fromDir = new File(cmdLine.getOptionValue("upgrade", ""));
+                installerInfo = upgrade(fromDir);
             } else if (isUndo) {
-                undoFromDir = new File(cmdLine.getOptionValue("undo", ""));
-                undo(undoFromDir);
+                fromDir = new File(cmdLine.getOptionValue("undo", ""));
+                undo(fromDir, noStamp);
                 return STATUS_NO_ERRORS;
             } else {
                 installerInfo = install(cmdLine);
@@ -264,8 +269,8 @@ public class StorageInstaller {
         serverPropertiesUpdater.update(properties);
 
         Properties dbProperties;
-        if (isUpgrade) {
-            File oldServerPropsFile = new File(undoFromDir, "bin/rhq-server.properties");
+        if (isUpgrade && !noStamp) {
+            File oldServerPropsFile = new File(fromDir, "bin/rhq-server.properties");
             dbProperties = new Properties();
             FileInputStream oldServerPropsFileInputStream = new FileInputStream(oldServerPropsFile);
             try {
@@ -276,6 +281,7 @@ public class StorageInstaller {
 
             String version = StorageInstaller.class.getPackage().getImplementationVersion();
             stampStorageNodeVersion(dbProperties, installerInfo.hostname, version);
+
         } else {
             dbProperties = serverPropertiesUpdater.loadExistingProperties();
         }
@@ -627,20 +633,25 @@ public class StorageInstaller {
         }
     }
 
-    private void undo(File upgradeFromDir) {
+    private void undo(File fromDir, boolean noStamp) {
+        // the only undo action is to undo the version stamp, so ignore if we are ignoring version stamping
+        if (noStamp) {
+            return;
+        }
+
         try {
             log.info("Undoing storage node version stamp...");
 
             File existingStorageDir;
 
-            if (!upgradeFromDir.isDirectory()) {
+            if (!fromDir.isDirectory()) {
                 log.error("The value passed to the upgrade option is not a directory. The value must be a valid "
                     + "path that points to the base directory of an existing RHQ server installation.");
                 throw new StorageInstallerException(
                     "The upgrade cannot proceed. The value passed to the upgrade option " + "is invalid.",
                     STATUS_INVALID_UPGRADE);
             }
-            existingStorageDir = new File(upgradeFromDir, "rhq-storage");
+            existingStorageDir = new File(fromDir, "rhq-storage");
             if (!(existingStorageDir.exists() && existingStorageDir.isDirectory())) {
                 log.error(existingStorageDir + " does not appear to be an existing RHQ storage node installation. "
                     + "Check the value that was passed to the upgrade option and make sure it specifies the base "
@@ -657,7 +668,7 @@ public class StorageInstaller {
             String storageNodeAddress = oldYamlEditor.getListenAddress();
 
             Properties dbProperties;
-            File oldServerPropsFile = new File(upgradeFromDir, "bin/rhq-server.properties");
+            File oldServerPropsFile = new File(fromDir, "bin/rhq-server.properties");
             dbProperties = new Properties();
             FileInputStream oldServerPropsFileInputStream = new FileInputStream(oldServerPropsFile);
             try {

@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -46,7 +48,10 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
             if (!result.isEmpty()) {
                 List<Resource> resources = new ArrayList<Resource>(result.size());
                 for (Alert alert : result) {
-                    resources.add(alert.getAlertDefinition().getResource());
+                    AlertDefinition definition = alert.getAlertDefinition();
+                    if (AlertDefinitionContext.get(definition) == AlertDefinitionContext.Resource) {
+                        resources.add(definition.getResource());
+                    }
                 }
                 ObjectFilter.filterFieldsInCollection(resources, ResourceGWTServiceImpl.importantFieldsSet);
             }

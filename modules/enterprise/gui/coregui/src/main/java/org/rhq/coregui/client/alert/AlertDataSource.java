@@ -47,12 +47,14 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
@@ -75,7 +77,7 @@ import org.rhq.coregui.client.util.RPCDataSource;
  * @author John Mazzitelli
  */
 public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
-    
+
     private static final String FIELD_PARENT = "parent"; // may be template or group alert def parent
 
     public static final String PRIORITY_ICON_HIGH = ImageManager.getAlertIcon(AlertPriority.HIGH);
@@ -113,11 +115,11 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         return fields;
     }
 
-    
+
     public ArrayList<ListGridField> getListGridFields() {
         return getListGridFields(true);
     }
-    
+
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
@@ -294,9 +296,23 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             Set<Integer> typesSet = new HashSet<Integer>();
             Set<String> ancestries = new HashSet<String>();
             for (Alert alert : result) {
-                Resource resource = alert.getAlertDefinition().getResource();
-                typesSet.add(resource.getResourceType().getId());
-                ancestries.add(resource.getAncestry());
+                AlertDefinition alertDefinition = alert.getAlertDefinition();
+                switch (AlertDefinitionContext.get(alertDefinition)) {
+                case Group:
+                    ResourceGroup group = alertDefinition.getGroup();
+                    typesSet.add(group.getResourceType().getId());
+                    break;
+                case Resource:
+                    Resource resource = alertDefinition.getResource();
+                    typesSet.add(resource.getResourceType().getId());
+                    ancestries.add(resource.getAncestry());
+                    break;
+                case Type:
+                    typesSet.add(alertDefinition.getResourceType().getId());
+                    break;
+                default:
+                    throw new IllegalStateException();
+                }
             }
 
             // In addition to the types of the result resources, get the types of their ancestry
@@ -410,16 +426,33 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         AlertDefinition alertDefinition = from.getAlertDefinition();
 
         record.setAttribute("definitionId", alertDefinition.getId());
-        Resource resource = alertDefinition.getResource();
         record.setAttribute("name", alertDefinition.getName());
         record.setAttribute("description", alertDefinition.getDescription());
         record.setAttribute("priority", ImageManager.getAlertIcon(alertDefinition.getPriority()));
 
-        // for ancestry handling
-        record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
-        record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
-        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
-        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+        switch (AlertDefinitionContext.get(alertDefinition)) {
+        case Group:
+            ResourceGroup group = alertDefinition.getGroup();
+            // not right but try to avoid problems for now
+            record.setAttribute(AncestryUtil.RESOURCE_NAME, group.getName());
+            record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, group.getResourceType().getId());
+            boolean isAutogroup = group.getAutoGroupParentResource() != null;
+            record.setAttribute(FIELD_PARENT, (isAutogroup ? "#Resource/AutoGroup/" : "#ResourceGroup/")
+                + alertDefinition.getGroup().getId() + "/Alerts/Definitions/" + alertDefinition.getId());
+            record.setLinkText(MSG.view_alert_definition_for_group());
+            break;
+        case Resource:
+            Resource resource = alertDefinition.getResource();
+            record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
+            record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+            record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+            record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+            break;
+        case Type:
+            // unclear what these would be?
+        default:
+            throw new IllegalStateException("context");
+        }
 
         AlertDefinition groupAlertDefinition = alertDefinition.getGroupAlertDefinition();
         Integer parentId = alertDefinition.getParentId();
@@ -429,6 +462,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
                 + groupAlertDefinition.getGroup().getId() + "/Alerts/Definitions/" + groupAlertDefinition.getId());
             record.setLinkText(MSG.view_alert_definition_for_group());
         } else if (parentId != null && parentId.intValue() != 0) {
+            Resource resource = alertDefinition.getResource();
             record.setAttribute(
                 FIELD_PARENT,
                 LinkManager.getAdminTemplatesEditLink(AlertDefinitionTemplateTypeView.VIEW_ID.getName(), resource

@@ -373,7 +373,7 @@
                              across restarts."/>
           <c:simple-property name="AggregationWorkers" displayName="Workers" type="integer" required="false"
                              description="The number of threads to use during aggregation. It defaults to
-                             ceiling(4, num_cores). Changing this value only takes effect after a server restart.">
+                             ceiling(4, num_cores).">
             <c:constraint>
               <c:integer-constraint minimum="2"/>
             </c:constraint>

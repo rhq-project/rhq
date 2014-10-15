@@ -5,8 +5,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -58,17 +59,15 @@ public class AggregationManager {
 
     private ListeningExecutorService aggregationTasks;
 
-    private Semaphore permits;
-
     private MetricsConfiguration configuration;
 
     private int batchSize;
 
     private int parallelism;
 
-    private int numWorkers;
-
     private AtomicLong totalAggregationTime = new AtomicLong();
+
+    private ThreadPoolExecutor threadPool;
 
     public AggregationManager(MetricsDAO dao, DateTimeService dtService, MetricsConfiguration configuration) {
 
@@ -77,16 +76,16 @@ public class AggregationManager {
         this.configuration = configuration;
         batchSize = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.batch-size", "5"));
         parallelism = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.parallelism", "3"));
-        permits = new Semaphore(batchSize * parallelism);
 
-        numWorkers = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.workers", "4"));
+        int numWorkers = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.workers", "4"));
         // We have to have more than 1 thread, otherwise we can deadlock during aggregation task scheduling.
         // See https://bugzilla.redhat.com/show_bug.cgi?id=1084626 for details
         if (numWorkers < 2) {
             numWorkers = 2;
         }
-        aggregationTasks = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numWorkers,
-            new StorageClientThreadFactory("AggregationTasks")));
+        threadPool = new ThreadPoolExecutor(numWorkers, numWorkers, 30, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<Runnable>(), new StorageClientThreadFactory("AggregationTasks"));
+        aggregationTasks = MoreExecutors.listeningDecorator(threadPool);
     }
 
     public void shutdown() {
@@ -110,11 +109,13 @@ public class AggregationManager {
     }
 
     public int getNumWorkers() {
-        return numWorkers;
+        return threadPool.getMaximumPoolSize();
     }
 
     public void setNumWorkers(int numWorkers) {
-        this.numWorkers = numWorkers;
+        log.debug("Setting aggregation worker thread count to " + numWorkers);
+        threadPool.setCorePoolSize(numWorkers);
+        threadPool.setMaximumPoolSize(numWorkers);
     }
 
     /**
@@ -127,7 +128,11 @@ public class AggregationManager {
 
     public Set<AggregateNumericMetric> run() {
         log.info("Starting metrics data aggregation");
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        Semaphore permits = new Semaphore(batchSize * parallelism);
+
+        log.debug("Allocating " + permits.availablePermits() + " permits");
+
         int num1Hour = 0;
         int num6Hour = 0;
         int num24Hour = 0;
@@ -142,7 +147,7 @@ public class AggregationManager {
             // 7 days, then we could end up in a situation where data has expired and
             // aggregate metric get overwritten with partial data.
             DateTime start = end.minus(configuration.getRawRetention().toPeriod().minusHours(1));
-            DataAggregator rawAggregator = createRawAggregator(persistFunctions);
+            DataAggregator rawAggregator = createRawAggregator(persistFunctions, permits);
             rawAggregator.setBatchFinishedListener(new DataAggregator.BatchFinishedListener() {
                 @Override
                 public void onFinish(List<AggregateNumericMetric> metrics) {
@@ -153,11 +158,11 @@ public class AggregationManager {
 
             end = dtService.get6HourTimeSlice(endTime);
             start = dtService.get6HourTimeSlice(endTime).minus(configuration.getRawRetention());
-            num6Hour = create1HourAggregator(persistFunctions).execute(start, end);
+            num6Hour = create1HourAggregator(persistFunctions, permits).execute(start, end);
 
             end = dtService.get24HourTimeSlice(endTime);
             start = dtService.get24HourTimeSlice(endTime).minus(configuration.getRawRetention());
-            num24Hour = create6HourAggregator(persistFunctions).execute(start, end);
+            num24Hour = create6HourAggregator(persistFunctions, permits).execute(start, end);
 
             return oneHourData;
         } catch (InterruptedException e) {
@@ -175,7 +180,7 @@ public class AggregationManager {
         }
     }
 
-    private DataAggregator createRawAggregator(PersistFunctions persistFunctions) {
+    private DataAggregator createRawAggregator(PersistFunctions persistFunctions, Semaphore permits) {
         DataAggregator aggregator = new DataAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setBucket(IndexBucket.RAW);
@@ -190,7 +195,7 @@ public class AggregationManager {
         return aggregator;
     }
 
-    private DataAggregator create1HourAggregator(PersistFunctions persistFunctions) {
+    private DataAggregator create1HourAggregator(PersistFunctions persistFunctions, Semaphore permits) {
         DataAggregator aggregator = new DataAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setBucket(IndexBucket.ONE_HOUR);
@@ -205,7 +210,7 @@ public class AggregationManager {
         return aggregator;
     }
 
-    private DataAggregator create6HourAggregator(PersistFunctions persistFunctions) {
+    private DataAggregator create6HourAggregator(PersistFunctions persistFunctions, Semaphore permits) {
         DataAggregator aggregator = new DataAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setBucket(IndexBucket.SIX_HOUR);

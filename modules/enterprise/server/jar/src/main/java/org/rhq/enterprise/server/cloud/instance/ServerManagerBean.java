@@ -77,14 +77,11 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     static private Server.OperationMode lastEstablishedServerMode = null;
 
-    static private final String RHQ_SERVER_NAME_PROPERTY;
+    static private final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
 
-    static private final String SERVER_NAME;
-
-    static {
-        RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
-        SERVER_NAME = getServerName();
-    }
+    // This is set once and caches the unchanging server name, but must be set lazily as RHQ_SERVER_NAME_PROPERTY
+    // may not yet be set when the static block executes (typically in i-test situations).
+    static private String SERVER_NAME;
 
     @Resource
     private TimerService timerService;
@@ -142,10 +139,14 @@ public class ServerManagerBean implements ServerManagerLocal {
     }
 
     public String getIdentity() {
-        return SERVER_NAME;
+        return getServerName();
     }
 
     private static String getServerName() {
+        if (null != SERVER_NAME) {
+            return SERVER_NAME;
+        }
+
         // The property may return "" so also use "" as the default to ensure we set it to something useful
         String result = System.getProperty(RHQ_SERVER_NAME_PROPERTY, "");
 
@@ -156,21 +157,23 @@ public class ServerManagerBean implements ServerManagerLocal {
                 result = "localhost";
             }
         }
+
+        SERVER_NAME = result;
         return result;
     }
 
     public List<Agent> getAgents() {
-        List<Agent> results = topologyManager.getAgentsByServerName(SERVER_NAME);
+        List<Agent> results = topologyManager.getAgentsByServerName(getServerName());
         return results;
     }
 
     public List<Integer> getAndClearAgentsWithStatus() {
-        List<Integer> results = agentStatusManager.getAndClearAgentsWithStatusForServer(SERVER_NAME);
+        List<Integer> results = agentStatusManager.getAndClearAgentsWithStatusForServer(getServerName());
         return results;
     }
 
     public boolean getAndClearServerStatus() {
-        Server server = topologyManager.getServerByName(SERVER_NAME);
+        Server server = topologyManager.getServerByName(getServerName());
         if (server == null) {
             return false; // don't reload caches if we don't know who we are
         }
@@ -182,9 +185,9 @@ public class ServerManagerBean implements ServerManagerLocal {
     }
 
     public Server getServer() throws ServerNotFoundException {
-        Server result = topologyManager.getServerByName(SERVER_NAME);
+        Server result = topologyManager.getServerByName(getServerName());
         if (result == null) {
-            throw new ServerNotFoundException("Could not find server name [" + SERVER_NAME
+            throw new ServerNotFoundException("Could not find server name [" + getServerName()
                 + "]. If the rhq-server.properties property [" + RHQ_SERVER_NAME_PROPERTY
                 + "] is unset the server name defaults to the host name (via InetAddress.getLocalHost()). "
                 + "If this value, possibly an IP address, has changed it can cause this issue.");

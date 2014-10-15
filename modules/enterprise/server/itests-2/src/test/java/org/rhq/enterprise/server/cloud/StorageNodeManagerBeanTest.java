@@ -1,26 +1,20 @@
 /*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
  *
- *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
- *  * All rights reserved.
- *  *
- *  * This program is free software; you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License, version 2, as
- *  * published by the Free Software Foundation, and/or the GNU Lesser
- *  * General Public License, version 2.1, also as published by the Free
- *  * Software Foundation.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  * GNU General Public License and the GNU Lesser General Public License
- *  * for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * and the GNU Lesser General Public License along with this program;
- *  * if not, write to the Free Software Foundation, Inc.,
- *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.server.cloud;
@@ -32,6 +26,8 @@ import java.util.UUID;
 import javax.ejb.EJB;
 import javax.persistence.Query;
 import javax.transaction.Transaction;
+
+import org.testng.annotations.Test;
 
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -46,7 +42,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
-import org.testng.annotations.Test;
+import org.rhq.enterprise.server.util.StorageNodeFactory;
 
 /**
  * @author Jirka Kremser
@@ -78,7 +74,7 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
                 StorageNode lastOne = null, firstOne = null;
                 for (int i = 0; i < storageNodeCount; i++) {
                     String address = prefix + String.format(" %03d", i + 1) + ".domain.com";
-                    StorageNode node = new StorageNode();
+                    StorageNode node = StorageNodeFactory.newInstance();
                     node.setAddress(address);
                     node.setOperationMode(StorageNode.OperationMode.NORMAL);
                     node.setCqlPort(9142 + i);
@@ -134,7 +130,7 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
 
             @Override
             public void execute() throws Exception {
-                StorageNode node = new StorageNode();
+                StorageNode node = StorageNodeFactory.newInstance();
                 final String address = TEST_PREFIX + "foo.com";
                 node.setAddress(address);
                 node.setOperationMode(StorageNode.OperationMode.ANNOUNCE);

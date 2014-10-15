@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.resource.metadata.test;
 
 import java.io.FileNotFoundException;
@@ -59,6 +60,7 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ServerFactory;
 
 public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
 
@@ -269,7 +271,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
     }
 
     protected void createServerIdentity() {
-        server = new Server();
+        server = ServerFactory.newInstance();
         server.setName(RHQ_SERVER_NAME_PROPERTY_VALUE);
         server.setAddress("localhost");
         server.setPort(7080);

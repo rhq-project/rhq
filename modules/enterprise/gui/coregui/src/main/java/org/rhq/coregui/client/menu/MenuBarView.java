@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -334,12 +334,12 @@ public class MenuBarView extends EnhancedVLayout {
            +"<a id='"+BTN_MSG_CENTER_ID+"' onclick='__gwt_showMessageCenter(); return false;'>"+MSG_CENTER_BTN_CONTENT+"0</a>"
          +"</li>"
            +"<li class='dropdown'>"
-             +"<a href='#' class='dropdown-toggle' data-toggle='dropdown'>"
+             +"<a class='dropdown-toggle' data-toggle='dropdown'>"
                +"<span class='pficon pficon-user'></span>"
                 +user.getName()+" <b class='caret'></b>"
              +"</a>"
              +"<ul class='dropdown-menu'>"
-             + "<li><a href='#Administration/Security/Users/"+user.getId()+"'>Account Details</a></li>"
+             + "<li><a href='#Administration/Security/Users/"+user.getId()+"'>" + MSG.common_title_settings() +  "</a></li>"
              + "<li class='divider'></li>"
                +"<li>"
                  +"<a href='#"+LOGOUT_VIEW_ID.getName()+"'>"+LOGOUT_VIEW_ID.getTitle()+"</a>"

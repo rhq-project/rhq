@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.cloud;
 
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ServerFactory;
 
 /**
  * Tests the configuration manager.
@@ -141,14 +143,14 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
     }
 
     private void setupTest(int numServers, int numAgents) throws Exception {
-        Server server = new Server();
+        Server server = ServerFactory.newInstance();
         Agent agent;
 
         getTransactionManager().begin();
 
         try {
             for (int i = 0; (i < numServers); ++i) {
-                server = new Server();
+                server = ServerFactory.newInstance();
                 server.setName("Server-flm-" + i);
                 server.setAddress("" + i);
                 server.setPort(i);

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.server.alert;
@@ -75,6 +75,7 @@ import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
+import org.rhq.enterprise.server.util.ServerFactory;
 
 /**
  * !!! README
@@ -179,7 +180,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
                 agent = new Agent(universalName, "localhost", 0, "foo", "bar");
 
-                server = new Server();
+                server = ServerFactory.newInstance();
                 server.setAddress("localhost");
                 server.setName(universalName);
                 server.setOperationMode(OperationMode.NORMAL);
@@ -898,7 +899,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //
 //                agent = new Agent("localhost", "localhost", 0, "foo", "bar");
 //
-//                server = new Server();
+//                server = ServerFactory.newInstance();
 //                server.setAddress("localhost");
 //                server.setName("localhost");
 //                server.setOperationMode(OperationMode.NORMAL);

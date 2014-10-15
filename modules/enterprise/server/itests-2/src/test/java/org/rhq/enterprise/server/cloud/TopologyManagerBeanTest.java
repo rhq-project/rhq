@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,7 @@ import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ServerFactory;
 
 /**
  * @author Jirka Kremser
@@ -68,7 +69,7 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
 
                 for (int i = 0; i < serverCount - 1; i++) {
                     String name = prefix + String.format(" %03d", i + 1);
-                    Server server = new Server();
+                    Server server = ServerFactory.newInstance();
                     server.setName(name);
                     server.setOperationMode(OperationMode.NORMAL);
                     server.setAddress("address" + i);
@@ -140,7 +141,7 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                 
                 for (int i = 0; i < serverCount - 1; i++) {
                     String name = prefix + String.format(" %03d", i + 1);
-                    Server server = new Server();
+                    Server server = ServerFactory.newInstance();
                     server.setName(name);
                     switch (i % 5) {
                     case 0:
@@ -234,7 +235,7 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                 
                 for (int i = 0; i < serverCount; i++) {
                     String name = namePrefix + String.format(" %03d", i + 1);
-                    Server server = new Server();
+                    Server server = ServerFactory.newInstance();
                     server.setName(name);
                     server.setOperationMode(OperationMode.NORMAL);
                     server.setAddress(addressPrefix + i);
@@ -379,7 +380,7 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                 
                 for (int i = 0; i < serverCount; i++) {
                     String name = namePrefix + String.format(" %03d", i + 1);
-                    Server server = new Server();
+                    Server server = ServerFactory.newInstance();
                     server.setName(name);
                     server.setOperationMode(OperationMode.NORMAL);
                     server.setAddress(addressPrefix + i);
@@ -427,7 +428,7 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
 
                 for (int i = 0; i < serverCount; i++) {
                     String name = namePrefix + String.format(" %03d", i + 1);
-                    Server server = new Server();
+                    Server server = ServerFactory.newInstance();
                     server.setName(name);
                     switch (i % 2) {
                     case 0:

@@ -143,13 +143,24 @@ public class ServerManagerBean implements ServerManagerLocal {
     }
 
     private static String getServerName() {
-        if (null != SERVER_NAME) {
-            return SERVER_NAME;
-        }
+        // To support testing, or possibly a use case I can't foresee, reset the cached server name if the sysprop
+        // is reset. This allows different tests to use different values and eliminates test interaction issues.
 
         // The property may return "" so also use "" as the default to ensure we set it to something useful
         String result = System.getProperty(RHQ_SERVER_NAME_PROPERTY, "");
 
+        // reset cached value if sysprop differs
+        if (!("".equals(result) || result.equals(SERVER_NAME))) {
+            SERVER_NAME = result;
+        }
+
+        // return cached value
+        if (null != SERVER_NAME) {
+            return SERVER_NAME;
+        }
+
+        // we don't want to hit the DNS server repeatedly, for efficiency and also to protect ourselves
+        // from a DNS failure, so we cache the server name.
         if ("".equals(result)) {
             try {
                 result = InetAddress.getLocalHost().getCanonicalHostName();

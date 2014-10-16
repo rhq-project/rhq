@@ -48,9 +48,6 @@ import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 
 /**
- * @author Greg Hinkle
- * @author Ian Springer
- * @author John Mazzitelli
  * @author Jay Shaughnessy
  */
 public class FavoritesMenu extends Menu {
@@ -334,7 +331,6 @@ public class FavoritesMenu extends Menu {
                                 callback.onSuccess(new Favorites(resources, groups));
                             }
                         });
-
                 }
             });
     }
@@ -366,5 +362,4 @@ public class FavoritesMenu extends Menu {
             return null;
         }
     }
-
 }

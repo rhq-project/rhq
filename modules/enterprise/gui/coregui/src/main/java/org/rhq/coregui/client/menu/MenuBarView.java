@@ -191,6 +191,7 @@ public class MenuBarView extends EnhancedVLayout {
         favoritesMenu = new FavoritesMenu();
         messageBar = new MessageBar();
         messageBar.setVisible(false);
+
         injectMenuFunctions(this);
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
@@ -199,9 +200,7 @@ public class MenuBarView extends EnhancedVLayout {
                 for (MenuItem item : MENU_ITEMS) {
                     updateMenuVisibility(item);
                 }
-                LinkBar linkBar = new LinkBar();
-                messageBar.setOverridingCanvas(linkBar);
-                addMember(linkBar);
+                addMember(new LinkBar());
                 addMember(messageBar);
             }
         });
@@ -220,24 +219,33 @@ public class MenuBarView extends EnhancedVLayout {
         }
     }
 
- // This is our JSNI method that will be called on form submit
+    // This is our JSNI method that will be called on form submit
     private native void injectMenuFunctions(MenuBarView view) /*-{
-      $wnd.__gwt_showMessageCenter = $entry(function(){
-        view.@org.rhq.coregui.client.menu.MenuBarView::showMessageCenterWindow()();
-      });
+                                                              $wnd.__gwt_clearMessageBar = $entry(function(){
+                                                              view.@org.rhq.coregui.client.menu.MenuBarView::clearMessageBar()();
+                                                              });
 
-      $wnd.__gwt_showFavoritesMenu = $entry(function(){
-        view.@org.rhq.coregui.client.menu.MenuBarView::showFavoritesMenu()();
-      });
+                                                              $wnd.__gwt_showMessageCenter = $entry(function(){
+                                                              view.@org.rhq.coregui.client.menu.MenuBarView::showMessageCenterWindow()();
+                                                              });
 
-      $wnd.__gwt_showAboutBox = $entry(function(){
-        view.@org.rhq.coregui.client.menu.MenuBarView::showAboutBox()();
-      });
-    }-*/;
+                                                              $wnd.__gwt_showFavoritesMenu = $entry(function(){
+                                                              view.@org.rhq.coregui.client.menu.MenuBarView::showFavoritesMenu()();
+                                                              });
+
+                                                              $wnd.__gwt_showAboutBox = $entry(function(){
+                                                              view.@org.rhq.coregui.client.menu.MenuBarView::showAboutBox()();
+                                                              });
+                                                              }-*/;
+
+    // called via JSNI - user menu button
+    public void clearMessageBar() {
+        messageBar.clearMessage(true);
+    }
 
     // called via JSNI - fav menu button
     public void showFavoritesMenu() {
-        // lazily show the favs menu, in that way it shows up on top of the menu item bar
+        clearMessageBar();
         favoritesMenu.show();
         this.favoritesMenu.showMenu(DOM.getElementById(BTN_FAV_ID).getAbsoluteBottom(), DOM.getElementById(BTN_FAV_ID)
             .getAbsoluteLeft());
@@ -334,8 +342,8 @@ public class MenuBarView extends EnhancedVLayout {
            +"<li>"
            +"<a id='"+BTN_MSG_CENTER_ID+"' onclick='__gwt_showMessageCenter(); return false;'>"+MSG_CENTER_BTN_CONTENT+"0</a>"
          +"</li>"
-           +"<li class='dropdown'>"
-                + "<a class='dropdown-toggle' data-toggle='dropdown'>"
+                + "<li class='dropdown'>"
+                + "<a onclick='__gwt_clearMessageBar(); return false;' class='dropdown-toggle' data-toggle='dropdown'>"
                +"<span class='pficon pficon-user'></span>"
                 +user.getName()+" <b class='caret'></b>"
              +"</a>"
@@ -531,5 +539,4 @@ public class MenuBarView extends EnhancedVLayout {
             return hidden;
         }
     }
-
 }

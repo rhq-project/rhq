@@ -461,7 +461,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 row.setOverflow(Overflow.VISIBLE);
                 HTMLFlow graph = new HTMLFlow();
                 String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0' " + "values='"
-                    + commaDelimitedList + "'>...</span>";
+                        + commaDelimitedList.substring(0,commaDelimitedList.lastIndexOf(",")) + "'>...</span>";
                 graph.setContents(contents);
                 graph.setContentsType(ContentsType.PAGE);
                 //disable scrollbars on span

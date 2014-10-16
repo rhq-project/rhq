@@ -89,7 +89,8 @@ public class TrackingRequestCallback implements RequestCallback {
         case STATUS_CODE_OK:
             if (response != null && response.getText() != null && response.getText().isEmpty()
                 && !LoginView.isLoginShowing()) { // this happens when the RHQ server was restarted
-                new LoginView().showLoginDialog();
+                Log.error("RHQ server was probably restarted. Showing the login page.");
+                new LoginView().showLoginDialog(true);
                 break;
             }
             RPCTracker.getInstance().succeedCall(this);
@@ -106,7 +107,7 @@ public class TrackingRequestCallback implements RequestCallback {
             if (UserSessionManager.isLoggedIn()) {
                 CoreGUI.getErrorHandler().handleError(CoreGUI.getMessages().view_core_serverUnreachable());
             } else {
-                new LoginView().showLoginDialog();
+                new LoginView().showLoginDialog(true);
             }
             break;
 
@@ -116,7 +117,7 @@ public class TrackingRequestCallback implements RequestCallback {
             if (UserSessionManager.isLoggedIn()) {
                 callback.onResponseReceived(request, response);
             } else {
-                new LoginView().showLoginDialog();
+                new LoginView().showLoginDialog(true);
             }
         }
     }

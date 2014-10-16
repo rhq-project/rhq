@@ -115,7 +115,7 @@ public class UserSessionManager {
         @Override
         public void run() {
             Log.info("Session timer expired.");
-            new LoginView().showLoginDialog();
+            new LoginView().showLoginDialog(true);
         }
     };
 
@@ -182,8 +182,7 @@ public class UserSessionManager {
                             // a browser refresh kills any existing logoutTimer. Reschedule the logout.
                             sessionState = State.IS_LOGGED_OUT;
                             scheduleLogoutServerSide(sessionId);
-
-                            new LoginView().showLoginDialog();
+                            new LoginView().showLoginDialog(true);
                             return;
                         }
 
@@ -254,11 +253,11 @@ public class UserSessionManager {
                                 //we've lost crucial information, probably in a browser refresh. Send them back through login
                                 Log.trace("Unable to locate information critical to ldap registration/account lookup. Log back in.");
                                 sessionState = State.IS_LOGGED_OUT;
-                                new LoginView().showLoginDialog();
+                                new LoginView().showLoginDialog(true);
                                 return;
                             }
 
-                            Log.trace("Proceeding with case insensitive login of ldap user '" + user + "'.");
+                            Log.error("Proceeding with case insensitive login of ldap user '" + user + "'.");
                             GWTServiceLookup.getSubjectService().processSubjectForLdap(subject, password,
                                 new AsyncCallback<Subject>() {
                                     public void onFailure(Throwable caught) {
@@ -268,7 +267,7 @@ public class UserSessionManager {
                                         Log.debug("Failed to complete ldap processing for subject: "
                                             + caught.getMessage());
                                         //TODO: pass message to login dialog.
-                                        new LoginView().showLoginDialog();
+                                        new LoginView().showLoginDialog(true);
                                         return;
                                     }
 
@@ -310,7 +309,7 @@ public class UserSessionManager {
                                             caught);
                                         Log.info("Failed to load user's subject");
                                         //TODO: pass message to login ui.
-                                        new LoginView().showLoginDialog();
+                                        new LoginView().showLoginDialog(true);
                                         return;
                                     }
 
@@ -347,7 +346,7 @@ public class UserSessionManager {
                     } else {
                         //invalid client session. Back to login
                         sessionState = State.IS_LOGGED_OUT;
-                        new LoginView().showLoginDialog();
+                        new LoginView().showLoginDialog(true);
                         return;
                     }
                 }
@@ -407,6 +406,7 @@ public class UserSessionManager {
 
         checkLoginStatus(user, password, new AsyncCallback<Subject>() {
             public void onSuccess(final Subject loggedInSubject) {
+                
                 // will build UI if necessary, then fires history event
                 sessionState = State.IS_LOGGED_IN;
 
@@ -436,7 +436,6 @@ public class UserSessionManager {
                         } catch (NumberFormatException e) {
                             sessionTimeout = SESSION_TIMEOUT_MINIMUM;
                         }
-
                         LoginView.redirectTo(""); // redirect back to the "root" path (coregui/)
                     }
 

@@ -284,24 +284,26 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     }
 
     public void init() {
-        if (productInfo == null) {
-            GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_aboutBox_failedToLoad(), caught);
-                    buildCoreUI();
-                }
+        if (!LoginView.isLoginView()) {
+            if (productInfo == null) {
+                GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_aboutBox_failedToLoad(), caught);
+                        buildCoreUI();
+                    }
 
-                @Override
-                public void onSuccess(ProductInfo result) {
-                    productInfo = result;
-                    rhq = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
-                    Window.setTitle(productInfo.getName());
-                    buildCoreUI();
-                }
-            });
-        } else {
-            buildCoreUI();
+                    @Override
+                    public void onSuccess(ProductInfo result) {
+                        productInfo = result;
+                        rhq = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
+                        Window.setTitle(productInfo.getName());
+                        buildCoreUI();
+                    }
+                });
+            } else {
+                buildCoreUI();
+            }
         }
     }
 
@@ -388,12 +390,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     public Canvas createContent(String viewName) {
         Canvas canvas;
 
-        if (viewName.equals(LOGOUT_VIEW) || LoginView.isLoginView()) {
-            UserSessionManager.logout();
+        boolean isLogout = LOGOUT_VIEW.equals(viewName);
+        if (isLogout || LoginView.isLoginView()) {
             rootCanvas.hide();
             LoginView logoutView = new LoginView();
             canvas = logoutView;
-            logoutView.showLoginDialog();
+            logoutView.showLoginDialog(isLogout);
         } else if (viewName.equals(DashboardsView.VIEW_ID.getName())) {
             canvas = new DashboardsView();
         } else if (viewName.equals(InventoryView.VIEW_ID.getName())) {

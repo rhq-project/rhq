@@ -108,40 +108,40 @@
 
       <help>
          <![CDATA[
-         <p>In order to monitor your Java applications via JMX, you need to expose their MBeans to remote JMX clients. 
-         In order to do this, you must pass in some system properties when starting your application's Java virtual 
+         <p>In order to monitor your Java applications via JMX, you need to expose their MBeans to remote JMX clients.
+         In order to do this, you must pass in some system properties when starting your application's Java virtual
          machine.</p>
-         
+
          <p>To run a JVM with JMX remoting enabled without authentication, you must pass in the following system
          properties:</p>
-         
+
          <ul>
             <li>-Dcom.sun.management.jmxremote.port=19988</li>
             <li>-Dcom.sun.management.jmxremote.ssl=false</li>
             <li>-Dcom.sun.management.jmxremote.authenticate=false</li>
          </ul>
 
-         <p>You can require your remote JMX endpoint to demand authentication for clients to be able to connect to it. 
+         <p>You can require your remote JMX endpoint to demand authentication for clients to be able to connect to it.
          To run a JVM with JMX remoting enabled with password authentication:</p>
-         
+
          <ul>
             <li>-Dcom.sun.management.jmxremote.port=19988</li>
             <li>-Dcom.sun.management.jmxremote.ssl=false</li>
             <li>-Dcom.sun.management.jmxremote.authenticate=true</li>
             <li>-Dcom.sun.management.jmxremote.password.file=/some/directory/jmxremote.password</li>
          </ul>
-         
+
          <p>Note that "jmxremote.password" must be read-only. On Windows, you must use "cacls" command to do this:
          <code>cacls /some/directory/jmxremote.password /P username:R</code></p>
-         
-         <p>A password file template is located at $JRE_HOME/lib/management/jmxremote.password.template. There is also 
-         an auth file that you can use to define other roles. For more information on setting this up and setting up 
+
+         <p>A password file template is located at $JRE_HOME/lib/management/jmxremote.password.template. There is also
+         an auth file that you can use to define other roles. For more information on setting this up and setting up
          SSL, see <a href="http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html">Monitoring and Management
          Using JMX</a>.</p>
 
-         <p>If you wish to expose your JBossAS 4 application server's MBeans over this remote JMX mechanism, you must 
+         <p>If you wish to expose your JBossAS 4 application server's MBeans over this remote JMX mechanism, you must
          pass in these extra properties, in addition to the properties specified above:</p>
-         
+
          <ul>
             <li>-Djboss.platform.mbeanserver</li>
             <li>-Djavax.management.builder.initial=org.jboss.system.server.jmx.MBeanServerBuilderImpl</li>
@@ -352,27 +352,27 @@
                     units="bytes"/>
             <metric displayName="Committed"
                     property="{Usage.committed}"
-                    displayType="summary"
+                    displayType="detail"
                     description="Current memory allocated"
                     units="bytes"/>
             <metric displayName="Initial Size"
                     property="{Usage.init}"
-                    displayType="summary"
-                    dataType="trait"
+                    displayType="detail"
+                    dataType="measurement"
                     description="The amount of memory that the Java virtual machine initially requests from the operating system"
                     units="bytes"/>
             <metric displayName="Maximum Size"
                     property="{Usage.max}"
                     displayType="summary"
-                    dataType="trait"
+                    dataType="measurement"
                     description="Maximum amount of memory that can be used for memory management.  This amount of memory is not guaranteed to be available if it is greater than the amount of committed memory.  The Java virtual machine may fail to allocate memory even if the amount of used memory does not exceed this maximum size."
                     units="bytes"/>
             <metric property="MemoryManagerNames"
-                    displayType="summary"
+                    displayType="detail"
                     dataType="trait"
                     description="Garbage collectors for this space"/>
             <metric property="Type"
-                    displayType="summary"
+                    displayType="detail"
                     dataType="trait"
                     description="Pool location"/>
 
@@ -483,8 +483,8 @@
 
    <help>
       <![CDATA[
-          <p>This plugin provides both base connectivity to arbitrary MBeanServers over several supported protocols as 
-          well as service definitions for JMX Platform MBean services. It is often used as a base plugin to support 
+          <p>This plugin provides both base connectivity to arbitrary MBeanServers over several supported protocols as
+          well as service definitions for JMX Platform MBean services. It is often used as a base plugin to support
           other JMX based services and is designed for extension.</p>
       ]]>
    </help>

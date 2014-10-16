@@ -1886,5 +1886,5 @@ body > div[eventproxy*="isc_Menu"].normal > div[eventproxy*="isc_Menu"] > div[ev
 
 /* selector for favorites menu in IE (the dom is slightly different) */
 body > div[eventproxy*="isc_Menu"].normal > div[eventproxy="isc_Menu_1_body"].normal {
-    z-index: 999999 !important;
+    z-index: 1000000 !important;
 }

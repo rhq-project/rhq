@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010-2014, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -53,6 +53,7 @@ import org.rhq.coregui.client.util.message.Message.Severity;
  */
 public class MessageBar extends Canvas implements MessageCenter.MessageListener, Enhanced {
 
+    public static final int Z_INDEX = 999998;
     private static final int AUTO_HIDE_DELAY_MILLIS = 30000;
     private static final String NON_BREAKING_SPACE = "&nbsp;";
 
@@ -61,11 +62,9 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
     private Message stickyMessage; // this message will always be shown until dismissed by user.
     private Menu showDetailsMenu;
     private Timer messageClearingTimer;
-    private Canvas overridingCanvas;
 
     public MessageBar() {
         super();
-
         setOverflow(Overflow.VISIBLE);
         setHeight(1);
         setWidth(1);
@@ -166,15 +165,6 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
         }
     }
 
-    /**
-     * A canvas whose z-index will have (+1) higher priority that than the message bar.
-     * TODO: not yet needed, but another canvas setting may be useful for a (-1) z-index
-     * @param overridingCanvas
-     */
-    public void setOverridingCanvas(Canvas overridingCanvas) {
-        this.overridingCanvas = overridingCanvas;
-    }
-
     public void reset() {
         clearMessage(true);
     }
@@ -198,21 +188,20 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
         +"<span class='pficon pficon-close'></span>"
         +"</button>";
         StringBuilder sb = new StringBuilder();
-        int zIndex = null == overridingCanvas ? 0 : overridingCanvas.getZIndex() - 1;
         switch (severity) {
             case Blank: {
-            sb.append("<div class='alert alert-success' style='float:right; z-index: " + zIndex + ";'>");
+            sb.append("<div class='alert alert-success' style='float:right; z-index: " + Z_INDEX + ";'>");
                 sb.append("<span class='pficon pficon-ok'></span>");
                 break;
             }
             case Info: {
-            sb.append("<div class='alert alert-info' style='float:right; z-index: " + zIndex + ";'>");
+            sb.append("<div class='alert alert-info' style='float:right; z-index: " + Z_INDEX + ";'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon pficon-info'></span>");
                 break;
             }
             case Warning: {
-            sb.append("<div class='alert alert-warning' style='float:right; z-index: " + zIndex + ";'>");
+            sb.append("<div class='alert alert-warning' style='float:right; z-index: " + Z_INDEX + ";'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon-layered'>");
                 sb.append("  <span class='pficon pficon-warning-triangle'></span>");
@@ -222,7 +211,7 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
             }
             case Fatal:
             case Error: {
-            sb.append("<div class='alert alert-danger' style='float:right; z-index: " + zIndex + ";'>");
+            sb.append("<div class='alert alert-danger' style='float:right; z-index: " + Z_INDEX + ";'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon-layered'>");
                 sb.append("  <span class='pficon pficon-error-octagon'></span>");
@@ -231,7 +220,7 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
                 break;
             }
             default: {
-            sb.append("<div class='alert alert-info' style='z-index: " + zIndex + ";'>");
+            sb.append("<div class='alert alert-info' style='z-index: " + Z_INDEX + ";'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon pficon-info'></span>");
             }
@@ -264,5 +253,4 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
         content.redraw();
         content.show();
     }
-
 }

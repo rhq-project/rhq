@@ -20,26 +20,26 @@
 
 package org.rhq.enterprise.server.test;
 
-import static org.rhq.enterprise.server.cloud.StorageNodeManagerLocal.STORAGE_NODE_GROUP_NAME;
+import java.sql.Connection;
 
-import java.util.List;
-
-import javax.ejb.EJB;
+import javax.annotation.Resource;
 import javax.ejb.Singleton;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.sql.DataSource;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.db.upgrade.ServerVersionColumnUpgrader;
+import org.rhq.core.db.upgrade.StorageNodeVersionColumnUpgrader;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.StorageNode;
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.core.StartupBean;
 import org.rhq.enterprise.server.naming.NamingHack;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 
 /**
  * This is a replacement for the fullblown {@link StartupBean} of the actual RHQ server.
@@ -47,11 +47,17 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
  */
 @Singleton
 public class StrippedDownStartupBean {
+    private static final Log LOG = LogFactory.getLog(StrippedDownStartupBean.class);
 
     public static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
 
+    static final String RHQ_VERSION = System.getProperty("project.version");
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
+
+    @Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
+    private DataSource dataSource;
 
     private void secureNaming() {
         NamingHack.bruteForceInitialContextFactoryBuilder();
@@ -73,4 +79,41 @@ public class StrippedDownStartupBean {
             .setParameter("serverName", TestConstants.RHQ_TEST_SERVER_NAME)
             .executeUpdate();
     }
+
+    // The version columns is not managed by db-upgrade so its need to be created here if not present
+    // We don't support a Tx here so that any DDL executed by createXxxVersionColumnIfNeeded
+    // succeeds on Oracle, which in-effect applies autocommit=true for DDL changes.
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void createStorageNodeVersionColumnIfNeeded() {
+        Connection connection = null;
+        try {
+            connection = dataSource.getConnection();
+            StorageNodeVersionColumnUpgrader versionColumnUpgrader = new StorageNodeVersionColumnUpgrader();
+            versionColumnUpgrader.upgrade(connection, RHQ_VERSION);
+            versionColumnUpgrader.setVersionForAllNodes(connection, RHQ_VERSION);
+        } catch (Exception e) {
+            LOG.error("Could not check storage node version column", e);
+        } finally {
+            JDBCUtil.safeClose(connection);
+        }
+    }
+
+    // The version columns is not managed by db-upgrade so its need to be created here if not present
+    // We don't support a Tx here so that any DDL executed by createXxxVersionColumnIfNeeded
+    // succeeds on Oracle, which in-effect applies autocommit=true for DDL changes.
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void createServerVersionColumnIfNeeded() {
+        Connection connection = null;
+        try {
+            connection = dataSource.getConnection();
+            ServerVersionColumnUpgrader versionColumnUpgrader = new ServerVersionColumnUpgrader();
+            versionColumnUpgrader.upgrade(connection, RHQ_VERSION);
+            versionColumnUpgrader.setVersionForAllServers(connection, RHQ_VERSION);
+        } catch (Exception e) {
+            LOG.error("Could not check server version column", e);
+        } finally {
+            JDBCUtil.safeClose(connection);
+        }
+    }
+
 }

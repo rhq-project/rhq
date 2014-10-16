@@ -26,6 +26,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
@@ -46,7 +48,10 @@ public class SetupBean {
     @Resource(name = "RHQ_DS", mappedName = "java:jboss/datasources/RHQDS")
     private DataSource dataSource;
 
+    // We don't support a Tx here so that any DDL executed by createXxxVersionColumnIfNeeded
+    // succeeds on Oracle, which in-effect applies autocommit=true for DDL changes.
     @PostConstruct
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void init() throws RuntimeException {
         LOG.info("Begin core domain tests setup");
         LOG.info("RHQ_VERSION = " + RHQ_VERSION);

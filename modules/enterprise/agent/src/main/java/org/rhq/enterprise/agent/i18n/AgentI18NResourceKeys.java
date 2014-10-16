@@ -1626,6 +1626,9 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The name of this agent was not predefined so it was auto-generated. The agent name is now [{0}]")
     String AGENT_NAME_AUTO_GENERATED = "AgentMain.agent-name-auto-generated";
 
+    @I18NMessage("A server appears to be up, but the agent is not yet registered. Will wait again. wait counter=[{0}]")
+    String STARTUP_REGISTRATION_FAILED_RETRY = "AgentMain.startup-registration-failed-retry";
+
     @I18NMessage("Agent is not starting the plugin container at startup, as per its configuration")
     String NOT_STARTING_PLUGIN_CONTAINER_AT_STARTUP = "AgentMain.not-starting-pc-at-startup";
 

@@ -65,6 +65,7 @@ import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
+import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.layout.HStack;
 
 import org.rhq.core.domain.auth.Subject;

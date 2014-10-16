@@ -38,6 +38,7 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.smartgwt.client.types.Alignment;
@@ -64,7 +65,6 @@ import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
-import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.layout.HStack;
 
 import org.rhq.core.domain.auth.Subject;
@@ -133,16 +133,18 @@ public class LoginView extends Canvas {
                 redirectTo(LOGIN_VIEW);
                 return;
             }
-            showLoginDialog();
+            showLoginDialog(false);
         } else {
             form.setErrorsPreamble(message);
             setLoginError(message);
         }
     }
 
-    public void showLoginDialog() {
+    public void showLoginDialog(boolean isLogout) {
         if (!loginShowing) {
-            UserSessionManager.logout();
+            if (isLogout) {
+                UserSessionManager.logout();
+            }
             if (!isLoginView()) {
                 redirectTo(LOGIN_VIEW);
                 return;
@@ -449,8 +451,7 @@ public class LoginView extends Canvas {
     private void resetLogin() {
         window.destroy();
         loginShowing = false;
-        UserSessionManager.logout();
-        new LoginView().showLoginDialog();
+        showLoginDialog(true);
     }
 
     /**Uses the information from the populated form to create the Subject for the new LDAP user.
@@ -521,7 +522,7 @@ public class LoginView extends Canvas {
                     Log.error("Failed to register LDAP subject '" + newSubject.getName() + "' " + caught.getMessage(),
                         caught);
                     //TODO: pass in warning message to Login Dialog.
-                        new LoginView().showLoginDialog();
+                        showLoginDialog(false);
                 }
 
                 public void onSuccess(Subject checked) {
@@ -543,7 +544,7 @@ public class LoginView extends Canvas {
             window.destroy();
             loginShowing = false;
             //TODO: pass informative message to login.
-            new LoginView().showLoginDialog();
+            showLoginDialog(true);
         }
     }
 
@@ -677,14 +678,21 @@ public class LoginView extends Canvas {
         return isLoginView && com.google.gwt.user.client.Window.Location.getHref().contains(LOGIN_VIEW);
     }
 
-    public static void redirectTo(String path) {
-        if (path != null && !("/coregui/" + path).equals(com.google.gwt.user.client.Window.Location.getPath())) {
-            if (path.isEmpty()) {
-                isLoginView = false;
+    public static void redirectTo(final String path) {
+        new Timer() {
+            @Override
+            public void run() {
+                if (path != null && !("/coregui/" + path).equals(com.google.gwt.user.client.Window.Location.getPath())) {
+                    if (path.isEmpty()) {
+                        isLoginView = false;
+                    }
+                    String destinationFullPath = GWT.getHostPageBaseURL() + path
+                        + com.google.gwt.user.client.Window.Location.getQueryString()
+                        + com.google.gwt.user.client.Window.Location.getHash();
+                    Log.info("redirecting to " + destinationFullPath);
+                    com.google.gwt.user.client.Window.Location.assign(destinationFullPath);
+                }
             }
-            com.google.gwt.user.client.Window.Location.assign(GWT.getHostPageBaseURL() + path
-                + com.google.gwt.user.client.Window.Location.getQueryString()
-                + com.google.gwt.user.client.Window.Location.getHash());
-        }
+        }.schedule(20);
     }
 }

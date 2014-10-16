@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Connection;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
@@ -34,16 +33,12 @@ import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.db.upgrade.ServerVersionColumnUpgrader;
-import org.rhq.core.db.upgrade.StorageNodeVersionColumnUpgrader;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.StorageNode;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 
@@ -62,8 +57,6 @@ import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 public class StrippedDownStartupBeanPreparation {
     private static final Log LOG = LogFactory.getLog(StrippedDownStartupBeanPreparation.class);
 
-    private static final String RHQ_VERSION = System.getProperty("project.version");
-
     @EJB
     private StrippedDownStartupBean startupBean;
 
@@ -76,49 +69,16 @@ public class StrippedDownStartupBeanPreparation {
     @Resource
     private TimerService timerService; // needed to schedule our startup bean init call
 
-    @Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-    private DataSource dataSource;
-
     @PostConstruct
     public void initWithTransactionBecauseAS75530() throws RuntimeException {
-        createStorageNodeVersionColumnIfNeeded();
-        createServerVersionColumnIfNeeded();
+        startupBean.createStorageNodeVersionColumnIfNeeded();
+        startupBean.createServerVersionColumnIfNeeded();
         LOG.info("Scheduling the initialization of the testing RHQ deployment");
         timerService.createSingleActionTimer(1, new TimerConfig(null, false)); // call StartupBean in 1ms
         startupBean.purgeTestServerAndStorageNodes();
         createTestServer();
         loadCassandraConnectionProps();
         createStorageNodes();
-    }
-
-    // The version columns is not managed by db-upgrade so its need to be created here if not present
-    private void createStorageNodeVersionColumnIfNeeded() {
-        Connection connection = null;
-        try {
-            connection = dataSource.getConnection();
-            StorageNodeVersionColumnUpgrader versionColumnUpgrader = new StorageNodeVersionColumnUpgrader();
-            versionColumnUpgrader.upgrade(connection, RHQ_VERSION);
-            versionColumnUpgrader.setVersionForAllNodes(connection, RHQ_VERSION);
-        } catch (Exception e) {
-            LOG.error("Could not check storage node version column", e);
-        } finally {
-            JDBCUtil.safeClose(connection);
-        }
-    }
-
-    // The version columns is not managed by db-upgrade so its need to be created here if not present
-    private void createServerVersionColumnIfNeeded() {
-        Connection connection = null;
-        try {
-            connection = dataSource.getConnection();
-            ServerVersionColumnUpgrader versionColumnUpgrader = new ServerVersionColumnUpgrader();
-            versionColumnUpgrader.upgrade(connection, RHQ_VERSION);
-            versionColumnUpgrader.setVersionForAllServers(connection, RHQ_VERSION);
-        } catch (Exception e) {
-            LOG.error("Could not check server version column", e);
-        } finally {
-            JDBCUtil.safeClose(connection);
-        }
     }
 
     /**
@@ -134,7 +94,7 @@ public class StrippedDownStartupBeanPreparation {
         server.setOperationMode(Server.OperationMode.INSTALLED);
         server.setPort(7080);
         server.setSecurePort(7443);
-        server.setVersion(RHQ_VERSION);
+        server.setVersion(StrippedDownStartupBean.RHQ_VERSION);
 
         serverManager.create(server);
         System.setProperty(TestConstants.RHQ_SERVER_NAME_PROPERTY, TestConstants.RHQ_TEST_SERVER_NAME);
@@ -148,7 +108,7 @@ public class StrippedDownStartupBeanPreparation {
             storageNode.setAddress(node);
             storageNode.setCqlPort(Integer.parseInt(cqlPort));
             storageNode.setOperationMode(StorageNode.OperationMode.NORMAL);
-            storageNode.setVersion(RHQ_VERSION);
+            storageNode.setVersion(StrippedDownStartupBean.RHQ_VERSION);
             entityManager.persist(storageNode);
         }
     }

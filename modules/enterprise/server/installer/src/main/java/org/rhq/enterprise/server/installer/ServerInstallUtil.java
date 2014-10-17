@@ -221,7 +221,7 @@ public class ServerInstallUtil {
         sb.append(",");
         sb.append("match(\"ARJUNA016009\")"); //BZ 1144998, waiting for fix of https://issues.jboss.org/browse/WFLY-2828
         sb.append(",");
-        sb.append("match(\"JBAS014807\")"); //BZ 1144998, missing web subsystem is expected at times 
+        sb.append("match(\"JBAS014807\")"); //BZ 1144998, missing web subsystem is expected at times
         sb.append(",");
         sb.append("match(\"admin/user/UserAdminPortal\")"); //BZ 994267
         sb.append("))");
@@ -1072,6 +1072,7 @@ public class ServerInstallUtil {
         Statement queryStatement = null;
         ResultSet resultSet = null;
         PreparedStatement insertStorageNode = null;
+        PreparedStatement deleteStorageNodes = null;
 
         try {
             String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
@@ -1083,14 +1084,26 @@ public class ServerInstallUtil {
                 throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
             }
 
+            // IF there are no current storage nodes then we can persist the specified storage nodes.
+            // IF there are current storage nodes but none are linked to resources, we replace them with
+            // the currently specified addresses.  This allows an install or upgrade to be run again if the
+            // initial address(es) were incorrect.
+
             queryStatement = connection.createStatement();
-            resultSet = queryStatement.executeQuery("SELECT count(id) FROM rhq_storage_node");
+            resultSet = queryStatement
+                .executeQuery("SELECT count(*) FROM rhq_storage_node sn WHERE NOT sn.resource_id IS NULL");
             resultSet.next();
 
             if (resultSet.getInt(1) == 0) {
                 connection.setAutoCommit(false);
 
                 try {
+                    deleteStorageNodes = connection.prepareStatement("DELETE FROM rhq_storage_node");
+                    int numRemoved = deleteStorageNodes.executeUpdate();
+                    if (numRemoved > 0) {
+                        LOG.info("Removed [" + numRemoved + "] storage nodes. They will be redefined now...");
+                    }
+
                     LOG.info("Persisting to database new storage nodes for values specified in server configuration property [rhq.storage.nodes]");
 
                     insertStorageNode = connection
@@ -1127,6 +1140,7 @@ public class ServerInstallUtil {
             if (db != null) {
                 db.closeResultSet(resultSet);
                 db.closeStatement(queryStatement);
+                db.closeStatement(deleteStorageNodes);
                 db.closeStatement(insertStorageNode);
                 db.closeConnection(connection);
             }

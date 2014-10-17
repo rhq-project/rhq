@@ -1308,10 +1308,10 @@ div[eventproxy^="isc_DateChooser"] {
 ============================================================*/
 
 /*============================================================
-	ListGrid parts
-		styleName - listGrid
-		headerBarStyle - headerBar
-		bodyStyleName - gridBody
+    ListGrid parts
+        styleName - listGrid
+        headerBarStyle - headerBar
+        bodyStyleName - gridBody
 ============================================================*/
 
 .listGrid {
@@ -1342,12 +1342,12 @@ div[eventproxy^="isc_DateChooser"] {
 }
 
 /*============================================================
-	ListGrid cells
-		listGrid.baseStyle
+    ListGrid cells
+        listGrid.baseStyle
 ============================================================*/
 
 /*------------------------------------------------------------
-		listGrid.baseStyle
+        listGrid.baseStyle
 ------------------------------------------------------------*/
 .cell,
 .cellDark,
@@ -1522,7 +1522,7 @@ div[eventproxy^="isc_DateChooser"] {
 
 /*Tree styling*/
 /*------------------------------------------------------------
-		treeGrid.baseStyle
+        treeGrid.baseStyle
 ------------------------------------------------------------*/
 .treeCell,
 .treeCellDark,
@@ -1637,7 +1637,7 @@ div[eventproxy^="isc_DateChooser"] {
 }
 
 /*============================================================
-	15) Scrollbars
+    15) Scrollbars
 ============================================================*/
 .vScrollThumb {
     border: 1px solid #D9D9D9;
@@ -1693,7 +1693,7 @@ div[eventproxy^="isc_DateChooser"] {
 
 /*============================================================
     TabSet CSS tabs
-		tabSet.simpleTabBaseStyle
+        tabSet.simpleTabBaseStyle
 ============================================================*/
 /* styles for simple css-styled tabs*/
 /* left */

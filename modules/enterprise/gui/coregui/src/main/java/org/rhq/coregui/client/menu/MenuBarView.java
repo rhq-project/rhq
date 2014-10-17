@@ -62,7 +62,7 @@ import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.dashboard.DashboardsView;
 import org.rhq.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.coregui.client.drift.DriftHistoryView;
-import org.rhq.coregui.client.footer.FavoritesButton;
+import org.rhq.coregui.client.footer.FavoritesMenu;
 import org.rhq.coregui.client.help.HelpView;
 import org.rhq.coregui.client.help.RhAccessView;
 import org.rhq.coregui.client.inventory.InventoryView;
@@ -90,7 +90,6 @@ public class MenuBarView extends EnhancedVLayout {
     public static final String MSG_CENTER_BTN_CONTENT = "<span class='fa fa-flag'> ";
     public static final String BTN_FAV_ID = "fav-btn";
     public static final String BTN_MSG_CENTER_ID = "msg-center-btn";
-    public static final int Z_INDEX = MessageBar.Z_INDEX + 1;
 
     public static final MenuItem[] MENU_ITEMS = {
         new MenuItem(DashboardsView.VIEW_ID),
@@ -177,7 +176,7 @@ public class MenuBarView extends EnhancedVLayout {
     private String currentlySelectedSection = DashboardsView.VIEW_ID.getName();
     private MessageBar messageBar;
     private MessageCenterView messageCenter;
-    private FavoritesButton favoritesButton;
+    private FavoritesMenu favoritesMenu;
     private Set<Permission> globalPermissions;
 
     public MenuBarView() {
@@ -188,13 +187,11 @@ public class MenuBarView extends EnhancedVLayout {
     @Override
     protected void onInit() {
         super.onInit();
-        setZIndex(Z_INDEX);
         messageCenter = new MessageCenterView();
+        favoritesMenu = new FavoritesMenu();
         messageBar = new MessageBar();
-        // messageBar.setHeight(1);
-        // messageBar.setMaxHeight(1);
         messageBar.setVisible(false);
-        favoritesButton = new FavoritesButton();
+
         injectMenuFunctions(this);
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
@@ -222,24 +219,36 @@ public class MenuBarView extends EnhancedVLayout {
         }
     }
 
- // This is our JSNI method that will be called on form submit
+    // This is our JSNI method that will be called on form submit
     private native void injectMenuFunctions(MenuBarView view) /*-{
-      $wnd.__gwt_showMessageCenter = $entry(function(){
-        view.@org.rhq.coregui.client.menu.MenuBarView::showMessageCenterWindow()();
-      });
+                                                              $wnd.__gwt_clearMessageBar = $entry(function(){
+                                                              view.@org.rhq.coregui.client.menu.MenuBarView::clearMessageBar()();
+                                                              });
 
-      $wnd.__gwt_showFavoritesMenu = $entry(function(){
-        view.@org.rhq.coregui.client.menu.MenuBarView::showFavoritesMenu()();
-      });
+                                                              $wnd.__gwt_showMessageCenter = $entry(function(){
+                                                              view.@org.rhq.coregui.client.menu.MenuBarView::showMessageCenterWindow()();
+                                                              });
 
-      $wnd.__gwt_showAboutBox = $entry(function(){
-        view.@org.rhq.coregui.client.menu.MenuBarView::showAboutBox()();
-      });
-    }-*/;
+                                                              $wnd.__gwt_showFavoritesMenu = $entry(function(){
+                                                              view.@org.rhq.coregui.client.menu.MenuBarView::showFavoritesMenu()();
+                                                              });
+
+                                                              $wnd.__gwt_showAboutBox = $entry(function(){
+                                                              view.@org.rhq.coregui.client.menu.MenuBarView::showAboutBox()();
+                                                              });
+                                                              }-*/;
+
+    // called via JSNI - user menu button
+    public void clearMessageBar() {
+        messageBar.clearMessage(true);
+    }
 
     // called via JSNI - fav menu button
     public void showFavoritesMenu() {
-        this.favoritesButton.showMenu();
+        clearMessageBar();
+        favoritesMenu.show();
+        this.favoritesMenu.showMenu(DOM.getElementById(BTN_FAV_ID).getAbsoluteBottom(), DOM.getElementById(BTN_FAV_ID)
+            .getAbsoluteLeft());
     }
 
     // called via JSNI - msgcenter menu button
@@ -333,13 +342,17 @@ public class MenuBarView extends EnhancedVLayout {
            +"<li>"
            +"<a id='"+BTN_MSG_CENTER_ID+"' onclick='__gwt_showMessageCenter(); return false;'>"+MSG_CENTER_BTN_CONTENT+"0</a>"
          +"</li>"
-           +"<li class='dropdown'>"
-             +"<a href='#' class='dropdown-toggle' data-toggle='dropdown'>"
+                + "<li class='dropdown'>"
+                + "<a onclick='__gwt_clearMessageBar(); return false;' class='dropdown-toggle' data-toggle='dropdown'>"
                +"<span class='pficon pficon-user'></span>"
                 +user.getName()+" <b class='caret'></b>"
              +"</a>"
              +"<ul class='dropdown-menu'>"
-             + "<li><a href='#Administration/Security/Users/"+user.getId()+"'>Account Details</a></li>"
+                + "<li><a href='#Administration/Security/Users/"
+                + user.getId()
+                + "'>"
+                + MSG.common_title_settings()
+                + "</a></li>"
              + "<li class='divider'></li>"
                +"<li>"
                  +"<a href='#"+LOGOUT_VIEW_ID.getName()+"'>"+LOGOUT_VIEW_ID.getTitle()+"</a>"
@@ -526,5 +539,4 @@ public class MenuBarView extends EnhancedVLayout {
             return hidden;
         }
     }
-
 }

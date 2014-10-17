@@ -66,7 +66,6 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
     public MessageBar() {
         super();
         setOverflow(Overflow.VISIBLE);
-        setZIndex(Z_INDEX);
         setHeight(1);
         setWidth(1);
         content = new HTMLFlow();
@@ -221,7 +220,7 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
                 break;
             }
             default: {
-                sb.append("<div class='alert alert-info' style='z-index: " + Z_INDEX + ";'>");
+            sb.append("<div class='alert alert-info' style='z-index: " + Z_INDEX + ";'>");
                 sb.append(closeBtn);
                 sb.append("<span class='pficon pficon-info'></span>");
             }
@@ -251,9 +250,7 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
         content.setLeft(left);
         content.setWidth((ulWidth - left - 10) + "px");
         content.setTop("34px");
-        setZIndex(999998);
         content.redraw();
         content.show();
     }
-
 }

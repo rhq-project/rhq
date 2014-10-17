@@ -1304,10 +1304,10 @@ div[eventproxy^="isc_DateChooser"] {
 ============================================================*/
 
 /*============================================================
-	ListGrid parts
-		styleName - listGrid
-		headerBarStyle - headerBar
-		bodyStyleName - gridBody
+    ListGrid parts
+        styleName - listGrid
+        headerBarStyle - headerBar
+        bodyStyleName - gridBody
 ============================================================*/
 
 .listGrid {
@@ -1338,12 +1338,12 @@ div[eventproxy^="isc_DateChooser"] {
 }
 
 /*============================================================
-	ListGrid cells
-		listGrid.baseStyle
+    ListGrid cells
+        listGrid.baseStyle
 ============================================================*/
 
 /*------------------------------------------------------------
-		listGrid.baseStyle
+        listGrid.baseStyle
 ------------------------------------------------------------*/
 .cell,
 .cellDark,
@@ -1518,7 +1518,7 @@ div[eventproxy^="isc_DateChooser"] {
 
 /*Tree styling*/
 /*------------------------------------------------------------
-		treeGrid.baseStyle
+        treeGrid.baseStyle
 ------------------------------------------------------------*/
 .treeCell,
 .treeCellDark,
@@ -1633,7 +1633,7 @@ div[eventproxy^="isc_DateChooser"] {
 }
 
 /*============================================================
-	15) Scrollbars
+    15) Scrollbars
 ============================================================*/
 .vScrollThumb {
     border: 1px solid #D9D9D9;
@@ -1689,7 +1689,7 @@ div[eventproxy^="isc_DateChooser"] {
 
 /*============================================================
     TabSet CSS tabs
-		tabSet.simpleTabBaseStyle
+        tabSet.simpleTabBaseStyle
 ============================================================*/
 /* styles for simple css-styled tabs*/
 /* left */
@@ -1864,8 +1864,8 @@ div[eventproxy^="isc_DateChooser"] {
     display: none;
 }
 
+
 /* bz 1144052, sets the z-index to auto to all related parents to reset the 'stacking context' */
-body > div[eventproxy*="isc_Menu"].normal > div[eventproxy*="isc_Menu"],
 body > div > div[eventproxy*="isc_HTMLFlow_0"],
 body > div.normal[eventproxy*="HTMLFlow"],
 body > div > div[eventproxy*="isc_HTMLFlow_0"],
@@ -1877,14 +1877,4 @@ body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_R
 body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"] > div.overflowVisible[eventproxy*="MenuBarView_LinkBar"],
 body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"] > div.overflowVisible[eventproxy*="MenuBarView_LinkBar"] > div[eventproxy*="MenuBarView_LinkBar"] {
      z-index: auto !important;
-}
-
-/* selector for favorites menu in the navigation bar (on the top) */
-body > div[eventproxy*="isc_Menu"].normal > div[eventproxy*="isc_Menu"] > div[eventproxy*="isc_Menu"].normal {
-    z-index: 999999 !important;
-}
-
-/* selector for favorites menu in IE (the dom is slightly different) */
-body > div[eventproxy*="isc_Menu"].normal > div[eventproxy="isc_Menu_1_body"].normal {
-    z-index: 1000000 !important;
 }

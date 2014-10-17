@@ -266,8 +266,7 @@ public class UserSessionManager {
                                         // to any LDAP users, previously registered or not.
                                         Log.debug("Failed to complete ldap processing for subject: "
                                             + caught.getMessage());
-                                        //TODO: pass message to login dialog.
-                                        new LoginView().showLoginDialog(true);
+                                        new LoginView().showLoginDialog(MSG.view_login_noUser());
                                         return;
                                     }
 

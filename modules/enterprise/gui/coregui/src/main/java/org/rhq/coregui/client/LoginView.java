@@ -93,7 +93,7 @@ public class LoginView extends Canvas {
 
     private Window window;
     private FormPanel fakeForm;
-    private DynamicForm form;
+    private static DynamicForm form;
     private DynamicForm inputForm;
 
     private SubmitItem loginButton;
@@ -122,12 +122,12 @@ public class LoginView extends Canvas {
     private static final String LOGIN_ERROR_DIV_ID = "loginError";
     private static final String ERROR_FEEDBACK_DIV_ID = "errorFeedback";
     private static final String HTML_ID = "htmlId";
-    private String errorMessage;
+    private static String errorMessage;
     private static volatile boolean isLoginView = true;
 
     private ProductInfo productInfo;
 
-    public void showLoginDialog(String message) {
+    public void showLoginDialog(final String message) {
         if (!loginShowing) {
             errorMessage = message;
             if (!isLoginView()) {
@@ -137,11 +137,14 @@ public class LoginView extends Canvas {
             showLoginDialog(false);
         } else {
             form.setErrorsPreamble(message);
+            form.setFieldErrors("login", message, true);
             setLoginError(message);
+            setLoginButtonDisabled(false);
         }
     }
 
     public void showLoginDialog(boolean isLogout) {
+        setLoginButtonDisabled(false);
         if (!loginShowing) {
             if (isLogout) {
                 UserSessionManager.logout();
@@ -234,7 +237,9 @@ public class LoginView extends Canvas {
             injectLoginFunction(this);
 
             if (errorMessage != null) {
-                form.setFieldErrors("login", MSG.view_login_noUser(), true);
+                form.setErrorsPreamble(errorMessage);
+                form.setFieldErrors("login", errorMessage, true);
+                setLoginError(errorMessage);
                 errorMessage = null; // hide it next time
             }
         }
@@ -565,8 +570,8 @@ public class LoginView extends Canvas {
     }
 
     private void login(final String username, final String password) {
-
-        loginButton.setDisabled(true);
+        setLoginError(null);
+        setLoginButtonDisabled(true);
 
         try {
             RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.POST, "/portal/j_security_check.do");
@@ -622,7 +627,7 @@ public class LoginView extends Canvas {
             form.setFieldErrors("login", MSG.view_login_noBackend(), true);
             setLoginError(MSG.view_login_noBackend());
         }
-        loginButton.setDisabled(false);
+        setLoginButtonDisabled(false);
     }
 
     /**
@@ -664,6 +669,16 @@ public class LoginView extends Canvas {
         if (errorDiv != null && feedbackDiv != null) {
             errorDiv.setInnerHTML(error);
             feedbackDiv.setClassName(error != null ? "showError" : "hideError");
+        }
+    }
+    
+    private void setLoginButtonDisabled(boolean disabled) {
+        if (null != loginButton) {
+            loginButton.setDisabled(true);
+        }
+        Element button = DOM.getElementById(LOGINBUTTON_ID);
+        if (button != null) {
+            button.setClassName("btn btn-primary btn-lg" + (disabled ? " disabled" : ""));
         }
     }
 

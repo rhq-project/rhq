@@ -3953,7 +3953,7 @@ public class AgentMain {
                     || !((RemotePojoInvocationCommand) command).getTargetInterfaceName().equals(PING_INTERFACE_NAME))
                 {
                     // only wait a finite time, otherwise shutdown may be blocked
-                    long timeout = m_configuration.getWaitForServerAtStartupMsecs();
+                    long timeout = SECONDS.toMillis(30);
                     if (!m_latch.await(timeout, TimeUnit.MILLISECONDS)) {
                         throw new NotPermittedException(timeout);
                     }

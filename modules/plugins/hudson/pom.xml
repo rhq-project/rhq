@@ -6,12 +6,12 @@
   <parent>
       <artifactId>rhq-plugins-parent</artifactId>
       <groupId>org.rhq</groupId>
-      <version>4.12.0.JON330ER04</version>
+      <version>4.12.0.JON330ER05</version>
   </parent>
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-hudson-plugin</artifactId>
-  <version>4.12.0.JON330ER04</version>
+  <version>4.12.0.JON330ER05</version>
   <packaging>jar</packaging>
 
   <name>RHQ Hudson Plugin</name>

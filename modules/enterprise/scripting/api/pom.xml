@@ -3,10 +3,10 @@
     <parent>
         <artifactId>rhq-scripting-parent</artifactId>
         <groupId>org.rhq</groupId>
-        <version>4.12.0.JON330ER04</version>
+        <version>4.12.0.JON330ER05</version>
     </parent>
     <artifactId>rhq-scripting-api</artifactId>
-    <version>4.12.0.JON330ER04</version>
+    <version>4.12.0.JON330ER05</version>
     <name>RHQ Scripting API</name>
     <description>Provides API for adding scripting support to RHQ using different javax.scripting - based interpreters</description>
 

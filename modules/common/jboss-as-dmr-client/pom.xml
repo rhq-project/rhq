@@ -6,11 +6,11 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-common-parent</artifactId>
-    <version>4.12.0.JON330ER04</version>
+    <version>4.12.0.JON330ER05</version>
   </parent>
 
   <artifactId>rhq-jboss-as-dmr-client</artifactId>
-  <version>4.12.0.JON330ER04</version>
+  <version>4.12.0.JON330ER05</version>
   <packaging>jar</packaging>
 
   <name>RHQ JBoss AS DMR Client</name>

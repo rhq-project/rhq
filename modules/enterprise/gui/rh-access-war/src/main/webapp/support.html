@@ -15,6 +15,10 @@
 	<script src="js/redhat_access_angular_ui.js"></script>
 	<script src="js/custom-cases.js"></script>
 
+  <!--[if IE 9]>
+  <script type="text/javascript">$.support.cors = true;</script>
+  <![endif]-->
+
 	<div class="jon-rha-main" ng-app="RedhatAccess.JON" ng-controller="customCase" data-ng-init="init()">
 		<div id="rha-content" ui-view></div>
 	</div>

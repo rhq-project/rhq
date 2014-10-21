@@ -118,14 +118,13 @@ public class AlertBuilderTest {
     public void testRecovery() {
         // Test without recoveryDefinitions and with recoveryDefinitions
         AlertDefinitionTemplate alertDefinitionTemplate = createEmptyTemplate();
-        alertDefinitionTemplate.recovery()
-                .disableWhenFired(true);
+        alertDefinitionTemplate.disableWhenFired(true);
 
         AlertDefinition alertDefinition = alertDefinitionTemplate.getAlertDefinition();
         assertEquals(true, alertDefinition.getWillRecover());
         assertEquals(Integer.valueOf(0), alertDefinition.getRecoveryId());
 
-        alertDefinitionTemplate.recovery()
+        alertDefinitionTemplate
                 .recoverAlert(1)
                 .disableWhenFired(true);
         try {
@@ -136,8 +135,7 @@ public class AlertBuilderTest {
         }
 
         alertDefinitionTemplate = createEmptyTemplate();
-        alertDefinitionTemplate.recovery()
-                .recoverAlert(1);
+        alertDefinitionTemplate.recoverAlert(1);
         alertDefinition = alertDefinitionTemplate.getAlertDefinition();
         Assert.assertEquals(Integer.valueOf(1), alertDefinition.getRecoveryId());
     }

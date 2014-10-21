@@ -45,14 +45,14 @@ public class AlertDefinitionTemplate implements Serializable {
     private String name = null;
     private AlertPriority priority = null;
     private BooleanExpression protocol = null;
-    private Recovery recovery = null;
     private Integer resourceId;
+    private Boolean disableWhenFired = false;
+    private Integer recoveredAlert = Integer.valueOf(0); // 0 indicates nothing to recover
 
     public AlertDefinitionTemplate(Integer resourceId, String name) {
         conditions = new HashSet<AbstractCondition>();
         notifiers = new HashSet<AlertNotificationTemplate>();
         dampening = new AlertDampeningTemplate().category(AlertDampening.Category.NONE);
-        this.recovery = new Recovery();
         this.resourceId = resourceId;
         priority = AlertPriority.MEDIUM;
         protocol = BooleanExpression.ANY;
@@ -84,31 +84,14 @@ public class AlertDefinitionTemplate implements Serializable {
         return this;
     }
 
-    public static class Recovery implements Serializable {
-        private Boolean disableWhenFired = false;
-        private Integer recoveredAlert = Integer.valueOf(0); // 0 indicates nothing to recover
-
-        Boolean getDisableWhenFired() {
-            return disableWhenFired;
-        }
-
-        Integer getRecoveredAlert() {
-            return recoveredAlert;
-        }
-
-        public Recovery disableWhenFired(Boolean disable) {
-            this.disableWhenFired = disable;
-            return this;
-        }
-
-        public Recovery recoverAlert(Integer alertToRecover) {
-            recoveredAlert = alertToRecover;
-            return this;
-        }
+    public AlertDefinitionTemplate disableWhenFired(Boolean disable) {
+        this.disableWhenFired = disable;
+        return this;
     }
 
-    public Recovery recovery() {
-        return this.recovery;
+    public AlertDefinitionTemplate recoverAlert(Integer alertToRecover) {
+        recoveredAlert = alertToRecover;
+        return this;
     }
 
     // Redesign this part..
@@ -144,10 +127,8 @@ public class AlertDefinitionTemplate implements Serializable {
         alertDefinition.setPriority(this.priority);
 
         // Recovery properties
-        if(this.recovery != null) {
-            alertDefinition.setRecoveryId(this.recovery.getRecoveredAlert());
-            alertDefinition.setWillRecover(this.recovery().getDisableWhenFired());
-        }
+        alertDefinition.setRecoveryId(this.recoveredAlert);
+        alertDefinition.setWillRecover(this.disableWhenFired);
 
         // Dampening properties
         if(this.dampening != null) {

@@ -31,6 +31,33 @@ debug_msg ()
 }
 
 # ----------------------------------------------------------------------
+# Approximate the invocation of readlink -f for platforms (like OS/X) 
+# that don't have the '-f' option.
+# Taken from: https://stackoverflow.com/questions/1055671/how-can-i-get-the-behavior-of-gnus-readlink-f-on-a-mac
+# ----------------------------------------------------------------------
+readlink_rhq() 
+{
+  TARGET_FILE=$1
+
+  cd `dirname $TARGET_FILE`
+  TARGET_FILE=`basename $TARGET_FILE`
+
+  # Iterate down a (possible) chain of symlinks
+  while [ -L "$TARGET_FILE" ]
+  do
+      TARGET_FILE=`readlink $TARGET_FILE`
+      cd `dirname $TARGET_FILE`
+      TARGET_FILE=`basename $TARGET_FILE`
+  done
+
+  # Compute the canonicalized name by finding the physical path 
+  # for the directory we're in and appending the target file.
+  PHYS_DIR=`pwd -P`
+  RESULT=$PHYS_DIR/$TARGET_FILE
+  echo $RESULT
+}
+
+# ----------------------------------------------------------------------
 # Determine what specific platform we are running on.
 # Set some platform-specific variables.
 # ----------------------------------------------------------------------
@@ -63,9 +90,14 @@ else
     # only certain platforms support the -e argument for readlink
     if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then
        _READLINK_ARG="-e"
+       _DOLLARZERO=`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`
+    elif  [ -n "${_DARWIN}" ]; then
+       _DOLLARZERO=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
+    else
+       _DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
     fi
-    _DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
 fi
+
 
 RHQ_CLI_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`
 
@@ -80,7 +112,7 @@ fi
 # we do want to change the dir in RHQ, but possibly don't want to do that in JBoss ON for backwards compatibility
 # reasons.
 # (yes, this USES ${} in the source (not in the distribution) because we seed the default value from the build)
-RHQ_CLI_CHANGE_DIR_ON_START_DEFAULT=${rhq.cli.change-dir-on-start-default}
+RHQ_CLI_CHANGE_DIR_ON_START_DEFAULT=false
 if [ -z "$RHQ_CLI_CHANGE_DIR_ON_START" ]; then
     RHQ_CLI_CHANGE_DIR_ON_START="$RHQ_CLI_CHANGE_DIR_ON_START_DEFAULT"
 fi
@@ -102,8 +134,19 @@ else
         RHQ_CLI_HOME="$RHQ_CLI_BIN_DIR_PATH/.."
     fi
 
-    #get an absolute path
-    RHQ_CLI_HOME=`readlink -f "$RHQ_CLI_HOME"`
+    command -v readlink >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo >&2 'WARNING: The readlink command is not available on this platform.'
+        echo >&2 '         If this script was launched from a symbolic link, errors may occur.'
+        echo >&2 '         Consider installing readlink on this platform.'
+    else
+        # only certain platforms support the -e argument for readlink
+        if [ -n "${_DARWIN}" ]; then
+           readlink_rhq "$RHQ_CLI_HOME"
+        else
+          RHQ_CLI_HOME=`readlink -f "$RHQ_CLI_HOME"`
+        fi
+    fi
 
     if [ ! -d "$RHQ_CLI_HOME" ]; then
         echo "RHQ_CLI_HOME detected or defined as [$RHQ_CLI_HOME] doesn't seem to exist or is not a directory"

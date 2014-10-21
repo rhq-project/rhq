@@ -7,7 +7,15 @@ if [ $? -ne 0 ]; then
     echo >&2 '         Consider installing readlink on this platform.'
     _DOLLARZERO="$0"
 else
-    _DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
+    # only certain platforms support the -e argument for readlink
+     if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then
+       _READLINK_ARG="-e"
+       _DOLLARZERO=`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`
+    elif  [ -n "${_DARWIN}" ]; then
+       _DOLLARZERO=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
+    else
+       _DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
+    fi
 fi
 
 RHQ_AGENT_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`

@@ -148,8 +148,12 @@ else
     # only certain platforms support the -e argument for readlink
     if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then
        _READLINK_ARG="-e"
+       _DOLLARZERO=`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`
+    elif  [ -n "${_DARWIN}" ]; then
+       _DOLLARZERO=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
+    else
+       _DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
     fi
-    _DOLLARZERO=`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`
 fi
 
 

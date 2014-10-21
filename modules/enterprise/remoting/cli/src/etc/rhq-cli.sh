@@ -148,11 +148,6 @@ else
         fi
     fi
 
-
-    #readlink_rhq "$RHQ_CLI_HOME"
-    #get an absolute path
-    #RHQ_CLI_HOME=`readlink -f "$RHQ_CLI_HOME"`
-
     if [ ! -d "$RHQ_CLI_HOME" ]; then
         echo "RHQ_CLI_HOME detected or defined as [$RHQ_CLI_HOME] doesn't seem to exist or is not a directory"
         exit 1

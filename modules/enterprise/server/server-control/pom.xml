@@ -6,12 +6,12 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>4.12.0.JON330ER04</version>
+    <version>4.12.0.JON330ER05</version>
     <relativePath>../../../../pom.xml</relativePath>
   </parent>
 
   <artifactId>rhq-server-control</artifactId>
-  <version>4.12.0.JON330ER04</version>
+  <version>4.12.0.JON330ER05</version>
   <name>RHQ Server Control</name>
   <packaging>jar</packaging>
 

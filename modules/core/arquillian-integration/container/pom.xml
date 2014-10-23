@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-arquillian-parent</artifactId>
-        <version>4.12.0.JON330ER04</version>
+        <version>4.12.0.JON330ER05</version>
     </parent>
 
     <!-- Model Version -->
@@ -17,7 +17,7 @@
 
     <groupId>org.rhq</groupId>
     <artifactId>rhq-arquillian-agent-plugin-container-embedded</artifactId>
-    <version>4.12.0.JON330ER04</version>
+    <version>4.12.0.JON330ER05</version>
     <name>RHQ Arquillian Plugin Container</name>
     <description>RHQ Embedded Agent Plugin Container integration for Arquillian</description>
 

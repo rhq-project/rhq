@@ -715,6 +715,14 @@ public class AgentMain {
                     startManagementServices(); // we start our metric collectors before plugin container so the agent plugin can work
                     boolean mustRegister = prepareStartupWorkRequiringServer();
                     boolean keepWaitingForServer;
+                    int serverUpWaitCounter;
+                    try {
+                        // we really should not need to have to customize this, but make a backdoor setting, just in case
+                        serverUpWaitCounter = Integer.parseInt(System.getProperty(
+                            "rhq.agent.startup-registration-waits", "5"));
+                    } catch (Exception e) {
+                        serverUpWaitCounter = 5;
+                    }
                     do {
                         boolean aServerIsKnownToBeUp = waitForServer(m_configuration.getWaitForServerAtStartupMsecs());
                         boolean agentIsRegistered = isRegistered();
@@ -729,8 +737,15 @@ public class AgentMain {
                         } else if (mustRegister && !agentIsRegistered) {
                             // If we got here, we know a server is up and the agent needs to be registered, but it isn't registered.
                             // This usually means an unrecoverable registration error occurred, so abort.
-                            throw new AgentRegistrationException(
-                                MSG.getMsg(AgentI18NResourceKeys.AGENT_CANNOT_REGISTER));
+                            // But there have been cases were there is a race condition and the server just isn't ready yet
+                            // so let's at least retry a few times before giving up (BZ 1152154)
+                            if (--serverUpWaitCounter < 0) {
+                                throw new AgentRegistrationException(
+                                    MSG.getMsg(AgentI18NResourceKeys.AGENT_CANNOT_REGISTER));
+                            } else {
+                                keepWaitingForServer = true;
+                                LOG.warn(AgentI18NResourceKeys.STARTUP_REGISTRATION_FAILED_RETRY, serverUpWaitCounter);
+                            }
                         } else {
                             keepWaitingForServer = false;
                         }

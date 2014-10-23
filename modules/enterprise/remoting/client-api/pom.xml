@@ -5,12 +5,12 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.12.0.JON330ER04</version>
+      <version>4.12.0.JON330ER05</version>
       <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
    <artifactId>rhq-remoting-client-api</artifactId>
-   <version>4.12.0.JON330ER04</version>
+   <version>4.12.0.JON330ER05</version>
 
    <name>RHQ Enterprise Remote Client API</name>
    <description>a set of client APIs used to connect to an RHQ Server and invoke methods on it</description>

@@ -2060,6 +2060,8 @@
                 <schema-addColumn   table="RHQ_STORAGE_NODE" column="MTIME" columnType="LONG" />
                 <schema-alterColumn table="RHQ_STORAGE_NODE" column="MTIME" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_STORAGE_NODE" column="RESOURCE_ID" columnType="INTEGER" />
+                <schema-addColumn   table="RHQ_STORAGE_NODE" column="VERSION" columnType="VARCHAR2" precision="255"/>
+                <schema-alterColumn table="RHQ_STORAGE_NODE" column="VERSION" nullable="FALSE" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_STORAGE_NODE foreign key to RHQ_RESOURCE">
                         ALTER TABLE RHQ_STORAGE_NODE

@@ -86,7 +86,8 @@ public class ConversionUtils {
     private static final Map<String, KnownDeploymentTypes> DEPLOYMENT_TYPE_CACHE = new HashMap<String, KnownDeploymentTypes>();
     private static final Map<String, Configuration> DEFAULT_PLUGIN_CONFIG_CACHE = new HashMap<String, Configuration>();
 
-    public static ComponentType getComponentType(@NotNull ResourceType resourceType) {
+    public static ComponentType getComponentType(@NotNull
+    ResourceType resourceType) {
         String resourceTypeName = resourceType.getName();
         if (COMPONENT_TYPE_CACHE.containsKey(resourceTypeName))
             return COMPONENT_TYPE_CACHE.get(resourceTypeName);
@@ -104,7 +105,8 @@ public class ConversionUtils {
         return componentType;
     }
 
-    public static KnownDeploymentTypes getDeploymentType(@NotNull ResourceType resourceType) {
+    public static KnownDeploymentTypes getDeploymentType(@NotNull
+    ResourceType resourceType) {
         String resourceTypeName = resourceType.getName();
         if (DEPLOYMENT_TYPE_CACHE.containsKey(resourceTypeName))
             return DEPLOYMENT_TYPE_CACHE.get(resourceTypeName);
@@ -168,7 +170,8 @@ public class ConversionUtils {
     }
 
     public static void convertConfigurationToManagedProperties(Map<String, ManagedProperty> managedProperties,
-        Configuration configuration, ConfigurationDefinition configDefinition, Map<String, PropertySimple> customProps) {
+        Configuration configuration, ConfigurationDefinition configDefinition, Map<String, PropertySimple> customProps,
+        boolean trimManagedProperties) {
         Set<String> missingManagedPropertyNames = new HashSet<String>();
         for (Property property : configuration.getProperties()) {
             String propertyName = property.getName();
@@ -189,21 +192,25 @@ public class ConversionUtils {
                 throw new IllegalStateException("***** The following properties are defined in this plugin's "
                     + "descriptor but have no corresponding ManagedProperties: " + missingManagedPropertyNames);
         }
-        // remove all managed properties missing in configuration definition
-        List<String> toRemove = new ArrayList<String>();
-        for (Entry<String, ManagedProperty> prop : managedProperties.entrySet()) {
-            if (configDefinition.get(prop.getKey()) == null) {
-                toRemove.add(prop.getKey());
+
+        if (trimManagedProperties) {
+            // remove all managed properties missing in configuration definition
+            List<String> toRemove = new ArrayList<String>();
+            for (Entry<String, ManagedProperty> prop : managedProperties.entrySet()) {
+                if (configDefinition.get(prop.getKey()) == null) {
+                    toRemove.add(prop.getKey());
+                }
             }
+            managedProperties.keySet().removeAll(toRemove);
         }
-        managedProperties.keySet().removeAll(toRemove);
+
         return;
     }
 
     public static void convertConfigurationToManagedProperties(Map<String, ManagedProperty> managedProperties,
         Configuration configuration, ResourceType resourceType, Map<String, PropertySimple> customProps) {
         convertConfigurationToManagedProperties(managedProperties, configuration,
-            resourceType.getResourceConfigurationDefinition(), customProps);
+            resourceType.getResourceConfigurationDefinition(), customProps, false);
     }
 
     private static Configuration getDefaultPluginConfiguration(ResourceType resourceType) {
@@ -218,7 +225,9 @@ public class ConversionUtils {
     }
 
     private static void populateManagedPropertyFromProperty(Property property, PropertyDefinition propertyDefinition,
-        @NotNull ManagedProperty managedProperty, @Nullable PropertySimple customProperty) {
+        @NotNull
+        ManagedProperty managedProperty, @Nullable
+        PropertySimple customProperty) {
         // See if there is a custom adapter defined for this property.
         PropertyAdapter propertyAdapter = PropertyAdapterFactory.getCustomPropertyAdapter(customProperty);
 
@@ -304,8 +313,10 @@ public class ConversionUtils {
      *         will be returned
      */
     @NotNull
-    public static MetaValue[] convertOperationsParametersToMetaValues(@NotNull ManagedOperation managedOperation,
-        @NotNull Configuration parameters, @NotNull OperationDefinition operationDefinition) {
+    public static MetaValue[] convertOperationsParametersToMetaValues(@NotNull
+    ManagedOperation managedOperation, @NotNull
+    Configuration parameters, @NotNull
+    OperationDefinition operationDefinition) {
         ConfigurationDefinition paramsConfigDef = operationDefinition.getParametersConfigurationDefinition();
         if (paramsConfigDef == null)
             return new MetaValue[0];

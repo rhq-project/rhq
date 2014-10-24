@@ -213,7 +213,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     /**
      * updates resource configuration, but only changes. This is done by loading configuration first and then comparing
      * all the simple properties (if existing and new value equals, property is skipped)
-     * 
+     *
      * @param configurationUpdateReport report
      */
     public void updateResourceConfigurationChangesOnly(ConfigurationUpdateReport configurationUpdateReport) {
@@ -247,7 +247,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     }
 
     /**
-     * update resource configuration. Given resourceConfigurationDefinition defines which properties will be updated. Use this 
+     * update resource configuration. Given resourceConfigurationDefinition defines which properties will be updated. Use this
      * method in case you don't want to update all properties defined by resource type and supply resourceConfigurationDefinition
      * consisting of stuff you want.
      * @param configurationUpdateReport
@@ -265,7 +265,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
                 LOG.debug("*** BEFORE UPDATE:\n" + DebugUtils.convertPropertiesToString(managedProperties));
             }
             ConversionUtils.convertConfigurationToManagedProperties(managedProperties, resourceConfig,
-                resourceConfigurationDefinition, customProps);
+                resourceConfigurationDefinition, customProps, true);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("*** AFTER UPDATE:\n" + DebugUtils.convertPropertiesToString(managedProperties));
             }
@@ -534,7 +534,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
      * This method should most likely not be overridden. Instead, override {@link #getManagedComponent(ManagementView)}.
      * <br/><br/>
      * IMPORTANT!!! The returned ManagedComponent SHOULD NOT be cached in the instance. It is potentially a memory hog.
-     * 
+     *
      * @return The ManagedComponent
      * @throws RuntimeException if fetching the ManagementView or getting the component fails
      * @throws IllegalStateException if the managedComponent is null/not found
@@ -551,7 +551,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
                 + this.componentName + "].", e);
         }
 
-        // Even if not found, update the refresh time. It will avoid too many costly, and potentially fruitless, fetches 
+        // Even if not found, update the refresh time. It will avoid too many costly, and potentially fruitless, fetches
         lastComponentRefresh = System.currentTimeMillis();
 
         if (managedComponent == null) {
@@ -568,7 +568,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     /**
      * This is an override point. When actually fetching the managed component, this entry point should not be
-     * used. Instead, access should be via {@link #getManagedComponent()}. 
+     * used. Instead, access should be via {@link #getManagedComponent()}.
      *
      * @param managementView for querying profile service
      * @return the ManagedComponent. Null if not found.

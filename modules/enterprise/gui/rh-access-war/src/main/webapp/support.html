@@ -16,7 +16,7 @@
 	<script src="js/custom-cases.js"></script>
 
   <!--[if IE 9]>
-  <script type="text/javascript">$.support.cors = true;</script>
+  <script type="text/javascript">var host = 'access.redhat.com'; $.support.cors = true; strata.setStrataHostname('https://' + host);</script>
   <![endif]-->
 
 	<div class="jon-rha-main" ng-app="RedhatAccess.JON" ng-controller="customCase" data-ng-init="init()">

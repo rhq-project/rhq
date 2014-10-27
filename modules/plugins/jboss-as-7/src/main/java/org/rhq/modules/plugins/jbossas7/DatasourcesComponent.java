@@ -104,8 +104,9 @@ public class DatasourcesComponent extends BaseComponent<BaseComponent<?>> {
         if (!connectionPropertiesAsMap.isEmpty()) {
             CompositeOperation cop = new CompositeOperation();
             for (Map.Entry<String, String> connectionProperty : connectionPropertiesAsMap.entrySet()) {
-                datasourceAddress.add(connPropAttributeNameOnServer, connectionProperty.getKey());
-                Operation op = new Operation("add", datasourceAddress);
+                Address propertyAddress = new Address(datasourceAddress);
+                propertyAddress.add(connPropAttributeNameOnServer, connectionProperty.getKey());
+                Operation op = new Operation("add", propertyAddress);
                 op.addAdditionalProperty("value", connectionProperty.getValue());
                 cop.addStep(op);
             }

@@ -169,6 +169,9 @@ public class DatasourceComponent extends BaseComponent<DatasourcesComponent> {
         ConfigurationDefinition configDef = resourceType.getResourceConfigurationDefinition();
         Configuration newConfig = configurationUpdateReport.getConfiguration();
 
+        // remove special property being possibly sent from server in case EAP requires reload/restart
+        newConfig.remove("__OOB");
+
         // 1. First of all, read the current configuration
         ConfigurationLoadDelegate readDelegate = new ConfigurationLoadDelegate(configDef, getASConnection(), address,
             includeRuntime);

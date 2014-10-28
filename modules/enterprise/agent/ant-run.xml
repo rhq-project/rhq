@@ -46,8 +46,6 @@ Ant Script that provides ways to package the Agent.
          <include name="jline/jline/${jline.version}/jline-${jline.version}.jar" />
          <include name="commons-logging/commons-logging/1.1.0.jboss/commons-logging-1.1.0.jboss.jar" />
          <include name="gnu/getopt/java-getopt/${getopt.version}/java-getopt-${getopt.version}.jar" />
-         <include name="commons-httpclient/commons-httpclient/2.0.2/commons-httpclient-2.0.2.jar" />
-         <include name="dom4j/dom4j/1.6/dom4j-1.6.jar" />
          <include name="oswego-concurrent/concurrent/${concurrent.version}/concurrent-${concurrent.version}.jar" />
          <include name="org/jboss/jboss-common-core/${jboss-common-core.version}/jboss-common-core-${jboss-common-core.version}.jar" />
          <include name="jboss/jboss-jmx/${jboss-jmx.version}/jboss-jmx-${jboss-jmx.version}.jar" />

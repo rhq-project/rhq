@@ -277,16 +277,10 @@ public class ResourceHandlerBean extends AbstractRestBean {
     @ApiOperation(value = "List all platforms in the system", multiValueResponse = true, responseClass = "ResourceWithType")
     public Response getPlatforms(
         @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
-        @ApiParam("Page for paging, 0-based") @QueryParam("page") Integer page,
+        @ApiParam("Page for paging, 0-based") @QueryParam("page") @DefaultValue("0") Integer page,
         @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
-        PageControl pc;
-        if (page!=null) {
-            pc = new PageControl(page,pageSize);
-        }
-        else {
-            pc = PageControl.getUnlimitedInstance();
-        }
+        PageControl pc = new PageControl(page, pageSize);
         pc.setPrimarySort("id",PageOrdering.ASC);
 
         PageList<Resource> ret = resMgr.findResourcesByCategory(caller, ResourceCategory.PLATFORM,

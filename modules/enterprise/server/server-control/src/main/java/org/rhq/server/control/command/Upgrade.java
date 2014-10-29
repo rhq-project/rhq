@@ -145,7 +145,7 @@ public class Upgrade extends AbstractInstall {
         }
 
         if (commandLine.hasOption(STORAGE_SCHEMA_OPTION)) {
-            return upgradeStorageSchema(commandLine);
+            return updateStorageSchema(commandLine);
         }
 
         int rValue = RHQControl.EXIT_CODE_OK;
@@ -831,7 +831,7 @@ public class Upgrade extends AbstractInstall {
             + "script located in the server bin folder.\n" + "================\n");
     }
 
-    private int upgradeStorageSchema(CommandLine commandLine) {
+    private int updateStorageSchema(CommandLine commandLine) {
         // Only performed from a server install
         if (!isServerInstalled()) {
             log.info("This command can only be performed from an installed Server node. This is either a standalone Storage Node, or the Server has yet to be installed.");

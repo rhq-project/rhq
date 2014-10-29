@@ -207,7 +207,10 @@ public class InstallerServiceImpl implements InstallerService {
 
         } catch (NoHostAvailableException e1) {
             info.append("  ==> Could not connect to Storage Cluster.\n");
-            info.append("  ==> To check Storage Cluster schema version start a Storage Node and re-execute this command.");
+            info.append("  ==> To check Storage Cluster schema version start all nodes of the Storage Cluster and execute 'rhqctl uprade --list-versions'.");
+        } catch (AuthenticationException e2) {
+            info.append("  ==> Could not connect to Storage Cluster.\n");
+            info.append("  ==> To check Storage Cluster schema version start all nodes of the Storage Cluster and execute 'rhqctl uprade --list-versions'.");
         } catch (InstalledSchemaTooOldException e3) {
             info.append("  ==> The Storage Cluster version is old and requires an update!\n");
             info.append("  ==> 1) Complete Server and Storage Node upgrades.\n");
@@ -215,8 +218,8 @@ public class InstallerServiceImpl implements InstallerService {
             info.append("  ==>    Use 'rhqctl start --storage'.  Servers and Agents should not be running.\n");
             info.append("  ==> 3) Update the Storage Cluster via 'rhqctl upgrade --storage-schema.'");
         } catch (Exception e) {
-            info.append("  ==> Failed to check Storage Cluster Version: ");
-            info.append("  ==> " + e.getMessage());
+            info.append("  ==> Failed to check Storage Cluster Version: " + e.getMessage() + "\n");
+            info.append("  ==> To check Storage Cluster schema version start all nodes of the Storage Cluster and execute 'rhqctl uprade --list-versions'.");
         }
 
         info.append("\n");
@@ -357,7 +360,8 @@ public class InstallerServiceImpl implements InstallerService {
 
     @Override
     public void install(HashMap<String, String> serverProperties, ServerDetails serverDetails,
-        String existingSchemaOption) throws AutoInstallDisabledException, AlreadyInstalledException, Exception {
+        String existingSchemaOption, boolean isUpgrade) throws AutoInstallDisabledException, AlreadyInstalledException,
+        Exception {
 
         if (isEarDeployed()) {
             if (this.installerConfiguration.isForceInstall()) {
@@ -406,7 +410,7 @@ public class InstallerServiceImpl implements InstallerService {
         additionalProperties.add(ServerProperties.PROP_STORAGE_PASSWORD);
         ServerProperties.validate(serverProperties, additionalProperties);
 
-        prepareDatabase(serverProperties, serverDetails, existingSchemaOption);
+        prepareDatabase(serverProperties, serverDetails, existingSchemaOption, isUpgrade);
 
         // perform stuff that has to get done via the JBossAS management client
         ModelControllerClient mcc = null;
@@ -473,7 +477,7 @@ public class InstallerServiceImpl implements InstallerService {
 
     @Override
     public void prepareDatabase(HashMap<String, String> serverProperties, ServerDetails serverDetails,
-        String existingSchemaOption) throws Exception {
+        String existingSchemaOption, boolean isUpgrade) throws Exception {
 
         // if we are in auto-install mode, ignore the server details passed in and build our own using the given server properties
         // if not in auto-install mode, make sure user gave us the server details that we will need
@@ -641,14 +645,28 @@ public class InstallerServiceImpl implements InstallerService {
             }
         }
 
-        Set<String> storageNodeAddresses = prepareStorageSchema(serverProperties, clearTextDbPassword,
-            existingSchemaOptionEnum, false);
+        // All storage nodes must be running to perform a schema update or creation. Therefore, upgrades perform the
+        // schema update as a separate, post-upgrade step (rhqctl upgrade --schema-update).  We want to
+        // avoid a separate step for server installs but the storage cluster must still be running. This should
+        // be OK.  For 'rhqctl install --server' the remote storage cluster should already be installed and running.
+        // for 'rhqctl install' the storage node will be co-located and started as part of the install.  (Note
+        // that if there are multiple co-located storage nodes, a quorum of nodes must be running to successfully
+        // check the current schema version. In practice this is unlikely to be an issue because for a larger topology
+        // there will likely be an external storage cluster already installed and running.
+        Set<String> storageNodeAddresses = null;
+        if (!isUpgrade) {
+            storageNodeAddresses = prepareStorageSchema(serverProperties, clearTextDbPassword, existingSchemaOptionEnum);
+        } else {
+            log("When all upgrades are complete the Storage Cluster schema must then be updated using 'rhqctl upgrade --storage-schema.");
+        }
 
         // ensure the server info is up to date and stored in the DB
         ServerInstallUtil.storeServerDetails(serverProperties, clearTextDbPassword, serverDetails);
         ServerInstallUtil.persistAdminPasswordIfNecessary(serverProperties, clearTextDbPassword);
-        ServerInstallUtil.persistStorageNodesIfNecessary(serverProperties, clearTextDbPassword,
-            parseNodeInformation(serverProperties, storageNodeAddresses));
+        if (!isUpgrade) {
+            ServerInstallUtil.persistStorageNodesIfNecessary(serverProperties, clearTextDbPassword,
+                parseNodeInformation(serverProperties, storageNodeAddresses));
+        }
         ServerInstallUtil.persistStorageClusterSettingsIfNecessary(serverProperties, clearTextDbPassword);
 
         // For sanity, make sure the server props file is in sync with the db settings.
@@ -656,19 +674,21 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     @Override
-    public void updateStorageSchema(HashMap<String, String> serverProperties)
-        throws Exception {
+    public void updateStorageSchema(HashMap<String, String> serverProperties) throws Exception {
 
         String clearTextDbPassword;
         String obfuscatedDbPassword;
         obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
         clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
 
-        prepareStorageSchema(serverProperties, clearTextDbPassword, ExistingSchemaOption.KEEP, true);
+        Set<String> storageNodeAddresses = prepareStorageSchema(serverProperties, clearTextDbPassword,
+            ExistingSchemaOption.KEEP);
+        ServerInstallUtil.persistStorageNodesIfNecessary(serverProperties, clearTextDbPassword,
+            parseNodeInformation(serverProperties, storageNodeAddresses));
     }
 
     private Set<String> prepareStorageSchema(HashMap<String, String> serverProperties, String clearTextDbPassword,
-        ExistingSchemaOption existingSchemaOptionEnum, boolean allowUpdate) throws Exception {
+        ExistingSchemaOption existingSchemaOptionEnum) throws Exception {
 
         SchemaManager storageNodeSchemaManager = null;
         Set<String> storageNodeAddresses = Collections.emptySet();
@@ -695,21 +715,18 @@ public class InstallerServiceImpl implements InstallerService {
 
                 try {
                     storageNodeSchemaManager.checkCompatibility();
+
                 } catch (AuthenticationException e1) {
-                    log("Install RHQ schema along with updates to storage nodes.");
+                    log("Storage user does not exist. Installing Storage Cluster schema along with updates to storage nodes.");
                     storageNodeSchemaManager.install(schemaProperties);
                     storageNodeSchemaManager.updateTopology();
                 } catch (SchemaNotInstalledException e2) {
-                    log("Install RHQ schema along with updates to storage nodes.");
+                    log("Storage cluster Schema does not exist. Installing Storage Cluster schema along with updates to storage nodes.");
                     storageNodeSchemaManager.install(schemaProperties);
                     storageNodeSchemaManager.updateTopology();
                 } catch (InstalledSchemaTooOldException e3) {
-                    if (allowUpdate) {
-                        log("Install RHQ schema updates to storage cluster.");
-                        storageNodeSchemaManager.install(schemaProperties);
-                    } else {
-                        log("When all upgrades are complete the Storage Cluster schema must then be updated using 'rhqctl upgrade --storage-schema.");
-                    }
+                    log("Storage cluster Schema out of date. Applying Storage Cluster schema updates.");
+                    storageNodeSchemaManager.install(schemaProperties);
                 }
                 storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
                 storageNodeSchemaManager.shutdown();

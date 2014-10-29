@@ -50,7 +50,7 @@ public class Installer {
     private InstallerConfiguration installerConfig;
 
     private enum WhatToDo {
-        DISPLAY_USAGE, DO_NOTHING, TEST, SETUPDB, LIST_SERVERS, INSTALL, UPDATESTORAGESCHEMA, LIST_VERSIONS
+        DISPLAY_USAGE, DO_NOTHING, TEST, SETUPDB, LIST_SERVERS, INSTALL, UPDATESTORAGESCHEMA, LIST_VERSIONS, UPGRADE
     }
 
     public static void main(String[] args) {
@@ -107,7 +107,7 @@ public class Installer {
                 try {
                     final InstallerService installerService = new InstallerServiceImpl(installerConfig);
                     final HashMap<String, String> serverProperties = installerService.getServerProperties();
-                    installerService.prepareDatabase(serverProperties, null, null);
+                    installerService.prepareDatabase(serverProperties, null, null, false);
                     LOG.info("Database setup is complete.");
                 } catch (Exception e) {
                     LOG.error(ThrowableUtil.getAllMessages(e));
@@ -127,11 +127,12 @@ public class Installer {
                 }
                 continue;
             }
-            case INSTALL: {
+            case INSTALL:
+            case UPGRADE: {
                 try {
                     final InstallerService installerService = new InstallerServiceImpl(installerConfig);
                     final HashMap<String, String> serverProperties = installerService.preInstall();
-                    installerService.install(serverProperties, null, null);
+                    installerService.install(serverProperties, null, null, (WhatToDo.UPGRADE == whatToDo));
                     LOG.info("Installation is complete. The server should be ready shortly.");
                 } catch (AutoInstallDisabledException e) {
                     LOG.error(e.getMessage());
@@ -167,7 +168,9 @@ public class Installer {
             .append("\n");
         usage.append("\t--setupdb, -b: only perform database schema creation or update").append("\n");
         usage.append("\t--updatestorageschema, -u: only perform storage cluster schema update").append("\n");
-        usage.append("\t--encodevalue, -e: prompts for password or value to encode for editing configuration files for agent or server");
+        usage.append("\t--upgrade, -g: this is an upgrade installation (as opposed to a new install)").append("\n");
+        usage
+            .append("\t--encodevalue, -e: prompts for password or value to encode for editing configuration files for agent or server");
         usage.append("\n");
         LOG.info(usage);
     }
@@ -180,6 +183,7 @@ public class Installer {
             new LongOpt("encodevalue", LongOpt.NO_ARGUMENT, null, 'e'),
             new LongOpt("setupdb", LongOpt.NO_ARGUMENT, null, 'b'),
             new LongOpt("updatestorageschema", LongOpt.NO_ARGUMENT, null, 'u'),
+            new LongOpt("upgrade", LongOpt.NO_ARGUMENT, null, 'g'),
             new LongOpt("listservers", LongOpt.NO_ARGUMENT, null, 'l'),
             new LongOpt("listversions", LongOpt.NO_ARGUMENT, null, 'v'),
             new LongOpt("force", LongOpt.NO_ARGUMENT, null, 'f'), new LongOpt("test", LongOpt.NO_ARGUMENT, null, 't') };
@@ -188,6 +192,7 @@ public class Installer {
         boolean listservers = false;
         boolean listversions = false;
         boolean setupdb = false;
+        boolean upgrade = false;
         boolean updatestorage = false;
         String valueToEncode = null;
         String associatedProperty = null;
@@ -285,6 +290,11 @@ public class Installer {
                 break; // don't return, in case we need to allow more args
             }
 
+            case 'g': {
+                upgrade = true;
+                break; // don't return, in case we need to allow more args
+            }
+
             case 'u': {
                 updatestorage = true;
                 break; // don't return, in case we need to allow more args
@@ -339,20 +349,23 @@ public class Installer {
                 }
 
                 System.out.println("!!! WARNING !!!");
-                System.out.println("Both standalone-full.xml and rhq-server.properties need to be updated if a property from rhq-server.properties is used in standalone-full.xml");
+                System.out
+                    .println("Both standalone-full.xml and rhq-server.properties need to be updated if a property from rhq-server.properties is used in standalone-full.xml");
                 System.out.println("!!! WARNING !!!");
                 System.out.println("     ");
                 System.out.println("Encoded " + prompt + " for rhq-server.properties:");
                 System.out.println("     " + associatedProperty + "=RESTRICTED::" + encodedValue);
                 System.out.println("     ");
-                System.out.println("Encoded " + prompt + " for standalone-full.xml with selected " + prompt + " as default:");
+                System.out.println("Encoded " + prompt + " for standalone-full.xml with selected " + prompt
+                    + " as default:");
                 System.out.println("     ${VAULT::restricted::" + associatedProperty + "::" + encodedValue + "}");
                 System.out.println("     ");
                 System.out.println("Encoded " + prompt + " for standalone-full.xml without default:");
                 System.out.println("     ${VAULT::restricted::" + associatedProperty + ":: }");
                 System.out.println("     ");
                 System.out.println("Encoded " + prompt + " for agent-configuration.xml:");
-                System.out.println("     <entry key=\"" + associatedProperty + "\" value=\"RESTRICTED::" + encodedValue + "\" />");
+                System.out.println("     <entry key=\"" + associatedProperty + "\" value=\"RESTRICTED::" + encodedValue
+                    + "\" />");
                 System.out.println("     ");
             }
 
@@ -382,7 +395,7 @@ public class Installer {
             return whatToDo.toArray(new WhatToDo[whatToDo.size()]);
         }
 
-        return new WhatToDo[] { WhatToDo.INSTALL };
+        return new WhatToDo[] { (upgrade ? WhatToDo.UPGRADE : WhatToDo.INSTALL) };
     }
 
     private String ask(Console console, String prompt) {

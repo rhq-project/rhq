@@ -660,6 +660,9 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Failed to load configuration file [{0}]. Cause: {1}")
     String LOAD_CONFIG_FILE_FAILURE = "AgentMain.load-config-file-failure";
 
+    @I18NMessage("Agent told to reload agent config file [{0}] due to marker file existence.")
+    String AGENT_CONFIG_FILE_RELOAD_MARKER_FILE_FOUND = "AgentMain.agent-config-file-reload-marker-file-found";
+
     @I18NMessage("Agent container has processed its command line arguments: {0}")
     String ARGS_PROCESSED = "AgentMain.args-processed";
 

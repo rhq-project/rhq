@@ -30,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -3389,6 +3390,11 @@ public class AgentMain {
             prefsNode.flush();
         }
 
+        if (config_file_name == null) {
+            // -c was not specified, but let's see if we were told to do a one-time reload of a config file
+            config_file_name = findAgentConfigurationFileReloadMarker();
+        }
+
         if (config_file_name != null) {
             try {
                 loadConfigurationFile(config_file_name);
@@ -3396,6 +3402,8 @@ public class AgentMain {
                 throw new IllegalArgumentException(MSG.getMsg(AgentI18NResourceKeys.LOAD_CONFIG_FILE_FAILURE,
                     config_file_name, e));
             }
+            // now that we know we loaded the config file, make sure we purge any marker file that might have triggered the reload
+            purgeAgentConfigurationFileReloadMarker();
         }
 
         checkInitialConfiguration();
@@ -3410,6 +3418,57 @@ public class AgentMain {
 
         LOG.debug(AgentI18NResourceKeys.ARGS_PROCESSED, Arrays.asList(m_commandLineArgs));
 
+        return;
+    }
+
+    /**
+     * If a user puts a marker file in the conf/ directory named "foo.xml.reload", this tells the agent
+     * it should reload the agent configuration file named "foo.xml" - this will act just as if the user
+     * passed in "-c foo.xml" on the command line.
+     *
+     * @return the agent config file whose reload marker was found; null if no marker file was found
+     */
+    private String findAgentConfigurationFileReloadMarker() {
+        String agentConfigFileToReload = null;
+
+        File confDir = new File("conf");
+        if (confDir.exists()) {
+            File[] reload = confDir.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return (name.endsWith(".xml.reload"));
+                }
+            });
+            if (reload != null && reload.length > 0) {
+                // just take the first one, should only ever have one anyway (unless we have zero)
+                File markerFile = reload[0];
+                int filenameLength = markerFile.getName().length();
+                agentConfigFileToReload = markerFile.getName().substring(0, filenameLength - ".reload".length());
+                LOG.info(AgentI18NResourceKeys.AGENT_CONFIG_FILE_RELOAD_MARKER_FILE_FOUND, agentConfigFileToReload);
+            }
+        }
+
+        return agentConfigFileToReload;
+    }
+
+    /**
+     * Purges any and all agent configuration file reload marker files found.
+     */
+    private void purgeAgentConfigurationFileReloadMarker() {
+        File confDir = new File("conf");
+        if (confDir.exists()) {
+            File[] reloads = confDir.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return (name.endsWith(".xml.reload"));
+                }
+            });
+            if (reloads != null && reloads.length > 0) {
+                for (File doomed : reloads) {
+                    doomed.delete();
+                }
+            }
+        }
         return;
     }
 

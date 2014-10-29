@@ -769,6 +769,10 @@ public abstract class AbstractInstall extends ControlCommand {
             File agentConfDir = new File(agentBasedir, "conf");
             File agentConfigFile = new File(agentConfDir, "agent-configuration.xml");
 
+            // BZ 1158228 - to support install on Windows, make sure the first time we reload the agent config xml always
+            File agentConfigReloadMarkerFile = new File(agentConfigFile.getAbsolutePath() + ".reload");
+            agentConfigReloadMarkerFile.createNewFile();
+
             if (commandLine.hasOption(AGENT_CONFIG_OPTION)) {
                 log.info("Configuring the RHQ agent with custom configuration file: "
                     + commandLine.getOptionValue(AGENT_CONFIG_OPTION));

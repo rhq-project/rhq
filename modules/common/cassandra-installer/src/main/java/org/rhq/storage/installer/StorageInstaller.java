@@ -221,8 +221,7 @@ public class StorageInstaller {
             .addOption(commitLogOption).addOption(dataDirOption).addOption(savedCachesDirOption)
             .addOption(cqlPortOption).addOption(gossipPortOption).addOption(basedirOption).addOption(heapSizeOption)
             .addOption(heapNewSizeOption).addOption(noVersionStampOption).addOption(stackSizeOption)
-            .addOption(upgradeOption).addOption(undoOption)
-            .addOption(verifyDataDirsEmptyOption);
+            .addOption(upgradeOption).addOption(undoOption).addOption(verifyDataDirsEmptyOption);
     }
 
     public int run(CommandLine cmdLine) throws Exception {
@@ -266,24 +265,35 @@ public class StorageInstaller {
         properties.setProperty(StorageProperty.CQL_PORT.property(), Integer.toString(installerInfo.cqlPort));
         properties.setProperty(StorageProperty.GOSSIP_PORT.property(), Integer.toString(installerInfo.gossipPort));
 
-        serverPropertiesUpdater.update(properties);
-
-        Properties dbProperties;
-        if (isUpgrade && !noStamp) {
+        // carry forward the required db props from the legacy install. We need these to contact the
+        // DB to do a version stamp.
+        if (isUpgrade) {
             File oldServerPropsFile = new File(fromDir, "bin/rhq-server.properties");
-            dbProperties = new Properties();
+            Properties oldProperties = new Properties();
             FileInputStream oldServerPropsFileInputStream = new FileInputStream(oldServerPropsFile);
             try {
-                dbProperties.load(oldServerPropsFileInputStream);
+                oldProperties.load(oldServerPropsFileInputStream);
+                properties.setProperty("rhq.server.database.connection-url",
+                    oldProperties.getProperty("rhq.server.database.connection-url"));
+                properties.setProperty("rhq.server.database.user-name",
+                    oldProperties.getProperty("rhq.server.database.user-name"));
+                properties.setProperty("rhq.server.database.password",
+                    oldProperties.getProperty("rhq.server.database.password"));
+
             } finally {
                 oldServerPropsFileInputStream.close();
             }
+        }
 
+        // update the properties file
+        serverPropertiesUpdater.update(properties);
+
+        Properties dbProperties = serverPropertiesUpdater.loadExistingProperties();
+
+        // when upgrading, mark the upgrade by stamping the new version
+        if (isUpgrade && !noStamp) {
             String version = StorageInstaller.class.getPackage().getImplementationVersion();
             stampStorageNodeVersion(dbProperties, installerInfo.hostname, version);
-
-        } else {
-            dbProperties = serverPropertiesUpdater.loadExistingProperties();
         }
 
         // start node (and install windows service) if necessary
@@ -1083,7 +1093,9 @@ public class StorageInstaller {
             }
         } catch (Exception e) {
             throw new RuntimeException("Unable to update Storage Node [" + storageNodeAddress + "] to version ["
-                + version + "]", e);
+                + version
+                + "].  Make sure the rhq-server.properties file has the correct database property settings! Cause: "
+                + e.getMessage());
         } finally {
             JDBCUtil.safeClose(connection);
         }

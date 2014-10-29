@@ -100,11 +100,14 @@ public interface InstallerService {
      *                             existing schema. Must be one of the names of the
      *                             {@link ServerInstallUtil.ExistingSchemaOption} enum.
      *                             If in auto-install mode, this value is ignored and can be anything.
+     * @param isUpgrade If true this is an upgrade install (rhqctl upgrade), otherwise just an install (rhqctl install)
+     *
      * @throws AutoInstallDisabledException if the server configuration properties does not have auto-install enabled
      * @throws AlreadyInstalledException if it appears the installer was already run and the server is fully installed
      * @throws Exception some other exception that should disallow the installation from continuing
      */
-    void install(HashMap<String, String> serverProperties, ServerDetails serverDetails, String existingSchemaOption)
+    void install(HashMap<String, String> serverProperties, ServerDetails serverDetails, String existingSchemaOption,
+        boolean isUpgrade)
         throws AutoInstallDisabledException, AlreadyInstalledException, Exception;
 
     /**
@@ -126,15 +129,17 @@ public interface InstallerService {
      *                             existing schema. Must be one of the names of the
      *                             {@link ServerInstallUtil.ExistingSchemaOption} enum.
      *                             If in auto-install mode, this value is ignored and can be anything.
+     * @param isUpgrade If true this is an upgrade install (rhqctl upgrade), otherwise just an install (rhqctl install)
+     *
      * @throws Exception failed to successfully prepare the database
      */
     void prepareDatabase(HashMap<String, String> serverProperties, ServerDetails serverDetails,
-        String existingSchemaOption) throws Exception;
+        String existingSchemaOption, boolean isUpgrade) throws Exception;
 
     /**
-     * Update the existing storage cluster schema.  All storage nodes must be up and running the bits associated
-     * with this schema.<b/>
-     * NOTE: if not in auto-install mode, the database password is assumed to be in clear text (i.e. unencoded).
+     * Update an existing storage cluster schema or install a new schema if it does not yet exist.  All storage nodes
+     * must be up and running the bits associated with this schema.<b/>
+     * NOTE: if not in auto-install mode, the database password is assumed to be in clear text (i.e. not encoded).
      * If in auto-install mode, the database password must be encoded already.
      *
      * @param serverProperties the server's settings to use. These will be persisted to

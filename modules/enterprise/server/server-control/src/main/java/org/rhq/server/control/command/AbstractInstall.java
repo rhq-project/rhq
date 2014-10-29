@@ -484,6 +484,9 @@ public abstract class AbstractInstall extends ControlCommand {
             });
 
             org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
+            if (ServerInstallerAction.UPGRADE == serverInstallerAction) {
+                commandLine.addArgument("--upgrade");
+            }
             integerFuture = ExecutorAssist.executeAsync(getBinDir(), commandLine, null);
             log.info("The RHQ Server installer is running");
             break;

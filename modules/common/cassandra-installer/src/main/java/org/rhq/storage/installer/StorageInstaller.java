@@ -269,19 +269,23 @@ public class StorageInstaller {
         // DB to do a version stamp.
         if (isUpgrade) {
             File oldServerPropsFile = new File(fromDir, "bin/rhq-server.properties");
-            Properties oldProperties = new Properties();
-            FileInputStream oldServerPropsFileInputStream = new FileInputStream(oldServerPropsFile);
-            try {
-                oldProperties.load(oldServerPropsFileInputStream);
-                properties.setProperty("rhq.server.database.connection-url",
-                    oldProperties.getProperty("rhq.server.database.connection-url"));
-                properties.setProperty("rhq.server.database.user-name",
-                    oldProperties.getProperty("rhq.server.database.user-name"));
-                properties.setProperty("rhq.server.database.password",
-                    oldProperties.getProperty("rhq.server.database.password"));
+            // if the old props file exists then carry forward the props. If we're not doing a version stamp then
+            // don't worry about a missing file, we're not contacting the db anyway (typically a test scenario).
+            if (oldServerPropsFile.exists() || !noStamp) {
+                Properties oldProperties = new Properties();
+                FileInputStream oldServerPropsFileInputStream = new FileInputStream(oldServerPropsFile);
+                try {
+                    oldProperties.load(oldServerPropsFileInputStream);
+                    properties.setProperty("rhq.server.database.connection-url",
+                        oldProperties.getProperty("rhq.server.database.connection-url"));
+                    properties.setProperty("rhq.server.database.user-name",
+                        oldProperties.getProperty("rhq.server.database.user-name"));
+                    properties.setProperty("rhq.server.database.password",
+                        oldProperties.getProperty("rhq.server.database.password"));
 
-            } finally {
-                oldServerPropsFileInputStream.close();
+                } finally {
+                    oldServerPropsFileInputStream.close();
+                }
             }
         }
 

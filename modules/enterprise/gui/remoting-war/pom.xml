@@ -5,13 +5,13 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-parent</artifactId>
-        <version>4.12.0.JON330ER05</version>
+        <version>4.12.0.JON330CR01</version>
         <relativePath>../../../../pom.xml</relativePath>
     </parent>
 
     <groupId>org.rhq</groupId>
     <artifactId>rhq-remoting-war</artifactId>
-    <version>4.12.0.JON330ER05</version>
+    <version>4.12.0.JON330CR01</version>
     <packaging>war</packaging>
 
     <name>RHQ Remoting WAR</name>

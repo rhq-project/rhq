@@ -4,10 +4,10 @@
    <parent>
       <artifactId>rhq-scripting-parent</artifactId>
       <groupId>org.rhq</groupId>
-      <version>4.12.0.JON330ER05</version>
+      <version>4.12.0.JON330CR01</version>
    </parent>
    <artifactId>rhq-scripting-javascript</artifactId>
-   <version>4.12.0.JON330ER05</version>
+   <version>4.12.0.JON330CR01</version>
    <name>RHQ Javascript support</name>
    <description>Provides RHQ scripting in Javascript using Rhino</description>
 

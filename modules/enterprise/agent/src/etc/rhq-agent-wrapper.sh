@@ -143,7 +143,9 @@ if [ $? -ne 0 ]; then
     echo >&2 'WARNING: The readlink command is not available on this platform.'
     echo >&2 '         If this script was launched from a symbolic link, errors may occur.'
     echo >&2 '         Consider installing readlink on this platform.'
-    _DOLLARZERO="$0"
+    _WORKINGPATH="`dirname \"$0\"`"
+    _WORKINGPATH="`(cd \"$_WORKINGPATH\" && pwd )`"
+    _DOLLARZERO="$_WORKINGPATH"/rhq-agent-wrapper.sh
 else
     # only certain platforms support the -e argument for readlink
     if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then

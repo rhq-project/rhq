@@ -174,7 +174,7 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
     @Override
     public Alert checkForCompletedAlertConditionSet(int alertConditionId) {
         Integer alertDefinitionId = alertConditionManager
-            .getAlertDefinitionByConditionIdInNewTransaction(alertConditionId);
+            .getAlertDefinitionByConditionIdNewTx(alertConditionId);
 
         // ok, so figure out whether all of the conditions have been met
         boolean conditionSetResult = evaluateConditionSet(alertDefinitionId);

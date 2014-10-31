@@ -26,6 +26,7 @@ import java.util.Map;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
@@ -50,7 +51,7 @@ public interface AlertManagerLocal {
 
     Alert fireAlert(int alertDefinitionId);
 
-    void sendAlertNotifications(Alert alert);
+    void sendAlertNotificationsNSTx(Alert alert);
 
     int getAlertCountByMeasurementDefinitionAndResources(int measurementDefinitionId, int[] resources, long beginDate,
         long endDate);
@@ -62,6 +63,8 @@ public interface AlertManagerLocal {
      * @return The alert sender plugin manager
      */
     AlertSenderPluginManager getAlertPluginManager();
+
+    void addNotificationLog(int alertId, AlertNotificationLog notificationLog);
 
     /**
      * Create a human readable description of the conditions that led to this alert.

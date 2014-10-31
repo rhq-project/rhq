@@ -35,14 +35,14 @@ import org.rhq.core.domain.util.PageList;
 @Local
 public interface AlertConditionManagerLocal {
 
-    Integer getAlertDefinitionByConditionIdInNewTransaction(int alertConditionId);
+    Integer getAlertDefinitionByConditionIdNewTx(int alertConditionId);
 
     AlertCondition getAlertConditionById(int alertConditionId);
 
     PageList<? extends AbstractAlertConditionCategoryComposite> getAlertConditionComposites(Subject user,
         Integer agentId, AlertConditionCategory category, PageControl pageControl);
 
-    InventoryStatus getResourceStatusByConditionId(int alertConditionId);
+    InventoryStatus getResourceStatusByConditionIdNewTx(int alertConditionId);
 
     int purgeOrphanedAlertConditions();
 }

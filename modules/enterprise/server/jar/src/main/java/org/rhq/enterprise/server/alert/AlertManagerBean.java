@@ -114,6 +114,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
     @EJB
+    private AlertManagerLocal alertManager;
+    @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB
     @IgnoreDependency
@@ -658,8 +660,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      * @param alert the fired alert
      */
     @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void sendAlertNotifications(Alert alert) {
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void sendAlertNotificationsNSTx(Alert alert) {
         /*
          * make this method public in case we show the notification failure to the user in the UI in the future and want
          * to give them some way to explicitly try to re-send the notification for some client-side auditing purposes
@@ -672,57 +674,78 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
             if (alertNotifications != null && alertNotifications.size() > 0) {
                 AlertSenderPluginManager alertSenderPluginManager = getAlertPluginManager();
-                DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
 
                 for (AlertNotification alertNotification : alertNotifications) {
-                    AlertNotificationLog notificationLog = null;
+                    try {
+                        AlertNotificationLog notificationLog = null;
 
-                    String senderName = alertNotification.getSenderName();
-                    if (senderName == null) {
-                        notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE, "Sender '"
-                            + senderName + "' is not defined");
-                    } else {
-
-                        AlertSender<?> notificationSender = alertSenderPluginManager
-                            .getAlertSenderForNotification(alertNotification);
-                        if (notificationSender == null) {
+                        String senderName = alertNotification.getSenderName();
+                        if (alertSenderPluginManager == null) {
                             notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
-                                "Failed to obtain a sender with given name");
-                        } else {
-                            try {
-                                SenderResult result = notificationSender.send(alert);
-                                if (log.isDebugEnabled()) {
-                                    log.debug(result);
-                                }
+                                "Notification was not sent as alert sender plugins are not yet initialized ");
 
-                                if (result == null) {
-                                    notificationLog = new AlertNotificationLog(alert, senderName, ResultState.UNKNOWN,
-                                        "Sender did not return any result");
-                                } else {
-                                    notificationLog = new AlertNotificationLog(alert, senderName, result);
-                                }
-                            } catch (Throwable t) {
-                                log.error("Notification processing terminated abruptly" + t.getMessage());
+                        } else if (senderName == null) {
+                            notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
+                                "Sender '" + senderName + "' is not defined");
+
+                        } else {
+                            AlertSender<?> notificationSender = alertSenderPluginManager
+                                .getAlertSenderForNotification(alertNotification);
+                            if (notificationSender == null) {
                                 notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
-                                    "Notification processing terminated abruptly, cause: " + t.getMessage());
+                                    "Failed to obtain a sender with given name");
+                            } else {
+                                try {
+                                    SenderResult result = notificationSender.send(alert);
+                                    if (log.isDebugEnabled()) {
+                                        log.debug(result);
+                                    }
+
+                                    if (result == null) {
+                                        notificationLog = new AlertNotificationLog(alert, senderName,
+                                            ResultState.UNKNOWN, "Sender did not return any result");
+                                    } else {
+                                        notificationLog = new AlertNotificationLog(alert, senderName, result);
+                                    }
+                                } catch (Throwable t) {
+                                    log.error("Notification processing terminated abruptly" + t.getMessage());
+                                    notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
+                                        "Notification processing terminated abruptly, cause: " + t.getMessage());
+                                }
                             }
                         }
-                    }
 
-                    // make sure we don't exceed the max message length for the db vendor
-                    String message = dbType.getString(notificationLog.getMessage(),
-                        AlertNotificationLog.MESSAGE_MAX_LENGTH);
-                    if (null != message && !message.equals(notificationLog.getMessage())) {
-                        notificationLog = new AlertNotificationLog(notificationLog.getAlert(),
-                            notificationLog.getSender(), notificationLog.getResultState(), message);
+                        alertManager.addNotificationLog(alert.getId(), notificationLog);
+
+                    } catch (Throwable t) {
+                        log.error(
+                            "Failed to send notification [" + alertNotification + "] for [" + alert.toSimpleString()
+                                + "].", t);
                     }
-                    entityManager.persist(notificationLog);
-                    alert.addAlertNotificatinLog(notificationLog);
                 }
             }
         } catch (Throwable t) {
-            log.error("Failed to send all notifications for " + alert.toSimpleString(), t);
+            log.error("Failed to send all notifications for [" + alert.toSimpleString() + "].", t);
         }
+    }
+
+    public void addNotificationLog(int alertId, AlertNotificationLog notificationLog) {
+        Alert alert = entityManager.find(Alert.class, alertId);
+        if (null == alert) {
+            throw new RuntimeException("Alert not found with id [" + alertId + "].");
+        }
+
+        // make sure we don't exceed the max message length for the db vendor
+        DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
+        String message = dbType.getString(notificationLog.getMessage(), AlertNotificationLog.MESSAGE_MAX_LENGTH);
+
+        if (null != message && !message.equals(notificationLog.getMessage())) {
+            notificationLog = new AlertNotificationLog(notificationLog.getAlert(), notificationLog.getSender(),
+                notificationLog.getResultState(), message);
+        }
+
+        entityManager.persist(notificationLog);
+        alert.addAlertNotificatinLog(notificationLog);
     }
 
     /**

@@ -59,7 +59,7 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public Alert processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage, Integer definitionId) {
+    public Alert processCachedConditionMessageNewTx(AbstractAlertConditionMessage conditionMessage, Integer definitionId) {
         Alert result = null;
 
         /*

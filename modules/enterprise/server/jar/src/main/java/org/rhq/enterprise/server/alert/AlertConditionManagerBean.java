@@ -70,7 +70,7 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @Override
-    public Integer getAlertDefinitionByConditionIdInNewTransaction(int alertConditionId) {
+    public Integer getAlertDefinitionByConditionIdNewTx(int alertConditionId) {
         try {
             Query query = entityManager.createNamedQuery(AlertDefinition.QUERY_FIND_DEFINITION_ID_BY_CONDITION_ID);
             query.setParameter("alertConditionId", alertConditionId);
@@ -163,7 +163,7 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @Override
-    public InventoryStatus getResourceStatusByConditionId(int alertConditionId) {
+    public InventoryStatus getResourceStatusByConditionIdNewTx(int alertConditionId) {
         try {
             Query query = entityManager.createNamedQuery(AlertCondition.QUERY_FIND_RESOURCE_STATUS_BY_CONDITION_ID);
             query.setParameter("alertConditionId", alertConditionId);

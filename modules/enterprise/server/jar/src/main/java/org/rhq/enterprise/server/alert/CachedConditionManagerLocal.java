@@ -41,5 +41,5 @@ public interface CachedConditionManagerLocal {
      * @param definitionId
      * @return the newly fired alert resulting from the condition message, or null if no alert was fired.
      */
-    Alert processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage, Integer definitionId);
+    Alert processCachedConditionMessageNewTx(AbstractAlertConditionMessage conditionMessage, Integer definitionId);
 }

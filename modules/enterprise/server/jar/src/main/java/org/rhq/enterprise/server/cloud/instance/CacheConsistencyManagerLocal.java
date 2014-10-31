@@ -31,5 +31,5 @@ public interface CacheConsistencyManagerLocal {
 
     void handleHeartbeatTimer(Timer timer);
 
-    void reloadServerCacheIfNeeded();
+    void reloadServerCacheIfNeededNSTx();
 }

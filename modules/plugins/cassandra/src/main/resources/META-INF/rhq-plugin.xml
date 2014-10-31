@@ -533,7 +533,6 @@
 
       <resource-configuration>
           <c:simple-property name="PhiConvictThreshold" type="double" required="true" description="Phi-convict threshold sets the sensitivity of the failure detector. Lower values increase the likelihood that an unresponsive node will be marked as down, while higher values decrease the likelihood."/>
-          <c:simple-property name="AllEndpointStates" type="integer" required="false" readOnly="true" description="States of all the end-points."/>
           <c:list-property name="SimpleStates" readOnly="true">
             <c:map-property name="SimpleState" readOnly="true">
               <c:simple-property name="name" type="string" readOnly="true"/>

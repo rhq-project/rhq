@@ -79,7 +79,7 @@ public class AlertConditionConsumerBean implements MessageListener {
             }
 
             int alertConditionId = conditionMessage.getAlertConditionId();
-            InventoryStatus status = alertConditionManager.getResourceStatusByConditionId(alertConditionId);
+            InventoryStatus status = alertConditionManager.getResourceStatusByConditionIdNewTx(alertConditionId);
             if (status != InventoryStatus.COMMITTED) {
                 if (log.isDebugEnabled()) {
                     log.debug("Resource for AlertCondition[id=" + alertConditionId
@@ -88,7 +88,7 @@ public class AlertConditionConsumerBean implements MessageListener {
                 return;
             }
 
-            definitionId = alertConditionManager.getAlertDefinitionByConditionIdInNewTransaction(alertConditionId);
+            definitionId = alertConditionManager.getAlertDefinitionByConditionIdNewTx(alertConditionId);
             if (definitionId == null) {
                 log.info("AlertCondition[id=" + alertConditionId
                     + "] has been removed after it was triggered; this message will be discarded");
@@ -101,7 +101,7 @@ public class AlertConditionConsumerBean implements MessageListener {
              * must be executed in a new, nested transaction so that by it completes and unlocks, the next thread
              * will see all of its results.
              */
-            Alert newAlert = cachedConditionManager.processCachedConditionMessage(conditionMessage, definitionId);
+            Alert newAlert = cachedConditionManager.processCachedConditionMessageNewTx(conditionMessage, definitionId);
 
             /*
              * In general it's not required to reload the caches directly. Changes made via the AlertDefinitionManager
@@ -122,10 +122,10 @@ public class AlertConditionConsumerBean implements MessageListener {
              */
             if (null != newAlert) {
                 log.debug("Checking for cache reload due to alert firing");
-                cacheConsistencyManager.reloadServerCacheIfNeeded();
+                cacheConsistencyManager.reloadServerCacheIfNeededNSTx();
 
                 //  the alert is already persisted, now process notifications
-                alertManager.sendAlertNotifications(newAlert);
+                alertManager.sendAlertNotificationsNSTx(newAlert);
             }
 
         } catch (Throwable t) {

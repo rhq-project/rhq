@@ -86,7 +86,7 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
     @Timeout
     public void handleHeartbeatTimer(Timer timer) {
         try {
-            cacheConsistencyManager.reloadServerCacheIfNeeded();
+            cacheConsistencyManager.reloadServerCacheIfNeededNSTx();
         } catch (Throwable t) {
             log.error("Failed to reload server cache if needed - will try again later. Cause: " + t);
         } finally {
@@ -103,7 +103,7 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void reloadServerCacheIfNeeded() {
+    public void reloadServerCacheIfNeededNSTx() {
         // try reload the global cache separate from the agent caches for purposes of isolated failures
         reloadGlobalCacheIfNeeded();
         reloadAgentCachesAsNeeded();

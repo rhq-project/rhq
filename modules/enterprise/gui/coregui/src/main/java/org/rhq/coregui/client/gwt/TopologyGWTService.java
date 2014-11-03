@@ -29,6 +29,7 @@ import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.PartitionEvent;
 import org.rhq.core.domain.cloud.PartitionEventDetails;
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.cloud.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.AgentCriteria;
@@ -45,6 +46,13 @@ import org.rhq.core.domain.util.PageList;
  * @author Jiri Kremser
  */
 public interface TopologyGWTService extends RemoteService {
+
+    /**
+     * returns current server operation mode
+     * @return
+     * @throws RuntimeException
+     */
+    OperationMode getCurrentServerOperationMode() throws RuntimeException;
 
     /**
      * Returns all the servers with agent count.

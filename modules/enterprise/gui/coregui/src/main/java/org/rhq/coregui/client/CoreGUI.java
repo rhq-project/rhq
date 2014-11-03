@@ -18,6 +18,7 @@
  */
 package org.rhq.coregui.client;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -44,6 +45,7 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.coregui.client.admin.AdministrationView;
 import org.rhq.coregui.client.alert.AlertHistoryView;
@@ -65,6 +67,8 @@ import org.rhq.coregui.client.test.TestTopView;
 import org.rhq.coregui.client.util.ErrorHandler;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Option;
+import org.rhq.coregui.client.util.message.Message.Severity;
 import org.rhq.coregui.client.util.message.MessageCenter;
 
 /**
@@ -180,6 +184,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         messageCenter = new MessageCenter();
 
         UserSessionManager.login();
+
     }
 
     public int getRpcTimeout() {
@@ -304,6 +309,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             } else {
                 buildCoreUI();
             }
+
         }
     }
 
@@ -353,6 +359,21 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         if (!rootCanvas.isVisible()) {
             rootCanvas.show();
         }
+        GWTServiceLookup.getTopologyService().getCurrentServerOperationMode(new AsyncCallback<OperationMode>() {
+
+            @Override
+            public void onFailure(Throwable caught) {
+            }
+
+            @Override
+            public void onSuccess(OperationMode result) {
+                if (OperationMode.MAINTENANCE.equals(result)) {
+                    getMessageCenter().notify(
+                        new Message(MSG.server_maintanance_warning(), Severity.Warning, EnumSet.of(Option.Sticky)));
+                }
+
+            }
+        });
     }
 
     @Override
@@ -384,6 +405,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         showBusy(true);
         currentViewPath = new ViewPath(currentView, true);
         coreGUI.rootCanvas.renderView(currentViewPath);
+
         showBusy(false);
     }
 

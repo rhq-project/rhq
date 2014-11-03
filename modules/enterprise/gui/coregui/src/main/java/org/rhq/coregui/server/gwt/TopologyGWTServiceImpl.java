@@ -23,12 +23,14 @@
 package org.rhq.coregui.server.gwt;
 
 import org.apache.commons.lang.ArrayUtils;
+
 import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.PartitionEvent;
 import org.rhq.core.domain.cloud.PartitionEventDetails;
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.cloud.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.AgentCriteria;
@@ -42,6 +44,7 @@ import org.rhq.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -59,6 +62,13 @@ public class TopologyGWTServiceImpl extends AbstractGWTServiceImpl implements To
     private PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();
 
     private AffinityGroupManagerLocal affinityGroupManager = LookupUtil.getAffinityGroupManager();
+
+    private ServerManagerLocal serverManager = LookupUtil.getServerManager();
+
+    @Override
+    public OperationMode getCurrentServerOperationMode() throws RuntimeException {
+        return serverManager.getServer().getOperationMode();
+    }
         
     @Override
     public PageList<ServerWithAgentCountComposite> getServers(PageControl pc) throws RuntimeException {

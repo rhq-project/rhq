@@ -185,7 +185,7 @@ import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvoc
 import org.rhq.enterprise.communications.command.server.CommandListener;
 import org.rhq.enterprise.communications.command.server.IncomingCommandTrace;
 import org.rhq.enterprise.communications.util.CommandTraceUtil;
-import org.rhq.enterprise.communications.util.NotPermittedException;
+import org.rhq.enterprise.communications.util.NotProcessedException;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 
 /**
@@ -3955,7 +3955,7 @@ public class AgentMain {
                     // only wait a finite time, otherwise shutdown may be blocked
                     long timeout = SECONDS.toMillis(30);
                     if (!m_latch.await(timeout, TimeUnit.MILLISECONDS)) {
-                        throw new NotPermittedException(timeout);
+                        throw new NotProcessedException("startup");
                     }
                 }
             } catch (InterruptedException e) {

@@ -1,7 +1,7 @@
 var attachmentsRequest = 'attachments';
 
 angular.module('RedhatAccess.JON', ['RedhatAccess.cases'])
-.controller('customCase', ['$scope', 'securityService', 'NEW_DEFAULTS', '$location', '$http', function($scope, securityService, NEW_DEFAULTS , $location, $http) {
+.controller('customCase', ['$scope', 'NEW_DEFAULTS', '$location', '$http', function($scope, NEW_DEFAULTS , $location, $http) {
   NEW_DEFAULTS.product = "Red Hat JBoss Operations Network";
   NEW_DEFAULTS.version = "3.3.0";
   
@@ -16,9 +16,9 @@ angular.module('RedhatAccess.JON', ['RedhatAccess.cases'])
     $location.path('/case/new')
   }
 
-   $scope.init = function () {
-     securityService.validateLogin(true);
-   };
+}])
+.run(['SECURITY_CONFIG', function(SECURITY_CONFIG) {
+    SECURITY_CONFIG.forceLogin = true;
 }]);
 angular.module('RedhatAccess.cases')
   .controller('BackEndAttachmentsCtrl', ['$scope', 'TreeViewSelectorData', 'AttachmentsService',

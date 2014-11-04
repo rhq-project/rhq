@@ -36,6 +36,7 @@ gwt-tmp/
 .wtpmodules
 *~
 *.DS_Store
+stellar.yaml
 #these are created by the python script engine during the tests
 cachedir/
 

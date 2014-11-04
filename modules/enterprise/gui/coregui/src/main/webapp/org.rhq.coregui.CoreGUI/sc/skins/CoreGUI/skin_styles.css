@@ -1870,12 +1870,10 @@ div[eventproxy^="isc_DateChooser"] {
 
 
 /* bz 1144052, sets the z-index to auto to all related parents to reset the 'stacking context' */
-body > div > div[eventproxy*="isc_HTMLFlow_0"],
 body > div.normal[eventproxy*="HTMLFlow"],
 body > div > div[eventproxy*="isc_HTMLFlow_0"],
 body > div.normal,
 body > div[eventproxy*="CoreGUI_RootCanvas"].normal,
-body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"],
 body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"],
 body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"],
 body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"] > div.overflowVisible[eventproxy*="MenuBarView_LinkBar"],

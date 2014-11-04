@@ -812,4 +812,10 @@ public interface AgentConfigurationConstants {
      */
     @Restricted
     String COMMUNICATIONS_CONNECTOR_SECURITY_KEYSTORE_KEY_PASSWORD = "rhq.communications.connector.security.keystore.key-password";
+
+    /**
+     * The password used to access the truststore file
+     */
+    @Restricted
+    String COMMUNICATIONS_CONNECTOR_SECURITY_TRUSTSTORE_PASSWORD = "rhq.communications.connector.security.truststore.password";
 }

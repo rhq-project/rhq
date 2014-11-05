@@ -70,8 +70,8 @@ import org.rhq.coregui.client.components.form.SortedSelectItem;
 import org.rhq.coregui.client.components.form.TimeUnit;
 import org.rhq.coregui.client.util.MeasurementConverterClient;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.measurement.MeasurementParser;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
@@ -1050,7 +1050,7 @@ public class ConditionEditor extends EnhancedVLayout {
         eventSeveritySelection.setWrapTitle(false);
         eventSeveritySelection.setShowIfCondition(ifFunc);
         formItems.add(eventSeveritySelection);
-        
+
         String eventRegexValue = "", eventSourcePathRegexValue = "";
         if (editMode) {
             if (existingCondition.getOption().contains(AlertCondition.ADHOC_SEPARATOR)) {
@@ -1077,7 +1077,7 @@ public class ConditionEditor extends EnhancedVLayout {
             eventDetailsRegex.setDefaultValue(eventRegexValue);
         }
         formItems.add(eventDetailsRegex);
-        
+
         TextItem eventSourcePathRegex = new TextItem(EVENT_SOURCE_PATH_REGEX_ITEMNAME,
             MSG.view_inventory_eventHistory_sourceLocation() + " "
                 + MSG.view_alert_definition_condition_editor_common_regex());
@@ -1283,24 +1283,23 @@ public class ConditionEditor extends EnhancedVLayout {
         metricDropDownMenu.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 MeasurementDefinition measDef = getMeasurementDefinition(metricDropDownMenu.getValueAsString());
-                baseUnitsItem.setValue(measDef.getUnits() == MeasurementUnits.NONE ? MSG
-                    .view_alert_definition_condition_editor_common_baseUnits_none() : measDef.getUnits().toString());
+                baseUnitsItem.setValue(measDef.getUnits() == MeasurementUnits.NONE ? MSG.common_val_none() : measDef
+                    .getUnits().toString());
                 List<MeasurementUnits> availableUnits = measDef.getUnits().getFamilyUnits();
                 baseUnitsItem.setTooltip(MSG.view_alert_definition_condition_editor_common_baseUnits_availableUnits()
                     + (availableUnits.isEmpty() || availableUnits.get(0) == MeasurementUnits.NONE ? MSG
-                        .view_alert_definition_condition_editor_common_baseUnits_none() : availableUnits));
+                        .common_val_none() : availableUnits));
             }
         });
         // initialize the field, the default will be the first entry in the value map
         MeasurementDefinition defaultMeasDef = getMeasurementDefinition((String) metricDropDownMenu
             .getAttributeAsMap("valueMap").keySet().iterator().next());
         MeasurementUnits units = defaultMeasDef.getUnits();
-        baseUnitsItem.setValue(units == MeasurementUnits.NONE ? MSG
-            .view_alert_definition_condition_editor_common_baseUnits_none() : units.toString());
+        baseUnitsItem.setValue(units == MeasurementUnits.NONE ? MSG.common_val_none() : units.toString());
         List<MeasurementUnits> availableUnits = units.getFamilyUnits();
         baseUnitsItem.setTooltip(MSG.view_alert_definition_condition_editor_common_baseUnits_availableUnits()
-            + (availableUnits.isEmpty() || availableUnits.get(0) == MeasurementUnits.NONE ? MSG
-                .view_alert_definition_condition_editor_common_baseUnits_none() : availableUnits));
+            + (availableUnits.isEmpty() || availableUnits.get(0) == MeasurementUnits.NONE ? MSG.common_val_none()
+                : availableUnits));
         return baseUnitsItem;
     }
 

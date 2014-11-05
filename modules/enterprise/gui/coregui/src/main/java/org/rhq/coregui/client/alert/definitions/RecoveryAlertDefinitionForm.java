@@ -287,7 +287,7 @@ public class RecoveryAlertDefinitionForm extends DynamicForm implements EditAler
     private String getNoRecoveryMenuItemTitle() {
         StringBuilder str = new StringBuilder();
         str.append("-- ");
-        str.append(MSG.view_alert_definition_recovery_editor_none_available());
+        str.append(MSG.common_val_none());
         str.append(" --");
         return str.toString();
     }

@@ -612,7 +612,7 @@ public class DampeningAlertDefinitionForm extends DynamicForm implements EditAle
     private String getCategoryTitle(AlertDampening.Category category) {
         switch (category) {
         case NONE: {
-            return MSG.view_alert_common_tab_dampening_category_none();
+            return MSG.common_val_none();
         }
         case CONSECUTIVE_COUNT: {
             return MSG.view_alert_common_tab_dampening_category_consecutive_count();

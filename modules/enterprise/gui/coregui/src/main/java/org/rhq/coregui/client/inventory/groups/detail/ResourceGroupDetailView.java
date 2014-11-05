@@ -22,6 +22,7 @@ package org.rhq.coregui.client.inventory.groups.detail;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -76,6 +77,7 @@ import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.preferences.UserPreferenceNames.UiSubsystem;
 
 /**
  * The right panel of a Resource Group view (#ResourceGroup/* or #Resource/AutoGroup/*).
@@ -136,6 +138,8 @@ public class ResourceGroupDetailView extends
     private String currentTabName;
     private String currentSubTabName;
 
+    private static Map<UiSubsystem, Boolean> showSubsystems;
+
     public ResourceGroupDetailView(String baseViewPath) {
         super(baseViewPath, createTitleBar(baseViewPath), createTabs());
         addStyleName("groupDetail");
@@ -156,19 +160,27 @@ public class ResourceGroupDetailView extends
         inventoryMembers = inventoryTab.getSubTabByName(GroupTab.Inventory.SubTab.MEMBERS);
 
         operationsTab = getTabSet().getTabByName(Tab.Operations.NAME);
-        operationsHistory = operationsTab.getSubTabByName(Tab.Operations.SubTab.HISTORY);
-        operationsSchedules = operationsTab.getSubTabByName(Tab.Operations.SubTab.SCHEDULES);
+        if (null != operationsTab) {
+            operationsHistory = operationsTab.getSubTabByName(Tab.Operations.SubTab.HISTORY);
+            operationsSchedules = operationsTab.getSubTabByName(Tab.Operations.SubTab.SCHEDULES);
+        }
 
         alertsTab = getTabSet().getTabByName(Tab.Alerts.NAME);
-        alertDef = alertsTab.getSubTabByName(Tab.Alerts.SubTab.DEFINITIONS);
-        alertHistory = alertsTab.getSubTabByName(Tab.Alerts.SubTab.HISTORY);
+        if (null != alertsTab) {
+            alertDef = alertsTab.getSubTabByName(Tab.Alerts.SubTab.DEFINITIONS);
+            alertHistory = alertsTab.getSubTabByName(Tab.Alerts.SubTab.HISTORY);
+        }
 
         configurationTab = getTabSet().getTabByName(Tab.Configuration.NAME);
-        configCurrent = configurationTab.getSubTabByName(Tab.Configuration.SubTab.CURRENT);
-        configHistory = configurationTab.getSubTabByName(Tab.Configuration.SubTab.HISTORY);
+        if (null != configurationTab) {
+            configCurrent = configurationTab.getSubTabByName(Tab.Configuration.SubTab.CURRENT);
+            configHistory = configurationTab.getSubTabByName(Tab.Configuration.SubTab.HISTORY);
+        }
 
         eventsTab = getTabSet().getTabByName(Tab.Events.NAME);
-        eventHistory = eventsTab.getSubTabByName(Tab.Events.SubTab.HISTORY);
+        if (null != eventsTab) {
+            eventHistory = eventsTab.getSubTabByName(Tab.Events.SubTab.HISTORY);
+        }
 
         this.hide();
     }
@@ -216,70 +228,93 @@ public class ResourceGroupDetailView extends
 
     private static TwoLevelTab[] createTabs() {
         List<TwoLevelTab> tabs = new ArrayList<TwoLevelTab>();
+        showSubsystems = UserSessionManager.getUserPreferences().getShowUiSubsystems();
 
-        TwoLevelTab summaryTab = new TwoLevelTab(new ViewName(Tab.Summary.NAME, MSG.common_title_summary()), ImageManager.getResourceIcon(
-            ResourceCategory.SERVICE, AvailabilityType.UP));
+        TwoLevelTab summaryTab = new TwoLevelTab(new ViewName(Tab.Summary.NAME, MSG.common_title_summary()),
+            ImageManager.getResourceIcon(ResourceCategory.SERVICE, AvailabilityType.UP));
 
-        SubTab summaryActivity = new SubTab(summaryTab, new ViewName(Tab.Summary.SubTab.ACTIVITY, MSG.view_tabs_common_activity()), null);
-        SubTab summaryTimeline = new SubTab(summaryTab, new ViewName(Tab.Summary.SubTab.TIMELINE, MSG.view_tabs_common_timeline()), null);
+        SubTab summaryActivity = new SubTab(summaryTab, new ViewName(Tab.Summary.SubTab.ACTIVITY,
+            MSG.view_tabs_common_activity()), null);
+        SubTab summaryTimeline = new SubTab(summaryTab, new ViewName(Tab.Summary.SubTab.TIMELINE,
+            MSG.view_tabs_common_timeline()), null);
         summaryTab.registerSubTabs(summaryActivity, summaryTimeline);
         tabs.add(summaryTab);
 
         TwoLevelTab inventoryTab = new TwoLevelTab(new ViewName(Tab.Inventory.NAME, MSG.view_tabs_common_inventory()),
             IconEnum.INVENTORY_SUMMARY);
-        SubTab inventoryMembers = new SubTab(inventoryTab, new ViewName(GroupTab.Inventory.SubTab.MEMBERS, MSG.view_tabs_common_members()), null);
+        SubTab inventoryMembers = new SubTab(inventoryTab, new ViewName(GroupTab.Inventory.SubTab.MEMBERS,
+            MSG.view_tabs_common_members()), null);
         SubTab inventoryConn = new SubTab(inventoryTab, new ViewName(Tab.Inventory.SubTab.CONNECTION_SETTINGS,
             MSG.view_tabs_common_connectionSettings()), null);
-        SubTab inventoryConnHistory = new SubTab(inventoryTab, new ViewName(Tab.Inventory.SubTab.CONNECTION_SETTINGS_HISTORY,
-            MSG.view_tabs_common_connectionSettingsHistory()), null);
+        SubTab inventoryConnHistory = new SubTab(inventoryTab, new ViewName(
+            Tab.Inventory.SubTab.CONNECTION_SETTINGS_HISTORY, MSG.view_tabs_common_connectionSettingsHistory()), null);
         inventoryTab.registerSubTabs(inventoryMembers, inventoryConn, inventoryConnHistory);
         tabs.add(inventoryTab);
 
-        TwoLevelTab alertsTab = new TwoLevelTab(new ViewName(Tab.Alerts.NAME, MSG.common_title_alerts()), IconEnum.ALERT_DEFINITIONS);
-        SubTab alertHistory = new SubTab(alertsTab, new ViewName(Tab.Alerts.SubTab.HISTORY, MSG.view_tabs_common_history()), null);
-        SubTab alertDef = new SubTab(alertsTab, new ViewName(Tab.Alerts.SubTab.DEFINITIONS, MSG.common_title_definitions()), null);
-        alertsTab.registerSubTabs(alertDef, alertHistory);
-        tabs.add(alertsTab);
+        if (showSubsystems.get(UiSubsystem.ALERTS)) {
+            TwoLevelTab alertsTab = new TwoLevelTab(new ViewName(Tab.Alerts.NAME, MSG.common_title_alerts()),
+                IconEnum.ALERT_DEFINITIONS);
+            SubTab alertHistory = new SubTab(alertsTab, new ViewName(Tab.Alerts.SubTab.HISTORY,
+                MSG.view_tabs_common_history()), null);
+            SubTab alertDef = new SubTab(alertsTab, new ViewName(Tab.Alerts.SubTab.DEFINITIONS,
+                MSG.common_title_definitions()), null);
+            alertsTab.registerSubTabs(alertDef, alertHistory);
+            tabs.add(alertsTab);
+        }
 
-        TwoLevelTab monitoringTab = new TwoLevelTab(new ViewName(Tab.Monitoring.NAME, MSG.view_tabs_common_monitoring()),
-            IconEnum.SUSPECT_METRICS);
-        SubTab monitorGraphs = new SubTab(monitoringTab, new ViewName(GroupTab.Monitoring.SubTab.GRAPHS, MSG.view_tabs_common_graphs()), null);
-        SubTab monitorMetrics = new SubTab(monitoringTab, new ViewName(Tab.Monitoring.SubTab.METRICS, MSG.view_tabs_common_metrics()), null);
-        SubTab monitorTraits = new SubTab(monitoringTab, new ViewName(Tab.Monitoring.SubTab.TRAITS, MSG.view_tabs_common_traits()), null);
+        TwoLevelTab monitoringTab = new TwoLevelTab(
+            new ViewName(Tab.Monitoring.NAME, MSG.view_tabs_common_monitoring()), IconEnum.SUSPECT_METRICS);
+        SubTab monitorGraphs = new SubTab(monitoringTab, new ViewName(GroupTab.Monitoring.SubTab.GRAPHS,
+            MSG.view_tabs_common_graphs()), null);
+        SubTab monitorMetrics = new SubTab(monitoringTab, new ViewName(Tab.Monitoring.SubTab.METRICS,
+            MSG.view_tabs_common_metrics()), null);
+        SubTab monitorTraits = new SubTab(monitoringTab, new ViewName(Tab.Monitoring.SubTab.TRAITS,
+            MSG.view_tabs_common_traits()), null);
 
-        SubTab monitorSched = new SubTab(monitoringTab, new ViewName(Tab.Monitoring.SubTab.SCHEDULES, MSG.view_tabs_common_schedules()), null);
-        SubTab monitorCallTime = new SubTab(monitoringTab, new ViewName(Tab.Monitoring.SubTab.CALL_TIME, MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs(monitorGraphs, monitorMetrics, monitorTraits, monitorSched,
-            monitorCallTime);
+        SubTab monitorSched = new SubTab(monitoringTab, new ViewName(Tab.Monitoring.SubTab.SCHEDULES,
+            MSG.view_tabs_common_schedules()), null);
+        SubTab monitorCallTime = new SubTab(monitoringTab, new ViewName(Tab.Monitoring.SubTab.CALL_TIME,
+            MSG.view_tabs_common_calltime()), null);
+        monitoringTab.registerSubTabs(monitorGraphs, monitorMetrics, monitorTraits, monitorSched, monitorCallTime);
         tabs.add(monitoringTab);
 
-        TwoLevelTab eventsTab = new TwoLevelTab(new ViewName(Tab.Events.NAME, MSG.view_tabs_common_events()), IconEnum.EVENTS);
-        SubTab eventHistory = new SubTab(eventsTab, new ViewName(Tab.Events.SubTab.HISTORY, MSG.view_tabs_common_history()), null);
-        eventsTab.registerSubTabs(eventHistory);
-        tabs.add(eventsTab);
+        if (showSubsystems.get(UiSubsystem.EVENTS)) {
+            TwoLevelTab eventsTab = new TwoLevelTab(new ViewName(Tab.Events.NAME, MSG.view_tabs_common_events()),
+                IconEnum.EVENTS);
+            SubTab eventHistory = new SubTab(eventsTab, new ViewName(Tab.Events.SubTab.HISTORY,
+                MSG.view_tabs_common_history()), null);
+            eventsTab.registerSubTabs(eventHistory);
+            tabs.add(eventsTab);
+        }
 
-        TwoLevelTab operationsTab = new TwoLevelTab(new ViewName(Tab.Operations.NAME, MSG.common_title_operations()),
-            IconEnum.RECENT_OPERATIONS);
-        SubTab operationsSchedules = new SubTab(operationsTab,
-            new ViewName(Tab.Operations.SubTab.SCHEDULES, MSG.view_tabs_common_schedules()), null);
-        SubTab operationsHistory = new SubTab(operationsTab, new ViewName(Tab.Operations.SubTab.HISTORY, MSG.view_tabs_common_history()),
-            null);
-        operationsTab.registerSubTabs(operationsSchedules, operationsHistory);
-        tabs.add(operationsTab);
+        if (showSubsystems.get(UiSubsystem.OPERATIONS)) {
+            TwoLevelTab operationsTab = new TwoLevelTab(
+                new ViewName(Tab.Operations.NAME, MSG.common_title_operations()), IconEnum.RECENT_OPERATIONS);
+            SubTab operationsSchedules = new SubTab(operationsTab, new ViewName(Tab.Operations.SubTab.SCHEDULES,
+                MSG.view_tabs_common_schedules()), null);
+            SubTab operationsHistory = new SubTab(operationsTab, new ViewName(Tab.Operations.SubTab.HISTORY,
+                MSG.view_tabs_common_history()), null);
+            operationsTab.registerSubTabs(operationsSchedules, operationsHistory);
+            tabs.add(operationsTab);
+        }
 
-        TwoLevelTab configurationTab = new TwoLevelTab(new ViewName(Tab.Configuration.NAME, MSG.common_title_configuration()),
-            IconEnum.CONFIGURATION_HISTORY);
-        SubTab configCurrent = new SubTab(configurationTab, new ViewName(Tab.Configuration.SubTab.CURRENT, MSG.view_tabs_common_current()), null);
-        SubTab configHistory = new SubTab(configurationTab, new ViewName(Tab.Configuration.SubTab.HISTORY, MSG.view_tabs_common_history()), null);
-        configurationTab.registerSubTabs(configCurrent, configHistory);
-        tabs.add(configurationTab);
+        if (showSubsystems.get(UiSubsystem.CONFIG)) {
+            TwoLevelTab configurationTab = new TwoLevelTab(new ViewName(Tab.Configuration.NAME,
+                MSG.common_title_configuration()), IconEnum.CONFIGURATION_HISTORY);
+            SubTab configCurrent = new SubTab(configurationTab, new ViewName(Tab.Configuration.SubTab.CURRENT,
+                MSG.view_tabs_common_current()), null);
+            SubTab configHistory = new SubTab(configurationTab, new ViewName(Tab.Configuration.SubTab.HISTORY,
+                MSG.view_tabs_common_history()), null);
+            configurationTab.registerSubTabs(configCurrent, configHistory);
+            tabs.add(configurationTab);
+        }
 
         return tabs.toArray(new TwoLevelTab[tabs.size()]);
     }
 
     private static Canvas viewWithoutHeader(Table t) {
-      t.setShowHeader(false);
-      return t;
+        t.setShowHeader(false);
+        return t;
     }
 
     @Override
@@ -325,13 +360,13 @@ public class ResourceGroupDetailView extends
         ViewFactory viewFactory;
         boolean visible = hasMetricsOfType(this.groupComposite, null);
         if (updateTab(this.monitoringTab, visible, true)) {
-            visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT) ||
-                hasMetricsOfType(this.groupComposite, DataType.AVAILABILITY);
+            visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT)
+                || hasMetricsOfType(this.groupComposite, DataType.AVAILABILITY);
             boolean showOnPage;
 
-            if(BrowserUtility.isBrowserPreIE9()){
+            if (BrowserUtility.isBrowserPreIE9()) {
                 showOnPage = false;
-            }else{
+            } else {
                 showOnPage = visible;
             }
 
@@ -412,8 +447,9 @@ public class ResourceGroupDetailView extends
     }
 
     private void updateOperationsTab(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
-        if (updateTab(this.operationsTab,
-            groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.OPERATION), true)) {
+        if (showSubsystems.get(UiSubsystem.OPERATIONS)
+            && updateTab(this.operationsTab,
+                groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.OPERATION), true)) {
             updateSubTab(this.operationsTab, this.operationsSchedules, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
@@ -431,7 +467,7 @@ public class ResourceGroupDetailView extends
 
     private void updateAlertsTab(final GroupCategory groupCategory) {
         // alerts tab is always visible, even for mixed groups
-        if (updateTab(this.alertsTab, true, true)) {
+        if (showSubsystems.get(UiSubsystem.ALERTS) && updateTab(this.alertsTab, true, true)) {
             // alert history is always available
             updateSubTab(this.alertsTab, this.alertHistory, true, true, new ViewFactory() {
                 @Override
@@ -458,7 +494,9 @@ public class ResourceGroupDetailView extends
         boolean visible = (groupCategory == GroupCategory.COMPATIBLE && facets
             .contains(ResourceTypeFacet.CONFIGURATION));
         Set<Permission> groupPermissions = this.groupComposite.getResourcePermission().getPermissions();
-        if (updateTab(this.configurationTab, visible, visible && groupPermissions.contains(Permission.CONFIGURE_READ))) {
+        if (showSubsystems.get(UiSubsystem.CONFIG)
+            && updateTab(this.configurationTab, visible,
+                visible && groupPermissions.contains(Permission.CONFIGURE_READ))) {
             updateSubTab(this.configurationTab, this.configCurrent, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
@@ -478,7 +516,7 @@ public class ResourceGroupDetailView extends
         // allow mixed groups to show events from supporting resources
         boolean visible = (groupCategory == GroupCategory.MIXED || (groupCategory == GroupCategory.COMPATIBLE && facets
             .contains(ResourceTypeFacet.EVENT)));
-        if (updateTab(this.eventsTab, visible, true)) {
+        if (showSubsystems.get(UiSubsystem.EVENTS) && updateTab(this.eventsTab, visible, true)) {
             updateSubTab(this.eventsTab, this.eventHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
@@ -487,7 +525,6 @@ public class ResourceGroupDetailView extends
             });
         }
     }
-
 
     @Override
     protected ResourceGroupComposite getSelectedItem() {
@@ -542,7 +579,7 @@ public class ResourceGroupDetailView extends
                                     @Override
                                     public void onSuccess(Subject result) {
                                         Log.debug("Updated recently viewed resource groups for " + result
-                                                + " with resourceGroupId [" + groupId + "]");
+                                            + " with resourceGroupId [" + groupId + "]");
                                     }
                                 });
                         }

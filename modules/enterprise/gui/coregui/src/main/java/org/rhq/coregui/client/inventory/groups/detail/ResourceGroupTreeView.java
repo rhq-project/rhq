@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -489,7 +489,7 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
                 if (childType.getSubCategory() != null) {
                     SubcategoryNode parentSubcategoryNode = null;
 
-                    for(String currentSubcategoryName: childType.getSubCategory().split("\\|")){
+                    for (String currentSubcategoryName : childType.getSubCategory().split("\\|")) {
                         SubcategoryNode currentSubcategoryNode = null;
                         if (parentSubcategoryNode == null) {
                             currentSubcategoryNode = subcategoryTreeRoots.get(currentSubcategoryName);
@@ -501,12 +501,14 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
                         if (currentSubcategoryNode == null) {
                             // This node represents a subcategory. It is not associated with any specific resource type
                             // or cluster key - it is merely a way plugin developers organize different resource types into groups.
-                            ResourceGroupEnhancedTreeNode subcategoryResourceTreeNode = new ResourceGroupEnhancedTreeNode(currentSubcategoryName);
+                            ResourceGroupEnhancedTreeNode subcategoryResourceTreeNode = new ResourceGroupEnhancedTreeNode(
+                                currentSubcategoryName);
                             subcategoryResourceTreeNode.setTitle(currentSubcategoryName);
                             subcategoryResourceTreeNode.setIsFolder(true);
                             subcategoryResourceTreeNode.setID("cat" + currentSubcategoryName);
 
-                            currentSubcategoryNode = new SubcategoryNode(currentSubcategoryName, subcategoryResourceTreeNode);
+                            currentSubcategoryNode = new SubcategoryNode(currentSubcategoryName,
+                                subcategoryResourceTreeNode);
 
                             if (parentSubcategoryNode == null) {
                                 subcategoryResourceTreeNode.setParentID(parentKey.getKey());

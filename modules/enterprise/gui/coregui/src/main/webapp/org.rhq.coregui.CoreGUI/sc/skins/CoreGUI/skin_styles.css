@@ -1474,6 +1474,16 @@ div[eventproxy^="isc_DateChooser"] {
     color: #4D5258;
 }
 
+.showSubsystemsGrid .tallCellOverDark,
+.showSubsystemsGrid .tallCellSelectedDark,
+.showSubsystemsGrid .tallCellSelectedOverDark,
+.showSubsystemsGrid .tallCellOver,
+.showSubsystemsGrid .tallCellSelectedOver,
+.showSubsystemsGrid .tallCellSelected {
+    background-color: #fbfbfb !important;
+    color: #4D5258;
+}
+
 .tallCellSelected a,
 .tallCellSelectedOver a,
 .tallCellSelectedOverDark a,
@@ -1874,5 +1884,136 @@ body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_R
 body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"],
 body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"] > div.overflowVisible[eventproxy*="MenuBarView_LinkBar"],
 body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"] > div.overflowVisible[eventproxy*="MenuBarView_LinkBar"] > div[eventproxy*="MenuBarView_LinkBar"] {
-     z-index: auto !important;
+    z-index: auto !important;
+}
+
+.switch-light span span {
+    display: none; 
+}
+
+div[eventproxy^="showSubsystemsGrid"] {
+    color: red !important;
+}
+
+@media only screen {
+    .switch-light {
+        display: block;
+        min-height: 1.875em;
+        position: relative;
+        overflow: visible;
+        padding: 0;
+    }
+    .switch-light * {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box; 
+    }
+    .switch-light a {
+        display: block;
+        -webkit-transition: all 0.2s ease-out;
+        -moz-transition: all 0.2s ease-out;
+        transition: all 0.2s ease-out; 
+    }
+    .switch-light label, .switch-light > span {
+        line-height: 1.875em;
+        vertical-align: middle; 
+    }
+    .switch-light input:focus ~ a, .switch-light input:focus + label {
+        outline: 1px dotted #888; 
+    }
+    .switch-light label {
+        position: relative;
+        z-index: 3;
+        display: block;
+        width: 100%; 
+    }
+    .switch-light input {
+        position: absolute;
+        opacity: 0;
+        z-index: 5; 
+    }
+    .switch-light input:checked ~ a {
+        right: 0%; 
+    }
+    .switch-light > span {
+        position: absolute;
+        width: 100%;
+        margin: 0;
+        text-align: left; 
+    }
+    .switch-light > span span {
+        position: absolute;
+        top: 0;
+        left: -50%;
+        z-index: 5;
+        display: block;
+        width: 50%;
+        text-align: center; 
+    }
+    .switch-light > span span:last-child {
+        left: 0; 
+    }
+    .switch-light a {
+        position: absolute;
+        right: 50%;
+        top: 0;
+        z-index: 4;
+        display: block;
+        width: 50%;
+        height: 100%;
+        padding: 0; 
+    }
+    .switch-candy {
+        background-color: #fff;
+        border-radius: 5px;
+        color: #fff;
+        text-align: center;
+        font-weight: 600;
+        text-shadow: 1px 1px 1px #191b1e;
+        border: 1px solid #d0d0d0;
+    }
+    .switch-candy label {
+        color: #fff;
+        -webkit-transition: color 0.2s ease-out;
+        -moz-transition: color 0.2s ease-out;
+        transition: color 0.2s ease-out; 
+    }
+    .switch-candy input:checked + label {
+        color: #fff;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); 
+    }
+    .switch-candy a {
+        border: 1px solid #333;
+        background-color: #418aca;
+        border-radius: 3px;
+        background-image: -webkit-linear-gradient(top, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0));
+        background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0));
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.45); 
+    }
+    .switch-candy > span {
+        color: #fff;
+        text-shadow: none; 
+    }
+    .switch-candy span {
+        color: #fff; 
+    }
+    .off {
+        background-color: #868a89 !important;
+    }
+ }
+
+@media only screen and (-webkit-max-device-pixel-ratio: 2) and (max-device-width: 80em) {
+  .switch-light {
+    -webkit-animation: webkitSiblingBugfix infinite 1s; 
+  } 
+}
+
+@-webkit-keyframes webkitSiblingBugfix {
+  from {
+    -webkit-transform: translate3d(0, 0, 0); 
+  }
+
+  to {
+    -webkit-transform: translate3d(0, 0, 0); 
+  }
 }

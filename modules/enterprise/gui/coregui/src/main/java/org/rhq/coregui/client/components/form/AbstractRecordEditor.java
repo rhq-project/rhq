@@ -241,15 +241,25 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Enh
                 saveButton.setDisabled(false);
             }
 
+            if (showResetButton()) {
             IButton resetButton = this.buttonBar.getResetButton();
             if (resetButton.isDisabled()) {
                 resetButton.setDisabled(false);
             }
+            }
         }
+    }
+    
+    protected boolean showResetButton() {
+        return true;
     }
 
     protected void reset() {
         this.form.resetValues();
+    }
+
+    protected void postSaveAction() {
+        // do nothing in the default implementation, override this method if needed
     }
 
     protected void save(final DSRequest requestProperties) {
@@ -302,6 +312,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Enh
                     message = new Message(conciseMessage, detailedMessage);
                     // only refresh if no-refresh attribute is missing
                     boolean refresh = requestProperties.getAttribute(FIELD_NO_REFRESH) == null;
+                    postSaveAction();
                     CoreGUI.goToView(getListViewPath(), message, refresh);
 
                 } else if (response.getStatus() == RPCResponse.STATUS_VALIDATION_ERROR) {
@@ -319,7 +330,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Enh
                         Message.Severity.Error);
                     CoreGUI.getMessageCenter().notify(message);
                 } else {
-                    // assume failure                    
+                    // assume failure
                     Message message = new Message(MSG.widget_recordEditor_error_operation(), Message.Severity.Error);
                     CoreGUI.getMessageCenter().notify(message);
                 }
@@ -472,16 +483,18 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Enh
             });
             hLayout.addMember(saveButton);
 
-            resetButton = new EnhancedIButton(MSG.common_button_reset());
-            resetButton.setDisabled(true);
-            resetButton.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    resetButton.disable();
-                    saveButton.disable();
-                    reset();
-                }
-            });
-            hLayout.addMember(resetButton);
+            if (showResetButton()) {
+                resetButton = new EnhancedIButton(MSG.common_button_reset());
+                resetButton.setDisabled(true);
+                resetButton.addClickHandler(new ClickHandler() {
+                    public void onClick(ClickEvent clickEvent) {
+                        resetButton.disable();
+                        saveButton.disable();
+                        reset();
+                    }
+                });
+                hLayout.addMember(resetButton);
+            }
 
             cancelButton = new EnhancedIButton(MSG.common_button_cancel());
             cancelButton.addClickHandler(new ClickHandler() {

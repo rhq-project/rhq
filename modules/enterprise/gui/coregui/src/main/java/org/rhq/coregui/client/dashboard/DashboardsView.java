@@ -60,6 +60,7 @@ import org.rhq.coregui.client.InitializableView;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.PermissionsLoadedListener;
 import org.rhq.coregui.client.PermissionsLoader;
+import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.ViewPath;
 import org.rhq.coregui.client.components.tab.NamedTab;
 import org.rhq.coregui.client.components.tab.NamedTabSet;
@@ -75,6 +76,7 @@ import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.preferences.UserPreferenceNames.UiSubsystem;
 
 /**
  * @author Jay Shaughnessy
@@ -207,7 +209,7 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
         buttons.addMember(editButton);
         buttons.addMember(newDashboardButton);
 
-        tabSet.setTabBarControls(TabBarControls.TAB_SCROLLER, TabBarControls.TAB_PICKER, buttons );
+        tabSet.setTabBarControls(TabBarControls.TAB_SCROLLER, TabBarControls.TAB_PICKER, buttons);
 
         tabSet.addTabSelectedHandler(new TabSelectedHandler() {
             public void onTabSelected(TabSelectedEvent tabSelectedEvent) {
@@ -284,6 +286,7 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
         dashboard.setColumns(2);
         // only leftmost column width is currently settable, the rest are equally divided
         dashboard.setColumnWidths("32%");
+        Map<UiSubsystem, Boolean> showSubsystems = UserSessionManager.getUserPreferences().getShowUiSubsystems();
 
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
         boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
@@ -309,8 +312,10 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
         columnIndex = 1;
         rowIndex = 0;
 
-        DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY, 250);
-        dashboard.addPortlet(recentAlerts, columnIndex, rowIndex++);
+        if (showSubsystems.get(UiSubsystem.ALERTS)) {
+            DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY, 250);
+            dashboard.addPortlet(recentAlerts, columnIndex, rowIndex++);
+        }
 
         DashboardPortlet problemResources = new DashboardPortlet(ProblemResourcesPortlet.NAME,
             ProblemResourcesPortlet.KEY, 250);
@@ -323,9 +328,11 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
                 ProblemResourcesPortlet.defaultShowHours));
         dashboard.addPortlet(problemResources, columnIndex, rowIndex++);
 
-        DashboardPortlet operations = new DashboardPortlet(OperationHistoryPortlet.NAME, OperationHistoryPortlet.KEY,
-            200);
-        dashboard.addPortlet(operations, columnIndex, rowIndex++);
+        if (showSubsystems.get(UiSubsystem.OPERATIONS)) {
+            DashboardPortlet operations = new DashboardPortlet(OperationHistoryPortlet.NAME,
+                OperationHistoryPortlet.KEY, 200);
+            dashboard.addPortlet(operations, columnIndex, rowIndex++);
+        }
 
         return dashboard;
     }

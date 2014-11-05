@@ -21,8 +21,10 @@ package org.rhq.coregui.client.util.preferences;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -32,16 +34,18 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LoginView;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.preferences.UserPreferenceNames.UiSubsystem;
 
 /**
  * Provides access to the persisted user preferences.
- * 
+ *
  * If you want to work with measurement related preferences, you might want to use
  * {@link MeasurementUserPreferences} instead.
- * 
+ *
  * @author Greg Hinkle
  * @author Ian Springer
  */
@@ -56,7 +60,7 @@ public class UserPreferences {
         preferencesThatShouldNeverCauseRefresh = new ArrayList<String>();
         // this is auto-set while navigating around and does not affect the current page
         preferencesThatShouldNeverCauseRefresh.add(UserPreferenceNames.RECENT_RESOURCES);
-        // this is auto-set while navigating around and does not affect the current page        
+        // this is auto-set while navigating around and does not affect the current page
         preferencesThatShouldNeverCauseRefresh.add(UserPreferenceNames.RECENT_RESOURCE_GROUPS);
         // this update is already applied to current portlets by the dashboard impl
         preferencesThatShouldNeverCauseRefresh.add(UserPreferenceNames.PAGE_REFRESH_PERIOD);
@@ -82,7 +86,7 @@ public class UserPreferences {
      * automatically persist changes as they occur. If you pass in false,
      * you are disabling this feature. When enabled, {@link #store(AsyncCallback)} is
      * called every time a preference value is changed or removed.
-     * 
+     *
      * @param enable true or false to turn on or off automatic persistence
      */
     public void setAutomaticPersistence(boolean enable) {
@@ -214,6 +218,30 @@ public class UserPreferences {
         return getPreferenceAsInteger(UserPreferenceNames.PAGE_REFRESH_PERIOD);
     }
 
+    public Map<UiSubsystem, Boolean> getShowUiSubsystems() {
+        if (null == getPreference(UserPreferenceNames.UI_SHOW_SUBSYSTEMS)) {
+            setPreference(UserPreferenceNames.UI_SHOW_SUBSYSTEMS, "1|1|1|1|1|1|1|1");
+        }
+        List<Integer> flags = getPreferenceAsIntegerList(UserPreferenceNames.UI_SHOW_SUBSYSTEMS);
+        int numberOfItems = UiSubsystem.values().length;
+        Map<UiSubsystem, Boolean> returnMap = new HashMap<UiSubsystem, Boolean>(numberOfItems);
+        for (int i = 0; i < numberOfItems; i++) {
+            returnMap.put(UiSubsystem.values()[i], Integer.valueOf(1).equals(flags.get(i)));
+        }
+        return returnMap;
+    }
+
+    public boolean getShowUiSubsystem(UiSubsystem subsystem) {
+        return getShowUiSubsystems().get(subsystem);
+    }
+
+    public void setShowUiSubsystems(List<Integer> items, AsyncCallback<Subject> persistCallback) {
+        if (null == items || items.size() != UiSubsystem.values().length) {
+            return;
+        }
+        setPreference(UserPreferenceNames.UI_SHOW_SUBSYSTEMS, items, true, persistCallback);
+    }
+
     public void setPageRefreshInterval(int refreshInterval, AsyncCallback<Subject> persistCallback) {
         setPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD, String.valueOf(refreshInterval), persistCallback);
         storeIfNotAutoPersisted(persistCallback);
@@ -224,6 +252,10 @@ public class UserPreferences {
     }
 
     protected String getPreference(String name, String defaultValue) {
+        if (userConfiguration == null) {
+            new LoginView().showLoginDialog(true);
+            return null;
+        }
         return userConfiguration.getSimpleValue(name, defaultValue);
     }
 
@@ -231,7 +263,7 @@ public class UserPreferences {
      * Similar to {@link #getPreference(String, String)} except if the preference
      * exists, but its value is an empty string, this method returns the defaultValue.
      * In other words, an empty preference value is just as if it was null.
-     * 
+     *
      * @param name name of preference
      * @param defaultValue the value returned if the preference value was null or an empty string
      * @return the preference value

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2010-2014, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -244,9 +244,8 @@ public class MessageBar extends Canvas implements MessageCenter.MessageListener,
         }
 
         content.setContents(messageContent(contents, message.getSeverity()));
-        int left = DOM.getElementById(MenuBarView.LAST_MENU_ITEM_ID).getAbsoluteLeft()
-            + DOM.getElementById(MenuBarView.LAST_MENU_ITEM_ID).getClientWidth() + 10;
-        int ulWidth = DOM.getElementById(MenuBarView.LAST_MENU_ITEM_ID).getParentElement().getClientWidth();
+        int left = MenuBarView.getUlLeftCoordinate();
+        int ulWidth = MenuBarView.getUlWidth();
         content.setLeft(left);
         content.setWidth((ulWidth - left - 10) + "px");
         content.setTop("34px");

@@ -346,7 +346,10 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
 
     protected void populateAvailableGrid(Criteria criteria) {
         // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
-        this.datasource.invalidateCache();
+        if (datasource == null) {
+            datasource = getDataSource();
+        }
+        datasource.invalidateCache();
         DSRequest requestProperties = new DSRequest();
         requestProperties.setStartRow(0);
         requestProperties.setEndRow(getMaxAvailableRecords());
@@ -367,9 +370,13 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
                     } else {
                         // Clear the warning message, if any, from the previous fetch.
                         // Note, surprisingly, setContents(null) doesn't work.
-                        messageLayout.setContents("&nbsp;");
+                        if (messageLayout != null) {
+                            messageLayout.setContents("&nbsp;");
+                        }
                     }
-                    messageLayout.markForRedraw();
+                    if (messageLayout != null) {
+                        messageLayout.markForRedraw();
+                    }
                     availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
                 } finally {
                     updateButtonEnablement();

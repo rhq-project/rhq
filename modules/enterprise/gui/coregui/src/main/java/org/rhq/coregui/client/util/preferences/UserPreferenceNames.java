@@ -240,6 +240,27 @@ public abstract class UserPreferenceNames {
      * we probably won't provide a CHART mode.
      */
     public static final String RESOURCE_BROWSER_VIEW_MODE = ".resource.browser.view";
+    
+    /**
+     * List of booleans delimited by '|' characters denoting which subsystems are visible in the UI.
+     * Default is "1|1|1|1|1|1|1|1".
+     * The values belongs to (in this order): 
+     * <ol>
+     * <li>show content and bundles</li>
+     * <li>show reports</li>
+     * <li>show administration</li> 
+     * <li>show events</li>
+     * <li>show operations</li>
+     * <li>show alerts</li>
+     * <li>show configuration</li>
+     * <li>show drift</li>
+     * </ol>
+     */
+    public static final String UI_SHOW_SUBSYSTEMS = ".ui.showSubsystems";
+    
+    public enum UiSubsystem {
+        CONTENT, REPORTS, ADMINISTRATION, EVENTS, OPERATIONS, ALERTS, CONFIG, DRIFT
+    }
 
     private UserPreferenceNames() {
     }

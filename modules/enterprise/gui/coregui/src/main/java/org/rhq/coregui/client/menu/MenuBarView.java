@@ -78,6 +78,8 @@ import org.rhq.coregui.client.report.tag.TaggedView;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.MessageBar;
 import org.rhq.coregui.client.util.message.MessageCenterView;
+import org.rhq.coregui.client.util.preferences.UserPreferences;
+import org.rhq.coregui.client.util.preferences.UserPreferenceNames.UiSubsystem;
 
 /**
  * @author Greg Hinkle
@@ -169,7 +171,8 @@ public class MenuBarView extends EnhancedVLayout {
         new MenuItem(HelpView.VIEW_ID)
     };
 
-    public static final String LAST_MENU_ITEM_ID = "menu" + (MENU_ITEMS.length - 1);
+    private static int topLvlItems = 0;
+    private static final String NAV_BAR_UL_ID = "navBarUlId";
 
     public static final ViewName LOGOUT_VIEW_ID = new ViewName("LogOut", MSG.view_menuBar_logout());
     private final ProductInfo productInfo = CoreGUI.get().getProductInfo();
@@ -178,6 +181,7 @@ public class MenuBarView extends EnhancedVLayout {
     private MessageCenterView messageCenter;
     private FavoritesMenu favoritesMenu;
     private Set<Permission> globalPermissions;
+    private Map<UiSubsystem, Boolean> showSubsystems;
 
     public MenuBarView() {
         super();
@@ -197,8 +201,16 @@ public class MenuBarView extends EnhancedVLayout {
             @Override
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 globalPermissions = (permissions != null) ? permissions : EnumSet.noneOf(Permission.class);
+                showSubsystems = UserSessionManager.getUserPreferences().getShowUiSubsystems();
                 for (MenuItem item : MENU_ITEMS) {
-                    updateMenuVisibility(item);
+                    if ((item.getView() == ReportTopView.VIEW_ID && !showSubsystems.get(UiSubsystem.REPORTS))
+                        || (item.getView() == BundleTopView.VIEW_ID && !showSubsystems.get(UiSubsystem.CONTENT))
+                        || (item.getView() == AdministrationView.VIEW_ID && !showSubsystems
+                            .get(UiSubsystem.ADMINISTRATION))) {
+                        item.setHidden(true);
+                    } else {
+                        updateMenuVisibility(item);
+                    }
                 }
                 addMember(new LinkBar());
                 addMember(messageBar);
@@ -221,22 +233,22 @@ public class MenuBarView extends EnhancedVLayout {
 
     // This is our JSNI method that will be called on form submit
     private native void injectMenuFunctions(MenuBarView view) /*-{
-                                                              $wnd.__gwt_clearMessageBar = $entry(function(){
-                                                              view.@org.rhq.coregui.client.menu.MenuBarView::clearMessageBar()();
-                                                              });
+        $wnd.__gwt_clearMessageBar = $entry(function(){
+            view.@org.rhq.coregui.client.menu.MenuBarView::clearMessageBar()();
+        });
 
-                                                              $wnd.__gwt_showMessageCenter = $entry(function(){
-                                                              view.@org.rhq.coregui.client.menu.MenuBarView::showMessageCenterWindow()();
-                                                              });
+        $wnd.__gwt_showMessageCenter = $entry(function(){
+            view.@org.rhq.coregui.client.menu.MenuBarView::showMessageCenterWindow()();
+        });
 
-                                                              $wnd.__gwt_showFavoritesMenu = $entry(function(){
-                                                              view.@org.rhq.coregui.client.menu.MenuBarView::showFavoritesMenu()();
-                                                              });
+        $wnd.__gwt_showFavoritesMenu = $entry(function(){
+            view.@org.rhq.coregui.client.menu.MenuBarView::showFavoritesMenu()();
+        });
 
-                                                              $wnd.__gwt_showAboutBox = $entry(function(){
-                                                              view.@org.rhq.coregui.client.menu.MenuBarView::showAboutBox()();
-                                                              });
-                                                              }-*/;
+        $wnd.__gwt_showAboutBox = $entry(function(){
+            view.@org.rhq.coregui.client.menu.MenuBarView::showAboutBox()();
+        });
+    }-*/;
 
     // called via JSNI - user menu button
     public void clearMessageBar() {
@@ -360,7 +372,7 @@ public class MenuBarView extends EnhancedVLayout {
              +"</ul>"
            +"</li>"
          +"</ul>"
-         +"<ul class='nav navbar-nav navbar-primary'>"
+         +"<ul id='" + NAV_BAR_UL_ID +"' class='nav navbar-nav navbar-primary'>"
              + getMenuItems()
          +"</ul>"
        +"</div>"
@@ -370,11 +382,13 @@ public class MenuBarView extends EnhancedVLayout {
 
         private String getMenuItems() {
             StringBuilder sb = new StringBuilder();
-            int i = 0;
+            topLvlItems = -1;
             for (MenuItem menuItem : MENU_ITEMS) {
-                sb.append(getMenuItemString(menuItem, String.valueOf(i), 0));
-                sectionNameToLinkID.put(menuItem.getView().getName(), "menu"+i);
-                i++;
+                if (!menuItem.isHidden()) {
+                    ++topLvlItems;
+                    sb.append(getMenuItemString(menuItem, String.valueOf(topLvlItems), 0));
+                    sectionNameToLinkID.put(menuItem.getView().getName(), "menu" + topLvlItems);
+                }
             }
             return sb.toString();
         }
@@ -443,7 +457,9 @@ public class MenuBarView extends EnhancedVLayout {
             }
             currentlySelectedSection = topViewId;
             for (MenuItem item : MENU_ITEMS) {
-                updateLinkStyle(item.getView().getName());
+                if (!item.isHidden()) {
+                    updateLinkStyle(item.getView().getName());
+                }
             }
         }
 
@@ -457,6 +473,17 @@ public class MenuBarView extends EnhancedVLayout {
             String itemId = this.sectionNameToLinkID.get(sectionName);
             DOM.getElementById(itemId).setClassName(className);
         }
+    }
+    
+    public static int getUlLeftCoordinate() {
+        int left = DOM.getElementById("menu" + topLvlItems).getAbsoluteLeft()
+            + DOM.getElementById("menu" + topLvlItems).getClientWidth() + 10;
+        return left;
+    }
+    
+    public static int getUlWidth() {
+        int ulWidth = DOM.getElementById(NAV_BAR_UL_ID).getParentElement().getClientWidth();
+        return ulWidth;
     }
 
     public static class MenuItem {

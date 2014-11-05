@@ -23,7 +23,43 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.dashboard.Dashboard;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.resource.ResourceTypeFacet;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.components.form.ColorButtonItem;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupEventsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupPkgHistoryPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceAlertsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceBundleDeploymentsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceOobsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.preferences.UserPreferenceNames.UiSubsystem;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -47,37 +83,6 @@ import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.ItemClickEvent;
 import com.smartgwt.client.widgets.menu.events.ItemClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
-
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.dashboard.Dashboard;
-import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.resource.ResourceTypeFacet;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.core.domain.resource.group.GroupCategory;
-import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.ImageManager;
-import org.rhq.coregui.client.UserSessionManager;
-import org.rhq.coregui.client.components.form.ColorButtonItem;
-import org.rhq.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
-import org.rhq.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
-import org.rhq.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
-import org.rhq.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
-import org.rhq.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
-import org.rhq.coregui.client.dashboard.portlets.groups.GroupPkgHistoryPortlet;
-import org.rhq.coregui.client.dashboard.portlets.resource.ResourceBundleDeploymentsPortlet;
-import org.rhq.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
-import org.rhq.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
-import org.rhq.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
-import org.rhq.coregui.client.dashboard.portlets.resource.ResourceOobsPortlet;
-import org.rhq.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
-import org.rhq.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
-import org.rhq.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.coregui.client.util.message.Message;
 
 /**
  * @author Jay Shaughnessy
@@ -204,7 +209,8 @@ public class DashboardView extends EnhancedVLayout {
     }
 
     public void buildPortlets() {
-        this.setBackgroundColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "transparent"));
+        this.setBackgroundColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND,
+            "transparent"));
 
         portalLayout = new PortalLayout(this, storedDashboard.getColumns(), storedDashboard.getColumnWidths());
 
@@ -323,12 +329,15 @@ public class DashboardView extends EnhancedVLayout {
         default:
             throw new IllegalStateException("Unsupported context [" + context + "]");
         }
+        Map<UiSubsystem, Boolean> showSubsystems = UserSessionManager.getUserPreferences().getShowUiSubsystems();
         for (Iterator<String> i = valueMap.keySet().iterator(); i.hasNext();) {
             String portletKey = i.next();
-            String portletName = valueMap.get(portletKey);
-            MenuItem menuItem = new MenuItem(portletName);
-            menuItem.setAttribute("portletKey", portletKey);
-            addPortletMenu.addItem(menuItem);
+            if (PortletFactory.canBeAdded(portletKey, showSubsystems)) {
+                String portletName = valueMap.get(portletKey);
+                MenuItem menuItem = new MenuItem(portletName);
+                menuItem.setAttribute("portletKey", portletKey);
+                addPortletMenu.addItem(menuItem);
+            }
         }
 
         addPortlet = new IMenuButton(MSG.common_title_add_portlet(), addPortletMenu);
@@ -356,7 +365,8 @@ public class DashboardView extends EnhancedVLayout {
         ColorButtonItem picker = new ColorButtonItem("colorButton", MSG.common_title_background());
         picker.setStartRow(false);
         picker.setEndRow(false);
-        picker.setCurrentColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "transparent"));
+        picker.setCurrentColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND,
+            "transparent"));
         picker.setColorSelectedHandler(new ColorSelectedHandler() {
             @Override
             public void onColorSelected(ColorSelectedEvent event) {
@@ -546,16 +556,19 @@ public class DashboardView extends EnhancedVLayout {
     }
 
     private void loadPortletWindows() {
+        Map<UiSubsystem, Boolean> showSubsystems = UserSessionManager.getUserPreferences().getShowUiSubsystems();
         for (int i = 0; i < storedDashboard.getColumns(); i++) {
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
                 try {
-                    PortletWindow portletWindow = new PortletWindow(this, storedPortlet, context);
-                    portletWindow.setTitle(storedPortlet.getName());
-                    portletWindow.setHeight(storedPortlet.getHeight());
-                    portletWindow.setVisible(true);
+                    if (PortletFactory.canBeAdded(storedPortlet.getPortletKey(), showSubsystems)) {
+                        PortletWindow portletWindow = new PortletWindow(this, storedPortlet, context);
+                        portletWindow.setTitle(storedPortlet.getName());
+                        portletWindow.setHeight(storedPortlet.getHeight());
+                        portletWindow.setVisible(true);
 
-                    portletWindows.add(portletWindow);
-                    portalLayout.addPortletWindow(portletWindow, i);
+                        portletWindows.add(portletWindow);
+                        portalLayout.addPortletWindow(portletWindow, i);
+                    }
                 } catch (Exception ex) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error2(), ex);
                     continue;

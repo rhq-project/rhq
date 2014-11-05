@@ -148,7 +148,7 @@ public class InstallerServiceImpl implements InstallerService {
         Map<String, String> map = ServerInstallUtil.getServerVersions(dbUrl, dbUsername, clearTextDbPassword);
 
         if (map.isEmpty()) {
-            log("There are no known Servers currently registered");
+            log("There are no Servers currently registered.");
             return;
         }
 
@@ -170,8 +170,16 @@ public class InstallerServiceImpl implements InstallerService {
 
         map = ServerInstallUtil.getStorageNodeVersions(dbUrl, dbUsername, clearTextDbPassword);
 
-        if (map.isEmpty()) {
-            log("There are no known Storage Nodes currently registered");
+        if (null == map || map.isEmpty()) {
+            info.append("There are no Storage Nodes currently registered.\n");
+            info.append("This is normal when upgrading from a version without Storage Nodes. If so:\n");
+            info.append("  ==> 1) Complete Server and Storage Node upgrades.\n");
+            info.append("  ==> 2) Start all Storage Nodes to prepare them for a schema update.\n");
+            info.append("  ==>    Use 'rhqctl start --storage'.  Servers and Agents should not be running.\n");
+            info.append("  ==> 3) Initialize the Storage Cluster via 'rhqctl upgrade --storage-schema'.\n");
+            info.append("  ==> 4) See 'rhq-data-migrator --help' for moving legacy data to the new storage cluster.");
+            info.append("\n");
+            log(info.toString());
             return;
         }
 

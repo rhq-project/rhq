@@ -61,7 +61,6 @@ public class Upgrade extends AbstractInstall {
     private static final String FROM_SERVER_DIR_OPTION = "from-server-dir";
     private static final String USE_REMOTE_STORAGE_NODE = "use-remote-storage-node";
     private static final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
-    private static final String RUN_DATA_MIGRATION = "run-data-migrator";
     private static final String LIST_VERSIONS_OPTION = "list-versions";
     private static final String STORAGE_SCHEMA_OPTION = "storage-schema";
 
@@ -107,15 +106,7 @@ public class Upgrade extends AbstractInstall {
                     + "interrupted.  It requires that all servers and storage nodes have already been upgraded to the desired version "
                     + "and that all nodes in the storage cluster are running. The command will fail if these prerequisites are not met. "
                     + "Use 'rhqctl upgrade --list-versions' to see the current upgrade status.  When specified, all other options "
-                    + "are ignored.  Not all upgrades will require this step.")
-            .addOption(
-                null,
-                RUN_DATA_MIGRATION,
-                false,
-                "This option is valid only when upgrading from older systems that did not have storage nodes. The existing metric data needs to migrate to "
-                    + "the metric storage. This option completes the data migration process as part of the upgrade. If you want "
-                    + "to have fine control over the process (eg: run it a later time, get an estimate first, purge data from the SQL database after migration), "
-                    + "please run the data migrator on the command line.");
+                    + "are ignored.  Not all upgrades will require this step.");
     }
 
     @Override
@@ -150,8 +141,9 @@ public class Upgrade extends AbstractInstall {
 
         int rValue = RHQControl.EXIT_CODE_OK;
 
+        List<String> errors = null;
         try {
-            List<String> errors = validateOptions(commandLine);
+            errors = validateOptions(commandLine);
             if (!errors.isEmpty()) {
                 for (String error : errors) {
                     log.error(error);
@@ -222,45 +214,26 @@ public class Upgrade extends AbstractInstall {
 
         } catch (Exception e) {
             throw new RHQControlException("An error occurred while executing the upgrade command", e);
-        } finally {
-            try {
-                if (isServerInstalled()) {
-                    log.info("\n\n========== UPGRADE SUMMARY ==========");
-                    listVersions(commandLine);
-                }
 
-                Stop stopCommand = new Stop();
-                stopCommand.exec(new String[] { "--server" });
-                if (!commandLine.hasOption(RUN_DATA_MIGRATION)) {
+        } finally {
+            if (errors == null || errors.isEmpty()) {
+                try {
+                    if (isServerInstalled()) {
+                        log.info("\n\n========== UPGRADE SUMMARY ==========");
+                        listVersions(commandLine);
+                    }
+
+                    Stop stopCommand = new Stop();
+                    stopCommand.exec(new String[] { "--server" });
                     rValue = Math.max(rValue, stopCommand.exec(new String[] { "--storage" }));
+
+                } catch (Throwable t) {
+                    log.warn("Unable to stop services: " + t.getMessage());
+                    rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
                 }
-            } catch (Throwable t) {
-                log.warn("Unable to stop services: " + t.getMessage());
-                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         }
 
-        if (!isRhq48OrLater(commandLine) && commandLine.hasOption(RUN_DATA_MIGRATION)) {
-            rValue = Math.max(rValue, runDataMigration(commandLine));
-        }
-        return rValue;
-    }
-
-    private int runDataMigration(CommandLine rhqctlCommandLine) {
-        int rValue;
-
-        // We deduct the database parameters from the server properties
-        try {
-            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-data-migration");
-            commandLine.addArgument("-X");
-            int exitValue = ExecutorAssist.execute(new File(getBaseDir(), "bin"), commandLine);
-            log.info("The data migrator finished with exit value " + exitValue);
-            rValue = exitValue;
-        } catch (Exception e) {
-            log.error("Running the data migrator failed - please try to run it from the command line: "
-                + e.getMessage());
-            rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
-        }
         return rValue;
     }
 
@@ -781,11 +754,6 @@ public class Upgrade extends AbstractInstall {
                 errors.add("The option --" + STORAGE_DATA_ROOT_DIR
                     + " is valid only for upgrades from older systems that did not have storage nodes.");
             }
-
-            if (commandLine.hasOption(RUN_DATA_MIGRATION)) {
-                errors.add("The option --" + RUN_DATA_MIGRATION
-                    + " is valid only for upgrades from older systems that did not have storage nodes.");
-            }
         }
 
         if (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
@@ -819,16 +787,6 @@ public class Upgrade extends AbstractInstall {
 
     protected boolean isRhq410OrLater(CommandLine commandLine) {
         return new File(getFromServerDir(commandLine), "bin/internal").isDirectory();
-    }
-
-    private void printDataMigrationNotice() {
-        log.info("\n================\n"
-            + "If this was an upgrade from older systems that did not have storage nodes,\n "
-            + "you need to run the data migration job to transfer stored (historic)\n"
-            + "metrics data from the relational database into the new storage.\n"
-            + "Until the migration has run, that historic data is not available \n" + "in e.g. the charting views.\n\n"
-            + "To run the data migration, just run rhq-data-migration.{sh|bat}\n"
-            + "script located in the server bin folder.\n" + "================\n");
     }
 
     private int updateStorageSchema(CommandLine commandLine) {

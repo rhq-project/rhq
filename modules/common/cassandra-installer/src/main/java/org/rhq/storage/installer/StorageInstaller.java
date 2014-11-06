@@ -108,6 +108,8 @@ public class StorageInstaller {
 
     public static final int STATUS_UNKNOWN_HOST = 11;
 
+    public static final int STATUS_VERSION_STAMP_ERROR = 12;
+
     static final String STORAGE_LOG_FILE_PATH = "../../logs/rhq-storage.log";
 
     static final String DEFAULT_COMMIT_LOG_DIR = "../../../rhq-data/commit_log";
@@ -296,8 +298,13 @@ public class StorageInstaller {
 
         // when upgrading, mark the upgrade by stamping the new version
         if (isUpgrade && !noStamp) {
-            String version = StorageInstaller.class.getPackage().getImplementationVersion();
-            stampStorageNodeVersion(dbProperties, installerInfo.hostname, version);
+            try {
+                String version = StorageInstaller.class.getPackage().getImplementationVersion();
+                stampStorageNodeVersion(dbProperties, installerInfo.hostname, version);
+            } catch (Exception e) {
+                log.error("Failed to update version stamp", e);
+                return STATUS_VERSION_STAMP_ERROR;
+            }
         }
 
         // start node (and install windows service) if necessary
@@ -695,7 +702,8 @@ public class StorageInstaller {
             stampStorageNodeVersion(dbProperties, storageNodeAddress, version);
 
         } catch (Exception e) {
-            log.warn("Failed to undo version stamp (DB Restore recommended): " + e.getMessage());
+            log.warn("Failed to undo version stamp (DB Restore recommended unless original problem was applying the version stamp): "
+                + e.getMessage());
         }
     }
 

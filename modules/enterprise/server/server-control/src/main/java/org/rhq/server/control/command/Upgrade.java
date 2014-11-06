@@ -186,7 +186,8 @@ public class Upgrade extends AbstractInstall {
 
             // If any failures occur during upgrade, we know we need to reset rhq-server.properties
             final FileReverter serverPropFileReverter = new FileReverter(getServerPropertiesFile());
-            addUndoTask(new ControlCommand.UndoTask("Reverting server properties file") {
+            addUndoTask(new ControlCommand.UndoTask("Reverting server properties file ["
+                + getServerPropertiesFile().getName() + "]") {
                 public void performUndoWork() throws Exception {
                     try {
                         serverPropFileReverter.revert();
@@ -243,7 +244,7 @@ public class Upgrade extends AbstractInstall {
             return RHQControl.EXIT_CODE_OK;
         }
 
-        int rValue;
+        int rValue = RHQControl.EXIT_CODE_OK;
 
         // If upgrading from a pre-cassandra then just install an initial storage node. Otherwise, upgrade
         if (isRhq48OrLater(rhqctlCommandLine)) {
@@ -273,7 +274,8 @@ public class Upgrade extends AbstractInstall {
                     fromServerPath);
 
                 rValue = ExecutorAssist.execute(getBinDir(), commandLine);
-                log.info("The storage node upgrade has finished with an exit value of " + rValue);
+                log.info("The storage node upgrade has finished with an exit value of [" + rValue + "]");
+
             } catch (IOException e) {
                 log.error("An error occurred while running the storage node upgrade: " + e.getMessage());
                 throw e;
@@ -282,7 +284,13 @@ public class Upgrade extends AbstractInstall {
         } else {
             rValue = installStorageNode(getStorageBasedir(), rhqctlCommandLine, true);
         }
-        return rValue;
+
+        // Only an exception will stop the upgrade progress and invoke the undo logic.
+        if (rValue != RHQControl.EXIT_CODE_OK) {
+            throw new RuntimeException("The storage node upgrade failed with exit code [" + rValue + "]");
+        }
+
+        return RHQControl.EXIT_CODE_OK;
     }
 
     private int upgradeServer(CommandLine commandLine) throws Exception {
@@ -414,7 +422,8 @@ public class Upgrade extends AbstractInstall {
                 try {
                     // If any failures occur during upgrade reset the env file to the default
                     final FileReverter serverEnvFileReverter = new FileReverter(newServerEnvFile);
-                    addUndoTask(new ControlCommand.UndoTask("Reverting server environment file") {
+                    addUndoTask(new ControlCommand.UndoTask("Reverting server environment file ["
+                        + newServerEnvFile.getName() + "]") {
                         public void performUndoWork() throws Exception {
                             try {
                                 serverEnvFileReverter.revert();

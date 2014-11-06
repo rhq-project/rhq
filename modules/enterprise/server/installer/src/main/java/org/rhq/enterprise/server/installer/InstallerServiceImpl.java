@@ -77,6 +77,18 @@ public class InstallerServiceImpl implements InstallerService {
     private static final String SYSPROP_PROPFILE = "rhq.server.properties-file";
     private static final String SYSPROP_BASEDIR = "rhq.server.basedir";
 
+    private static final String SYSPROP_TEST_CONTROLLER_TIMEOUT = "rhq.test.controller.timeout";
+    private static final int TEST_CONTROLLER_TIMEOUT_SECS;
+    static {
+        int secs = 60;
+        try {
+            secs = Integer.parseInt(System.getProperty(SYSPROP_TEST_CONTROLLER_TIMEOUT, String.valueOf(secs)));
+        } catch (Throwable t) {
+            // ignore
+        }
+        TEST_CONTROLLER_TIMEOUT_SECS = secs;
+    }
+
     private final Log log = LogFactory.getLog(InstallerServiceImpl.class);
     private final InstallerConfiguration installerConfiguration;
 
@@ -317,7 +329,7 @@ public class InstallerServiceImpl implements InstallerService {
         }
 
         // make an attempt to connect to the app server - we must make sure its running and we can connect to it
-        final String asVersion = testModelControllerClient(serverProperties);
+        final String asVersion = testModelControllerClient(serverProperties, TEST_CONTROLLER_TIMEOUT_SECS);
         log("Installing into app server version [" + asVersion + "]");
 
         // If we are already fully installed, we don't have to do anything. Just return false immediately.
@@ -463,7 +475,7 @@ public class InstallerServiceImpl implements InstallerService {
         reloadConfiguration();
 
         // we need to wait for the reload to finish - wait until we can connect again
-        testModelControllerClient(60);
+        testModelControllerClient(TEST_CONTROLLER_TIMEOUT_SECS);
 
         // deploy the main EAR app subsystem - this is the thing that contains and actually deploys the EAR
         deployAppSubsystem();

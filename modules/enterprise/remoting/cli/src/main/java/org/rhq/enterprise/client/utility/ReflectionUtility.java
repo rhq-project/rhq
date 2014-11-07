@@ -24,6 +24,8 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 
+import org.apache.commons.lang.ClassUtils;
+
 /**
  * @author Greg Hinkle
  */
@@ -64,7 +66,7 @@ public class ReflectionUtility {
             if (type == null) {
                 return "";
             } else {
-                return getName((Class<?>) type, fullNames);
+                return ClassUtils.getShortClassName(type.toString());
             }
         }
     }

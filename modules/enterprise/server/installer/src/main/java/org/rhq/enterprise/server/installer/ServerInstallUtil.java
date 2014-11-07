@@ -1054,6 +1054,70 @@ public class ServerInstallUtil {
     }
 
     /**
+     * Delete all of the current storage nodes defined in the database, unless they are already managed (meaning,
+     * at least one is linked to a resource). This can be useful for re-installs where the original install
+     * may have misconfigured the storage node addresses.
+     *
+     * @param serverProperties the server properties
+     * @param password clear text password to connect to the database
+     * @param force, if true, all storageNodes are deleted regardless of whether they are managed.
+     * @throws Exception
+     */
+    public static void deleteStorageNodes(HashMap<String, String> serverProperties, String password, boolean force)
+        throws Exception {
+        DatabaseType db = null;
+        Connection connection = null;
+        Statement queryStatement = null;
+        ResultSet resultSet = null;
+        PreparedStatement deleteStorageNodes = null;
+
+        try {
+            String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+            String userName = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+            connection = getDatabaseConnection(dbUrl, userName, password);
+            db = DatabaseTypeFactory.getDatabaseType(connection);
+
+            if (!(db instanceof PostgresqlDatabaseType || db instanceof OracleDatabaseType)) {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
+            }
+
+            // unless forced, delete storage nodes *only* if they are *all* unmanaged.
+            queryStatement = connection.createStatement();
+            resultSet = queryStatement
+                .executeQuery("SELECT count(*) FROM rhq_storage_node sn WHERE NOT sn.resource_id IS NULL");
+            resultSet.next();
+
+            if (resultSet.getInt(1) == 0 || force) {
+                connection.setAutoCommit(false);
+
+                try {
+                    deleteStorageNodes = connection.prepareStatement("DELETE FROM rhq_storage_node");
+                    int numRemoved = deleteStorageNodes.executeUpdate();
+                    if (numRemoved > 0) {
+                        LOG.info("Removed [" + numRemoved + "] storage nodes. They will be redefined...");
+                    }
+
+                    connection.commit();
+                } catch (SQLException e) {
+                    LOG.error("Failed to delete storage nodes. Transaction will be rolled back.", e);
+                    connection.rollback();
+                    throw e;
+                }
+            } else {
+                LOG.info("Managed Storage nodes already in database. Server configuration property [rhq.storage.nodes] will be ignored.");
+            }
+
+        } finally {
+            if (db != null) {
+                db.closeResultSet(resultSet);
+                db.closeStatement(queryStatement);
+                db.closeStatement(deleteStorageNodes);
+                db.closeConnection(connection);
+            }
+        }
+    }
+
+    /**
      * Persists the storage nodes to the database only if no storage node entities already exist. This method is used
      * to persist storage nodes created from the rhq.storage.nodes server configuration property. The only time those
      * seed nodes should be created is during an initial server installation. After the initial installation storage
@@ -1085,25 +1149,14 @@ public class ServerInstallUtil {
             }
 
             // IF there are no current storage nodes then we can persist the specified storage nodes.
-            // IF there are current storage nodes but none are linked to resources, we replace them with
-            // the currently specified addresses.  This allows an install or upgrade to be run again if the
-            // initial address(es) were incorrect.
-
             queryStatement = connection.createStatement();
-            resultSet = queryStatement
-                .executeQuery("SELECT count(*) FROM rhq_storage_node sn WHERE NOT sn.resource_id IS NULL");
+            resultSet = queryStatement.executeQuery("SELECT count(*) FROM rhq_storage_node sn");
             resultSet.next();
 
             if (resultSet.getInt(1) == 0) {
                 connection.setAutoCommit(false);
 
                 try {
-                    deleteStorageNodes = connection.prepareStatement("DELETE FROM rhq_storage_node");
-                    int numRemoved = deleteStorageNodes.executeUpdate();
-                    if (numRemoved > 0) {
-                        LOG.info("Removed [" + numRemoved + "] storage nodes. They will be redefined now...");
-                    }
-
                     LOG.info("Persisting to database new storage nodes for values specified in server configuration property [rhq.storage.nodes]");
 
                     insertStorageNode = connection

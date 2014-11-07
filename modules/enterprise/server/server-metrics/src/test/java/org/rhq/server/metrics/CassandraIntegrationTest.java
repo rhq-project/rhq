@@ -67,7 +67,7 @@ public class CassandraIntegrationTest {
 
     protected static StorageSession storageSession;
 
-    private static DateTimeService dateTimeService;
+    protected static DateTimeService dateTimeService;
 
     private final Log log = LogFactory.getLog(CassandraIntegrationTest.class);
 

@@ -26,7 +26,6 @@
 package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
-import static org.joda.time.DateTime.now;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 
@@ -38,7 +37,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 import org.joda.time.DateTime;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -56,8 +55,20 @@ public class MetricsServerTest extends MetricsTest {
 
     private MetricsServer metricsServer;
 
-    @BeforeMethod
-    public void initServer() throws Exception {
+    @DataProvider(name="testDates")
+    public Object[][] createData(){
+        return new Object[][] {
+            { new DateTime(2014, 3, 15, 10, 11) }, //will hit the change from non-DST to DST
+            { new DateTime(2014, 11, 7, 10, 11) }, //will hit the change from DST to non-DST
+            { new DateTime(2014, 9, 7, 10, 11) }, //outside of DST transitions in DST zone
+            { new DateTime(2014, 12, 7, 10, 11) }, //outside of DST transitions in non-DST zone
+            { new DateTime(System.currentTimeMillis()) }
+        };
+    }
+
+    public void initServer(DateTime testNow) throws Exception {
+        dateTimeServiceStub.setNow(testNow);
+
         metricsServer = new MetricsServer();
         metricsServer.setConfiguration(configuration);
 
@@ -69,8 +80,10 @@ public class MetricsServerTest extends MetricsTest {
         purgeDB();
     }
 
-    @Test
-    public void insertMultipleRawNumericDataForOneSchedule() throws Exception {
+    @Test(dataProvider = "testDates")
+    public void insertMultipleRawNumericDataForOneSchedule(DateTime testNow) throws Exception {
+        initServer(testNow);
+
         int scheduleId = 123;
 
         DateTime currentTime = hour(4).plusMinutes(44);
@@ -85,7 +98,7 @@ public class MetricsServerTest extends MetricsTest {
 
         WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
 
-        dateTimeService.setNow(currentTime);
+        dateTimeServiceStub.setNow(currentTime);
         metricsServer.addNumericData(data, waitForRawInserts);
 
         waitForRawInserts.await("Failed to insert raw data");
@@ -102,8 +115,10 @@ public class MetricsServerTest extends MetricsTest {
         assertRawIndexEquals(hour(4), asList(scheduleId));
     }
 
-    @Test
-    public void insertRawDataForMultipleSchedules() throws Exception {
+    @Test(dataProvider = "testDates")
+    public void insertRawDataForMultipleSchedules(DateTime testNow) throws Exception {
+        initServer(testNow);
+
         int scheduleId1 = 123;
         int scheduleId2 = 148;
         int scheduleId3 = 176;
@@ -117,7 +132,7 @@ public class MetricsServerTest extends MetricsTest {
         WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
 
         metricsServer.setIndexPartitions(2);
-        dateTimeService.setNow(hour(5).plusMinutes(5));
+        dateTimeServiceStub.setNow(hour(5).plusMinutes(5));
         metricsServer.addNumericData(data, waitForRawInserts);
         waitForRawInserts.await("Failed to insert raw data");
 
@@ -134,8 +149,10 @@ public class MetricsServerTest extends MetricsTest {
         assertRawIndexEquals(hour(5), asList(scheduleId2, scheduleId3, scheduleId1, scheduleId4));
     }
 
-    @Test
-    public void insertLateData() throws Exception {
+    @Test(dataProvider = "testDates")
+    public void insertLateData(DateTime testNow) throws Exception {
+        initServer(testNow);
+
         int scheduleId1 = 123;
         int scheduleId2 = 145;
         int scheduleId3 = 184;
@@ -149,7 +166,7 @@ public class MetricsServerTest extends MetricsTest {
         );
         WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
 
-        dateTimeService.setNow(hour(5).plusMinutes(12));
+        dateTimeServiceStub.setNow(hour(5).plusMinutes(12));
         metricsServer.addNumericData(data, waitForRawInserts);
         waitForRawInserts.await("Failed to insert raw data");
 
@@ -166,22 +183,26 @@ public class MetricsServerTest extends MetricsTest {
         assertRawDataEquals(scheduleId4, hour(4), hour(5), expected4);
     }
 
-    @Test
-    public void doNotInsertDataThatIsTooOld() throws Exception {
+    @Test(dataProvider = "testDates")
+    public void doNotInsertDataThatIsTooOld(DateTime testNow) throws Exception {
+        initServer(testNow);
+
         int scheduleId = 123;
         Set<MeasurementDataNumeric> data = ImmutableSet.of(new MeasurementDataNumeric(
             today().minusDays(4).plusHours(5).minusHours(25).getMillis(), scheduleId, 3.14));
         WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
 
-        dateTimeService.setNow(hour(5).plusMinutes(2));
+        dateTimeServiceStub.setNow(hour(5).plusMinutes(2));
         metricsServer.addNumericData(data, waitForRawInserts);
         waitForRawInserts.await("Failed to insert raw data");
 
         assertRawDataEmpty(scheduleId, hour(5).minusHours(25), hour(5).minusHours(24));
     }
 
-    @Test
-    public void calculateAggregatesForOneScheduleWhenDBIsEmpty() throws Exception {
+    @Test(dataProvider = "testDates")
+    public void calculateAggregatesForOneScheduleWhenDBIsEmpty(DateTime testNow) throws Exception {
+        initServer(testNow);
+
         int scheduleId = 123;
 
         DateTime hour0 = hour0();
@@ -198,11 +219,11 @@ public class MetricsServerTest extends MetricsTest {
 
         WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
 
-        dateTimeService.setNow(hour(7));
+        dateTimeServiceStub.setNow(hour(7));
         metricsServer.addNumericData(data, waitForRawInserts);
         waitForRawInserts.await("Failed to insert raw data");
 
-        dateTimeService.setNow(hour(8));
+        dateTimeServiceStub.setNow(hour(8));
 
         metricsServer.calculateAggregates();
 
@@ -216,8 +237,10 @@ public class MetricsServerTest extends MetricsTest {
             Bucket.SIX_HOUR, divide((3.9 + 3.2 + 2.6), 3), 2.6, 3.9, hour0.getMillis())));
     }
 
-    @Test
-    public void aggregateRawDataDuring9thHour() throws Exception {
+    @Test(dataProvider = "testDates")
+    public void aggregateRawDataDuring9thHour(DateTime testNow) throws Exception {
+        initServer(testNow);
+
         int scheduleId = 123;
 
         DateTime hour0 = hour0();
@@ -232,7 +255,7 @@ public class MetricsServerTest extends MetricsTest {
         double secondValue = 2.2;
         double thirdValue = 3.3;
 
-        dateTimeService.setNow(hour(8).plusMinutes(55));
+        dateTimeServiceStub.setNow(hour(8).plusMinutes(55));
 
         insertRawData(
             new MeasurementDataNumeric(firstMetricTime.getMillis(), scheduleId, firstValue),
@@ -240,7 +263,7 @@ public class MetricsServerTest extends MetricsTest {
             new MeasurementDataNumeric(thirdMetricTime.getMillis(), scheduleId, thirdValue)
         );
 
-        dateTimeService.setNow(hour(10));
+        dateTimeServiceStub.setNow(hour(10));
 
         metricsServer.calculateAggregates();
 
@@ -264,11 +287,13 @@ public class MetricsServerTest extends MetricsTest {
      * hour 10 which also mean we could have raw data in the 10:00 hour in addition to the
      * previous hour that need to be aggregated.
      */
-    @Test(enabled = false)
-    public void runAggregationIn15thHourAfterServerOutage() throws Exception {
+    @Test(enabled = false, dataProvider = "testDates")
+    public void runAggregationIn15thHourAfterServerOutage(DateTime testNow) throws Exception {
+        initServer(testNow);
+
         int scheduleId = 123;
 
-        dateTimeService.setNow(hour(11));
+        dateTimeServiceStub.setNow(hour(11));
 
         Set<MeasurementDataNumeric> data = ImmutableSet.of(
             new MeasurementDataNumeric(hour(10).plusMinutes(5).getMillis(), scheduleId, 5.0),
@@ -283,7 +308,7 @@ public class MetricsServerTest extends MetricsTest {
         //
         //  2) re-initialize the metrics server
         //  3) insert some more raw data
-        dateTimeService.setNow(hour(14).plusMinutes(55));
+        dateTimeServiceStub.setNow(hour(14).plusMinutes(55));
 
         metricsServer.init();
 
@@ -298,7 +323,7 @@ public class MetricsServerTest extends MetricsTest {
 
         // Now let's assume we have reached the top of the hour and run the scheduled
         // aggregation.
-        dateTimeService.setNow(hour(16));
+        dateTimeServiceStub.setNow(hour(16));
 
         metricsServer.calculateAggregates();
 
@@ -329,15 +354,17 @@ public class MetricsServerTest extends MetricsTest {
 //        assert6HourCacheEquals(hour(0), startScheduleId(scheduleId), expected6HourData);
     }
 
-    @Test(enabled = false)
-    public void runAggregationIn8thHourAfterServerOutageFromPreviousDay() throws Exception {
+    @Test(enabled = false, dataProvider = "testDates")
+    public void runAggregationIn8thHourAfterServerOutageFromPreviousDay(DateTime testNow) throws Exception {
+        initServer(testNow);
+
         int scheduleId = 123;
         DateTime hour20Yesterday = hour0().minusHours(4);
         DateTime hour18Yesterday = hour0().minusHours(6);
         DateTime hour0Yesterday = hour0().minusDays(1);
 
         // insert data before server shutdown
-        dateTimeService.setNow(hour20Yesterday.plusMinutes(55));
+        dateTimeServiceStub.setNow(hour20Yesterday.plusMinutes(55));
 
         Set<MeasurementDataNumeric> data = ImmutableSet.of(
             new MeasurementDataNumeric(hour20Yesterday.plusMinutes(5).getMillis(), scheduleId, 7.0),
@@ -352,7 +379,7 @@ public class MetricsServerTest extends MetricsTest {
         //
         //  2) re-initialize the metrics server
         //  3) insert some more raw data
-        dateTimeService.setNow(hour(8).plusMinutes(55));
+        dateTimeServiceStub.setNow(hour(8).plusMinutes(55));
 
         metricsServer.init();
 
@@ -367,7 +394,7 @@ public class MetricsServerTest extends MetricsTest {
 
         // Now let's assume we have reached the top of the hour and run the scheduled
         // aggregation.
-        dateTimeService.setNow(hour(10));
+        dateTimeServiceStub.setNow(hour(10));
 
         metricsServer.calculateAggregates();
 
@@ -401,10 +428,12 @@ public class MetricsServerTest extends MetricsTest {
             hour20YesterdayMin, hour20YesterdayMax, hour0Yesterday.getMillis())));
     }
 
-    @Test
-    public void findRawDataCompositesForResource() throws Exception {
-        DateTime beginTime = now().minusHours(4);
-        DateTime endTime = now();
+    @Test(dataProvider = "testDates")
+    public void findRawDataCompositesForResource(DateTime testNow) throws Exception {
+        initServer(testNow);
+
+        DateTime beginTime = testNow.minusHours(4);
+        DateTime endTime = testNow;
         Buckets buckets = new Buckets(beginTime, endTime);
         int scheduleId = 123;
 
@@ -446,13 +475,15 @@ public class MetricsServerTest extends MetricsTest {
             actualData.get(29));
     }
 
-    @Test
-    public void findLatestValueForResource() throws Exception {
+    @Test(dataProvider = "testDates")
+    public void findLatestValueForResource(DateTime testNow) throws Exception {
+        initServer(testNow);
+
         int scheduleId = 123;
 
-        DateTime fifteenMinutesAgo = now().minusMinutes(15);
-        DateTime tenMinutesAgo = now().minusMinutes(10);
-        DateTime fiveMinutesAgo = now().minusMinutes(5);
+        DateTime fifteenMinutesAgo = testNow.minusMinutes(15);
+        DateTime tenMinutesAgo = testNow.minusMinutes(10);
+        DateTime fiveMinutesAgo = testNow.minusMinutes(5);
 
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
         data.add(new MeasurementDataNumeric(fifteenMinutesAgo.getMillis(), scheduleId, 1.1));
@@ -471,10 +502,12 @@ public class MetricsServerTest extends MetricsTest {
         assertEquals(actual, expected, "Failed to find latest metric value for resource");
     }
 
-    @Test
-    public void getSummaryRawAggregateForResource() throws Exception {
-        DateTime beginTime = now().minusHours(4);
-        DateTime endTime = now();
+    @Test(dataProvider = "testDates")
+    public void getSummaryRawAggregateForResource(DateTime testNow) throws Exception {
+        initServer(testNow);
+
+        DateTime beginTime = testNow.minusHours(4);
+        DateTime endTime = testNow;
         Buckets buckets = new Buckets(beginTime, endTime);
         int scheduleId = 123;
 
@@ -507,10 +540,12 @@ public class MetricsServerTest extends MetricsTest {
             TEST_PRECISION);
     }
 
-    @Test
-    public void getSummary1HourAggregateForResource() {
-        DateTime beginTime = now().minusDays(11);
-        DateTime endTime = now();
+    @Test(dataProvider = "testDates")
+    public void getSummary1HourAggregateForResource(DateTime testNow) throws Exception {
+        initServer(testNow);
+
+        DateTime beginTime = testNow.minusDays(11);
+        DateTime endTime = testNow;
 
         Buckets buckets = new Buckets(beginTime, endTime);
         DateTime bucket0Time = new DateTime(buckets.get(0).getStartTime());
@@ -539,10 +574,12 @@ public class MetricsServerTest extends MetricsTest {
             TEST_PRECISION);
     }
 
-    @Test
-    public void getSummaryAggregateForGroup() {
-        DateTime beginTime = now().minusDays(11);
-        DateTime endTime = now();
+    @Test(dataProvider = "testDates")
+    public void getSummaryAggregateForGroup(DateTime testNow) throws Exception {
+        initServer(testNow);
+
+        DateTime beginTime = testNow.minusDays(11);
+        DateTime endTime = testNow;
 
         Buckets buckets = new Buckets(beginTime, endTime);
         DateTime bucket0Time = new DateTime(buckets.get(0).getStartTime());
@@ -558,6 +595,7 @@ public class MetricsServerTest extends MetricsTest {
             new AggregateNumericMetric(scheduleId1, Bucket.ONE_HOUR, 5.1, 5.1, 5.1, bucket59Time.getMillis()),
             new AggregateNumericMetric(scheduleId2, Bucket.ONE_HOUR, 5.2, 5.2, 5.2, bucket59Time.getMillis())
         );
+
         for (AggregateNumericMetric metric : metrics) {
             dao.insert1HourData(metric).get();
         }
@@ -573,10 +611,12 @@ public class MetricsServerTest extends MetricsTest {
             TEST_PRECISION);
     }
 
-    @Test
-    public void getSummaryRawAggregateForGroup() throws Exception {
-        DateTime beginTime = now().minusHours(4);
-        DateTime endTime = now();
+    @Test(dataProvider = "testDates")
+    public void getSummaryRawAggregateForGroup(DateTime testNow) throws Exception {
+        initServer(testNow);
+
+        DateTime beginTime = testNow.minusHours(4);
+        DateTime endTime = testNow;
         Buckets buckets = new Buckets(beginTime, endTime);
         int scheduleId1 = 123;
         int scheduleId2 = 456;
@@ -624,10 +664,13 @@ public class MetricsServerTest extends MetricsTest {
             TEST_PRECISION);
     }
 
-    @Test
-    public void findRawDataCompositesForGroup() throws Exception {
-        DateTime beginTime = now().minusHours(4);
-        DateTime endTime = now();
+    @Test(dataProvider = "testDates")
+    public void findRawDataCompositesForGroup(DateTime testNow) throws Exception {
+        initServer(testNow);
+
+        DateTime beginTime = testNow.minusHours(4);
+        DateTime endTime = testNow;
+
         Buckets buckets = new Buckets(beginTime, endTime);
         int scheduleId1 = 123;
         int scheduleId2 = 456;
@@ -685,10 +728,12 @@ public class MetricsServerTest extends MetricsTest {
             actualData.get(29));
     }
 
-    @Test
-    public void find1HourDataComposites() {
-        DateTime beginTime = now().minusDays(11);
-        DateTime endTime = now();
+    @Test(dataProvider = "testDates")
+    public void find1HourDataComposites(DateTime testNow) throws Exception {
+        initServer(testNow);
+
+        DateTime beginTime = testNow.minusDays(11);
+        DateTime endTime = testNow;
 
         Buckets buckets = new Buckets(beginTime, endTime);
         DateTime bucket0Time = new DateTime(buckets.get(0).getStartTime());
@@ -727,10 +772,12 @@ public class MetricsServerTest extends MetricsTest {
             actualData.get(29), TEST_PRECISION);
     }
 
-    @Test
-    public void find6HourDataCompositesHavingInvalidMax() throws Exception {
-        DateTime beginTime = now().minusDays(30);
-        DateTime endTime = now();
+    @Test(dataProvider="testDates")
+    public void find6HourDataCompositesHavingInvalidMax(DateTime testNow) throws Exception {
+        initServer(testNow);
+
+        DateTime beginTime = testNow.minusDays(30);
+        DateTime endTime = testNow;
 
         Buckets buckets = new Buckets(beginTime, endTime);
         DateTime bucket0Time = new DateTime(buckets.get(0).getStartTime());
@@ -757,10 +804,12 @@ public class MetricsServerTest extends MetricsTest {
             actualData.get(0), TEST_PRECISION);
     }
 
-    @Test
-    public void find1HourDatCompositesForGroup() {
-        DateTime beginTime = now().minusDays(11);
-        DateTime endTime = now();
+    @Test(dataProvider = "testDates")
+    public void find1HourDatCompositesForGroup(DateTime testNow) throws Exception {
+        initServer(testNow);
+
+        DateTime beginTime = testNow.minusDays(11);
+        DateTime endTime = testNow;
 
         Buckets buckets = new Buckets(beginTime, endTime);
         DateTime bucket0Time = new DateTime(buckets.get(0).getStartTime());
@@ -800,10 +849,12 @@ public class MetricsServerTest extends MetricsTest {
             actual.get(59));
     }
 
-    @Test
-    public void find6HourDataComposites() {
-        DateTime beginTime = now().minusDays(20);
-        DateTime endTime = now();
+    @Test(dataProvider = "testDates")
+    public void find6HourDataComposites(DateTime testNow) throws Exception {
+        initServer(testNow);
+
+        DateTime beginTime = testNow.minusDays(20);
+        DateTime endTime = testNow;
 
         Buckets buckets = new Buckets(beginTime, endTime);
         DateTime bucket0Time = new DateTime(buckets.get(0).getStartTime());
@@ -842,10 +893,12 @@ public class MetricsServerTest extends MetricsTest {
             actualData.get(29), TEST_PRECISION);
     }
 
-    @Test
-    public void find24HourDataComposites() {
+    @Test(dataProvider = "testDates")
+    public void find24HourDataComposites(DateTime testNow) throws Exception {
+        initServer(testNow);
+
         DateTime beginTime = hour(0).minusDays(100);
-        DateTime endTime = now();
+        DateTime endTime = testNow;
 
         Buckets buckets = new Buckets(beginTime, endTime);
         DateTime bucket0Time = new DateTime(buckets.get(0).getStartTime());

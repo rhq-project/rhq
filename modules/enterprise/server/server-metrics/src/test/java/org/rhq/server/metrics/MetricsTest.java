@@ -39,7 +39,7 @@ public class MetricsTest extends CassandraIntegrationTest {
 
     protected MetricsDAO dao;
     protected MetricsConfiguration configuration = new MetricsConfiguration();
-    protected DateTimeServiceStub dateTimeService;
+    protected DateTimeServiceStub dateTimeServiceStub;
     private RawNumericMetricMapper rawMapper = new RawNumericMetricMapper();
     private AggregateNumericMetricMapper aggregateMapper = new AggregateNumericMetricMapper();
 
@@ -47,8 +47,11 @@ public class MetricsTest extends CassandraIntegrationTest {
     public void initClass() throws Exception {
         configuration = createConfiguration();
         dao = new MetricsDAO(storageSession, configuration);
-        dateTimeService = new DateTimeServiceStub();
-        dateTimeService.setConfiguration(configuration);
+        dateTimeServiceStub = new DateTimeServiceStub();
+
+        dateTimeServiceStub.setConfiguration(configuration);
+
+        dateTimeService = dateTimeServiceStub;
     }
 
     protected MetricsConfiguration createConfiguration() {

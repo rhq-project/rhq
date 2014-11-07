@@ -84,7 +84,7 @@ public class MetricsPerfTests extends MetricsTest {
         Random random = new Random();
         DateTime currentHour = hour(3);
         storageSession.setTopologyDelta(NUM_SCHEDULES);
-        dateTimeService.setNow(currentHour);
+        dateTimeServiceStub.setNow(currentHour);
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
         for (int i = 0; i < NUM_SCHEDULES; ++i) {
             DateTime time = currentHour;
@@ -162,7 +162,7 @@ public class MetricsPerfTests extends MetricsTest {
 
         long start = System.currentTimeMillis();
         DateTime currentHour = hour(4);
-        dateTimeService.setNow(currentHour);
+        dateTimeServiceStub.setNow(currentHour);
         metricsServer.setDateTimeService(new DateTimeServiceStub(hour(4), start));
         Collection<AggregateNumericMetric> oneHourData =
             (Collection<AggregateNumericMetric>) metricsServer.calculateAggregates();

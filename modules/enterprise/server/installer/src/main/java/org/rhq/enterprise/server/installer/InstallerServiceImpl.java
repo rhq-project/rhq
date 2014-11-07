@@ -648,11 +648,17 @@ public class InstallerServiceImpl implements InstallerService {
             throw new Exception("Could not complete the database schema installation", e);
         }
 
-        // install the storage schema if the schema does not yet exist. do not upgrade the schema
-        // during a single server install because storage cluster schema is a cluster-wide operation handled
-        // via another path.
-        // if the storage cluster credentials are already set in the DB (typically an HA install), override
-        // what's currently in the server properties file, and then continue with storage schema setup
+        // if this is not an upgrade it may instead be a re-install. In that case we can try to replace potentially
+        // errant storage node definitions with the currently supplied configuration (if it is defined) BZ1092707. By
+        // deleting here, prior to fetching cluster settings from the DB,  we're assured that to use the properties
+        // file setting, if applicable (because ServerProperties.PROP_STORAGE_NODES will not get reset, below).
+        String storageNodes = serverProperties.get(ServerProperties.PROP_STORAGE_NODES);
+        if (!isUpgrade && !StringUtil.isBlank(storageNodes)) {
+            ServerInstallUtil.deleteStorageNodes(serverProperties, clearTextDbPassword, false);
+        }
+
+        // To ensure consistency, override the server properties if configuration is already in the DB
+        // (typically an HA install), and then continue with storage schema setup.
         Map<String, String> storageProperties = ServerInstallUtil.fetchStorageClusterSettings(serverProperties,
             clearTextDbPassword);
         String[] properties = new String[] { ServerProperties.PROP_STORAGE_USERNAME,

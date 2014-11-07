@@ -60,7 +60,6 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -101,7 +100,6 @@ import org.rhq.enterprise.server.util.QueryUtility;
  * @author Joseph Marques
  */
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, ResourceGroupManagerRemote {
     private final Log log = LogFactory.getLog(ResourceGroupManagerBean.class);
 
@@ -126,21 +124,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     @EJB
     private GroupAlertDefinitionManagerLocal groupAlertDefinitionManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource rhqDs;
+
     private DatabaseType dbType;
 
     @PostConstruct
     public void init() {
-        Connection conn = null;
-        try {
-            conn = rhqDs.getConnection();
-            dbType = DatabaseTypeFactory.getDatabaseType(conn);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            JDBCUtil.safeClose(conn);
-        }
+        dbType = DatabaseTypeFactory.getDefaultDatabaseType();
     }
 
     public ResourceGroup createPrivateResourceGroup(Subject subject, ResourceGroup group) {
@@ -671,9 +662,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             }
 
             // delete explicit resources
-            String deleteExplicitQueryString = JDBCUtil.transformQueryForMultipleInParameters(
-                ResourceGroup.QUERY_NATIVE_REMOVE_RESOURCES_FROM_GROUP_EXPLICIT, "@@RESOURCE_IDS@@",
- resourceIds.length);
+            String deleteExplicitQueryString = JDBCUtil
+                .transformQueryForMultipleInParameters(ResourceGroup.QUERY_NATIVE_REMOVE_RESOURCES_FROM_GROUP_EXPLICIT,
+                    "@@RESOURCE_IDS@@", resourceIds.length);
             deleteExplicitStatement = conn.prepareStatement(deleteExplicitQueryString);
             deleteExplicitStatement.setInt(1, groupId);
             JDBCUtil.bindNTimes(deleteExplicitStatement, resourceIdsArray, 2);
@@ -1759,5 +1750,4 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
         return group;
     }
-
 }

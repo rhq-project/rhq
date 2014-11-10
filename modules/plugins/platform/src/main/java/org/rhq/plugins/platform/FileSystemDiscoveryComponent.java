@@ -44,6 +44,9 @@ public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<
 
     private static final String SYS_TYPE_NAME_LOFS = "lofs";
     private static final String SYS_TYPE_NAME_TMPFS = "tmpfs";
+    private static final String SYS_TYPE_NAME_BTRFS = "btrfs";
+    private static final String SYS_TYPE_NAME_ZFS = "zfs";
+    private static final String SYS_TYPE_NAME_F2FS = "f2fs";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -69,7 +72,9 @@ public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<
                 break;
             default:
                 String sysTypeName = fs.getSysTypeName();
-                if (!(SYS_TYPE_NAME_LOFS.equals(sysTypeName) || SYS_TYPE_NAME_TMPFS.equals(sysTypeName))) {
+                if (!(SYS_TYPE_NAME_LOFS.equals(sysTypeName) || SYS_TYPE_NAME_TMPFS.equals(sysTypeName)
+                || SYS_TYPE_NAME_BTRFS.equals(sysTypeName) || SYS_TYPE_NAME_F2FS.equals(sysTypeName)
+                || SYS_TYPE_NAME_ZFS.equals(sysTypeName))) {
                     continue;
                 }
             }

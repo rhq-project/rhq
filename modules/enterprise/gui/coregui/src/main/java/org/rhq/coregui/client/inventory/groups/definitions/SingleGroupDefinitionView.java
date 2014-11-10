@@ -41,6 +41,7 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.IButton;
@@ -69,6 +70,7 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.Layout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
@@ -91,8 +93,8 @@ import org.rhq.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.coregui.client.inventory.groups.definitions.GroupDefinitionExpressionBuilder.AddExpressionHandler;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -122,6 +124,7 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
         super();
         buildForm();
         setWidth100();
+        setOverflow(Overflow.AUTO);
     }
 
     public void setGroupDefinition(final GroupDefinition groupDefinition) {
@@ -293,6 +296,13 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
             super(MSG.view_dynagroup_children(), new Criteria("groupDefinitionId", String.valueOf(groupDefinition
                 .getId())));
             setDataSource(ResourceGroupsDataSource.getInstance());
+        }
+
+        @Override
+        protected void configureTableContents(Layout contents) {
+            super.configureTableContents(contents);
+            contents.setMinMemberSize(100);
+            contents.setOverflow(Overflow.VISIBLE);
         }
 
         @Override

@@ -58,10 +58,14 @@ public class MetricsServerTest extends MetricsTest {
     @DataProvider(name="testDates")
     public Object[][] createData(){
         return new Object[][] {
+            //even if everything use an UTC timezone, keep this variations here
+            //to alert in case a non-UTC timezone is used in the future by mistake
             { new DateTime(2014, 3, 15, 10, 11) }, //will hit the change from non-DST to DST
             { new DateTime(2014, 11, 7, 10, 11) }, //will hit the change from DST to non-DST
             { new DateTime(2014, 9, 7, 10, 11) }, //outside of DST transitions in DST zone
             { new DateTime(2014, 12, 7, 10, 11) }, //outside of DST transitions in non-DST zone
+            { new DateTime(2014, 11, 2, 3, 11) }, //data on the DST to non-DST boundary
+            { new DateTime(2014, 3, 9, 3, 11) }, //data on the non-DST to DST boundary
             { new DateTime(System.currentTimeMillis()) }
         };
     }

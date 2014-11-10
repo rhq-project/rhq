@@ -14,7 +14,6 @@ import com.google.common.collect.Iterators;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 
 import org.rhq.server.metrics.MetricsConfiguration;
@@ -166,31 +165,7 @@ public class IndexIterator implements Iterator<IndexEntry> {
                 ++partition;
             } else {
                 partition = 0;
-
-                //(BZ ) Added code to adjust to the shifts in time due to
-                // changes from DST to non-DST and the reverse.
-                //
-                // 1) When switching from DST to non-DST, the time after the
-                // duration increment needs to be adjusted by a positive
-                // one hour
-                //
-                // 2) When switching from non-DST to DST, the time after the
-                // duration increment needs to be adjusted by a negative
-                // one hour
-                //
-                // Note: this does not work if the duration is exactly one
-                // hour because it will create an infinite loop when switching
-                // from non-DST to DST times.
-
-                if (duration.toPeriod().getHours() == 1) {
-                    time = time.plus(duration);
-                } else {
-                    DateTimeZone zone = time.getZone();
-                    int beforeOffset = zone.getOffset(time.getMillis());
-                    time = time.plus(duration);
-                    int afterOffset = zone.getOffset(time.getMillis());
-                    time = time.plus(beforeOffset - afterOffset);
-                }
+                time = time.plus(duration);
             }
 
             nextResultSet = findIndexEntries();

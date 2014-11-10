@@ -20,4 +20,4 @@ Resource Ancestry:
 
 For additional details about this alert, go to @@@ALERT_URL@@@
 
-This message was delivered to you by RHQ.
+This message was delivered to you by @@@PRODUCT_NAME@@@.

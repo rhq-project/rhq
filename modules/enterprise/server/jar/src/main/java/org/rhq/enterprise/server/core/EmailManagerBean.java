@@ -41,6 +41,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * EJB interface to an SMTP email system.
@@ -86,6 +87,8 @@ public class EmailManagerBean implements EmailManagerLocal {
      * The token string found in the email template file that will be replaced with a URL to a specific alert.
      */
     private static final String TEMPLATE_TOKEN_ALERT_URL = "@@@ALERT_URL@@@";
+
+    private static final String TEMPLATE_TOKEN_PRODUCT_NAME = "@@@PRODUCT_NAME@@@";
 
     @Resource(mappedName = "java:jboss/mail/Default")
     private Session mailSession;
@@ -153,6 +156,9 @@ public class EmailManagerBean implements EmailManagerLocal {
         InputStream templateStream = this.getClass().getClassLoader().getResourceAsStream("alert-email-template.txt");
         String template = new String(StreamUtil.slurp(templateStream));
 
+        String productName = LookupUtil.getSystemManager().getProductInfo(LookupUtil.getSubjectManager().getOverlord())
+            .getFullName();
+
         // the resource hierarchy could have backslash characters from new lines and/or resource names
         template = template.replaceAll(TEMPLATE_TOKEN_RESOURCE_HIERARCHY, cleanse(resourceHierarchy,
             "?Unknown Resource Hierarchy?"));
@@ -174,6 +180,8 @@ public class EmailManagerBean implements EmailManagerLocal {
 
         // better to be paranoid and on the safe side than risk it just to save one line of code
         template = template.replaceAll(TEMPLATE_TOKEN_ALERT_URL, cleanse(alertUrl, "?Unknown URL?"));
+
+        template = template.replaceAll(TEMPLATE_TOKEN_PRODUCT_NAME, cleanse(productName, "RHQ"));
 
         String subject = "[" + RHQConstants.PRODUCT_NAME + "] Alert";
 

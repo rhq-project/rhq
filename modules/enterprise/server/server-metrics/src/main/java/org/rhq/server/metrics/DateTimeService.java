@@ -27,6 +27,7 @@ package org.rhq.server.metrics;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeComparator;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 import org.joda.time.Period;
 
@@ -36,6 +37,15 @@ import org.joda.time.Period;
  * @author John Sanda
  */
 public class DateTimeService {
+
+    static {
+        //[BZ 1161806]
+        // Force the timezone to UTC to avoid any problems due to transitions
+        // from DST to non-DST
+        // This also solves the problem where an HA environment is distributed
+        // in two different timezones
+        DateTimeZone.setDefault(DateTimeZone.UTC);
+    }
 
     private DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();
 

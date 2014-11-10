@@ -98,6 +98,7 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
+import org.rhq.server.metrics.DateTimeService;
 
 /**
  * This startup singleton EJB performs the rest of the RHQ Server startup initialization.
@@ -181,6 +182,10 @@ public class StartupBean implements StartupLocal {
      */
     @Override
     public void init() throws RuntimeException {
+
+        //[BZ 1161806] Make sure the default time zone is set to UTC prior to use
+        @SuppressWarnings("unused")
+        DateTimeService temp = new DateTimeService();
 
         checkTempDir();
 

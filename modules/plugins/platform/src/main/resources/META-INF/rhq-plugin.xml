@@ -505,51 +505,53 @@
 
     </service>
 
-    <service name="File System" discovery="FileSystemDiscoveryComponent" class="FileSystemComponent">
+  <service name="File System" discovery="FileSystemDiscoveryComponent" class="FileSystemComponent">
 
-        <runs-inside>
-            <parent-resource-type name="Windows" plugin="Platforms"/>
-            <parent-resource-type name="Linux" plugin="Platforms"/>
-            <parent-resource-type name="Solaris" plugin="Platforms"/>
-            <parent-resource-type name="HP-UX" plugin="Platforms"/>
-            <parent-resource-type name="AIX" plugin="Platforms"/>
-            <parent-resource-type name="FreeBSD" plugin="Platforms"/>
-            <parent-resource-type name="Mac OS X" plugin="Platforms"/>
-        </runs-inside>
+    <runs-inside>
+      <parent-resource-type name="Windows" plugin="Platforms"/>
+      <parent-resource-type name="Linux" plugin="Platforms"/>
+      <parent-resource-type name="Solaris" plugin="Platforms"/>
+      <parent-resource-type name="HP-UX" plugin="Platforms"/>
+      <parent-resource-type name="AIX" plugin="Platforms"/>
+      <parent-resource-type name="FreeBSD" plugin="Platforms"/>
+      <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+    </runs-inside>
 
-        <metric property="fileSystemUsage.free" displayName="Free Space" units="kilobytes" displayType="summary"
-                description="The total free bytes on filesystem"/>
-        <metric property="fileSystemUsage.usePercent" displayName="Used Percentage" units="percentage"
-                displayType="summary"
-                description="The percentage of disk used"/>
-        <metric property="fileSystemUsage.total" displayName="Capacity" units="kilobytes" dataType="trait"
-                description="The total size of the filesystem"/>
-        <metric property="fileSystem.typeName" displayName="Volume Type" dataType="trait" displayType="summary"
-                description="The filesystem's generic type name"/>
-        <metric property="fileSystem.sysTypeName" displayName="Drive Type" dataType="trait" displayType="summary"
-                description="The filesystem's operating system-specific type name"/>
-        <metric property="fileSystem.devName" displayName="name" dataType="trait"
-                description="The name of this device"/>
-        <metric property="fileSystemUsage.freeFiles" displayName="Free Files"
-                description="The number of free file nodes on the filesystem"/>
-        <metric property="fileSystem.flags" displayName="Flags" dataType="trait"
-                description="The filesystem's flags"/>
-        <metric property="fileSystemUsage.used" displayName="Used" units="kilobytes"
-                description="The total bytes used on the filesystem"/>
-        <metric property="fileSystemUsage.diskReads" displayName="Disk Reads" measurementType="trendsup"
-                description="The number of physical disk reads"/>
-        <metric property="fileSystemUsage.diskWrites" displayName="Disk Writes" measurementType="trendsup"
-                description="The number of physical disk writes"/>
-        <metric property="fileSystemUsage.diskReadBytes" displayName="Disk Read Bytes" measurementType="trendsup"
-                units="bytes"
-                description="The number of physical disk bytes read"/>
-        <metric property="fileSystemUsage.diskWriteBytes" displayName="Disk Write Bytes" measurementType="trendsup"
-                units="bytes"
-                description="The number of physical disk bytes written"/>
-        <metric property="fileSystemUsage.diskQueue" displayName="Disk Queue"
-                description="The number of I/Os currently in progress"/>
+    <metric property="fileSystemUsage.free" displayName="Free Space" units="kilobytes" displayType="summary"
+            description="The total free bytes on filesystem"/>
+    <metric property="fileSystemUsage.usePercent" displayName="Used Percentage" units="percentage"
+            displayType="summary"
+            description="The percentage of disk used"/>
+    <metric property="fileSystemUsage.total" displayName="Capacity" units="kilobytes" dataType="trait"
+            description="The total size of the filesystem"/>
+    <metric property="fileSystem.typeName" displayName="Volume Type" dataType="trait" displayType="summary"
+            description="The filesystem's generic type name"/>
+    <metric property="fileSystem.sysTypeName" displayName="Drive Type" dataType="trait" displayType="summary"
+            description="The filesystem's operating system-specific type name"/>
+    <metric property="fileSystem.devName" displayName="name" dataType="trait"
+            description="The name of this device"/>
+    <metric property="fileSystemUsage.freeFiles" displayName="Free Files"
+            description="The number of free file nodes on the filesystem"/>
+    <metric property="fileSystem.flags" displayName="Flags" dataType="trait"
+            description="The filesystem's flags"/>
+    <metric property="fileSystem.options" displayName="Options" dataType="trait"
+            description="The filesystem's mount options"/>
+    <metric property="fileSystemUsage.used" displayName="Used" units="kilobytes"
+            description="The total bytes used on the filesystem"/>
+    <metric property="fileSystemUsage.diskReads" displayName="Disk Reads" measurementType="trendsup"
+            description="The number of physical disk reads"/>
+    <metric property="fileSystemUsage.diskWrites" displayName="Disk Writes" measurementType="trendsup"
+            description="The number of physical disk writes"/>
+    <metric property="fileSystemUsage.diskReadBytes" displayName="Disk Read Bytes" measurementType="trendsup"
+            units="bytes"
+            description="The number of physical disk bytes read"/>
+    <metric property="fileSystemUsage.diskWriteBytes" displayName="Disk Write Bytes" measurementType="trendsup"
+            units="bytes"
+            description="The number of physical disk bytes written"/>
+    <metric property="fileSystemUsage.diskQueue" displayName="Disk Queue"
+            description="The number of I/Os currently in progress"/>
 
-    </service>
+  </service>
 
     <service name="CPU" discovery="CpuDiscoveryComponent" class="CpuComponent">
 

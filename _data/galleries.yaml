@@ -1,6 +1,6 @@
 - id: screenshots
   description: In-App Screenshots
-  imagefolder: /img/
+  imagefolder: ./img
   images:
   - name: screen1.png
     thumb: screen1.png

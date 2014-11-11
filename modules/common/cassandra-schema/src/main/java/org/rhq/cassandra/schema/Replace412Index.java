@@ -94,7 +94,8 @@ public class Replace412Index {
                 ++count;
                 for (Integer scheduleId : scheduleIds) {
                     partition = (scheduleId % NUM_PARTITIONS);
-                    session.execute(updateNewIndex.bind(newBucket, partition, time.toDate(), scheduleId));
+                    session.execute(updateNewIndex.bind(newBucket, partition,
+                        ReplaceIndex.getUTCTimeSlice(time, timeSlice).toDate(), scheduleId));
                 }
             }
             if (count < PAGE_SIZE) {

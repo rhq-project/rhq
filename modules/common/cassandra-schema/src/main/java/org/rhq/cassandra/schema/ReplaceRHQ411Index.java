@@ -85,7 +85,8 @@ public class ReplaceRHQ411Index {
                 scheduleId = row.getInt(0);
                 partition = (scheduleId % NUM_PARTITIONS);
                 ++count;
-                session.execute(updateNewIndex.bind(newBucket, partition, time.toDate(), scheduleId));
+                session.execute(updateNewIndex.bind(newBucket, partition, ReplaceIndex.getUTCTimeSlice(time, timeSlice)
+                    .toDate(), scheduleId));
             }
             if (count < PAGE_SIZE) {
                 time = time.plus(timeSlice);

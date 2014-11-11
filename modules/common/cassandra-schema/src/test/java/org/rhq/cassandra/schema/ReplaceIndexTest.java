@@ -205,7 +205,7 @@ public class ReplaceIndexTest extends SchemaUpgradeTest {
         List<Integer> expectedScheduleIds) throws InterruptedException {
         DateTime time = startTime;
         while (time.isBefore(endTime)) {
-            List<Integer> actualScheduleIds = loadIndex(bucket, time);
+            List<Integer> actualScheduleIds = loadIndex(bucket, time, timeSlice);
             // Put them schedule ids in a set before comparing. The order ids is not
             // important and will likely not match since loadIndex() merges results from
             // queries across multiple index partitions.
@@ -216,11 +216,12 @@ public class ReplaceIndexTest extends SchemaUpgradeTest {
         }
     }
 
-    private List<Integer> loadIndex(String bucket, DateTime time) throws InterruptedException {
+    private List<Integer> loadIndex(String bucket, DateTime time, Duration timeSlice) throws InterruptedException {
         List<ResultSetFuture> queryFutures = new ArrayList<ResultSetFuture>(NUM_PARTITIONS);
         for (int i = 0; i < NUM_PARTITIONS; ++i) {
-            queryFutures.add(session.executeAsync("select schedule_id from metrics_idx where bucket = '" + bucket +
-                "' and partition = " + i + " and time = " + time.getMillis()));
+            queryFutures.add(session
+                .executeAsync("select schedule_id from metrics_idx where bucket = '" + bucket + "' and partition = "
+                    + i + " and time = " + ReplaceIndex.getUTCTimeSlice(time, timeSlice).getMillis()));
         }
         final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
         final List<Integer> scheduleIds = new ArrayList<Integer>();

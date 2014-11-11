@@ -12,7 +12,7 @@ fa-icon: camera
 <li>
         {{ image.text }}<br>
         <a href="{{ gallery.imagefolder }}/{{ image.name }}" data-lightbox="{{ gallery.id }}" title="{{ image.text }}">
-          <img width="450px" src="{{ gallery.imagefolder }}/{{ image.thumb }}">
+          <img width="450px" src="./{{ gallery.imagefolder }}/{{ image.thumb }}">
         </a>
       </li>
     {% endfor %}

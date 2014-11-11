@@ -8,6 +8,7 @@ import com.datastax.driver.core.Session;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
 import org.joda.time.Duration;
 import org.joda.time.Hours;
@@ -59,7 +60,7 @@ public class ReplaceIndex implements Step {
         }
     }
 
-    private DateTime getTimeSlice(DateTime dt, Duration duration) {
+    protected static DateTime getTimeSlice(DateTime dt, Duration duration) {
         Period p = duration.toPeriod();
 
         if (p.getYears() != 0) {
@@ -78,6 +79,10 @@ public class ReplaceIndex implements Step {
             return dt.secondOfMinute().roundFloorCopy().minusSeconds(dt.getSecondOfMinute() % p.getSeconds());
         }
         return dt.millisOfSecond().roundCeilingCopy().minusMillis(dt.getMillisOfSecond() % p.getMillis());
+    }
+
+    protected static DateTime getUTCTimeSlice(DateTime dateTime, Duration duration) {
+        return getTimeSlice(new DateTime(dateTime.getMillis(), DateTimeZone.UTC), duration);
     }
 
     private boolean cacheIndexExists() {

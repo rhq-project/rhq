@@ -1,90 +1,81 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Rhq by Jiri-Kremser</title>
-
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <div class="wrapper">
-      <header>
-        <h1>Rhq</h1>
-        <p>RHQ system management and monitoring framework</p>
-
-        <p class="view"><a href="https://github.com/Jiri-Kremser/rhq">View the Project on GitHub <small>Jiri-Kremser/rhq</small></a></p>
-
-
-        <ul>
-          <li><a href="https://github.com/Jiri-Kremser/rhq/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/Jiri-Kremser/rhq/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/Jiri-Kremser/rhq">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <p><img src="https://docs.jboss.org/author/download/attachments/30901932/RHQ?version=2&amp;modificationDate=1257539985000" alt=""></p>
-
-<h2>
-<a name="rhq-project" class="anchor" href="#rhq-project"><span class="octicon octicon-link"></span></a>RHQ Project</h2>
-
-<p>RHQ Project (short RHQ) is a Framework and tool for systems management and monitoring. As such it allows to gather metrics from so called managed resources, alert on values of the metrics or state change and other conditions. RHQ is also able to provision new content onto managed resources, run operations on them etc.</p>
-
-<p>The list of supported managed resources is not hard coded, but provided by (agent) <a href="https://github.com/rhq-project/rhq/tree/master/modules/plugins">plugins</a>.</p>
-
-<h2>
-<a name="wiki-and-issue-tracker" class="anchor" href="#wiki-and-issue-tracker"><span class="octicon octicon-link"></span></a>Wiki and issue tracker</h2>
-
-<p>The <a href="https://docs.jboss.org/author/display/RHQ/Home">RHQ wiki</a> contains information about running RHQ as well as a lot of design documentation.</p>
-
-<p>Issues for RHQ are currently tracked in <a href="https://bugzilla.redhat.com/browse.cgi?product=RHQ%20Project">Bugzilla</a></p>
-
-<h2>
-<a name="contributing" class="anchor" href="#contributing"><span class="octicon octicon-link"></span></a>Contributing</h2>
-
-<p>If you wish to get involved as a contributor to RHQ, please visit <code>#rhq</code> channel on Freenode IRC and get to know people. We are more than happy to accept your changes. If you want your change to go upstream, please contact us on our IRC channel or using our <a href="https://fedorahosted.org/mailman/listinfo/rhq-devel">dev mailing list</a> before actual coding so we can talk about it first. </p>
-
-<h3>
-<a name="cla" class="anchor" href="#cla"><span class="octicon octicon-link"></span></a>CLA</h3>
-
-<p>To contribute please make sure you have signed the Fedora CLA as explained on this <a href="https://docs.jboss.org/author/display/RHQ/Contributions#Contributions-TheContributorLicenseAgreement%28CLA%29">wiki page</a>.</p>
-
-<h3>
-<a name="how-to" class="anchor" href="#how-to"><span class="octicon octicon-link"></span></a>How to</h3>
-
-<p>If you want to contribute to the source repository, please fork it into your own repository and send pull-requests afterwards. Each pull-request should be "backed" by an entry in Bugzilla. Please add the Bugzilla issue number to the pull-request.</p>
-
-<p>For building the project you can run following command</p>
-
-<pre><code>$ mvn clean -Ddbsetup -Penterprise,dev -DskipTests install
-</code></pre>
-
-<h2>
-<a name="core-developers" class="anchor" href="#core-developers"><span class="octicon octicon-link"></span></a>Core developers</h2>
-
-<p><a href="https://github.com/Jiri-Kremser" class="user-mention">@Jiri-Kremser</a>
-<a href="https://github.com/jmazzitelli" class="user-mention">@jmazzitelli</a>
-<a href="https://github.com/jsanda" class="user-mention">@jsanda</a>
-<a href="https://github.com/jshaughn" class="user-mention">@jshaughn</a>
-<a href="https://github.com/lzoubek" class="user-mention">@lzoubek</a>
-<a href="https://github.com/metlos" class="user-mention">@metlos</a>
-<a href="https://github.com/mtho11" class="user-mention">@mtho11</a>
-<a href="https://github.com/pilhuhn" class="user-mention">@pilhuhn</a>
-<a href="https://github.com/spinder" class="user-mention">@spinder</a>
-<a href="https://github.com/stefannegrea" class="user-mention">@stefannegrea</a>
-<a href="https://github.com/tsegismont" class="user-mention">@tsegismont</a></p>
-      </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/Jiri-Kremser">Jiri-Kremser</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
+---
+---
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ site.title }}</title>
+	<meta name="keywords" content="{{ site.keywords }}">
+	<meta name="description" content="{{ site.description }}">
+  <link rel="stylesheet" href="combo.css">
+  <link href='http://fonts.googleapis.com/css?family=Raleway:400,300,700' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
+  {% if site.favicon %}<link rel="shortcut icon" href="{{ site.favicon }}" type="image/x-icon">{% endif %}
+	{% if site.touch_icon %}<link rel="apple-touch-icon" href="{{ site.touch_icon }}">{% endif %}
+  <link href="http://static.jboss.org/css/tabzilla.css" media="screen" rel="stylesheet">
+</head>
+<body>
+  <div id="main">
+   <div class="dropup">
+       <div id="ajbossproject">A JBoss Project</div> <a class="tabnav-closed" href="#" id="tab">Red Hat</a>
+       <script>
+            window.addEventListener('load', function() {
+                 renderTabzilla("<PROJECT_NAME>", "<PROJECT_URL_NAME>", false );
+            }, false);
+       </script>
     </div>
-    <script src="javascripts/scale.fix.js"></script>
-    
-  </body>
+    <nav><ul>
+      {% for node in site.posts reversed %}
+        {% capture id %}{{ node.id | remove:'/' | downcase }}{% endcapture %}
+        <li class="p-{{id}}"><a href="#{{id}}">{{node.title}}</a></li>
+      {% endfor %}
+    </ul></nav>
+
+
+    {% for page in site.posts reversed %}
+      {% capture id %}{{ page.id | remove:'/' | downcase }}{% endcapture %}
+      <div id="{{id}}" class="section p-{{id}}">
+        {% if page.icon %}
+        <div class="subtlecircle sectiondivider imaged">
+          <img src="{{page.icon}}" alt="section icon" />
+          <h5 class="icon-title">{{ page.title }}</h5>
+        </div>
+        {% elsif page.fa-icon %}
+        <div class="subtlecircle sectiondivider faicon">
+          <span class="fa-stack">
+            <i class="fa fa-circle fa-stack-2x"></i>
+            <i class="fa fa-{{ page.fa-icon }} fa-stack-1x"></i>
+          </span>
+          <h5 class="icon-title">{{ page.title }}</h5>
+        </div>
+        {% endif %}
+        <div class="container {{ page.style }}">
+          {{ page.content }}
+        </div>
+      </div>
+    {% endfor %}
+
+    <div id="footer" class="section text-white">
+      <div class="container">
+        {% capture foottext %} {% include footer.md %} {% endcapture %}
+        {{ foottext | markdownify }}
+      </div>
+    </div>
+  </div>
+
+<div class="container" id="companyfooter">
+  <div class="redhatlogo" style="text-align:center;">
+      <div id="logospacer"></div>
+      <a href="http://www.redhat.com/">
+        <img src="http://static.jboss.org/theme/images/common/redhat_logo.png">
+      </a>
+  </div>
+</div>
+
+{% include analytics.html %}
+</body>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="site.js"></script>
+<script src="http://static.jboss.org/js/_jbossorg-tabzilla.js"></script>
 </html>

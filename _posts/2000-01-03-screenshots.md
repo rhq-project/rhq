@@ -1,9 +1,23 @@
 ---
-title: "setup details"
+title: "Screenshots"
 bg: orange
 color: black
-fa-icon: toggle-on
+fa-icon: camera
 ---
+
+{% for gallery in site.data.galleries %}
+<h1>{{ gallery.description }}</h1>
+<ol>
+    {% for image in gallery.images %}
+<li>
+        {{ image.text }}<br>
+        <a href="{{ gallery.imagefolder }}/{{ image.name }}" data-lightbox="{{ gallery.id }}" title="{{ image.text }}">
+          <img width="450px" src="{{ gallery.imagefolder }}/{{ image.thumb }}">
+        </a>
+      </li>
+    {% endfor %}
+    </ol>
+{% endfor %}
 
 ## Setup as user homepage
 

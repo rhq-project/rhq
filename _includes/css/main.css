@@ -202,6 +202,10 @@ nav ul li:hover, nav ul li.active {
     line-height: 45px;
 }
 
+.sourceforge {
+    font-family: Calibri,Candara,Segoe,Segoe UI,Optima,Arial,sans-serif; 
+}
+
 .btn:focus,
 .btn:active,
 .btn.active {

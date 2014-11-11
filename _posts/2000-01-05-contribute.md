@@ -1,8 +1,8 @@
 ---
-title: "usage"
-bg: '#63BD2F'
+title: "Contribute"
+bg: red
 color: white
-fa-icon: plug
+fa-icon: code-fork
 ---
 
 Alright, you've got a clean copy and are ready to push some schmancy pages for the world to ogle at.

@@ -1,0 +1,22 @@
+- id: screenshots
+  description: In-App Screenshots
+  imagefolder: /img/
+  images:
+  - name: screen1.png
+    thumb: screen1.png
+    text: The first image
+  - name: screen2.png
+    thumb: screen2.png
+    text: The second image
+  - name: screen3.png
+    thumb: screen3.png
+    text: The third image
+  - name: screen4.png
+    thumb: screen4.png
+    text: The fourth image
+  - name: screen5.png
+    thumb: screen5.png
+    text: The fourth image
+  - name: screen6.png
+    thumb: screen6.png
+    text: The fourth image

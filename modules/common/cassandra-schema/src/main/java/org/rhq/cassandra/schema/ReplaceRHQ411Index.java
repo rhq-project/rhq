@@ -89,7 +89,7 @@ public class ReplaceRHQ411Index {
                     .toDate(), scheduleId));
             }
             if (count < PAGE_SIZE) {
-                time = time.plus(timeSlice);
+                time = ReplaceIndex.plusDSTAware(time, timeSlice);
                 statement = find411IndexEntries.bind(oldBucket, time.toDate());
             } else {
                 statement = find411IndexEntriesAfterScheduleId.bind(oldBucket, time.toDate(), scheduleId);

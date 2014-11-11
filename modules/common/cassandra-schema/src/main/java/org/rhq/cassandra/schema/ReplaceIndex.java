@@ -85,6 +85,35 @@ public class ReplaceIndex implements Step {
         return getTimeSlice(new DateTime(dateTime.getMillis(), DateTimeZone.UTC), duration);
     }
 
+    protected static DateTime plusDSTAware(DateTime dateTime, Duration duration) {
+        //(BZ 1161806) Added code to adjust to the shifts in time due to
+        // changes from DST to non-DST and the reverse.
+        //
+        // 1) When switching from DST to non-DST, the time after the
+        // duration increment needs to be adjusted by a positive
+        // one hour
+        //
+        // 2) When switching from non-DST to DST, the time after the
+        // duration increment needs to be adjusted by a negative
+        // one hour
+        //
+        // Note: this does not work if the duration is exactly one
+        // hour because it will create an infinite loop when switching
+        // from non-DST to DST times.
+
+        if (duration.toPeriod().getHours() <= 1) {
+            dateTime = dateTime.plus(duration);
+        } else {
+            DateTimeZone zone = dateTime.getZone();
+            int beforeOffset = zone.getOffset(dateTime.getMillis());
+            dateTime = dateTime.plus(duration);
+            int afterOffset = zone.getOffset(dateTime.getMillis());
+            dateTime = dateTime.plus(beforeOffset - afterOffset);
+        }
+
+        return dateTime;
+    }
+
     private boolean cacheIndexExists() {
         ResultSet resultSet = session.execute("SELECT columnfamily_name FROM system.schema_columnfamilies " +
             "WHERE keyspace_name = 'rhq' AND columnfamily_name = 'metrics_cache_index'");

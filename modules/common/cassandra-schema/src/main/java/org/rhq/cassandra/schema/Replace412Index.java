@@ -99,9 +99,10 @@ public class Replace412Index {
                 }
             }
             if (count < PAGE_SIZE) {
-                time = time.plus(timeSlice);
-                if (time.equals(day.plus(Days.ONE.toStandardDuration()))) {
-                    day = day.plusDays(1);
+                time = ReplaceIndex.plusDSTAware(time, timeSlice);
+                DateTime tempDay = ReplaceIndex.plusDSTAware(day, Days.ONE.toStandardDuration());
+                if (time.equals(tempDay)) {
+                    day = ReplaceIndex.plusDSTAware(day, Days.ONE.toStandardDuration());
                 }
                 statement = find412IndexEntries.bind(oldBucket, day.toDate(), time.toDate());
             } else {

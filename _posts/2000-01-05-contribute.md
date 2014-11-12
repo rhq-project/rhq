@@ -5,59 +5,24 @@ color: white
 fa-icon: code-fork
 ---
 
-Alright, you've got a clean copy and are ready to push some schmancy pages for the world to ogle at.
+### General Info###
 
-- Edit `_config.yml` to change your title, keywords, and description.
-- Create a new file in `_posts/` called `2014-01-01-intro.md`
-  Edit it, and add:
+If you wish to get involved as a contributor to RHQ, please visit [`#rhq`](irc://irc.freenode.net/#rhq) channel on Freenode IRC and get to know people.
 
-{% highlight text linenos=table %}
----
-title: "home"
-bg: white     #defined in _config.yml, can use html color like '#010101'
-color: black  #text color
-style: center
----
+If you want to contribute to the source repository, please fork it into your own repository and send pull-requests afterwards. Each Pull-Request should be "backed" by an entry in Bugzilla. Please add the Bugzilla issue number to the Pull-Request.
 
-# Example headline!
-and so on..
-{% endhighlight %}
+{: style="margin-top:50px;"}
+### Mailing Lists ###
 
-- Create a second post called `2014-01-02-art.md` with an divider image this time:
+Our user mailing list and our developer mailing list are the main channels of communication between all community members
 
-{% highlight text linenos=table %}
----
-title: "Art"
-bg: turquoise  #defined in _config.yml, can use html color like '#0fbfcf'
-color: white   #text color
-fa-icon: paint-brush
----
+* [https://fedorahosted.org/mailman/listinfo/rhq-users](https://fedorahosted.org/mailman/listinfo/rhq-users) (user list)
+* [https://fedorahosted.org/mailman/listinfo/rhq-devel](https://fedorahosted.org/mailman/listinfo/rhq-devel) (devel list)
 
-#### A new section- oh the humanity!
-{% endhighlight %}
+{: style="margin-top:50px;"}
+### Forum ###
 
-**Note:** That part `fa-icon: paint-brush` will use a font-awesome icon of [paint-brush](http://fortawesome.github.io/Font-Awesome/icon/paint-brush/). You can use any icon from this [font-awesome icon directory](http://fortawesome.github.io/Font-Awesome/icons/).
+You can also help the community by answering the questions either on our own RHQ [forum](https://community.jboss.org/en/rhq) or on [StackOverflow](https://stackoverflow.com/search?q=rhq).
 
-- install Jekyll with `sudo gem install github-pages`
-- run `jekyll serve -w`
-  - visit [localhost:4000](http://localhost:4000) to see a live locally served preview.
-- Push changes and see them live!
-
-
-
-
-## **Changing your colors**
-{: style="margin-top:100px;"}
-
-- In each post file you can define `bg: mycolor` and `color: myothercolor` to change the background and text colors for that section.
-- **mycolor** can be a quoted html color like `'#0fbfcf'` or a key to a special color defined in **_config.yml** under 'colors'.
-  - **Note:** Changes to _config.yml require a manual restart to your local server with `^C` and `jekyll serve -w`.
-
-Nifty, right!
-
-
-
-### Also see **README.md** [*on github!*](https://github.com/t413/SinglePaged#usage)
-{: style="margin-top:100px;"}
-
-
+{: style="margin-top:50px;"}
+#### *Our developers are always looking for the community to get involved. Whether it is ideas for improvement, documentation, contributed plugins or core development. Check the [Contributions page](https://docs.jboss.org/author/display/RHQ/Contributions) on the RHQ wiki for more details*

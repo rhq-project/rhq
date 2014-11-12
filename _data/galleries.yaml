@@ -4,19 +4,19 @@
   images:
   - name: screen1.png
     thumb: screen1.png
-    text: The first image
+    text: The Global Dashboard
   - name: screen2.png
     thumb: screen2.png
-    text: The second image
+    text: The Charts with Metrics
   - name: screen3.png
     thumb: screen3.png
-    text: The third image
+    text: Popup with a Graph
   - name: screen4.png
     thumb: screen4.png
-    text: The fourth image
+    text: UI for Bundle Deployments
   - name: screen5.png
     thumb: screen5.png
-    text: The fourth image
+    text: The Dashboard for Resource
   - name: screen6.png
     thumb: screen6.png
-    text: The fourth image
+    text: Report of Config History

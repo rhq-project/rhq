@@ -1173,11 +1173,22 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
 
             if (null != existingResource) {
-                // We found it - reset the id to what it should be.
-                resource.setId(existingResource.getId());
-                if (isDebugEnabled) {
-                    LOG.debug("Found resource already in inventory with specified business key, Id=" + resource.getId());
+                if (InventoryStatus.DELETED.equals(existingResource.getInventoryStatus())) {
+                    // found resource previously deleted, we'd better pretend it did not exist and clean it up
+                    if (isDebugEnabled) {
+                        LOG.debug("Found resource already in inventory with specified business key, but it is marked as DELETED. will now be removed, nothing to do for the merge");
+                    }
+                    resourceManager.uninventoryResourceInNewTransaction(existingResource.getId());
+                    existingResource = null;
+                } else {
+                    // We found it - reset the id to what it should be.
+                    resource.setId(existingResource.getId());
+                    if (isDebugEnabled) {
+                        LOG.debug("Found resource already in inventory with specified business key, Id="
+                            + resource.getId());
+                    }
                 }
+
 
             } else {
                 LOG.debug("Unable to find the agent-reported resource by id or business key.");
@@ -1278,6 +1289,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // If the resource was marked as deleted, reactivate it again.
         if (existingResource.getInventoryStatus() == InventoryStatus.DELETED) {
+            // this code schould not be reached anymore, because we intentionally reject merging with DELETED resource
             existingResource.setInventoryStatus(InventoryStatus.COMMITTED);
             existingResource.setPluginConfiguration(updatedResource.getPluginConfiguration());
             existingResource.setAgentSynchronizationNeeded();

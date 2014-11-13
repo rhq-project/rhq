@@ -161,4 +161,23 @@ public class PurgeManagerBean implements PurgeManagerLocal {
         JPADriftFilePurge purge = new JPADriftFilePurge(dataSource, userTransaction, purgeMillis);
         return purge.execute();
     }
+
+    @Override
+    public int purgePartitionEvents(long deleteUpToTime) {
+        PartitionEventDetailsPurge detailsPurge = new PartitionEventDetailsPurge(dataSource, userTransaction,
+            deleteUpToTime);
+        detailsPurge.execute();
+        PartitionEventPurge eventPurge = new PartitionEventPurge(dataSource, userTransaction, deleteUpToTime);
+        return eventPurge.execute();
+    }
+
+    @Override
+    public int purgeResourceConfigHistory(long deleteUpToTime) {
+        int purged = 0;
+        purged += new ResourceConfigurationUpdatePurge(dataSource, userTransaction, deleteUpToTime).execute();
+        // ResourceConfigurationUpdateFromGroupPurge needs to be executed before GroupResourceConfigurationUpdatePurge
+        purged += new ResourceConfigurationUpdateFromGroupPurge(dataSource, userTransaction, deleteUpToTime).execute();
+        purged += new GroupResourceConfigurationUpdatePurge(dataSource, userTransaction, deleteUpToTime).execute();
+        return purged;
+    }
 }

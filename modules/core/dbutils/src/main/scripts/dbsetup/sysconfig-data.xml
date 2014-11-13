@@ -180,6 +180,12 @@
 
       <data ID="74" PROPERTY_KEY="STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="TRUE"/>
 
+      <!-- do not purge partition events by default (0 indicates no purge) -->
+      <data ID="75" PROPERTY_KEY="PARTITION_EVENT_PURGE" PROPERTY_VALUE="0" DEFAULT_PROPERTY_VALUE="0" FREAD_ONLY="FALSE"/>
+
+      <!-- do not purge resource config history by default (0 indicates no purge) -->
+      <data ID="76" PROPERTY_KEY="RESOURCE_CONFIG_HISTORY_PURGE" PROPERTY_VALUE="0" DEFAULT_PROPERTY_VALUE="0" FREAD_ONLY="FALSE"/>
+
     </table>
 
 </dbsetup>

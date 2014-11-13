@@ -19,9 +19,22 @@
 
 package org.rhq.enterprise.server.scheduler.jobs;
 
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.rhq.core.domain.common.composite.SystemSetting.ALERT_PURGE_PERIOD;
+import static org.rhq.core.domain.common.composite.SystemSetting.AVAILABILITY_PURGE_PERIOD;
+import static org.rhq.core.domain.common.composite.SystemSetting.DATA_MAINTENANCE_PERIOD;
+import static org.rhq.core.domain.common.composite.SystemSetting.DATA_REINDEX_NIGHTLY;
+import static org.rhq.core.domain.common.composite.SystemSetting.DRIFT_FILE_PURGE_PERIOD;
+import static org.rhq.core.domain.common.composite.SystemSetting.EVENT_PURGE_PERIOD;
+import static org.rhq.core.domain.common.composite.SystemSetting.OPERATION_HISTORY_PURGE_PERIOD;
+import static org.rhq.core.domain.common.composite.SystemSetting.PARTITION_EVENT_PURGE_PERIOD;
+import static org.rhq.core.domain.common.composite.SystemSetting.RESOURCE_CONFIG_HISTORY_PURGE_PERIOD;
+import static org.rhq.core.domain.common.composite.SystemSetting.RT_DATA_PURGE_PERIOD;
+import static org.rhq.core.domain.common.composite.SystemSetting.TRAIT_PURGE_PERIOD;
+
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,13 +42,16 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.SimpleTrigger;
 
-import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.purge.PurgeManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -51,7 +67,29 @@ import org.rhq.enterprise.server.util.TimingVoodoo;
 public class DataPurgeJob extends AbstractStatefulJob {
     private static final Log LOG = LogFactory.getLog(DataPurgeJob.class);
 
-    private static final long HOUR = 60 * 60 * 1000L;
+    private static final long HOUR = MILLISECONDS.convert(1, HOURS);
+
+    private final SubjectManagerLocal subjectManager;
+    private final SystemManagerLocal systemManager;
+    private final PurgeManagerLocal purgeManager;
+    private final OperationManagerLocal operationManager;
+    private final AlertDefinitionManagerLocal alertDefinitionManager;
+    private final AlertConditionManagerLocal alertConditionManager;
+    private final AlertNotificationManagerLocal alertNotificationManager;
+    private final DriftManagerLocal driftManager;
+    private final ResourceManagerLocal resourceManager;
+
+    public DataPurgeJob() {
+        subjectManager = LookupUtil.getSubjectManager();
+        systemManager = LookupUtil.getSystemManager();
+        purgeManager = LookupUtil.getPurgeManager();
+        operationManager = LookupUtil.getOperationManager();
+        alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+        alertConditionManager = LookupUtil.getAlertConditionManager();
+        alertNotificationManager = LookupUtil.getAlertNotificationManager();
+        driftManager = LookupUtil.getDriftManager();
+        resourceManager = LookupUtil.getResourceManager();
+    }
 
     /**
      * Schedules a purge job to trigger right now. This will not block - it schedules the job to trigger but immediately
@@ -79,10 +117,10 @@ public class DataPurgeJob extends AbstractStatefulJob {
         LOG.info("Data Purge Job STARTING");
 
         try {
-            Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
-                LookupUtil.getSubjectManager().getOverlord());
-            purgeEverything(systemConfig);
-            performDatabaseMaintenance(LookupUtil.getSystemManager(), systemConfig);
+            Subject overlord = subjectManager.getOverlord();
+            SystemSettings systemSettings = systemManager.getSystemSettings(overlord);
+            purgeEverything(systemSettings);
+            performDatabaseMaintenance(systemSettings);
         } catch (Exception e) {
             LOG.error("Data Purge Job FAILED TO COMPLETE. Cause: " + e);
         } finally {
@@ -91,29 +129,32 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeEverything(Properties systemConfig) {
-        PurgeManagerLocal purgeManager = LookupUtil.getPurgeManager();
-        purgeCallTimeData(purgeManager, systemConfig);
-        purgeEventData(purgeManager, systemConfig);
-        purgeAlertData(purgeManager, systemConfig);
-        purgeUnusedAlertDefinitions(LookupUtil.getAlertDefinitionManager());
-        purgeOrphanedAlertConditions(LookupUtil.getAlertConditionManager());
-        purgeOrphanedAlertNotifications(LookupUtil.getAlertNotificationManager());
-        purgeMeasurementTraitData(purgeManager, systemConfig);
-        purgeAvailabilityData(purgeManager, systemConfig);
-        purgeOrphanedDriftFiles(LookupUtil.getDriftManager(), systemConfig);
-        purgeOperationHistoryData(LookupUtil.getOperationManager(), systemConfig);
-        purgeOrphanedBundleResourceDeploymentHistory(purgeManager);
+    private void purgeEverything(SystemSettings systemSettings) {
+        purgeCallTimeData(systemSettings);
+        purgeEventData(systemSettings);
+        purgeAlertData(systemSettings);
+        purgeUnusedAlertDefinitions();
+        purgeOrphanedAlertConditions();
+        purgeOrphanedAlertNotifications();
+        purgeMeasurementTraitData(systemSettings);
+        purgeAvailabilityData(systemSettings);
+        purgeOrphanedDriftFiles(systemSettings);
+        purgeOperationHistoryData(systemSettings);
+        purgeOrphanedBundleResourceDeploymentHistory();
+        purgePartitionEventsData(systemSettings);
+        purgeResourceConfigHistory(systemSettings);
+        removeResourceErrorDuplicates();
+        removeStaleAvailabilityResourceErrors();
     }
 
-    private void purgeMeasurementTraitData(PurgeManagerLocal purgeManager, Properties systemConfig) {
+    private void purgeMeasurementTraitData(SystemSettings systemSettings) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Trait data purge starting at " + new Date(timeStart));
         int traitsPurged = 0;
 
         try {
             long threshold;
-            String traitPurgeThresholdStr = systemConfig.getProperty(RHQConstants.TraitPurge);
+            String traitPurgeThresholdStr = systemSettings.get(TRAIT_PURGE_PERIOD);
             if (traitPurgeThresholdStr == null) {
                 threshold = timeStart - (1000L * 60 * 60 * 24 * 365);
                 LOG.debug("No purge traits threshold found - will purge traits older than one year");
@@ -131,13 +172,13 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeOperationHistoryData(OperationManagerLocal operationManager, Properties systemConfig) {
+    private void purgeOperationHistoryData(SystemSettings systemSettings) {
         long timeStart = System.currentTimeMillis();
         int purgeCount = 0;
 
         try {
-            String purgeThresholdStr = systemConfig.getProperty(RHQConstants.OperationHistoryPurge, "0");
-            long purgeThreshold = Long.parseLong(purgeThresholdStr);
+            String purgeThresholdStr = systemSettings.get(OPERATION_HISTORY_PURGE_PERIOD);
+            long purgeThreshold = purgeThresholdStr != null ? Long.parseLong(purgeThresholdStr) : 0;
             if (purgeThreshold <= 0) {
                 LOG.info("Operation History threshold set to 0, skipping purge of operation history data.");
                 return;
@@ -158,14 +199,14 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeAvailabilityData(PurgeManagerLocal purgeManager, Properties systemConfig) {
+    private void purgeAvailabilityData(SystemSettings systemSettings) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Availability data purge starting at " + new Date(timeStart));
         int availsPurged = 0;
 
         try {
             long threshold;
-            String availPurgeThresholdStr = systemConfig.getProperty(RHQConstants.AvailabilityPurge);
+            String availPurgeThresholdStr = systemSettings.get(AVAILABILITY_PURGE_PERIOD);
             if (availPurgeThresholdStr == null) {
                 threshold = timeStart - (1000L * 60 * 60 * 24 * 365);
                 LOG.debug("No purge avails threshold found - will purge availabilities older than one year");
@@ -182,13 +223,13 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeCallTimeData(PurgeManagerLocal purgeManager, Properties systemConfig) {
+    private void purgeCallTimeData(SystemSettings systemSettings) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Measurement calltime data purge starting at " + new Date(timeStart));
         int calltimePurged = 0;
 
         try {
-            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.RtDataPurge));
+            long threshold = timeStart - Long.parseLong(systemSettings.get(RT_DATA_PURGE_PERIOD));
             LOG.info("Purging calltime data that is older than " + new Date(threshold));
             calltimePurged = purgeManager.purgeCallTimeData(threshold);
         } catch (Exception e) {
@@ -199,13 +240,13 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeEventData(PurgeManagerLocal purgeManager, Properties systemConfig) {
+    private void purgeEventData(SystemSettings systemSettings) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Event data purge starting at " + new Date(timeStart));
         int eventsPurged = 0;
 
         try {
-            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.EventPurge));
+            long threshold = timeStart - Long.parseLong(systemSettings.get(EVENT_PURGE_PERIOD));
             LOG.info("Purging event data older than " + new Date(threshold));
             eventsPurged = purgeManager.purgeEventData(threshold);
         } catch (Exception e) {
@@ -216,13 +257,13 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeAlertData(PurgeManagerLocal purgeManager, Properties systemConfig) {
+    private void purgeAlertData(SystemSettings systemSettings) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Alert data purge starting at " + new Date(timeStart));
         int alertsPurged = 0;
 
         try {
-            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.AlertPurge));
+            long threshold = timeStart - Long.parseLong(systemSettings.get(ALERT_PURGE_PERIOD));
             LOG.info("Purging alert data older than " + new Date(threshold));
             alertsPurged = purgeManager.deleteAlerts(0, threshold);
         } catch (Exception e) {
@@ -233,7 +274,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeUnusedAlertDefinitions(AlertDefinitionManagerLocal alertDefinitionManager) {
+    private void purgeUnusedAlertDefinitions() {
         long timeStart = System.currentTimeMillis();
         LOG.info("Alert definition unused purge starting at " + new Date(timeStart));
         int alertDefinitionsPurged = 0;
@@ -248,7 +289,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeOrphanedAlertConditions(AlertConditionManagerLocal alertConditionManager) {
+    private void purgeOrphanedAlertConditions() {
         long timeStart = System.currentTimeMillis();
         LOG.info("Alert condition orphan purge starting at " + new Date(timeStart));
         int orphansPurged = 0;
@@ -263,7 +304,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeOrphanedAlertNotifications(AlertNotificationManagerLocal alertNotificationManager) {
+    private void purgeOrphanedAlertNotifications() {
         long timeStart = System.currentTimeMillis();
         LOG.info("Alert notification orphan purge starting at " + new Date(timeStart));
         int orphansPurged = 0;
@@ -278,16 +319,15 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeOrphanedDriftFiles(DriftManagerLocal driftManager, Properties systemConfig) {
+    private void purgeOrphanedDriftFiles(SystemSettings systemSettings) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Drift file orphan purge starting at " + new Date(timeStart));
         int orphansPurged = 0;
 
         try {
-            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.DriftFilePurge));
+            long threshold = timeStart - Long.parseLong(systemSettings.get(DRIFT_FILE_PURGE_PERIOD));
             LOG.info("Purging orphaned drift files older than " + new Date(threshold));
-            orphansPurged = driftManager.purgeOrphanedDriftFiles(LookupUtil.getSubjectManager().getOverlord(),
-                threshold);
+            orphansPurged = driftManager.purgeOrphanedDriftFiles(subjectManager.getOverlord(), threshold);
         } catch (Exception e) {
             LOG.error("Failed to purge orphaned drift files. Cause: " + e, e);
         } finally {
@@ -296,7 +336,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeOrphanedBundleResourceDeploymentHistory(PurgeManagerLocal purgeManager) {
+    private void purgeOrphanedBundleResourceDeploymentHistory() {
         long timeStart = System.currentTimeMillis();
         LOG.info("Orphaned bundle audit messages purge starting at " + new Date(timeStart));
         int orphansPurged = 0;
@@ -311,7 +351,80 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void performDatabaseMaintenance(SystemManagerLocal systemManager, Properties systemConfig) {
+    private void purgePartitionEventsData(SystemSettings systemSettings) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Partition event data purge starting at " + new Date(timeStart));
+        int eventsPurged = 0;
+        try {
+            String purgeThresholdStr = systemSettings.get(PARTITION_EVENT_PURGE_PERIOD);
+            long purgeThreshold = purgeThresholdStr != null ? Long.parseLong(purgeThresholdStr) : 0;
+            if (purgeThreshold <= 0) {
+                LOG.info("Partition event threshold set to 0, skipping purge of operation history data.");
+                return;
+            }
+            long deleteUpToTime = timeStart - purgeThreshold;
+            LOG.info("Purging partition event data older than " + new Date(deleteUpToTime));
+            eventsPurged = purgeManager.purgePartitionEvents(deleteUpToTime);
+        } catch (Exception e) {
+            LOG.error("Failed to purge partition event data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Partition event data purged [" + eventsPurged + "] - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void purgeResourceConfigHistory(SystemSettings systemSettings) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Resource configuration history purge starting at " + new Date(timeStart));
+        int configurationsPurged = 0;
+        try {
+            String purgeThresholdStr = systemSettings.get(RESOURCE_CONFIG_HISTORY_PURGE_PERIOD);
+            long purgeThreshold = purgeThresholdStr != null ? Long.parseLong(purgeThresholdStr) : 0;
+            if (purgeThreshold <= 0) {
+                LOG.info("Resource configuration history threshold set to 0, "
+                    + "skipping purge of resource configuration history data.");
+                return;
+            }
+            long deleteUpToTime = timeStart - purgeThreshold;
+            LOG.info("Purging resource configuration history data older than " + new Date(deleteUpToTime));
+            configurationsPurged = purgeManager.purgeResourceConfigHistory(deleteUpToTime);
+        } catch (Exception e) {
+            LOG.error("Failed to purge resource configuration history data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Resource configuration history purged [" + configurationsPurged + "] - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void removeResourceErrorDuplicates() {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Resource error duplicates removal starting at " + new Date(timeStart));
+        int deleted = 0;
+        try {
+            deleted = resourceManager.removeResourceErrorDuplicates();
+        } catch (Exception e) {
+            LOG.error("Failed to remove resource error duplicates.", e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Resource error duplicates removed [" + deleted + "] - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void removeStaleAvailabilityResourceErrors() {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Stale availability resource errors removal starting at " + new Date(timeStart));
+        int deleted = 0;
+        try {
+            deleted = resourceManager.removeStaleAvailabilityResourceErrors();
+        } catch (Exception e) {
+            LOG.error("Failed to remove stale availability resource errors.", e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Stale availability resource errors removed [" + deleted + "] - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void performDatabaseMaintenance(SystemSettings systemSettings) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Database maintenance starting at " + new Date(timeStart));
 
@@ -322,7 +435,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
             // as usually an ANALYZE only takes a fraction of what a full VACUUM
             // takes. VACUUM will occur every day at midnight.
 
-            String dataMaintenance = systemConfig.getProperty(RHQConstants.DataMaintenance);
+            String dataMaintenance = systemSettings.get(DATA_MAINTENANCE_PERIOD);
             if (dataMaintenance == null) {
                 LOG.error("No data maintenance interval found - will not perform db maintenance");
                 return;
@@ -334,20 +447,20 @@ public class DataPurgeJob extends AbstractStatefulJob {
             Calendar cal = Calendar.getInstance();
             if (cal.get(Calendar.HOUR_OF_DAY) == 0) {
                 LOG.info("Performing daily database maintenance");
-                systemManager.vacuum(LookupUtil.getSubjectManager().getOverlord());
+                systemManager.vacuum(subjectManager.getOverlord());
 
-                String reindexStr = systemConfig.getProperty(RHQConstants.DataReindex);
+                String reindexStr = systemSettings.get(DATA_REINDEX_NIGHTLY);
                 boolean reindexNightly = Boolean.valueOf(reindexStr);
                 if (reindexNightly) {
                     LOG.info("Re-indexing data tables");
-                    systemManager.reindex(LookupUtil.getSubjectManager().getOverlord());
+                    systemManager.reindex(subjectManager.getOverlord());
                 } else {
                     LOG.info("Skipping re-indexing of data tables");
                 }
             } else if (TimingVoodoo.roundDownTime(timeStart, HOUR) == TimingVoodoo.roundDownTime(timeStart,
                 maintInterval)) {
                 LOG.info("Performing hourly database maintenance");
-                systemManager.analyze(LookupUtil.getSubjectManager().getOverlord());
+                systemManager.analyze(subjectManager.getOverlord());
             } else {
                 LOG.debug("Not performing any database maintenance now");
             }

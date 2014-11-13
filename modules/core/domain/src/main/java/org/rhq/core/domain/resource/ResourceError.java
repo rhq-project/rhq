@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -52,10 +52,46 @@ import org.jetbrains.annotations.Nullable;
  * @author Ian Springer
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = ResourceError.QUERY_DELETE_BY_RESOURCES, query = "DELETE From ResourceError re WHERE re.resource.id IN ( :resourceIds )"),
     @NamedQuery(name = ResourceError.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT re FROM ResourceError re WHERE re.resource.id = :resourceId"),
-    @NamedQuery(name = ResourceError.QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE, query = "SELECT re FROM ResourceError re WHERE re.resource.id = :resourceId AND re.errorType = :errorType") })
+    @NamedQuery(name = ResourceError.QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE, query = "SELECT re FROM ResourceError re WHERE re.resource.id = :resourceId AND re.errorType = :errorType"),
+    @NamedQuery(name = ResourceError.QUERY_FIND_ID_BY_RESOURCE_ID_AND_ERROR_TYPE, query = "" //
+        + " SELECT " //
+        + "   re.id " //
+        + " FROM ResourceError re " //
+        + " WHERE " //
+        + "   re.resource.id = :resourceId " //
+        + "   AND re.errorType = :type " //
+        + " ORDER BY re.id ASC"), //
+    @NamedQuery(name = ResourceError.QUERY_FIND_ID_BY_RESOURCE_ID_AND_ERROR_TYPE_OLDER_THAN, query = "" //
+        + " SELECT " //
+        + "   re.id " //
+        + " FROM ResourceError re " //
+        + " WHERE " //
+        + "   re.resource.id = :resourceId " //
+        + "   AND re.errorType = :type " //
+        + "   AND re.timeOccurred < :upToTime " //
+        + " ORDER BY re.id ASC"), //
+    @NamedQuery(name = ResourceError.QUERY_FIND_ALL_INVALID_RESOURCE_ERROR_TYPE_COMPOSITE, query = "" //
+        + " SELECT " //
+        + "   new org.rhq.core.domain.resource.ResourceErrorTypeComposite( " //
+        + "     re.resource.id, re.errorType, count(*), max(re.timeOccurred) " //
+        + "   ) " //
+        + " FROM ResourceError re " //
+        + " GROUP BY " //
+        + "   re.resource.id, re.errorType " //
+        + " HAVING count(*) > 1 "), //
+    @NamedQuery(name = ResourceError.QUERY_FIND_ALL_STALE_AVAILABILITY_RESOURCE_ERROR, query = "" //
+        + " SELECT " //
+        + "   DISTINCT re.resource.id " //
+        + " FROM " //
+        + "   ResourceError re " //
+        + " WHERE " //
+        + "   re.errorType = org.rhq.core.domain.resource.ResourceErrorType.AVAILABILITY_CHECK " //
+        + "   AND re.resource.currentAvailability.availabilityType = org.rhq.core.domain.measurement.AvailabilityType.UP "), //
+    @NamedQuery(name = ResourceError.QUERY_DELETE_BY_ID, query = "DELETE FROM ResourceError re WHERE re.id = :id") //
+})
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_ERROR_ID_SEQ", sequenceName = "RHQ_RESOURCE_ERROR_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_ERROR")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -65,6 +101,11 @@ public class ResourceError implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCES = "ResourceError.deleteByResources";
     public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceError.findByResource";
     public static final String QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE = "ResourceError.findByResourceAndErrorType";
+    public static final String QUERY_FIND_ID_BY_RESOURCE_ID_AND_ERROR_TYPE = "ResourceError.findIdByResourceAndErrorType";
+    public static final String QUERY_FIND_ID_BY_RESOURCE_ID_AND_ERROR_TYPE_OLDER_THAN = "ResourceError.findIdByResourceAndErrorTypeOlderThan";
+    public static final String QUERY_FIND_ALL_INVALID_RESOURCE_ERROR_TYPE_COMPOSITE = "ResourceError.findAllInvalidResourceErrorTypeComposite";
+    public static final String QUERY_FIND_ALL_STALE_AVAILABILITY_RESOURCE_ERROR = "ResourceError.findAllStaleAvailabilityResourceError";
+    public static final String QUERY_DELETE_BY_ID = "ResourceError.deleteById";
 
     private static final int MAX_SUMMARY_LENGTH = 1000;
 
@@ -168,14 +209,7 @@ public class ResourceError implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("ResourceError: ");
-        str.append("id=[").append(id);
-        str.append("], time-occurred=[").append(new Date(timeOccurred));
-        str.append("], error-type=[").append(errorType);
-        str.append("], resource=[").append(resource);
-        str.append("], summary=[").append(summary);
-        str.append("], detail=[").append(detail);
-        str.append("]");
-        return str.toString();
+        return "ResourceError: " + "id=[" + id + "], time-occurred=[" + new Date(timeOccurred) + "], error-type=["
+            + errorType + "], resource=[" + resource + "], summary=[" + summary + "], detail=[" + detail + "]";
     }
 }

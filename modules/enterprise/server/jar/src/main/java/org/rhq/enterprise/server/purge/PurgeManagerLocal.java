@@ -86,4 +86,20 @@ public interface PurgeManagerLocal {
      * @return number of orphaned drift files that were removed
      */
     int purgeOrphanedDriftFilesInDatabase(long purgeMillis);
+
+    /**
+     * Deletes event data older than the specified time.
+     *
+     * @param deleteUpToTime event data older than this time will be deleted
+     * @return number of deleted events
+     */
+    int purgePartitionEvents(long deleteUpToTime);
+
+    /**
+     * Deletes resource configuration history data older than the specified time.
+     *
+     * @param deleteUpToTime history data older than this time will be deleted
+     * @return number of deleted configurations
+     */
+    int purgeResourceConfigHistory(long deleteUpToTime);
 }

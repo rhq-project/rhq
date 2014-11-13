@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-common-parent</artifactId>
-    <version>4.12.0.JON330CR01</version>
+    <version>4.12.0.JON330GA</version>
   </parent>
 
   <artifactId>rhq-cassandra-auth</artifactId>

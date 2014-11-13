@@ -100,7 +100,7 @@ public class AttachmentsServlet extends HttpServlet {
     }
 
     private boolean isAuthorized(HttpServletRequest request) {
-        String sessionId = request.getHeader("RHQ_SessionID");
+        String sessionId = request.getHeader("RHQ-Session-ID");
         if (sessionId != null) {
             try {
                 return SessionManager.getInstance().getSubject(Integer.parseInt(sessionId)) != null;

@@ -90,16 +90,16 @@ public class UserSessionManager {
     private static int SESSION_ACCESS_REFRESH = 20 * 60 * 1000;
 
     // The web session
-    public static final String SESSION_NAME = "RHQ_Session";
+    public static final String SESSION_NAME = "RHQ-Session";
 
     // The web session scheduled to be logged out on the server side
-    private static final String DOOMED_SESSION_NAME = "RHQ_DoomedSession";
+    private static final String DOOMED_SESSION_NAME = "RHQ-DoomedSession";
 
     // HTTP Header indicating to SessionAccessServlet to update the portal war webUser
-    private static final String HEADER_WEB_USER_UPDATE = "rhq_webuser_update";
+    private static final String HEADER_WEB_USER_UPDATE = "rhq-webuser-update";
 
     // HTTP Header indicating to SessionAccessServlet to update the HTTP session access time
-    private static final String HEADER_LAST_ACCESS_UPDATE = "rhq_last_access_update";
+    private static final String HEADER_LAST_ACCESS_UPDATE = "rhq-last-access-update";
 
     private static Subject sessionSubject;
     private static UserPreferences userPreferences;

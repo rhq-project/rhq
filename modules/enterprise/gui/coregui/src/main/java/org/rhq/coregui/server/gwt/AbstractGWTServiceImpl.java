@@ -31,6 +31,7 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -64,7 +65,7 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
         }
 
         boolean continueProcessing = true;
-        String sid = req.getHeader("RHQ_Session");
+        String sid = req.getHeader("RHQ-Session");
         if (sid != null) {
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
             try {

@@ -6,7 +6,7 @@ angular.module('RedhatAccess.JON', ['RedhatAccess.cases'])
   NEW_DEFAULTS.version = "3.3.0";
   
   var params = $location.search();
-  $http.defaults.headers.common['RHQ_SessionID'] = params.sid;
+  $http.defaults.headers.common['RHQ-Session-ID'] = params.sid;
   
   // handle support case for managed resource
   if ($location.path().indexOf('/resource-case') >= 0) {    

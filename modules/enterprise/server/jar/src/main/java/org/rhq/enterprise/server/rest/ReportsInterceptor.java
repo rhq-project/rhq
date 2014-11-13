@@ -118,7 +118,7 @@ public class ReportsInterceptor {
     }
 
     private Subject getSubject(HttpServletRequest request) {
-        Cookie rhqSession = getCookie(request, "RHQ_Session");
+        Cookie rhqSession = getCookie(request, "RHQ-Session");
         if (rhqSession == null) {
             return null;
         }

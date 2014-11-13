@@ -34,6 +34,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -79,7 +80,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     public static String getTitle(ResourceType type) {
-        return MSG.view_adminConfig_alertDefTemplates() + " [" + type.getName() + "]";
+        return MSG.view_adminConfig_alertDefTemplates() + " [" + ResourceTypeUtility.displayName(type) + "]";
     }
 
     @Override

@@ -59,6 +59,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -227,7 +228,7 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
                     Integer typeId = record.getAttributeAsInt(TYPE.propertyName());
                     ResourceType type = types.get(typeId);
                     if (type != null) {
-                        record.setAttribute(TYPE.propertyName(), type.getName());
+                        record.setAttribute(TYPE.propertyName(), ResourceTypeUtility.displayName(type));
                         record.setAttribute(TYPE_ID.propertyName(), type.getId());
                     }
 

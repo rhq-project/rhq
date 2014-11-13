@@ -29,6 +29,7 @@ import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.components.wizard.WizardStep;
@@ -61,7 +62,7 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
     @Override
     public String getTitle() {
         return MSG.view_drift_wizard_pinTemplate_title(String.valueOf(getSnapshotVersion()), getSnapshotDriftDef()
-            .getName(), getResourceType().getName());
+            .getName(), ResourceTypeUtility.displayName(getResourceType()));
     }
 
     @Override

@@ -61,6 +61,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.LinkManager;
@@ -349,7 +350,7 @@ public class GroupMembersComparisonView extends Table<GroupMembersComparisonData
                         Integer typeId = record.getAttributeAsInt(TYPE.propertyName());
                         ResourceType type = types.get(typeId);
                         if (type != null) {
-                            record.setAttribute(TYPE.propertyName(), type.getName());
+                            record.setAttribute(TYPE.propertyName(), ResourceTypeUtility.displayName(type));
                             record.setAttribute(TYPE_ID.propertyName(), type.getId());
                         }
 

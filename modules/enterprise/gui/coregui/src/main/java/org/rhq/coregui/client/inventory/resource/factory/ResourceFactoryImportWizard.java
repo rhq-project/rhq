@@ -21,7 +21,6 @@ package org.rhq.coregui.client.inventory.resource.factory;
 
 import static org.rhq.coregui.client.CoreGUI.getErrorHandler;
 import static org.rhq.coregui.client.CoreGUI.getMessageCenter;
-import static org.rhq.coregui.client.util.message.Message.Severity;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -38,11 +37,13 @@ import org.rhq.core.domain.resource.ImportResourceRequest;
 import org.rhq.core.domain.resource.ImportResourceResponse;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.components.wizard.WizardStep;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Jay Shaughnessy 
@@ -85,7 +86,7 @@ public class ResourceFactoryImportWizard extends AbstractResourceFactoryWizard {
 
     @Override
     public String getTitle() {
-        return MSG.widget_resourceFactoryWizard_importWizardTitle(getChildType().getName());
+        return MSG.widget_resourceFactoryWizard_importWizardTitle(ResourceTypeUtility.displayName(getChildType()));
     }
 
     @Override
@@ -124,7 +125,7 @@ public class ResourceFactoryImportWizard extends AbstractResourceFactoryWizard {
                     public void run() {
                         boolean resourceAlreadyExisted = result.isResourceAlreadyExisted();
                         Resource resource = result.getResource();
-                        String resourceTypeName = resource.getResourceType().getName();
+                        String resourceTypeName = ResourceTypeUtility.displayName(resource.getResourceType());
                         String resourceKey = resource.getResourceKey();
 
                         String conciseMessage;

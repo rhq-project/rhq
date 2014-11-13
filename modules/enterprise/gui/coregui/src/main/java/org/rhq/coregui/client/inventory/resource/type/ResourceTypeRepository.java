@@ -38,6 +38,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -340,7 +341,7 @@ public class ResourceTypeRepository {
                 if (Log.isDebugEnabled()) {
                     Set<String> typeNames = new LinkedHashSet<String>(topLevelServerAndServiceTypes.size());
                     for (ResourceType type : topLevelServerAndServiceTypes) {
-                        typeNames.add(type.getPlugin() + ":" + type.getName());
+                        typeNames.add(type.getPlugin() + ":" + ResourceTypeUtility.displayName(type));
                     }
                     Log.debug("Loaded " + typeNames.size() + " top-level server and service types: " + typeNames);
                 }

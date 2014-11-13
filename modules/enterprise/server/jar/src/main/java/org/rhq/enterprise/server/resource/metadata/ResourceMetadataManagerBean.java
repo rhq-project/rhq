@@ -382,6 +382,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         existingType.setCreateDeletePolicy(resourceType.getCreateDeletePolicy());
         existingType.setCreationDataType(resourceType.getCreationDataType());
         existingType.setDescription(resourceType.getDescription());
+        existingType.setDisplayName(resourceType.getDisplayName());
         existingType.setSingleton(resourceType.isSingleton());
         existingType.setSupportsManualAdd(resourceType.isSupportsManualAdd());
         existingType.setSupportsMissingAvailabilityType(resourceType.isSupportsMissingAvailabilityType());

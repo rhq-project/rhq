@@ -319,6 +319,7 @@ public class PluginMetadataParser {
             ResourceCategory.PLATFORM, null);
 
         platformResourceType.setDescription(platformDescriptor.getDescription());
+        platformResourceType.setDisplayName(platformDescriptor.getDisplayName());
         LOG.debug("Parsed platform resource type: " + platformResourceType);
 
         parseResourceDescriptor(platformDescriptor, platformResourceType, null, null, null);
@@ -353,6 +354,7 @@ public class PluginMetadataParser {
             serverResourceType = new ResourceType(serverDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVER, parentServerType);
             serverResourceType.setDescription(serverDescriptor.getDescription());
+            serverResourceType.setDisplayName(serverDescriptor.getDisplayName());
             serverResourceType.setSubCategory(serverDescriptor.getSubCategory());
             serverResourceType.setCreationDataType(convertCreationDataType(serverDescriptor.getCreationDataType()));
             serverResourceType
@@ -477,6 +479,7 @@ public class PluginMetadataParser {
             serviceResourceType = new ResourceType(serviceDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVICE, parentType);
             serviceResourceType.setDescription(serviceDescriptor.getDescription());
+            serviceResourceType.setDisplayName(serviceDescriptor.getDisplayName());
             serviceResourceType.setSubCategory(serviceDescriptor.getSubCategory());
             serviceResourceType.setCreationDataType(convertCreationDataType(serviceDescriptor.getCreationDataType()));
             serviceResourceType.setCreateDeletePolicy(convertCreateDeletePolicy(serviceDescriptor
@@ -521,7 +524,7 @@ public class PluginMetadataParser {
             // values.
             serviceResourceType.setDescription(serviceDescriptor.getDescription());
             serviceResourceType.setSubCategory(serviceDescriptor.getSubCategory());
-
+            serviceResourceType.setDisplayName(serviceDescriptor.getDisplayName());
             serviceResourceType.setCreationDataType(convertCreationDataType(serviceDescriptor.getCreationDataType()));
             serviceResourceType.setCreateDeletePolicy(convertCreateDeletePolicy(serviceDescriptor
                 .getCreateDeletePolicy()));
@@ -622,6 +625,9 @@ public class PluginMetadataParser {
         // Only set the description, subCategory, etc. if they have not already been set. This is in
         if (resourceType.getDescription() == null) {
             resourceType.setDescription(resourceDescriptor.getDescription());
+        }
+        if (resourceType.getDisplayName() == null) {
+            resourceType.setDisplayName(resourceDescriptor.getDisplayName());
         }
 
         if (resourceType.getSubCategory() == null) {

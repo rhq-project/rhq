@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.Messages;
@@ -220,7 +221,7 @@ public abstract class ResourceTypeTreeNodeBuilder {
             this.id = resourceType.getId();
 
             setAttribute(ATTRIB_ID, String.valueOf(id));
-            setAttribute(ATTRIB_NAME, resourceType.getName());
+            setAttribute(ATTRIB_NAME, ResourceTypeUtility.displayName(resourceType));
             setAttribute(ATTRIB_PLUGIN, resourceType.getPlugin());
             setAttribute(ATTRIB_CATEGORY, resourceType.getCategory().name());
             setAttribute(ATTRIB_EDIT, ImageManager.getEditIcon());
@@ -260,7 +261,7 @@ public abstract class ResourceTypeTreeNodeBuilder {
             this.parentId = parentId;
 
             setAttribute(ATTRIB_ID, id);
-            setAttribute(ATTRIB_NAME, resourceType.getName());
+            setAttribute(ATTRIB_NAME, ResourceTypeUtility.displayName(resourceType));
             setAttribute(ATTRIB_PLUGIN, resourceType.getPlugin());
             setAttribute(ATTRIB_CATEGORY, resourceType.getCategory().name());
             setAttribute(ATTRIB_EDIT, ImageManager.getEditIcon());

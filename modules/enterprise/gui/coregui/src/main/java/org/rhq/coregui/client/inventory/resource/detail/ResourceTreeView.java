@@ -38,7 +38,6 @@ import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.types.SelectionStyle;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
@@ -65,8 +64,8 @@ import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.ViewId;
 import org.rhq.coregui.client.ViewPath;
@@ -452,8 +451,8 @@ public class ResourceTreeView extends EnhancedVLayout {
         resourceContextMenu.setItems(new MenuItem(resource.getName()));
 
         // resource type name
-        resourceContextMenu.addItem(new MenuItem(MSG.view_tree_common_contextMenu_type_name_label(resourceType
-            .getName())));
+        resourceContextMenu.addItem(new MenuItem(MSG.view_tree_common_contextMenu_type_name_label(ResourceTypeUtility
+            .displayName(resourceType))));
 
         // separator
         resourceContextMenu.addItem(new MenuItemSeparator());
@@ -1036,7 +1035,7 @@ public class ResourceTreeView extends EnhancedVLayout {
         }
         Map<String, ResourceType> results = new TreeMap<String, ResourceType>();
         for (ResourceType type : types) {
-            String displayName = type.getName();
+            String displayName = ResourceTypeUtility.displayName(type);
             if (repeatedNames.contains(type.getName())) {
                 displayName += " (" + type.getPlugin() + " plugin)";
             }

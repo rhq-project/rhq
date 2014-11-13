@@ -35,6 +35,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -231,10 +232,9 @@ public class ResourceTypeTreeDataSource extends DataSource {
 
             setAttribute("id", id);
             setAttribute("parentId", parentId);
-            setAttribute("name", resourceType.getName());
+            setAttribute("name", ResourceTypeUtility.displayName(resourceType));
             setAttribute("plugin", resourceType.getPlugin());
             setAttribute("category", resourceType.getCategory().getDisplayName());
-
             setIsFolder(true);
         }
 

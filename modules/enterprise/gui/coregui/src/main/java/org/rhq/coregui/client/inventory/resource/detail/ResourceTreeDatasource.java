@@ -35,7 +35,6 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
@@ -44,6 +43,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.ViewChangedException;
@@ -481,7 +481,7 @@ public class ResourceTreeDatasource extends DataSource {
             }
             setParentID(parentId);
 
-            String name = StringUtility.pluralize(this.resourceType.getName());
+            String name = StringUtility.pluralize(ResourceTypeUtility.displayName(this.resourceType));
             setName(name);
 
             setAttribute(Attributes.DESCRIPTION, this.resourceType.getDescription());
@@ -503,7 +503,8 @@ public class ResourceTreeDatasource extends DataSource {
          * @return The name of the backing group.
          */
         public String getBackingGroupName() {
-            return this.getParentResource().getName() + " ( " + this.getResourceType().getName() + " )";
+            return this.getParentResource().getName() + " ( " + ResourceTypeUtility.displayName(this.resourceType)
+                + " )";
         }
 
         public Integer getResourceGroupId() {
@@ -542,7 +543,7 @@ public class ResourceTreeDatasource extends DataSource {
         }
 
         public void disambiguateName() {
-            String typeName = StringUtility.pluralize(this.resourceType.getName());
+            String typeName = StringUtility.pluralize(ResourceTypeUtility.displayName(this.resourceType));
             String name = typeName + " (" + this.resourceType.getPlugin() + " "
                 + MSG.common_title_plugin().toLowerCase() + ")";
             setName(name);

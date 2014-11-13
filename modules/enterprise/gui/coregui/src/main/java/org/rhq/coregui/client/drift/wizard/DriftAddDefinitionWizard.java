@@ -29,6 +29,7 @@ import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.wizard.WizardStep;
@@ -71,10 +72,10 @@ public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
     public String getTitle() {
         switch (getEntityContext().getType()) {
         case SubsystemView:
-            return MSG.view_drift_wizard_addTemplate_title(getType().getName());
+            return MSG.view_drift_wizard_addTemplate_title(ResourceTypeUtility.displayName(getType()));
 
         default:
-            return MSG.view_drift_wizard_addDef_title(getType().getName());
+            return MSG.view_drift_wizard_addDef_title(ResourceTypeUtility.displayName(getType()));
         }
     }
 

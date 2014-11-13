@@ -45,6 +45,7 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.Messages;
@@ -141,7 +142,7 @@ public class ResourceGroupContextMenu extends Menu {
         setItems(new MenuItem(group.getName()));
 
         // type name
-        addItem(new MenuItem("Type: " + resourceType.getName()));
+        addItem(new MenuItem("Type: " + ResourceTypeUtility.displayName(resourceType)));
 
         // Mixed group refresh is not needed as there is only a single top node. Compat group
         // refresh makes sense after a group membership change but we already perform a CoreGUI refresh to

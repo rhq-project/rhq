@@ -44,6 +44,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
@@ -360,7 +361,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         }
         Map<String, ResourceType> results = new TreeMap<String, ResourceType>();
         for (ResourceType type : types) {
-            String displayName = type.getName();
+            String displayName = ResourceTypeUtility.displayName(type);
             if (repeatedNames.contains(type.getName())) {
                 displayName += " (" + type.getPlugin() + " plugin)";
             }

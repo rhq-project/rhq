@@ -51,6 +51,7 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.components.form.SortedSelectItem;
@@ -503,8 +504,9 @@ public class GroupDefinitionExpressionBuilder extends Window {
                     if (result != null && !result.isEmpty()) {
                         ArrayList<String> typeNames = new ArrayList<String>();
                         for (ResourceType type : result) {
-                            typeNames.add(type.getName());
-                            resourceTypeIds.put(type.getName(), Integer.valueOf(type.getId()));
+                            String typeName = ResourceTypeUtility.displayName(type);
+                            typeNames.add(typeName);
+                            resourceTypeIds.put(typeName, Integer.valueOf(type.getId()));
                         }
                         resourceTypeItem.setValueMap(typeNames.toArray(new String[typeNames.size()]));
                     } else {

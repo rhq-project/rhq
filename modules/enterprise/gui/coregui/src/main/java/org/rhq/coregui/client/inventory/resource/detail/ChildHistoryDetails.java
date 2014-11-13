@@ -27,6 +27,7 @@ import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -120,7 +121,7 @@ public class ChildHistoryDetails extends EnhancedVLayout {
 
         StaticTextItem createdResourceType = new StaticTextItem("createdResourceType", MSG.common_title_resource_type());
         if (history.getResourceType() != null) {
-            createdResourceType.setValue(history.getResourceType().getName());
+            createdResourceType.setValue(ResourceTypeUtility.displayName(history.getResourceType()));
         } else {
             createdResourceType.setValue(MSG.common_status_unknown());
         }
@@ -192,7 +193,7 @@ public class ChildHistoryDetails extends EnhancedVLayout {
         if (history.getResource() != null) {
             deletedResourceName.setValue(history.getResource().getName());
             if (history.getResource().getResourceType() != null) {
-                deletedResourceType.setValue(history.getResource().getResourceType().getName());
+                deletedResourceType.setValue(ResourceTypeUtility.displayName(history.getResource().getResourceType()));
             } else {
                 deletedResourceType.setValue(MSG.common_status_unknown());
             }

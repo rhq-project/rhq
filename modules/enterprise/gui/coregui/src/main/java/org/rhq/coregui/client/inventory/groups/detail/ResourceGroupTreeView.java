@@ -54,6 +54,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
 import org.rhq.core.domain.resource.group.composite.ClusterKeyFlyweight;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.BookmarkableView;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
@@ -573,7 +574,7 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
         // used specifically for groups of logically equivalent resources, like cloned AS instances.
         String childName = child.getName();
         if ("...".equals(childName)) {
-            childName = MSG.group_tree_groupOfResourceType(type.getName());
+            childName = MSG.group_tree_groupOfResourceType(ResourceTypeUtility.displayName(type));
         }
         ResourceGroupEnhancedTreeNode node = new ResourceGroupEnhancedTreeNode(childName);
 
@@ -614,7 +615,7 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
         // an auto type group node of type WAR means our group members each have multiple WARs deployed to them,
         // so this node represents the parent to all the different WARs cluster nodes).
         // This node will be associated with only a resource type (not a cluster key)
-        String name = StringUtility.pluralize(type.getName());
+        String name = StringUtility.pluralize(ResourceTypeUtility.displayName(type));
         ResourceGroupEnhancedTreeNode autoTypeGroupNode = new ResourceGroupEnhancedTreeNode(name);
         String parentId = parentKey.getKey();
         String autoTypeGroupNodeId = "rt" + String.valueOf(type.getId());

@@ -41,6 +41,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGroupGWTServiceAsync;
@@ -163,7 +164,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup, Resou
 
         if (from.getResourceType() != null) {
             record.setAttribute("resourceType", from.getResourceType());
-            record.setAttribute(TYPE.propertyName(), from.getResourceType().getName());
+            record.setAttribute(TYPE.propertyName(), ResourceTypeUtility.displayName(from.getResourceType()));
             record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());
         }
 

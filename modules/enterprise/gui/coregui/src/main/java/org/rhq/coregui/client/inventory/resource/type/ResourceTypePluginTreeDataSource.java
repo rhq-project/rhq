@@ -39,6 +39,7 @@ import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.ImageManager;
@@ -253,10 +254,8 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             setAttribute(ID, id);
             setAttribute(PARENT_ID, parentId);
             setAttribute(ITEM_ID, resourceType.getId());
-            setAttribute(NAME, resourceType.getName());
+            setAttribute(NAME, ResourceTypeUtility.displayName(resourceType));
             setAttribute(PLUGIN, resourceType.getPlugin());
-            setAttribute("category", resourceType.getCategory().getDisplayName());
-
             setIcon(ImageManager.getResourceIcon(resourceType.getCategory()));
         }
 

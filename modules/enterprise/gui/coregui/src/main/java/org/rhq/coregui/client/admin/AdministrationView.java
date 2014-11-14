@@ -21,6 +21,7 @@ package org.rhq.coregui.client.admin;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
@@ -30,6 +31,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.admin.roles.RolesView;
 import org.rhq.coregui.client.admin.storage.StorageNodeAdminView;
 import org.rhq.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
@@ -50,6 +52,7 @@ import org.rhq.coregui.client.components.view.NavigationSection;
 import org.rhq.coregui.client.components.view.ViewFactory;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.preferences.UserPreferenceNames.UiSubsystem;
 
 /**
  * The Administration top-level view.
@@ -90,8 +93,10 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         NavigationSection configurationSection = buildConfigurationSection();
         sections.add(configurationSection);
 
-        NavigationSection contentSection = buildContentSection();
-        sections.add(contentSection);
+        if (UserSessionManager.getUserPreferences().getShowUiSubsystems().get(UiSubsystem.CONTENT)) {
+            NavigationSection contentSection = buildContentSection();
+            sections.add(contentSection);
+        }
 
         return sections;
     }
@@ -210,8 +215,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         });
         ignoreResourceTypesItem.setRefreshRequired(true); // we always need a new page
 
-        NavigationItem missingResourcePolicyItem = new NavigationItem(
-            MissingPolicyResourceTypesView.VIEW_ID,
+        NavigationItem missingResourcePolicyItem = new NavigationItem(MissingPolicyResourceTypesView.VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
                     return new MissingPolicyResourceTypesView();
@@ -236,11 +240,22 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                 return new ServerPluginTableView();
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
-
-        return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, systemSettingsItem, alertTemplatesItem,
-            driftTemplatesItem, metricTemplatesItem, ignoreResourceTypesItem, missingResourcePolicyItem,
-            downloadsItem, agentPluginsItem,
-            serverPluginsItem);
+        Map<UiSubsystem, Boolean> showSubsystems = UserSessionManager.getUserPreferences().getShowUiSubsystems();
+        List<NavigationItem> items = new ArrayList<NavigationItem>(9);
+        items.add(systemSettingsItem);
+        if (showSubsystems.get(UiSubsystem.ALERTS)) {
+            items.add(alertTemplatesItem);
+        }
+        if (showSubsystems.get(UiSubsystem.DRIFT)) {
+            items.add(driftTemplatesItem);
+        }
+        items.add(metricTemplatesItem);
+        items.add(ignoreResourceTypesItem);
+        items.add(missingResourcePolicyItem);
+        items.add(downloadsItem);
+        items.add(agentPluginsItem);
+        items.add(serverPluginsItem);
+        return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, items.toArray(new NavigationItem[items.size()]));
     }
 
     private NavigationSection buildContentSection() {

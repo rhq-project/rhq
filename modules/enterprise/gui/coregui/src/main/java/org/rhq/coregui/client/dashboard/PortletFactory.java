@@ -20,6 +20,7 @@ package org.rhq.coregui.client.dashboard;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.TreeMap;
 
 import com.smartgwt.client.widgets.Canvas;
@@ -64,6 +65,7 @@ import org.rhq.coregui.client.dashboard.portlets.util.MashupPortlet;
 import org.rhq.coregui.client.dashboard.portlets.util.MessagePortlet;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.util.preferences.UserPreferenceNames.UiSubsystem;
 
 /**
  * @author Simeon Pinder
@@ -272,6 +274,41 @@ public class PortletFactory {
         }
 
         return view;
+    }
+
+    public static boolean canBeAdded(String portletKey, Map<UiSubsystem, Boolean> showSubsystems) {
+        if (!showSubsystems.get(UiSubsystem.ALERTS)) {
+            if (ResourceAlertsPortlet.KEY.equals(portletKey) || GroupAlertsPortlet.KEY.equals(portletKey)
+                || RecentAlertsPortlet.KEY.equals(portletKey)) {
+                return false;
+            }
+        }
+        if (!showSubsystems.get(UiSubsystem.CONFIG)) {
+            if (ResourceConfigurationUpdatesPortlet.KEY.equals(portletKey)
+                || GroupConfigurationUpdatesPortlet.KEY.equals(portletKey)) {
+                return false;
+            }
+        }
+        if (!showSubsystems.get(UiSubsystem.CONTENT)) {
+            if (ResourcePkgHistoryPortlet.KEY.equals(portletKey) || GroupPkgHistoryPortlet.KEY.equals(portletKey)
+                || ResourceBundleDeploymentsPortlet.KEY.equals(portletKey)
+                || GroupBundleDeploymentsPortlet.KEY.equals(portletKey)) {
+                return false;
+            }
+        }
+        if (!showSubsystems.get(UiSubsystem.EVENTS)) {
+            if (ResourceEventsPortlet.KEY.equals(portletKey) || GroupEventsPortlet.KEY.equals(portletKey)
+                || RecentEventsPortlet.KEY.equals(portletKey)) {
+                return false;
+            }
+        }
+        if (!showSubsystems.get(UiSubsystem.OPERATIONS)) {
+            if (ResourceOperationsPortlet.KEY.equals(portletKey) || GroupOperationsPortlet.KEY.equals(portletKey)
+                || OperationHistoryPortlet.KEY.equals(portletKey) || OperationSchedulePortlet.KEY.equals(portletKey)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

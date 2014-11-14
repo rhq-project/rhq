@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,20 +19,10 @@
 package org.rhq.coregui.client.admin.users;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.Record;
-import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.PasswordItem;
-import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
-import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
-import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
@@ -48,12 +38,40 @@ import org.rhq.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.coregui.client.components.selector.AssignedItemsChangedHandler;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.preferences.UserPreferenceNames.UiSubsystem;
+import org.rhq.coregui.client.util.preferences.UserPreferences;
+
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.Record;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ListGridEditEvent;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.PasswordItem;
+import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.HeaderClickEvent;
+import com.smartgwt.client.widgets.grid.events.HeaderClickHandler;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 /**
  * A form for viewing and/or editing an RHQ user (i.e. a {@link Subject}, and if the user is authenticated via RHQ and
  * not LDAP, the password of the associated {@link Principal}).
  *
  * @author Ian Springer
+ * @author Jirka Kremser
  */
 public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
@@ -65,8 +83,15 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     private boolean loggedInUserHasManageSecurityPermission;
     private boolean ldapAuthorizationEnabled;
 
+    private ListGrid uiCustomizationGrid;
+    private UserPreferences prefs;
+    private List<Integer> initialState;
+    private ListGridRecord[] initData;
+    private ListGrid uiShowGrid;
+
     public UserEditView(int subjectId) {
         super(new UsersDataSource(), subjectId, MSG.common_label_user(), HEADER_ICON);
+        injectHelperFunctions(this);
     }
 
     @Override
@@ -126,10 +151,29 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
         Subject sessionSubject = UserSessionManager.getSessionSubject();
         boolean userBeingEditedIsLoggedInUser = (getRecordId() == sessionSubject.getId());
+        prefs = UserSessionManager.getUserPreferences();
 
         // A user can always view their own assigned roles, but only users with MANAGE_SECURITY can view or update
         // other users' assigned roles.
         if (this.loggedInUserHasManageSecurityPermission || userBeingEditedIsLoggedInUser) {
+            VLayout spacer = null;
+            if (userBeingEditedIsLoggedInUser) {
+                spacer = new VLayout();
+                spacer.setHeight(10);
+                getContentPane().addMember(spacer);
+                Label showUiSubsystems = new Label("<h4>" + MSG.view_adminUsers_ui_label() + "</h4>");
+                showUiSubsystems.setHeight(17);
+                getContentPane().addMember(showUiSubsystems);
+                uiCustomizationGrid = createUiCustomizationGrid();
+                getContentPane().addMember(uiCustomizationGrid);
+                spacer = new VLayout();
+                spacer.setHeight(10);
+                getContentPane().addMember(spacer);
+                Label rolesHeader = new Label("<h4>" + MSG.common_title_roles() + "</h4>");
+                rolesHeader.setHeight(17);
+                getContentPane().addMember(rolesHeader);
+            }
+
             Record[] roleRecords = record.getAttributeAsRecordArray(UsersDataSource.Field.ROLES);
             ListGridRecord[] roleListGridRecords = toListGridRecordArray(roleRecords);
             boolean rolesAreReadOnly = areRolesReadOnly(record);
@@ -142,6 +186,174 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
             });
             getContentPane().addMember(this.roleSelector);
         }
+    }
+
+    private ListGrid createUiCustomizationGrid() {
+        uiShowGrid = new ListGrid();
+        uiShowGrid.addHeaderClickHandler(new HeaderClickHandler() {
+            // when changing the sorting the cells are reformated using all the custom cell formatters,
+            // so we need to call the bootstrapSwitch() again. Unfortunately we can't hook to draw() method of ListGrid
+            @Override
+            public void onHeaderClick(HeaderClickEvent event) {
+                new Timer() {
+                    @Override
+                    public void run() {
+                        initSwitches();
+                    }
+                }.schedule(200);
+            }
+        });
+        uiShowGrid.setStyleName("showSubsystemsGrid");
+        ListGridField iconField = new ListGridField("icon", "&nbsp;", 28);
+        iconField.setShowDefaultContextMenu(false);
+        iconField.setCanSort(false);
+        iconField.setAlign(Alignment.CENTER);
+        iconField.setType(ListGridFieldType.IMAGE);
+        iconField.setImageURLSuffix("_16.png");
+        iconField.setImageWidth(16);
+        iconField.setImageHeight(16);
+        iconField.setCanEdit(false);
+
+        ListGridField displayNameField = new ListGridField("displayName", MSG.common_title_name(), 130);
+        displayNameField.setCanEdit(false);
+
+        ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
+        descriptionField.setWrap(true);
+        descriptionField.setCanEdit(false);
+
+        final ListGridField showFieldHidden = new ListGridField("showSubsystem", MSG.common_title_show(), 50);
+        showFieldHidden.setHidden(true);
+        showFieldHidden.setType(ListGridFieldType.IMAGE);
+        showFieldHidden.setImageSize(11);
+        LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(2);
+        valueMap.put(Boolean.TRUE.toString(), "global/permission_enabled_11.png");
+        valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
+        showFieldHidden.setValueMap(valueMap);
+        showFieldHidden.setCanEdit(true);
+        CheckboxItem editor = new CheckboxItem();
+        showFieldHidden.setEditorType(editor);
+        showFieldHidden.addChangedHandler(new com.smartgwt.client.widgets.grid.events.ChangedHandler() {
+            @Override
+            public void onChanged(com.smartgwt.client.widgets.grid.events.ChangedEvent event) {
+                UserEditView.this.onItemChanged();
+            }
+        });
+
+        final ListGridField showField = new ListGridField("showSubsystemSwitch", MSG.common_title_show(), 100);
+        showField.addChangedHandler(new com.smartgwt.client.widgets.grid.events.ChangedHandler() {
+            @Override
+            public void onChanged(com.smartgwt.client.widgets.grid.events.ChangedEvent event) {
+                UserEditView.this.onItemChanged();
+            }
+        });
+        showField.setCellFormatter(new CellFormatter() {
+            @Override
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                boolean show = "true".equals(record.getAttributeAsString("showSubsystem").toString());
+                
+                return "<input type='checkbox' name='rhqSwitch' id='showSubsystem" + rowNum + "' data-on-text='"
+                    + MSG.common_title_show() + "' data-off-text='" + MSG.view_adminUsers_ui_hide()
+                    + "' onchange='__gwt_onItemChange();' data-size='mini' " + (show ? "checked" : "") + ">";
+            }
+        });
+        showField.setCanEdit(false);
+        uiShowGrid.setFields(iconField, displayNameField, showField, descriptionField, showFieldHidden);
+
+        Map<UiSubsystem, Boolean> showSubsystems = prefs.getShowUiSubsystems();
+        initializeDefaultState(showSubsystems);
+
+        List<ListGridRecord> records = new ArrayList<ListGridRecord>();
+        ListGridRecord record = createShowUiSubsystemRecord(
+            MSG.view_admin_content() + " & " + MSG.common_title_bundles(), showSubsystems.get(UiSubsystem.CONTENT),
+            "subsystems/content/Content", MSG.view_adminUsers_ui_content());
+        records.add(record);
+        record = createShowUiSubsystemRecord(MSG.view_reportsTop_title(), showSubsystems.get(UiSubsystem.REPORTS),
+            "subsystems/report/Document", MSG.view_adminUsers_ui_reports());
+        records.add(record);
+        record = createShowUiSubsystemRecord(MSG.view_admin_administration(),
+            showSubsystems.get(UiSubsystem.ADMINISTRATION), "types/Service_type", MSG.view_adminUsers_ui_admin());
+        records.add(record);
+        record = createShowUiSubsystemRecord(MSG.view_tabs_common_events(), showSubsystems.get(UiSubsystem.EVENTS),
+            "subsystems/event/Events", MSG.view_adminUsers_ui_events());
+        records.add(record);
+        record = createShowUiSubsystemRecord(MSG.common_title_operations(), showSubsystems.get(UiSubsystem.OPERATIONS),
+            "subsystems/control/Operation", MSG.view_adminUsers_ui_ops());
+        records.add(record);
+        record = createShowUiSubsystemRecord(MSG.common_title_alerts(), showSubsystems.get(UiSubsystem.ALERTS),
+            "subsystems/alert/Alerts", MSG.view_adminUsers_ui_alerts());
+        records.add(record);
+        record = createShowUiSubsystemRecord(MSG.common_title_configuration(), showSubsystems.get(UiSubsystem.CONFIG),
+            "subsystems/configure/Configure", MSG.view_adminUsers_ui_config());
+        records.add(record);
+        record = createShowUiSubsystemRecord(MSG.view_tabs_common_drift(), showSubsystems.get(UiSubsystem.DRIFT),
+            "subsystems/drift/Drift", MSG.view_adminUsers_ui_drift());
+        records.add(record);
+        initData = records.toArray(new ListGridRecord[records.size()]);
+        uiShowGrid.setData(initData);
+        uiShowGrid.setCanEdit(true);
+        uiShowGrid.setEditEvent(ListGridEditEvent.CLICK);
+        return uiShowGrid;
+    }
+
+    private native void injectHelperFunctions(UserEditView view) /*-{
+        $wnd.__gwt_onItemChange = $entry(function(){
+            view.@org.rhq.coregui.client.admin.users.UserEditView::onItemChanged()();
+        });
+    }-*/;
+    
+    // 4 (20 * 200ms) seconds should be fine even for very old browsers / slow PCs to render 8 lines in the ListGrid
+    private native void initSwitchesUntilItsDone() /*-{
+        $wnd.$.getScript("js/bootstrap-switch.min.js", function(){
+            $wnd.$.fn.bootstrapSwitch.defaults.handleWidth = '40px';
+            $wnd.$.fn.bootstrapSwitch.defaults.labelWidth = '40px';
+            var affectedElems = 0;
+            $wnd.tryToInitialize = function() {
+                $wnd.console.info('Initializing bootstrap-switch...');
+                affectedElems = $wnd.$("[name='rhqSwitch']").bootstrapSwitch();
+            };
+            $wnd.tryToInitialize();
+            var attempts = 20;
+            do {
+                $wnd.setTimeout("tryToInitialize();", 200);
+            } while (affectedElems.length != 8 && attempts-- > 0)
+        });
+    }-*/;
+    
+    private native void initSwitches() /*-{
+        $wnd.$("[name='rhqSwitch']").bootstrapSwitch();
+    }-*/;
+
+    private native boolean isSubsystemShown(int id) /*-{
+        return $wnd.$('#showSubsystem' + id).is(':checked')
+    }-*/;
+    
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+        // we need to wait for cell formatters to do their work and then run the jsni method on updated DOM
+        new Timer() {
+            @Override
+            public void run() {
+                initSwitchesUntilItsDone();
+            }
+        }.schedule(1000);
+    }
+
+    private void initializeDefaultState(Map<UiSubsystem, Boolean> showSubsystems) {
+        initialState = new ArrayList<Integer>();
+        for (UiSubsystem subsystem : UiSubsystem.values()) {
+            initialState.add(showSubsystems.get(subsystem) ? 1 : 0);
+        }
+    }
+
+    private ListGridRecord createShowUiSubsystemRecord(String displayName, boolean show, String icon, String description) {
+        ListGridRecord record = new ListGridRecord();
+        record.setAttribute("displayName", displayName);
+        record.setAttribute("showSubsystem", show);
+        record.setAttribute("showSubsystemSwitch", show ? "checked" : "");
+        record.setAttribute("icon", icon);
+        record.setAttribute("description", description);
+        return record;
     }
 
     //
@@ -236,8 +448,16 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         return items;
     }
 
+    private List<Integer> getIntegerList() {
+        List<Integer> integerList = new ArrayList<Integer>(8);
+        for (int i = 0, length = uiCustomizationGrid.getRecords().length; i < length; i++) {
+            integerList.add(isSubsystemShown(i) ? 1 : 0);
+        }
+        return integerList;
+    }
+
     @Override
-    protected void save(DSRequest requestProperties) {
+    protected void save(final DSRequest requestProperties) {
         // Grab the currently assigned roles from the selector and stick them into the corresponding canvas
         // item on the form, so when the form is saved, they'll get submitted along with the rest of the simple fields
         // to the datasource's add or update methods.
@@ -245,18 +465,55 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
             ListGridRecord[] roleRecords = this.roleSelector.getSelectedRecords();
             getForm().setValue(UsersDataSource.Field.ROLES, roleRecords);
         }
-
         // Submit the form values to the datasource.
         super.save(requestProperties);
     }
 
     @Override
-    protected void reset() {
-        super.reset();
+    protected void postSaveAction() {
+        List<Integer> currentState = getIntegerList();
+        if (!initialState.equals(currentState)) {
+            prefs.setShowUiSubsystems(currentState, new AsyncCallback<Subject>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Cannot store preferences", caught);
+                }
 
-        if (this.roleSelector != null) {
-            this.roleSelector.reset();
+                @Override
+                public void onSuccess(Subject subject) {
+                    // do the refresh to reflect the changes to current UI
+                    new Timer() {
+                        @Override
+                        public void run() {
+                            Window.Location.reload();
+                        }
+                    }.schedule(100);
+                }
+            });
         }
     }
+    
+    @Override
+    protected boolean showResetButton() {
+        return false;
+    }
 
+//    @Override
+//    protected void reset() {
+//        super.reset();
+//
+//        if (this.roleSelector != null) {
+//            this.roleSelector.reset();
+//        }
+//        
+//        if (uiShowGrid != null && initData != null && initData.length > 0) {
+//            uiShowGrid.setData(initData);
+//            new Timer() {
+//                @Override
+//                public void run() {
+//                    initSwitches();
+//                }
+//            }.schedule(190);
+//        }
+//    }
 }

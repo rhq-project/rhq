@@ -49,11 +49,13 @@ import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
 import org.rhq.coregui.client.inventory.resource.detail.ResourceTreeView;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.util.preferences.UserPreferenceNames.UiSubsystem;
 
 /**
  * @author Jay Shaughnessy
@@ -181,57 +183,63 @@ public class ResourceGroupContextMenu extends Menu {
         }
         addItem(pluginConfiguration);
 
+        Map<UiSubsystem, Boolean> showSubsystems = UserSessionManager.getUserPreferences().getShowUiSubsystems();
+
         // resource config
-        MenuItem resourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
-        boolean resourceConfigEnabled = groupComposite.getResourcePermission().isConfigureRead()
-            && resourceType.getResourceConfigurationDefinition() != null;
-        resourceConfiguration.setEnabled(resourceConfigEnabled);
-        if (resourceConfigEnabled) {
-            resourceConfiguration.addClickHandler(new ClickHandler() {
-                public void onClick(MenuItemClickEvent event) {
-                    CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(group), "Configuration",
-                        "Current"));
-                }
-            });
+        if (showSubsystems.get(UiSubsystem.CONFIG)) {
+            MenuItem resourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
+            boolean resourceConfigEnabled = groupComposite.getResourcePermission().isConfigureRead()
+                && resourceType.getResourceConfigurationDefinition() != null;
+            resourceConfiguration.setEnabled(resourceConfigEnabled);
+            if (resourceConfigEnabled) {
+                resourceConfiguration.addClickHandler(new ClickHandler() {
+                    public void onClick(MenuItemClickEvent event) {
+                        CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(group), "Configuration",
+                            "Current"));
+                    }
+                });
+            }
+            addItem(resourceConfiguration);
         }
-        addItem(resourceConfiguration);
 
         // separator
         addItem(new MenuItemSeparator());
 
         // Operations Menu
-        MenuItem operations = new MenuItem(MSG.common_title_operations());
-        boolean operationsEnabled = (groupComposite.getResourcePermission().isControl()
-            && null != resourceType.getOperationDefinitions() && !resourceType.getOperationDefinitions().isEmpty());
-        operations.setEnabled(operationsEnabled);
-        if (operationsEnabled) {
-            Menu opSubMenu = new Menu();
-            //sort the display items alphabetically
-            TreeSet<String> ordered = new TreeSet<String>();
-            Map<String, OperationDefinition> definitionMap = new HashMap<String, OperationDefinition>();
-            for (OperationDefinition o : resourceType.getOperationDefinitions()) {
-                ordered.add(o.getDisplayName());
-                definitionMap.put(o.getDisplayName(), o);
-            }
+        if (showSubsystems.get(UiSubsystem.OPERATIONS)) {
+            MenuItem operations = new MenuItem(MSG.common_title_operations());
+            boolean operationsEnabled = (groupComposite.getResourcePermission().isControl()
+                && null != resourceType.getOperationDefinitions() && !resourceType.getOperationDefinitions().isEmpty());
+            operations.setEnabled(operationsEnabled);
+            if (operationsEnabled) {
+                Menu opSubMenu = new Menu();
+                //sort the display items alphabetically
+                TreeSet<String> ordered = new TreeSet<String>();
+                Map<String, OperationDefinition> definitionMap = new HashMap<String, OperationDefinition>();
+                for (OperationDefinition o : resourceType.getOperationDefinitions()) {
+                    ordered.add(o.getDisplayName());
+                    definitionMap.put(o.getDisplayName(), o);
+                }
 
-            for (String displayName : ordered) {
-                final OperationDefinition operationDefinition = definitionMap.get(displayName);
+                for (String displayName : ordered) {
+                    final OperationDefinition operationDefinition = definitionMap.get(displayName);
 
-                MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
-                operationItem.addClickHandler(new ClickHandler() {
-                    public void onClick(MenuItemClickEvent event) {
-                        String viewPath = LinkManager.getEntityTabLink(EntityContext.forGroup(group),
-                            ResourceDetailView.Tab.Operations.NAME, "Schedules")
-                            + "/0/"
-                            + operationDefinition.getId();
-                        CoreGUI.goToView(viewPath);
-                    }
-                });
-                opSubMenu.addItem(operationItem);
+                    MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
+                    operationItem.addClickHandler(new ClickHandler() {
+                        public void onClick(MenuItemClickEvent event) {
+                            String viewPath = LinkManager.getEntityTabLink(EntityContext.forGroup(group),
+                                ResourceDetailView.Tab.Operations.NAME, "Schedules")
+                                + "/0/"
+                                + operationDefinition.getId();
+                            CoreGUI.goToView(viewPath);
+                        }
+                    });
+                    opSubMenu.addItem(operationItem);
+                }
+                operations.setSubmenu(opSubMenu);
             }
-            operations.setSubmenu(opSubMenu);
+            addItem(operations);
         }
-        addItem(operations);
     }
 
 }

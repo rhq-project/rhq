@@ -2576,6 +2576,27 @@
             <schemaSpec version="2.164">
                 <schema-addColumn table="RHQ_RESOURCE_TYPE" column="DISPLAY_NAME" columnType="VARCHAR2" precision="100" />
                 <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="DISPLAY_NAME" nullable="true" />
+              <schema-directSQL ignoreError="true">
+                <statement desc="Add new partition events purge setting. Initially set to 0 meaning no purge">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                  VALUES (75, 'PARTITION_EVENT_PURGE', '0', '0')
+                </statement>
+              </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.165">
+              <schema-dropForeignKeys table="RHQ_CONFIG_GROUP_UPDATE" column="CONFIGURATION_ID" ignoreError="true"/>
+              <schema-directSQL ignoreError="true">
+                <statement desc="Re-create RHQ_CONFIG_GROUP_UPDATE(CONFIGURATION_ID) foreign key with ON DELETE CASCADE">
+                  ALTER TABLE RHQ_CONFIG_GROUP_UPDATE ADD FOREIGN KEY (CONFIGURATION_ID) REFERENCES RHQ_CONFIG ON DELETE CASCADE
+                </statement>
+              </schema-directSQL>
+              <schema-directSQL ignoreError="true">
+                <statement desc="Add new resource config history purge setting. Initially set to 0 meaning no purge">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                  VALUES (76, 'RESOURCE_CONFIG_HISTORY_PURGE', '0', '0')
+                </statement>
+              </schema-directSQL>
             </schemaSpec>
 
         </dbupgrade>

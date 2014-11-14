@@ -712,6 +712,9 @@ public class Upgrade extends AbstractInstall {
         defaultRestrictedProperties.add("rhq.communications.connector.security.keystore.key-password");
         defaultRestrictedProperties.add("rhq.communications.connector.security.keystore.password");
         defaultRestrictedProperties.add("rhq.communications.connector.security.truststore.password");
+        defaultRestrictedProperties.add("rhq.server.tomcat.security.keystore.password");
+        defaultRestrictedProperties.add("rhq.server.tomcat.security.keystore.key-password");
+        defaultRestrictedProperties.add("rhq.server.tomcat.security.truststore.password");
 
         for (String restrictedProperty : defaultRestrictedProperties) {
             String value = (String) properties.get(restrictedProperty);

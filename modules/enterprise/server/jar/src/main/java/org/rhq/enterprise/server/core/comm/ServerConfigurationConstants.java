@@ -253,4 +253,24 @@ public interface ServerConfigurationConstants {
      */
     @Restricted
     String COMMUNICATIONS_CONNECTOR_SECURITY_TRUSTSTORE_PASSWORD = COMMUNICATIONS_PROPERTY_NAME_PREFIX + "connector.security.truststore.password";
+
+
+    /**
+     * Tomcat security keystore password
+    */
+    @Restricted
+    String TOMCAT_SECURITY_KEYSTORE_PASSWORD = "rhq.server.tomcat.security.keystore.password";
+
+    /**
+     * Tomcat security keystore key password
+    */
+    @Restricted
+    String TOMCAT_SECURITY_KEYSTORE_KEY_PASSWORD = "rhq.server.tomcat.security.keystore.key-password";
+
+
+    /**
+     * Tomcat security truststore password
+    */
+    @Restricted
+    String TOMCAT_SECURITY_TRUSTSTORE_PASSWORD = "rhq.server.tomcat.security.truststore.password";
 }

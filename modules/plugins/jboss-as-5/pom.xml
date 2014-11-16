@@ -269,6 +269,13 @@
           <scope>test</scope>
         </dependency>
 
+        <dependency>
+          <groupId>org.hyperic</groupId>
+          <artifactId>sigar-dist</artifactId>
+          <version>${sigar.version}</version>
+          <type>zip</type>
+        </dependency>
+
       </dependencies>
 
       <build>

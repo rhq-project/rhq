@@ -93,7 +93,9 @@ else
        _READLINK_ARG="-e"
        _DOLLARZERO=`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`
     elif  [ -n "${_DARWIN}" ]; then
-       _DOLLARZERO=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
+       __tmp_dirname=`dirname "${BASH_SOURCE[0]}"`
+       __tmp_basename=`basename "${BASH_SOURCE[0]}"`
+       _DOLLARZERO=`cd "${__tmp_dirname}" && pwd`/${__tmp_basename}
     else
        _DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
     fi

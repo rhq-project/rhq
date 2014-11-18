@@ -200,6 +200,19 @@ nav ul li:hover, nav ul li.active {
     text-align: center;
     font-size: 20px;
     line-height: 45px;
+    -webkit-transition: .4s all;
+    -moz-transition: .4s all;
+    -ms-transition: .4s all;
+    -o-transition: .4s all;
+}
+
+.btn-social:hover {
+    color: #18bc9c;
+    border: 2px solid #18bc9c;
+    -webkit-transition: .4s all;
+    -moz-transition: .4s all;
+    -ms-transition: .4s all;
+    -o-transition: .4s all;
 }
 
 .sourceforge {

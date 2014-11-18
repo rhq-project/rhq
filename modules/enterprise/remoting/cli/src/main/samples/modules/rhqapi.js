@@ -1,10 +1,25 @@
 /**
- * @overview this library tries to be synchronous and high-level API built on top of standard RHQ remote API
+ * @overview this library tries to be synchronous and high-level API built on top of regular RHQ remote API. Compatible with JBoss ON 3.1.2 and 3.2.0
  * @name RHQ API
- * @version 0.2
- * @author Libor Zoubek (lzoubek@redhat.com), Filip Brychta (fbrychta@redhat.com)
+ * @version 0.3
+ * @author Libor Zoubek (lzoubek@redhat.com), Filip Brychta (fbrychta@redhat.com), John Sanda (jsanda@redhat.com)
+ *
+ * 
+ * If you want to contribute this code, please note following things
+ * 
+ * - do not return RHQ Domain objects out of rhqapi functions, always create a wrapper object which can hold and expose RHQ Domain object
+ * - create namespace for each valid subsystem (resources, resourceTypes) and make sure that each subsystem has find() method that follows
+ *   same criteria/query pattern as resources.find()
+ * - If there is an asynchronous operation/method defined by RHQ remote API, make it synchronous and implement waiting
+ * - enable logging 
+ *   - make rhqapi log at TRACE level on every JS function you write
+ *   - make rhqapi log at DEBUG level in case you think it might help understand what is going on
+ *   - make rhqapi log at INFO level in case you need to inform user about some progress/status
+ * - think of rhqapi the way it can be consumed interactively by human (if there are wrong inputs provided and there is a way to advise correct ones, do that)
+ * - write JSDoc with examples
+ * - don't forget to expose your subsystem/class to commonjs (look at the end of this file)
+ * 
  */
-
 
 // jsdoc-toolkit takes care of generating documentation
 // please follow http://code.google.com/p/jsdoc-toolkit/wiki/TagReference for adding correct tag
@@ -159,11 +174,11 @@ var _common = function() {
 		if (!hash) {
 			return config;
 		}
-		for(key in hash) {
-			if (!hash.hasOwnProperty(key)) {
+		for(_k in hash) {
+			if (!hash.hasOwnProperty(_k)) {
 				continue;
 			}
-			value = hash[key];
+			value = hash[_k];
 
 			(function(parent, key, value) {
 				function isArray(obj) {
@@ -204,7 +219,7 @@ var _common = function() {
 					for(var i = 0; i < value.length; ++i) {
 						var v = value[i];
 						if (v != null) {
-							// me(prop, key, v);
+							 me(prop, key, v);
 						}
 					}
 				} else if (isHash(value)) {
@@ -212,7 +227,7 @@ var _common = function() {
 					for(var i in value) {
 						var v = value[i];
 						if (value != null) {
-							// me(prop, i, v);
+							 me(prop, i, v);
 						}
 					}
 				}
@@ -228,7 +243,7 @@ var _common = function() {
 				} else {
 					parent.put(prop);
 				}
-			})(config, key, value);
+			})(config, _k, value);
 		}
 
 		return config;
@@ -274,30 +289,40 @@ var _common = function() {
 				var representation = null;
 
 				if (prop instanceof PropertySimple) {
-					if (propDef && propDef instanceof PropertyDefinitionSimple) {
-						// TODO implement all propertySimple types ..
-						if (propDef.getType() == PropertySimpleType.BOOLEAN) {
-                            if (prop.booleanValue !=null) {
-                                if (prop.booleanValue == false) {
-                                	representation = false;
+					// we don't want to represent null values as string 'null'
+					if(prop.stringValue != null){
+						if (propDef && propDef instanceof PropertyDefinitionSimple) {
+							// TODO implement all propertySimple types ..
+							if (propDef.getType() == PropertySimpleType.BOOLEAN) {
+	                            if (prop.booleanValue !=null) {
+	                                if (prop.booleanValue == false) {
+	                                	representation = false;
+	                                }
+	                                else {
+	                                	representation = true;
+	                                }
+	                            }
+	                        }
+							else if (propDef.getType() == PropertySimpleType.DOUBLE
+									|| propDef.getType() == PropertySimpleType.INTEGER
+									|| propDef.getType() == PropertySimpleType.LONG
+									|| propDef.getType() == PropertySimpleType.FLOAT
+									) {
+                                try {
+                                    representation = Number(prop.doubleValue);
+
+                                } catch (e) {
+                                    _warn("Failed to type value "+prop+" as "+propDef.getType()+", this is a BUG in RHQ");
+                                    representation = String(prop.stringValue);
                                 }
-                                else {
-                                	representation = true;
-                                }
-                            }
-                        }
-						else if (propDef.getType() == PropertySimpleType.DOUBLE
-								|| propDef.getType() == PropertySimpleType.INTEGER
-								|| propDef.getType() == PropertySimpleType.LONG
-								|| propDef.getType() == PropertySimpleType.FLOAT
-								) {
-							representation = Number(prop.doubleValue);
-						} else {
+
+							} else {
+								representation = String(prop.stringValue);
+							}
+						}
+						else {
 							representation = String(prop.stringValue);
 						}
-					}
-					else {
-						representation = String(prop.stringValue);
 					}
 				} else if (prop instanceof PropertyList) {
 					representation = [];
@@ -345,9 +370,9 @@ var _common = function() {
 	 */
 	var _applyConfiguration = function(original,definition,values) {
 		values = values || {};
-		for (var k in values) {
+		for (var _k in values) {
 			// we only iterrate over values
-			if (values.hasOwnProperty(k)) {
+			if (values.hasOwnProperty(_k)) {
 				// parent - parent configuration
 				// definition - parent configuration definition
 				// key - config key to be applied
@@ -355,6 +380,7 @@ var _common = function() {
 				(function (parent,definition,key,value) {
 					var propDef = null;
 					var prop = null;
+					
 					// decide which type of property are we working with
 					if (definition instanceof PropertyDefinitionMap) {
 						// println("DEF is map");
@@ -367,27 +393,37 @@ var _common = function() {
 						propDef = definition.getPropertyDefinitions().get(key);
 					}
 
+					// this handles cases when we have property map, and it's children do not have configDefinition
+					// so there may be just key/values
+
+					if (propDef==null && parent instanceof PropertyMap) {
+						propDef = new PropertyDefinitionSimple(key,"",false,PropertySimpleType.STRING);
+					}
+					// ignore properties which don't have property definition (this is legal state)	// ignore properties which don't have property definition (this is legal state)
 					if (propDef==null) {
-						_debug("Unable to get PropertyDefinition for key="+key);
+						_warn("Unable to get PropertyDefinition for key="+key);
 						return;
 					}
 					// process all 3 possible types
 					if (propDef instanceof PropertyDefinitionSimple) {
+						// _trace("applyConfiguration(), creating simple property");
 						prop = new PropertySimple(key, null);
 
 						if (value!=null) {
+							if(value == 'null'){
+								_warn("Adding property '"+ key +"' with null value as a string");
+							}
 							prop = new PropertySimple(key, new java.lang.String(value));
 						}
-							// println("it's simple! "+prop);
 					} else if (propDef instanceof PropertyDefinitionList) {
+						// _trace("applyConfiguration(), creating list property");
 						prop = new PropertyList(key);
-						// println("it's list! "+prop);
 						for(var i = 0; i < value.length; ++i) {
 							arguments.callee(prop,propDef,"",value[i]);
 						}
 					} else if (propDef instanceof PropertyDefinitionMap) {
+						// _trace("applyConfiguration(), creating map property");
 						prop = new PropertyMap(propDef.name);
-						// println("it's map! "+prop);
 						for (var i in value) {
 							if (value.hasOwnProperty(i)) {
 								arguments.callee(prop,propDef,i,value[i]);
@@ -395,9 +431,8 @@ var _common = function() {
 						}
 					}
 					else {
-						common.info("Unkonwn property definition! this is a bug");
 						pretty.print(propDef);
-						return
+						throw ("Unkonwn property definition! this is a bug, see above which property definition was passed");
 					}
 					// now we update our Configuration node
 					if (parent instanceof PropertyList) {
@@ -405,108 +440,111 @@ var _common = function() {
 					} else {
 						parent.put(prop);
 					}
-				}) (original,definition,k,values[k]);
+				}) (original,definition,_k,values[_k]);
 			}
 		}
+
 		return original;
 	};
+	
+	var _objToString = function(hash) {
+		function isArray(obj) {
+			return typeof (obj) == 'object' && (obj instanceof Array);
+		}
+		function isHash(obj) {
+			return typeof (obj) == 'object' && !(obj instanceof Array);
+		}
 
-	return {
-		objToString : function(hash) {
-			function isArray(obj) {
-				return typeof (obj) == 'object' && (obj instanceof Array);
+		function isPrimitive(obj) {
+			return typeof (obj) != 'object' || obj == null || obj instanceof Number || obj instanceof String || obj instanceof Boolean;
+		}
+		function isJavaObject(obj) {
+			return typeof (obj) == 'object' && typeof (obj.getClass) != 'undefined'
+		}
+		if (!hash) {
+			return hash;
+		}
+		// process only hashes, everything else is "just" string
+		if (!isHash(hash)) {
+			return String(hash);
+		}
+		output = "";
+		for (_k in hash) {
+			if (!hash.hasOwnProperty(_k)) {
+				continue;
 			}
-			function isHash(obj) {
-				return typeof (obj) == 'object' && !(obj instanceof Array);
-			}
+			var valueStr = (function(key, value) {
 
-			function isPrimitive(obj) {
-				return typeof (obj) != 'object' || obj == null || (obj instanceof Boolean || obj instanceof Number || obj instanceof String);
-			}
-			function isJavaObject(obj) {
-				return typeof (obj) == 'object' && typeof (obj.getClass) != 'undefined'
-			}
-			if (!hash) {
-				return hash;
-			}
-			// process only hashes, everything else is "just" string
-			if (!isHash(hash)) {
-				return String(hash);
-			}
-			output = "";
-			for (key in hash) {
-				if (!hash.hasOwnProperty(key)) {
-					continue;
+				var me = arguments.callee;
+
+				var prop = null;
+				if (typeof value == "function") {
+					return;
 				}
-				var valueStr = (function(key, value) {
-
-					var me = arguments.callee;
-
-					var prop = null;
-					if (typeof value == "function") {
-						return;
+				// if non-empty key was passed we are going to print this
+				// element as key:<something>
+				// otherwise there's no key to print
+				var kkey = "";
+				if (key != "") {
+					kkey = key + ":";
+				}
+				if (isPrimitive(value)) {
+					// put strings into quotes
+					if (typeof value == "string" || value instanceof String) {
+						prop = kkey + "\'" + value + "\'";
+					} else {
+						prop = kkey + value;
 					}
-					// if non-empty key was passed we are going to print this
-					// element as key:<something>
-					// otherwise there's no key to print
-					var kkey = "";
-					if (key != "") {
-						kkey = key + ":";
-					}
-					if (isPrimitive(value)) {
-						// primitive types
-						if (value instanceof Number || value instanceof Boolean) {
-							prop = kkey + value;
-						} else {
-							prop = kkey + "\'" + value + "\'";
-						}
 
-					} else if (isJavaObject(value)) {
-						// java object - should't be here
-						prop = kkey + String(value);
-					} else if (isArray(value)) {
-						// by printing array we deeper (passing empty key)
-						prop = kkey + "[";
-						for ( var i = 0; i < value.length; ++i) {
-							var v = value[i];
-							if (v != null) {
-								var repr = me("", v)
-								if (repr) {
-									// only if value was printed to something
-									prop += repr + ",";
-								}
-							}
-						}
-						// trim last ','
-						prop = prop.substring(0, prop.length - 1) + "]"
-					} else if (isHash(value)) {
-						// printing hash, again we go deeper
-						prop = kkey + "{";
-						for ( var i in value) {
-							var v = value[i];
-							var repr = me(i, v)
+				} else if (isJavaObject(value)) {
+					// java object - should't be here
+					prop = kkey + String(value);
+				} else if (isArray(value)) {
+					// by printing array we deeper (passing empty key)
+					prop = kkey + "[";
+					for ( var i = 0; i < value.length; ++i) {
+						var v = value[i];
+						if (v != null) {
+							var repr = me("", v)
 							if (repr) {
+								// only if value was printed to something
 								prop += repr + ",";
 							}
 						}
-						prop = prop.substring(0, prop.length - 1) + "}"
-					} else {
-						// this code should not be reached
-						println("it is unkonwn");
-						println(typeof value);
-						println(value);
-						return;
 					}
-					return prop;
-				})(key, hash[key])
-
-				if (valueStr) {
-					output += valueStr + ",";
+					// trim last ','
+					prop = prop.substring(0, prop.length - 1) + "]"
+				} else if (isHash(value)) {
+					// printing hash, again we go deeper
+					prop = kkey + "{";
+					for ( var i in value) {
+						var v = value[i];
+						var repr = me(i, v)
+						if (repr) {
+							prop += repr + ",";
+						}
+					}
+					prop = prop.substring(0, prop.length - 1) + "}"
+				} else {
+					// this code should not be reached
+					println("it is unkonwn");
+					println(typeof value);
+					println(value);
+					return;
 				}
+				return prop;
+			})(_k, hash[_k])
+
+			if (valueStr) {
+				output += valueStr + ",";
 			}
-			output = output.substring(0, output.length - 1);
-			return "{"+output+"}";
-		},
+		}
+		output = output.substring(0, output.length - 1);
+		return "{"+output+"}";
+	}
+
+	return {
+		objToString : _objToString,
 		arrayToSet : function(array){
 			var hashSet = new java.util.HashSet();
 			if(array){
@@ -517,32 +555,37 @@ var _common = function() {
 			return hashSet;
 		},
 		pageListToArray : function(pageList) {
-			var resourcesArray = new Array();
+			var array = new Array();
 		    var i = 0;
 		    for(i = 0;i < pageList.size(); i++){
-		    	resourcesArray[i] = pageList.get(i);
+		    	array[i] = pageList.get(i);
 		    }
-		    return resourcesArray;
+		    return array;
 		},
 		/**
 		 * @param conditionFunc -
 		 *            predicate waits until conditionFunc does return any
 		 *            defined value except for false
+		 * @param funcDelay - delay (seconds) which overwrites globally defined delay
+		 * @param funcTimeout - timeout (seconds) which overwrites globally defined timeout 
 		 */
-		waitFor : function(conditionFunc) {
+		waitFor : function(conditionFunc,funcDelay,funcTimeout) {
 			var time = 0;
-			if (typeof timeout == "number") {
-				var tout = timeout;
+			
+			var dlay = 5;
+			if(funcDelay){
+				dlay = funcDelay;
+			}else if (typeof delay == "number") {
+				dlay = delay;
 			}
-			else {
-				tout = 20;
+			
+			var tout = 20;
+			if(funcTimeout){
+				tout = funcTimeout
+			}else if (typeof timeout == "number") {
+				tout = timeout;
 			}
-			if (typeof delay == "number") {
-				var dlay = delay;
-			}
-			else {
-				dlay = 5;
-			}
+			
 			_trace("common.waitFor(func,delay="+dlay+",timeout="+tout+")");
 
 			var result = conditionFunc();
@@ -588,12 +631,21 @@ var _common = function() {
 			if (!criteria) {
 				throw "Criteria object must be defined!";
 			}
-			for (var k in params) {
+			_trace("Creating criteria with following params: " + _objToString(params));
+			criteria.setStrict(true);
+			for (var _k in params) {
 			    // use hasOwnProperty to filter out keys from the
 				// Object.prototype
-			    if (params.hasOwnProperty(k)) {
+			    if (params.hasOwnProperty(_k)) {
+			    	if (_k=="_opts") {
+			    		var _opts = params[_k]
+			    		if (_opts.hasOwnProperty("strict") && typeof(_opts["strict"]) == "boolean") {
+			    			criteria.setStrict(_opts["strict"]);
+			    		}
+			    		continue;
+			    	}
 			    	if (shortcutFunc) {
-				    	var shortcutExpr = shortcutFunc(k,params[k]);
+				    	var shortcutExpr = shortcutFunc(_k,params[_k]);
 				    	if (shortcutExpr) {
 				    		// shortcut func returned something so we can eval
 							// it and skip normal processing for this property
@@ -601,10 +653,15 @@ var _common = function() {
 				    		continue;
 				    	}
 			    	}
-			        var key = k[0].toUpperCase()+k.substring(1);
-			        var func = eval("criteria.addFilter"+key);
+			        var __k = _k[0].toUpperCase()+_k.substring(1);
+			        var func = eval("criteria.addFilter"+__k);
 			        if (typeof func !== "undefined") {
-			        	func.call(criteria,params[k]);
+			        	try {
+			        		func.call(criteria,params[_k]);
+			        	}
+			        	catch (e) {
+			        		throw "You have passed wrong argument (type="+typeof(params[_k])+") to filter "+_k + " "+ e;
+			        	}
 			        }
 			        else {
 			        	var names = "";
@@ -614,10 +671,11 @@ var _common = function() {
 			        		 names+=name.substring(0,1).toLowerCase()+name.substring(1)+", ";
 			        		}
 			        	});
-			        	throw "Parameter ["+k+"] is not valid filter parameter, valid filter parameters are : "+names;
+			        	throw "Parameter ["+_k+"] is not valid filter parameter, valid filter parameters are : "+names;
 			        }
 			    }
 			}
+			
 			return criteria;
 		}
 	};
@@ -717,10 +775,10 @@ var roles = (function() {
 			// Object.prototype
 		    if (params.hasOwnProperty(k)) {
 		    	_checkParam(k);
-		        var key = k[0].toUpperCase()+k.substring(1);
-	        	var func = eval("natRole.set"+key);
+		        var _k = k[0].toUpperCase()+k.substring(1);
+	        	var func = eval("natRole.set"+_k);
 	        	if(typeof func == "undefined"){
-		        	throw "Given parameter '"+key+"' is not defined on org.rhq.core.domain.authz.Role object";
+		        	throw "Given parameter '"+_k+"' is not defined on org.rhq.core.domain.authz.Role object";
 		        }
 	        	func.call(natRole,params[k]);
 		    }
@@ -839,8 +897,10 @@ var roles = (function() {
  */
 var Role = function(nativeRole){
 	var common = new _common();
-	nativeRole = nativeRole || {};
 	common.debug("Creating an abstract role: " + nativeRole);
+	if (!nativeRole) {
+		throw "org.rhq.core.domain.authz.Role parameter is required";
+	}
 	
 	var _nativeRole = nativeRole;
 	var _name = _nativeRole.getName();
@@ -878,6 +938,38 @@ var Role = function(nativeRole){
 			var permissSet = _nativeRole.getPermissions();
 			
 			return permissSet.toArray();
+		},
+	      /**
+         * assigns given resource groups to this role. Note that this cleans up all previously assigned groups
+         * @param {BundleGroup[]} groupArray - resource groups to be assigned with this role
+         */
+        assignBundleGroups : function(groupArray) {
+            groupArray = groupArray || [];
+            RoleManager.setAssignedBundleGroups(_id,groupArray.map(function(g){return g.id;}))
+        },
+		/**
+		 * Returns array of BundleGroups assigned to this role
+		 * @return {BundleGroup[]}
+		 */
+		bundleGroups : function() {
+		    // TODO implement
+		   return bundleGroups.find({roleIds:[_id]});
+		},
+		/**
+		 * assigns given resource groups to this role. Note that this cleans up all previously assigned groups
+		 * @param {ResGroup[]} groupArray - resource groups to be assigned with this role
+		 */
+		assignResourceGroups : function(groupArray) {
+		    groupArray = groupArray || [];
+		    RoleManager.setAssignedResourceGroups(_id,groupArray.map(function(g){return g.id;}))
+		},
+		/**
+		 * Returns array of ResourceGroups assigned to this role
+		 * @return {ResGroup[]}
+		 */
+		resourceGroups : function() {
+		    var _groups = ResourceGroupManager.findResourceGroupsForRole(_id,PageControl.getUnlimitedInstance());
+		    return common.pageListToArray(_groups).map(function(g) {return new ResGroup(g)});
 		}
 	}
 };
@@ -917,10 +1009,10 @@ var users = (function() {
 			// Object.prototype
 		    if (params.hasOwnProperty(k)) {
 		    	_checkParam(k);
-		        var key = k[0].toUpperCase()+k.substring(1);
-		        var func = eval("subject.set"+key);
+		        var _k = k[0].toUpperCase()+k.substring(1);
+		        var func = eval("subject.set"+_k);
 		        if(typeof func == "undefined"){
-		        	throw "Given parameter '"+key+"' is not defined on Subject object";
+		        	throw "Given parameter '"+_k+"' is not defined on Subject object";
 		        }
 		        func.call(subject,params[k]);
 		    }
@@ -1003,8 +1095,17 @@ var users = (function() {
 				}
 			}
 		},
-		/** 
-		 * Finds all users according to given parameters.
+        /**
+         * Finds all users according to given parameters.
+         * @public
+         * @function
+         * @param {Object} params -  see SubjectCriteria.addFilter[param] methods for available params
+         * @returns  Array of found users.
+         * @type Users[]
+         */
+        find : _findUsers,
+        /**
+		 * Finds all users according to given parameters. (deprecated)
 		 * @public
 		 * @function
 		 * @param {Object} params -  see SubjectCriteria.addFilter[param] methods for available params
@@ -1052,8 +1153,10 @@ var users = (function() {
  */
 var User = function(nativeSubject){
 	var common = new _common();
-	nativeSubject = nativeSubject || {};
 	common.debug("Creating following abstract user: " + nativeSubject );
+	if (!nativeSubject) {
+		throw "org.rhq.core.domain.authz.Subject parameter is required";
+	}
 	
 	var _id = nativeSubject.getId();
 	var _name = nativeSubject.getName();
@@ -1212,6 +1315,123 @@ var ResGroup = function(param) {
 	var _id = param.id;
 	var _obj = param;
 	var _name = param.name;
+	var _getCategory = function(){
+		return _obj.getGroupCategory();
+	}
+	var _resources = function(params){
+		params = params || {};
+		params.explicitGroupIds = [_id];
+		return resources.find(params);
+	}
+	var _resourcesImpl = function(params){
+		params = params || {};
+		params.implicitGroupIds = [_id];
+		return resources.find(params);
+	}
+	var _waitForOperationResult = function(groupOpShedule) {
+		var opHistCriteria = new GroupOperationHistoryCriteria();
+		if (groupOpShedule)
+			opHistCriteria.addFilterJobId(groupOpShedule.getJobId());
+		var list = new java.util.ArrayList();
+		list.add(new java.lang.Integer(_id));
+		opHistCriteria.addFilterResourceGroupIds(list);
+		opHistCriteria.addSortStartTime(PageOrdering.DESC); // put most recent
+		// at top of results
+		opHistCriteria.clearPaging();
+		var pred = function() {
+			var histories = OperationManager
+					.findGroupOperationHistoriesByCriteria(opHistCriteria);
+			if (histories.size() > 0) {
+				if (histories.get(0).getStatus() != OperationRequestStatus.INPROGRESS) {
+					return histories.get(0);
+				}
+				common.debug("Operation in progress..");
+			}
+			;
+		};
+		common.debug("Waiting for result..");
+		sleep(3000); // trying to workaround
+						// https://bugzilla.redhat.com/show_bug.cgi?id=855674
+		var history = common.waitFor(pred);
+		if (!history) {
+			// timed out
+			var histories = OperationManager
+					.findGroupOperationHistoriesByCriteria(opHistCriteria);
+			if (histories.size() > 0) {
+				history = histories.get(0);
+			} else {
+				throw "ERROR Cannot get operation history result remote API ERROR?";
+			}
+		}
+		common.debug("Operation finished with status : " + history.status);
+		return history;
+	};
+	var _scheduleOperation = function(name,delay,repeatInterval,repeatCount,timeout,
+			haltOnFailure,executionOrderResourceIds,description,opParams){
+		delay = delay || 0;
+		repeatInterval = repeatInterval || 0;
+		repeatCount = repeatCount || 0;
+		timeout = timeout || 0;
+		haltOnFailure = haltOnFailure || true;
+		executionOrderResourceIds = executionOrderResourceIds || null;
+		description = description || null;
+		
+		common.trace("Group(" + _id + ")._scheduleOperation(name="
+				+ name + ", delay=" + delay + ", repeatInterval="+repeatInterval 
+				+ ", repeatCount=" + repeatCount 
+				+", timeout="+timeout
+				+", haltOnFailure="+haltOnFailure
+				+", executionOrderResourceIds="+common.objToString(executionOrderResourceIds)
+				+", description="+description
+				+", opParams="+common.objToString(opParams)+")");
+		
+		if (_getCategory() == GroupCategory.MIXED) {
+			throw "It's not possible to invoke operation on MIXED group!!"
+		}
+
+		// get resources in this group
+		var groupRes = _resources();
+		var res = groupRes[0];
+		// check that operation is correct and get operation configuration
+		var conf = res.checkOperation(name, opParams);
+		
+		var opShedule = OperationManager.scheduleGroupOperation(
+				_id, executionOrderResourceIds, haltOnFailure, name, common.hashAsConfiguration(conf),
+				delay * 1000, repeatInterval * 1000, repeatCount,timeout,description)
+		common.info("Group operation '" + name + "' scheduled on '" + _name
+				+ "'");
+		
+		return opShedule;
+	};
+	var _getMetricSchedules = function(metricName){
+		var criteria = common.createCriteria(new MeasurementDefinitionCriteria(),
+				{resourceTypeId:_resources()[0].getProxy().resourceType.id,displayName:metricName});				
+		var mDefs = MeasurementDefinitionManager.findMeasurementDefinitionsByCriteria(criteria);
+		
+		var index = -1
+		for (i=0;i<mDefs.size();i++) {
+			if (mDefs.get(i).displayName == metricName) {
+				index = i;
+				break;
+			}
+		}
+		if (index == -1) {
+			throw "Unable to retrieve measurement definition with following name: " + metricName;
+		}
+		var mDefId = mDefs.get(index).id;
+		
+		common.trace("Retreaving schedules for goup with id: " +_id + 
+				" and measurement definition id: " +mDefId);
+		var criteria = common.createCriteria(new MeasurementScheduleCriteria(),
+				{resourceGroupId:_id,definitionIds:[mDefId]});				
+		var schedules = MeasurementScheduleManager.findSchedulesByCriteria(criteria);
+		
+		if(schedules.size()==0){
+			throw "Unable to retrive schedule for this Metric!!";
+		}
+		
+		return schedules;
+	};
     /**
 	 * @lends ResGroup.prototype
 	 */
@@ -1221,6 +1441,11 @@ var ResGroup = function(param) {
 		 * @field
 		 */
 		id : _id,
+		/**
+		 * gets name of this group
+		 * @field
+		 */
+		name : _name,
 		/**
 		 * gets underlying ResourceGroup instance
 		 * @field
@@ -1241,17 +1466,1222 @@ var ResGroup = function(param) {
 			ResourceGroupManager.deleteResourceGroup(_id);
 		},
 		/**
-		 * get resources contained in this group
+		 * get explicit resources contained in this group
 		 * @param params - you can filter child resources same way as in {@link resources.find()} function
-		 * @returns array of resources
+		 * @returns array of explicit resources
 		 * @type Resrouce[]
+		 * @function
 		 */
-		resources : function(params) {
-			params = params || {};
-			params.explicitGroupIds = [_id];
-			return resources.find(params);
+		resources : _resources,
+		/**
+		 * get implicit resources contained in this group
+		 * @param params - you can filter child resources same way as in {@link resources.find()} function
+		 * @returns array of implicit resources
+		 * @type Resrouce[]
+		 * @function
+		 */
+		resourcesImpl : _resourcesImpl,
+		/**
+		 * schedules operation on this group using cron expression. In contrast to runOperation this is
+		 * not blocking operation.
+		 *
+		 * @param {String}
+		 *            name of operation (required)
+		 *            
+		 * @param {String} cronExpression (required)
+		 * @param {Object}
+		 *            opParams - hashmap for operation params (Configuration) (optional)
+		 * @example allAgents.scheduleOperationUsingCron("executeAvailabilityScan","5 5 5 * * ?",{changesOnly:false});
+		 */
+		scheduleOperationUsingCron : function(name,cronExpression,opParams) {
+			common.trace("Group("+_id+").scheduleOperationUsingCron(name="+name+", cronExpression="+cronExpression+
+					", opParams={"+common.objToString(opParams)+"})");
+			if(_getCategory() == GroupCategory.MIXED ){
+				throw "It's not possible to invoke operation on MIXED group!!"
+			}
+			
+			// get resources in this group
+			var groupRes = _resources();
+			var res = groupRes[0];
+			// check that operation is correct and get operation configuration
+			var conf = res.checkOperation(name,opParams);
+			
+			var opShedule = OperationManager.scheduleGroupOperationUsingCron(_id, null, true, name, common.hashAsConfiguration(conf), 
+					cronExpression, 0, null)
+			common.info("Group operation '"+name+"' scheduled on '"+_name+"'");
 		},
+		/**
+		 * Runs operation on this group and returns result of the operation.
+		 *
+         * @param {Object} params - inputs for scheduling with fileds as follows:
+		 *  <ul>
+         *      <li>{String} name - name of operation (required)</li>
+         *      <li>{boolean} haltOnFailure (optional, default is true)</li>
+         *      <li>{Array} executionOrderResources defines execution order (optional)</li>
+         *      <li>{String} description (optional)</li>
+         *      <li>{Object} config - hashmap for operation params (Configuration) (optional)</li>
+		 *  </ul>
+         *
+		 * @example allAgents.runOperation({name:"executeAvailabilityScan"});
+		 *
+		 */
+		runOperation : function(params){
+            params = params || {};
+            params.haltOnFailure = params.haltOnFailure || true;
+            params.executionOrderResources = params.executionOrderResources || [];
+            params.description = params.description || null;
+            params.config = params.config || null;
+            var name,haltOnFailure,executionOrderResourceIds,description,opParams
+			var groupOpShedule = _scheduleOperation(params.name,0,0,0,0,params.haltOnFailure,params.executionOrderResources.map(function(r){return r.id;}),
+					params.description,params.config);
+			var result = _waitForOperationResult(groupOpShedule);
+			
+			var ret = {}
+			ret.status = String(result.status)
+			ret.error = String(result.errorMessage)
+			ret.nativeHistory = result;
+			
+			return ret;
+		},
+		/**
+		 * Schedules operation on this group. In contrast to runOperation this is
+		 * not blocking operation.
+		 *
+         *  @param {Object} params - inputs for scheduling with fileds as follows:
+         *  <ul>
+         *      <li>{String} name of operation (required)</li>
+         *      <li>{Number} delay of operation in seconds (optional, 0 is default)</li>
+         *      <li>{Number} repeatInterval of operation in seconds (optional, 0 is default)</li>
+         *      <li>{Number} repeatCount of operations (optional, 0 is default)</li>
+         *      <li>{Number} timeout of operation in seconds (optional, 0 is default)</li>
+         *      <li>{boolean} haltOnFailure (optional, default is true)</li>
+         *      <li>{Array} executionOrderResources defines execution order (optional)</li>
+         *      <li>{String} description (optional)</li>
+         *      <li>{Object} config - hashmap for operation params (Configuration) (optional)</li>
+         *      <li></li>
+         *      <li></li>
+         *  </ul>
+		 * @example scheduleOperation({name:"executeAvailabilityScan",delay:10,repeatInterval:10,repeatCount:10,config:{changesOnly:false});
+		 *
+		 */
+		scheduleOperation : function(params){
+            params = params || {};
+            params.delay = params.delay || 0;
+            params.repeatInerval = params.repeatInterval || 0;
+            params.repeatCount = params.repeatCount || 0;
+            params.timeout = params.timeout || 0;
+            params.executionOrderResources = params.executionOrderResources || [];
+            params.description = params.description || null;
+            params.config = params.config || null;
+
+			_scheduleOperation(params.name,params.delay,params.repeatInterval,params.repeatCount,params.timeout,
+					params.haltOnFailure,params.executionOrderResources.map(function(r){return r.id;}),params.description,params.config);
+		},
+		/**
+		 * Returns Array with metric intervals of given metric for all resources in this group.
+		 * 
+		 * @param {String}
+		 *  		metricName 
+		 * 
+		 * @type {Array}
+		 * @returns Array with javascript objects (hashmap) with following keys:
+		 * <ul>
+		 * <li>id {String} - resource id</li>
+		 * <li>interval {Number} - metric collection interval</li>
+		 * <ul>
+		 */
+		getMetricIntervals : function(metricName){
+			// TODO - for all metric methods - create inner Metric type like its done for Resource, compatible group checks, tests
+			common.debug("Getting metric intervals for metric with name " + metricName);
+			var schedules = _getMetricSchedules(metricName);
+			var array = new Array();
+			for(var i =0;i<schedules.size();i++){
+				array[i] = {id:new String(schedules.get(i).getResource().getId()),
+						interval: new Number(schedules.get(i).getInterval())}
+			}
+			return array;
+		},
+		/**
+		 * Returns Array with metric statuses of given metric for all resources in this group.
+		 * 
+		 * @param {String}
+		 *  		metricName 
+		 * 
+		 * @type {Array}
+		 * @returns Array with javascript objects (hashmap) with following keys:
+		 * <ul>
+		 * <li>id {String} - resource id</li>
+		 * <li>isEnabled {Boolean} - true when metric is enabled</li>
+		 * <ul>
+		 */
+		getMetricStatuses : function(metricName){
+			common.debug("Getting metric statuses for metric with name " + metricName);
+			var schedules = _getMetricSchedules(metricName);
+			var array = new Array();
+			for(var i =0;i<schedules.size();i++){
+				array[i] = {id: new String(schedules.get(i).getResource().getId()),
+						isEnabled: schedules.get(i).isEnabled()}
+			}
+			return array;
+		},
+		/**
+		 * Returns true only if given metric is enabled on all resources in this group
+		 * 
+		 * @param {String}
+		 *            metricName 
+		 */
+		isMetricEnabled : function(metricName){
+			var schedules = _getMetricSchedules(metricName);
+			for(var i =0;i<schedules.size();i++){
+				if(!schedules.get(i).isEnabled()){
+					return false;
+				}
+			}
+			return true;
+		},
+		/**
+		 * Returns true only if given metric is disabled on all resources in this group
+		 * 
+		 * @param {String}
+		 *            metricName
+		 */
+		isMetricDisabled : function(metricName){
+			var schedules = _getMetricSchedules(metricName);
+			for(var i =0;i<schedules.size();i++){
+				if(schedules.get(i).isEnabled()){
+					return false;
+				}
+			}
+			return true;
+		}
+		
 	}
+};
+
+/**
+ * creates a new instance of Resource Type
+ * @class 
+ * @constructor
+ * @param {org.rhq.core.domain.resource.ResourceType} rhqType
+ */
+var ResourceType = function(rhqType) {	
+    var common = new _common();
+    if (!rhqType) {
+		throw "org.rhq.core.domain.resource.ResourceType parameter is required";
+	}
+	var _obj = rhqType;
+    /**
+	 * @lends ResourceType.prototype
+	 */
+	return {
+		/**
+		 * resource type id
+		 * @type Number
+		 */
+		id : _obj.id,
+		/**
+		 * resource type name
+		 * @type String
+		 */
+		name: _obj.name,
+		/**
+		 * org.rhq.core.domain.resource.ResourceType instance
+		 * @type org.rhq.core.domain.resource.ResourceType
+		 */
+		obj: _obj,
+		/**
+		 * plugin name defining this resource type
+		 * @type String
+		 */
+		plugin: _obj.plugin,
+		/**
+		 * @function
+		 * Returns default configuration for this resource type as hash.
+		 * 
+		 * @type hash
+		 * @return default configuration for this resource type as hash
+		 */
+		getDefaultConfiguration : function(){
+			common.trace("resourceType.getDefaultConfiguration()");
+			var configDef = ConfigurationManager.getResourceConfigurationDefinitionForResourceType(_obj.id);
+			var conf = org.rhq.core.domain.configuration.ConfigurationUtility.createDefaultConfiguration(configDef);
+			
+			return common.configurationAsHash(conf,configDef);
+		}
+	};
+};
+
+/**
+ * 
+ * @namespace provides access to resource types
+ */
+var resourceTypes = (function() {
+	var common = new _common();
+	return {
+		/**
+		 * @ignore
+		 */
+	    createCriteria : function(params) {
+			params = params || {};
+			common.trace("resourceTypes.createCriteria("+common.objToString(params) +")");
+			var criteria = common.createCriteria(new ResourceTypeCriteria(),params,function(key,value) {
+				if (key=="createDeletePolicy") {
+		    		 return "addFilterCreateDeletePolicy(CreateDeletePolicy."+value.toUpperCase()+")";
+		    	}
+		    	if (key=="category") {
+		    		return "addFilterCategories(ResourceCategory."+value.toUpperCase()+")";
+		    	}
+		    	if (key=="plugin") {
+		    		return "addFilterPluginName(\""+value+"\")";
+		    	}
+			});
+			// by default only 200 items are returned, this line discards it ..
+			// so we get unlimited list
+			criteria.clearPaging();
+			criteria.fetchResourceConfigurationDefinition(true);
+			criteria.fetchPluginConfigurationDefinition(true);
+			
+			return criteria;
+		},
+		/**
+		 * @function
+		 * Finds a resource type according to criteria params
+		 * @param params - filter params
+		 * * There are also shortcuts for ENUM parameters: - you can use
+		 * <ul>
+		 *    <li>{createDeletePolicy:"both"} insetead of {createDeletePolicy:"CreateDeletePolicy.BOTH"}</li>
+		 *    <li>{category:"platform"} instead of {category:"ResourceCategory.PLATTFORM"}</li>
+		 *    <li>{plugin:"Platforms"} instead of {pluginName:"Platforms"}</li>
+		 *  </ul>
+		 * @type ResourceType[]
+		 * @return array of resource types
+		 */
+		find : function(params) {
+			params = params || {};
+			common.trace("resourceTypes.find("+common.objToString(params)+")");
+			var criteria = resourceTypes.createCriteria(params);
+			var res = ResourceTypeManager.findResourceTypesByCriteria(criteria);
+			common.debug("Found "+res.size()+" resource types ");
+		    return common.pageListToArray(res).map(function(x){return new ResourceType(x);});			
+		}
+	}
+}) ();
+
+/**
+ * @namespace provides access to metric templates
+ */
+var metricsTemplates = (function() { 
+  var common = new _common();
+  
+  var forEachMetricDef = function(resTypes, fn) {
+	  resTypes.forEach(function(rt) {
+		  var metricDefinitions = java.util.ArrayList(rt.obj.metricDefinitions);
+		    for (i = 0; i < metricDefinitions.size(); ++i) {
+		      var metricDef = metricDefinitions.get(i);
+		      fn(rt,metricDef);
+		    }
+	  });    
+  };
+
+  var fetchMetricDefs = function(resTypes) {
+	  resTypes = resTypes || []
+	  var criteria = resourceTypes.createCriteria({ids:resTypes.map(function(rt){return rt.id})});
+	  criteria.fetchMetricDefinitions(true);
+	  var types = ResourceTypeManager.findResourceTypesByCriteria(criteria);
+	  common.debug("Found "+types.size()+" resource types ");
+	  return common.pageListToArray(types).map(function(x){return new ResourceType(x);});
+  };
+
+  return {
+    /**
+     * @namespace metric template predicates
+     */
+    predicates: {
+      /**
+       * predicate that accepts metric definitions of CALLTIME DataType
+       * @field
+       */
+      isCallTime: function(metricDef) { 
+        return metricDef.dataType == DataType.CALLTIME;
+      },
+
+      /**
+       * predicate that accepts metric definitions of MEASUREMENT DataType
+       * @field
+       */
+      isNumeric: function(metricDef) {
+        return metricDef.dataType == DataType.MEASUREMENT;
+      },
+      /**
+       * predicate that accepts metric definitions of TRAIT DataType
+       * @field
+       */
+      isTrait: function(metricDef) {
+          return metricDef.dataType == DataType.TRAIT;
+      }
+    },
+
+    /**
+     * disables metrics 
+     * @public
+     * @param {ResourceType[]} resTypes - resource types, see {@link resourceTypes.find}
+     * @param filter - filter function - see {@link metricsTemplates.predicates}
+     * @example metricsTemplates.disable(resourceTypes.find({name: "server-b", plugin: "PerfTest"}), metricTemplates.predicates.isCallTime);
+     * @example metricsTemplates.disable(resourceTypes.find());
+     */
+    disable: function(resTypes, filter) {
+    	common.trace("metricsTemplates.disable(resTypes="+resTypes+",filter="+filter+")");
+    	resTypes = fetchMetricDefs(resTypes);
+    	if (resTypes.length == 0) {
+    		common.error("Failed to find resource types for " + resTypes);
+        	return;
+      	}
+    	var definitionIds = [];
+      	forEachMetricDef(resTypes, function(rt,metricDef) {
+      		if (typeof filter == "undefined" || filter(metricDef)) {
+      			common.debug("Preparing to disable metric template " + metricDef + " for " +rt.name);
+      			definitionIds.push(metricDef.id);
+        	}
+      	});
+      	MeasurementScheduleManager.disableSchedulesForResourceType(definitionIds, true);
+    },
+    
+    /**
+     * enables metrics 
+     * @public
+     * @param {ResourceType[]} resTypes - resource types, see {@link resourceTypes.find}
+     * @param filter - filter function - see {@link metricsTemplates.predicates}
+     * @example metricsTemplates.enable(resourceTypes.find({name: "server-b", plugin: "PerfTest"}), metricTemplates.predicates.isCallTime);
+     * @example metricsTemplates.enable(resourceTypes.find());
+     */
+    enable: function(resTypes, filter) {
+    	common.trace("metricsTemplates.enable(resTypes="+resTypes+",filter="+filter+")");
+    	resTypes = fetchMetricDefs(resTypes);
+    	if (resTypes.length == 0) {
+    		common.error("Failed to find resource types for " + resTypes);
+        	return;
+      	}
+    	var definitionIds = [];
+      	forEachMetricDef(resTypes, function(rt,metricDef) {
+      		if (typeof filter == "undefined" || filter(metricDef)) {
+      			common.debug("Preparing to enable metric template " + metricDef + " for " +rt.name);
+      			definitionIds.push(metricDef.id);
+        	}
+      	});
+      	MeasurementScheduleManager.enableSchedulesForResourceType(definitionIds, true);
+    },
+
+    /**
+     * sets collection interval for metrics 
+     * @public
+     * @param {ResourceType[]} resTypes - resource types, see {@link resourceTypes.find}
+     * @param interval - collection interval in seconds
+     * @param filter - filter function - see {@link metricsTemplates.predicates}
+     * @example metricsTemplates.setCollectionInterval(resourceTypes.find({name: "server-b", plugin: "PerfTest"}), 30, metricTemplates.predicates.isCallTime);
+     */
+    setCollectionInterval: function(resTypes, interval, filter) {
+    	common.trace("metricsTemplates.setCollectionInterval(resTypes="+resTypes+",interval="+interval+",filter="+filter+")");
+    	resTypes = fetchMetricDefs(resTypes);
+    	if (resTypes.lentgh == 0) {
+    		common.error("Failed to find resource types for " + resTypes);
+    		return;
+    	}
+    	var definitionIds = [];
+      	forEachMetricDef(resTypes, function(rt,metricDef) {
+      		if (typeof filter == "undefined" || filter(metricDef)) {
+          	common.debug("Setting collection interval for metric template " + metricDef + " to " + interval + "s for resource type " + rt.name);
+          	definitionIds.push(metricDef.id);
+      		}
+      	});
+      	MeasurementScheduleManager.updateSchedulesForResourceType(definitionIds, interval * 1000, true);
+    }
+  };
+})();
+
+
+/**
+ * @namespace Provides access to dynamic group definitions
+ */
+var dynaGroupDefinitions = (function(){
+	var common = new _common();
+	
+	/** 
+	 * Sets up given native GroupDefinition according to given parameters 
+	 * @private
+	 * @param {org.rhq.core.domain.resource.group.GroupDefinition} groupDefinition native groupDefinition to set up
+	 * @param {Object} params
+	 * @returns {org.rhq.core.domain.resource.group.GroupDefinition} prepared native groupDefinition
+	 * @throws some of given parameters are not valid
+	 */
+	var _setUpGroupDefinition = function(groupDefinition,params){
+		for (var k in params) {
+		    // use hasOwnProperty to filter out keys from the
+			// Object.prototype
+		    if (params.hasOwnProperty(k)) {
+		        var _k = k[0].toUpperCase()+k.substring(1);
+		        var func = eval("groupDefinition.set"+_k);
+		        if(typeof func == "undefined"){
+		        	throw "Given parameter '"+_k+"' is not defined on org.rhq.core.domain.resource.group.GroupDefinition object";
+		        }
+		        func.call(groupDefinition,params[k]);
+		    }
+		}
+		
+		return groupDefinition;
+	};
+	var _find = function(params){
+		params = params || {};
+		common.debug("Searching for dynagroup definition with params: "+common.objToString(params));
+		var cri = common.createCriteria(new ResourceGroupDefinitionCriteria(),params);
+		cri.fetchManagedResourceGroups(true);
+		cri.setStrict(true);
+		var result = GroupDefinitionManager.findGroupDefinitionsByCriteria(cri);
+	
+		return common.pageListToArray(result).map(function(x){return new DynaGroupDefinition(x);});
+	};
+	
+	return{
+		/**
+		 * Finds dynagroup definitions according to given parameters.
+		 * @function
+		 * @param {Object} params - see ResourceGroupDefinitionCriteria.addFilter[param] methods for available params.
+		 * @example dynaGroupDefinitions.find({name:"All agents",description:"All agents in inventory"});
+		 * @returns array of dynagroup definitions
+		 * @type DynaGroupDefinition[]
+		 */
+		find : _find,
+		/**
+		 * Creates a new dynagroup definition with given parameters.
+		 * @param {Object} params - see org.rhq.core.domain.resource.group.GroupDefinition.set[param] methods for available params.
+		 * @example dynaGroupDefinitions.create({name:"All agents",description:"All agents in inventory",expression:"resource.type.name=RHQ Agent"});
+		 * @type DynaGroupDefinition
+		 * @return created dynagroup definition
+		 */
+		create : function(params){
+			params = params || {};
+			common.info("Creating dynagroup definition with params: "+common.objToString(params));
+			var nativeGroupDef = _setUpGroupDefinition(new GroupDefinition(),params);
+			nativeGroupDef = GroupDefinitionManager.createGroupDefinition(nativeGroupDef);
+			
+			return new DynaGroupDefinition(nativeGroupDef);
+		},
+		/**
+		 * Edits existing dynagroup definition with given name using given parameters.
+		 * @param {String} dynagroupDefName - name of dynagroup definition to be edited
+		 * @param {Object} params - see org.rhq.core.domain.resource.group.GroupDefinition.set[param] methods for available params.
+		 * @example dynaGroupDefinitions.edit("All agents",{name:"All agents - edited",recursive:true});
+		 * @type DynaGroupDefinition
+		 * @return updated dynagroup definition or null when dynagroup definition with given name was not found 
+		 */
+		edit : function(dynagroupDefName,params){
+			params = params || {};
+			common.info("Editing dynagroup definition with name: "+dynagroupDefName+", using params: "+common.objToString(params));
+			var foundDynagroupDefs = _find({name:dynagroupDefName});
+			if(foundDynagroupDefs.length >0){
+				var nativeDynagroupDefOrig = foundDynagroupDefs[0].obj;
+				var nativeDynagroupDefEdited = _setUpGroupDefinition(nativeDynagroupDefOrig,params);
+				nativeDynagroupDefEdited = GroupDefinitionManager.updateGroupDefinition(nativeDynagroupDefEdited);
+				
+				return new DynaGroupDefinition(nativeDynagroupDefEdited);
+			}else{
+				common.warn("Dynagroup definition with name: "+dynagroupDefName+" was not found. Nothing to edit.");
+				
+				return null;
+			}
+		},
+		/**
+		 * Removes dynagroup definition with given name.
+		 * @param {String} dynagroupDefName - name of dynagroup definition to be deleted
+		 */
+		remove : function(dynagroupDefName){
+			common.info("Removing dynagroup definition with name: "+dynagroupDefName);
+			var foundDynagroupDefs = _find({name:dynagroupDefName});
+			if(foundDynagroupDefs.length >0){
+				GroupDefinitionManager.removeGroupDefinition(foundDynagroupDefs[0].id);
+			}else{
+				common.warn("Dynagroup definition with name: "+dynagroupDefName+" was not found. Nothing to delete.");
+			}
+		}
+	};
+})();
+/**
+ * @class
+ * @constructor
+ */
+var DynaGroupDefinition = function(param) {
+	var common = new _common();
+	common.trace("new DynaGroupDefinition("+param+")");
+	if (!param) {
+		throw "org.rhq.core.domain.resource.group.GroupDefinition parameter is required";
+	}
+	var _id = param.id;
+	var _obj = param;
+	
+	/**
+	 * @lends DynaGroupDefinition.prototype
+	 */
+	return {
+		/**
+		 * id of this dynagroup definition
+		 * @field
+		 * @type Number
+		 */
+		id : _id,
+		/**
+		 * native object
+		 * @type org.rhq.core.domain.resource.group.GroupDefinition 
+		 * @field
+		 */
+		obj : _obj,
+		/**
+		 * name of this dynagroup definition
+		 */
+		name : _obj.getName(),
+		/**
+		 * Returns groups managed by this dynagroup definition.
+		 * @type ResGroup[]
+		 * @return groups managed by this dynagroup definition
+		 */
+		managedGroups : function() {
+			var groups =  _obj.getManagedResourceGroups();
+			return groups.toArray().map(function(x){return new ResGroup(x);});
+		},
+		/**
+		 * Removes this dynagroup definition.
+		 */
+		remove : function(){
+			common.info("Removing dynaGroup definition with name: '" + _obj.getName() +"' and id: "+_id);
+			GroupDefinitionManager.removeGroupDefinition(_id);
+		},
+		/**
+		 * Explicitly recalculates groups managed by this dynagroup definition.
+		 */
+		recalculate : function(){
+			common.info("Recalculating dynagroup definition with name: '"+_obj.getName()+"'");
+			GroupDefinitionManager.calculateGroupMembership(_id);
+		}
+	}
+}
+
+/**
+ * @namespace Provides access to drift subsystem
+ */
+var drifts = (function(){
+	var common = new _common();
+	
+	return{
+		/**
+		 * Finds drift definition templates according to given parameters.
+		 * @function
+		 * @param {Object} params - see DriftDefinitionTemplateCriteria.addFilter[param] methods for available params.
+		 * @example drifts.findDriftDefinitionTemplates({resourceTypeId:1});
+		 * @returns array of drift definition templates
+		 * @type DriftDefinitionTemplate[]
+		 */
+		findDriftDefinitionTemplates : function(params){
+			params = params || {};
+			common.trace("drifts.findDriftDefinitionTemplates("+common.objToString(params)+")");
+			var cri = common.createCriteria(new DriftDefinitionTemplateCriteria(),params);
+			cri.fetchDriftDefinitions(true);
+			cri.fetchResourceType(true);
+			var result = DriftTemplateManager.findTemplatesByCriteria(cri);
+		
+			return common.pageListToArray(result).map(function(x){return new DriftDefinitionTemplate(x);});
+		},
+		/**
+		 * Finds drift definitions according to given parameters.
+		 * @function
+		 * @param {Object} params - see DriftDefinitionCriteria.addFilter[param] methods for available params.
+		 * @example drifts.findDriftDefinition({name:"testDriftDefinition"});
+		 * @returns array of drift definitions
+		 * @type DriftDefinition[]
+		 */
+		findDriftDefinition : function(params){
+			params = params || {};
+			common.trace("drifts.findDriftDefinition("+common.objToString(params)+")");
+			var cri = common.createCriteria(new DriftDefinitionCriteria(),params);
+			var result = DriftManager.findDriftDefinitionsByCriteria(cri);
+		
+			return common.pageListToArray(result).map(function(x){return new DriftDefinition(x);});
+		}
+	};
+})();
+/**
+ * @class
+ * @constructor
+ */
+var DriftDefinitionTemplate = function(param) {
+	var common = new _common();
+	common.trace("new DriftDefinitionTemplate("+param+")");
+	if (!param) {
+		throw "org.rhq.core.domain.drift.DriftDefinitionTemplate parameter is required";
+	}
+	var _id = param.id;
+	var _obj = param;
+	
+	/**
+	 * @lends DriftDefinitionTemplate.prototype
+	 */
+	return {
+		/**
+		 * id of this drift definition template
+		 * @field
+		 * @type Number
+		 */
+		id : _id,
+		/**
+		 * native object
+		 * @type org.rhq.core.domain.drift.DriftDefinitionTemplate
+		 * @field
+		 */
+		obj : _obj,
+		/**
+		 * name of this drift definition template
+		 */
+		name : _obj.getName()
+	}
+}
+/**
+ * @class
+ * @constructor
+ */
+var DriftDefinition = function(param) {
+	var common = new _common();
+	common.trace("new DriftDefinition("+param+")");
+	if (!param) {
+		throw "org.rhq.core.domain.drift.DriftDefinition parameter is required";
+	}
+	var _id = param.id;
+	var _obj = param;
+	
+	/**
+	 * @lends DriftDefinition.prototype
+	 */
+	return {
+		/**
+		 * id of this drift definition
+		 * @field
+		 * @type Number
+		 */
+		id : _id,
+		/**
+		 * native object
+		 * @type org.rhq.core.domain.drift.DriftDefinition
+		 * @field
+		 */
+		obj : _obj,
+		/**
+		 * name of this drift definition
+		 */
+		name : _obj.getName()
+	}
+}
+
+/**
+ * @namespace provides access to StorageNodes subsystem
+ */
+var storageNodes = (function() {
+	var common = new _common();
+
+	var _find = function(params) {
+		params = params || {};
+		common.trace("storageNodes.find(" + common.objToString(params)
+				+ ")");
+		var criteria = storageNodes.createCriteria(params);
+		var result = StorageNodeManager.findStorageNodesByCriteria(criteria);
+		common.debug("Found " + result.size() + " storageNodes ");
+		return common.pageListToArray(result).map(function(x) {
+			return new StorageNode(x);
+		});
+	};
+	
+	var _allAlerts = function(params){
+		params = params || {};
+		common.trace("storageNodes.allAlerts(" + common.objToString(params)
+				+ ")");
+		var result = StorageNodeManager.findAllStorageNodeAlerts();
+		common.debug("Found " + result.size() + " storageNodes ");
+		return common.pageListToArray(result).map(function(x) {
+			return new Alert(x);
+		});
+	};
+	/**
+	@lends storageNodes
+	*/
+	return {
+
+		/**
+		 * creates StorageNodeCriteria object based on given params
+		 * 
+		 * @param {Object}
+		 *            params - filter parameters
+		 * @ignore
+		 */
+		createCriteria : function(params) {
+			params = params || {};
+			common.trace("storageNodes.createCriteria("
+					+ common.objToString(params) + ")");
+			var criteria = common.createCriteria(new StorageNodeCriteria(),
+					params);
+			return criteria;
+		},
+
+		/**
+		 * finds storageNodes based on query parameters
+		 * 
+		 * @param {Object}
+		 *            params - hash of query params See StorageNodeCriteria
+		 *            class for available params
+		 * @type StorageNode[]
+		 * @function
+		 */
+		find : _find,
+		
+		/**
+		 * gets all alerts for all storage nodes
+		 * 
+		 * @type Alert[]
+		 * @function
+		 */
+		allAlerts : _allAlerts
+		
+	};
+})();
+
+/**
+ * @class
+ * @constructor
+ */
+var StorageNode = function(param) {
+	var common = new _common();
+	// we define StorageNode child classes as hidden types
+
+	
+	/**
+	 *@lends StorageNode.prototype
+	 */
+	return {
+		/**
+		 * id of StorageNode
+		 * @field
+		 * @type String
+		 *  
+		 */
+		id : param.id,
+		/**
+		 * StorageNode instance
+		 * @field
+		 * @type StorageNode
+		 */
+		obj : param,
+		
+		/**
+		 * JMXConnectionURL of StorageNode
+		 * @field
+		 * @type String
+		 */
+		JMXConnectionURL : param.JMXConnectionURL,
+		/**
+		 * address of StorageNode
+		 * @field
+		 * @type String
+		 */
+		address : param.address,
+		/**
+		 * cqlPort of StorageNode
+		 * @field
+		 * @type String
+		 */
+		cqlPort : param.cqlPort,
+		/**
+		 * ctime of StorageNode
+		 * @field
+		 * @type String
+		 */
+		ctime : param.ctime,
+		/**
+		 * jmxPort of StorageNode
+		 * @field
+		 * @type String
+		 */
+		jmxPort : param.jmxPort,
+		/**
+		 * mtime of StorageNode
+		 * @field
+		 * @type String
+		 */
+		mtime : param.mtime,
+		/**
+		 * operationMode of StorageNode
+		 * @field
+		 * @type String
+		 */
+		operationMode : param.operationMode,
+		/**
+		 * resource of StorageNode
+		 * @field
+		 * @type Resource
+		 */
+		resource : param.resource
+
+	};
+};
+/**
+ * @class
+ * @constructor
+ */
+var Alert = function(param){
+	/**
+	 *@lends Alert.prototype
+	 */
+	return {
+		/**
+		 * id of Alert
+		 * @field
+		 * @type String
+		 */
+		id : param.id,
+		/**
+		 * AlertDefinition instance
+		 * @field
+		 * @type AlertDefinition
+		 */
+		alertDefinition: param.alertDefinition,
+		/**
+		 * alert notification logs
+		 * @field
+		 * @type String[]
+		 */
+		alertNotificationLogs: param.alertNotificationLogs
+	}
+	
+};
+
+
+/**
+ * @namespace provides access to AlertDefinition subsystem
+ */
+var alertDefinitions = (function() {
+	var common = new _common();
+
+	var _find = function(params) {
+		params = params || {};
+		common.trace("alertDefinitions.find(" + common.objToString(params)
+				+ ")");
+		var criteria = alertDefinitions.createCriteria(params);
+		var result = AlertDefinitionManager
+				.findAlertDefinitionsByCriteria(criteria);
+		common.debug("Found " + result.size() + " alertDefinitions ");
+		return common.pageListToArray(result).map(function(x) {
+			return new AlertDefinition(x);
+		});
+	};
+	/**
+	@lends alertDefinitions
+	*/
+	return {
+
+		/**
+		 * creates AlertDefinitionCriteria object based on given params
+		 * 
+		 * @param {Object}
+		 *            params - filter parameters
+		 * @ignore
+		 */
+		createCriteria : function(params) {
+			params = params || {};
+			common.trace("alertDefinitions.createCriteria("
+					+ common.objToString(params) + ")");
+			var criteria = common.createCriteria(new AlertDefinitionCriteria(),
+					params);
+			return criteria;
+		},
+
+		/**
+		 * finds alertDefinitions based on query parameters
+		 * 
+		 * @param {Object}
+		 *            params - hash of query params See AlertDefinitionCriteria
+		 *            class for available params
+		 * @type AlertDefinition[]
+		 * @function
+		 */
+		find : _find
+
+	};
+})();
+
+/**
+ * @class
+ * @constructor
+ */
+var AlertDefinition = function(param) {
+	var common = new _common();
+	// we define AlertDefinition child classes as hidden types
+
+	var _id = param.id;
+	var _obj = param;
+
+	/**
+	 * @name AlertDefinition-Condition
+	 * @class
+	 * @constructor
+	 */
+	var Condition = function(param) {
+		common.trace("new Condition(" + param + ")");
+		if (!param) {
+			throw "either Number or org.rhq.core.domain.alert.AlertDefinition parameter is required";
+		}
+		var _id = param.id;
+		var _obj = param;
+
+		/**
+		 * @lends AlertDefinition-Condition.prototype
+		 */
+		return {
+			/**
+			 * Condition id
+			 * 
+			 * @field
+			 */
+			id : param.id,
+			/**
+			 * Condition instance
+			 * 
+			 * @field
+			 * @type Condition
+			 */
+			obj : _obj,
+			/**
+			 * threshold of condition
+			 * @field
+			 * @type String
+			 */
+			threshold : param.threshold,
+			/**
+			 * name of condition
+			 * 
+			 * @field
+			 * @type String
+			 */
+			name : param.name,
+			/**
+			 * comparator of condition
+			 * @field
+			 * @type String
+			 */
+			comparator : param.comparator,
+			/**
+			 * alertDefinition of condition
+			 * @field
+			 * @type AlertDefinition
+			 */
+
+			alertDefinition : param.alertDefinition,
+			/**
+			 * triggerId of condition
+			 * @field
+			 * @type String
+			 */
+			triggerId : param.triggerId
+
+		};
+
+	};
+	/**
+	 *@lends AlertDefinition.prototype
+	 */
+	return {
+		/**
+		 * id of AlertDefinition
+		 * @field
+		 * @type String
+		 *  
+		 */
+		id : _id,
+		/**
+		 * AlertDefinition instance
+		 * @field
+		 * @type AlertDefinition
+		 */
+		obj : _obj,
+		/**
+		 * name of AlertDefinition
+		 * @field
+		 * @type String
+		 *  
+		 */
+		name : param.name,
+		/**
+		 * gets conditions of AlertDefinition
+		 */
+		conditions : function() {
+			common.trace("AlertDefinition(" + _id + ").conditions()");
+			var criteria = alertDefinitions.createCriteria({
+				id : _id
+			});
+			criteria.fetchConditions(true);
+			var result = AlertDefinitionManager
+					.findAlertDefinitionsByCriteria(criteria);
+			if (result.size() == 1 && result.get(0).conditions) {
+				result = result.get(0).conditions.toArray();
+				return result.map(function(x) {
+					return new Condition(x);
+				});
+			};
+			
+		}
+
+	};
+};
+
+
+/**
+ * @namespace provides access to Bundle groups
+ */
+var bundleGroups = (function() {
+    var common = new _common();
+
+    return {
+        /**
+         * creates a org.rhq.domain.criteria.BundleGroupCriteria object based on
+         * given params
+         * 
+         * @param {Obejct}
+         *            params - criteria params
+         * @returns BundleGroupCriteria
+         * @ignore
+         */
+        createCriteria : function(params) {
+            params = params || {};
+            common.debug("bundleGroups.createCriteria(" + common.objToString(params) + ")");
+            var criteria = common.createCriteria(new BundleGroupCriteria(), params);
+            return criteria;
+        },
+        /**
+         * finds bundle groups by given params
+         * 
+         * @param {Object}
+         *            params see BundleGroupCriteria for available params
+         * @type BundleGroup[]
+         */
+        find : function(params) {
+            params = params || {};
+            common.trace("bundleGroups.find(" + common.objToString(params) + ")");
+            var criteria = bundleGroups.createCriteria(params);
+            var result = BundleManager.findBundleGroupsByCriteria(criteria);
+            common.debug("Found " + result.size() + " groups ");
+            return common.pageListToArray(result).map(function(x) {
+                return new BundleGroup(x);
+            });
+        },
+        /**
+         * creates a new bundle group. You can pass array of Bundles to become
+         * members of new group
+         * 
+         * @param {String}
+         *            name for a new group
+         * @param {Bundle[]}
+         *            children - array of resources that represents content of
+         *            this group
+         * @type BundleGroup
+         * @return {BundleGroup}
+         */
+        create : function(name, children) {
+            children = children || [];
+            common.info("Creating a group '" + name + "', with following children: '" + common.objToString(children) + "'");
+            var group = BundleManager.createBundleGroup(new org.rhq.core.domain.bundle.BundleGroup(name));
+            BundleManager.assignBundlesToBundleGroups([ group.id ], children.map(function(x) {
+                return x.getId();
+            }));
+            return new BundleGroup(group);
+        }
+    };
+})();
+
+
+/**
+ * @class
+ * @constructor
+ */
+var BundleGroup = function(param) {
+    var common = new _common();
+    common.trace("new BundleGroup(" + param + ")");
+    if (!param) {
+        throw "either number or org.rhq.core.domain.bundle.BundleGroup parameter is required";
+    }
+    var _id = param.id;
+    var _obj = param;
+    var _name = param.name;
+
+    /**
+     * @lends BundleGroup.prototype
+     */
+    return {
+        /**
+         * gets ID of this group
+         * 
+         * @field
+         */
+        id : _id,
+        /**
+         * gets name of this group
+         * 
+         * @field
+         */
+        name : _name,
+        /**
+         * gets underlying ResourceGroup instance
+         * 
+         * @field
+         * 
+         */
+        obj : _obj,
+        /**
+         * returns ID of this group
+         * 
+         * @function
+         * @type Number
+         */
+        getId : function() {
+            return _id;
+        },
+        /**
+         * assigns bundles to this group, does nothing if bundles are already in this group
+         * @param {Bundle[]} bundles to assign
+         */
+        assignBundles : function(bundleArray) {
+            common.trace("BundleGroup("+_id+").assignBundles("+common.objToString(bundleArray)+")");
+            bundleArray = bundleArray || [];
+            BundleManager.assignBundlesToBundleGroups([_id],bundleArray.map(function(b){return b.id;}));
+        },
+        /**
+         * unassigns bundles to this group, does nothing if bundles are not assigned with this group
+         * @param {Bundle[]} bundles to assign
+         */
+        unassignBundles : function(bundleArray) {
+            common.trace("BundleGroup("+_id+").unassignBundles("+common.objToString(bundleArray)+")");
+            bundleArray = bundleArray || [];
+            BundleManager.unassignBundlesFromBundleGroups([_id],bundleArray.map(function(b){return b.id;}));
+        },
+        /**
+         * removes this bundle group
+         */
+        remove : function() {
+            common.info("Removing a group with name '" + _name + "'");
+            BundleManager.deleteBundleGroups([ _id ]);
+        },
+        /**
+         * returns bundles assigned to this group
+         * 
+         * @type Bundle[]
+         * 
+         */
+        bundles : function() {
+            common.trace("BundleGroup("+_id+").bundles()");
+            return bundles.find({bundleGroupIds:[_id]});
+        }
+    }
 };
 
 /**
@@ -1270,84 +2700,128 @@ var bundles = (function() {
 	  return common.pageListToArray(result).map(function(x){return new Bundle(x);});
 	};
 
-  return {
-		/**
-		 * creates BundleCriteria object based on given params
-		 *
-		 * @param {Object} params - filter parameters
-		 * @ignore
-		 */
-	  	createCriteria : function(params) {
-			params = params || {};
-			common.trace("bundles.createCriteria("+common.objToString(params) +")");
-			var criteria = common.createCriteria(new BundleCriteria(),params);
-			return criteria;
-		},
-		/**
-		 * finds bundles based on query parameters
-		 *
-		 * @param {Object} params - hash of query params
-		 * See BundleCriteria class for available params
-		 * @type Bundle[]
-		 * @function
-	*/
-    find : _find,
-		/**
-		 * creates a bundle
-		 *
-		 * @param {String} dist - path to bundle distribution ZIP file or URL. 
-		 * If URL it must be reachable by RHQ server
-		 * @type Bundle
-		 */
-    createFromDistFile : function(dist) {
-    	if (dist==null) {
-    		throw "parameter dist must not be null"
-    	}
-    	if (dist.indexOf("http")==0) {
-    		var version = BundleManager.createBundleVersionViaURL(dist);
-		    return new Bundle(version.bundle);
-    	}
-    	else {
-			var file = new java.io.File(dist);
-			if (!file.exists()) {
-				throw "file parameter ["+file+"] does not exist!";
-			}
-		    var inputStream = new java.io.FileInputStream(file);
-		    var fileLength = file.length();
-		    var fileBytes = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, fileLength);
-		    for (numRead=0, offset=0; ((numRead >= 0) && (offset < fileBytes.length)); offset += numRead ) {
-			    numRead = inputStream.read(fileBytes, offset, fileBytes.length - offset);
-		    }
-		    var version = BundleManager.createBundleVersionViaByteArray(fileBytes);
-		    return new Bundle(version.bundle);
-    	}
-	},
+    _createFromDistFile = function(dist,username,password,groups) {
+        if (dist==null) {
+            throw "parameter dist must not be null"
+        }
+        groups = groups || null;
+        if (groups!=null) {
+            groups = groups.map(function(g){return g.id;})
+        }
+        var groupsSupported = typeof BundleManager.createInitialBundleVersionViaURL !== "undefined" && groups != null;
+        if (groups!=null && groups.length>0 && !groupsSupported) {
+            common.error('Bundle groups are not supported on this version of RHQ, groups parameter is ignored');
+        }
+        if (dist.indexOf("http")==0) {
+            common.debug("Getting bundle file from URL: "+dist);
+            username = username || null;
+            password =  password || null;
+            if (username!=null && password!=null) {
+                if (groupsSupported) {
+                    var version = BundleManager.createInitialBundleVersionViaURL(groups,dist,username,password);
+                }
+                else {
+                    var version = BundleManager.createBundleVersionViaURL(dist,username,password);
+                }
+                return new Bundle(version.bundle);
+            }
+            if (groupsSupported) {
+                var version = BundleManager.createBundleVersionViaURL(groups,dist);
+            }
+            else {
+                var version = BundleManager.createBundleVersionViaURL(dist);
+            }
+            return new Bundle(version.bundle);
+        }
+        else {
+            var file = new java.io.File(dist);
+            if (!file.exists()) {
+                throw "file parameter ["+file+"] does not exist!";
+            }
+            if (typeof scriptUtil.uploadContent !== "undefined") {
+                // since JON 3.2 we can stream our content to server
+                var handle = scriptUtil.uploadContent(file);
+                if (groupsSupported) {
+                    var version = BundleManager.createInitialBundleVersionViaContentHandle(groups,handle);
+                }
+                else {
+                    var version = BundleManager.createBundleVersionViaContentHandle(handle);
+                }
+                return new Bundle(version.bundle);
+            }
+            else {
+                // keep this to stay compatible with < JON 3.2
+                common.debug("Getting bundle file from disk: '"+dist+"'");
+                var inputStream = new java.io.FileInputStream(file);
+                var fileLength = file.length();
+                var fileBytes = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, fileLength);
+                for (var numRead=0, offset=0; ((numRead >= 0) && (offset < fileBytes.length)); offset += numRead ) {
+                    numRead = inputStream.read(fileBytes, offset, fileBytes.length - offset);
+                }
+                if (groupsSupported) {
+                    var version = BundleManager.createInitialBundleVersionViaByteArray(groups,fileBytes);
+                }
+                else {
+                    var version = BundleManager.createBundleVersionViaByteArray(fileBytes);
+                }
+                return new Bundle(version.bundle);
+            }
+        }
+    };
 
-		// createFromRecipe : function(recipe,files) {
-			// we're creating a resource with backing content
-			// common.debug("Reading recipe file " + recipe + " ...");
-			// var file = new java.io.File(recipe);
-			// if (!file.exists()) {
-			// throw "recipe parameter file does not exist!";
-			// }
-		  // var inputStream = new java.io.FileInputStream(file);
-		  // var fileLength = file.length();
-		    // TODO read recipe to String properly!
-		  // var fileBytes =
-			// java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE,
-			// fileLength);
-		  // for (numRead=0, offset=0; ((numRead >= 0) && (offset <
-			// fileBytes.length)); offset += numRead ) {
-			// numRead = inputStream.read(fileBytes, offset, fileBytes.length -
-			// offset);
-		  // }
-		  // println(fileBytes);
-		  // var recipeStr = new String(fileBytes,0,fileLength);
-		  // println(recipeStr);
-		  // var bundleVersion =
-			// BundleManager.createBundleVersionViaRecipe(recipeStr);
-		// }
-	};
+    return {
+        /**
+         * creates BundleCriteria object based on given params
+         *
+         * @param {Object} params - filter parameters
+         * @ignore
+         */
+        createCriteria: function (params) {
+            params = params || {};
+            common.trace("bundles.createCriteria(" + common.objToString(params) + ")");
+            var criteria = common.createCriteria(new BundleCriteria(), params);
+            return criteria;
+        },
+        /**
+         * finds bundles based on query parameters
+         *
+         * @param {Object} params - hash of query params
+         * See BundleCriteria class for available params
+         * @type Bundle[]
+         * @function
+         */
+        find: _find,
+        /**
+         * creates a bundle (a wrapper method above createFromDistFile)
+         * @see bundles#createFromDistFile
+         * @param {Object} params
+         * If URL it must be reachable by RHQ server
+         * @type Bundle
+         */
+        create: function (params) {
+            params = params || {}
+            params.username = params.username || null;
+            params.password = params.password || null;
+            params.groups = params.groups || null;
+            common.trace("bundles.create('params=" + common.objToString(params) + "')");
+            return _createFromDistFile(params.dist, params.username, params.password, params.groups);
+        },
+        /**
+         * creates a bundle (deprecated)
+         *
+         * @param {String} dist - path to bundle distribution ZIP file or URL.
+         * @param {String} username - basic HTTP auth username (use when 'dist' is URL)
+         * @param {String} password - basic HTTP auth password (use when 'dist' is URL)
+         * @param {BundleGroup[]} groups - array of bundle groups to assign into
+         * If URL it must be reachable by RHQ server
+         * @type Bundle
+         */
+        createFromDistFile: function (dist, username, password, groups) {
+            common.trace("bundles.createFromDistFile('" + dist + "','" + username + "','" + password + "','" + groups + "')");
+            common.warn("You are using deprecated method, please use bundles.create instead");
+            return _createFromDistFile(dist, username, password, groups);
+        }
+    };
 })();
 
 
@@ -1374,6 +2848,13 @@ var Bundle = function(param) {
 		 * @lends Bundle-Destination.prototype
 		 */
 		return {
+			/**
+			 * destination id
+			 */
+			id : param.id,
+			/**
+			 * org.rhq.core.domain.bundle.BundleDestination instance
+			 */
 			obj : _obj,
 			/**
 			 * purges this destination
@@ -1479,17 +2960,19 @@ var Bundle = function(param) {
 			 */
 			obj : _obj,
 			/**
-			 * removes this version of bundle from server (not yet implemented)
+			 * removes this version of bundle from server
 			 */
 			remove : function() {
-
+				BundleManager.deleteBundleVersion(_id,false);
 			},
 			/**
 			 * returns all files contained in this version of bundle (not yet implemented)
+			 * @return array of filenames contained
+			 * @type String[]
 			 */
 			files : function() {
-
-			},
+				return BundleManager.getBundleVersionFilenames(_id,false).toArray().map(function (x) {return String(x);});
+			}
 		};
 	};
 
@@ -1527,6 +3010,16 @@ var Bundle = function(param) {
  * @lends Bundle.prototype
  */
 	return {
+	    /**
+	     * @return id of this bundle
+	     * @type Number
+	     */
+	    id : _id,
+	    /**
+         * @return id of this bundle
+         * @type Number
+         */
+	    getId : function() {return _id; },
 		toString : function() {return _bundle.toString();},
 		/**
 		 * returns Bundle destinations based on query params
@@ -1556,11 +3049,22 @@ var Bundle = function(param) {
 	 * @param {Bundle-Destination} destination - destination to be deployed to
 	 * @param {Object} params - map of input parameters required by bundle
 	 * @param {Bundle-Version|String} version - bundle version to be deployed, if null, latest version is used
+	 * @param {Boolean} isClean - whether to perform clean deployment or not, default is true
 	 * @type Bundle-Deployment
 	 */
-		deploy : function(destination,params,version) {
+		deploy : function(destination,params,version,isClean) {
 			params = params || {};
-			common.trace("Bundle("+_id+").deploy(destination="+destination+",params="+common.objToString(params)+",version="+version+")");
+			if (typeof(isClean) == "undefined") {
+			    isClean = true;
+			}
+			var versionStr; // detect version argument and properly print it
+			if (typeof(version) == "string") {
+				versionStr = version;
+			}
+			else if (version != null && typeof(version) == "object") {
+				versionStr = version.obj;
+			}
+			common.trace("Bundle("+_id+").deploy(destination="+common.objToString(destination)+",params="+common.objToString(params)+",version="+versionStr+")");
 			if (version==null) {
 				common.info("Param version is null, will use latest version of bundle");
 				var criteria = common.createCriteria(new BundleCriteria(),{id:_id});
@@ -1577,7 +3081,6 @@ var Bundle = function(param) {
 			// we need to fetch version object with configuration definition
 			var criteria = common.createCriteria(new BundleVersionCriteria(),{id:version.id});
 			criteria.fetchConfigurationDefinition(true);
-			println(BundleManager.findBundleVersionsByCriteria(criteria));
 			version.obj = BundleManager.findBundleVersionsByCriteria(criteria).get(0);
 			var configuration = new Configuration();
 			// so if the bundle has come configuration, we create default
@@ -1586,10 +3089,11 @@ var Bundle = function(param) {
 				var defaultConfig = version.obj.configurationDefinition.defaultTemplate.createConfiguration();
 				configuration = common.applyConfiguration(defaultConfig,version.obj.configurationDefinition,params);
 			}
-			var deployment = BundleManager.createBundleDeployment(version.obj.id, destination.obj.id, "", configuration);
-			deployment = BundleManager.scheduleBundleDeployment(deployment.id, true);
+			var deployment = BundleManager.createBundleDeployment(version.obj.id, destination.id, "", configuration);
+			deployment = BundleManager.scheduleBundleDeployment(deployment.id, isClean);
 			var func = function() {
 				var crit = common.createCriteria(new BundleDeploymentCriteria(),{id:deployment.id});
+				crit.fetchResourceDeployments(true);
 		        var result = BundleManager.findBundleDeploymentsByCriteria(crit);
 		        if (!result.isEmpty()) {
 		        	result = result.get(0);
@@ -1601,6 +3105,30 @@ var Bundle = function(param) {
 			var deployment = common.waitFor(func);
 			if (deployment) {
 				common.info("Bundle deployment finished with status : "+deployment.status);
+				if(deployment.status != BundleDeploymentStatus.SUCCESS){
+				    common.error("Bundle deployment err msg: " +deployment.getErrorMessage());
+				    var resDeployments = deployment.getResourceDeployments();
+				    for(i = 0;i < resDeployments.size();i++){
+				        var status = resDeployments.get(i).getStatus();
+				        var name = resDeployments.get(i).getResource().getName();
+				        common.info("Resource name: " +name+", status: "+status);
+				        if(status != BundleDeploymentStatus.SUCCESS){
+				            common.error("Bundle deployment on resource named " +name+" failed!");
+				            var resCri = new BundleResourceDeploymentCriteria();
+				            resCri.addFilterId(resDeployments.get(i).getId());
+				            resCri.fetchHistories(true);
+				            var resDep = BundleManager.findBundleResourceDeploymentsByCriteria(resCri).get(0);
+				            
+				            var hists = resDep.getBundleResourceDeploymentHistories();
+				            for(x = 0; x < hists.size();x++){
+				                if(hists.get(x).getStatus() != BundleResourceDeploymentHistory.Status.SUCCESS){
+				                    common.error("Failed operation: "+hists.get(x).getInfo());
+				                    common.error("Msg: "+hists.get(x).getMessage());
+				                }
+				            }
+				        }
+				    }
+				}
 				return new Deployment(deployment);
 			}
 			throw "Bundle deployment error";
@@ -1709,6 +3237,9 @@ var resources = (function () {
 		    	if (key=="type") {
 		    		return "addFilterResourceTypeName(\""+value+"\")";
 		    	}
+		    	if (key=="key") {
+		    		return "addFilterResourceKey(\""+value+"\")";
+		    	}
 			});
 			// by default only 200 items are returned, this line discards it ..
 			// so we get unlimited list
@@ -1789,7 +3320,7 @@ discoveryQueue = (function () {
 	};
 	var _importResources = function (params){
 		params = params || {};
-		common.trace("discoveryQueue._importResources("+common.objToString(params)+")");
+		common.trace("discoveryQueue.importResources("+common.objToString(params)+")");
 		params.status="NEW";
 		var criteria = resources.createCriteria(params);
 	    common.info("Waiting until desired resources become NEW");
@@ -1802,11 +3333,11 @@ discoveryQueue = (function () {
 	    criteria = resources.createCriteria(params);
 	    common.info("Waiting until resources become COMMITTED");
 	    var committed = _waitForResources(criteria);
-	    assertTrue(committed.size() > 0, "COMMITED resources size > 0");
+	    //assertTrue(committed.size() > 0, "COMMITED resources size > 0");
 	    // return only imported resources
 	    return common.pageListToArray(res).map(function(x){return new Resource(x);});
 	};
-  _listPlatforms = function(params) {
+  var _listPlatforms = function(params) {
 			params = params || {};
 			common.trace("discoveryQueue.listPlatforms("+common.objToString(params)+")");
 			params["status"] = "NEW";
@@ -1823,6 +3354,21 @@ discoveryQueue = (function () {
 		 * @returns Array of resources in discovery queue matching given filter
 		 * @type Resource[]
 		 */
+    find : function (params) {
+			params = params || {};
+			common.trace("discoveryQueue.list("+common.objToString(params)+")");
+			params["status"] = "NEW";
+			var criteria = resources.createCriteria(params);
+			var res = ResourceManager.findResourcesByCriteria(criteria);
+			return common.pageListToArray(res).map(function(x){return new Resource(x);});
+		},
+		/**
+		 * lists discovery queue
+		 * @deprecated use find() instead
+		 * @param {Object} params - filter
+		 * @returns Array of resources in discovery queue matching given filter
+		 * @type Resource[]
+		 */
     list : function (params) {
 			params = params || {};
 			common.trace("discoveryQueue.list("+common.objToString(params)+")");
@@ -1831,6 +3377,7 @@ discoveryQueue = (function () {
 			var res = ResourceManager.findResourcesByCriteria(criteria);
 			return common.pageListToArray(res).map(function(x){return new Resource(x);});
 		},
+	
 		/**
 		 * lists platforms from discovery queue
 		 *
@@ -1848,31 +3395,33 @@ discoveryQueue = (function () {
    * @returns platform resource
 	 * @type Resource
 	 */
-		importPlatform: function(name,children) {
-			common.trace("discoveryQueue.importPlatform(name="+name+" children[default=true]="+children+")");
+		importPlatform : function(name, children) {
+			common.trace("discoveryQueue.importPlatform(name=" + name + " children[default=true]=" + children + ")");
 
 			// default is true (when null is passed)
-			if(children != false){children = true;}
+			if (children != false) {
+				children = true;
+			}
 
 			// first lookup whether platform is already imported
-			var reso = resources.find({name:name,category:"PLATFORM"});
-			if (reso.length == 1) {
-				common.debug("Platform "+name+" is already in inventory, not importing");
+			var res = resources.find({name : name,category : "PLATFORM"});
+			if (res.length == 1) {
+				common.debug("Platform " + name + " is already in inventory, not importing");
 				return res[0];
 			}
-      if (_listPlatforms({name:name}).length < 1) {
-        throw "Platform ["+name+"] was not found in discovery queue"
-      }
-			res = _importResources({name:name,category:"PLATFORM"});
+			if (_listPlatforms({name : name}).length < 1) {
+				throw "Platform [" + name + "] was not found in discovery queue"
+			}
+			res = _importResources({name : name,category : "PLATFORM"});
 			if (res.length != 1) {
-        throw "Plaform was not imported, server error?"
-      }
+				throw "Plaform was not imported, server error?"
+			}
 			if (children) {
 				common.debug("Importing platform's children");
-				_importResources({parentResourceId:res[0].getId()});
+				_importResources({parentResourceId : res[0].getId()});
 			}
 			common.debug("Waiting 15 seconds, 'till inventory syncrhonizes with agent");
-			sleep(15*1000);
+			sleep(15 * 1000);
 			return res[0];
 		},
     /**
@@ -1894,6 +3443,12 @@ discoveryQueue = (function () {
 			if(children != false){children = true;}
 
 			if (!resource.exists()) {
+			    // import resource's parent as well if it's not already imported
+			    var resParent = resource.parent(false);
+			    if(resParent){
+			        common.debug("Importing resources's parent");
+			        DiscoveryBoss.importResources([resParent.getId()]);
+			    }
 				DiscoveryBoss.importResources([resource.getId()]);
 				common.waitFor(resource.exists);
 			}
@@ -1908,8 +3463,9 @@ discoveryQueue = (function () {
    * @param param - filter resources being imported similar to {@link resources.find()}
 	 * @type Resource[]
 	 * @function
+	 * 	 * @example discovery.importResources() // import all resources in discovery queue
 	 */
-		importResources : _importResources,
+		importResources : _importResources
 	};
 }) ();
 
@@ -1934,11 +3490,13 @@ var Resource = function (param) {
 	}
 
 	var _id = param.id;
-	var _name = param.name;
+	var _name = String(param.name);
 	var _res = param;
 	
+	
+	
 	// we define a metric as an internal type
-	//TODO implement reading last metric value properly
+	
 	/**
 	 * creates a new instance of Metric
 	 * @class
@@ -1949,9 +3507,10 @@ var Resource = function (param) {
 		var common = new _common();
 		var _param = param;
 		var _res = res;
-		var _defId = function() {
+		var _getMDef = function(){
 			var criteria = common.createCriteria(new MeasurementDefinitionCriteria(),{resourceTypeId:_res.resourceType.id,displayName:_param.name});				
 			var mDefs = MeasurementDefinitionManager.findMeasurementDefinitionsByCriteria(criteria);
+			
 			var index = -1
 			for (i=0;i<mDefs.size();i++) {
 				if (mDefs.get(i).displayName == _param.name) {
@@ -1962,8 +3521,27 @@ var Resource = function (param) {
 			if (index == -1) {
 				throw "Unable to retrieve measurement definition, this is a bug"
 			}
-			return mDefs.get(index).id;
+			return mDefs.get(index);
 		};
+		var _getSchedule = function(){
+			var mDefId = _getMDef().id;
+			common.trace("Retrieving schedules for resource with id: " +_res.id + 
+					" and measurement definition id: " +mDefId);
+			var criteria = common.createCriteria(new MeasurementScheduleCriteria(),
+					{resourceId:_res.id,definitionIds:[mDefId]});				
+			var schedules = MeasurementScheduleManager.findSchedulesByCriteria(criteria);
+			
+			if(schedules.size()==0){
+				throw "Unable to retrive schedule for this Metric!!";
+			}
+			if(schedules.size()>1){
+				throw "Retrived multiple schedules for this Metric!!";
+			}			
+			return schedules.get(0);
+		};
+		
+		
+		
 		return {
 			/**
 			 * name of metric
@@ -1973,6 +3551,12 @@ var Resource = function (param) {
 			 */
 			name : param.name,
 			/**
+			 * data type of metric
+			 * @field
+			 * @type String
+			 */
+			dataType : String(param.dataType.name()),
+			/**
 			 * gets live value for metric
 			 * @type String
 			 * @returns String whatever the value is
@@ -1980,7 +3564,7 @@ var Resource = function (param) {
 			 */
 			getLiveValue : function() {
 				common.trace("Resource("+_res.id+").metrics.["+param.name+"].getLiveValue()");				
-				var defId = _defId();
+				var defId = _getMDef().id;
 				var values = MeasurementDataManager.findLiveData(_res.id,[defId]).toArray()
 				// values is returned as set
 				if (values.length>0) {
@@ -1996,7 +3580,7 @@ var Resource = function (param) {
 			 */
 			set : function(enabled,interval) {
 				common.trace("Resource("+_res.id+").metrics.["+param.name+"].set(enabled="+enabled+",interval="+interval+")");
-				var defId = _defId();
+				var defId = _getMDef().id;
 				if (enabled==false) {
 					common.debug("Disabling measurement");
 					MeasurementScheduleManager.disableSchedulesForResource(_res.id,[defId])
@@ -2010,6 +3594,25 @@ var Resource = function (param) {
 					MeasurementScheduleManager.updateSchedulesForResource(_res.id,[defId],interval*1000);
 				}
 				
+			},
+			getScheduleId : function(){
+				return new _getSchedule().getId();
+			},
+			/**
+			 * gets actual metric collection interval
+			 * @type Number
+			 * @returns Number interval in milis
+			 */
+			getInterval : function(){
+				return new Number(_getSchedule().getInterval());
+			}, 
+			/**
+			 * returns true if this metrics is enabled, false otherwise
+			 * @type Boolean
+			 * @returns Boolean true if this metrics is enabled, false otherwise
+			 */
+			isEnabled : function(){
+				return _getSchedule().isEnabled();
 			}
 		}
 	};
@@ -2019,12 +3622,38 @@ var Resource = function (param) {
   var _shortenMetricName = function(name) {
 	  return (String(name)[0].toLowerCase()+name.substring(1)).replace(/ /g,"");
   }
-  common.debug("Enumerating metrics")
+  
+  /**
+   * gets calltimes for given resource (Note that this method gets injected to resource object only when a resource has CALLTIME metric)
+   * @function
+   * @lends Resource.prototype
+   * @returns array of simple data objects having fields same as org.rhq.core.domain.measurement.calltime.CallTimeDataComposite
+   */
+  var _getCallTimes = function(beginTime,endTime) {
+	  common.trace("Resource("+_id+").getCallTimes(beginTime="+beginTime+",endTime="+endTime+")");
+	  beginTime = beginTime || new Date().getTime() - (8 * 3600 * 1000);
+	  endTime = endTime || new Date().getTime(); // 8 hours by default
+	  for (_k in _metrics) {
+		var metric = _metrics[_k]
+		if (metric.dataType == "CALLTIME") {
+			var callTimes = CallTimeDataManager.findCallTimeDataForResource(metric.getScheduleId(),beginTime,endTime,PageControl.getUnlimitedInstance());
+			return common.pageListToArray(callTimes).map(function(x) {
+				return {callDestination:x.callDestination, average:x.average, total:x.total, minimum:x.minimum, maximum:x.maximum, count: x.count};
+			});
+		}
+	  }
+	  throw "No CALLTIME Schedule found for this resource"
+  }
+  
+  common.trace("Enumerating metrics")
   var _metrics = {};
   for (index in param.measurements) {
 	  var metric = new Metric(param.measurements[index],param);
 	  var _metricName = _shortenMetricName(metric.name);
 	  _metrics[_metricName] = metric;
+	  if (metric.dataType == "CALLTIME") {
+		  _dynamic.getCallTimes = _getCallTimes; // inject _getCallTimes function
+	  }
   }
   var _retrieveContent = function(destination) {
 		var self = ProxyFactory.getResource(_id);
@@ -2079,7 +3708,7 @@ var Resource = function (param) {
 
 
 	var _getName = function(){
-		return _res.getName();
+		return String(_res.getName());
 	}
 
 	var _find = function() {
@@ -2099,24 +3728,33 @@ var Resource = function (param) {
 	var _exists = function() {
 		return _find().size() == 1;
 	};
-	var _parent = function() {
+	var _parent = function(imported) {
 		var criteria = resources.createCriteria({id:_id});
 		criteria.fetchParentResource(true);
+		if(imported == false){
+		    criteria.addFilterInventoryStatus(InventoryStatus.NEW);
+		}
 		var res = ResourceManager.findResourcesByCriteria(criteria);
 		if (res.size()==1 && res.get(0).parentResource) {
-			return new Resource(res.get(0).parentResource.id);
+		    var par = res.get(0).parentResource;
+		    if(imported == false){
+			    if(par.getInventoryStatus() == InventoryStatus.NEW){
+			        return new Resource(par.id);
+			    }
+			}else{
+			    return new Resource(par.id);
+			}
 		}
 	};
 
-	var _waitForOperationResult = function(resourceId, resOpShedule){
+	var _waitForOperationResult = function(resOpShedule){
 		var opHistCriteria = new ResourceOperationHistoryCriteria();
 		if(resOpShedule)
 			opHistCriteria.addFilterJobId(resOpShedule.getJobId());
-		opHistCriteria.addFilterResourceIds(resourceId);
+		opHistCriteria.addFilterResourceIds(_id);
 		opHistCriteria.addSortStartTime(PageOrdering.DESC); // put most recent
 															// at top of results
-		opHistCriteria.setPaging(0, 1); // only return one result, in effect the
-										// latest
+		opHistCriteria.clearPaging();
 		opHistCriteria.fetchResults(true);
 		var pred = function() {
 			var histories = OperationManager.findResourceOperationHistoriesByCriteria(opHistCriteria);
@@ -2128,6 +3766,7 @@ var Resource = function (param) {
 			};
 		};
 		common.debug("Waiting for result..");
+		sleep(3000); // trying to workaround https://bugzilla.redhat.com/show_bug.cgi?id=855674
 		var history = common.waitFor(pred);
 		if (!history) {
 			// timed out
@@ -2215,15 +3854,33 @@ var Resource = function (param) {
 	 */
     metrics : _metrics,
     /**
+     *  Update resource's editable properties (name, description, location).
+     *  @example new Resource(12345).update({name:"new name",description:"new description",location:"new location"})
+     *  @type Resource
+     *  @return updated Resource
+     */
+    update : function(params) {
+         var _self = _find().get(0);
+         params.name = params.name || _self.name;
+         params.description = params.description || _self.description;
+         params.location = params.location || _self.location;
+
+        _self.name = params.name;
+        _self.description = params.description;
+        _self.location = params.location;
+        ResourceManager.updateResource(_self);
+        return new Resource(_self);
+    },
+    /**
      * gets a metric by it's name
      * @example resource.getMetric("Total Swap Space")
      * @type Metric
      */
     getMetric : function(name) {
     	common.trace("Resource("+_id+").getMetric("+name+")");
-    	var key = _shortenMetricName(name);
-    	if (key in _metrics) {
-    		return _metrics[key];
+    	var _k = _shortenMetricName(name);
+    	if (_k in _metrics) {
+    		return _metrics[_k];
     	}
     	else {
     		throw "Cannot find metric called ["+name+"]"
@@ -2239,12 +3896,19 @@ var Resource = function (param) {
     * gets resource String representation
     * @type String
     */
-		toString : function() {return _res.toString();},
+	toString : function() {return _res.toString();},
     /**
 	  * gets resource name
 	  * @type String
 	  */
     getName : function() {return _getName();},
+    /**
+	  * gets resource type id
+	  * @type Number
+	  */
+    getResourceTypeId : function(){
+    	return _res.resourceType.id;
+    },
 	  /**
 	  * @returns Resource proxy object
 	  */
@@ -2253,12 +3917,14 @@ var Resource = function (param) {
 			return ProxyFactory.getResource(_id);
 		},
     /**
+	  * @param {Boolean} if set to true, we will search for parent resource with inventory status COMMITED
+	  * false will search for parent resource with status NEW, default is true
 	  * @returns parent resource
 	  * @type Resource
 	  */
-		parent : function() {
-			common.trace("Resource("+_id+").parent()");
-			return _parent();
+		parent : function(imported) {
+			common.trace("Resource("+_id+").parent("+imported+")");
+			return _parent(imported);
 		},
 		/**
 		 * removes/deletes this resource from inventory.
@@ -2345,6 +4011,41 @@ var Resource = function (param) {
 				return children[0];
 			}
 		},
+        	      /**
+                     * wait's until given child resource exists (useful when you
+                     * need to wait for discovery)
+                     * 
+                     * @param {Object} -
+                     *            you can filter child resources same way as in
+                     *            {@link resources.find()} function
+                     * @returns first matchin child resource found
+                     * @type Resource
+                     */
+        waitForChild : function(params) {
+            common.trace("Resource(" + _id + ").waitForChild(" + common.objToString(params) + ")");
+            return common.waitFor(function() {
+                params = params || {};
+                params.parentResourceId = _id;
+                var children = resources.find(params);
+                if (children.length == 0) {
+                    common.info("Waiting for resource " + common.objToString(params));
+                } else {
+                    return children[0];
+                }
+            });
+        },
+		/**
+		 * gets alert definitions for this resource
+		 * @param {Object} params - you can filter alert definitions same as in {@link alertDefinitions.find()} function
+		 * @returns array of alert definitions
+		 * @type AlertDefinition[]
+		 */
+		alertDefinitons : function(params) {
+			common.trace("Resource("+_id+").alertDefinitions("+common.objToString(params)+")");
+			params = params || {};
+			params["resourceIds"] = _id;
+			return alertDefinitions.find(params);
+		},
 		/**
 		 * updates configuration of this resource. You can either pass whole
 		 * configuration (retrieved by {@link Resource.getConfiguration()}) or only params that
@@ -2356,21 +4057,25 @@ var Resource = function (param) {
 		 * @type Boolean
 		 */
 		updateConfiguration : function(params) {
+			common.info("Updating configuration of resource with id: " + _id);
 			common.trace("Resource("+_id+").updateConfiguration("+common.objToString(params)+")");
 			params = params || {};
 			common.debug("Retrieving configuration and configuration definition");
 			var self = ProxyFactory.getResource(_id);
 			var config = ConfigurationManager.getLiveResourceConfiguration(_id,false);
-			common.debug("Got configuration : "+config);
+			common.debug("Got configuration : "+config +", "
+					+ common.objToString(common.configurationAsHash(config)));
 			var configDef = ConfigurationManager.getResourceConfigurationDefinitionForResourceType(self.resourceType.id);
 			var applied = common.applyConfiguration(config,configDef,params);
-			common.debug("Will apply this configuration: "+applied);
+			common.debug("Will apply this configuration: "+applied +", "
+					+ common.objToString(common.configurationAsHash(applied)));
 
 			var update = ConfigurationManager.updateResourceConfiguration(_id,applied);
 			if (!update) {
 				common.debug("Configuration has not been changed");
 				return;
 			}
+			// TODO see https://bugzilla.redhat.com/show_bug.cgi?id=1020374
 			if (update.status == ConfigurationUpdateStatus.INPROGRESS) {
 				var pred = function() {
 					var up = ConfigurationManager.getLatestResourceConfigurationUpdate(_id);
@@ -2392,6 +4097,7 @@ var Resource = function (param) {
 			else if (update.status == ConfigurationUpdateStatus.SUCCESS) {
 				common.info("Resource configuration was updated");
 			}
+			
 			return update.status == ConfigurationUpdateStatus.SUCCESS;
 		},
 		/**
@@ -2407,9 +4113,59 @@ var Resource = function (param) {
 			return common.configurationAsHash(ConfigurationManager.getLiveResourceConfiguration(_id,false),configDef);
 		},
 		/**
+		 * updates plugin configuration (Connection settings) of this resource.  You can either pass whole
+		 * configuration (retrieved by {@link Resource.getPluginConfiguration()}) or only params that
+		 * needs to be changed
+		 * @example // set new start script arguments for as7
+		 * as7.updatePluginConfiguration({'startScriptArgs':'-Djboss.server.base.dir=foo'});
+		 * @param {Object} params - new configuration parameters, partial configuration is supported
+		 * @returns True if configuration was updated
+		 * @type Boolean
+		 */
+		updatePluginConfiguration : function(params) {
+			common.info("Updating plugin configuration of resource with id: " + _id);
+			common.trace("Resource("+_id+").updatePluginConfiguration("+common.objToString(params)+")");
+			params = params || {};
+			common.debug("Retrieving plugin configuration and configuration definition");
+			var self = ProxyFactory.getResource(_id);
+			var config = ConfigurationManager.getPluginConfiguration(_id);
+			common.debug("Got configuration : "+config +", "+ common.objToString(common.configurationAsHash(config)));
+			var configDef = ConfigurationManager.getPluginConfigurationDefinitionForResourceType(self.resourceType.id);
+			var applied = common.applyConfiguration(config,configDef,params);
+			common.debug("Will apply this configuration: "+applied +", " + common.objToString(common.configurationAsHash(applied)));
+
+			var update = ConfigurationManager.updatePluginConfiguration(_id,applied);
+			if (!update) {
+				common.debug("Configuration has not been changed");
+				return;
+			}
+			if (update.status == ConfigurationUpdateStatus.INPROGRESS) {
+				var pred = function() {
+					var up = ConfigurationManager.getLatestPluginConfigurationUpdate(_id);
+					if (up) {
+						return up.status != ConfigurationUpdateStatus.INPROGRESS;
+					}
+				};
+				common.debug("Waiting for configuration to be updated...");
+				var result = common.waitFor(pred);
+				if (!result) {
+					throw "Resource configuration update timed out!";
+				}
+				update = ConfigurationManager.getLatestPluginConfigurationUpdate(_id);
+			}
+			common.debug("Configuration update finished with status : "+update.status);
+			if (update.status == ConfigurationUpdateStatus.FAILURE) {
+				common.info("Resource configuration update failed : "+update.errorMessage);
+			}
+			else if (update.status == ConfigurationUpdateStatus.SUCCESS) {
+				common.info("Resource configuration was updated");
+			}
+			return update.status == ConfigurationUpdateStatus.SUCCESS;
+		},
+		/**
 		 * retrieves plugin configuration for this resource
 		 *
-		 * @returns
+		 * @returns plugin configuration object (Connection settings)
 		 * @type Object
 		 */
 		getPluginConfiguration : function() {
@@ -2488,38 +4244,58 @@ var Resource = function (param) {
 		    }
 		    else {
 		    	// we should obtain default/empty configuration
+		    	common.debug("No configuration passed, using default");
 		    	var template = resType.resourceConfigurationDefinition.defaultTemplate;
 				if (template) {
 					configuration = template.createConfiguration();
 				}
 		    }
-			common.debug("Creating new ["+type+"] resource called [" + name+"]");
+			common.debug("Creating new ["+type+"] resource called [" + name+"] with following configuration: ["
+					+ common.objToString(common.configurationAsHash(configuration)) + "]");
 			if (content) {
 				// we're creating a resource with backing content
-				common.debug("Reading file " + content + " ...");
 				var file = new java.io.File(content);
 				if (!file.exists()) {
 					throw "content parameter file '" +content+ "' does not exist!";
 				}
-			    var inputStream = new java.io.FileInputStream(file);
-			    var fileLength = file.length();
-			    var fileBytes = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, fileLength);
-			    for (numRead=0, offset=0; ((numRead >= 0) && (offset < fileBytes.length)); offset += numRead ) {
-				    numRead = inputStream.read(fileBytes, offset, fileBytes.length - offset);
-			    }
-
-				history = ResourceFactoryManager.createPackageBackedResource(
-					_id,
-					resType.id,
-					name, // new resource name
-					null, // pluginConfiguration
-					name,
-					version, // packageVersion
-					null, // architectureId
-					configuration, // resourceConfiguration
-					fileBytes, // content
-					null // timeout
-				);
+				if (typeof scriptUtil.uploadContent !== "undefined") {
+				    var handle = scriptUtil.uploadContent(content);
+				    var history = ResourceFactoryManager.createPackageBackedResourceViaContentHandle(
+	                        _id,
+	                        resType.id,
+	                        name, // new resource name
+	                        null, // pluginConfiguration
+	                        name,
+	                        version, // packageVersion
+	                        null, // architectureId
+	                        configuration, // resourceConfiguration
+	                        handle, // content
+	                        null // timeout
+	                    );
+				}
+				else {
+				    // keep for compatibility with < JON 3.2
+    				common.debug("Reading file " + content + " ...");
+    			    var inputStream = new java.io.FileInputStream(file);
+    			    var fileLength = file.length();
+    			    var fileBytes = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, fileLength);
+    			    for (numRead=0, offset=0; ((numRead >= 0) && (offset < fileBytes.length)); offset += numRead ) {
+    				    numRead = inputStream.read(fileBytes, offset, fileBytes.length - offset);
+    			    }
+    
+    				var history = ResourceFactoryManager.createPackageBackedResource(
+    					_id,
+    					resType.id,
+    					name, // new resource name
+    					null, // pluginConfiguration
+    					name,
+    					version, // packageVersion
+    					null, // architectureId
+    					configuration, // resourceConfiguration
+    					fileBytes, // content
+    					null // timeout
+    				);
+				}
 			}
 			else {
 				var plugConfiguration = new Configuration();
@@ -2620,7 +4396,7 @@ var Resource = function (param) {
 
 			var resOpShedule = OperationManager.scheduleResourceOperation(_id,name,0,0,0,0,configuration,null);
 			common.info("Operation ["+name+"] scheduled");
-			var result = _waitForOperationResult(_id,resOpShedule);
+			var result = _waitForOperationResult(resOpShedule);
 			var ret = {}
 			ret.status = String(result.status)
 			ret.error = String(result.errorMessage)
@@ -2639,7 +4415,6 @@ var Resource = function (param) {
 		 * @param {int} repeatCount repeatCount in seconds (required)
 		 * @param {Object}
 		 *            opParams - hashmap for operation params (Configuration) (optional)
-		 * @returns
 		 */
 		scheduleOperation : function(name,delay,repeatInterval,repeatCount,opParams) {
 			common.trace("Resource("+_id+").scheduleOperation(name="+name+", delay="
@@ -2656,19 +4431,59 @@ var Resource = function (param) {
 
 			var resOpShedule = OperationManager.scheduleResourceOperation(_id,name,delay * 1000,
 					repeatInterval * 1000,repeatCount,0,configuration,null);
-			common.info("Operation scheduled");
+			common.info("Operation '"+name+"' scheduled");
+		},
+		/**
+		 * schedules operation on resource using crone expression. In contrast to invokeOperation this is 
+		 * not blocking (synchronous) operation.
+		 *
+		 * @param {String}
+		 *            name of operation (required)
+		 *            
+		 * @param {String} cronExpression (required)
+		 * @param {Object}
+		 *            opParams - hashmap for operation params (Configuration) (optional)
+		 */
+		scheduleOperationUsingCron : function(name,cronExpression,opParams) {
+			common.trace("Resource("+_id+").scheduleOperationUsingCron(name="+name+", cronExpression="+cronExpression+
+					", opParams={"+common.objToString(opParams)+"})");
+			
+			// let's obtain operation definitions, so we can check operation
+			var op = _checkOperationName(name);
+			var configuration = _createOperationConfig(opParams,op);
+			_checkRequiredConfigurationParams(op.parametersConfigurationDefinition,common.configurationAsHash(configuration));
+			
+			var resOpShedule = OperationManager.scheduleResourceOperationUsingCron(_id,name,cronExpression,0,configuration,null);
+			common.info("Operation '"+name+"' scheduled");
 		},
 		/**
 		 * Waits until operation is finished or timeout is reached.
 		 *
-		 * @param resourceId
 		 * @param resOpShedule
-		 *            may be null, than the most recent job for given resourceId
+		 *            may be null, than the most recent job for this resource
 		 *            is picked
 		 * @returns operation history
 		 * @function
 		 */
 		waitForOperationResult : _waitForOperationResult,
+		/**
+		 * Checks that given operation with given parameters is valid on this resource.
+		 * Default parameters are used when ommited.
+		 *
+		 * @param {String}
+		 *            name of operation (required)
+		 *            
+		 * @param {Object}
+		 *            opParams - hashmap for operation params (Configuration) (optional)
+		 * @returns checked configuration
+		 */
+		checkOperation : function(name, opParams){
+			var op = _checkOperationName(name);
+			var configuration = _createOperationConfig(opParams,op);
+			var confAsHash = common.configurationAsHash(configuration);
+			_checkRequiredConfigurationParams(op.parametersConfigurationDefinition,confAsHash);
+			return confAsHash;
+		},
 		/**
 		 * checks whether resource exists in inventory
 		 *
@@ -2723,8 +4538,31 @@ var Resource = function (param) {
 		 */
 		uninventory : function() {
 			common.trace("Resource("+_id+").uninventory()");
-			ResourceManager.uninventoryResources([_id]);
-			var result = common.waitFor(function () {
+			
+			// this is a workaround for https://bugzilla.redhat.com/show_bug.cgi?id=830158
+			var result = common.waitFor(function (){
+				try{
+					ResourceManager.uninventoryResources([_id]);
+					return true;
+				}catch(err){
+					var errMsg = err.message;
+					common.warn("Caught following error during uninventory: " + errMsg);
+					if(errMsg.indexOf("Failed to uninventory platform. " +
+							"This can happen if new resources were actively being imported. " +
+							"Please wait and try again shortly") != -1){
+						return false;
+					}else{
+						return -1;
+					}
+				}
+			},20,480);
+			
+			if(!result || result == -1){
+				throw "Failed to uninventory. See previous errors."
+			}
+			
+			
+			result = common.waitFor(function () {
 					if (_find().size()>0) {
 						common.debug("Waiting for resource to be removed from inventory");
 						return false;
@@ -2744,8 +4582,8 @@ var Resource = function (param) {
 	};
 
 	// merge dynamic methods into static ones
-	for (key in _dynamic) {
-		_static[key] = _dynamic[key];
+	for (_k in _dynamic) {
+		_static[_k] = _dynamic[_k];
 	}
 	return _static;
 };
@@ -2769,7 +4607,7 @@ var delay = 5;
 /**
  * total timeout of any waiting in seconds
  */
-var timeout = 120;
+var timeout = 360;
 
 /**
  *  initializes verbosity and timeouts
@@ -2788,11 +4626,15 @@ if (typeof exports !== "undefined") {
 	exports.resources = resources;
 	exports.discoveryQueue = discoveryQueue;
 	exports.bundles = bundles;
+    exports.bundleGroups = bundleGroups;
 	exports.groups = groups;
 	exports.Resource = Resource;
 	exports.roles = roles;
 	exports.users = users;
 	exports.permissions = permissions;
+	exports.alertDefinitions = alertDefinitions;
+	exports.dynaGroupDefinitions = dynaGroupDefinitions;
+	exports.resourceTypes = resourceTypes;
   exports.initialize = initialize;
 }
 

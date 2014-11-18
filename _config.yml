@@ -16,11 +16,11 @@ highlighter: pygments
 
 ### content configuration ###
 title:       "RHQ"
-keywords:    "SinglePaged, jekyll, template, github, blog, single page"
-description: "A single-page template for Jekyll based blogs (like what you'd use on github pages!)"
+keywords:    "RHQ, monitoring, management, open-source, Red Hat"
+description: "Project landing page of RHQ. RHQ is an enterprise management solution for JBoss middleware projects, Tomcat, Apache Web Server, and numerous other server-side applications."
 source_link: "https://github.com/rhq-project/rhq"
-favicon:     "img/favicon.ico"
-touch_icon:  "img/apple-touch-icon.png"
+favicon:     "img/favicon.png"
+touch_icon:  "img/rhq-touch-icon.png"
 google_analytics_key: UA-10656779-1
 
 

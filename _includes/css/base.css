@@ -1,29 +1,4 @@
-/*
-* Skeleton V1.2
-* Copyright 2011, Dave Gamache
-* www.getskeleton.com
-* Free to use under the MIT license.
-* http://www.opensource.org/licenses/mit-license.php
-* 6/20/2012
-*/
 
-
-/* Table of Content
-==================================================
-	#Reset & Basics
-	#Basic Styles
-	#Site Styles
-	#Typography
-	#Links
-	#Lists
-	#Images
-	#Buttons
-	#Forms
-	#Misc */
-
-
-/* #Reset & Basics (Inspired by E. Meyers)
-================================================== */
 	html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
 		margin: 0;
 		padding: 0;
@@ -47,9 +22,6 @@
 		border-collapse: collapse;
 		border-spacing: 0; }
 
-
-/* #Basic Styles
-================================================== */
 	body {
 		background: #fff;
 		font: 14px/21px "Raleway" "HelveticaNeue-Light", Arial, sans-serif;
@@ -58,9 +30,6 @@
 		-webkit-text-size-adjust: 100%;
  }
 
-
-/* #Typography
-================================================== */
 	h1, h2, h3, h4, h5, h6 {
 		font-weight: 300; }
 	h1 a, h2 a, h3 a, h4 a, h5 a, h6 a { font-weight: inherit; }
@@ -80,7 +49,6 @@
 	strong { font-weight: bold; }
 	small { font-size: 80%; }
 
-/*	Blockquotes  */
 	blockquote, blockquote p { font-size: 17px; line-height: 24px; color: #777; font-style: italic; }
 	blockquote { margin: 0 0 20px; padding: 9px 20px 0 19px; border-left: 1px solid #ddd; }
 	blockquote cite { display: block; font-size: 12px; color: #555; }
@@ -90,15 +58,11 @@
 	hr { border: solid #ddd; border-width: 1px 0 0; clear: both; margin: 10px 0 30px; height: 0; }
 
 
-/* #Links
-================================================== */
 	a, a:visited { text-decoration: underline; outline: 0; }
 	a:hover, a:focus { }
 	p a, p a:visited { line-height: inherit; }
 
 
-/* #Lists
-================================================== */
 	ul, ol { margin-bottom: 20px; }
 	ul { list-style: none outside; }
 	ol { list-style: decimal; }
@@ -111,16 +75,9 @@
 	ul.large li { line-height: 21px; }
 	li p { line-height: 21px; }
 
-/* #Images
-================================================== */
-
 	img.scale-with-grid {
 		max-width: 100%;
 		height: auto; }
-
-
-/* #Buttons
-================================================== */
 
 	.button,
 	button,
@@ -200,10 +157,6 @@
     padding: 0;
 	}
 
-
-/* #Forms
-================================================== */
-
 	form {
 		margin-bottom: 20px; }
 	fieldset {
@@ -255,16 +208,9 @@
 		font-size: 13px;
 		color: #444; }
 
-/* #Misc
-================================================== */
 	.remove-bottom { margin-bottom: 0 !important; }
 	.half-bottom { margin-bottom: 10px !important; }
 	.add-bottom { margin-bottom: 20px !important; }
-
-
-
-  /* #Syntax highlighting
-  ================================================== */
 
 
 .highlighttable {

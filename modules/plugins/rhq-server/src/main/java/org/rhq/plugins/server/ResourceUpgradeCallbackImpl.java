@@ -19,11 +19,15 @@
 
 package org.rhq.plugins.server;
 
+import java.io.File;
+import java.util.Arrays;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeCallback;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
+import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessInfo;
 
 /**
@@ -35,7 +39,6 @@ public final class ResourceUpgradeCallbackImpl implements ResourceUpgradeCallbac
     @Override
     public void upgrade(ResourceUpgradeReport upgradeReport,
         ResourceUpgradeContext<ResourceComponent<?>> inventoriedResource) {
-
         ProcessInfo processInfo = inventoriedResource.getNativeProcess();
 
         if (DiscoveryCallbackImpl.isRhqServer(processInfo)) {
@@ -59,6 +62,18 @@ public final class ResourceUpgradeCallbackImpl implements ResourceUpgradeCallbac
             String resourceName = upgradeReport.getNewName();
             if (resourceName == null) {
                 resourceName = inventoriedResource.getName();
+            }
+
+            // set rhqctl as start-script
+            StartScriptConfiguration startScriptConfig = new StartScriptConfiguration(pluginConfiguration);
+            File startScriptFile = startScriptConfig.getStartScript();
+            if (startScriptFile != null && startScriptFile.getName().equals("standalone.sh")) {
+                startScriptConfig.setStartScriptPrefix(null);
+                startScriptConfig.setStartScriptArgs(Arrays.asList("start", "--server"));
+                File homeDirFile = new File(
+                    pluginConfiguration.getSimpleValue(DiscoveryCallbackImpl.PLUGIN_CONFIG_HOME_DIR));
+                startScriptConfig.setStartScript(new File(new File(homeDirFile, "bin"), "rhqctl"));
+                upgradeReport.setNewPluginConfiguration(pluginConfiguration);
             }
 
             // this is not critical, we can live with the server being called a "wrong" name.

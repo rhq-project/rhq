@@ -34,12 +34,13 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryCallback;
+import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.util.obfuscation.Obfuscator;
 
 public class DiscoveryCallbackImpl implements ResourceDiscoveryCallback {
 
-    private static final String PLUGIN_CONFIG_HOME_DIR = "homeDir";
+    public static final String PLUGIN_CONFIG_HOME_DIR = "homeDir";
     private static final String PLUGIN_CONFIG_PASSWORD = "password";
     private static final String PROP_SERVER_PROP_FILE = "../bin/rhq-server.properties";
     private static final String PROP_SERVER_MGMT_USER_PASSWORD = "rhq.server.management.password";
@@ -106,6 +107,13 @@ public class DiscoveryCallbackImpl implements ResourceDiscoveryCallback {
             discoveredDetails.setPluginConfiguration(pluginConfig);
 
             pluginConfig.setSimpleValue("supportsPatching", "false");
+
+            // set rhqctl as start-script
+            StartScriptConfiguration startScriptConfig = new StartScriptConfiguration(pluginConfig);
+            startScriptConfig.setStartScriptPrefix(null);
+            startScriptConfig.setStartScriptArgs(Arrays.asList("start", "--server"));
+            startScriptConfig.setStartScript(new File(homeDirFile.getParentFile(), "bin" + File.separator + "rhqctl"));
+
         } catch (Throwable t) {
             log.warn(
                 "Problem setting RHQ Server management password - will not be able to connect to the RHQ Server instance",

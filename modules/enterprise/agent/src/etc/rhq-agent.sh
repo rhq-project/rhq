@@ -322,7 +322,12 @@ debug_msg "$CMD"
 
 # Run the VM - put it in background if the caller wants it to be
 if [ -z "$RHQ_AGENT_IN_BACKGROUND" ]; then
-   eval "$CMD"
+   trap 'kill -TERM $RHQ_AGENT_PID' TERM INT
+   eval "$CMD &"
+   RHQ_AGENT_PID=$!
+   wait $RHQ_AGENT_PID
+   trap - TERM INT
+   wait $RHQ_AGENT_PID
 else
    eval "$CMD &"
    RHQ_AGENT_BACKGROUND_PID=$!

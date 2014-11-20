@@ -7,7 +7,7 @@ fa-icon: code-fork
 
 ### General Info###
 
-If you wish to get involved as a contributor to RHQ, please visit [`#rhq`](irc://irc.freenode.net/#rhq) channel on Freenode IRC and get to know people.
+If you wish to get involved as a contributor to RHQ, please visit [`#rhq`](irc://irc.freenode.net/#rhq) channel on Freenode IRC and get to know people. This channel is logged and the history is [here](http://transcripts.jboss.org/channel/irc.freenode.org/%23rhq/index.html).
 
 If you want to contribute to the source repository, please fork it into your own repository and send pull-requests afterwards. Each Pull-Request should be "backed" by an entry in Bugzilla. Please add the Bugzilla issue number to the Pull-Request.
 

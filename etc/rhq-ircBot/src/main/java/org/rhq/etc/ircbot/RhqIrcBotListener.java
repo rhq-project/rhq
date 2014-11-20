@@ -101,7 +101,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
     public RhqIrcBotListener(String server, String channel) {
         this.server = server;
         this.channel = channel;
-        isRedHatChannel = "irc.devel.redhat.com".equals(server);
+        isRedHatChannel = "irc.devel.redhat.com".equals(server) || "irc.lab.bos.redhat.com".equals(server);
         if (isRedHatChannel)
             System.out.print("Red Hat channel");
         StringBuilder commandRegExp = new StringBuilder();

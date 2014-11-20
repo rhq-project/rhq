@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
@@ -35,7 +36,6 @@ import org.jboss.remoting.ServerInvocationHandler;
 import org.jboss.remoting.ServerInvoker;
 import org.jboss.remoting.callback.InvokerCallbackHandler;
 import org.jboss.remoting.stream.StreamInvocationHandler;
-
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.CommandType;
@@ -101,7 +101,7 @@ public class CommandProcessor implements StreamInvocationHandler {
     /**
      * Where all the statistics are stored.
      */
-    private CommandProcessorMetrics m_metrics;
+    private final CommandProcessorMetrics m_metrics;
 
     /**
      * Constructor for {@link CommandProcessor}.
@@ -110,7 +110,7 @@ public class CommandProcessor implements StreamInvocationHandler {
         m_mBeanServer = null;
         m_directoryService = null;
         m_authenticator = null;
-        m_commandListeners = new ArrayList<CommandListener>();
+        m_commandListeners = new CopyOnWriteArrayList<CommandListener>();
         m_metrics = new CommandProcessorMetrics();
     }
 
@@ -146,9 +146,7 @@ public class CommandProcessor implements StreamInvocationHandler {
      * @param listener
      */
     public void addCommandListener(CommandListener listener) {
-        synchronized (m_commandListeners) {
-            m_commandListeners.add(listener);
-        }
+        m_commandListeners.add(listener);
     }
 
     /**
@@ -158,9 +156,7 @@ public class CommandProcessor implements StreamInvocationHandler {
      * @param listener
      */
     public void removeCommandListener(CommandListener listener) {
-        synchronized (m_commandListeners) {
-            m_commandListeners.remove(listener);
-        }
+        m_commandListeners.remove(listener);
     }
 
     /**
@@ -388,29 +384,18 @@ public class CommandProcessor implements StreamInvocationHandler {
     }
 
     private void notifyListenersOfReceivedCommand(Command command) {
-        if (m_commandListeners.size() > 0) // we know ArrayList.size() is atomic
-        {
-            ArrayList<CommandListener> listeners;
-
-            synchronized (m_commandListeners) {
-                listeners = new ArrayList<CommandListener>(m_commandListeners);
-            }
-
-            for (CommandListener listener : listeners) {
-                // notice that we bubble up NotPermittedException or NotProcessedException and abort the command, but any other exception we just log and move on
-                try {
-                    listener.receivedCommand(command);
-                } catch (NotPermittedException npe) {
-                    throw npe;
-                } catch (NotProcessedException npe) {
-                    throw npe;
-                } catch (Throwable t) {
-                    LOG.warn(t, CommI18NResourceKeys.COMMAND_PROCESSOR_LISTENER_ERROR_RECEIVED, t);
-                }
+        for (CommandListener listener : m_commandListeners) {
+            // notice that we bubble up NotPermittedException or NotProcessedException and abort the command, but any other exception we just log and move on
+            try {
+                listener.receivedCommand(command);
+            } catch (NotPermittedException npe) {
+                throw npe;
+            } catch (NotProcessedException npe) {
+                throw npe;
+            } catch (Throwable t) {
+                LOG.warn(t, CommI18NResourceKeys.COMMAND_PROCESSOR_LISTENER_ERROR_RECEIVED, t);
             }
         }
-
-        return;
     }
 
     /**
@@ -422,25 +407,14 @@ public class CommandProcessor implements StreamInvocationHandler {
      * @param response the result of the command processing
      */
     private void notifyListenersOfProcessedCommand(Command command, CommandResponse response) {
-        if (m_commandListeners.size() > 0) // we know ArrayList.size() is atomic
-        {
-            ArrayList<CommandListener> listeners;
-
-            synchronized (m_commandListeners) {
-                listeners = new ArrayList<CommandListener>(m_commandListeners);
-            }
-
-            for (CommandListener listener : listeners) {
-                try {
-                    // notice that on any exception we just log and move on
-                    listener.processedCommand(command, response);
-                } catch (Throwable t) {
-                    LOG.warn(t, CommI18NResourceKeys.COMMAND_PROCESSOR_LISTENER_ERROR_PROCESSED, t);
-                }
+        for (CommandListener listener : m_commandListeners) {
+            try {
+                // notice that on any exception we just log and move on
+                listener.processedCommand(command, response);
+            } catch (Throwable t) {
+                LOG.warn(t, CommI18NResourceKeys.COMMAND_PROCESSOR_LISTENER_ERROR_PROCESSED, t);
             }
         }
-
-        return;
     }
 
     /**

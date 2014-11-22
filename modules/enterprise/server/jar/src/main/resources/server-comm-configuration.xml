@@ -331,7 +331,7 @@ RHQ Server Communications Configuration
                <entry key="rhq.communications.connector.rhqtype"          value="server" />
                <entry key="rhq.communications.connector.transport"        value="servlet" />
                <entry key="rhq.communications.connector.bind-port"        value="7080" />
-               <entry key="rhq.communications.connector.transport-params" value="/jboss-remoting-servlet-invoker/ServerInvokerServlet" />
+               <entry key="rhq.communications.connector.transport-params" value="/jboss-remoting-servlet-invoker/ServerInvokerServlet/?generalizeSocketException=true" />
                <!--
                <entry key="rhq.communications.connector.bind-address"     value="127.0.0.1" />
                <entry key="rhq.communications.connector.lease-period"     value="5000" />

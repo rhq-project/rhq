@@ -145,7 +145,7 @@ public interface ServiceContainerConfigurationConstants {
     /**
      * The default transport parameters.
      */
-    String DEFAULT_CONNECTOR_TRANSPORT_PARAMS = "numAcceptThreads=1&maxPoolSize=303&clientMaxPoolSize=304&socketTimeout=60000&enableTcpNoDelay=true&backlog=200";
+    String DEFAULT_CONNECTOR_TRANSPORT_PARAMS = "numAcceptThreads=1&maxPoolSize=303&clientMaxPoolSize=304&socketTimeout=60000&enableTcpNoDelay=true&backlog=200&generalizeSocketException=true";
 
     /**
      * The number of milliseconds that should be used when establishing the client lease period (meaning the client will

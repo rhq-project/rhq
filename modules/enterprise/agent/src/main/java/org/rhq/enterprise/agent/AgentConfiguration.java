@@ -241,6 +241,29 @@ public class AgentConfiguration {
     public String getServerTransportParams() {
         String value = m_preferences.get(AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS,
             AgentConfigurationConstants.DEFAULT_SERVER_TRANSPORT_PARAMS);
+
+        // see BZ 1166383
+        final String requiredParamName = "generalizeSocketException";
+        if (value != null) {
+            if (!value.contains(requiredParamName)) {
+                if (value.startsWith("/")) {
+                    if (!value.contains("/?")) {
+                        if (!value.endsWith("/")) {
+                            value += "/";
+                        }
+                        value += "?";
+                    } else {
+                        value += "&";
+                    }
+                } else {
+                    value += "&";
+                }
+                value += requiredParamName + "=true";
+            }
+        } else {
+            value = requiredParamName + "=true";
+        }
+
         return value;
     }
 

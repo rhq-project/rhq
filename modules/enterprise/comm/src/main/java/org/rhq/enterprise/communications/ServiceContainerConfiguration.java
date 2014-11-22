@@ -309,6 +309,29 @@ public class ServiceContainerConfiguration {
     public String getConnectorTransportParams() {
         String value = m_preferences.get(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT_PARAMS,
             ServiceContainerConfigurationConstants.DEFAULT_CONNECTOR_TRANSPORT_PARAMS);
+
+        // see BZ 1166383
+        final String requiredParamName = "generalizeSocketException";
+        if (value != null) {
+            if (!value.contains(requiredParamName)) {
+                if (value.startsWith("/")) {
+                    if (!value.contains("/?")) {
+                        if (!value.endsWith("/")) {
+                            value += "/";
+                        }
+                        value += "?";
+                    } else {
+                        value += "&";
+                    }
+                } else {
+                    value += "&";
+                }
+                value += requiredParamName + "=true";
+            }
+        } else {
+            value = requiredParamName + "=true";
+        }
+
         return value;
     }
 
@@ -398,7 +421,7 @@ public class ServiceContainerConfiguration {
      *
      * The default is {@link SSLSocketBuilder#CLIENT_AUTH_MODE_NONE} - that will be returned if the client auth mode was
      * not found in the configuration.
-     * 
+     *
      * <i>Note:</i> To support Tomcat syntax, the client authentication mode value is allowed to be "true" or "false".
      * "true" maps to {@link SSLSocketBuilder#CLIENT_AUTH_MODE_NEED},
      * "false" maps to {@link SSLSocketBuilder#CLIENT_AUTH_MODE_NONE}.
@@ -672,7 +695,7 @@ public class ServiceContainerConfiguration {
 
     /**
      * Forces the preferences to flush so they get written to the backing store.
-     * 
+     *
      * @param changedPreference the name of the preference that was changed to
      *                          cause flush to be called (used for error log message)
      */

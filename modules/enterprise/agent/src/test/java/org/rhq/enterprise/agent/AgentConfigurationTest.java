@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Properties;
+import java.util.prefs.Preferences;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLEventWriter;
@@ -34,7 +35,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * Test the configuration importing and exporting functionality.
+ * Test the configuration importing and exporting functionality and other things.
  *
  * @author Michael Burman
  */
@@ -144,5 +145,41 @@ public class AgentConfigurationTest {
         eventWriter.close();
 
         return output;
+    }
+
+    @Test
+    public void testTransportParams() {
+        Preferences prefs = Preferences.userRoot().node("rhqtest").node("AgentConfigurationTest");
+
+        // BZ 1166383 - we need to make sure generalizeSocketException=true gets in the params even if we don't specify it
+
+        // first make sure its in the default
+        assert (new AgentConfiguration(prefs)).getServerTransportParams().contains("generalizeSocketException=true") : "missing expected param";
+
+        // now try all different formats of transport param and make sure the one we want always gets in there
+        prefs.put(AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS, "/some/path");
+        assertTransportParams(prefs, "/some/path/?generalizeSocketException=true");
+
+        prefs.put(AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS, "/some/path/");
+        assertTransportParams(prefs, "/some/path/?generalizeSocketException=true");
+
+        prefs.put(AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS, "/some/path/?foo");
+        assertTransportParams(prefs, "/some/path/?foo&generalizeSocketException=true");
+
+        prefs.put(AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS, "/some/path/?foo=false");
+        assertTransportParams(prefs, "/some/path/?foo=false&generalizeSocketException=true");
+
+        prefs.put(AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS, "foo=false");
+        assertTransportParams(prefs, "foo=false&generalizeSocketException=true");
+
+        prefs.put(AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS, "foo=false&bar=1");
+        assertTransportParams(prefs, "foo=false&bar=1&generalizeSocketException=true");
+
+    }
+
+    private void assertTransportParams(Preferences p, String expected) {
+        AgentConfiguration config = new AgentConfiguration(p);
+        String actual = config.getServerTransportParams();
+        assert actual.equals(expected) : "actual [" + actual + "] != expected [" + expected + "]";
     }
 }

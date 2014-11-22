@@ -124,7 +124,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                <!--
                <entry key="rhq.agent.server.bind-address"     value="127.0.0.1" />
                -->
-               <entry key="rhq.agent.server.transport-params" value="/jboss-remoting-servlet-invoker/ServerInvokerServlet" />
+               <entry key="rhq.agent.server.transport-params" value="/jboss-remoting-servlet-invoker/ServerInvokerServlet/?generalizeSocketException=true" />
                <entry key="rhq.agent.server.alias"            value="rhqserver" />
 
                <!--
@@ -1058,7 +1058,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                <entry key="rhq.communications.connector.bind-port"        value="16163" />
                <!--
                <entry key="rhq.communications.connector.bind-address"     value="127.0.0.1" />
-               <entry key="rhq.communications.connector.transport-params" value="serverBindAddress=127.0.0.1&amp;serverBindPort=16163&amp;numAcceptThreads=3&amp;maxPoolSize=303&amp;clientMaxPoolSize=304&amp;socketTimeout=60000&amp;enableTcpNoDelay=true&amp;backlog=200" />
+               <entry key="rhq.communications.connector.transport-params" value="serverBindAddress=127.0.0.1&amp;serverBindPort=16163&amp;numAcceptThreads=3&amp;maxPoolSize=303&amp;clientMaxPoolSize=304&amp;socketTimeout=60000&amp;enableTcpNoDelay=true&amp;backlog=200&amp;generalizeSocketException=true" />
                <entry key="rhq.communications.connector.lease-period"     value="5000" />
                -->
 

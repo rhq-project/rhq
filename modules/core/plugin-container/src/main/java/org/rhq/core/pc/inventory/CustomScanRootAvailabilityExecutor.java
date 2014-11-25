@@ -20,6 +20,7 @@
 package org.rhq.core.pc.inventory;
 
 import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 
@@ -50,8 +51,9 @@ public class CustomScanRootAvailabilityExecutor extends AvailabilityExecutor {
 
     @Override
     protected void startScan(Resource ignored, AvailabilityReport availabilityReport, boolean changesOnly) {
+        ResourceContainer resourceContainer = null;
         if (forceScanForRoot) {
-            ResourceContainer resourceContainer = inventoryManager.getResourceContainer(scanRoot);
+            resourceContainer = inventoryManager.getResourceContainer(scanRoot);
 
             //if we can't the resource container, let's just not bother with the scan at all
             if (resourceContainer == null) {
@@ -69,5 +71,14 @@ public class CustomScanRootAvailabilityExecutor extends AvailabilityExecutor {
         }
 
         super.startScan(scanRoot, availabilityReport, changesOnly);
+        // if we happened to set availabilityScheduleTime for a resource having disabled availability schedule
+        // we need to reset it back to 0 (both isEnabled=true and availabilityScheduleTime=0 indicate, not to do 
+        // real avail check on resource, but rather defer to parent's availability)
+        if (forceScanForRoot && resourceContainer != null) {
+            MeasurementScheduleRequest availSchedule = resourceContainer.getAvailabilitySchedule();
+            if (availSchedule != null && !availSchedule.isEnabled()) {
+                resourceContainer.setAvailabilityScheduleTime(0L);
+            }
+        }
     }
 }

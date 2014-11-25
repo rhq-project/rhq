@@ -20,6 +20,8 @@
 package org.rhq.core.pc.inventory;
 
 import static org.rhq.core.util.StringUtil.isNotBlank;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.io.File;
 import java.net.URL;
@@ -46,9 +48,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -79,6 +78,7 @@ import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -853,8 +853,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 return new AvailabilityReport(changesOnly, getAgent().getName());
             }
             resource = container.getResource();
-
-            AvailabilityExecutor availExec = new CustomScanRootAvailabilityExecutor(this, resource, true);
+            MeasurementScheduleRequest availSchedule = container.getAvailabilitySchedule();
+            boolean forceScanForRoot = availSchedule == null || availSchedule.isEnabled();
+            // force scan for root resource only if availability schedule is enabled 
+            AvailabilityExecutor availExec = new CustomScanRootAvailabilityExecutor(this, resource, forceScanForRoot);
             if (changesOnly) {
                 availExec.sendChangesOnlyReportNextTime();
             } else {

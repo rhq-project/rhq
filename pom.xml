@@ -1672,7 +1672,7 @@
                   <version>3.0</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>[1.7,1.8)</version> <!-- 1.7.x -->
+                  <version>[1.7,)</version> <!-- 1.7.x and up -->
                 </requireJavaVersion>
               </rules>
             </configuration>

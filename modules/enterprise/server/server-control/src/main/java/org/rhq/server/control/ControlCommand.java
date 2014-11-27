@@ -492,6 +492,12 @@ public abstract class ControlCommand {
     }
 
     protected boolean isUnixPidRunning(String pid) {
+        try {
+            Integer numericPid = Integer.valueOf(pid);
+        } catch(NumberFormatException e) {
+            // PID wasn't numeric, it can't be correct
+            return false;
+        }
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(getBinDir());

@@ -400,7 +400,6 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
                 c.addFilterResourceTypeId(rt.getId());
                 c.addFilterInventoryStatus(InventoryStatus.NEW);
                 List<Resource> doomedResources = resourceManager.findResourcesByCriteria(overlord, c);
-                c.addFilterInventoryStatus(InventoryStatus.DELETED);
                 doomedResources.addAll(resourceManager.findResourcesByCriteria(overlord, c));
                 c.addFilterInventoryStatus(InventoryStatus.UNINVENTORIED);
                 doomedResources.addAll(resourceManager.findResourcesByCriteria(overlord, c));

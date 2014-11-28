@@ -343,12 +343,8 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
             Resource parent = em.find(Resource.class, parentResource.getId());
             Set<Resource> childResources = parent.getChildResources();
 
-            assert childResources.size() == 1 : "Child resource not found on the parent";
+            assert childResources.size() == 0 : "Child resource not deleted";
 
-            Resource deletedResource = childResources.iterator().next();
-
-            assert deletedResource.getInventoryStatus() == InventoryStatus.DELETED : "Inventory status for deleted resource was incorrect. Expected: Deleted, Found: "
-                + deletedResource.getInventoryStatus();
         } finally {
             getTransactionManager().rollback();
         }
@@ -455,9 +451,9 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         assert historyList.getTotalSize() == 3 : "Incorrect number of entries in page list. Expected: 3, Found: "
             + historyList.getTotalSize();
 
-        assert historyList.get(0).getResource().getId() == resource1.getId() : "History entry 1 is invalid";
-        assert historyList.get(1).getResource().getId() == resource2.getId() : "History entry 2 is invalid";
-        assert historyList.get(2).getResource().getId() == resource3.getId() : "History entry 3 is invalid";
+        assert historyList.get(0).getResourceKey().equals(resource1.getResourceKey()) : "History entry 1 is invalid";
+        assert historyList.get(1).getResourceKey().equals(resource2.getResourceKey()) : "History entry 2 is invalid";
+        assert historyList.get(2).getResourceKey().equals(resource3.getResourceKey()) : "History entry 3 is invalid";
     }
 
     @Test
@@ -554,8 +550,8 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
      */
     private void teardownResourceEnvironment() throws Exception {
         if (parentResource != null) {
-
-            List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, parentResource.getId());
+            resourceManager.uninventoryResource(overlord, parentResource.getId());
+            List<Integer> deletedIds = resourceManager.findResourcesMarkedForAsyncDeletion(overlord);
             for (Integer deletedResourceId : deletedIds) {
                 resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
             }
@@ -605,6 +601,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
             resource.setUuid("" + new Random().nextInt());
             resource.setParentResource(parentResource);
             resource.setInventoryStatus(InventoryStatus.COMMITTED);
+            resource.setResourceKey("" + new Random().nextInt());
             em.persist(resource);
         } catch (Exception e) {
             System.out.println(e);
@@ -676,12 +673,14 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
 
             switch (deleteReturnStatus) {
             case SUCCESS: {
-                response = new DeleteResourceResponse(request.getRequestId(), deleteReturnStatus, null);
+                response = new DeleteResourceResponse(request.getRequestId(), request.getResourceId(),
+                    deleteReturnStatus, null);
                 break;
             }
 
             case FAILURE: {
-                response = new DeleteResourceResponse(request.getRequestId(), deleteReturnStatus, "errorMessage");
+                response = new DeleteResourceResponse(request.getRequestId(), request.getResourceId(),
+                    deleteReturnStatus, "errorMessage");
                 break;
             }
             }

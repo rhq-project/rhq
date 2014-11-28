@@ -50,6 +50,7 @@ import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
 import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
+import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -282,6 +283,16 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         measurementMetadataMgr.deleteMetadata(existingType);
         entityManager.flush();
+
+        // remove DeleteResourceHistories
+        try {
+            Query nativeQuery = entityManager.createNamedQuery(DeleteResourceHistory.QUERY_DELETE_BY_RESOURCE_TYPE_ID);
+            nativeQuery.setParameter("resourceTypeId", existingType.getId());
+            nativeQuery.executeUpdate();
+        } catch (Throwable t) {
+            throw new RuntimeException("DeleteResourceHistory deletion failed, . Cannot finish deleting "
+                + existingType, t);
+        }
 
         // TODO: Clean out event definitions?
 

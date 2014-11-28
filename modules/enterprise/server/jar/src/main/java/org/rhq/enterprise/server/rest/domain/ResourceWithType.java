@@ -117,7 +117,7 @@ public class ResourceWithType {
         this.parentId = parentId;
     }
 
-    @ApiProperty(value = "Inventory status of the resource.",allowableValues = "NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED" )
+    @ApiProperty(value = "Inventory status of the resource.", allowableValues = "NEW, IGNORED, COMMITTED, UNINVENTORIED")
     public String getStatus() {
         return status;
     }

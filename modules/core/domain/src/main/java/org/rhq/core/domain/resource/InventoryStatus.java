@@ -44,9 +44,8 @@ public enum InventoryStatus {
      *    <li>COMMITTED: Resources in this state will be visible in the inventory browser.  The act of importing
      *                   resources changes their state from NEW to COMMITTED.  Note: resources that are factory-created
      *                   or manually added will also appear in the inventory browser and, thus, will be COMMITTED.</li>
-     *                   
-     *    <li>DELETED: Resources can be removed from the remote box, which will flip their status to DELETED to suppress
-     *                 them from showing up in the inventory browser.</li>
+     *
+     *     <li>DELETED: This state is deprecated since RHQ 4.14 and exists only for API compatibility reason.</li>
      *                 
      *    <li>UNINVENTORIED: Resources can be removed from the inventory.  Since this is an expensive operation, these
      *                       resources are temporarily marked as UNINVENTORIED which will suppress them from showing up

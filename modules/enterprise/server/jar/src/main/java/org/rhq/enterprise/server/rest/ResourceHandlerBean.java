@@ -237,7 +237,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
                                         @ApiParam("Limit to category (PLATFORM, SERVER, SERVICE") @QueryParam("category") String category,
                                         @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
                                         @ApiParam("Page for paging, 0-based") @QueryParam("page") @DefaultValue("0") Integer page,
-                                        @ApiParam(value = "Limit to Inventory status of the resources", allowableValues = "ALL, NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED")
+                                        @ApiParam(value = "Limit to Inventory status of the resources", allowableValues = "ALL, NEW, IGNORED, COMMITTED, UNINVENTORIED")
                                             @DefaultValue("COMMITTED") @QueryParam("status") String status,
                                         @Context HttpHeaders headers,
                                         @Context UriInfo uriInfo) {
@@ -248,7 +248,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
             try {
                 criteria.addFilterInventoryStatus(InventoryStatus.valueOf(status.toUpperCase()));
             } catch (IllegalArgumentException iae) {
-                throw new BadArgumentException("status","Value " + status + " is not in the list of allowed values: ALL, NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED" );
+                throw new BadArgumentException("status", "Value " + status
+                    + " is not in the list of allowed values: ALL, NEW, IGNORED, COMMITTED, UNINVENTORIED");
             }
         } else {
             // JavaDoc says to explicitly set to null in order to get all Status

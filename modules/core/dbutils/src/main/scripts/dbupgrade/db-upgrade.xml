@@ -2599,6 +2599,67 @@
               </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.166">
+              <!-- removed InventoryStatus.DELETED -->
+              <schema-addColumn table="RHQ_DELETE_RES_HIST" column="PARENT_RESOURCE_ID" columnType="INTEGER" />
+              <schema-directSQL>
+                <statement>
+                  ALTER TABLE RHQ_DELETE_RES_HIST
+                  ADD CONSTRAINT RHQ_DELETE_RES_HIST_PARENT_RESOURCE_ID_ID_FK
+                  FOREIGN KEY ( PARENT_RESOURCE_ID ) REFERENCES RHQ_RESOURCE ( ID )
+                </statement>
+              </schema-directSQL>
+              <schema-addColumn table="RHQ_DELETE_RES_HIST" column="RESOURCE_TYPE_ID" columnType="INTEGER" />
+              <schema-directSQL>
+                <statement>
+                  ALTER TABLE RHQ_DELETE_RES_HIST
+                  ADD CONSTRAINT RHQ_DELETE_RES_HIST_RESOURCE_TYPE_ID_ID_FK
+                  FOREIGN KEY ( RESOURCE_TYPE_ID ) REFERENCES RHQ_RESOURCE_TYPE ( ID )
+                </statement>
+              </schema-directSQL>
+              <schema-directSQL>
+                <statement>
+                  ALTER TABLE RHQ_DELETE_RES_HIST DROP CONSTRAINT RHQ_DELETE_RES_HIST_RESOURCE_ID_FKEY
+                </statement>
+              </schema-directSQL>
+              <schema-addColumn table="RHQ_DELETE_RES_HIST" column="RESOURCE_NAME" columnType="VARCHAR2" precision="500" />
+              <schema-addColumn table="RHQ_DELETE_RES_HIST" column="RESOURCE_KEY" columnType="VARCHAR2" precision="500" />
+              <schema-directSQL ignoreError="true">
+                <statement desc="Migrate data in RHQ_DELETE_RES_HIST - set RESOURCE_ID to NULL and update RESOURCE_TYPE_ID, RESOURCE_KEY and RESOURCE_NAME columns">
+                  UPDATE rhq_delete_res_hist
+                  SET 
+                  parent_resource_id = rhq_resource.parent_resource_id,
+                  resource_name = rhq_resource.name,
+                  resource_key = rhq_resource.resource_key,
+                  resource_type_id = rhq_resource_type.id
+                  FROM rhq_resource, rhq_resource_type
+                  WHERE rhq_resource.id = rhq_delete_res_hist.resource_id and rhq_resource.resource_type_id = rhq_resource_type.id
+                </statement>
+              </schema-directSQL>
+              <schema-alterColumn table="RHQ_DELETE_RES_HIST" column="PARENT_RESOURCE_ID" nullable="FALSE" />
+              <schema-alterColumn table="RHQ_DELETE_RES_HIST" column="RESOURCE_TYPE_ID" nullable="FALSE" />
+              <schema-alterColumn table="RHQ_DELETE_RES_HIST" column="RESOURCE_NAME" nullable="FALSE" />
+              <schema-deleteColumn table="RHQ_DELETE_RES_HIST" column="RESOURCE_ID" />
+              <schema-alterColumn table="RHQ_DELETE_RES_HIST" column="RESOURCE_KEY" nullable="FALSE" />
+              <!-- prepare the DELETED resources to be picked up by async uninventory job -->
+              <schema-directSQL ignoreError="true">
+                <statement desc="Remove resources with InventoryStatus = DELETED from implicit resource groups">
+                  DELETE FROM RHQ_RESOURCE_GROUP_RES_IMP_MAP WHERE RESOURCE_ID IN ( SELECT id FROM rhq_resource WHERE inventory_status = 'DELETED' )
+                </statement>
+                <statement desc="Remove resources with InventoryStatus = DELETED from explicit resource groups">
+                  DELETE FROM RHQ_RESOURCE_GROUP_RES_EXP_MAP WHERE RESOURCE_ID IN ( SELECT id FROM rhq_resource WHERE inventory_status = 'DELETED' )
+                </statement>
+                <statement desc="Mark resources with InventoryStatus = DELETED for async uninventory">
+                  UPDATE rhq_resource
+                  SET inventory_status = 'UNINVENTORIED',
+                  agent_id = NULL,
+                  parent_resource_id = NULL,
+                  resource_key = 'deleted'
+                  WHERE inventory_status = 'DELETED'
+                </statement>
+              </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

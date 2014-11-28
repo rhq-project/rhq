@@ -305,9 +305,6 @@ public class AutodiscoveryQueueDataSource extends DataSource {
             case IGNORED:
                 setAttribute("statusLabel", MSG.view_autoDiscoveryQ_ignored());
                 break;
-            case DELETED:
-                setAttribute("statusLabel", MSG.view_autoDiscoveryQ_deleted());
-                break;
             case UNINVENTORIED:
                 setAttribute("statusLabel", MSG.view_autoDiscoveryQ_uninventoried());
                 break;

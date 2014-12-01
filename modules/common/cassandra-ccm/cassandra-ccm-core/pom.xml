@@ -20,8 +20,15 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-core-plugin-api</artifactId>
-      <version>${rhq-core-plugin-api.version}</version>
+      <artifactId>rhq-core-util</artifactId>
+      <version>${rhq-core-util.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-native-system</artifactId>
+      <version>${rhq-core-native-system.version}</version>
+      <scope>provided</scope> <!-- provided by the agent/plugin-container -->
     </dependency>
 
     <dependency>

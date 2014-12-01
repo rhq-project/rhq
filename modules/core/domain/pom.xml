@@ -65,13 +65,13 @@
         <scope>provided</scope>
       </dependency>
 
-      <!-- needed if you want to use the logging JDBC wrapper
+      <!-- needed if you want to use the logging JDBC wrapper and for tests to run properly
+           reactor order is not correct unless this dependency is activated-->
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-dbutils</artifactId>
          <version>${rhq-core-dbutils.version}</version>
       </dependency>
-      -->
 
       <!--================ Test Deps ================-->
       <dependency>

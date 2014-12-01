@@ -46,8 +46,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * A {@link ProcessInfo} unit test class (mocked SIGAR) 
- * 
+ * A {@link ProcessInfo} unit test class (mocked SIGAR)
+ *
  * @author Thomas Segismont
  */
 public class ProcessInfoTest {
@@ -136,7 +136,7 @@ public class ProcessInfoTest {
         when(procState.getName()).thenReturn("/this/file/should/not/exists");
         when(sigarProxy.getProcState(PID)).thenReturn(procState);
         processInfo = new ProcessInfo(PID, sigarProxy);
-        assertEquals(processInfo.getName(), "?");
+        assertEquals(processInfo.getName(), "/this/file/should/not/exists");
     }
 
     @Test

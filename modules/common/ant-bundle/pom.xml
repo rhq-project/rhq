@@ -75,7 +75,7 @@
             <scope>runtime</scope> <!-- needs to be runtime otherwise it will not be included by assembly plugin -->
             <exclusions>
                <exclusion>
-                   <groupId>ant</groupId>
+                   <groupId>org.apache.ant</groupId>
                    <artifactId>ant</artifactId>
                </exclusion>
             </exclusions>

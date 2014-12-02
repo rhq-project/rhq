@@ -214,7 +214,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         recoveredField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 Long recovered = listGridRecord.getAttributeAsLong("recovered");
-                if(recovered.longValue() > 0) {
+                if(recovered != null && recovered.longValue() > 0) {
                     Img checkedImg = new Img(ImageManager.getAlertStatusCheckedIcon(),80,16);
                     checkedImg.setImageType(ImageStyle.CENTER);
                     return checkedImg.getInnerHTML();
@@ -227,7 +227,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             @Override
             public String hoverHTML(Object o, ListGridRecord listGridRecord, int i, int i2) {
                 Long recovered = listGridRecord.getAttributeAsLong("recovered");
-                if(recovered.longValue() > 0) {
+                if(recovered != null && recovered.longValue() > 0) {
                     Date recoveredTime = listGridRecord.getAttributeAsDate("recoveredTime");
                     String recoveredTimeString = TimestampCellFormatter.format(recoveredTime,
                             TimestampCellFormatter.DATE_TIME_FORMAT_FULL);
@@ -462,8 +462,8 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             record.setAttribute("acknowledgeTime", new Date(from.getAcknowledgeTime().longValue()));
         }
         record.setAttribute("acknowledgingSubject", from.getAcknowledgingSubject());
-        record.setAttribute("recovered", from.getRecoveryTime());
         if(from.getRecoveryTime() != null && from.getRecoveryTime().longValue() > 0) {
+            record.setAttribute("recovered", from.getRecoveryTime());
             record.setAttribute("recoveredTime", new Date(from.getRecoveryTime().longValue()));
         }
 

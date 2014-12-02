@@ -3,13 +3,13 @@
     <parent>
         <artifactId>rhq-helpers</artifactId>
         <groupId>org.rhq.helpers</groupId>
-        <version>4.13.0-SNAPSHOT</version>
+        <version>4.14.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.rhq.helpers</groupId>
     <artifactId>bundleGen</artifactId>
-    <version>4.13.0-SNAPSHOT</version>
+    <version>4.14.0-SNAPSHOT</version>
 
     <build>
      <plugins>

@@ -28,13 +28,13 @@
   <parent>
     <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
     <groupId>org.rhq</groupId>
-    <version>4.13.0-SNAPSHOT</version>
+    <version>4.14.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.rhq</groupId>
   <artifactId>alert-ups</artifactId>
-  <version>4.13.0-SNAPSHOT</version>
+  <version>4.14.0-SNAPSHOT</version>
 
   <name>RHQ Aerogear-UPS Alert Plugin</name>
 

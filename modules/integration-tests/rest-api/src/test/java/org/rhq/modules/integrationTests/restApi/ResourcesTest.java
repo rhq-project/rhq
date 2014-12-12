@@ -54,6 +54,7 @@ import com.jayway.restassured.response.Headers;
 import com.jayway.restassured.response.Response;
 
 import org.apache.http.HttpStatus;
+import org.junit.Assert;
 import org.junit.Test;
 
 import org.rhq.modules.integrationTests.restApi.d.Availability;
@@ -294,6 +295,35 @@ public class ResourcesTest extends AbstractBase {
             .get("/resource/" + _platformId + "/children");
         JsonPath jsonPath = r.jsonPath();
         assert jsonPath.getList("").size() == 2;
+    }
+
+    @Test
+    public void testGetChildResourcesWithFilter() throws Exception {
+
+        int platform = findIdOfARealPlatform();
+        Response r = given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("category", "platform")
+        .expect()
+            .statusCode(200)
+            .log().everything()
+        .when()
+            .get("/resource/" + _platformId + "/children");
+        assert r.jsonPath().getList("").size() == 0;
+
+        r = given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("q", "Storage")
+        .expect()
+            .statusCode(200)
+            .log().everything()
+        .when()
+            .get("/resource/" + platform + "/children");
+
+        Assert.assertTrue(r.getBody().asString() + "", r
+            .jsonPath().getList("").size() == 1);
     }
 
     @Test

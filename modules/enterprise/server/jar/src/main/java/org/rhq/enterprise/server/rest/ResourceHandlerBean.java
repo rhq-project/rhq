@@ -556,14 +556,41 @@ public class ResourceHandlerBean extends AbstractRestBean {
             @ApiParam("Id of the resource to get children") @PathParam("id") int id,
             @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
             @ApiParam("Page for paging, 0-based") @QueryParam("page") @DefaultValue("0") Integer page,
+            @ApiParam("Limit results to param in the resource name") @QueryParam("q") String q,
+            @ApiParam("Limit to category (PLATFORM, SERVER, SERVICE)") @QueryParam("category") String category,
+            @ApiParam(value = "Limit to Inventory status of the resources", allowableValues = "ALL, NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED")
+                @DefaultValue("COMMITTED") @QueryParam("status") String status,
             @Context HttpHeaders headers,
             @Context UriInfo uriInfo) {
 
-        PageControl pc = new PageControl(page,pageSize);
-        Resource parent;
-        parent = fetchResource(id);
-        List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller, parent, InventoryStatus.COMMITTED,
-            pc);
+        // just check if resource exists
+        fetchResource(id);
+
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addSortName(PageOrdering.ASC);
+        criteria.addFilterParentResourceId(id);
+        if (!status.toLowerCase().equals("all")) {
+            try {
+                criteria.addFilterInventoryStatus(InventoryStatus.valueOf(status.toUpperCase()));
+            } catch (IllegalArgumentException iae) {
+                throw new BadArgumentException("status", "Value " + status
+                    + " is not in the list of allowed values: ALL, NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED");
+            }
+        } else {
+            // JavaDoc says to explicitly set to null in order to get all Status
+            criteria.addFilterInventoryStatus(null);
+        }
+        if (q != null) {
+            criteria.addFilterName(q);
+        }
+        if (category != null) {
+            criteria.addFilterResourceCategories(ResourceCategory.valueOf(category.toUpperCase()));
+        }
+        if (page != null) {
+            criteria.setPaging(page, pageSize);
+        }
+        PageList<Resource> ret = resMgr.findResourcesByCriteria(caller, criteria);
+
         List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
         for (Resource r : ret) {
             ResourceWithType rwt = fillRWT(r, uriInfo);

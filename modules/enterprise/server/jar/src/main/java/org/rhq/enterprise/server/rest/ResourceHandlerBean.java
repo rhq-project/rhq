@@ -115,6 +115,7 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 import org.rhq.enterprise.server.rest.domain.StringValue;
 import org.rhq.enterprise.server.rest.helper.ConfigurationHelper;
+import org.rhq.enterprise.server.rest.helper.ResourceCriteriaHelper;
 
 /**
  * Class that deals with getting data about resources
@@ -227,6 +228,35 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
         return Response.ok(outWithType).build();
 
+    }
+
+    @GET
+    @GZIP
+    @Path("/search")
+    @ApiError(code = 406, reason = "The passed inventory status was invalid")
+    @ApiOperation(value = "Search for resources based on query parameters", notes = "You can use any parameters based on org.rhq.core.domain.criteria.ResourceCriteria#addFilter*,"
+        + " , but note that only one value is passed to filter method (even if it may support multiple values)."
+        + " For example parameter name=value transforms to ResourceCriteria#addFilterName(value),"
+        + " parameter pluginName=value transforms to ResourceCriteria#addFilterPluginName(value)."
+        + " For some parameter names, following are equivalent : "
+        + ResourceCriteriaHelper.PARAM_SHORTCUTS_TEXT
+        + ". For example, to find all running AS7 Standalone Servers on a platform do GET /resource/search?parentId=10001&type=JBossAS7 Standalone Server&availability=UP", responseClass = "ResourceWithType")
+    public Response searchResourcesByQuery(
+        @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
+        @ApiParam("Page for paging, 0-based") @QueryParam("page") @DefaultValue("0") Integer page,
+        @ApiParam("Enable strict filtering") @QueryParam("strict") @DefaultValue("false") boolean strict,
+        @Context HttpHeaders headers,
+        @Context UriInfo uriInfo) {
+
+        ResourceCriteria criteria = ResourceCriteriaHelper.create(uriInfo.getQueryParameters());
+        criteria.addSortName(PageOrdering.ASC);
+
+        if (page != null) {
+            criteria.setPaging(page, pageSize);
+        }
+        PageList<Resource> ret = resMgr.findResourcesByCriteria(caller, criteria);
+        Response.ResponseBuilder builder = getResponseBuilderForResourceList(headers, uriInfo, ret);
+        return builder.build();
     }
 
     @GET @GZIP

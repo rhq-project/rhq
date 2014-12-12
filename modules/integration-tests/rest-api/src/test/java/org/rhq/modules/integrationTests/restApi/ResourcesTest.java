@@ -57,6 +57,9 @@ import org.apache.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.modules.integrationTests.restApi.d.Availability;
 import org.rhq.modules.integrationTests.restApi.d.CreateCBRRequest;
 import org.rhq.modules.integrationTests.restApi.d.Resource;
@@ -163,6 +166,177 @@ public class ResourcesTest extends AbstractBase {
         .when()
             .get("/resource/{id}");
 
+    }
+
+    @Test
+    public void testResourceSearch() throws Exception {
+        int platformId = findIdOfARealPlatform();
+
+        Response r = given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("id", platformId)
+            .queryParam("category", "platform")
+         .expect()
+            .statusCode(200)
+            .body("links.self", notNullValue())
+         .when()
+            .get("/resource/search");
+
+        JsonPath jsonPath = r.jsonPath();
+        assert jsonPath.getList("").size() == 1;
+    }
+
+    @Test
+    public void testResourceSearchInvalidParams() throws Exception {
+
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("foo", "foo")
+         .expect()
+            .statusCode(406)
+         .when()
+            .get("/resource/search");
+
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("id", "foo")
+        .expect()
+            .statusCode(406)
+        .when()
+            .get("/resource/search");
+
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("status", "foo")
+        .expect()
+            .statusCode(406)
+        .when()
+            .get("/resource/search");
+    }
+
+    @Test
+    public void testResourceSearchPaging() throws Exception {
+        int as7id = findIdOfARealEAP6();
+
+        Response r = given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("parentResourceId", as7id)
+            .queryParam("ps", "3")
+         .expect()
+            .statusCode(200)
+            .body("links.self", notNullValue())
+         .when()
+            .get("/resource/search");
+
+        JsonPath jsonPath = r.jsonPath();
+        assert jsonPath.getList("").size() == 3;
+
+        r = given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("parentResourceId", as7id)
+            .queryParam("ps", "3")
+            .queryParam("page", 1)
+         .expect()
+            .statusCode(200)
+            .body("links.self", notNullValue())
+         .when()
+            .get("/resource/search");
+
+        jsonPath = r.jsonPath();
+        assert jsonPath.getList("").size() == 3;
+    }
+
+    @Test
+    public void testResourceSearchForChildrenOfAType() throws Exception {
+        int as7id = findIdOfARealEAP6();
+
+        Response r = given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("parentResourceId", as7id)
+            .queryParam("resourceTypeName", "logging")
+            .queryParam("name", "logg") // let strict=false (default) do it's work
+            .queryParam("pluginName", "JBossAS7")
+            .queryParam("resourceCategories", ResourceCategory.SERVICE.name())
+            .queryParam("inventoryStatus", InventoryStatus.COMMITTED.name())
+            .queryParam("currentAvailability", AvailabilityType.UP.name())
+         .expect()
+            .statusCode(200)
+            .body("links.self", notNullValue())
+         .when()
+            .get("/resource/search");
+
+        JsonPath jsonPath = r.jsonPath();
+        assert jsonPath.getList("").size() == 1;
+    }
+
+    @Test
+    public void testResourceSearchForChildrenOfATypeShortcuts() throws Exception {
+        int as7id = findIdOfARealEAP6();
+
+        Response r = given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("parentResourceId", as7id)
+            .queryParam("type", "logging")
+            .queryParam("name", "logg") // let strict=false (default) do it's work
+            .queryParam("plugin", "JBossAS7")
+            .queryParam("category", ResourceCategory.SERVICE.name())
+            .queryParam("status", InventoryStatus.COMMITTED.name())
+            .queryParam("availability", AvailabilityType.UP.name())
+         .expect()
+            .statusCode(200)
+            .body("links.self", notNullValue())
+         .when()
+            .get("/resource/search");
+
+        JsonPath jsonPath = r.jsonPath();
+        assert jsonPath.getList("").size() == 1;
+    }
+
+    @Test
+    public void testResourceSearchForChildrenOfATypeStrict() throws Exception {
+        int as7id = findIdOfARealEAP6();
+
+        Response r = given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("parentResourceId", as7id)
+            .queryParam("resourceTypeName", "logging")
+            .queryParam("name", "logg")
+            .queryParam("strict", "true")
+            .queryParam("pluginName", "JBossAS7")
+         .expect()
+            .statusCode(200)
+            .body("links.self", notNullValue())
+         .when()
+            .get("/resource/search");
+
+        JsonPath jsonPath = r.jsonPath();
+        assert jsonPath.getList("").size() == 0;
+
+        r = given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("parentResourceId", as7id)
+            .queryParam("resourceTypeName", "logging")
+            .queryParam("name", "logging")
+            .queryParam("strict", "true")
+            .queryParam("pluginName", "JBossAS7")
+         .expect()
+            .statusCode(200)
+            .body("links.self", notNullValue())
+         .when()
+            .get("/resource/search");
+
+        jsonPath = r.jsonPath();
+        assert jsonPath.getList("").size() == 1;
     }
 
     @Test

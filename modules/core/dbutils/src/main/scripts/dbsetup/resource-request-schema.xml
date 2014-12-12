@@ -25,7 +25,10 @@
         <column name="CTIME" type="LONG" required="true"/>
         <column name="MTIME" type="LONG" required="true"/>
         <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
-        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+        <column name="PARENT_RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE" />
+        <column name="RESOURCE_NAME" type="VARCHAR2" required="true" size="500" />
+        <column name="RESOURCE_KEY" type="VARCHAR2" required="true" size="500" />
     </table>
 
 </dbsetup>

@@ -904,13 +904,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             throw new InvalidInventoryReportException("Reported resource [" + resource + "] has a null key.");
         }
 
-        if (resource.getInventoryStatus() == InventoryStatus.DELETED) {
-            throw new InvalidInventoryReportException(
-                "Reported resource ["
-                    + resource
-                    + "] has an illegal inventory status of 'DELETED' - agents are not allowed to delete platforms from inventory.");
-        }
-
         // Recursively validate all the resource's descendants.
         for (Resource childResource : resource.getChildResources()) {
             validateResource(childResource);
@@ -1273,15 +1266,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             LOG.warn("Agent reported that key for " + existingResource + " has changed from '"
                 + existingResource.getResourceKey() + "' to '" + updatedResource.getResourceKey() + "'.");
         }
-
         updateResourceVersion(existingResource, updatedResource.getVersion());
-
-        // If the resource was marked as deleted, reactivate it again.
-        if (existingResource.getInventoryStatus() == InventoryStatus.DELETED) {
-            existingResource.setInventoryStatus(InventoryStatus.COMMITTED);
-            existingResource.setPluginConfiguration(updatedResource.getPluginConfiguration());
-            existingResource.setAgentSynchronizationNeeded();
-        }
     }
 
     private boolean initResourceTypes(Resource resource) {

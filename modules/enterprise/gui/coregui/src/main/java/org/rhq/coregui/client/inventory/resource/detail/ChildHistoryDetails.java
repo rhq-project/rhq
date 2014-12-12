@@ -190,17 +190,8 @@ public class ChildHistoryDetails extends EnhancedVLayout {
         StaticTextItem deletedResourceName = new StaticTextItem("deletedResourceName", MSG.common_title_resource_name());
         StaticTextItem deletedResourceType = new StaticTextItem("deletedResourceType", MSG.common_title_resource_type());
 
-        if (history.getResource() != null) {
-            deletedResourceName.setValue(history.getResource().getName());
-            if (history.getResource().getResourceType() != null) {
-                deletedResourceType.setValue(ResourceTypeUtility.displayName(history.getResource().getResourceType()));
-            } else {
-                deletedResourceType.setValue(MSG.common_status_unknown());
-            }
-        } else {
-            deletedResourceName.setValue(MSG.common_status_unknown());
-            deletedResourceType.setValue(MSG.common_status_unknown());
-        }
+        deletedResourceName.setValue(history.getResourceName());
+        deletedResourceType.setValue(ResourceTypeUtility.displayName(history.getResourceType()));
 
         TextAreaItem errorMessage = new TextAreaItem("errorMessage", MSG.common_severity_error());
         errorMessage.setValue(history.getErrorMessage());

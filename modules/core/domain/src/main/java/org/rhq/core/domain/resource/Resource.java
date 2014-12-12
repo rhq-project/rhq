@@ -1107,11 +1107,6 @@ public class Resource implements Comparable<Resource>, Serializable {
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
     @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
     @OrderBy
-    private List<DeleteResourceHistory> deleteResourceRequests;//  = new ArrayList<DeleteResourceHistory>();
-
-    // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
-    @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
-    @OrderBy
     // by primary key which will also put the operation histories in chronological order
     private List<ResourceOperationHistory> operationHistories;//  = new ArrayList<ResourceOperationHistory>();
 
@@ -1624,22 +1619,6 @@ public class Resource implements Comparable<Resource>, Serializable {
         }
         request.setParentResource(this);
         this.createChildResourceRequests.add(request);
-    }
-
-    public List<DeleteResourceHistory> getDeleteResourceRequests() {
-        if (deleteResourceRequests == null) {
-            deleteResourceRequests = new ArrayList<DeleteResourceHistory>(1);
-        }
-        return deleteResourceRequests;
-    }
-
-    public void setDeleteResourceRequests(List<DeleteResourceHistory> deleteResourceRequests) {
-        this.deleteResourceRequests = deleteResourceRequests;
-    }
-
-    public void addDeleteResourceHistory(DeleteResourceHistory history) {
-        history.setResource(this);
-        this.deleteResourceRequests.add(history);
     }
 
     public Agent getAgent() {

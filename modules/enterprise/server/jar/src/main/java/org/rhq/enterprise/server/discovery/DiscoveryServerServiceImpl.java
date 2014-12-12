@@ -236,7 +236,6 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         resource.setAutoGroupBackingGroups(Collections.EMPTY_LIST);
         resource.setExplicitGroups(Collections.EMPTY_SET);
         resource.setCreateChildResourceRequests(Collections.EMPTY_LIST);
-        resource.setDeleteResourceRequests(Collections.EMPTY_LIST);
         resource.setImplicitGroups(Collections.EMPTY_SET);
         resource.setInstalledPackageHistory(Collections.EMPTY_LIST);
         resource.setInstalledPackages(Collections.EMPTY_SET);
@@ -327,8 +326,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     }
 
     private static boolean isVisibleInInventory(Resource resource) {
-        return resource.getInventoryStatus() != InventoryStatus.DELETED
-            && resource.getInventoryStatus() != InventoryStatus.UNINVENTORIED;
+        return resource.getInventoryStatus() != InventoryStatus.UNINVENTORIED;
     }
 
     @Override

@@ -23,6 +23,7 @@
 package org.rhq.core.clientapi.agent.inventory;
 
 import java.io.Serializable;
+
 import org.rhq.core.domain.resource.DeleteResourceStatus;
 
 /**
@@ -32,6 +33,7 @@ public class DeleteResourceResponse implements Serializable {
     // Attributes  --------------------------------------------
 
     private int requestId;
+    private int resourceId;
     private DeleteResourceStatus status;
     private String errorMessage;
 
@@ -40,8 +42,9 @@ public class DeleteResourceResponse implements Serializable {
     public DeleteResourceResponse() {
     }
 
-    public DeleteResourceResponse(int requestId, DeleteResourceStatus status, String errorMessage) {
+    public DeleteResourceResponse(int requestId, int resourceId, DeleteResourceStatus status, String errorMessage) {
         this.requestId = requestId;
+        this.resourceId = resourceId;
         this.status = status;
         this.errorMessage = errorMessage;
     }
@@ -54,6 +57,14 @@ public class DeleteResourceResponse implements Serializable {
 
     public void setRequestId(int requestId) {
         this.requestId = requestId;
+    }
+
+    public int getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(int resourceId) {
+        this.resourceId = resourceId;
     }
 
     public DeleteResourceStatus getStatus() {

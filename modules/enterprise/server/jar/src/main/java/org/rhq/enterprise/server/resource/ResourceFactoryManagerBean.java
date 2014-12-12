@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -61,7 +60,6 @@ import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceStatus;
-import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
@@ -153,7 +151,6 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Received call to complete delete resource: " + response);
         }
-
         // Load the persisted history entry
         DeleteResourceHistory history = entityManager.find(DeleteResourceHistory.class, response.getRequestId());
 
@@ -169,27 +166,10 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
         // If successful mark resource as deleted and uninventory children
         if (response.getStatus() == DeleteResourceStatus.SUCCESS) {
-            Resource resource = history.getResource();
-
-            // get doomed children
-            Set<Resource> children = resource.getChildResources();
-
-            // set the resource deleted and update the db in case it matters to the child operations
-            resource.setInventoryStatus(InventoryStatus.DELETED);
-            //resource.setParentResource(null); can't null this out since the query DeleteResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID needs it
-            resource.setItime(System.currentTimeMillis());
-            entityManager.merge(resource);
-
-            // uninventory the children of the deleted resource (see rhq-2378)
-            uninventoryChildren(children);
+            resourceManager.uninventoryResourceInNewTransaction(response.getResourceId());
         }
     }
 
-    private void uninventoryChildren(Set<Resource> children) {
-        for (Resource child : children) {
-            resourceManager.uninventoryResourceInNewTransaction(child.getId());
-        }
-    }
 
     @SuppressWarnings("unchecked")
     public void checkForTimedOutRequests() {
@@ -307,10 +287,6 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         history.setStatus(DeleteResourceStatus.IN_PROGRESS);
 
         entityManager.persist(history);
-        resource.addDeleteResourceHistory(history);
-
-        // Caller will need this
-        resource.getAgent();
 
         return history;
     }
@@ -705,7 +681,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
             // Submit the error as a failure response
             String errorMessage = ThrowableUtil.getAllMessages(e);
-            DeleteResourceResponse response = new DeleteResourceResponse(persistedHistory.getId(),
+            DeleteResourceResponse response = new DeleteResourceResponse(persistedHistory.getId(), resourceId,
                 DeleteResourceStatus.FAILURE, errorMessage);
             resourceFactoryManager.completeDeleteResourceRequest(response);
 
@@ -715,7 +691,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
             // Submit the error as a failure response
             String errorMessage = ThrowableUtil.getAllMessages(e);
-            DeleteResourceResponse response = new DeleteResourceResponse(persistedHistory.getId(),
+            DeleteResourceResponse response = new DeleteResourceResponse(persistedHistory.getId(), resourceId,
                 DeleteResourceStatus.FAILURE, errorMessage);
             resourceFactoryManager.completeDeleteResourceRequest(response);
 

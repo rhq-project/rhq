@@ -22,17 +22,17 @@
   */
 package org.rhq.core.pc.inventory;
 
- import org.rhq.core.clientapi.agent.inventory.DeleteResourceResponse;
- import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
- import org.rhq.core.domain.resource.DeleteResourceStatus;
- import org.rhq.core.pc.PluginContainer;
- import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
- import org.rhq.core.util.exception.ThrowableUtil;
-
- import org.apache.commons.logging.Log;
- import org.apache.commons.logging.LogFactory;
-
  import java.util.concurrent.Callable;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.clientapi.agent.inventory.DeleteResourceResponse;
+import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
+import org.rhq.core.domain.resource.DeleteResourceStatus;
+import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+import org.rhq.core.util.exception.ThrowableUtil;
 
  /**
  * Runnable implementation to thread delete resource requests.
@@ -112,7 +112,7 @@ public class DeleteResourceRunner implements Callable, Runnable {
             status = DeleteResourceStatus.FAILURE;
         }
 
-        DeleteResourceResponse response = new DeleteResourceResponse(requestId, status, errorMessage);
+        DeleteResourceResponse response = new DeleteResourceResponse(requestId, resourceId, status, errorMessage);
 
         ResourceFactoryServerService serverService = resourceFactoryManager.getServerService();
         if (serverService != null) {

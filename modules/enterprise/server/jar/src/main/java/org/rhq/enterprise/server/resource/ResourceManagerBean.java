@@ -737,7 +737,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             ContentServiceRequest.QUERY_DELETE_BY_RESOURCES, //
             ResourceOperationScheduleEntity.QUERY_DELETE_BY_RESOURCES, //
             ResourceOperationHistory.QUERY_DELETE_BY_RESOURCES, //
-            DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES, //
+            DeleteResourceHistory.QUERY_DELETE_BY_PARENT_RESOURCE_IDS, // delete history items where this resource was parent (it's children was deleted)
             CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, //
             ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0, // orphan parent list or maps (execute only on non selfRefCascade dbs)
             ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config

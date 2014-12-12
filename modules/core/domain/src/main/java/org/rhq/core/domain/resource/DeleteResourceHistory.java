@@ -52,10 +52,11 @@ import javax.persistence.Table;
     @NamedQuery(name = DeleteResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, query = "" //
         + "SELECT drh " //
         + "  FROM DeleteResourceHistory AS drh " //
-        + " WHERE drh.resource.parentResource.id = :id " //
+        + " WHERE drh.parentResource.id = :id " //
         + "   AND ( drh.ctime > :startTime OR :startTime IS NULL ) " //
         + "   AND ( drh.mtime < :endTime OR :endTime IS NULL ) "),
-    @NamedQuery(name = DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM DeleteResourceHistory drh WHERE drh.resource.id IN ( :resourceIds ) )") })
+    @NamedQuery(name = DeleteResourceHistory.QUERY_DELETE_BY_PARENT_RESOURCE_IDS, query = "DELETE FROM DeleteResourceHistory drh WHERE drh.parentResource.id IN ( :resourceIds ) )"),
+    @NamedQuery(name = DeleteResourceHistory.QUERY_DELETE_BY_RESOURCE_TYPE_ID, query = "DELETE FROM DeleteResourceHistory drh WHERE drh.resourceType.id = :resourceTypeId") })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_DELETE_RES_HIST_ID_SEQ", sequenceName = "RHQ_DELETE_RES_HIST_ID_SEQ")
 @Table(name = "RHQ_DELETE_RES_HIST")
 public class DeleteResourceHistory implements Serializable {
@@ -66,8 +67,8 @@ public class DeleteResourceHistory implements Serializable {
 
     public static final String QUERY_FIND_WITH_STATUS = "DeleteResourceHistory.findWithStatus";
     public static final String QUERY_FIND_BY_PARENT_RESOURCE_ID = "DeleteResourceHistory.findByParentResourceId";
-    public static final String QUERY_DELETE_BY_RESOURCES = "DeleteResourceHistory.deleteByResources";
-
+    public static final String QUERY_DELETE_BY_PARENT_RESOURCE_IDS = "DeleteResourceHistory.deleteByResources";
+    public static final String QUERY_DELETE_BY_RESOURCE_TYPE_ID = "DeleteResourceHistory.deleteByResourceTypeId";
     // Attributes  --------------------------------------------
 
     @GeneratedValue(generator = "RHQ_DELETE_RES_HIST_ID_SEQ", strategy = GenerationType.AUTO)
@@ -90,11 +91,19 @@ public class DeleteResourceHistory implements Serializable {
     @Enumerated(EnumType.STRING)
     private DeleteResourceStatus status;
 
-    // Parameters for plugin call ----------
-
-    @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "PARENT_RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
-    private Resource resource;
+    private Resource parentResource;
+
+    @Column(name = "RESOURCE_NAME", nullable = false)
+    private String resourceName;
+
+    @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne
+    ResourceType resourceType;
+
+    @Column(name = "RESOURCE_KEY", nullable = false)
+    private String resourceKey;
 
     // Constructors  --------------------------------------------
 
@@ -107,7 +116,10 @@ public class DeleteResourceHistory implements Serializable {
      * @param resource being deleted
      */
     public DeleteResourceHistory(Resource resource, String subjectName) {
-        this.resource = resource;
+        this.resourceName = resource.getName();
+        this.resourceKey = resource.getResourceKey();
+        this.resourceType = resource.getResourceType();
+        this.parentResource = resource.getParentResource();
         this.subjectName = subjectName;
     }
 
@@ -173,12 +185,16 @@ public class DeleteResourceHistory implements Serializable {
         this.status = status;
     }
 
-    public Resource getResource() {
-        return resource;
+    public String getResourceName() {
+        return resourceName;
     }
 
-    public void setResource(Resource resource) {
-        this.resource = resource;
+    public String getResourceKey() {
+        return resourceKey;
+    }
+
+    public ResourceType getResourceType() {
+        return resourceType;
     }
 
     /**

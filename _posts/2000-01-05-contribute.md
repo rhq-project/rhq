@@ -20,6 +20,11 @@ Our user mailing list and our developer mailing list are the main channels of co
 * [https://fedorahosted.org/mailman/listinfo/rhq-devel](https://fedorahosted.org/mailman/listinfo/rhq-devel) (devel list)
 
 {: style="margin-top:50px;"}
+### Wiki ###
+
+In order to boot into the domain and grasp the nomenclature we use, good start is the RHQ [wikipage](https://docs.jboss.org/author/display/RHQ/Home).
+
+{: style="margin-top:50px;"}
 ### Forum ###
 
 You can also help the community by answering the questions either on our own RHQ [forum](https://community.jboss.org/en/rhq) or on [StackOverflow](https://stackoverflow.com/search?q=rhq).

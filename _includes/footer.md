@@ -17,6 +17,10 @@
                             <li>
                                 <a href="https://github.com/rhq-project/rhq" class="btn-social btn-outline"><i class="fa fa-fw fa-github-alt"></i></a>
                             </li>
+                            <li>
+                                <a href="http://starlogs.net/#rhq-project/rhq" class="btn-social btn-outline"><i class="fa fa-fw fa-rocket"></i></a>
+                            </li>
+
                         </ul>
                     </div>
 

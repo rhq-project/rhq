@@ -459,12 +459,8 @@ case "$1" in
         # START SERVER
         # first, make sure its working directory is the JBossAS bin directory
         cd "${RHQ_SERVER_JBOSS_HOME}/bin"
-        trap 'kill -TERM $PID' TERM INT
-        LAUNCH_JBOSS_IN_BACKGROUND=1 "$_JBOSS_RUN_SCRIPT" $_CMDLINE_OPTS &
-        PID=$!
-        wait $PID
-        trap - TERM INT
-        wait $PID
+        "$_JBOSS_RUN_SCRIPT" $_CMDLINE_OPTS
+
         _JBOSS_STATUS=$?
 
         remove_pid_files

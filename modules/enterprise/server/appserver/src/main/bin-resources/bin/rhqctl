@@ -218,8 +218,8 @@ if [ $? = 0 ] && [ $COLORS -gt 2 ]; then
     RHQ_CONTROL_ADDITIONAL_JAVA_OPTS="-Dcolor=true ${RHQ_CONTROL_ADDITIONAL_JAVA_OPTS}"
 fi
 
-# start the AS instance with our main installer module
-"$RHQ_JAVA_EXE_FILE_PATH" ${RHQ_CONTROL_JAVA_OPTS} ${RHQ_CONTROL_ADDITIONAL_JAVA_OPTS} -jar "${RHQ_SERVER_JBOSS_HOME}/jboss-modules.jar" -mp "$_JBOSS_MODULEPATH" org.rhq.rhq-server-control "$@"
+# start the rhqctl instance
+exec "$RHQ_JAVA_EXE_FILE_PATH" ${RHQ_CONTROL_JAVA_OPTS} ${RHQ_CONTROL_ADDITIONAL_JAVA_OPTS} -jar "${RHQ_SERVER_JBOSS_HOME}/jboss-modules.jar" -mp "$_JBOSS_MODULEPATH" org.rhq.rhq-server-control "$@"
 
 _EXIT_STATUS=$?
 exit $_EXIT_STATUS

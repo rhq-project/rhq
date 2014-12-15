@@ -28,6 +28,9 @@ import java.util.concurrent.Future;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteWatchdog;
+import org.apache.commons.exec.Executor;
 
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
@@ -122,9 +125,7 @@ public class Console extends ControlCommand {
             return startInWindowsForeground(storageBinDir, "cassandra", "-f");
         }
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(getCommandLine(false,
-            "cassandra", "-f"));
-        return ExecutorAssist.execute(storageBinDir, commandLine);
+        return startConsole(storageBinDir, getCommandLine(false, "cassandra", "-f"));
     }
 
     private int startServerInForeground() throws Exception {
@@ -137,8 +138,7 @@ public class Console extends ControlCommand {
             return startInWindowsForeground(binDir, "rhq-server", "console");
         }
 
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "console");
-        return ExecutorAssist.execute(binDir, commandLine);
+        return startConsole(binDir, getCommandLine("rhq-server", "console"));
     }
 
     private int startAgentInForeground() throws Exception {
@@ -213,5 +213,27 @@ public class Console extends ControlCommand {
                 log.error("An error occurred processing input from the agent prompt", e);
             }
         }
+    }
+
+    /**
+     * This assistant method provides correct SIGTERM handling.
+     *
+     * @param workingDir
+     * @param commandLine
+     * @return Exit code of the rhq-server.sh console, or 143 (128+15) in Linux if the service was killed.
+     * @throws IOException
+     */
+    private int startConsole(final File workingDir, final org.apache.commons.exec.CommandLine commandLine) throws IOException {
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(workingDir);
+        final ExecuteWatchdog watchdog = new ExecuteWatchdog(ExecuteWatchdog.INFINITE_TIMEOUT);
+        executor.setWatchdog(watchdog);
+        this.addUndoTask(new UndoTask() {
+            @Override
+            protected void performUndoWork() throws Exception {
+                watchdog.destroyProcess();
+            }
+        });
+        return executor.execute(commandLine);
     }
 }

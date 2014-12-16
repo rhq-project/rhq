@@ -168,6 +168,78 @@
             </plugins>
          </build>
       </profile>
+    <profile>
+      <id>dev</id>
+
+      <properties>
+        <rhq.rootDir>../../..</rhq.rootDir>
+        <rhq.agentContainerDir>${rhq.rootDir}/${rhq.devContainerAgentPath}</rhq.agentContainerDir>
+        <rhq.agentDeploymentDir>${rhq.agentContainerDir}/lib</rhq.agentDeploymentDir>
+      </properties>
+
+      <build>
+        <plugins>
+
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+
+              <execution>
+                <id>deploy</id>
+                <phase>compile</phase>
+                <configuration>
+                  <target>
+                    <mkdir dir="${rhq.agentDeploymentDir}" />
+                    <property name="deployment.file" location="${rhq.agentDeploymentDir}/${project.build.finalName}.jar" />
+                    <echo>*** Updating ${deployment.file}...</echo>
+                    <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+              <execution>
+                <id>deploy-jar-meta-inf</id>
+                <phase>package</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.file" location="${rhq.agentDeploymentDir}/${project.build.finalName}.jar" />
+                    <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
+                    <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
+                      <patternset><include name="META-INF/**" /></patternset>
+                    </unjar>
+                    <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
+                    </jar>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+              <execution>
+                <id>undeploy</id>
+                <phase>clean</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.file" location="${rhq.agentDeploymentDir}/${project.build.finalName}.jar" />
+                    <echo>*** Deleting ${deployment.file}...</echo>
+                    <delete file="${deployment.file}" />
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
   </profiles>
   <repositories>
      <!-- This is for SIGAR 1.6.4. -->

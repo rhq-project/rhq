@@ -192,7 +192,8 @@ done
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_AGENT_JAVA_OPTS" ]; then
-   RHQ_AGENT_JAVA_OPTS='-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true "-Drhq.preferences.file=${RHQ_AGENT_HOME}/conf/agent-prefs.properties"'
+    RHQ_AGENT_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
+    RHQ_AGENT_PREF_PROPERTIES="-Drhq.preferences.file=${RHQ_AGENT_HOME}/conf/agent-prefs.properties"
 fi
 debug_msg "RHQ_AGENT_JAVA_OPTS: $RHQ_AGENT_JAVA_OPTS"
 
@@ -208,7 +209,7 @@ else
       RHQ_AGENT_JAVA_ENDORSED_DIRS=`cygpath --windows --path "$RHQ_AGENT_JAVA_ENDORSED_DIRS"`
    fi
    debug_msg "RHQ_AGENT_JAVA_ENDORSED_DIRS: $RHQ_AGENT_JAVA_ENDORSED_DIRS"
-   _JAVA_ENDORSED_DIRS_OPT="\"-Djava.endorsed.dirs=${RHQ_AGENT_JAVA_ENDORSED_DIRS}\""
+   _JAVA_ENDORSED_DIRS_OPT="-Djava.endorsed.dirs=${RHQ_AGENT_JAVA_ENDORSED_DIRS}"
 fi
 
 if [ "$RHQ_AGENT_JAVA_LIBRARY_PATH" = "none" ]; then
@@ -223,7 +224,7 @@ else
       RHQ_AGENT_JAVA_LIBRARY_PATH=`cygpath --windows --path "$RHQ_AGENT_JAVA_LIBRARY_PATH"`
    fi
    debug_msg "RHQ_AGENT_JAVA_LIBRARY_PATH: $RHQ_AGENT_JAVA_LIBRARY_PATH"
-   _JAVA_LIBRARY_PATH_OPT="\"-Djava.library.path=${RHQ_AGENT_JAVA_LIBRARY_PATH}\""
+   _JAVA_LIBRARY_PATH_OPT="-Djava.library.path=${RHQ_AGENT_JAVA_LIBRARY_PATH}"
 fi
 
 debug_msg "RHQ_AGENT_ADDITIONAL_JAVA_OPTS: $RHQ_AGENT_ADDITIONAL_JAVA_OPTS"
@@ -231,7 +232,7 @@ debug_msg "RHQ_AGENT_ADDITIONAL_JAVA_OPTS: $RHQ_AGENT_ADDITIONAL_JAVA_OPTS"
 # ----------------------------------------------------------------------
 # Ensure the agent uses our custom JavaPreferences implementation
 # ----------------------------------------------------------------------
-_JAVA_PREFERENCES_FACTORY_OPT="\"-Djava.util.prefs.PreferencesFactory=org.rhq.core.util.preferences.FilePreferencesFactory\""
+_JAVA_PREFERENCES_FACTORY_OPT="-Djava.util.prefs.PreferencesFactory=org.rhq.core.util.preferences.FilePreferencesFactory"
 # add umask so user preferences are not world readable
 if [ -z "${RHQ_AGENT_UMASK}" ]; then
    RHQ_AGENT_UMASK=007
@@ -276,7 +277,7 @@ if [ -n "$_LINUX" ]; then
    # JNA. Without this, the lookup of .so.x.y versions wouldn't work.
    # We also need to keep the LD_LIBRARY_PATH in place so that the default
    # system lookup works for libfa, which libaugeas depends on.
-   _JNA_LIBRARY_PATH="\"-Djna.platform.library.path=${LD_LIBRARY_PATH}\""
+   _JNA_LIBRARY_PATH="-Djna.platform.library.path=${LD_LIBRARY_PATH}"
 
    debug_msg "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
 fi
@@ -314,17 +315,16 @@ fi
 
 # Build the command line that starts the VM
 # note - currently not using custom Java Prefs as the default, use commented command line to activate
-# CMD="\"${RHQ_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${_JAVA_PREFERENCES_FACTORY_OPT} ${_JNA_LIBRARY_PATH} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" ${RHQ_AGENT_MAINCLASS} ${RHQ_AGENT_CMDLINE_OPTS}"
-CMD="\"${RHQ_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${_JNA_LIBRARY_PATH} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" ${RHQ_AGENT_MAINCLASS} ${RHQ_AGENT_CMDLINE_OPTS}"
+CMD="\"${RHQ_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${_JNA_LIBRARY_PATH} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_PREF_PROPERTIES} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" ${RHQ_AGENT_MAINCLASS} ${RHQ_AGENT_CMDLINE_OPTS}"
 
 debug_msg "Executing the agent with this command line:"
 debug_msg "$CMD"
 
 # Run the VM - put it in background if the caller wants it to be
 if [ -z "$RHQ_AGENT_IN_BACKGROUND" ]; then
-   eval "$CMD"
+   exec $RHQ_JAVA_EXE_FILE_PATH "$_JAVA_ENDORSED_DIRS_OPT" "$_JAVA_LIBRARY_PATH_OPT" "$_JNA_LIBRARY_PATH" $RHQ_AGENT_JAVA_OPTS "$RHQ_AGENT_PREF_PROPERTIES" $RHQ_AGENT_ADDITIONAL_JAVA_OPTS $_LOG_CONFIG -cp "$CLASSPATH" $RHQ_AGENT_MAINCLASS $RHQ_AGENT_CMDLINE_OPTS
 else
-   eval "$CMD &"
+   exec $RHQ_JAVA_EXE_FILE_PATH "$_JAVA_ENDORSED_DIRS_OPT" "$_JAVA_LIBRARY_PATH_OPT" "$_JNA_LIBRARY_PATH" $RHQ_AGENT_JAVA_OPTS "$RHQ_AGENT_PREF_PROPERTIES" $RHQ_AGENT_ADDITIONAL_JAVA_OPTS $_LOG_CONFIG -cp "$CLASSPATH" $RHQ_AGENT_MAINCLASS $RHQ_AGENT_CMDLINE_OPTS &
    RHQ_AGENT_BACKGROUND_PID=$!
    export RHQ_AGENT_BACKGROUND_PID
    if [ "$RHQ_AGENT_IN_BACKGROUND" != "nofile" ]; then

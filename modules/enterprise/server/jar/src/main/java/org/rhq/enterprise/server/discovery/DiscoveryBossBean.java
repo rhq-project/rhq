@@ -1314,11 +1314,18 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             return true;
         }
 
+        // bz1174841 protect against the case where resource.hasCustomChildResourcesCollection() is true and the
+        // custom collection does not support Iterator.remove(). (note, just uses an approach that works in all cases.)
+        Set<Resource> badChildren = null;
         for (Iterator<Resource> childIterator = resource.getChildResources().iterator(); childIterator.hasNext();) {
             Resource child = childIterator.next();
             if (!initResourceTypes(child, loadedTypeMap)) {
-                childIterator.remove();
+                badChildren = (null == badChildren) ? new HashSet<Resource>() : badChildren;
+                badChildren.add(child);
             }
+        }
+        if (null != badChildren) {
+            resource.getChildResources().removeAll(badChildren);
         }
 
         return true;

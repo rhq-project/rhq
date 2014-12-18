@@ -46,7 +46,7 @@
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr-runtime</artifactId>
-            <version>3.3</version>
+            <version>${antlr.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>

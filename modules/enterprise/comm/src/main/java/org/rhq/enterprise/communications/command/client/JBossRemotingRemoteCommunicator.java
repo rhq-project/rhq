@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2014 Red Hat, Inc.
+ * Copyright (C) 2005-2008 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 package org.rhq.enterprise.communications.command.client;
 
@@ -351,16 +351,6 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
                 // once JBREM-745 is fixed, we can probably get rid of this catch block
                 ret_response = invoke(command);
                 OutgoingCommandTrace.finish(command, ret_response);
-            } catch (java.rmi.MarshalException rmie) {
-                // Due to JBREM-1245 we may fail due to SSL being shutdown and we need to retry.
-                if (rmie.getCause() != null && rmie.getCause() instanceof javax.net.ssl.SSLException
-                    && rmie.getCause().getMessage() != null
-                    && rmie.getCause().getMessage().startsWith("Connection has been shutdown")) { //$NON-NLS-1$
-                    ret_response = getRemotingClient().invoke(command, null);
-                    OutgoingCommandTrace.finish(command, ret_response);
-                } else {
-                    throw rmie;
-                }
             }
         } catch (Throwable t) {
             OutgoingCommandTrace.finish(command, t);

@@ -356,7 +356,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
                 if (rmie.getCause() != null && rmie.getCause() instanceof javax.net.ssl.SSLException
                     && rmie.getCause().getMessage() != null
                     && rmie.getCause().getMessage().startsWith("Connection has been shutdown")) { //$NON-NLS-1$
-                    ret_response = getRemotingClient().invoke(command, null);
+                    ret_response = invoke(command);
                     OutgoingCommandTrace.finish(command, ret_response);
                 } else {
                     throw rmie;

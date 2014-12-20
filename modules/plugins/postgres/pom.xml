@@ -5,12 +5,12 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-plugins-parent</artifactId>
-      <version>4.13.0</version>
+      <version>4.13.1</version>
    </parent>
 
    <groupId>org.rhq</groupId>
    <artifactId>rhq-postgres-plugin</artifactId>
-   <version>4.13.0</version>
+   <version>4.13.1</version>
    <packaging>jar</packaging>
 
    <name>RHQ Postgres Plugin</name>

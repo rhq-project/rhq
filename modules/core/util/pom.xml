@@ -5,11 +5,11 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-core-parent</artifactId>
-    <version>4.13.0</version>
+    <version>4.13.1</version>
   </parent>
 
   <artifactId>rhq-core-util</artifactId>
-  <version>4.13.0</version>
+  <version>4.13.1</version>
   <packaging>jar</packaging>
 
   <name>RHQ Utilities</name>

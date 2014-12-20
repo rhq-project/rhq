@@ -5,13 +5,13 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>4.13.0</version>
+    <version>4.13.1</version>
     <relativePath>../../../pom.xml</relativePath>
   </parent>
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-core-native-system</artifactId>
-  <version>4.13.0</version>
+  <version>4.13.1</version>
   <packaging>jar</packaging>
 
   <name>RHQ Native System API</name>

@@ -7,11 +7,11 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>4.13.0</version>
+      <version>4.13.1</version>
    </parent>
 
    <artifactId>rhq-core-plugin-container</artifactId>
-   <version>4.13.0</version>
+   <version>4.13.1</version>
    <packaging>jar</packaging>
 
    <name>RHQ Plugin Container</name>

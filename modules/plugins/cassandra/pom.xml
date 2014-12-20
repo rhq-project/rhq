@@ -5,12 +5,12 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-plugins-parent</artifactId>
-    <version>4.13.0</version>
+    <version>4.13.1</version>
   </parent>
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-cassandra-plugin</artifactId>
-  <version>4.13.0</version>
+  <version>4.13.1</version>
   <name>RHQ Cassandra Plugin</name>
   <description>An RHQ plugin for monitoring and managing a Cassandra cluster</description>
 

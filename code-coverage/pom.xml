@@ -3,7 +3,7 @@
    <parent>
       <artifactId>rhq-parent</artifactId>
       <groupId>org.rhq</groupId>
-      <version>4.13.0</version>
+      <version>4.13.1</version>
    </parent>
 
    <artifactId>rhq-code-coverage</artifactId>

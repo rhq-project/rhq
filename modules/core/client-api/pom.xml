@@ -6,12 +6,12 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-core-parent</artifactId>
-    <version>4.13.0</version>
+    <version>4.13.1</version>
   </parent>
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-core-client-api</artifactId>
-  <version>4.13.0</version>
+  <version>4.13.1</version>
   <packaging>jar</packaging>
 
   <name>RHQ Client API</name>

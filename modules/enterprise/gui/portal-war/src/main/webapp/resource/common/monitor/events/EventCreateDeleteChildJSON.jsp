@@ -106,8 +106,8 @@
             String link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Inventory/ChildHistory";
             String username = entry.getSubjectName();
             String description = "<b>User:</b> "+ username.replaceAll("[\"']","").trim() + "<br/><b>Status:</b> " + entry.getStatus();
-            if (entry.getResource() != null) {
-            	description = "<b>Resource Name:</b> " +  entry.getResource().getName().replaceAll("[\"']","").trim() + "<br/>" + description;
+            if (entry.getResourceName() != null) {
+               description = "<b>Resource Name:</b> " +  entry.getResourceName().replaceAll("[\"']","").trim() + "<br/>" + description;
             }
     %>
 { "start" : "<%=sdf.format(entry.getCreatedTime())%>",

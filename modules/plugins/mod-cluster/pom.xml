@@ -32,6 +32,13 @@
       </dependency>
 
       <dependency>
+        <groupId>org.jboss.integration</groupId>
+        <artifactId>jboss-profileservice-spi</artifactId>
+        <version>6.0.0.Alpha9</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.on</groupId>
          <artifactId>jopr-jboss-as-plugin</artifactId>
          <version>${project.version}</version>
@@ -47,7 +54,6 @@
 
    <build>
       <plugins>
-
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>

@@ -36,6 +36,10 @@
              <artifactId>antlr</artifactId>
            </exclusion>
            <exclusion>
+             <groupId>org.antlr</groupId>
+             <artifactId>antlr-complete</artifactId>
+           </exclusion>
+           <exclusion>
              <groupId>com.jcraft</groupId>
              <artifactId>jsch</artifactId>
            </exclusion>

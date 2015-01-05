@@ -131,8 +131,8 @@
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
       <dependency>
-         <groupId>antlr</groupId>
-         <artifactId>antlr</artifactId>
+         <groupId>org.antlr</groupId>
+         <artifactId>antlr-complete</artifactId>
          <scope>test</scope>
       </dependency>
 

@@ -217,27 +217,9 @@
     </dependency>
 
     <!-- 3rd Party Deps -->
-
-    <!-- do we really need this version, for now use the version provided by AS7, declare just below -->
     <dependency>
       <groupId>org.antlr</groupId>
-      <artifactId>antlr-runtime</artifactId>
-      <version>3.2</version>
-      <exclusions>
-        <exclusion>
-          <groupId>antlr</groupId>
-          <artifactId>antlr</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>antlr</groupId>
-      <artifactId>antlr</artifactId>
+      <artifactId>antlr-complete</artifactId>
       <scope>provided</scope>
     </dependency>
 

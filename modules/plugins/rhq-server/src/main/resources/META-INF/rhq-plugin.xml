@@ -441,20 +441,22 @@
 
     <metric property="ConnectionErrors" measurementType="trendsup" displayType="summary" description="Number of times the connection failed to the storage node." />
 
+    <metric property="CurrentWarmupTime" measurementType="dynamic" displayType="summary" description="Current throttling warmup period time in minutes." />
+
     <resource-configuration>
       <c:simple-property name="RequestLimit" type="double" required="false" description="Sets throttling in terms of
                          requests per second. Defaults to 30,000 if undefined. Note that this setting is automatically
                          changed when various events such as request timeouts occur." readOnly="true"/>
-      <c:simple-property name="MinRequestLimit" type="double" displayName="Minimum Request Limit" required="false"
-                         description="This sets a minimum threshold for the request limit. If the request limit is
-                         automatically decreased, it will never drop below this value."/>
       <c:simple-property name="RequestLimitTopologyDelta" displayName="Request Limit Topology Change Delta"
                          required="false" description="The request limit will automatically change by this amount when
                          there is a topology change event. Topology change events include nodes being added/removed and
                          nodes going up/down. Defaults to 30,000 if undefined."/>
-      <c:simple-property name="RequestTimeoutDelta" type="double" required="false" description="When a request times
-                         out, the limit is decreased by this amount. The value is interpreted as a percentage. Defaults
-                         to 0.2 (i.e., 20%) if undefined."/>
+      <c:simple-property name="RequestWarmupPeriod" type="integer" required="false" description="The warmup period time during which the request limit is grown
+                         from 50% to 100% of the calculated value. The value is in minutes. Defaults to 3 minutes if undefined." displayName="Warmup Period" />
+      <c:simple-property name="RequestWarmupCounterMaximum" type="integer" required="false" description="Sets the maximum throttling value for warmup periods. If a timeout occurs
+                         the request rate is halved with increased warmup period. This settings limits the maximum value of added warmup periods. The maximum warmup
+                         period is calculated: Warmup Period * Warmup Counter Maximum. Defaults to 10 if undefined (30 minutes maximum warmup with default values)."
+                         displayName="Warmup Counter Maximum" />
     </resource-configuration>
   </service>
 

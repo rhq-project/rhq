@@ -24,9 +24,9 @@ package org.rhq.server.metrics;
  */
 public class StorageClientConstants {
 
-    public static final String REQUEST_LIMIT_MIN = "rhq.storage.request.limit.min";
+    public static final String REQUEST_WARMUP_PERIOD = "rhq.storage.request.limit.warmup-period";
 
-    public static final String REQUEST_TIMEOUT_DELTA = "rhq.storage.request.limit.timeout-delta";
+    public static final String REQUEST_WARMUP_PERIOD_MAX_COUNTER = "rhq.storage.request.limit.max-warmup-counter";
 
     public static final String REQUEST_TIMEOUT_DAMPENING = "rhq.storage.request.timeout-dampening";
 

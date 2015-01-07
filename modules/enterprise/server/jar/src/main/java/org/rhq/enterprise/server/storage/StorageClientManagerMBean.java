@@ -26,17 +26,19 @@ public interface StorageClientManagerMBean {
 
     double getRequestLimit();
 
-    double getMinRequestLimit();
-
-    void setMinRequestLimit(double minRequestLimit);
-
     double getRequestLimitTopologyDelta();
 
+    void setRequestWarmupPeriod(int requestWarmupPeriod);
+
+    int getRequestWarmupPeriod();
+
+    void setRequestWarmupCounterMaximum(int requestWarmupCounterMaximum);
+
+    int getRequestWarmupCounterMaximum();
+
+    int getCurrentWarmupTime();
+
     void setRequestLimitTopologyDelta(double delta);
-
-    double getRequestTimeoutDelta();
-
-    void setRequestTimeoutDelta(double requestTimeoutDelta);
 
     long getRequestTimeoutDampening();
 

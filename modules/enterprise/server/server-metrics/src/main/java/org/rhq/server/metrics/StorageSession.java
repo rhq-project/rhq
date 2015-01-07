@@ -19,9 +19,9 @@
 
 package org.rhq.server.metrics;
 
-import static org.rhq.server.metrics.StorageClientConstants.REQUEST_LIMIT_MIN;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_WARMUP_PERIOD;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_WARMUP_PERIOD_MAX_COUNTER;
 import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TIMEOUT_DAMPENING;
-import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TIMEOUT_DELTA;
 import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TOPOLOGY_CHANGE_DELTA;
 
 import java.math.BigDecimal;
@@ -51,9 +51,9 @@ import org.apache.commons.logging.LogFactory;
  */
 public class StorageSession implements Host.StateListener {
 
-    private static final int DEFAULT_WARMUP_TIME_IN_MINUTES = 3;
-    private static final int MAX_WARMUP_COUNTER = 10;
-    private int previousWarmupTime = DEFAULT_WARMUP_TIME_IN_MINUTES;
+    private int warmupTimePeriod = Integer.parseInt(System.getProperty(REQUEST_WARMUP_PERIOD, "3"));
+    private int maxWarmupCounter = Integer.parseInt(System.getProperty(REQUEST_WARMUP_PERIOD_MAX_COUNTER, "10"));
+    private int previousWarmupTime = warmupTimePeriod;
 
     private final Log log = LogFactory.getLog(StorageSession.class);
 
@@ -63,11 +63,7 @@ public class StorageSession implements Host.StateListener {
 
     private boolean isClusterAvailable = false;
 
-    private double minRequestLimit = Double.parseDouble(System.getProperty(REQUEST_LIMIT_MIN, "5000"));
-
     private RateLimiter permits = null;
-
-    private double timeoutDelta = Double.parseDouble(System.getProperty(REQUEST_TIMEOUT_DELTA, "0.2"));
 
     private long permitsLastChanged = System.currentTimeMillis();
 
@@ -78,7 +74,7 @@ public class StorageSession implements Host.StateListener {
     public StorageSession(Session wrappedSession) {
         this.wrappedSession = wrappedSession;
         this.wrappedSession.getCluster().register(this);
-        permits = getRateLimiter(DEFAULT_WARMUP_TIME_IN_MINUTES);
+        permits = getRateLimiter(warmupTimePeriod);
     }
 
     private RateLimiter getRateLimiter(int warmupTime) {
@@ -121,22 +117,6 @@ public class StorageSession implements Host.StateListener {
         return new BigDecimal(permits.getRate(), new MathContext(2, RoundingMode.HALF_UP)).doubleValue();
     }
 
-    public double getTimeoutDelta() {
-        return timeoutDelta;
-    }
-
-    public void setTimeoutDelta(double timeoutDelta) {
-        this.timeoutDelta = timeoutDelta;
-    }
-
-    public double getMinRequestLimit() {
-        return minRequestLimit;
-    }
-
-    public void setMinRequestLimit(double minRequestLimit) {
-        this.minRequestLimit = minRequestLimit;
-    }
-
     public double getTopologyDelta() {
         return topologyDelta;
     }
@@ -144,7 +124,7 @@ public class StorageSession implements Host.StateListener {
     public synchronized void setTopologyDelta(double delta) {
         topologyDelta = delta;
         // On delta change, reset warmup period
-        previousWarmupTime = DEFAULT_WARMUP_TIME_IN_MINUTES;
+        previousWarmupTime = warmupTimePeriod;
         setRequestLimit();
     }
 
@@ -272,8 +252,8 @@ public class StorageSession implements Host.StateListener {
     synchronized void handleTimeout() {
         if (System.currentTimeMillis() - permitsLastChanged > timeoutDampening) {
             int warmupTime = previousWarmupTime;
-            if(previousWarmupTime < (MAX_WARMUP_COUNTER * DEFAULT_WARMUP_TIME_IN_MINUTES)) {
-                warmupTime += DEFAULT_WARMUP_TIME_IN_MINUTES;
+            if(previousWarmupTime < (maxWarmupCounter * warmupTimePeriod)) {
+                warmupTime += warmupTimePeriod;
                 previousWarmupTime = warmupTime;
             }
             permits = getRateLimiter(warmupTime);
@@ -306,5 +286,25 @@ public class StorageSession implements Host.StateListener {
         for (StorageStateListener listener : listeners) {
             listener.onStorageClusterDown(e);
         }
+    }
+
+    public int getWarmupTimePeriod() {
+        return warmupTimePeriod;
+    }
+
+    public void setWarmupTimePeriod(int warmupTimePeriod) {
+        this.warmupTimePeriod = warmupTimePeriod;
+    }
+
+    public int getMaxWarmupCounter() {
+        return maxWarmupCounter;
+    }
+
+    public void setMaxWarmupCounter(int maxWarmupCounter) {
+        this.maxWarmupCounter = maxWarmupCounter;
+    }
+
+    public int getPreviousWarmupTime() {
+        return previousWarmupTime;
     }
 }

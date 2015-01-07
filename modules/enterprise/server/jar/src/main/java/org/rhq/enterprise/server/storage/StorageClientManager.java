@@ -21,10 +21,10 @@ package org.rhq.enterprise.server.storage;
 
 import static org.rhq.server.metrics.StorageClientConstants.DATA_CENTER;
 import static org.rhq.server.metrics.StorageClientConstants.LOAD_BALANCING;
-import static org.rhq.server.metrics.StorageClientConstants.REQUEST_LIMIT_MIN;
 import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TIMEOUT_DAMPENING;
-import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TIMEOUT_DELTA;
 import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TOPOLOGY_CHANGE_DELTA;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_WARMUP_PERIOD;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_WARMUP_PERIOD_MAX_COUNTER;
 
 import java.io.File;
 import java.io.IOException;
@@ -386,21 +386,40 @@ public class StorageClientManager implements StorageClientManagerMBean{
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public double getMinRequestLimit() {
-        return session.getMinRequestLimit();
-    }
-
-    @Override
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void setMinRequestLimit(double minRequestLimit) {
-        session.setMinRequestLimit(minRequestLimit);
-        persistStorageProperty(REQUEST_LIMIT_MIN, Double.toString(minRequestLimit));
-    }
-
-    @Override
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public double getRequestLimitTopologyDelta() {
         return session.getTopologyDelta();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void setRequestWarmupPeriod(int requestWarmupPeriod) {
+        session.setWarmupTimePeriod(requestWarmupPeriod);
+        persistStorageProperty(REQUEST_WARMUP_PERIOD, Integer.toString(requestWarmupPeriod));
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public int getRequestWarmupPeriod() {
+        return session.getWarmupTimePeriod();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void setRequestWarmupCounterMaximum(int requestWarmupCounterMaximum) {
+        session.setWarmupTimePeriod(requestWarmupCounterMaximum);
+        persistStorageProperty(REQUEST_WARMUP_PERIOD_MAX_COUNTER, Integer.toString(requestWarmupCounterMaximum));
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public int getRequestWarmupCounterMaximum() {
+        return session.getMaxWarmupCounter();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public int getCurrentWarmupTime() {
+        return session.getPreviousWarmupTime();
     }
 
     @Override
@@ -408,19 +427,6 @@ public class StorageClientManager implements StorageClientManagerMBean{
     public void setRequestLimitTopologyDelta(double delta) {
         session.setTopologyDelta(delta);
         persistStorageProperty(REQUEST_TOPOLOGY_CHANGE_DELTA, Double.toString(delta));
-    }
-
-    @Override
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public double getRequestTimeoutDelta() {
-        return session.getTimeoutDelta();
-    }
-
-    @Override
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void setRequestTimeoutDelta(double requestTimeoutDelta) {
-        session.setTimeoutDelta(requestTimeoutDelta);
-        persistStorageProperty(REQUEST_TIMEOUT_DELTA, Double.toString(requestTimeoutDelta));
     }
 
     @Override

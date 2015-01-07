@@ -912,14 +912,6 @@ rhq.storage.gossip-port=${default.rhq.storage.gossip-port}
 # Defaults 30,000 if undefined.. If specified the value is parsed as a double.
 rhq.storage.request.limit.topology-delta=30000
 
-# When a request times out, the request limit as specified by
-# rhq.storage.request.limit will be decreased. The change will be persisted to
-# this file. The value is parsed as a double and should be expressed as a
-# percentage (i.e., a value between 0 and 1). For example, a value of 0.3 means
-# that on a request timeout, the the request limit will decrease by 30%.
-# Defaults to 0.2 if undefined.
-rhq.storage.request.limit.timeout-delta=0.2
-
 # If a request timeout occurs, there is a good possibility that it could be
 # followed by successive timeouts due to read/write patterns. This property
 # specifies a dampening period such that the request throughput will only be
@@ -928,10 +920,17 @@ rhq.storage.request.limit.timeout-delta=0.2
 # as a long.
 rhq.storage.request.limit.timeout-dampening=30000
 
-# Sets the maximum throttling. In other words, the request limit will not
-# decrease lower than this value. Defaults to 5,000 if undefined. The value is
-# parsed as a double.
-rhq.storage.request.limit.min=5000
+# The warmup time during which the request limit is allowed to grow from
+# 50% of the maximum to 100% of the set request limit value. The value is
+# in minutes. Defaults to 3 minutes if undefined.
+rhq.storage.request.limit.warmup-period=3
+
+# Sets the maximum throttling value for warmup periods. If a timeout occurs,
+# the request rate is halved with increased warmup period (as configured above).
+# This setting limits the maximum the warmup is allowed to grow to and can be
+# counted as warmup-period * max-warmup-counter, which is by default 30 mins.
+# This value defaults to 10 if undefined.
+rhq.storage.request.limit.max-warmup-counter=10
 
 ##############################################################################
 # Metrics aggregation settings

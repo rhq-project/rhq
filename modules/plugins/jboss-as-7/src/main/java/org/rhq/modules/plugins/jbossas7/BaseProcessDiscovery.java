@@ -554,6 +554,24 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
             report.setNewPluginConfiguration(pluginConfiguration);
         }
+        // detect if server is running and has default values
+        if (inventoriedResource.getNativeProcess() != null
+            && "127.0.0.1".equals(serverPluginConfiguration.getNativeHost())
+            && Integer.valueOf(9999).equals(serverPluginConfiguration.getNativePort())) {
+            try {
+                AS7CommandLine commandLine = new AS7CommandLine(inventoriedResource.getNativeProcess());
+                HostConfiguration hostConfiguration = loadHostConfiguration(serverPluginConfiguration
+                    .getHostConfigFile());
+                HostPort hp = hostConfiguration.getNativeHostPort(commandLine, getMode());
+                serverPluginConfiguration.setNativeHost(hp.host);
+                serverPluginConfiguration.setNativePort(hp.port);
+                report.setNewPluginConfiguration(serverPluginConfiguration.getPluginConfig());
+                LOG.info("Detected native host/port " + hp + " for " + inventoriedResource.getResourceKey());
+                upgraded = true;
+            } catch (Exception e) {
+                LOG.error("Unable to detect and upgrade native management host and port", e);
+            }
+        }
 
         if (upgraded) {
             return report;

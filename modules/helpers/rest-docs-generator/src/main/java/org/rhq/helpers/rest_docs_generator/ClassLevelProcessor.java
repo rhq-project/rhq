@@ -381,7 +381,7 @@ public class ClassLevelProcessor extends AbstractProcessor {
                 name = qp.value();
                 paramType="Query";
             }
-            else if (ap!=null)
+            else if (ap!=null && !ap.name().isEmpty())
                 name = ap.name();
             else {
                 Name nameElement = paramElement.getSimpleName();

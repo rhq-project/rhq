@@ -131,17 +131,19 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
         // If user wanted to override the value in recipe, allow it
         Property discoveryDelayProperty = wizard.getNewDeploymentConfig().get("org.rhq.discoveryDelay");
 
-        if(discoveryDelayProperty == null) {
+        if (discoveryDelayProperty == null) {
             // If there was no recipe value, assume the current value is the default one and check live-deployment
             BundleDeployment liveDeployment = wizard.getLiveDeployment();
 
             // If previous deployment had modified deploymentDelay, use it
-            if(liveDeployment != null) {
+            if (liveDeployment != null) {
                 Integer previousDeploymentDelay = liveDeployment.getDiscoveryDelay();
-                if(previousDeploymentDelay != null) {
+                if (previousDeploymentDelay != null) {
                     rValue = previousDeploymentDelay;
                 }
             }
+        } else {
+            rValue = ((PropertySimple) discoveryDelayProperty).getIntegerValue();
         }
 
         wizard.getNewDeploymentConfig().setSimpleValue("org.rhq.discoveryDelay", rValue.toString());

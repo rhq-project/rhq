@@ -107,8 +107,19 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
                             }
                         });
 
-                        form.setItems(nameTextItem, descriptionTextAreaItem, cleanDeploymentCBItem, discoveryDelayItem);
+                        final TextItem deployTimeoutItem = new TextItem("deploymentTimeout", "Timeout for deployment process (default 4 hours)");
+                        deployTimeoutItem.setValue(getDeploymentTimeoutValue());
+                        deployTimeoutItem.setWidth(300);
+                        deployTimeoutItem.setRequired(false);
+                        deployTimeoutItem.setValidators(new IsIntegerValidator());
+                        deployTimeoutItem.addChangedHandler(new ChangedHandler() {
+                            @Override
+                            public void onChanged(ChangedEvent changedEvent) {
+                                wizard.getNewDeploymentConfig().setSimpleValue("org.rhq.deploymentTimeout", (String) changedEvent.getValue());
+                            }
+                        });
 
+                        form.setItems(nameTextItem, descriptionTextAreaItem, cleanDeploymentCBItem, discoveryDelayItem, deployTimeoutItem);
                     }
 
                     public void onFailure(Throwable caught) {
@@ -147,6 +158,15 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
         }
 
         wizard.getNewDeploymentConfig().setSimpleValue("org.rhq.discoveryDelay", rValue.toString());
+        return rValue.toString();
+    }
+
+    private String getDeploymentTimeoutValue() {
+        Integer rValue = Integer.valueOf(4 * 60 * 60);
+        PropertySimple timeoutProperty = (PropertySimple) wizard.getNewDeploymentConfig().get("org.rhq.deploymentTimeout");
+        if(timeoutProperty != null) {
+            rValue = timeoutProperty.getIntegerValue();
+        }
         return rValue.toString();
     }
 }

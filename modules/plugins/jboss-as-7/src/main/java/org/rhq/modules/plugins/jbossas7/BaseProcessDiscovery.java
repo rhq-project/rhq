@@ -766,6 +766,13 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     }
 
     private boolean supportsPatching(JBossProductType productType, String version) {
+        if (version == null || productType == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Defaulting to supportsPatching = false - One of the following is null (productType="
+                    + productType + ", version=" + version + ")");
+            }
+            return false;
+        }
         if (version.startsWith(productType.SHORT_NAME)) {
             //version of the resource is SHORT_NAME space VERSION
             version = version.substring(productType.SHORT_NAME.length() + 1);

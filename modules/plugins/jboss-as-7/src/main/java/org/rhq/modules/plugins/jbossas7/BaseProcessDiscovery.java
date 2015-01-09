@@ -548,11 +548,49 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         if (supportsPatching == null || supportsPatching.startsWith("__UNINITIALIZED_")) {
             upgraded = true;
 
-            JBossProductType productType = JBossProductType.valueOf(pluginConfiguration.getSimpleValue("productType"));
-            pluginConfiguration
-                .setSimpleValue("supportsPatching", Boolean.toString(supportsPatching(productType, inventoriedResource.getVersion())));
+            JBossProductType productType = serverPluginConfiguration.getProductType();
+            if (productType == null) {
+                if (inventoriedResource.getNativeProcess() != null) {
+                    // if resource seems to run, detect product type
+                    AS7CommandLine commandLine = new AS7CommandLine(inventoriedResource.getNativeProcess());
+                    File homeDir = getHomeDir(inventoriedResource.getNativeProcess(), commandLine);
+                    File baseDir = getBaseDir(inventoriedResource.getNativeProcess(), commandLine, homeDir);
+                    File configDir = getConfigDir(inventoriedResource.getNativeProcess(), commandLine, baseDir);
+                    File hostXmlFile = getHostXmlFile(commandLine, configDir);
+                    if (hostXmlFile.exists()) {
+                        try {
+                            HostConfiguration hostConfig = loadHostConfiguration(hostXmlFile);
+                            String apiVersion = hostConfig.getDomainApiVersion();
+                            productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
+                            serverPluginConfiguration.setProductType(productType);
+                            pluginConfiguration.setSimpleValue("supportsPatching",
+                                Boolean.toString(supportsPatching(productType, inventoriedResource.getVersion())));
+                            report.setNewPluginConfiguration(pluginConfiguration);
+                            LOG.info(productType);
+                        } catch (Exception e) {
+                            LOG.warn("Unable to detect productType", e);
+                        }
+                    } else {
+                        LOG.warn("Unable to upgrade resource " + inventoriedResource
+                            + "Server configuration file not found at the expected location (" + hostXmlFile + ").");
+                        upgraded = false;
+                    }
 
-            report.setNewPluginConfiguration(pluginConfiguration);
+
+                } else {
+                    // we have to skip upgrading at this point since it is not running and we're unable to detect productType
+                    LOG.warn("Unable to upgrade resource "
+                        + inventoriedResource
+                        + " : resource is missing productType pluginConfiguration property and needs to be running in order to discover it");
+                    upgraded = false;
+                }
+            } else {
+                pluginConfiguration
+                .setSimpleValue("supportsPatching", Boolean.toString(supportsPatching(productType, inventoriedResource.getVersion())));
+                report.setNewPluginConfiguration(pluginConfiguration);
+            }
+
+
         }
 
         if (upgraded) {

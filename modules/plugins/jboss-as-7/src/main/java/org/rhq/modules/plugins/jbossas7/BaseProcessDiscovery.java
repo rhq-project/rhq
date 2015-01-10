@@ -566,7 +566,6 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                             pluginConfiguration.setSimpleValue("supportsPatching",
                                 Boolean.toString(supportsPatching(productType, inventoriedResource.getVersion())));
                             report.setNewPluginConfiguration(pluginConfiguration);
-                            LOG.info(productType);
                         } catch (Exception e) {
                             LOG.warn("Unable to detect productType", e);
                         }

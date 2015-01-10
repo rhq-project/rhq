@@ -644,7 +644,9 @@ public final class CriteriaQueryGenerator {
 
         results.append(NL);
 
-        LOG.debug(results);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(results);
+        }
         return results.toString();
     }
 
@@ -720,8 +722,10 @@ public final class CriteriaQueryGenerator {
 
             // translate first, if there was an error we won't add the dangling 'AND' to the where clause
             String translatedJPQL = searchManager.getJPQLWhereFragment();
-            LOG.debug("Translated JPQL Fragment was: " + translatedJPQL);
-            if (translatedJPQL != null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Translated JPQL Fragment was: " + translatedJPQL);
+            }
+            if (translatedJPQL != null && !translatedJPQL.trim().isEmpty() && !"(  )".equals(translatedJPQL.trim())) {
                 searchExpressionWhereClause = translatedJPQL;
             }
         } catch (SearchExpressionException see) {

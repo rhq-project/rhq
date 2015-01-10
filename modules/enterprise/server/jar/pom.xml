@@ -220,7 +220,6 @@
     <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>antlr-complete</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>

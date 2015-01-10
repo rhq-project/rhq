@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -89,12 +89,12 @@ searchExpression
     ;
 
 conditionalExpression
-    :   conds+=conditionalFactor ( WS+ ( '|' ) WS+ conds+=conditionalFactor )*        -> { $conds.size() == 1 }? ^($conds)
+    :   conds+=conditionalFactor ( WS+ ( '|' ) WS+ conds+=conditionalFactor )*        -> { $conds.size() == 1 }? {$conds.get(0)}
                                                                                       -> ^(OR conditionalFactor+)
     ; // use rewrite predicates to eliminate superfluous 'or' node if only one child
 
 conditionalFactor 
-    :   conds+=conditionalPrimary ( WS+ conds+=conditionalPrimary )*                  -> { $conds.size() == 1 }? ^($conds)
+    :   conds+=conditionalPrimary ( WS+ conds+=conditionalPrimary )*                  -> { $conds.size() == 1 }? {$conds.get(0)}
                                                                                       -> ^(AND conditionalPrimary+)
     ; // use rewrite predicates to eliminate superfluous 'and' node if only one child
 

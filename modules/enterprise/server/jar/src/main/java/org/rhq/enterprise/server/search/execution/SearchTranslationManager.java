@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,8 @@ import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.tree.CommonTree;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.server.search.RHQLLexer;
@@ -47,6 +48,8 @@ import org.rhq.enterprise.server.search.translation.jpql.SearchFragment;
  * @author Joseph Marques
  */
 public class SearchTranslationManager {
+    
+    private static final Log LOG = LogFactory.getLog(SearchTranslationManager.class);
 
     private SearchSubsystem context;
     private String expression;
@@ -92,20 +95,22 @@ public class SearchTranslationManager {
 
     public String getJPQLSelectStatement() throws Exception {
         String jpql = "SELECT " + alias + " FROM " + entity + " " + alias + " WHERE " + getJPQLWhereFragment();
-        //System.out.println("JPQL was:");
-        PrintUtils.printJPQL(jpql.split(" "));
-        //System.out.println();
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("JPQL was:");
+            PrintUtils.printJPQL(jpql.split(" "));
+        }
         return jpql;
     }
 
     public String getJPQLWhereFragment() throws Exception {
         RHQLParser.searchExpression_return searchAST = parser.searchExpression();
-
-        //System.out.println("Search was: " + expression);
-        CommonTree searchExpressionTree = (CommonTree) searchAST.getTree();
-        //System.out.println("Errors found: " + adaptor.getErrorMessages());
-        //System.out.println("Tree was:");
-        PrintUtils.print(searchExpressionTree, "");
+        CommonTree searchExpressionTree = searchAST.getTree();
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Search was: " + expression);
+            LOG.debug("Errors found: " + adaptor.getErrorMessages());
+            LOG.debug("Tree was:");
+            PrintUtils.print(searchExpressionTree, "");
+        }
         String fragment = generateJPQL(searchExpressionTree);
         return fragment;
     }
@@ -177,16 +182,21 @@ public class SearchTranslationManager {
         String path = null;
         String param = null;
         CommonTree contextTree = (CommonTree) tree.getChild(0);
-        for (int childIndex = 0; childIndex < contextTree.getChildCount(); childIndex++) {
-            CommonTree child = (CommonTree) contextTree.getChild(childIndex);
-            if (child.getToken().getType() == RHQLLexer.LINEAGE) {
-                lineage = PrintUtils.collapseStringChildren(child);
-            } else if (child.getToken().getType() == RHQLLexer.PATH) {
-                path = PrintUtils.collapseStringChildren(child);
-            } else if (child.getToken().getType() == RHQLLexer.PARAM) {
-                child = (CommonTree) child.getChild(0); // get the IDENT child of PARAM
-                param = PrintUtils.collapseStringChildren(child);
+        if (contextTree != null) {
+            for (int childIndex = 0; childIndex < contextTree.getChildCount(); childIndex++) {
+                CommonTree child = (CommonTree) contextTree.getChild(childIndex);
+                if (child.getToken().getType() == RHQLLexer.LINEAGE) {
+                    lineage = PrintUtils.collapseStringChildren(child);
+                } else if (child.getToken().getType() == RHQLLexer.PATH) {
+                    path = PrintUtils.collapseStringChildren(child);
+                } else if (child.getToken().getType() == RHQLLexer.PARAM) {
+                    child = (CommonTree) child.getChild(0); // get the IDENT child of PARAM
+                    param = PrintUtils.collapseStringChildren(child);
+                }
             }
+        } else {
+            throw new IllegalStateException("There is an issue with AST tree construction. Token "
+                + tree.getToken().getText() + " has no children");
         }
 
         String value = null;
@@ -250,12 +260,10 @@ public class SearchTranslationManager {
 
                 if (lineBreakers.contains(next)) {
                     //System.out.println();
-                    //System.out.print(indent);
+                    LOG.debug("indent = " + indent);
                 }
 
-                //System.out.print(next);
-                //System.out.print(" ");
-
+                LOG.debug(next);
                 if (next.equals(")")) {
                     indent = indent.substring(3);
                 }
@@ -284,9 +292,9 @@ public class SearchTranslationManager {
                 return;
             }
 
-            //System.out.print(indent + token.getText());
+            LOG.debug(indent + token.getText());
             if (isStringNode(token)) {
-                //System.out.println(collapseStringChildren(tree));
+                LOG.debug(collapseStringChildren(tree));
             } else {
                 //System.out.println();
                 for (int childIndex = 0; childIndex < tree.getChildCount(); childIndex++) {

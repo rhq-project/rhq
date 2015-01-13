@@ -32,6 +32,8 @@ import java.util.Set;
 import org.codehaus.jackson.JsonNode;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
@@ -65,8 +67,18 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
+
         Operation op = new Operation(name, getAddress());
-        Result res = getASConnection().execute(op, parameters.getSimple("responseTimeout").getIntegerValue());
+
+        PropertyDefinitionSimple responseTimeoutDefinition = getParameterDefinitionsForOperation(name).getPropertyDefinitionSimple("responseTimeout");
+        int timeout = Integer.parseInt(responseTimeoutDefinition.getDefaultValue());
+
+        PropertySimple responseTimeout = parameters.getSimple("responseTimeout");
+        if(responseTimeout != null && responseTimeout.getStringValue() != null) {
+            timeout = Integer.parseInt(responseTimeout.getStringValue());
+        }
+
+        Result res = getASConnection().execute(op, timeout);
         OperationResult result = new OperationResult();
         if (res.isSuccess()) {
             result.setSimpleResult(SUCCESS);

@@ -33,12 +33,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
 import org.rhq.core.clientapi.server.operation.OperationServerService;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
@@ -116,8 +116,7 @@ public class OperationManager extends AgentService implements OperationAgentServ
             OperationDefinition operationDefinition = getOperationDefinition(resourceId, operationName);
             if (operationDefinition != null && operationDefinition.getParametersConfigurationDefinition() != null
                 && parameterConfig != null) {
-                ConfigurationUtility.normalizeConfiguration(parameterConfig, operationDefinition
-                    .getParametersConfigurationDefinition());
+                ConfigurationUtility.normalizeConfiguration(parameterConfig, operationDefinition.getParametersConfigurationDefinition(), true, true);
             }
 
             // create our timer task that will force the operation invocation to time out if it takes too long to complete

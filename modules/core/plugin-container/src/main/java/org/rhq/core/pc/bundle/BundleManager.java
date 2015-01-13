@@ -237,9 +237,11 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                         }
 
                         int facetMethodTimeout = 4 * 60 * 60 * 1000; // 4 hours is given to the bundle plugin to do its thing as default
-                        PropertySimple deploymentTimeout = bundleDeployment.getConfiguration().getSimple("org.rhq.deploymentTimeout");
-                        if(deploymentTimeout != null) {
-                            facetMethodTimeout = deploymentTimeout.getIntegerValue().intValue() * 1000;
+                        if(bundleDeployment.getConfiguration() != null) {
+                            PropertySimple deploymentTimeout = bundleDeployment.getConfiguration().getSimple("org.rhq.deploymentTimeout");
+                            if(deploymentTimeout != null) {
+                                facetMethodTimeout = deploymentTimeout.getIntegerValue().intValue() * 1000;
+                            }
                         }
 
                         // get the bundle facet object that will process the bundle and call it to start the deployment
@@ -808,6 +810,6 @@ public class BundleManager extends AgentService implements BundleAgentService, B
      */
     protected BundleFacet getBundleFacet(int resourceId, long timeout) throws PluginContainerException {
         return ComponentUtil.getComponent(resourceId, BundleFacet.class, FacetLockType.READ, timeout, false, true,
-            false);
+                false);
     }
 }

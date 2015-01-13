@@ -36,6 +36,7 @@ import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
@@ -43,6 +44,7 @@ import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdateJob;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 
 /**
@@ -217,16 +219,6 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
     public void purgePluginConfigurationUpdate(Subject subject, int configurationUpdateId, boolean purgeInProgress);
 
     /**
-     * This deletes one or more plugin configuration updates from the resource's plugin config history.
-     *
-     * @param subject                 the user who is requesting the purge
-     * @param configurationUpdateIds identifies the update records to be deleted
-     * @param purgeInProgress        if <code>true</code>, delete those even if
-     *                               {@link ConfigurationUpdateStatus#INPROGRESS in progress}
-     */
-    void purgePluginConfigurationUpdates(Subject subject, int[] configurationUpdateIds, boolean purgeInProgress);
-
-    /**
      * This deletes the update information belonging to the {@link AbstractResourceConfigurationUpdate} object with the
      * given ID. Once this returns, the complete audit trail for that update will be gone and you will not be able to
      * rollback to that configuration.
@@ -243,16 +235,6 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
      *                              {@link ConfigurationUpdateStatus#INPROGRESS in progress}
      */
     void purgeResourceConfigurationUpdate(Subject subject, int configurationUpdateId, boolean purgeInProgress);
-
-    /**
-     * This deletes one or more configuration updates from the resource's configuration history.
-     *
-     * @param subject                 the user who is requesting the purge
-     * @param configurationUpdateIds identifies the update records to be deleted
-     * @param purgeInProgress        if <code>true</code>, delete those even if
-     *                               {@link ConfigurationUpdateStatus#INPROGRESS in progress}
-     */
-    void purgeResourceConfigurationUpdates(Subject subject, int[] configurationUpdateIds, boolean purgeInProgress);
 
     /**
      * Merge the specified configuration update into the DB.

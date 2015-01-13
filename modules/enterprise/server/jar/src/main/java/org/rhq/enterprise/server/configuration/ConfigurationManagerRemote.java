@@ -25,6 +25,7 @@ import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -33,7 +34,9 @@ import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
+import org.rhq.enterprise.server.rest.BadArgumentException;
 
 /**
  * The configuration manager which allows you to request resource configuration changes, view current resource
@@ -317,4 +320,26 @@ public interface ConfigurationManagerRemote {
     @Deprecated
     Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean fromStructured) throws ResourceNotFoundException;
+
+    /**
+     * This deletes one or more configuration updates from the resource's configuration history.
+     *
+     * @param subject                 the user who is requesting the purge
+     * @param configurationUpdateIds identifies the update records to be deleted
+     * @param purgeInProgress        if <code>true</code>, delete those even if
+     *                               {@link ConfigurationUpdateStatus#INPROGRESS in progress}
+     * @since 4.14
+     */
+    void purgeResourceConfigurationUpdates(Subject subject, int[] configurationUpdateIds, boolean purgeInProgress);
+
+    /**
+     * This deletes one or more plugin configuration updates from the resource's plugin config history.
+     *
+     * @param subject                 the user who is requesting the purge
+     * @param configurationUpdateIds identifies the update records to be deleted
+     * @param purgeInProgress        if <code>true</code>, delete those even if
+     *                               {@link ConfigurationUpdateStatus#INPROGRESS in progress}
+     * @since 4.14
+     */
+    void purgePluginConfigurationUpdates(Subject subject, int[] configurationUpdateIds, boolean purgeInProgress);
 }

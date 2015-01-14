@@ -1,20 +1,20 @@
 /*
  * RHQ Management Platform
- *  Copyright (C) 2005-2014 Red Hat, Inc.
- *  All rights reserved.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
+ * All rights reserved.
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation version 2 of the License.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.coregui.client.dashboard.portlets.resource;
@@ -37,6 +37,7 @@ import com.smartgwt.client.widgets.form.fields.events.KeyUpHandler;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
@@ -78,6 +79,10 @@ public class MetricsChartWindow implements Enhanced {
     private FloatItem newBaselineMeanText;
     private FloatItem newExpectedRangeHighText;
     private FloatItem newExpectedRangeLowText;
+
+    private MeasurementNumericValueAndUnits baselineMeanMd;
+    private MeasurementNumericValueAndUnits baselineHighMd;
+    private MeasurementNumericValueAndUnits baselineLowMd;
 
     private MeasurementDefinition measurementDefinition;
 
@@ -236,8 +241,9 @@ public class MetricsChartWindow implements Enhanced {
 
     private void saveCustomBaselineMean(double newBaselineMean) {
         Log.debug("Saving baseline mean: " + newBaselineMean);
+        Double scaledValue = MeasurementConverterClient.scale(new MeasurementNumericValueAndUnits(newBaselineMean, baselineMeanMd.getUnits()), MeasurementUnits.BYTES);
         GWTServiceLookup.getMeasurementDataService().setUserBaselineMean(resourceId, measurementDefinition.getId(),
-            newBaselineMean, new AsyncCallback<Void>() {
+            scaledValue, new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
                     unSuccessfulSave(CUSTOM_USER_BASELINE_MEAN_WAS_NOT_SAVED, throwable);
@@ -252,8 +258,9 @@ public class MetricsChartWindow implements Enhanced {
 
     private void saveCustomBaselineHigh(double newBaselineHigh) {
         Log.debug("Saving baseline high: " + newBaselineHigh);
+        Double scaledValue = MeasurementConverterClient.scale(new MeasurementNumericValueAndUnits(newBaselineHigh, baselineHighMd.getUnits()), MeasurementUnits.BYTES);
         GWTServiceLookup.getMeasurementDataService().setUserBaselineMax(resourceId, measurementDefinition.getId(),
-            newBaselineHigh, new AsyncCallback<Void>() {
+            scaledValue, new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
                     unSuccessfulSave(CUSTOM_USER_BASELINE_HIGH_WAS_NOT_SAVED, throwable);
@@ -268,8 +275,9 @@ public class MetricsChartWindow implements Enhanced {
 
     private void saveCustomBaselineLow(double newBaselineLow) {
         Log.debug("Saving baseline low: " + newBaselineLow);
+        Double scaledValue = MeasurementConverterClient.scale(new MeasurementNumericValueAndUnits(newBaselineLow, baselineLowMd.getUnits()), MeasurementUnits.BYTES);
         GWTServiceLookup.getMeasurementDataService().setUserBaselineMin(resourceId, measurementDefinition.getId(),
-            newBaselineLow, new AsyncCallback<Void>() {
+            scaledValue, new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
                     unSuccessfulSave(CUSTOM_USER_BASELINE_LOW_WAS_NOT_SAVED, throwable);
@@ -332,12 +340,13 @@ public class MetricsChartWindow implements Enhanced {
                         expectedRangeHighText.setTitle(expectedRangeHighText.getTitle());
                         expectedRangeLowText.setTitle(expectedRangeLowText.getTitle());
 
-                        newBaselineMeanText.setValue(MeasurementConverterClient.fit(measurementBaseline.getMean(),
-                            md.getUnits()).getValue());
-                        newExpectedRangeHighText.setValue(MeasurementConverterClient.fit(measurementBaseline.getMax(),
-                            units).getValue());
-                        newExpectedRangeLowText.setValue(MeasurementConverterClient.fit(measurementBaseline.getMin(),
-                            units).getValue());
+                        baselineMeanMd =  MeasurementConverterClient.fit(measurementBaseline.getMean(), units);
+                        baselineHighMd =  MeasurementConverterClient.fit(measurementBaseline.getMax(), units);
+                        baselineLowMd =  MeasurementConverterClient.fit(measurementBaseline.getMin(), units);
+
+                        newExpectedRangeHighText.setValue(baselineHighMd.getValue());
+                        newBaselineMeanText.setValue(baselineMeanMd.getValue());
+                        newExpectedRangeLowText.setValue(baselineLowMd.getValue());
 
                         newBaselineMeanText.setTitle(newBaselineMeanText.getTitle());
                         newExpectedRangeHighText.setTitle(newExpectedRangeHighText.getTitle());

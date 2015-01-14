@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javassist.ClassPool;
 import javassist.util.proxy.MethodHandler;
 
@@ -48,6 +49,7 @@ import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
+import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -56,13 +58,16 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.Summary;
@@ -70,8 +75,10 @@ import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
+import org.rhq.enterprise.server.measurement.CallTimeDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -85,6 +92,8 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
  */
 public class ResourceClientProxy {
     private static final Log LOG = LogFactory.getLog(ResourceClientProxy.class);
+
+    private static final long TIME_8_HOURS = 8 * 1000 * 3600L;
 
     private ResourceClientFactory proxyFactory;
     private RhqFacade remoteClient;
@@ -255,7 +264,9 @@ public class ResourceClientProxy {
         this.measurementMap = new HashMap<String, Measurement>();
         for (MeasurementDefinition def : measurementDefinitions) {
             Measurement m = new Measurement(def);
-
+            if (DataType.CALLTIME.equals(def.getDataType())) {
+                m = new CallTimeMeasurement(def);
+            }
             String name = def.getDisplayName().replaceAll("\\W", "");
             name = decapitalize(name);
 
@@ -368,6 +379,7 @@ public class ResourceClientProxy {
 
         public Object getValue() {
             Object result = "?";
+
             try {
                 Set<MeasurementData> d = remoteClient.getProxy(MeasurementDataManagerRemote.class).findLiveData(
                     remoteClient.getSubject(), resourceId, new int[] { definition.getId() });
@@ -387,6 +399,47 @@ public class ResourceClientProxy {
 
         public String getShortOutput() {
             return getDisplayValue();
+        }
+    }
+
+    public class CallTimeMeasurement extends Measurement {
+
+        private int scheduleId = -1;
+
+        public CallTimeMeasurement(MeasurementDefinition definition) {
+            super(definition);
+        }
+
+        private int getScheduleId() {
+            if (scheduleId < 0) {
+                MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+                criteria.setPageControl(PageControl.getSingleRowInstance());
+                criteria.addFilterDefinitionIds(definition.getId());
+                criteria.addFilterResourceId(resourceId);
+                PageList<MeasurementSchedule> schedules = remoteClient.getProxy(MeasurementScheduleManagerRemote.class)
+                    .findSchedulesByCriteria(remoteClient.getSubject(), criteria);
+                if (!schedules.isEmpty()) {
+                    scheduleId = schedules.get(0).getId();
+                } else {
+                    scheduleId = 0;
+                }
+            }
+            return scheduleId;
+        }
+
+        public Object getValue(long beginTime, long endTime) {
+            int id = getScheduleId();
+            if (id > 0) {
+                return remoteClient.getProxy(CallTimeDataManagerRemote.class).findCallTimeDataForResource(
+                    remoteClient.getSubject(), id, beginTime, endTime, PageControl.getUnlimitedInstance());
+            } else {
+                return new PageList<CallTimeDataComposite>();
+            }
+        }
+
+        public Object getValue() {
+            long endTime = System.currentTimeMillis();
+            return getValue(endTime - TIME_8_HOURS, endTime);
         }
     }
 

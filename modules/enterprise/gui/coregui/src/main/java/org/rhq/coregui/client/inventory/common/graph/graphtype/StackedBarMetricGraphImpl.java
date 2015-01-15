@@ -202,7 +202,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             // if both global extremes are the same, make some interval around the value to make it work
                             // because domain() excepts an array with some interval denoting an input value space
                             // here we create ['0.80 * the value', 1.2 * 'the value'] i.e. 20% from both sides
-                            reserve = Math.round(low * 0.2);
+                            reserve = Math.max(Math.round(low * 0.2), 1);
                         }
                         return $wnd.d3.scale.linear()
                             .clamp(true)

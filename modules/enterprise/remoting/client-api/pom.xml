@@ -20,7 +20,7 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>rhq-enterprise-comm</artifactId>
-         <version>${project.parent.version}</version>
+         <version>${rhq-enterprise-comm.version}</version>
          <exclusions>
             <exclusion>
               <groupId>dom4j</groupId>
@@ -70,7 +70,7 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>rhq-script-bindings</artifactId>
-         <version>${project.parent.version}</version>
+         <version>${rhq-script-bindings.version}</version>
       </dependency>
       
       <dependency>

@@ -30,7 +30,7 @@
         <resource-root path="rhq-agent/lib/rhq-core-plugin-container-${project.version}.jar" />
         <resource-root path="rhq-agent/lib/rhq-core-util-${project.version}.jar" />
         <resource-root path="rhq-agent/lib/rhq-enterprise-agent-${project.version}.jar" />
-        <resource-root path="rhq-agent/lib/rhq-enterprise-comm-${project.version}.jar" />
+        <resource-root path="rhq-agent/lib/rhq-enterprise-comm-${rhq-enterprise-comm.version}.jar" />
         <resource-root path="rhq-agent/lib/sigar-${sigar.version}.jar" />
         <resource-root path="rhq-agent/lib/trove4j-3.0.3.jar" />
     </resources>

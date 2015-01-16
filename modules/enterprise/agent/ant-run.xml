@@ -52,7 +52,7 @@ Ant Script that provides ways to package the Agent.
          <include name="org/jboss/remoting/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" />
          <include name="org/jboss/logging/jboss-logging/${jboss-logging.version}/jboss-logging-${jboss-logging.version}.jar" />
          <include name="jboss/jboss-serialization/${jboss-serialization.version}/jboss-serialization-${jboss-serialization.version}.jar" />
-         <include name="org/rhq/rhq-enterprise-comm/${project.version}/rhq-enterprise-comm-${project.version}.jar" />
+         <include name="org/rhq/rhq-enterprise-comm/${rhq-enterprise-comm.version}/rhq-enterprise-comm-${rhq-enterprise-comm.version}.jar" />
          <include name="org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.jar" />
          <include name="org/rhq/rhq-core-util/${rhq-core-util.version}/rhq-core-util-${rhq-core-util.version}.jar" />
          <include name="org/rhq/rhq-core-comm-api/${project.version}/rhq-core-comm-api-${project.version}.jar" />

@@ -39,7 +39,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-enterprise-comm</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-enterprise-comm.version}</version>
     </dependency>
 
     <dependency>

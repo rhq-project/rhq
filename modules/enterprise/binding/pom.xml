@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>rhq-enterprise-parent</artifactId>
         <groupId>org.rhq</groupId>
+        <artifactId>rhq-enterprise-parent</artifactId>
         <version>4.12.0.JON330GA</version>
     </parent>
     <artifactId>rhq-script-bindings</artifactId>
@@ -365,7 +365,7 @@
                               <property name="maven.compile.classpath" refid="maven.compile.classpath" />
  
                               <mkdir dir="${javadoc.outputDirectory}/bindings" />
-                              <javadoc destdir="${javadoc.outputDirectory}/bindings" author="false" version="true" windowtitle="RHQ ${project.version} Binding API" noindex="false">
+                              <javadoc destdir="${javadoc.outputDirectory}/bindings" author="false" version="true" windowtitle="RHQ ${rhq-script-bindings.version} Binding API" noindex="false">
                                  <classpath>
                                     <pathelement path="${maven.compile.classpath}" />
                                  </classpath>

@@ -19,7 +19,7 @@
         <dependency>
           <groupId>${rhq.groupId}</groupId>
           <artifactId>rhq-enterprise-comm</artifactId>
-          <version>${project.version}</version>
+          <version>${rhq-enterprise-comm.version}</version>
           <scope>provided</scope>
         </dependency>
 
@@ -53,7 +53,7 @@
                         <artifactItem>
                            <groupId>${rhq.groupId}</groupId>
                            <artifactId>rhq-enterprise-comm</artifactId>
-                           <version>${project.version}</version>
+                           <version>${rhq-enterprise-comm.version}</version>
                         </artifactItem>
                         <artifactItem>
                            <groupId>${rhq.groupId}</groupId>

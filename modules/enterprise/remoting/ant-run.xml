@@ -53,7 +53,7 @@ ANT Script that provides ways to package the agent.
 
          <include name="org/rhq/rhq-enterprise-client/${project.version}/rhq-enterprise-client-${project.version}.jar" />
          <include name="org/rhq/rhq-enterprise-server/${rhq-enterprise-server.version}/rhq-enterprise-server-${rhq-enterprise-server.version}.jar" />
-         <include name="org/rhq/rhq-enterprise-comm/${project.version}/rhq-enterprise-comm-${project.version}.jar" />
+         <include name="org/rhq/rhq-enterprise-comm/${rhq-enterprise-comm.version}/rhq-enterprise-comm-${rhq-enterprise-comm.version}.jar" />
 
          <include name="org/rhq/rhq-core-util/${rhq-core-util.version}/rhq-core-util-${rhq-core-util.version}.jar" />
          <include name="org/rhq/rhq-core-native-system/${rhq-core-native-system.version}/rhq-core-native-system-${rhq-core-native-system.version}.jar" />

@@ -55,7 +55,7 @@
       <copy file="${settings.localRepository}/org/rhq/rhq-core-domain/${rhq-core-domain.version}/rhq-core-domain-${rhq-core-domain.version}.jar" tofile="${lib.home}/rhq-core-domain-${rhq-core-domain.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-core-util/${rhq-core-util.version}/rhq-core-util-${rhq-core-util.version}.jar" tofile="${lib.home}/rhq-core-util-${rhq-core-util.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-server/${rhq-enterprise-server.version}/rhq-enterprise-server-${rhq-enterprise-server.version}-client.jar" tofile="${lib.home}/rhq-enterprise-server-${rhq-enterprise-server.version}-client.jar" verbose="true" />
-      <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-comm/${project.version}/rhq-enterprise-comm-${project.version}.jar" tofile="${lib.home}/rhq-enterprise-comm-${project.version}.jar" verbose="true" />
+      <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-comm/${rhq-enterprise-comm.version}/rhq-enterprise-comm-${rhq-enterprise-comm.version}.jar" tofile="${lib.home}/rhq-enterprise-comm-${rhq-enterprise-comm.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/jboss/jboss-common-core/${jboss-common-core.version}/jboss-common-core-${jboss-common-core.version}.jar" tofile="${lib.home}/jboss-common-core-${jboss-common-core.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/jboss/logging/jboss-logging/${jboss-logging.version}/jboss-logging-${jboss-logging.version}.jar" tofile="${lib.home}/jboss-logging-${jboss-logging.version}.jar" verbose="true" />   	
       <copy file="${settings.localRepository}/org/jboss/remoting/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" tofile="${lib.home}/jboss-remoting-${jboss-remoting.version}.jar" verbose="true" />
@@ -65,7 +65,7 @@
       <copy file="${settings.localRepository}/org/hibernate/hibernate-core/${hibernate.version}/hibernate-core-${hibernate.version}.jar" tofile="${lib.home}/hibernate-core-${hibernate.version}.jar" verbose="true" />
       <copy file="${basedir}/target/${project.artifactId}-${project.version}.jar" tofile="${lib.home}/${project.artifactId}-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/net/sf/opencsv/opencsv/${opencsv.version}/opencsv-${opencsv.version}.jar" tofile="${lib.home}/opencsv-${opencsv.version}.jar" verbose="true" />
-   	  <copy file="${settings.localRepository}/org/rhq/rhq-script-bindings/${project.version}/rhq-script-bindings-${project.version}.jar" tofile="${lib.home}/rhq-script-bindings-${project.version}.jar" verbose="true" />
+   	  <copy file="${settings.localRepository}/org/rhq/rhq-script-bindings/${rhq-script-bindings.version}/rhq-script-bindings-${rhq-script-bindings.version}.jar" tofile="${lib.home}/rhq-script-bindings-${rhq-script-bindings.version}.jar" verbose="true" />
 
       <copy file="${settings.localRepository}/org/rhq/rhq-scripting-api/${project.version}/rhq-scripting-api-${project.version}.jar" tofile="${lib.home}/rhq-scripting-api-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-scripting-javascript/${project.version}/rhq-scripting-javascript-${project.version}.jar" tofile="${lib.home}/rhq-scripting-javascript-${project.version}.jar" verbose="true" />

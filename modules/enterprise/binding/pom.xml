@@ -47,14 +47,14 @@
         <dependency>
            <groupId>${project.groupId}</groupId>
            <artifactId>rhq-scripting-javascript</artifactId>
-           <version>${project.version}</version>
+           <version>${rhq-scripting-javascript.version}</version>
            <scope>test</scope>
         </dependency>
         
         <dependency>
            <groupId>${project.groupId}</groupId>
            <artifactId>rhq-scripting-python</artifactId>
-           <version>${project.version}</version>
+           <version>${rhq-scripting-python.version}</version>
            <scope>test</scope>
         </dependency>
 

@@ -37,7 +37,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-comm-api</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-core-comm-api.version}</version>
     </dependency>
 
     <!-- 3rd Party Deps -->
@@ -126,7 +126,7 @@
           <archive>
             <manifestEntries>
               <Product-Name>${rhq.product.name}</Product-Name>
-              <Product-Version>${project.version}</Product-Version>
+              <Product-Version>${project.parent.version}</Product-Version>
             </manifestEntries>
           </archive>
         </configuration>

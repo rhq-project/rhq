@@ -137,6 +137,9 @@
                            <property name="rhq-enterprise-server.version" value="${rhq-enterprise-server.version}" />
                            <property name="rhq-core-util.version" value="${rhq-core-util.version}" />
                            <property name="rhq-remoting-client-api.version" value="${rhq-remoting-client-api.version}" />
+			   <property name="rhq-script-bindings.version" value="${rhq-script-bindings.version}" />
+			   <property name="rhq-enterprise-comm.version" value="${rhq-enterprise-comm.version}" />
+
                         </ant>
                      </target>
                   </configuration>

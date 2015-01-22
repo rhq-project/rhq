@@ -9,6 +9,7 @@
     </parent>
 
     <artifactId>rhq-rh-access</artifactId>
+    <version>4.12.0.JON330GA</version>
     <packaging>war</packaging>
     <name>RHQ RedHat Access</name>
     <properties>
@@ -65,7 +66,7 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-domain</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-domain.version}</version>
             <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
         </dependency>
 
@@ -77,7 +78,7 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-enterprise-server</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-enterprise-server.version}</version>
             <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
             <exclusions>
                 <exclusion>

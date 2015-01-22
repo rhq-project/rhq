@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,6 +21,7 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
+import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
 import com.google.common.io.LineReader;
 import com.google.common.util.concurrent.FutureCallback;
@@ -28,6 +30,20 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.RateLimiter;
+import com.netflix.astyanax.AstyanaxContext;
+import com.netflix.astyanax.Keyspace;
+import com.netflix.astyanax.connectionpool.NodeDiscoveryType;
+import com.netflix.astyanax.connectionpool.impl.ConnectionPoolConfigurationImpl;
+import com.netflix.astyanax.connectionpool.impl.SimpleAuthenticationCredentials;
+import com.netflix.astyanax.connectionpool.impl.Slf4jConnectionPoolMonitorImpl;
+import com.netflix.astyanax.impl.AstyanaxConfigurationImpl;
+import com.netflix.astyanax.model.ColumnFamily;
+import com.netflix.astyanax.model.Composite;
+import com.netflix.astyanax.model.Row;
+import com.netflix.astyanax.recipes.reader.AllRowsReader;
+import com.netflix.astyanax.serializers.CompositeSerializer;
+import com.netflix.astyanax.serializers.IntegerSerializer;
+import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 import com.yammer.metrics.core.Meter;
 import com.yammer.metrics.core.MetricsRegistry;
 
@@ -146,21 +162,32 @@ public class MigrateAggregateMetrics implements Step {
             writePermits = RateLimiter.create(getWriteLimit() * getNumberOfUpNodes(), 10, TimeUnit.SECONDS);
             readPermits = RateLimiter.create(getReadLimit() * getNumberOfUpNodes(), 10, TimeUnit.SECONDS);
 
-            log.info("The request limits are " + writePermits.getRate() + " writes per econd and " +
+            log.info("The request limits are " + writePermits.getRate() + " writes per second and " +
                 readPermits.getRate() + " reads per second");
 
-            Set<Integer> scheduleIds = loadScheduleIds();
-            remaining1HourMetrics.set(scheduleIds.size());
-            remaining6HourMetrics.set(scheduleIds.size());
-            remaining24HourMetrics.set(scheduleIds.size());
-            totalMetrics = scheduleIds.size() * 3;
+            AstyanaxContext<Keyspace> context = createContext();
+            context.start();
+            Keyspace keyspace = context.getClient();
+
+            Set<Integer> scheduleIdsWith1HourData = loadScheduleIds(keyspace, ColumnFamily.newColumnFamily(
+                "one_hour_metrics", IntegerSerializer.get(), CompositeSerializer.get()), Bucket.ONE_HOUR);
+            Set<Integer> scheduleIdsWith6HourData = loadScheduleIds(keyspace, ColumnFamily.newColumnFamily(
+                "six_hour_metrics", IntegerSerializer.get(), CompositeSerializer.get()), Bucket.SIX_HOUR);
+            Set<Integer> scheduleIdsWith24HourData = loadScheduleIds(keyspace, ColumnFamily.newColumnFamily(
+                "twenty_four_hour_metrics", IntegerSerializer.get(), CompositeSerializer.get()),
+                Bucket.TWENTY_FOUR_HOUR);
+
+            remaining1HourMetrics.set(scheduleIdsWith1HourData.size());
+            remaining6HourMetrics.set(scheduleIdsWith6HourData.size());
+            remaining24HourMetrics.set(scheduleIdsWith24HourData.size());
+            totalMetrics = remaining1HourMetrics.get() + remaining6HourMetrics.get() + remaining24HourMetrics.get();
             MigrationProgressLogger progressLogger = new MigrationProgressLogger();
 
             threadPool.submit(progressLogger);
 
-            migrate1HourData(scheduleIds);
-            migrate6HourData(scheduleIds);
-            migrate24HourData(scheduleIds);
+            migrate1HourData(scheduleIdsWith1HourData);
+            migrate6HourData(scheduleIdsWith6HourData);
+            migrate24HourData(scheduleIdsWith24HourData);
 
             migrations.finishedSchedulingTasks();
             migrations.waitForTasksToFinish();
@@ -184,6 +211,22 @@ public class MigrateAggregateMetrics implements Step {
             log.info("There were " + failedMigrations + " failed migrations");
             shutdown();
         }
+    }
+
+    private AstyanaxContext<Keyspace> createContext() {
+        return new AstyanaxContext.Builder()
+            .forCluster("rhq")
+            .forKeyspace("rhq")
+            .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
+                .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE))
+            .withConnectionPoolConfiguration(new ConnectionPoolConfigurationImpl("astyanax_connection_pool")
+                .setPort(9160)
+                .setSeeds(System.getProperty("rhq.storage.nodes"))
+                .setMaxConnsPerHost(5)
+                .setConnectTimeout(10000)
+                .setAuthenticationCredentials(new SimpleAuthenticationCredentials("rhqadmin", "rhqadmin")))
+            .withConnectionPoolMonitor(new Slf4jConnectionPoolMonitorImpl())
+            .buildKeyspace(ThriftFamilyFactory.getInstance());
     }
 
     private int getWriteLimit() {
@@ -230,6 +273,39 @@ public class MigrateAggregateMetrics implements Step {
             throw new RuntimeException("Failed to load schedule ids");
         } catch (ParseException e) {
             throw new RuntimeException("Failed to load schedule ids");
+        }
+    }
+
+    private Set<Integer> loadScheduleIds(Keyspace keyspace, ColumnFamily<Integer, Composite> table, Bucket bucket) {
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        final Set<Integer> scheduleIds = new ConcurrentSkipListSet<Integer>();
+        try {
+            log.info("Scanning for schedule ids with " + bucket + " data");
+            int concurrencyLevel = Integer.parseInt(System.getProperty("astyanax.concurrency-level", "4"));
+            new AllRowsReader.Builder<Integer, Composite>(keyspace, table)
+                .withColumnRange(null, null, false, 0)
+                .withPartitioner(null) // this will use keyspace's partitioner
+                .withConcurrencyLevel(concurrencyLevel)
+                .forEachRow(new Function<Row<Integer, Composite>, Boolean>() {
+                    @Override
+                    public Boolean apply(Row<Integer, Composite> row) {
+                        boolean added = scheduleIds.add(row.getKey());
+                        if (!added) {
+                            log.info("schedule id " + row.getKey() + " has already been loaded");
+                        }
+                        return true;
+                    }
+                })
+            .build()
+            .call();
+            return scheduleIds;
+        } catch (Exception e) {
+            throw new RuntimeException("There was an unexpected error scanning scanning for schedule ids with " +
+                bucket + " data. The migration will have to be rerun.", e);
+        } finally {
+            stopwatch.stop();
+            log.info("Found " + scheduleIds.size() + " schedule ids with " + bucket + " data in " +
+                stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
         }
     }
 

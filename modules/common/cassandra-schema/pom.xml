@@ -77,6 +77,24 @@
       <artifactId>metrics-core</artifactId>
       <version>3.1.0</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.netflix.astyanax</groupId>
+      <artifactId>astyanax-core</artifactId>
+      <version>2.0.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.netflix.astyanax</groupId>
+      <artifactId>astyanax-thrift</artifactId>
+      <version>2.0.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.netflix.astyanax</groupId>
+      <artifactId>astyanax-recipes</artifactId>
+      <version>2.0.2</version>
+    </dependency>
   </dependencies>
 
   <build>

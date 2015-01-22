@@ -332,16 +332,17 @@ public class MigrateAggregateMetrics implements Step {
             Set<Integer> migratedScheduleIds = migrationLog.read();
             Set<FailedBatch> failedBatches = Collections.newSetFromMap(new ConcurrentHashMap<FailedBatch, Boolean>());
 
-            while (!scheduleIds.isEmpty()) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Submitting migration tasks for " + scheduleIds.size() + " schedule ids - " +
-                        scheduleIds);
-                } else {
-                    log.info("Submitting migration tasks for " + scheduleIds.size() + " schedule ids");
-                }
-                scheduleIds = submitMigrationTasks(scheduleIds, query, bucket, ttl, migrationLog, migratedScheduleIds,
-                    failedBatches, remainingMetrics);
+        while (!remainingScheduleIds.isEmpty()) {
+            List<Integer> batch = getNextBatch(remainingScheduleIds, migratedScheduleIds);
+            ReadResults readResults = readData(batch, query, bucket);
+            for (Integer scheduleId : readResults.failedReads) {
+                remainingScheduleIds.offer(scheduleId);
             }
+            Map<Integer, List<Row>> failedWrites = writeData(readResults.resultSets, bucket, ttl, remainingMetrics);
+            while (!failedWrites.isEmpty()) {
+                failedWrites = writeData(failedWrites, bucket, ttl, remainingMetrics);
+            }
+        }
 
             int totalFailedBatches = failedBatches.size();
             Stopwatch batchesStopwatch = Stopwatch.createStarted();
@@ -353,25 +354,21 @@ public class MigrateAggregateMetrics implements Step {
                     log.info("Retrying " + failedBatches.size() + " failed batches for " + bucket + " data");
                 }
 
-                failedBatches = retryFailedBatches(bucket, failedBatches);
-                if (log.isDebugEnabled() && !failedBatches.isEmpty()) {
-                    log.debug("Retrying " + failedBatches.size() + " failed batches for " + bucket + " data");
-                }
+    private List<Integer> getNextBatch(Queue<Integer> scheduleIds, Set<Integer> migratedScheduleIds) {
+        List<Integer> batch = new ArrayList<Integer>(500);
+        while (!scheduleIds.isEmpty() && batch.size() < 500) {
+            Integer scheduleId = scheduleIds.poll();
+            if (!migratedScheduleIds.contains(scheduleId)) {
+                batch.add(scheduleId);
             }
-            batchesStopwatch.stop();
-            log.info("Successfully reinserted " + totalFailedBatches + " batches in " +
-                batchesStopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
-            try {
-                dropTable(bucket);
-            } catch (Exception e) {
-                log.warn("DROP " + bucket + " failed", e);
-                log.info("Tables are - " + getTables());
-            }
-            stopwatch.stop();
-            log.info("Finished migrating " + bucket + " data in " + stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
-        } finally {
-            migrationLog.close();
         }
+        return batch;
+    }
+
+    private static class ReadResults {
+        Set<Integer> failedReads = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>());
+
+        Map<Integer, List<Row>> resultSets = new ConcurrentHashMap<Integer, List<Row>>();
     }
 
     private Set<FailedBatch> retryFailedBatches(Bucket bucket, Set<FailedBatch> failedBatches)
@@ -384,9 +381,13 @@ public class MigrateAggregateMetrics implements Step {
             ResultSetFuture future = queryExecutor.executeWrite(failedBatch.getBatch());
             Futures.addCallback(future, new FutureCallback<ResultSet>() {
                 @Override
-                public void onSuccess(ResultSet result) {
-                    rateMonitor.requestSucceeded();
-                    latch.countDown();
+                public void onSuccess(ResultSet resultSet) {
+                    try {
+                        results.resultSets.put(scheduleId, resultSet.all());
+                        rateMonitor.requestSucceeded();
+                    } finally {
+                        queries.countDown();
+                    }
                 }
 
                 @Override
@@ -407,63 +408,99 @@ public class MigrateAggregateMetrics implements Step {
         return remaining;
     }
 
-    private Set<Integer> submitMigrationTasks(Set<Integer> scheduleIds, PreparedStatement query, final Bucket bucket,
-        Days ttl, final MigrationLog migrationLog, Set<Integer> migratedScheduleIds, final Set<FailedBatch> failedBatches,
-        final AtomicInteger remainingMetrics)
-        throws InterruptedException {
+    private Map<Integer, List<Row>> writeData(Map<Integer, List<Row>> resultSets, final Bucket bucket,
+        final Days ttl, final AtomicInteger remainingMetrics) throws InterruptedException{
 
-        final Set<Integer> failedScheduleIds = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>());
-        final CountDownLatch remaining = new CountDownLatch(scheduleIds.size());
+        final CountDownLatch writes = new CountDownLatch(resultSets.size());
+        final Map<Integer, List<Row>> failedWrites = new ConcurrentHashMap<Integer, List<Row>>();
 
-        for (final Integer scheduleId : scheduleIds) {
-            if (migratedScheduleIds.contains(scheduleId)) {
+        for (final Map.Entry<Integer, List<Row>> entry : resultSets.entrySet()) {
+            if (entry.getValue().isEmpty()) {
                 if (log.isDebugEnabled()) {
-                    log.debug(bucket + " data for schedule id " + scheduleId + " has already been migrated");
+                    log.debug("There is no " + bucket + " data for schedule id " + entry.getKey());
                 }
-                remainingMetrics.decrementAndGet();
-                remaining.countDown();
+                writes.countDown();
             } else {
-                ListenableFuture<ResultSet> queryFuture = queryExecutor.executeRead(query.bind(scheduleId));
-//                queryFuture = Futures.withFallback(queryFuture, countReadErrors);
-                ListenableFuture<List<BatchResult>> insertsFuture = Futures.transform(queryFuture,
-                    new MigrateData(scheduleId, bucket, queryExecutor, ttl.toStandardSeconds(), writeErrors,
-                        rateMonitor, failedBatches), threadPool);
-                Futures.addCallback(insertsFuture, new FutureCallback<List<BatchResult>>() {
+                threadPool.submit(new Runnable() {
                     @Override
-                    public void onSuccess(List<BatchResult> results) {
-                        try {
-                            boolean migrationFailed = false;
-                            for (BatchResult result : results) {
-                                if (result.succeeded()) {
+                    public void run() {
+                        ListenableFuture<List<ResultSet>> insertsFuture = writeData(entry.getKey(), bucket,
+                            entry.getValue(), ttl.toStandardSeconds());
+                        Futures.addCallback(insertsFuture, new FutureCallback<List<ResultSet>>() {
+                            @Override
+                            public void onSuccess(List<ResultSet> results) {
+                                try {
+                                    if (log.isDebugEnabled()) {
+                                        log.debug("Finished " + bucket + " data migration for schedule id " +
+                                            entry.getKey());
+                                    }
                                     rateMonitor.requestSucceeded();
-                                } else {
-                                    migrationFailed = true;
-                                    rateMonitor.requestFailed();
-                                    writeErrors.incrementAndGet();
-                                    failedBatches.add(new FailedBatch(scheduleId, result.getBatch()));
+                                    remainingMetrics.decrementAndGet();
+                                    migrationsMeter.mark();
+                                } finally {
+                                    writes.countDown();
                                 }
                             }
 
-                            if (!migrationFailed) {
-                                migrationsMeter.mark();
-                                migrationLog.write(scheduleId);
-                                remainingMetrics.decrementAndGet();
+                            @Override
+                            public void onFailure(Throwable t) {
+                                try {
+                                    if (log.isDebugEnabled()) {
+                                        log.debug("Failed to write " + bucket + " data for schedule id " + entry.getKey(),
+                                            t);
+                                    } else {
+                                        log.info("Failed to write " + bucket + " data for schedule id " + entry.getKey() +
+                                            ": " + ThrowableUtil.getRootMessage(t));
+                                    }
+                                    rateMonitor.requestFailed();
+                                    writeErrors.incrementAndGet();
+                                    failedWrites.put(entry.getKey(), entry.getValue());
+                                } finally {
+                                    writes.countDown();
+                                }
                             }
-
-                            remaining.countDown();
-                        } catch (IOException e) {
-                            log.warn("Failed to log successful migration of " + bucket + " data for schedule id " +
-                                scheduleId, e);
-                        } catch (Exception e) {
-                            log.error("The onSuccess callback failed. This is a bug!", e);
-                        }
+                        });
                     }
+                });
+            }
+        }
+        writes.await();
+        return failedWrites;
+    }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Failed to fetch " + bucket + " data for schedule id " + scheduleId +
-                                ". Migration will be retried.", t);
+    private ListenableFuture<List<ResultSet>> writeData(Integer scheduleId, Bucket bucket, List<Row> rows,
+        Seconds ttl) {
+        try {
+            List<ResultSetFuture> insertFutures = new ArrayList<ResultSetFuture>();
+            Date time = rows.get(0).getDate(0);
+            Date nextTime;
+            Double max = null;
+            Double min = null;
+            Double avg = null;
+            List<Statement> statements = new ArrayList<Statement>(45);
+
+            for (Row row : rows) {
+                nextTime = row.getDate(0);
+                if (nextTime.equals(time)) {
+                    int type = row.getInt(1);
+                    switch (type) {
+                    case 0:
+                        max = row.getDouble(2);
+                        break;
+                    case 1:
+                        min = row.getDouble(2);
+                        break;
+                    default:
+                        avg = row.getDouble(2);
+                    }
+                } else {
+                    Seconds elapsedSeconds = Seconds.secondsBetween(new DateTime(time), DateTime.now());
+                    if (elapsedSeconds.isLessThan(ttl)) {
+                        if (isDataMissing(avg, max, min)) {
+                            if (log.isDebugEnabled()) {
+                                log.debug("We only have a partial " + bucket + " metric for {scheduleId: " +
+                                    scheduleId + ", time: " + time.getTime() + "}. It will not be migrated.");
+                            }
                         } else {
                             log.info("Failed to fetch " + bucket + " data for schedule id " + scheduleId + ": " +
                                 ThrowableUtil.getRootMessage(t) + ". Migration will be retried.");

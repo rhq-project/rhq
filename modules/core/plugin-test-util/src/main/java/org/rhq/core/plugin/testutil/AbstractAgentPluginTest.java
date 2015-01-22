@@ -116,7 +116,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         //complete maven gav construction.
         String platformPluginArtifact = "org.rhq:rhq-platform-plugin:jar:";
         if ((rhqPlatformPluginVersion == null) || rhqPlatformPluginVersion.trim().isEmpty()) {
-            platformPluginArtifact += getRhqVersion();//got to classpath and MavenArtifactProperties
+            platformPluginArtifact += getPlatformPluginVersion();//go to classpath and MavenArtifactProperties
         } else {
             platformPluginArtifact += rhqPlatformPluginVersion;
         }
@@ -449,7 +449,17 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
             if ((rhqVersion != null) && !(rhqVersion.trim().isEmpty())) {
                 return rhqVersion;
             }
-            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-core-plugin-container");
+            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-parent");
+        } catch (MavenArtifactNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return rhqPluginContainerPom.getVersion();
+    }
+
+    private static String getPlatformPluginVersion() {
+        MavenArtifactProperties rhqPluginContainerPom = null;
+        try {
+            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-platform-plugin");
         } catch (MavenArtifactNotFoundException e) {
             throw new RuntimeException(e);
         }

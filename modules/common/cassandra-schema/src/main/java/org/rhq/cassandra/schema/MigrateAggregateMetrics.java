@@ -2,10 +2,14 @@ package org.rhq.cassandra.schema;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -21,6 +25,10 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.querybuilder.Batch;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -35,6 +43,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
+import org.joda.time.Seconds;
 
 import org.rhq.cassandra.schema.migration.BatchResult;
 import org.rhq.cassandra.schema.migration.FailedBatch;
@@ -209,14 +218,17 @@ public class MigrateAggregateMetrics implements Step {
             threadPool.submit(progressLogger);
             threadPool.submit(rateMonitor);
 
-            if (!scheduleIdsWith1HourData.isEmpty()) {
-                migrate1HourData(scheduleIdsWith1HourData);
-            }
-            if (!scheduleIdsWith6HourData.isEmpty()) {
-                migrate6HourData(scheduleIdsWith6HourData);
-            }
-            if (!scheduleIdsWith24HourData.isEmpty()) {
-                migrate24HourData(scheduleIdsWith24HourData);
+            migrate1HourData(scheduleIdsWith1HourData);
+            migrate6HourData(scheduleIdsWith6HourData);
+            migrate24HourData(scheduleIdsWith24HourData);
+
+//            migrations.await();
+
+            if (remaining1HourMetrics.get() > 0 || remaining6HourMetrics.get() > 0 ||
+                remaining24HourMetrics.get() > 0) {
+                throw new RuntimeException("There are unfinished metrics migrations - {one_hour: " +
+                    remaining1HourMetrics + ", six_hour: " + remaining6HourMetrics + ", twenty_four_hour: " +
+                    remaining24HourMetrics + "}. The upgrade will have to be " + "run again.");
             }
 
             stopwatch.stop();
@@ -283,7 +295,9 @@ public class MigrateAggregateMetrics implements Step {
         PreparedStatement query = session.prepare(
             "SELECT time, type, value FROM rhq.one_hour_metrics " +
             "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
-        migrateData(scheduleIds, query, Bucket.ONE_HOUR, Days.days(14), remaining1HourMetrics);
+//        migrateData(scheduleIds, query, delete, Bucket.ONE_HOUR, remaining1HourMetrics, migrated1HourMetrics,
+//            Days.days(14));
+        migrate(scheduleIds, query, Bucket.ONE_HOUR, remaining1HourMetrics, Days.days(14));
     }
 
     private void migrate6HourData(Set<Integer> scheduleIds) throws IOException, InterruptedException {
@@ -292,7 +306,9 @@ public class MigrateAggregateMetrics implements Step {
         PreparedStatement query = session.prepare(
             "SELECT time, type, value FROM rhq.six_hour_metrics " +
             "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
-        migrateData(scheduleIds, query, Bucket.SIX_HOUR, Days.days(31), remaining6HourMetrics);
+//        migrateData(scheduleIds, query, delete, Bucket.SIX_HOUR, remaining6HourMetrics, migrated6HourMetrics,
+//            Days.days(31));
+        migrate(scheduleIds, query, Bucket.SIX_HOUR, remaining6HourMetrics, Days.days(31));
     }
 
     private void migrate24HourData(Set<Integer> scheduleIds) throws IOException, InterruptedException {
@@ -301,7 +317,9 @@ public class MigrateAggregateMetrics implements Step {
         PreparedStatement query = session.prepare(
             "SELECT time, type, value FROM rhq.twenty_four_hour_metrics " +
             "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
-        migrateData(scheduleIds, query, Bucket.TWENTY_FOUR_HOUR, Days.days(365), remaining24HourMetrics);
+//        migrateData(scheduleIds, query, delete, Bucket.TWENTY_FOUR_HOUR, remaining24HourMetrics, migrated24HourMetrics,
+//            Days.days(365));
+        migrate(scheduleIds, query, Bucket.TWENTY_FOUR_HOUR, remaining24HourMetrics, Days.days(365));
     }
 
     private void migrateData(Set<Integer> scheduleIds, PreparedStatement query, Bucket bucket, Days ttl,

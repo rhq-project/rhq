@@ -183,6 +183,8 @@ Build-Number=${buildNumber}
                    <property name="rhq-core-plugin-container.version" value="${rhq-core-plugin-container.version}" />
                    <property name="rhq-core-client-api.version" value="${rhq-core-client-api.version}" />
                    <property name="rhq-jmx-plugin.version" value="${rhq-jmx-plugin.version}" />
+                   <property name="rhq-enterprise-comm.version" value="${rhq-enterprise-comm.version}" />
+                   <property name="rhq-script-bindings.version" value="${rhq-script-bindings.version}" />
                 </ant>
               </target>
             </configuration>

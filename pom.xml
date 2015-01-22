@@ -436,6 +436,7 @@
     <rhq-arquillian-agent-plugin-container-embedded.version>${rhq.pom.version}</rhq-arquillian-agent-plugin-container-embedded.version>
     <rhq-shrinkwrap-agent-plugin-archive.version>${rhq.pom.version}</rhq-shrinkwrap-agent-plugin-archive.version>
     <rhq-arquillian-container-test-plugin.version>${rhq.pom.version}</rhq-arquillian-container-test-plugin.version>
+    <rhq-rh-access.version>${rhq.pom.version}</rhq-rh-access.version>
   </properties>
 
 

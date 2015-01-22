@@ -286,7 +286,9 @@ public class StartupBean implements StartupLocal {
             sc.clearPaging();
             List<Server> servers = topologyManager.findServersByCriteria(overlord, sc);
             for (Server server : servers) {
-                if (!version.equals(server.getVersion())) {
+                //BZ-1184719: Exact match is too strict for cumulative patches. Also accept "-redhat-N" only differences.
+                if (!version.equals(server.getVersion())
+                    && !acceptableCpVersionDifference(version, server.getVersion())) {
                     throw new RuntimeException(
                         "Startup failed: Could not start Server because not all Servers are running the same version. This Server is running version ["
                             + version
@@ -302,7 +304,9 @@ public class StartupBean implements StartupLocal {
             snc.clearPaging();
             List<StorageNode> storageNodes = storageNodeManager.findStorageNodesByCriteria(overlord, snc);
             for (StorageNode storageNode : storageNodes) {
-                if (!version.equals(storageNode.getVersion())) {
+                //BZ-1184719: Exact match is too strict for cumulative patches. Also accept "-redhat-N" only differences.
+                if (!version.equals(storageNode.getVersion())
+                    && !acceptableCpVersionDifference(version, storageNode.getVersion())) {
                     throw new RuntimeException(
                         "Startup failed: Could not start Server because not all Storage Nodes are running the same version. This Server is running version ["
                             + version
@@ -314,8 +318,60 @@ public class StartupBean implements StartupLocal {
                 }
             }
         } catch (Throwable t) {
-            throw new RuntimeException("Startup failed: Could not validat Server or Storage Node versions", t);
+            throw new RuntimeException("Startup failed: Could not validate Server or Storage Node versions", t);
         }
+    }
+
+    //BZ-1184719: Tests whether the only difference between the the RHQ versioned
+    //  components is '-redhat-N' as used by cumulative patched components.
+    /** BZ-1184719: Tests whether the Server or Storage Node versions
+     *  differ by cumulative patch versioning only.
+     *  Ex. 4.12.0.JON330GA-redhat-1 vs. 4.12.0.JON330GA is acceptably different.
+     *  Ex. 4.12.0.JON330GA-redhat-3 vs. 4.12.0.JON330GA-redhat-9 is acceptably different.
+     * @param version
+     * @param secondVersion
+     * @return boolean about whether difference is acceptable.
+     */
+    private boolean acceptableCpVersionDifference(String version, String secondVersion) {
+        boolean acceptableCpVersionDelta = false;
+        String cpFrag = "-redhat-";
+        //fails early if neither version contains cp identifier.
+        if ((version.indexOf(cpFrag) > -1) || (secondVersion.indexOf(cpFrag) > -1)) {
+            String[] versionComponents = version.split(cpFrag);
+            String[] secondVersionComponents = secondVersion.split(cpFrag);
+            //Ex. 4.12.0.JON330GA-redhat-3 vs. 4.12.0.JON330GA-redhat-9
+            if (versionComponents.length == secondVersionComponents.length) {
+                if ((versionComponents.length > 0) && (versionComponents[0].equals(secondVersionComponents[0]))) {//compare prefix
+                    String index1 = versionComponents[1];
+                    String index2 = secondVersionComponents[1];
+                    if (versionComponents.length > 1) {
+                        try {
+                            Integer.parseInt(index1);
+                            Integer.parseInt(index2);
+                            acceptableCpVersionDelta = true;
+                        } catch (NumberFormatException e) {
+                        }
+                    }
+                }
+            } else { //4.12.0.JON330GA-redhat-1 vs. 4.12.0.JON330GA
+                if ((versionComponents.length > 0) && (versionComponents[0].equals(secondVersionComponents[0]))) {
+                    String index1 = "0";
+                    String index2 = "0";
+                    if (versionComponents.length > 1) {
+                        index1 = versionComponents[1];
+                    } else {
+                        index2 = secondVersionComponents[1];
+                    }
+                    try {
+                        Integer.parseInt(index1);
+                        Integer.parseInt(index2);
+                        acceptableCpVersionDelta = true;
+                    } catch (NumberFormatException e) {
+                    }
+                }
+            }
+        }
+        return acceptableCpVersionDelta;
     }
 
     private long readShutdownTimeLogFile() throws Exception {

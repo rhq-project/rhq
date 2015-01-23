@@ -229,34 +229,38 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
         }
 
         ConnectionProvider connectionProvider;
-        EmsConnection connection;
+        EmsConnection connection = null;
         try {
             connectionProvider = ConnectionProviderFactory.createConnectionProvider(pluginConfig, null,
                 discoveryContext.getParentResourceContext().getTemporaryDirectory());
             connection = connectionProvider.connect();
             connection.loadSynchronous(false);
+            String key = connectorAddress;
+            String name = connectorAddress;
+
+            String version = getJavaVersion(connection);
+            if (version == null) {
+                log.warn("Unable to determine version of JVM with connector address [" + connectorAddress + "].");
+            }
+
+            String connectionType = pluginConfig.getSimpleValue(CONNECTION_TYPE, null);
+            String description = connectionType + " JVM (" + connectorAddress + ")";
+
+            DiscoveredResourceDetails resourceDetails = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
+                    key, name, version, description, pluginConfig, null);
+            return resourceDetails;
         } catch (Exception e) {
             if (e.getCause() instanceof SecurityException) {
                 throw new InvalidPluginConfigurationException("Failed to authenticate to JVM with connector address ["
                         + connectorAddress + "] - principal and/or credentials connection properties are not set correctly.");
             }
             throw new RuntimeException("Failed to connect to JVM with connector address [" + connectorAddress + "].", e);
+        } finally {
+            if(connection != null) {
+                connection.close();
+            }
         }
 
-        String key = connectorAddress;
-        String name = connectorAddress;
-
-        String version = getJavaVersion(connection);
-        if (version == null) {
-            log.warn("Unable to determine version of JVM with connector address [" + connectorAddress + "].");
-        }
-
-        String connectionType = pluginConfig.getSimpleValue(CONNECTION_TYPE, null);
-        String description = connectionType + " JVM (" + connectorAddress + ")";
-
-        DiscoveredResourceDetails resourceDetails = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-                key, name, version, description, pluginConfig, null);
-        return resourceDetails;
     }
 
     private String getJavaVersion(EmsConnection connection) {

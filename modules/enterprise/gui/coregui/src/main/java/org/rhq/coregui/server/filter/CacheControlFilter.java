@@ -51,7 +51,7 @@ public class CacheControlFilter implements Filter {
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         String requestURI = httpServletRequest.getRequestURI();
 
-        if (requestURI.contains(".nocache.")) {
+        if (requestURI.contains(".nocache.") || requestURI.equals("/coregui/")) {
             // Tell browser to disable caching of the content.
             Date now = new Date();
             HttpServletResponse httpResponse = (HttpServletResponse) response;

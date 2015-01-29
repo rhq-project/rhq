@@ -45,12 +45,14 @@ import org.rhq.coregui.client.util.Log;
 
 public class RhAccessView extends FullHTMLPane implements BookmarkableView {
 
+    private static final String HOME = "/rha/support-redhat-1.html";
+
     public RhAccessView(String url) {
         super(url);
     }
 
     public RhAccessView() {
-        this("/rha/support.html#/search");
+        this(HOME + "#/search");
     }
 
     public static final ViewName VIEW_ID = new ViewName("Support", "Red Hat Access");
@@ -70,18 +72,18 @@ public class RhAccessView extends FullHTMLPane implements BookmarkableView {
         String sessionId = String.valueOf("?sid=" + UserSessionManager.getSessionSubject().getSessionId());
 
         if (viewPath.isEnd()) {
-            setContentsURL("/rha/support.html#/search" + sessionId);
+            setContentsURL(HOME + "#/search" + sessionId);
             return;
         }
         String viewId = viewPath.getCurrent().getPath();
         if (PAGE_SEARCH.getName().equals(viewId)) {
-            setContentsURL("/rha/support.html#/search" + sessionId);
+            setContentsURL(HOME + "#/search" + sessionId);
         }
         else if (PAGE_MY_CASES.getName().equals(viewId)) {
-            setContentsURL("/rha/support.html#/case/list" + sessionId);
+            setContentsURL(HOME + "#/case/list" + sessionId);
         }
         else if (PAGE_NEW_CASE.getName().equals(viewId)) {
-            setContentsURL("/rha/support.html#/case/new" + sessionId);
+            setContentsURL(HOME + "#/case/new" + sessionId);
         } else if (viewId.startsWith(PAGE_RESOURCE_CASE.getName())) {
             String resourceId = viewPath.getNext().getPath();
             try {
@@ -217,7 +219,7 @@ public class RhAccessView extends FullHTMLPane implements BookmarkableView {
                     }
 
                     String sessionId = String.valueOf("&sid=" + UserSessionManager.getSessionSubject().getSessionId());
-                    setContentsURL("/rha/support.html#/resource-case/?resourceId=" + resourceId + "&product="
+                    setContentsURL(HOME + "#/resource-case/?resourceId=" + resourceId + "&product="
                         + productName + "&version=" + productVersion + sessionId);
                     markForRedraw();
                     Log.info("content url set " + productVersion + " " + productName);

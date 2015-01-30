@@ -102,6 +102,10 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
 
     @Override
     public void stop() {
+        if(connection != null) {
+            connection.close();
+        }
+        connection = null;
     }
 
     @Override

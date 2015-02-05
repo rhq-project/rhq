@@ -2,9 +2,12 @@ package org.rhq.cassandra.schema;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +26,13 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.querybuilder.Batch;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
+import com.google.common.io.LineReader;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -88,13 +97,17 @@ public class MigrateAggregateMetrics implements Step {
 
     private PreparedStatement find24HourData;
 
+    private int jobBatchSize = 8;
+
+    private int concurrentJobLimit = 5;
+
     private RateLimiter writePermits;
 
-    private Semaphore readPermits = new Semaphore(1);
+    private Semaphore readPermits = new Semaphore(jobBatchSize * concurrentJobLimit);
 
     private AtomicInteger failedMigrations = new AtomicInteger();
 
-    private ListeningExecutorService threadPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(4,
+    private ListeningExecutorService threadPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),
         new SchemaUpdateThreadFactory()));
 
     private String dataDir;
@@ -171,18 +184,16 @@ public class MigrateAggregateMetrics implements Step {
             migrationLog = new MigrationLog(logFile);
             Set<Integer> migratedScheduleIds = migrationLog.read();
             threadPool.submit(progressLogger);
+            List<Integer> scheduleIdsBatch = new ArrayList<Integer>(jobBatchSize);
             for (Integer scheduleId : scheduleIds) {
-                if (migratedScheduleIds.contains(scheduleId)) {
-                    log.debug(bucket + " data for schedule id " + scheduleId + " has already been migrated. It will " +
-                        "be skipped.");
-                    latch.countDown();
-                } else {
-                    readPermits.acquire();
-                    ResultSet resultSet = session.execute(query.bind(scheduleId));
-                    ListenableFuture<Integer> migrationFuture = threadPool.submit(new MetricsWriter(scheduleId, bucket,
-                        resultSet));
-                    Futures.addCallback(migrationFuture, migrationFinished(scheduleId, bucket, latch, migrationLog));
+                scheduleIdsBatch.add(scheduleId);
+                if (scheduleIdsBatch.size() == jobBatchSize) {
+                    submitBatch(scheduleIdsBatch, migratedScheduleIds, latch, bucket, query, migrationLog);
+                    scheduleIdsBatch = new ArrayList<Integer>(jobBatchSize);
                 }
+            }
+            if (!scheduleIds.isEmpty()) {
+                submitBatch(scheduleIdsBatch, migratedScheduleIds, latch, bucket, query, migrationLog);
             }
             latch.await();
             log.info("Finished migrating " + bucket + " data");
@@ -203,6 +214,43 @@ public class MigrateAggregateMetrics implements Step {
         }
     }
 
+    private void submitBatch(final List<Integer> scheduleIds, final Set<Integer> migratedScheduleIds,
+        final CountDownLatch latch, final MigrateAggregateMetrics.Bucket bucket, final PreparedStatement query,
+        final MigrationLog migrationLog) throws InterruptedException {
+        readPermits.acquire(jobBatchSize);
+        threadPool.submit(processBatch(scheduleIds, migratedScheduleIds, latch, bucket, query,
+            migrationLog));
+    }
+
+    private Runnable processBatch(final List<Integer> scheduleIds, final Set<Integer> migratedScheduleIds,
+        final CountDownLatch latch, final MigrateAggregateMetrics.Bucket bucket, final PreparedStatement query,
+        final MigrationLog migrationLog) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (Integer scheduleId : scheduleIds) {
+                        if (migratedScheduleIds.contains(scheduleId)) {
+                            if (log.isDebugEnabled()) {
+                                log.debug(bucket + " data for schedule id " + scheduleId + " has already been " +
+                                    "migrated. It will be skipped.");
+                            }
+                            readPermits.release();
+                            latch.countDown();
+                        } else {
+                            ResultSetFuture queryFuture = session.executeAsync(query.bind(scheduleId));
+                            ListenableFuture<Integer> migrationFuture = Futures.transform(queryFuture,
+                                new MigrateData(scheduleId, bucket), threadPool);
+                            Futures.addCallback(migrationFuture, migrationFinished(scheduleId, bucket, latch, migrationLog));
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("There was an unexpected error processing data", e);
+                }
+            }
+        };
+    }
+
     private void initPreparedStatements() {
         find1HourData = session.prepare(
             "SELECT schedule_id, time, type, value, ttl(value), writetime(value) FROM rhq.one_hour_metrics " +
@@ -218,60 +266,103 @@ public class MigrateAggregateMetrics implements Step {
     }
 
     private Set<Integer> loadScheduleIds() {
-        Connection connection = null;
-        Statement statement = null;
-        java.sql.ResultSet resultSet = null;
+//        Connection connection = null;
+//        Statement statement = null;
+//        java.sql.ResultSet resultSet = null;
+//        try {
+//            connection = dbConnectionFactory.newConnection();
+//            statement = connection.createStatement();
+//            resultSet = statement.executeQuery(
+//                "SELECT s.id FROM rhq_measurement_sched s INNER JOIN rhq_measurement_def d on s.definition = d.id " +
+//                "WHERE d.data_type = 0");
+//            Set<Integer> scheduleIds = new HashSet<Integer>();
+//
+//            while (resultSet.next()) {
+//                scheduleIds.add(resultSet.getInt(1));
+//            }
+//
+//            return scheduleIds;
+//        } catch (SQLException e) {
+//            throw new RuntimeException("Cannot migrate aggregate metrics. There was an error loading schedule ids", e);
+//        } finally {
+//            if (resultSet != null) {
+//                try {
+//                    resultSet.close();
+//                } catch (SQLException e) {
+//                    log.info("There was an error closing the SQL result set", e);
+//                }
+//            }
+//            if (statement != null) {
+//                try {
+//                    statement.close();
+//                } catch (SQLException e) {
+//                    log.info("There was an error closing the SQL statement", e);
+//                }
+//            }
+//            if (connection != null) {
+//                try {
+//                    connection.close();
+//                } catch (SQLException e) {
+//                    log.info("There was an error closing the SQL connection", e);
+//                }
+//            }
+//        }
+        NumberFormat formatter = new DecimalFormat("\"#,#\"");
+        Set<Integer> scheduleIds = new HashSet<Integer>();
+        InputStream stream = getClass().getResourceAsStream("/schedule_ids");
+        LineReader reader = new LineReader(new InputStreamReader(stream));
+
         try {
-            connection = dbConnectionFactory.newConnection();
-            statement = connection.createStatement();
-            resultSet = statement.executeQuery(
-                "SELECT s.id FROM rhq_measurement_sched s INNER JOIN rhq_measurement_def d on s.definition = d.id " +
-                "WHERE d.data_type = 0");
-            Set<Integer> scheduleIds = new HashSet<Integer>();
-
-            while (resultSet.next()) {
-                scheduleIds.add(resultSet.getInt(1));
+            String line = reader.readLine();
+            while (line != null) {
+                scheduleIds.add(formatter.parse(line).intValue());
+                line = reader.readLine();
             }
-
-            return scheduleIds;
-        } catch (SQLException e) {
-            throw new RuntimeException("Cannot migrate aggregate metrics. There was an error loading schedule ids", e);
-        } finally {
-            if (resultSet != null) {
-                try {
-                    resultSet.close();
-                } catch (SQLException e) {
-                    log.info("There was an error closing the SQL result set", e);
-                }
-            }
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
-                    log.info("There was an error closing the SQL statement", e);
-                }
-            }
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    log.info("There was an error closing the SQL connection", e);
-                }
-            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load schedule ids");
+        } catch (ParseException e) {
+            throw new RuntimeException("Failed to load schedule ids");
         }
+
+        return scheduleIds;
+    }
+
+    private List<Integer> migrate1hrData() {
+        List<Integer> scheduleIds = new ArrayList<Integer>(100000);
+        List<Integer> batch = new ArrayList<Integer>(jobBatchSize);
+
+        NumberFormat formatter = new DecimalFormat("\"#,#\"");
+        InputStream stream = getClass().getResourceAsStream("/schedule_ids");
+        LineReader reader = new LineReader(new InputStreamReader(stream));
+
+        try {
+            String line = reader.readLine();
+            while (line != null) {
+                Integer scheduleId = formatter.parse(line).intValue();
+                scheduleIds.add(scheduleId);
+                batch.add(scheduleId);
+                line = reader.readLine();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load schedule ids");
+        } catch (ParseException e) {
+            throw new RuntimeException("Failed to load schedule ids");
+        }
+
+        return scheduleIds;
     }
 
     private void dropTables() {
-        ResultSet resultSet = session.execute("SELECT columnfamily_name FROM system.schema_columnfamilies " +
-            "WHERE keyspace_name = 'rhq'");
-        for (Row row : resultSet) {
-            String table = row.getString(0);
-            if (table.equals("one_hour_metrics") || table.equals("six_hour_metrics") ||
-                table.equals("twenty_four_hour_metrics")) {
-                log.info("Dropping table " +  table);
-                session.execute("DROP table rhq." + table);
-            }
-        }
+//        ResultSet resultSet = session.execute("SELECT columnfamily_name FROM system.schema_columnfamilies " +
+//            "WHERE keyspace_name = 'rhq'");
+//        for (Row row : resultSet) {
+//            String table = row.getString(0);
+//            if (table.equals("one_hour_metrics") || table.equals("six_hour_metrics") ||
+//                table.equals("twenty_four_hour_metrics")) {
+//                log.info("Dropping table " +  table);
+//                session.execute("DROP table rhq." + table);
+//            }
+//        }
     }
 
     private FutureCallback<Integer> migrationFinished(final Integer scheduleId, final Bucket bucket,
@@ -281,6 +372,7 @@ public class MigrateAggregateMetrics implements Step {
             public void onSuccess(Integer metricsWritten) {
                 latch.countDown();
                 readPermits.release();
+                log.debug("Finished migration for schedule id " + scheduleId);
                 try {
                     migrationLog.write(scheduleId);
                 } catch (IOException e) {
@@ -292,9 +384,128 @@ public class MigrateAggregateMetrics implements Step {
             public void onFailure(Throwable t) {
                 latch.countDown();
                 readPermits.release();
+                log.debug("Finished migration for schedule id " + scheduleId);
                 failedMigrations.incrementAndGet();
             }
         };
+    }
+
+    private class MigrateData implements Function<ResultSet, Integer>, FutureCallback<ResultSet> {
+
+        private Integer scheduleId;
+
+        private Bucket bucket;
+
+        private boolean writeFailed;
+
+        private AtomicInteger metricsMigrated = new AtomicInteger();
+
+        public MigrateData(Integer scheduleId, Bucket bucket) {
+            this.scheduleId = scheduleId;
+            this.bucket = bucket;
+        }
+
+        @Override
+        public Integer apply(ResultSet resultSet) {
+            List<Row> rows = resultSet.all();
+            if (rows.isEmpty()) {
+                log.debug("No " + bucket + " data to migrate for schedule id " + scheduleId);
+                return 0;
+            }
+            Date time = rows.get(0).getDate(1);
+            Date nextTime;
+            Double max = null;
+            Double min = null;
+            Double avg = null;
+            Long writeTime = rows.get(0).getLong(5);
+            Integer ttl = rows.get(0).getInt(4);
+            int batchSize = 30;
+            List<Statement> statements = new ArrayList<Statement>(batchSize);
+
+            for (Row row : rows) {
+                if (writeFailed) {
+                    throw new RuntimeException("Migration of " + bucket + " data for schedule id " + scheduleId + " failed");
+                }
+                nextTime = row.getDate(1);
+                if (nextTime.equals(time)) {
+                    int type = row.getInt(2);
+                    switch (type) {
+                    case 0 :
+                        max = row.getDouble(3);
+                        break;
+                    case 1:
+                        min = row.getDouble(3);
+                        break;
+                    default:
+                        avg = row.getDouble(3);
+                    }
+                } else {
+                    if (isDataMissing(avg, max, min)) {
+                        log.debug("We only have a partial " + bucket + " metric for {scheduleId: " + scheduleId +
+                            ", time: " + time.getTime() + "}. It will not be migrated.");
+                    } else {
+                        statements.add(createInsertStatement(time, avg, max, min, ttl, writeTime));
+                        if (statements.size() == batchSize) {
+                            Futures.addCallback(writeBatch(statements), this);
+                            statements.clear();
+                        }
+                    }
+
+                    time = nextTime;
+                    max = row.getDouble(3);
+                    min = null;
+                    avg = null;
+                    ttl = row.getInt(4);
+                    writeTime = row.getLong(5);
+                }
+            }
+
+            if (!statements.isEmpty()) {
+                Futures.addCallback(writeBatch(statements), this);
+            }
+
+            if (writeFailed) {
+                throw new RuntimeException("Migration of " + bucket + " data for schedule id " + scheduleId + " failed");
+            }
+
+            return metricsMigrated.get();
+        }
+
+        @Override
+        public void onSuccess(ResultSet result) {
+            metricsMigrated.incrementAndGet();
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            writeFailed = true;
+            // TODO only log a warning once
+            // If we have a failure, changes are that we will get them in bunches. Since we
+            // want to stop on the first failed write, it would be nice to only log the
+            // first failure in order to avoid spamming the log.
+            log.warn("Migration of " + bucket + " data for schedule id " + scheduleId + " failed", t);
+        }
+
+        private boolean isDataMissing(Double avg, Double max, Double min) {
+            if (avg == null || Double.isNaN(avg)) return true;
+            if (max == null || Double.isNaN(max)) return true;
+            if (min == null || Double.isNaN(min)) return true;
+
+            return false;
+        }
+
+        private ResultSetFuture writeBatch(List<Statement> statements) {
+            Batch batch = QueryBuilder.batch(statements.toArray(new Statement[statements.size()]));
+            writePermits.acquire();
+            return session.executeAsync(batch);
+        }
+
+        private SimpleStatement createInsertStatement(Date time, Double avg, Double max, Double min, Integer ttl,
+            Long writeTime) {
+            return new SimpleStatement("INSERT INTO rhq.aggregate_metrics(schedule_id, bucket, time, avg, max, min) VALUES " +
+                "(" + scheduleId + ", '" + bucket + "', " + time.getTime() + ", " + avg + ", " + max + ", " +
+                min + ") USING TTL " + ttl + " AND TIMESTAMP " + writeTime);
+        }
     }
 
     private class MetricsWriter implements Callable<Integer>, FutureCallback<ResultSet> {
@@ -329,6 +540,8 @@ public class MigrateAggregateMetrics implements Step {
             Double avg = null;
             Long writeTime = rows.get(0).getLong(5);
             Integer ttl = rows.get(0).getInt(4);
+            int batchSize = 30;
+            List<Statement> statements = new ArrayList<Statement>(batchSize);
 
             for (Row row : rows) {
                 if (writeFailed) {
@@ -349,11 +562,16 @@ public class MigrateAggregateMetrics implements Step {
                     }
                 } else {
                     if (isDataMissing(avg, max, min)) {
-                        log.debug("We only have a partial " + bucket + " metric for {scheduleId: " + scheduleId +
-                            ", time: " + time.getTime() + "}. It will not be migrated.");
+                        if (log.isDebugEnabled()) {
+                            log.debug("We only have a partial " + bucket + " metric for {scheduleId: " + scheduleId +
+                                ", time: " + time.getTime() + "}. It will not be migrated.");
+                        }
                     } else {
-                        ResultSetFuture writeFuture = writeMetrics(time, avg, max, min, ttl, writeTime);
-                        Futures.addCallback(writeFuture, this);
+                        statements.add(createInsertStatement(time, avg, max, min, ttl, writeTime));
+                        if (statements.size() == batchSize) {
+                            Futures.addCallback(writeBatch(statements), this);
+                            statements.clear();
+                        }
                     }
 
                     time = nextTime;
@@ -364,9 +582,15 @@ public class MigrateAggregateMetrics implements Step {
                     writeTime = row.getLong(5);
                 }
             }
+
+            if (!statements.isEmpty()) {
+                Futures.addCallback(writeBatch(statements), this);
+            }
+
             if (writeFailed) {
                 throw new Exception("Migration of " + bucket + " data for schedule id " + scheduleId + " failed");
             }
+
             return metricsMigrated.get();
         }
 
@@ -391,6 +615,19 @@ public class MigrateAggregateMetrics implements Step {
             // want to stop on the first failed write, it would be nice to only log the
             // first failure in order to avoid spamming the log.
             log.warn("Migration of " + bucket + " data for schedule id " + scheduleId + " failed", t);
+        }
+
+        private SimpleStatement createInsertStatement(Date time, Double avg, Double max, Double min, Integer ttl,
+            Long writeTime) {
+            return new SimpleStatement("INSERT INTO rhq.aggregate_metrics(schedule_id, bucket, time, avg, max, min) VALUES " +
+                "(" + scheduleId + ", '" + bucket + "', " + time.getTime() + ", " + avg + ", " + max + ", " +
+                min + ") USING TTL " + ttl + " AND TIMESTAMP " + writeTime);
+        }
+
+        private ResultSetFuture writeBatch(List<Statement> statements) {
+            Batch batch = QueryBuilder.batch(statements.toArray(new Statement[statements.size()]));
+            writePermits.acquire();
+            return session.executeAsync(batch);
         }
 
         private ResultSetFuture writeMetrics(Date time, Double avg, Double max, Double min, Integer ttl,

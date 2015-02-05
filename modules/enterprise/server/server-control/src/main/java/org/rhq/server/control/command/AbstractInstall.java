@@ -31,6 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -911,7 +912,7 @@ public abstract class AbstractInstall extends ControlCommand {
         return endpointData;
     }
 
-    private void overrideAgentPreferences(CommandLine commandLine, Preferences preferencesNode) {
+    private void overrideAgentPreferences(CommandLine commandLine, Preferences preferencesNode) throws BackingStoreException, IOException {
         // override the out of box config with user custom agent preference values
         String[] customPrefs = commandLine.getOptionValues(AGENT_PREFERENCE);
         if (customPrefs != null && customPrefs.length > 0) {
@@ -923,6 +924,32 @@ public abstract class AbstractInstall extends ControlCommand {
                 preferencesNode.put(prefName, prefValue);
             }
         }
+
+        // These should be stored in the configuration file also for reload marker
+        File confDir = new File(getAgentBasedir(), "conf");
+        File defaultConfigFile = new File(confDir, "agent-configuration.xml");
+        File backupConfigFile = new File(confDir, "agent-configuration.xml.orig");
+
+        if(!defaultConfigFile.renameTo(backupConfigFile)) {
+            log.error("Could not rename " + defaultConfigFile.getAbsolutePath() + " to " + backupConfigFile.getAbsolutePath() + " for backup purposes");
+        }
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(defaultConfigFile);
+            preferencesNode.exportSubtree(fos);
+        } catch (IOException e) {
+            log.error("Failed to store overridden agent preferences to " + defaultConfigFile.getAbsolutePath() + ".");
+            throw e;
+        } catch (BackingStoreException e) {
+            log.error("Failed to store overridden agent preferences to " + defaultConfigFile.getAbsolutePath() + ".");
+            throw e;
+        } finally {
+            if(fos != null) {
+                fos.close();
+            }
+        }
+
         return;
     }
 

@@ -1,5 +1,7 @@
 package org.rhq.cassandra.schema;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -19,6 +21,8 @@ public class SchemaUpdateThreadFactory implements ThreadFactory, Thread.Uncaught
 
     private Thread schemaUpdateThread;
 
+    private List<Thread> threads = new ArrayList<Thread>();
+
     public SchemaUpdateThreadFactory() {
         log = LogFactory.getLog(poolName);
         schemaUpdateThread = Thread.currentThread();
@@ -27,10 +31,15 @@ public class SchemaUpdateThreadFactory implements ThreadFactory, Thread.Uncaught
     @Override
     public Thread newThread(Runnable r) {
         Thread t = new Thread(r, poolName + "-" + threadNumber.getAndIncrement());
+        threads.add(t);
         t.setDaemon(false);
         t.setUncaughtExceptionHandler(this);
 
         return t;
+    }
+
+    public List<Thread> getThreads() {
+        return threads;
     }
 
     @Override

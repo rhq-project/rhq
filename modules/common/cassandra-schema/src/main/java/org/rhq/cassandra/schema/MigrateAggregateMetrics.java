@@ -2,20 +2,21 @@ package org.rhq.cassandra.schema;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.PreparedStatement;
@@ -23,6 +24,10 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.querybuilder.Batch;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -30,9 +35,16 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.RateLimiter;
+import com.yammer.metrics.core.Meter;
+import com.yammer.metrics.core.MetricsRegistry;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateTime;
+import org.joda.time.Days;
+import org.joda.time.Seconds;
+
+import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * <p>
@@ -56,9 +68,10 @@ import org.apache.commons.logging.LogFactory;
  */
 public class MigrateAggregateMetrics implements Step {
 
+
     private static final Log log = LogFactory.getLog(MigrateAggregateMetrics.class);
 
-    private static enum Bucket {
+    public static enum Bucket {
 
         ONE_HOUR("one_hour"),
 
@@ -78,26 +91,48 @@ public class MigrateAggregateMetrics implements Step {
         }
     }
 
+    public static final int DEFAULT_WARM_UP = 20;
+
+    private static final double RATE_INCREASE_PER_NODE = 0.3;
+
     private Session session;
+
+    private String dataDir;
 
     private DBConnectionFactory dbConnectionFactory;
 
-    private PreparedStatement find1HourData;
+    private AtomicReference<RateLimiter> readPermitsRef = new AtomicReference<RateLimiter>();
 
-    private PreparedStatement find6HourData;
+    private AtomicReference<RateLimiter> writePermitsRef = new AtomicReference<RateLimiter>();
 
-    private PreparedStatement find24HourData;
+    private AtomicInteger remaining1HourMetrics = new AtomicInteger();
 
-    private RateLimiter writePermits;
+    private AtomicInteger remaining6HourMetrics = new AtomicInteger();
 
-    private Semaphore readPermits = new Semaphore(1);
+    private AtomicInteger remaining24HourMetrics = new AtomicInteger();
 
-    private AtomicInteger failedMigrations = new AtomicInteger();
+    private AtomicInteger migrated1HourMetrics = new AtomicInteger();
 
-    private ListeningExecutorService threadPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(4,
+    private AtomicInteger migrated6HourMetrics = new AtomicInteger();
+
+    private AtomicInteger migrated24HourMetrics = new AtomicInteger();
+
+    private ListeningExecutorService threadPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(6,
         new SchemaUpdateThreadFactory()));
 
-    private String dataDir;
+    private MetricsRegistry metricsRegistry;
+
+    private Meter migrationsMeter;
+
+    private RateMonitor rateMonitor;
+
+    private KeyScanner keyScanner;
+
+    private MigrationProgressLogger progressLogger;
+
+    private AtomicInteger readErrors = new AtomicInteger();
+
+    private AtomicInteger writeErrors = new AtomicInteger();
 
     @Override
     public void setSession(Session session) {
@@ -111,43 +146,96 @@ public class MigrateAggregateMetrics implements Step {
     }
 
     @Override
-    public String toString() {
-        return getClass().getSimpleName();
-    }
-
-    @Override
     public void execute() {
-        // dbConnectionFactory can be null in test environments which is fine because we start tests with a brand
-        // new schema and cluster. In this case, we do not need to do anything since it is not an upgrade scenario.
-        if (dbConnectionFactory == null) {
-            log.info("The relational database connection factory is not set. No data migration necessary");
-        } else {
-            writePermits = RateLimiter.create(calculatePermits(), 30, TimeUnit.SECONDS);
+        log.info("Starting data migration");
+        metricsRegistry = new MetricsRegistry();
+        migrationsMeter = metricsRegistry.newMeter(MigrateAggregateMetrics.class, "migrations", "migrations",
+            TimeUnit.MINUTES);
 
-            Stopwatch stopwatch = new Stopwatch().start();
-            initPreparedStatements();
-            Set<Integer> scheduleIds = loadScheduleIds();
-
-            log.info("Migrating aggregate metrics for " + scheduleIds.size() + " schedule ids");
-
-            migrate(scheduleIds, find1HourData, Bucket.ONE_HOUR);
-            migrate(scheduleIds, find6HourData, Bucket.SIX_HOUR);
-            migrate(scheduleIds, find24HourData, Bucket.TWENTY_FOUR_HOUR);
-
-            stopwatch.stop();
-            log.info("Finished aggregate metrics migration in " + stopwatch.elapsed(TimeUnit.SECONDS) + " seconds");
-
-            if (failedMigrations.get() > 0) {
-                throw new RuntimeException("There were " + failedMigrations.get() + " failed migrations. The " +
-                    "upgrade will have to be run again to complete the migration.");
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            // dbConnectionFactory can be null in test environments which is fine because we start tests with a brand
+            // new schema and cluster. In this case, we do not need to do anything since it is not an upgrade scenario.
+            if (dbConnectionFactory == null) {
+                log.info("The relational database connection factory is not set. No data migration necessary");
+                return;
             }
+
+            progressLogger = new MigrationProgressLogger();
+            rateMonitor = new RateMonitor(readPermitsRef, writePermitsRef);
+
+            keyScanner = new KeyScanner(session);
+            Set<Integer> scheduleIdsWith1HourData = keyScanner.scanFor1HourKeys();
+            Set<Integer> scheduleIdsWith6HourData = keyScanner.scanFor6HourKeys();
+            Set<Integer> scheduleIdsWith24HourData = keyScanner.scanFor24HourKeys();
+            keyScanner.shutdown();
+
+            log.info("There are " + scheduleIdsWith1HourData.size() + " schedule ids with " +
+                Bucket.ONE_HOUR + " data");
+            log.info("There are " + scheduleIdsWith6HourData.size() + " schedule ids with " +
+                Bucket.SIX_HOUR + " data");
+            log.info("There are " + scheduleIdsWith24HourData.size() + " schedule ids with " +
+                Bucket.TWENTY_FOUR_HOUR + " data");
+
+            writePermitsRef.set(RateLimiter.create(getWriteLimit(getNumberOfUpNodes()), DEFAULT_WARM_UP,
+                TimeUnit.SECONDS));
+            readPermitsRef.set(RateLimiter.create(getReadLimit(getNumberOfUpNodes()), DEFAULT_WARM_UP,
+                TimeUnit.SECONDS));
+
+            log.info("The request limits are " + writePermitsRef.get().getRate() + " writes/sec and " +
+                readPermitsRef.get().getRate() + " reads/sec");
+
+            remaining1HourMetrics.set(scheduleIdsWith1HourData.size());
+            remaining6HourMetrics.set(scheduleIdsWith6HourData.size());
+            remaining24HourMetrics.set(scheduleIdsWith24HourData.size());
+
+            threadPool.submit(progressLogger);
+            threadPool.submit(rateMonitor);
+
+            migrate1HourData(scheduleIdsWith1HourData);
+            migrate6HourData(scheduleIdsWith6HourData);
+            migrate24HourData(scheduleIdsWith24HourData);
+
+            if (remaining1HourMetrics.get() > 0 || remaining6HourMetrics.get() > 0 ||
+                remaining24HourMetrics.get() > 0) {
+                throw new RuntimeException("There are unfinished metrics migrations - {one_hour: " +
+                    remaining1HourMetrics + ", six_hour: " + remaining6HourMetrics + ", twenty_four_hour: " +
+                    remaining24HourMetrics + "}. The upgrade will have to be " + "run again.");
+            }
+
+            dropTables();
+        } catch (IOException e) {
+            throw new RuntimeException("There was an unexpected I/O error. There are unfinished metrics migrations " +
+                "- " + getRemainingMetrics() + ". The upgrade will have to be run again.");
+        } catch (AbortedException e) {
+            throw new RuntimeException("The key scan was aborted. The upgrade will have to be rerun.", e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("The migration was interrupted. There are still " + getRemainingMetrics() +
+                " unfinished metrics migrations. The upgrade will have to be run again.");
+        } finally {
+            stopwatch.stop();
+            log.info("Finished migrating " + migrated1HourMetrics + " " + Bucket.ONE_HOUR + ", " +
+                migrated6HourMetrics + " " + Bucket.SIX_HOUR + ", and " + migrated24HourMetrics + " " +
+                Bucket.TWENTY_FOUR_HOUR + " metrics in " + stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
+            shutdown();
         }
-        dropTables();
     }
 
-    private int calculatePermits() {
-        int requestLimit = Integer.parseInt(System.getProperty("rhq.storage.request.limit", "20000"));
-        return requestLimit * getNumberOfUpNodes();
+    private String getRemainingMetrics() {
+        return "{" + Bucket.ONE_HOUR + ": " + remaining1HourMetrics + ", " + Bucket.SIX_HOUR + ": " +
+            remaining6HourMetrics + ", " + Bucket.TWENTY_FOUR_HOUR + ": " + remaining24HourMetrics + "}";
+    }
+
+    private double getWriteLimit(int numNodes) {
+        int baseLimit = Integer.parseInt(System.getProperty("rhq.storage.request.write-limit", "10000"));
+        double increase = baseLimit * RATE_INCREASE_PER_NODE;
+        return baseLimit + (increase * (numNodes - 1));
+    }
+
+    private double getReadLimit(int numNodes) {
+        int baseLimit = Integer.parseInt(System.getProperty("rhq.storage.request.read-limit", "25"));
+        double increase = baseLimit * RATE_INCREASE_PER_NODE;
+        return baseLimit + (increase * (numNodes - 1));
     }
 
     private int getNumberOfUpNodes() {
@@ -160,261 +248,277 @@ public class MigrateAggregateMetrics implements Step {
         return count;
     }
 
-    private void migrate(Set<Integer> scheduleIds, PreparedStatement query, final Bucket bucket) {
-        log.info("Migrating " + bucket + " data for " + scheduleIds.size() + " schedules");
-
-        CountDownLatch latch = new CountDownLatch(scheduleIds.size());
-        MigrationProgressLogger progressLogger = new MigrationProgressLogger(bucket, latch);
-        File logFile = new File(dataDir, bucket + "_migration.log");
-        MigrationLog migrationLog = null;
-        try {
-            migrationLog = new MigrationLog(logFile);
-            Set<Integer> migratedScheduleIds = migrationLog.read();
-            threadPool.submit(progressLogger);
-            for (Integer scheduleId : scheduleIds) {
-                if (migratedScheduleIds.contains(scheduleId)) {
-                    log.debug(bucket + " data for schedule id " + scheduleId + " has already been migrated. It will " +
-                        "be skipped.");
-                    latch.countDown();
-                } else {
-                    readPermits.acquire();
-                    ResultSet resultSet = session.execute(query.bind(scheduleId));
-                    ListenableFuture<Integer> migrationFuture = threadPool.submit(new MetricsWriter(scheduleId, bucket,
-                        resultSet));
-                    Futures.addCallback(migrationFuture, migrationFinished(scheduleId, bucket, latch, migrationLog));
-                }
-            }
-            latch.await();
-            log.info("Finished migrating " + bucket + " data");
-        } catch (InterruptedException e) {
-            threadPool.shutdownNow();
-            throw new RuntimeException("Migration of " + bucket + " data did not complete due to an interrupt. The " +
-                "upgrade will have to be run again to finish the migration", e);
-        } catch (IOException e) {
-            throw new RuntimeException("Migration of " + bucket + " data did not complete due to an I/O error. The " +
-                "upgrade will have to be run again to finish the migration", e);
-        } finally {
-            progressLogger.finished();
+    private void shutdown() {
+        if (dbConnectionFactory != null) {
             try {
-                migrationLog.close();
-            } catch (IOException e) {
-                log.warn("There was an error closing " + logFile.getAbsolutePath(), e);
+                log.info("Shutting down migration thread pools...");
+                rateMonitor.shutdown();
+                progressLogger.finished();
+                keyScanner.shutdown();
+                threadPool.shutdown();
+                threadPool.awaitTermination(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
             }
         }
     }
 
-    private void initPreparedStatements() {
-        find1HourData = session.prepare(
-            "SELECT schedule_id, time, type, value, ttl(value), writetime(value) FROM rhq.one_hour_metrics " +
-            "WHERE schedule_id = ?");
-
-        find6HourData = session.prepare(
-            "SELECT schedule_id, time, type, value, ttl(value), writetime(value) FROM rhq.six_hour_metrics " +
-            "WHERE schedule_id = ?");
-
-        find24HourData = session.prepare(
-            "SELECT schedule_id, time, type, value, ttl(value), writetime(value) FROM rhq.twenty_four_hour_metrics " +
-            "WHERE schedule_id = ?");
+    private void migrate1HourData(Set<Integer> scheduleIds) throws IOException, InterruptedException {
+        DateTime endTime = DateUtils.get1HourTimeSlice(DateTime.now());
+        DateTime startTime = endTime.minus(Days.days(14));
+        PreparedStatement query = session.prepare(
+            "SELECT time, type, value FROM rhq.one_hour_metrics " +
+                "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
+        migrate(scheduleIds, query, Bucket.ONE_HOUR, remaining1HourMetrics, Days.days(14));
     }
 
-    private Set<Integer> loadScheduleIds() {
-        Connection connection = null;
-        Statement statement = null;
-        java.sql.ResultSet resultSet = null;
+    private void migrate6HourData(Set<Integer> scheduleIds) throws IOException, InterruptedException {
+        DateTime endTime = DateUtils.get1HourTimeSlice(DateTime.now());
+        DateTime startTime = endTime.minus(Days.days(31));
+        PreparedStatement query = session.prepare(
+            "SELECT time, type, value FROM rhq.six_hour_metrics " +
+                "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
+        migrate(scheduleIds, query, Bucket.SIX_HOUR, remaining6HourMetrics, Days.days(31));
+    }
+
+    private void migrate24HourData(Set<Integer> scheduleIds) throws IOException, InterruptedException {
+        DateTime endTime = DateUtils.get1HourTimeSlice(DateTime.now());
+        DateTime startTime = endTime.minus(Days.days(365));
+        PreparedStatement query = session.prepare(
+            "SELECT time, type, value FROM rhq.twenty_four_hour_metrics " +
+                "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
+        migrate(scheduleIds, query, Bucket.TWENTY_FOUR_HOUR, remaining24HourMetrics, Days.days(365));
+    }
+
+    private void migrate(Set<Integer> scheduleIds, PreparedStatement query, Bucket bucket,
+        AtomicInteger remainingMetrics, Days ttl) throws IOException, InterruptedException {
+
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        MigrationLog migrationLog = new MigrationLog(new File(dataDir, bucket + "_migration.log"));
+        Set<Integer> migratedScheduleIds = migrationLog.read();
+        Queue<Integer> remainingScheduleIds = new ArrayDeque<Integer>(scheduleIds);
+
+        while (!remainingScheduleIds.isEmpty()) {
+            List<Integer> batch = getNextBatch(remainingScheduleIds, migratedScheduleIds, remainingMetrics);
+            ReadResults readResults = readData(batch, query, bucket);
+            for (Integer scheduleId : readResults.failedReads) {
+                remainingScheduleIds.offer(scheduleId);
+            }
+            Map<Integer, List<Row>> failedWrites = writeData(readResults.resultSets, bucket, ttl, remainingMetrics);
+            while (!failedWrites.isEmpty()) {
+                failedWrites = writeData(failedWrites, bucket, ttl, remainingMetrics);
+            }
+        }
+
+        stopwatch.stop();
+        log.info("Finished migrating " + bucket + " data in " + stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
+    }
+
+    private List<Integer> getNextBatch(Queue<Integer> scheduleIds, Set<Integer> migratedScheduleIds,
+        AtomicInteger remainingMetrics) {
+        List<Integer> batch = new ArrayList<Integer>(500);
+        while (!scheduleIds.isEmpty() && batch.size() < 500) {
+            Integer scheduleId = scheduleIds.poll();
+            if (migratedScheduleIds.contains(scheduleId)) {
+                remainingMetrics.decrementAndGet();
+            } else {
+                batch.add(scheduleId);
+            }
+        }
+        return batch;
+    }
+
+    private static class ReadResults {
+        Set<Integer> failedReads = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>());
+
+        Map<Integer, List<Row>> resultSets = new ConcurrentHashMap<Integer, List<Row>>();
+    }
+
+    private ReadResults readData(List<Integer> scheduleIds, PreparedStatement query, final Bucket bucket)
+        throws InterruptedException {
+
+        final ReadResults results = new ReadResults();
+        final CountDownLatch queries = new CountDownLatch(scheduleIds.size());
+
+        for (final Integer scheduleId : scheduleIds) {
+            readPermitsRef.get().acquire();
+            ResultSetFuture future = session.executeAsync(query.bind(scheduleId));
+            Futures.addCallback(future, new FutureCallback<ResultSet>() {
+                @Override
+                public void onSuccess(ResultSet resultSet) {
+                    try {
+                        results.resultSets.put(scheduleId, resultSet.all());
+                        rateMonitor.requestSucceeded();
+                    } finally {
+                        queries.countDown();
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    try {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Failed to read " + bucket + " data for schedule id " + scheduleId, t);
+                        } else {
+                            log.info("Failed to read " + bucket + " data for schedule id " + scheduleId + ": " +
+                                ThrowableUtil.getRootMessage(t));
+                        }
+                        results.failedReads.add(scheduleId);
+                        rateMonitor.requestFailed();
+                        readErrors.incrementAndGet();
+                    } finally {
+                        queries.countDown();
+                    }
+                }
+            });
+        }
+        queries.await();
+        return results;
+    }
+
+    private Map<Integer, List<Row>> writeData(Map<Integer, List<Row>> resultSets, final Bucket bucket,
+        final Days ttl, final AtomicInteger remainingMetrics) throws InterruptedException{
+
+        final CountDownLatch writes = new CountDownLatch(resultSets.size());
+        final Map<Integer, List<Row>> failedWrites = new ConcurrentHashMap<Integer, List<Row>>();
+
+        for (final Map.Entry<Integer, List<Row>> entry : resultSets.entrySet()) {
+            if (entry.getValue().isEmpty()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("There is no " + bucket + " data for schedule id " + entry.getKey());
+                }
+                writes.countDown();
+            } else {
+                threadPool.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        ListenableFuture<List<ResultSet>> insertsFuture = writeData(entry.getKey(), bucket,
+                            entry.getValue(), ttl.toStandardSeconds());
+                        Futures.addCallback(insertsFuture, new FutureCallback<List<ResultSet>>() {
+                            @Override
+                            public void onSuccess(List<ResultSet> results) {
+                                try {
+                                    if (log.isDebugEnabled()) {
+                                        log.debug("Finished " + bucket + " data migration for schedule id " +
+                                            entry.getKey());
+                                    }
+                                    rateMonitor.requestSucceeded();
+                                    remainingMetrics.decrementAndGet();
+                                    migrationsMeter.mark();
+                                } finally {
+                                    writes.countDown();
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                try {
+                                    if (log.isDebugEnabled()) {
+                                        log.debug("Failed to write " + bucket + " data for schedule id " + entry.getKey(),
+                                            t);
+                                    } else {
+                                        log.info("Failed to write " + bucket + " data for schedule id " + entry.getKey() +
+                                            ": " + ThrowableUtil.getRootMessage(t));
+                                    }
+                                    rateMonitor.requestFailed();
+                                    writeErrors.incrementAndGet();
+                                    failedWrites.put(entry.getKey(), entry.getValue());
+                                } finally {
+                                    writes.countDown();
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+        }
+        writes.await();
+        return failedWrites;
+    }
+
+    private ListenableFuture<List<ResultSet>> writeData(Integer scheduleId, Bucket bucket, List<Row> rows,
+        Seconds ttl) {
         try {
-            connection = dbConnectionFactory.newConnection();
-            statement = connection.createStatement();
-            resultSet = statement.executeQuery(
-                "SELECT s.id FROM rhq_measurement_sched s INNER JOIN rhq_measurement_def d on s.definition = d.id " +
-                "WHERE d.data_type = 0");
-            Set<Integer> scheduleIds = new HashSet<Integer>();
-
-            while (resultSet.next()) {
-                scheduleIds.add(resultSet.getInt(1));
-            }
-
-            return scheduleIds;
-        } catch (SQLException e) {
-            throw new RuntimeException("Cannot migrate aggregate metrics. There was an error loading schedule ids", e);
-        } finally {
-            if (resultSet != null) {
-                try {
-                    resultSet.close();
-                } catch (SQLException e) {
-                    log.info("There was an error closing the SQL result set", e);
-                }
-            }
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
-                    log.info("There was an error closing the SQL statement", e);
-                }
-            }
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    log.info("There was an error closing the SQL connection", e);
-                }
-            }
-        }
-    }
-
-    private void dropTables() {
-        ResultSet resultSet = session.execute("SELECT columnfamily_name FROM system.schema_columnfamilies " +
-            "WHERE keyspace_name = 'rhq'");
-        for (Row row : resultSet) {
-            String table = row.getString(0);
-            if (table.equals("one_hour_metrics") || table.equals("six_hour_metrics") ||
-                table.equals("twenty_four_hour_metrics")) {
-                log.info("Dropping table " +  table);
-                session.execute("DROP table rhq." + table);
-            }
-        }
-    }
-
-    private FutureCallback<Integer> migrationFinished(final Integer scheduleId, final Bucket bucket,
-        final CountDownLatch latch, final MigrationLog migrationLog) {
-        return new FutureCallback<Integer>() {
-            @Override
-            public void onSuccess(Integer metricsWritten) {
-                latch.countDown();
-                readPermits.release();
-                try {
-                    migrationLog.write(scheduleId);
-                } catch (IOException e) {
-                    log.warn("Failed to update migration log for bucket " + bucket + " and schedule id " + scheduleId);
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                latch.countDown();
-                readPermits.release();
-                failedMigrations.incrementAndGet();
-            }
-        };
-    }
-
-    private class MetricsWriter implements Callable<Integer>, FutureCallback<ResultSet> {
-
-        private Integer scheduleId;
-
-        private Bucket bucket;
-
-        private ResultSet resultSet;
-
-        private boolean writeFailed;
-
-        private AtomicInteger metricsMigrated = new AtomicInteger();
-
-        public MetricsWriter(Integer scheduleId, Bucket bucket, ResultSet resultSet) {
-            this.scheduleId = scheduleId;
-            this.bucket = bucket;
-            this.resultSet = resultSet;
-        }
-
-        @Override
-        public Integer call() throws Exception {
-            List<Row> rows = resultSet.all();
-            if (rows.isEmpty()) {
-                log.debug("No " + bucket + " data to migrate for schedule id " + scheduleId);
-                return 0;
-            }
-            Date time = rows.get(0).getDate(1);
+            List<ResultSetFuture> insertFutures = new ArrayList<ResultSetFuture>();
+            Date time = rows.get(0).getDate(0);
             Date nextTime;
             Double max = null;
             Double min = null;
             Double avg = null;
-            Long writeTime = rows.get(0).getLong(5);
-            Integer ttl = rows.get(0).getInt(4);
+            List<Statement> statements = new ArrayList<Statement>(45);
 
             for (Row row : rows) {
-                if (writeFailed) {
-                    throw new Exception("Migration of " + bucket + " data for schedule id " + scheduleId + " failed");
-                }
-                nextTime = row.getDate(1);
+                nextTime = row.getDate(0);
                 if (nextTime.equals(time)) {
-                    int type = row.getInt(2);
+                    int type = row.getInt(1);
                     switch (type) {
-                        case 0 :
-                            max = row.getDouble(3);
-                            break;
-                        case 1:
-                            min = row.getDouble(3);
-                            break;
-                        default:
-                            avg = row.getDouble(3);
+                    case 0:
+                        max = row.getDouble(2);
+                        break;
+                    case 1:
+                        min = row.getDouble(2);
+                        break;
+                    default:
+                        avg = row.getDouble(2);
                     }
                 } else {
-                    if (isDataMissing(avg, max, min)) {
-                        log.debug("We only have a partial " + bucket + " metric for {scheduleId: " + scheduleId +
-                            ", time: " + time.getTime() + "}. It will not be migrated.");
-                    } else {
-                        ResultSetFuture writeFuture = writeMetrics(time, avg, max, min, ttl, writeTime);
-                        Futures.addCallback(writeFuture, this);
+                    Seconds elapsedSeconds = Seconds.secondsBetween(new DateTime(time), DateTime.now());
+                    if (elapsedSeconds.isLessThan(ttl)) {
+                        if (isDataMissing(avg, max, min)) {
+                            if (log.isDebugEnabled()) {
+                                log.debug("We only have a partial " + bucket + " metric for {scheduleId: " +
+                                    scheduleId + ", time: " + time.getTime() + "}. It will not be migrated.");
+                            }
+                        } else {
+                            int newTTL = ttl.getSeconds() - elapsedSeconds.getSeconds();
+                            statements.add(createInsertStatement(scheduleId, bucket, time, avg, max, min, newTTL));
+                            if (statements.size() == 45) {
+                                insertFutures.add(writeBatch(statements));
+                                statements.clear();
+                            }
+                        }
                     }
-
                     time = nextTime;
-                    max = row.getDouble(3);
+                    max = row.getDouble(2);
                     min = null;
                     avg = null;
-                    ttl = row.getInt(4);
-                    writeTime = row.getLong(5);
                 }
             }
-            if (writeFailed) {
-                throw new Exception("Migration of " + bucket + " data for schedule id " + scheduleId + " failed");
+            if (!statements.isEmpty()) {
+                insertFutures.add(writeBatch(statements));
             }
-            return metricsMigrated.get();
+            return Futures.allAsList(insertFutures);
+        } catch (Exception e) {
+            return Futures.immediateFailedFuture(new Exception("There was an error writing " + bucket +
+                " data for schedule id " + scheduleId, e));
         }
+    }
 
-        private boolean isDataMissing(Double avg, Double max, Double min) {
-            if (avg == null || Double.isNaN(avg)) return true;
-            if (max == null || Double.isNaN(max)) return true;
-            if (min == null || Double.isNaN(min)) return true;
+    private boolean isDataMissing(Double avg, Double max, Double min) {
+        if (avg == null || Double.isNaN(avg)) return true;
+        if (max == null || Double.isNaN(max)) return true;
+        if (min == null || Double.isNaN(min)) return true;
 
-            return false;
-        }
+        return false;
+    }
 
-        @Override
-        public void onSuccess(ResultSet resultSet) {
-            metricsMigrated.incrementAndGet();
-        }
+    private ResultSetFuture writeBatch(List<Statement> statements) {
+        Batch batch = QueryBuilder.batch(statements.toArray(new Statement[statements.size()]));
+        writePermitsRef.get().acquire();
+        return session.executeAsync(batch);
+    }
 
-        @Override
-        public void onFailure(Throwable t) {
-            writeFailed = true;
-            // TODO only log a warning once
-            // If we have a failure, changes are that we will get them in bunches. Since we
-            // want to stop on the first failed write, it would be nice to only log the
-            // first failure in order to avoid spamming the log.
-            log.warn("Migration of " + bucket + " data for schedule id " + scheduleId + " failed", t);
-        }
-
-        private ResultSetFuture writeMetrics(Date time, Double avg, Double max, Double min, Integer ttl,
-            Long writeTime) {
-            writePermits.acquire();
-            return session.executeAsync(
-                "INSERT INTO rhq.aggregate_metrics(schedule_id, bucket, time, avg, max, min) VALUES " +
-                "(" + scheduleId + ", '" + bucket + "', " + time.getTime() + ", " + avg + ", " + max + ", " +
-                    min + ") USING TTL " + ttl + " AND TIMESTAMP " + writeTime);
-        }
+    private SimpleStatement createInsertStatement(Integer scheduleId, Bucket bucket, Date time, Double avg, Double max,
+        Double min, int newTTL) {
+        return new SimpleStatement("INSERT INTO rhq.aggregate_metrics(schedule_id, bucket, time, avg, max, min) " +
+            "VALUES (" + scheduleId + ", '" + bucket + "', " + time.getTime() + ", " + avg + ", " + max + ", " + min +
+            ") USING TTL " + newTTL);
     }
 
     private class MigrationProgressLogger implements Runnable {
 
-        private Bucket bucket;
-
-        private CountDownLatch latch;
-
         private boolean finished;
 
-        public MigrationProgressLogger(Bucket bucket, CountDownLatch latch) {
-            this.bucket = bucket;
-            this.latch = latch;
-        }
+        private boolean reportMigrationRates;
 
         public void finished() {
             finished = true;
@@ -423,12 +527,38 @@ public class MigrateAggregateMetrics implements Step {
         @Override
         public void run() {
             try {
-                while (!finished && latch.getCount() > 0) {
-                    log.info("There are " + latch.getCount() + " remaining schedules for the " + bucket +
-                        " data migration");
+                while (!finished) {
+                    log.info("Remaining metrics to migrate\n" +
+                        Bucket.ONE_HOUR + ": " + remaining1HourMetrics + "\n" +
+                        Bucket.SIX_HOUR + ": " + remaining6HourMetrics + "\n" +
+                        Bucket.TWENTY_FOUR_HOUR + ": " + remaining24HourMetrics + "\n");
+                    log.info("ErrorCounts{read:" + readErrors + ", write: " + writeErrors + "}");
+                    if (reportMigrationRates) {
+                        log.info("Metrics migration rates:\n" +
+                            "1 min rate: "  + migrationsMeter.oneMinuteRate() + "\n" +
+                            "5 min rate: " + migrationsMeter.fiveMinuteRate() + " \n" +
+                            "15 min rate: " + migrationsMeter.fifteenMinuteRate() + "\n");
+                        reportMigrationRates = false;
+                    } else {
+                        reportMigrationRates = true;
+                    }
+
                     Thread.sleep(30000);
                 }
             } catch (InterruptedException e) {
+            }
+        }
+    }
+
+    private void dropTables() {
+        ResultSet resultSet = session.execute("SELECT columnfamily_name FROM system.schema_columnfamilies " +
+            "WHERE keyspace_name = 'rhq'");
+        for (com.datastax.driver.core.Row row : resultSet) {
+            String table = row.getString(0);
+            if (table.equals("one_hour_metrics") || table.equals("six_hour_metrics") ||
+                table.equals("twenty_four_hour_metrics")) {
+                log.info("Dropping table " +  table);
+                session.execute("DROP table rhq." + table);
             }
         }
     }

@@ -1,11 +1,29 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.modules.plugins.jbossas7;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Singleton that keeps track of some statistics of this plugin
+ * Singleton that keeps track of some statistics of this plugin.
+ *
  * @author Heiko W. Rupp
  */
 public class PluginStats {
@@ -13,10 +31,7 @@ public class PluginStats {
 
     AtomicLong requestCount = new AtomicLong();
     AtomicLong requestTime = new AtomicLong();
-    private static final int FIFO_SIZE = 200; // Initial capacity
-    List<Long> maxTime = new ArrayList<Long>(FIFO_SIZE);
-    final Object lock = new Object();
-
+    AtomicLong maxTime = new AtomicLong();
 
     public static PluginStats getInstance() {
         return ourInstance;
@@ -29,9 +44,12 @@ public class PluginStats {
         requestCount.incrementAndGet();
     }
 
-    public void addRequestTime(long l) {
-        requestTime.addAndGet(l);
-        insertTime(l);
+    public void addRequestTime(long time) {
+        requestTime.addAndGet(time);
+        long currentMax;
+        do {
+            currentMax = maxTime.get();
+        } while (currentMax < time && !maxTime.compareAndSet(currentMax, time));
     }
 
     public long getRequestCount() {
@@ -43,19 +61,6 @@ public class PluginStats {
     }
 
     public long getMaxTime() {
-        long max = 0;
-        synchronized (lock) {
-            for (Long i : maxTime)
-                if (i > max )
-                    max = i;
-            maxTime = new ArrayList<Long>();
-        }
-        return max;
-    }
-
-    private void insertTime(long time) {
-        synchronized (lock) {
-            maxTime.add(time);
-        }
+        return maxTime.getAndSet(0);
     }
 }

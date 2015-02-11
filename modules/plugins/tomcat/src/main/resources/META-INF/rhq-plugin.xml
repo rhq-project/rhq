@@ -236,14 +236,6 @@
 	    <value-context>pluginConfiguration</value-context>
 	    <value-name>deployDir</value-name>
 	</destination-base-dir>
-	<destination-definition name="Patches">
-	    <accepts bundle-type="Tomcat Patch"/>
-	    <description>Use this location to apply patches to the server</description>
-	    <connection>WEBAPPS</connection>
-	    <referenced-configuration>
-		<all of="pluginConfiguration"/>
-	    </referenced-configuration>
-	</destination-definition>
       </bundle-target>
       
       <server

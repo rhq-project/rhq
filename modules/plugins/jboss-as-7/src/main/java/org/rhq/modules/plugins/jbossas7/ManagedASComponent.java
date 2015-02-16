@@ -42,6 +42,7 @@ import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.modules.plugins.jbossas7.helper.JdrReportRunner;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
+import org.rhq.modules.plugins.jbossas7.json.ExpressionResolver;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
@@ -229,7 +230,7 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
             throw new Exception("Failed to extract hostname from server path [" + serverPath + "].", e);
         }
         configuration.put(new PropertySimple("hostname", serverPath));
-
+        ExpressionResolver resolver = getServerComponent().getExpressionResolver();
         Operation op = new ReadResource(getAddress());
         ComplexResult res = getASConnection().executeComplex(op);
         if (res.isSuccess()) {
@@ -244,7 +245,9 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
                 sbGroup = (String) sgMap.get("socket-binding-group");
 
             configuration.put(new PropertySimple("socket-binding-group", sbGroup));
-            Integer offSet = (Integer) map.get("socket-binding-port-offset");
+            Boolean autoStart = resolver.getBoolean(map.get("auto-start"));
+            configuration.put(new PropertySimple("auto-start", autoStart));
+            Integer offSet = resolver.getInteger(map.get("socket-binding-port-offset"));
             if (offSet == null)
                 offSet = 0;
             configuration.put(new PropertySimple("socket-binding-port-offset", offSet));

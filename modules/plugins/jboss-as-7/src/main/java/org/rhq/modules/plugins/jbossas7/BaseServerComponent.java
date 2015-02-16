@@ -30,8 +30,6 @@ import static org.rhq.modules.plugins.jbossas7.JBossProductType.WILDFLY8;
 import static org.rhq.modules.plugins.jbossas7.util.ProcessExecutionLogger.logExecutionResults;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -69,12 +67,12 @@ import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.file.FileUtil;
-import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
+import org.rhq.modules.plugins.jbossas7.json.ExpressionResolver;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
@@ -103,6 +101,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private String releaseVersion;
     private String aSHostName;
     private long lastManagementInterfaceReply = 0;
+    private ExpressionResolver expressionResolver;
 
     @Override
     public void start(ResourceContext<T> resourceContext) throws Exception {
@@ -115,6 +114,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();
         startScriptConfig = new StartScriptConfiguration(pluginConfiguration);
+        expressionResolver = new ExpressionResolver(connection, getHostAddress());
     }
 
     @Override
@@ -888,6 +888,10 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             return null;
         }
         return findASDomainHostName(getASConnection());
+    }
+
+    protected ExpressionResolver getExpressionResolver() {
+        return expressionResolver;
     }
 
     /**

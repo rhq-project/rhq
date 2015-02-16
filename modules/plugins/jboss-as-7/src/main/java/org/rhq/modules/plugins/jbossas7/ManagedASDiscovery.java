@@ -40,6 +40,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
+import org.rhq.modules.plugins.jbossas7.json.ExpressionResolver;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
@@ -66,6 +67,8 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent<HostContro
         parentComponent = discoveryContext.getParentResourceComponent();
         Configuration hcConfig = discoveryContext.getParentResourceContext().getPluginConfiguration();
         String hostName = parentComponent.getASHostName();
+
+        // TODO verify we don't need this anymore
         if (hostName==null) {
             hostName = getHostName(discoveryContext.getParentResourceComponent().getASConnection());
         }
@@ -179,6 +182,7 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent<HostContro
         Result res = connection.execute(operation);
         List<String> servers = (List<String>) res.getResult();
         List<ServerInfo> ret = new ArrayList<ServerInfo>(servers.size());
+        ExpressionResolver resolver = parentComponent.getExpressionResolver();
         for (String server : servers) {
             ServerInfo info = new ServerInfo();
             info.name = server;
@@ -190,8 +194,8 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent<HostContro
             ComplexResult cres = connection.executeComplex(operation);
             Map<String, Object> map = cres.getResult();
             info.group = (String) map.get("group");
-            info.autoStart = (Boolean) map.get("auto-start");
-            Integer offset = (Integer) map.get("socket-binding-port-offset");
+            info.autoStart = resolver.getBoolean(map.get("auto-start"));
+            Integer offset = resolver.getInteger(map.get("socket-binding-port-offset"));
             if (offset != null)
                 info.portOffset = offset;
             info.bindingGroup = (String) map.get("socket-binding-group");

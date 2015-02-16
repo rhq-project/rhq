@@ -29,4 +29,9 @@ public class ResolveExpression extends Operation {
         addAdditionalProperty("expression", expression);
     }
 
+    public ResolveExpression(String expression, Address address) {
+        super("resolve-expression", address);
+        addAdditionalProperty("expression", expression);
+    }
+
 }

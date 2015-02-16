@@ -221,7 +221,7 @@ public class ReplaceIndexTest extends SchemaUpgradeTest {
         for (int i = 0; i < NUM_PARTITIONS; ++i) {
             queryFutures.add(session
                 .executeAsync("select schedule_id from metrics_idx where bucket = '" + bucket + "' and partition = "
-                    + i + " and time = " + ReplaceIndex.getUTCTimeSlice(time, timeSlice).getMillis()));
+                    + i + " and time = " + DateUtils.getUTCTimeSlice(time, timeSlice).getMillis()));
         }
         final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
         final List<Integer> scheduleIds = new ArrayList<Integer>();

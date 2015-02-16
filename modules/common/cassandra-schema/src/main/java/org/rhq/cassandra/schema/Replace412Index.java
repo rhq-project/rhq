@@ -95,14 +95,14 @@ public class Replace412Index {
                 for (Integer scheduleId : scheduleIds) {
                     partition = (scheduleId % NUM_PARTITIONS);
                     session.execute(updateNewIndex.bind(newBucket, partition,
-                        ReplaceIndex.getUTCTimeSlice(time, timeSlice).toDate(), scheduleId));
+                        DateUtils.getUTCTimeSlice(time, timeSlice).toDate(), scheduleId));
                 }
             }
             if (count < PAGE_SIZE) {
-                time = ReplaceIndex.plusDSTAware(time, timeSlice);
-                DateTime tempDay = ReplaceIndex.plusDSTAware(day, Days.ONE.toStandardDuration());
+                time = DateUtils.plusDSTAware(time, timeSlice);
+                DateTime tempDay = DateUtils.plusDSTAware(day, Days.ONE.toStandardDuration());
                 if (time.equals(tempDay)) {
-                    day = ReplaceIndex.plusDSTAware(day, Days.ONE.toStandardDuration());
+                    day = DateUtils.plusDSTAware(day, Days.ONE.toStandardDuration());
                 }
                 statement = find412IndexEntries.bind(oldBucket, day.toDate(), time.toDate());
             } else {

@@ -85,11 +85,11 @@ public class ReplaceRHQ411Index {
                 scheduleId = row.getInt(0);
                 partition = (scheduleId % NUM_PARTITIONS);
                 ++count;
-                session.execute(updateNewIndex.bind(newBucket, partition, ReplaceIndex.getUTCTimeSlice(time, timeSlice)
+                session.execute(updateNewIndex.bind(newBucket, partition, DateUtils.getUTCTimeSlice(time, timeSlice)
                     .toDate(), scheduleId));
             }
             if (count < PAGE_SIZE) {
-                time = ReplaceIndex.plusDSTAware(time, timeSlice);
+                time = DateUtils.plusDSTAware(time, timeSlice);
                 statement = find411IndexEntries.bind(oldBucket, time.toDate());
             } else {
                 statement = find411IndexEntriesAfterScheduleId.bind(oldBucket, time.toDate(), scheduleId);

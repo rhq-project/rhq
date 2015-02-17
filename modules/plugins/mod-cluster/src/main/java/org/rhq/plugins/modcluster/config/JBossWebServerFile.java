@@ -36,6 +36,7 @@ import org.xml.sax.SAXException;
 public class JBossWebServerFile extends AbstractConfigurationFile {
 
     private static final String CATALINA_LISTENER_CLASS_NAME = "org.jboss.modcluster.catalina.ModClusterListener";
+    private static final String CATALINA_LISTENER_CLASS_NAME_STANDALONE = "org.jboss.modcluster.container.catalina.standalone.ModClusterListener";
 
     private Node listenerNode;
 
@@ -82,7 +83,8 @@ public class JBossWebServerFile extends AbstractConfigurationFile {
             Node node = nodeList.item(i);
 
             if (node.getAttributes().getNamedItem("className") != null
-                && CATALINA_LISTENER_CLASS_NAME.equals(node.getAttributes().getNamedItem("className").getTextContent())) {
+                && (CATALINA_LISTENER_CLASS_NAME.equals(node.getAttributes().getNamedItem("className").getTextContent()) ||
+                    CATALINA_LISTENER_CLASS_NAME_STANDALONE.equals(node.getAttributes().getNamedItem("className").getTextContent()))) {
                 return node;
             }
         }

@@ -27,30 +27,52 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
+
+import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.domain.configuration.Configuration;
+
+import org.rhq.plugins.jmx.JMXComponent;
+
 import org.rhq.plugins.modcluster.helper.JBossHelper;
 import org.rhq.plugins.modcluster.model.ProxyInfo;
 
 /**
- * @author Stefan Negrea
+ * @author Stefan Negrea, Maxime Beck
  *
  */
 @SuppressWarnings({ "rawtypes" })
-public class ModClusterServerComponent extends MBeanResourceComponent {
+public class ModClusterServerComponent extends MBeanResourceComponent<JMXComponent<?>>
+ {
+    private ModClusterOperationsDelegate operationsDelegate;
+
+    public enum SupportedOperations {
+        STORECONFIG,
+        PROXY_INFO_STRING
+    }
+
+    public ModClusterServerComponent() {
+        this.operationsDelegate = new ModClusterOperationsDelegate((MBeanResourceComponent)this);
+    }
 
     @Override
     public AvailabilityType getAvailability() {
-        String rawProxyInfo = JBossHelper.getRawProxyInfo(getEmsBean());
+        EmsBean bean = getEmsBean();
 
-        if (rawProxyInfo == null) {
-            return AvailabilityType.DOWN;
-        }
-
-        ProxyInfo proxyInfo = new ProxyInfo(rawProxyInfo);
-        if (proxyInfo.getAvailableNodes().size() == 0) {
+        if(bean == null) {
             return AvailabilityType.DOWN;
         }
 
         return super.getAvailability();
+    }
+
+    void storeConfig() throws Exception {
+        invokeOperation(SupportedOperations.STORECONFIG.name(), new Configuration());
+    }
+
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
+            Exception {
+        SupportedOperations operation = Enum.valueOf(SupportedOperations.class, name.toUpperCase());
+        return operationsDelegate.invoke(operation, parameters);
     }
 
     @SuppressWarnings("unchecked")
@@ -64,7 +86,6 @@ public class ModClusterServerComponent extends MBeanResourceComponent {
                 break;
             }
         }
-
         super.getValues(report, requests, bean);
     }
 }

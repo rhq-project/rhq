@@ -47,52 +47,60 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
 
     @Override
     public ListenableFuture<List<ResultSet>> apply(ResultSet resultSet) throws Exception {
-        List<ResultSetFuture> insertFutures = new ArrayList<ResultSetFuture>();
-        List<Row> rows = resultSet.all();
-        Date time = rows.get(0).getDate(1);
-        Date nextTime;
-        Double max = null;
-        Double min = null;
-        Double avg = null;
-        Long writeTime = rows.get(0).getLong(5);
-        Integer ttl = rows.get(0).getInt(4);
-        List<Statement> statements = new ArrayList<Statement>(BATCH_SIZE);
-
-        for (Row row : resultSet) {
-            nextTime = row.getDate(1);
-            if (nextTime.equals(time)) {
-                int type = row.getInt(2);
-                switch (type) {
-                case 0:
-                    max = row.getDouble(3);
-                    break;
-                case 1:
-                    min = row.getDouble(3);
-                    break;
-                default:
-                    avg = row.getDouble(3);
-                }
-            } else {
-                if (isDataMissing(avg, max, min)) {
-                    log.debug("We only have a partial " + bucket + " metric for {scheduleId: " + scheduleId +
-                        ", time: " + time.getTime() + "}. It will not be migrated.");
-                } else {
-                    statements.add(createInsertStatement(time, avg, max, min, ttl, writeTime));
-                    if (statements.size() == BATCH_SIZE) {
-                        insertFutures.add(writeBatch(statements));
-                        statements.clear();
-                    }
-                }
-
-                time = nextTime;
-                max = row.getDouble(3);
-                min = null;
-                avg = null;
-                ttl = row.getInt(4);
-                writeTime = row.getLong(5);
+        try {
+            List<ResultSetFuture> insertFutures = new ArrayList<ResultSetFuture>();
+            if (resultSet.isExhausted()) {
+                return Futures.allAsList(insertFutures);
             }
+            List<Row> rows = resultSet.all();
+            Date time = rows.get(0).getDate(1);
+            Date nextTime;
+            Double max = null;
+            Double min = null;
+            Double avg = null;
+            Long writeTime = rows.get(0).getLong(5);
+            Integer ttl = rows.get(0).getInt(4);
+            List<Statement> statements = new ArrayList<Statement>(BATCH_SIZE);
+
+            for (Row row : resultSet) {
+                nextTime = row.getDate(1);
+                if (nextTime.equals(time)) {
+                    int type = row.getInt(2);
+                    switch (type) {
+                    case 0:
+                        max = row.getDouble(3);
+                        break;
+                    case 1:
+                        min = row.getDouble(3);
+                        break;
+                    default:
+                        avg = row.getDouble(3);
+                    }
+                } else {
+                    if (isDataMissing(avg, max, min)) {
+                        log.debug("We only have a partial " + bucket + " metric for {scheduleId: " + scheduleId +
+                            ", time: " + time.getTime() + "}. It will not be migrated.");
+                    } else {
+                        statements.add(createInsertStatement(time, avg, max, min, ttl, writeTime));
+                        if (statements.size() == BATCH_SIZE) {
+                            insertFutures.add(writeBatch(statements));
+                            statements.clear();
+                        }
+                    }
+
+                    time = nextTime;
+                    max = row.getDouble(3);
+                    min = null;
+                    avg = null;
+                    ttl = row.getInt(4);
+                    writeTime = row.getLong(5);
+                }
+            }
+            return Futures.allAsList(insertFutures);
+        } catch (Exception e) {
+            log.warn("An error occurred while migrating data", e);
+            throw e;
         }
-        return Futures.allAsList(insertFutures);
     }
 
     private boolean isDataMissing(Double avg, Double max, Double min) {

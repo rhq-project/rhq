@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.PreparedStatement;
@@ -96,15 +97,17 @@ public class MigrateAggregateMetrics implements Step {
         }
     }
 
+    public static final int DEFAULT_WARM_UP = 10;
+
     private Session session;
 
     private String dataDir;
 
     private DBConnectionFactory dbConnectionFactory;
 
-    private RateLimiter readPermits;
+    private AtomicReference<RateLimiter> readPermitsRef = new AtomicReference<RateLimiter>();
 
-    private RateLimiter writePermits;
+    private AtomicReference<RateLimiter> writePermitsRef = new AtomicReference<RateLimiter>();
 
     private AtomicInteger remaining1HourMetrics = new AtomicInteger();
 
@@ -120,7 +123,7 @@ public class MigrateAggregateMetrics implements Step {
 
     private AtomicInteger failedMigrations = new AtomicInteger();
 
-    private ListeningExecutorService threadPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(5,
+    private ListeningExecutorService threadPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(6,
         new SchemaUpdateThreadFactory()));
 
     private MetricsRegistry metricsRegistry;
@@ -132,6 +135,8 @@ public class MigrateAggregateMetrics implements Step {
     private int totalMetrics;
 
     private double failureThreshold = Double.parseDouble(System.getProperty("rhq.storage.failure-threshold", "0.05"));
+
+    private RateMonitor rateMonitor;
 
     @Override
     public void setSession(Session session) {
@@ -159,11 +164,13 @@ public class MigrateAggregateMetrics implements Step {
                 log.info("The relational database connection factory is not set. No data migration necessary");
                 return;
             }
-            writePermits = RateLimiter.create(getWriteLimit() * getNumberOfUpNodes(), 10, TimeUnit.SECONDS);
-            readPermits = RateLimiter.create(getReadLimit() * getNumberOfUpNodes(), 10, TimeUnit.SECONDS);
+            writePermitsRef.set(RateLimiter.create(getWriteLimit() * getNumberOfUpNodes(), DEFAULT_WARM_UP,
+                TimeUnit.SECONDS));
+            readPermitsRef.set(RateLimiter.create(getReadLimit() * getNumberOfUpNodes(), DEFAULT_WARM_UP,
+                TimeUnit.SECONDS));
 
-            log.info("The request limits are " + writePermits.getRate() + " writes per second and " +
-                readPermits.getRate() + " reads per second");
+            log.info("The request limits are " + writePermitsRef.get().getRate() + " writes/sec and " +
+                readPermitsRef.get().getRate() + " reads/sec");
 
             AstyanaxContext<Keyspace> context = createContext();
             context.start();
@@ -181,9 +188,12 @@ public class MigrateAggregateMetrics implements Step {
             remaining6HourMetrics.set(scheduleIdsWith6HourData.size());
             remaining24HourMetrics.set(scheduleIdsWith24HourData.size());
             totalMetrics = remaining1HourMetrics.get() + remaining6HourMetrics.get() + remaining24HourMetrics.get();
+
             MigrationProgressLogger progressLogger = new MigrationProgressLogger();
+            rateMonitor = new RateMonitor(readPermitsRef, writePermitsRef);
 
             threadPool.submit(progressLogger);
+            threadPool.submit(rateMonitor);
 
             migrate1HourData(scheduleIdsWith1HourData);
             migrate6HourData(scheduleIdsWith6HourData);
@@ -191,8 +201,8 @@ public class MigrateAggregateMetrics implements Step {
 
             migrations.finishedSchedulingTasks();
             migrations.waitForTasksToFinish();
+            rateMonitor.shutdown();
             progressLogger.finished();
-
         } catch (IOException e) {
             throw new RuntimeException("There was an unexpected I/O error. The are still " +
                 migrations.getRemainingTasks() + " outstanding migration tasks. The upgrade must be run again to " +
@@ -347,10 +357,10 @@ public class MigrateAggregateMetrics implements Step {
         for (final Integer scheduleId : scheduleIds) {
             if (!migratedScheduleIds.contains(scheduleId)) {
                 migrations.addTask();
-                readPermits.acquire();
+                readPermitsRef.get().acquire();
                 ResultSetFuture queryFuture = session.executeAsync(query.bind(scheduleId));
                 ListenableFuture<List<ResultSet>> migrationFuture = Futures.transform(queryFuture,
-                    new MigrateData(scheduleId, bucket, writePermits, session), threadPool);
+                    new MigrateData(scheduleId, bucket, writePermitsRef.get(), session), threadPool);
                 Futures.addCallback(migrationFuture, migrationFinished(scheduleId, bucket, migrationLog,
                     remainingMetrics, migratedMetrics), threadPool);
             }
@@ -371,6 +381,7 @@ public class MigrateAggregateMetrics implements Step {
                     remainingMetrics.decrementAndGet();
                     migratedMetrics.incrementAndGet();
                     migrationLog.write(scheduleId);
+                    rateMonitor.requestSucceeded();
                     migrationsMeter.mark();
                     if (log.isDebugEnabled()) {
                         log.debug("Finished migrating " + bucket + " data for schedule id " + scheduleId);
@@ -385,6 +396,7 @@ public class MigrateAggregateMetrics implements Step {
             public void onFailure(Throwable t) {
                 log.info("Failed to migrate " + bucket + " data for schedule id " + scheduleId);
                 migrations.finishedTask();
+                rateMonitor.requestFailed();
                 migrationsMeter.mark();
                 remainingMetrics.decrementAndGet();
                 failedMigrations.incrementAndGet();
@@ -420,10 +432,10 @@ public class MigrateAggregateMetrics implements Step {
                         reportMigrationRates = true;
                     }
 
-                    if (totalMetrics > 0 && (failedMigrations.get() / totalMetrics) > failureThreshold) {
-                        migrations.abort("The failure threshold has been exceeded with " + failedMigrations.get() +
-                            " failed migrations");
-                    }
+//                    if (totalMetrics > 0 && (failedMigrations.get() / totalMetrics) > failureThreshold) {
+//                        migrations.abort("The failure threshold has been exceeded with " + failedMigrations.get() +
+//                            " failed migrations");
+//                    }
 
                     Thread.sleep(30000);
                 }

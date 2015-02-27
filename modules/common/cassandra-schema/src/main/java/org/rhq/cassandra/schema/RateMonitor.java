@@ -86,11 +86,21 @@ public class RateMonitor implements Runnable {
 
     private static final double FAILURE_THRESHOLD = 0.01;
 
-    private static final double RATE_INCREASE_STEP = 100;
+    private static final double DEFAULT_RATE_INCREASE_STEP = 100;
+
+    private static final double RATE_DECREASE_FACTOR = 0.9;
+
+    private static final int DEFAULT_RATE_INCREASE_CHECKPOINT = 60;
+
+    private static final int FIVE_SECOND_WINDOW_SIZE = 60;
+
+    private static final int STABLE_RATE_WINDOW = 90;
 
     private LinkedList<RequestStats> oneSecondStats = new LinkedList<RequestStats>();
 
     private LinkedList<AggregateRequestStats> fiveSecondStats = new LinkedList<AggregateRequestStats>();
+
+    private int stableRateTick;
 
     private AtomicInteger requests = new AtomicInteger();
 
@@ -103,6 +113,10 @@ public class RateMonitor implements Runnable {
     private AtomicReference<RateLimiter> readPermitsRef;
 
     private AtomicReference<RateLimiter> writePermitsRef;
+
+    private double rateIncreaseStep = DEFAULT_RATE_INCREASE_STEP;
+
+    private int rateIncreaseCheckpoint = DEFAULT_RATE_INCREASE_CHECKPOINT;
 
     public RateMonitor(AtomicReference<RateLimiter> readPermitsRef, AtomicReference<RateLimiter> writePermitsRef) {
         this.readPermitsRef = readPermitsRef;
@@ -134,36 +148,31 @@ public class RateMonitor implements Runnable {
                     aggregateStats();
                     if (isRateDecreaseNeeded()) {
                         decreaseRates();
-                        oneSecondStats.clear();
-                        fiveSecondStats.clear();
+                        clearStats();
+                        stableRateTick = 0;
+                        rateIncreaseStep = DEFAULT_RATE_INCREASE_STEP;
+                        rateIncreaseCheckpoint = DEFAULT_RATE_INCREASE_CHECKPOINT;
                     } else if (fiveSecondStats.peek().thresholdExceeded) {
                         increaseWarmup();
                         oneSecondStats.clear();
-                    } else if (isRateIncreaseNeeded()) {
+                        stableRateTick = 0;
+                        rateIncreaseStep = DEFAULT_RATE_INCREASE_STEP;
+                        rateIncreaseCheckpoint = DEFAULT_RATE_INCREASE_CHECKPOINT;
+                    } else if (isLongTermRateStable()) {
+                        rateIncreaseStep += 100;
+                        rateIncreaseCheckpoint = Math.max(30, rateIncreaseCheckpoint - 15);
+                        stableRateTick = 0;
+
+                        log.info("Rates are stable. The rate increase step is now " + rateIncreaseStep +
+                            " and the rate increase checkpoint is now " + rateIncreaseCheckpoint);
+
                         increaseRates();
-                        oneSecondStats.clear();
-                        fiveSecondStats.clear();
+                        clearStats();
+                    } else if (isShortTermRateStable()) {
+                        increaseRates();
+                        clearStats();
                     }
                 }
-
-//                if (isRateDecreaseNeeded()) {
-//                    decreaseRates();
-//                    fiveSecondStats.clear();
-//                } else if (fiveSecondStats.peek().thresholdExceeded) {
-//                    increaseWarmup();
-//                } else if (isRateIncreaseNeeded()) {
-//                    increaseRates();
-//                    fiveSecondStats.clear();
-//                }
-
-//                if (recentStats.size() > 5) {
-//                    recentStats.removeLast();
-//                }
-
-//                while (fiveSecondStats.size() > 60) {
-//                    fiveSecondStats.removeLast();
-//                }
-
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 log.info("Stopping request monitoring due to interrupt", e);
@@ -173,19 +182,25 @@ public class RateMonitor implements Runnable {
         }
     }
 
+    protected void clearStats() {
+        oneSecondStats.clear();
+        fiveSecondStats.clear();
+    }
+
     private void aggregateStats() {
         double totalRequests = 0;
         double totalFailures = 0;
+
+        stableRateTick++;
 
         for (RequestStats stats : oneSecondStats) {
             totalRequests += stats.requests;
             totalFailures += stats.failedRequests;
         }
-//        log.info(((totalFailures / totalRequests) * 100.0) + "% of requests failed in the past 5 seconds");
         fiveSecondStats.addFirst(new AggregateRequestStats((totalFailures / totalRequests) > FAILURE_THRESHOLD,
             totalFailures));
         oneSecondStats.removeLast();
-        if (fiveSecondStats.size() > 60) {
+        if (fiveSecondStats.size() > FIVE_SECOND_WINDOW_SIZE) {
             fiveSecondStats.removeLast();
         }
     }
@@ -211,10 +226,21 @@ public class RateMonitor implements Runnable {
         return failures > 2;
     }
 
-    private boolean isRateIncreaseNeeded() {
-        if (fiveSecondStats.size() < 60) {
-            // We want to make sure we have at least a minute's worth of stats in order to
-            // decide if we should whether or not a rate increase is needed.
+    private boolean is5SecondStatsErrorFree() {
+        if (fiveSecondStats.size() < FIVE_SECOND_WINDOW_SIZE){
+            return false;
+        }
+
+        for (AggregateRequestStats stats : fiveSecondStats) {
+            if (stats.failedRequests > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isShortTermRateStable() {
+        if (fiveSecondStats.size() < rateIncreaseCheckpoint) {
             return false;
         }
 
@@ -223,7 +249,7 @@ public class RateMonitor implements Runnable {
             if (stats.failedRequests > 0) {
                 return false;
             }
-            if (i > 59) {
+            if (i > rateIncreaseCheckpoint - 1) {
                 break;
             }
             ++i;
@@ -231,11 +257,15 @@ public class RateMonitor implements Runnable {
         return true;
     }
 
+    private boolean isLongTermRateStable() {
+        return stableRateTick == STABLE_RATE_WINDOW;
+    }
+
     private void decreaseRates() {
         double readRate = readPermitsRef.get().getRate();
-        double newReadRate = readRate * 0.8;
+        double newReadRate = readRate * RATE_DECREASE_FACTOR;
         double writeRate = writePermitsRef.get().getRate();
-        double newWriteRate = writeRate * 0.8;
+        double newWriteRate = writeRate * RATE_DECREASE_FACTOR;
 
         log.info("Decreasing request rates:\n" +
             readRate + " reads/sec --> " + newReadRate + " reads/sec\n" +
@@ -248,11 +278,9 @@ public class RateMonitor implements Runnable {
 
     private void increaseRates() {
         double readRate = readPermitsRef.get().getRate();
-//        double newReadRate = readRate * 1.15;
-        double newReadRate = readRate + RATE_INCREASE_STEP;
+        double newReadRate = readRate + rateIncreaseStep;
         double writeRate = writePermitsRef.get().getRate();
-//        double newWriteRate = writeRate * 1.15;
-        double newWriteRate = writeRate + RATE_INCREASE_STEP;
+        double newWriteRate = writeRate + rateIncreaseStep;
 
         log.info("Increasing request rates:\n" +
             readRate + " reads/sec --> " + newReadRate + " reads/sec\n" +

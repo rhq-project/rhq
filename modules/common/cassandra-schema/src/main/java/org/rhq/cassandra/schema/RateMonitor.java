@@ -18,24 +18,79 @@ public class RateMonitor implements Runnable {
     private static final Log log = LogFactory.getLog(RateMonitor.class);
 
     private static class RequestStats {
-        public int requests;
-        public int failedRequests;
+        public double requests;
+        public double failedRequests;
 
-        public RequestStats(int requests, int failedRequests) {
+        public RequestStats(double requests, double failedRequests) {
             this.requests = requests;
             this.failedRequests = failedRequests;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            RequestStats that = (RequestStats) o;
+
+            if (Double.compare(that.failedRequests, failedRequests) != 0) return false;
+            if (Double.compare(that.requests, requests) != 0) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result;
+            long temp;
+            temp = Double.doubleToLongBits(requests);
+            result = (int) (temp ^ (temp >>> 32));
+            temp = Double.doubleToLongBits(failedRequests);
+            result = 31 * result + (int) (temp ^ (temp >>> 32));
+            return result;
+        }
+    }
+
+    private static class AggregateRequestStats {
+        public boolean thresholdExceeded;
+        public double failedRequests;
+
+        public AggregateRequestStats(boolean thresholdExceeded, double failedRequests) {
+            this.thresholdExceeded = thresholdExceeded;
+            this.failedRequests = failedRequests;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            AggregateRequestStats that = (AggregateRequestStats) o;
+
+            if (failedRequests != that.failedRequests) return false;
+            if (thresholdExceeded != that.thresholdExceeded) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result;
+            long temp;
+            result = (thresholdExceeded ? 1 : 0);
+            temp = Double.doubleToLongBits(failedRequests);
+            result = 31 * result + (int) (temp ^ (temp >>> 32));
+            return result;
         }
     }
 
     private static final double FAILURE_THRESHOLD = 0.01;
 
-    private static final Boolean SUCCESS = Boolean.TRUE;
+    private static final double RATE_INCREASE_STEP = 100;
 
-    private static final Boolean FAILURE = Boolean.FALSE;
+    private LinkedList<RequestStats> oneSecondStats = new LinkedList<RequestStats>();
 
-    private LinkedList<RequestStats> recentStats = new LinkedList<RequestStats>();
-
-    private LinkedList<Boolean> aggregatedStatsHistory = new LinkedList<Boolean>();
+    private LinkedList<AggregateRequestStats> fiveSecondStats = new LinkedList<AggregateRequestStats>();
 
     private AtomicInteger requests = new AtomicInteger();
 
@@ -74,26 +129,40 @@ public class RateMonitor implements Runnable {
                 if (requests.get() == 0) {
                     continue;
                 }
-                recentStats.addFirst(new RequestStats(requests.getAndSet(0), failRequests.getAndSet(0)));
-                aggregateStats();
-
-                if (isRateDecreaseNeeded()) {
-                    decreaseRates();
-                    aggregatedStatsHistory.clear();
-                } else if (aggregatedStatsHistory.peek() == FAILURE) {
-                    increaseWarmup();
-                } else if (isRateIncreaseNeeded()) {
-                    increaseRates();
-                    aggregatedStatsHistory.clear();
+                oneSecondStats.addFirst(new RequestStats(requests.getAndSet(0), failRequests.getAndSet(0)));
+                if (oneSecondStats.size() > 4) {
+                    aggregateStats();
+                    if (isRateDecreaseNeeded()) {
+                        decreaseRates();
+                        oneSecondStats.clear();
+                        fiveSecondStats.clear();
+                    } else if (fiveSecondStats.peek().thresholdExceeded) {
+                        increaseWarmup();
+                        oneSecondStats.clear();
+                    } else if (isRateIncreaseNeeded()) {
+                        increaseRates();
+                        oneSecondStats.clear();
+                        fiveSecondStats.clear();
+                    }
                 }
 
-                if (recentStats.size() > 5) {
-                    recentStats.removeLast();
-                }
+//                if (isRateDecreaseNeeded()) {
+//                    decreaseRates();
+//                    fiveSecondStats.clear();
+//                } else if (fiveSecondStats.peek().thresholdExceeded) {
+//                    increaseWarmup();
+//                } else if (isRateIncreaseNeeded()) {
+//                    increaseRates();
+//                    fiveSecondStats.clear();
+//                }
 
-                while (aggregatedStatsHistory.size() > 60) {
-                    aggregatedStatsHistory.removeLast();
-                }
+//                if (recentStats.size() > 5) {
+//                    recentStats.removeLast();
+//                }
+
+//                while (fiveSecondStats.size() > 60) {
+//                    fiveSecondStats.removeLast();
+//                }
 
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -105,56 +174,56 @@ public class RateMonitor implements Runnable {
     }
 
     private void aggregateStats() {
-        int i = 0;
-        int totalRequests = 0;
-        int totalFailures = 0;
+        double totalRequests = 0;
+        double totalFailures = 0;
 
-        for (RequestStats stats : recentStats) {
-            if (i > 4) {
-                break;
-            }
+        for (RequestStats stats : oneSecondStats) {
             totalRequests += stats.requests;
             totalFailures += stats.failedRequests;
-            ++i;
         }
-
-        aggregatedStatsHistory.addFirst((totalFailures / totalRequests) < FAILURE_THRESHOLD);
+//        log.info(((totalFailures / totalRequests) * 100.0) + "% of requests failed in the past 5 seconds");
+        fiveSecondStats.addFirst(new AggregateRequestStats((totalFailures / totalRequests) > FAILURE_THRESHOLD,
+            totalFailures));
+        oneSecondStats.removeLast();
+        if (fiveSecondStats.size() > 60) {
+            fiveSecondStats.removeLast();
+        }
     }
 
     private boolean isRateDecreaseNeeded() {
-        if (aggregatedStatsHistory.size() > 30) {
+        if (fiveSecondStats.size() < 30) {
             return false;
         }
 
         int i = 0;
         int failures = 0;
-
-        for (Boolean result : aggregatedStatsHistory) {
-            if (failures > 2 || i > 5) {
+        for (AggregateRequestStats stats : fiveSecondStats) {
+            // We are looking for 3 occurrences of the threshold being exceeded in the last
+            // 30 samples.
+            if (failures > 2 || i > 29) {
                 break;
             }
-            if (result == FAILURE) {
+            if (stats.thresholdExceeded) {
                 ++failures;
             }
             ++i;
         }
-
         return failures > 2;
     }
 
     private boolean isRateIncreaseNeeded() {
-        if (aggregatedStatsHistory.size() < 60) {
+        if (fiveSecondStats.size() < 60) {
             // We want to make sure we have at least a minute's worth of stats in order to
             // decide if we should whether or not a rate increase is needed.
             return false;
         }
 
         int i = 0;
-        for (Boolean result : aggregatedStatsHistory) {
-            if (result == FAILURE) {
+        for (AggregateRequestStats stats : fiveSecondStats) {
+            if (stats.failedRequests > 0) {
                 return false;
             }
-            if (i > 11) {
+            if (i > 59) {
                 break;
             }
             ++i;
@@ -168,8 +237,9 @@ public class RateMonitor implements Runnable {
         double writeRate = writePermitsRef.get().getRate();
         double newWriteRate = writeRate * 0.8;
 
-        log.info("Decreasing read rate from " + readRate + " reads/sec to " + newReadRate + " reads/sec");
-        log.info("Decreasing write rate from " + writeRate + " writes/sec to " + newWriteRate + " writes/sec");
+        log.info("Decreasing request rates:\n" +
+            readRate + " reads/sec --> " + newReadRate + " reads/sec\n" +
+            writeRate + " writes/sec --> " + newWriteRate + " writes/sec\n");
 
         warmUp = MigrateAggregateMetrics.DEFAULT_WARM_UP;
         readPermitsRef.set(RateLimiter.create(newReadRate, warmUp, TimeUnit.SECONDS));
@@ -178,12 +248,15 @@ public class RateMonitor implements Runnable {
 
     private void increaseRates() {
         double readRate = readPermitsRef.get().getRate();
-        double newReadRate = readRate * 1.1;
+//        double newReadRate = readRate * 1.15;
+        double newReadRate = readRate + RATE_INCREASE_STEP;
         double writeRate = writePermitsRef.get().getRate();
-        double newWriteRate = writeRate * 1.1;
+//        double newWriteRate = writeRate * 1.15;
+        double newWriteRate = writeRate + RATE_INCREASE_STEP;
 
-        log.info("Increasing read rate from " + readRate + " reads/sec to " + newReadRate + " reads/sec");
-        log.info("Increasing write rate from " + writeRate + " writes/sec to " + newWriteRate + " writes/sec");
+        log.info("Increasing request rates:\n" +
+            readRate + " reads/sec --> " + newReadRate + " reads/sec\n" +
+            writeRate + " writes/sec --> " + newWriteRate + " writes/sec\n");
 
         warmUp = MigrateAggregateMetrics.DEFAULT_WARM_UP;
         readPermitsRef.set(RateLimiter.create(newReadRate, warmUp, TimeUnit.SECONDS));
@@ -195,9 +268,8 @@ public class RateMonitor implements Runnable {
         double readRate = readPermitsRef.get().getRate();
         double writeRate = writePermitsRef.get().getRate();
 
-        log.info("Resetting read rate to " + readRate + " reads/sec with an increased warm up of " + warmUp + " sec");
-        log.info("Resetting write rate to " + writeRate + " writes/sec with an increased warm up of " + warmUp +
-            " sec");
+        log.info("Resetting read rate to " + readRate + " reads/sec and write rate to " + writeRate +
+            " writes/sec with an increased warm up of " + warmUp + " sec");
 
         readPermitsRef.set(RateLimiter.create(readRate, warmUp, TimeUnit.SECONDS));
         writePermitsRef.set(RateLimiter.create(writeRate, warmUp, TimeUnit.SECONDS));

@@ -36,6 +36,9 @@
         <module name="org.rhq.postgres"/>
         <module name="org.rhq.oracle" optional="true" />
         <module name="com.datastax.cassandra.cassandra-driver-core"/>
+        <module name="com.netflix.astyanax.astyanax-core"/>
+        <module name="com.netflix.astyanax.astyanax-thrift"/>
+        <module name="com.netflix.astyanax.astyanax-recipes"/>
         <module name="javax.api"/>
     </dependencies>
 

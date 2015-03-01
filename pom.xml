@@ -102,6 +102,7 @@
     <cassandra.snakeyaml.version>1.6</cassandra.snakeyaml.version>
     <cassandra.thrift.version>0.7.0</cassandra.thrift.version>
     <cassandra.version>1.2.18-jboss-1</cassandra.version>
+    <astyanax.version>2.0.2</astyanax.version>
     <clirr.version>2.6</clirr.version>
     <commons-beanutils.version>1.8.2</commons-beanutils.version>
     <commons-codec.version>1.4</commons-codec.version>

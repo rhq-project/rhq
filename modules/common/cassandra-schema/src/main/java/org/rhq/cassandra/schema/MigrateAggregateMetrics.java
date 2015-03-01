@@ -54,6 +54,8 @@ import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 
+import org.rhq.core.util.exception.ThrowableUtil;
+
 /**
  * <p>
  * Migrates aggregate metrics from the one_hour_metrics, six_hour_metrics, and twenty_four_hour_metrics tables to the
@@ -124,8 +126,6 @@ public class MigrateAggregateMetrics implements Step {
 
     private AtomicInteger migrated24HourMetrics = new AtomicInteger();
 
-    private AtomicInteger failedMigrations = new AtomicInteger();
-
     private ListeningExecutorService threadPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(6,
         new SchemaUpdateThreadFactory()));
 
@@ -134,10 +134,6 @@ public class MigrateAggregateMetrics implements Step {
     private Meter migrationsMeter;
 
     private TaskTracker migrations = new TaskTracker();
-
-    private int totalMetrics;
-
-    private double failureThreshold = Double.parseDouble(System.getProperty("rhq.storage.failure-threshold", "0.05"));
 
     private RateMonitor rateMonitor;
 
@@ -183,7 +179,6 @@ public class MigrateAggregateMetrics implements Step {
             Stopwatch contextStopWatch = Stopwatch.createStarted();
             context.shutdown();
             contextStopWatch.stop();
-            log.info("Shut down astyanax in " + contextStopWatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
 
             writePermitsRef.set(RateLimiter.create(getWriteLimit(getNumberOfUpNodes()), DEFAULT_WARM_UP,
                 TimeUnit.SECONDS));
@@ -196,7 +191,6 @@ public class MigrateAggregateMetrics implements Step {
             remaining1HourMetrics.set(scheduleIdsWith1HourData.size());
             remaining6HourMetrics.set(scheduleIdsWith6HourData.size());
             remaining24HourMetrics.set(scheduleIdsWith24HourData.size());
-            totalMetrics = remaining1HourMetrics.get() + remaining6HourMetrics.get() + remaining24HourMetrics.get();
 
             MigrationProgressLogger progressLogger = new MigrationProgressLogger();
             rateMonitor = new RateMonitor(readPermitsRef, writePermitsRef);
@@ -210,8 +204,17 @@ public class MigrateAggregateMetrics implements Step {
 
             migrations.finishedSchedulingTasks();
             migrations.waitForTasksToFinish();
+
             rateMonitor.shutdown();
             progressLogger.finished();
+
+            if (remaining1HourMetrics.get() > 0 || remaining6HourMetrics.get() > 0 ||
+                remaining24HourMetrics.get() > 0) {
+                throw new RuntimeException("There are unfinished metrics migrations. The upgrade will have to be " +
+                    "run again.");
+            }
+
+            dropTables();
         } catch (IOException e) {
             throw new RuntimeException("There was an unexpected I/O error. The are still " +
                 migrations.getRemainingTasks() + " outstanding migration tasks. The upgrade must be run again to " +
@@ -226,8 +229,9 @@ public class MigrateAggregateMetrics implements Step {
                 "complete the migration.", e);
         } finally {
             stopwatch.stop();
-            log.info("Finished data migration in " + stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
-            log.info("There were " + failedMigrations + " failed migrations");
+            log.info("Finished migrating " + migrated1HourMetrics + " " + Bucket.ONE_HOUR + ", " +
+                migrated6HourMetrics + " " + Bucket.SIX_HOUR + ", and " + migrated24HourMetrics + " " +
+                Bucket.TWENTY_FOUR_HOUR + " metrics in " + stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
             shutdown();
         }
     }
@@ -249,13 +253,13 @@ public class MigrateAggregateMetrics implements Step {
     }
 
     private double getWriteLimit(int numNodes) {
-        int baseLimit = Integer.parseInt(System.getProperty("rhq.storage.request.write-limit", "20000"));
+        int baseLimit = Integer.parseInt(System.getProperty("rhq.storage.request.write-limit", "10000"));
         double increase = baseLimit * RATE_INCREASE_PER_NODE;
         return baseLimit + (increase * (numNodes - 1));
     }
 
     private double getReadLimit(int numNodes) {
-        int baseLimit = Integer.parseInt(System.getProperty("rhq.storage.request.read-limit", "200"));
+        int baseLimit = Integer.parseInt(System.getProperty("rhq.storage.request.read-limit", "25"));
         double increase = baseLimit * RATE_INCREASE_PER_NODE;
         return baseLimit + (increase * (numNodes - 1));
     }
@@ -382,7 +386,7 @@ public class MigrateAggregateMetrics implements Step {
             stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
     }
 
-    private void migrateData(PreparedStatement query, final PreparedStatement delete, Bucket bucket,
+    private void migrateData(PreparedStatement query, final PreparedStatement delete, final Bucket bucket,
         AtomicInteger remainingMetrics, AtomicInteger migratedMetrics, MigrationLog migrationLog,
         final Integer scheduleId) {
         readPermitsRef.get().acquire();
@@ -426,10 +430,14 @@ public class MigrateAggregateMetrics implements Step {
 
             @Override
             public void onFailure(Throwable t) {
-                log.info("Failed to migrate " + bucket + " data for schedule id " + scheduleId +
-                    ". Migration will be rescheduled");
+                if (log.isDebugEnabled()) {
+                    log.debug("Failed to migrate " + bucket + " data for schedule id " + scheduleId +
+                        ". Migration will be rescheduled.", t);
+                } else {
+                    log.info("Failed to migrate " + bucket + " data for schedule id " + scheduleId + ": " +
+                        ThrowableUtil.getRootMessage(t) + ". Migration will be rescheduled");
+                }
                 rateMonitor.requestFailed();
-                failedMigrations.incrementAndGet();
                 migrateData(query, delete, bucket, remainingMetrics, migratedMetrics, migrationLog, scheduleId);
             }
         };
@@ -453,7 +461,6 @@ public class MigrateAggregateMetrics implements Step {
                         Bucket.ONE_HOUR + ": " + remaining1HourMetrics + "\n" +
                         Bucket.SIX_HOUR + ": " + remaining6HourMetrics + "\n" +
                         Bucket.TWENTY_FOUR_HOUR + ": " + remaining24HourMetrics + "\n");
-                    log.info("Failed migrations: " + failedMigrations);
                     if (reportMigrationRates) {
                         log.info("Metrics migration rates:\n" +
                             "1 min rate: "  + migrationsMeter.oneMinuteRate() + "\n" +
@@ -464,11 +471,6 @@ public class MigrateAggregateMetrics implements Step {
                         reportMigrationRates = true;
                     }
 
-//                    if (totalMetrics > 0 && (failedMigrations.get() / totalMetrics) > failureThreshold) {
-//                        migrations.abort("The failure threshold has been exceeded with " + failedMigrations.get() +
-//                            " failed migrations");
-//                    }
-
                     Thread.sleep(30000);
                 }
             } catch (InterruptedException e) {
@@ -477,16 +479,16 @@ public class MigrateAggregateMetrics implements Step {
     }
 
     private void dropTables() {
-//        ResultSet resultSet = session.execute("SELECT columnfamily_name FROM system.schema_columnfamilies " +
-//            "WHERE keyspace_name = 'rhq'");
-//        for (Row row : resultSet) {
-//            String table = row.getString(0);
-//            if (table.equals("one_hour_metrics") || table.equals("six_hour_metrics") ||
-//                table.equals("twenty_four_hour_metrics")) {
-//                log.info("Dropping table " +  table);
-//                session.execute("DROP table rhq." + table);
-//            }
-//        }
+        ResultSet resultSet = session.execute("SELECT columnfamily_name FROM system.schema_columnfamilies " +
+            "WHERE keyspace_name = 'rhq'");
+        for (com.datastax.driver.core.Row row : resultSet) {
+            String table = row.getString(0);
+            if (table.equals("one_hour_metrics") || table.equals("six_hour_metrics") ||
+                table.equals("twenty_four_hour_metrics")) {
+                log.info("Dropping table " +  table);
+                session.execute("DROP table rhq." + table);
+            }
+        }
     }
 
 }

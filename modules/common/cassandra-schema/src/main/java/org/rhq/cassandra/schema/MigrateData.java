@@ -62,7 +62,7 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
             Integer ttl = rows.get(0).getInt(4);
             List<Statement> statements = new ArrayList<Statement>(BATCH_SIZE);
 
-            for (Row row : resultSet) {
+            for (Row row : rows) {
                 nextTime = row.getDate(1);
                 if (nextTime.equals(time)) {
                     int type = row.getInt(2);
@@ -95,6 +95,9 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
                     ttl = row.getInt(4);
                     writeTime = row.getLong(5);
                 }
+            }
+            if (!statements.isEmpty()) {
+                insertFutures.add(writeBatch(statements));
             }
             return Futures.allAsList(insertFutures);
         } catch (Exception e) {

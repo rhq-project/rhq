@@ -4,9 +4,7 @@ import static org.testng.Assert.assertFalse;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -33,13 +31,9 @@ import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.Duration;
 import org.joda.time.Hours;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import org.rhq.core.util.jdbc.JDBCUtil;
 
 /**
  * @author John Sanda
@@ -47,12 +41,6 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 public class MigrateAggregateMetricsTest extends SchemaUpgradeTest {
 
     private static final Log log = LogFactory.getLog(MigrateAggregateMetricsTest.class);
-
-    private static final int RESOURCE_TYPE_ID = -1;
-
-    private static final int RESOURCE_ID = -1;
-
-    private Connection connection;
 
     private Session session;
 
@@ -64,19 +52,8 @@ public class MigrateAggregateMetricsTest extends SchemaUpgradeTest {
 
     private PreparedStatement insert24HourData;
 
-    @BeforeClass
-    public void setupClass() throws Exception {
-        connection = newJDBCConnection();
-    }
-
-    @AfterClass(alwaysRun = true)
-    public void tearDownClass() throws Exception {
-        JDBCUtil.safeClose(connection);
-    }
-
     @BeforeMethod
     public void setUp() throws Exception {
-        resetDB();
         for (File file : new File("target").listFiles()) {
             if (file.getName().endsWith("_migration.log")) {
                 file.delete();
@@ -86,27 +63,16 @@ public class MigrateAggregateMetricsTest extends SchemaUpgradeTest {
 
     @AfterMethod(alwaysRun = true)
     public void tearDown() throws Exception {
-        resetDB();
-    }
-
-    private void resetDB() throws Exception {
-        executeUpdate("delete from rhq_measurement_sched where id < 0");
-        executeUpdate("delete from rhq_measurement_def where id < 0");
-        executeUpdate("delete from rhq_resource where id = " + RESOURCE_ID);
-        executeUpdate("delete from rhq_resource_type where id = " + RESOURCE_TYPE_ID);
     }
 
     @Test
     public void runMigration() throws Exception {
         int numSchedules = Integer.parseInt(System.getProperty("numSchedules", "10"));
-        createResource();
-        createMeasurementSchedules(numSchedules);
-
         Properties properties = new Properties();
         properties.put(SchemaManager.RELATIONAL_DB_CONNECTION_FACTORY_PROP, new DBConnectionFactory() {
             @Override
             public Connection newConnection() throws SQLException {
-                return newJDBCConnection();
+                return null;
             }
         });
         properties.put(SchemaManager.DATA_DIR, "target");
@@ -148,20 +114,11 @@ public class MigrateAggregateMetricsTest extends SchemaUpgradeTest {
     }
 
     private void initPreparedStatements() {
-//        insert1HourData = session.prepare("insert into one_hour_metrics (schedule_id, time, type, value) values " +
-//            "(?, ?, ?, ?) USING TTL " + Minutes.minutes(40).toStandardSeconds().getSeconds());
-
         insert1HourData = session.prepare("insert into one_hour_metrics (schedule_id, time, type, value) values " +
             "(?, ?, ?, ?)");
 
-//        insert6HourData = session.prepare("insert into six_hour_metrics (schedule_id, time, type, value) values " +
-//            "(?, ?, ?, ?) USING TTL " + Minutes.minutes(50).toStandardSeconds().getSeconds());
-
         insert6HourData = session.prepare("insert into six_hour_metrics (schedule_id, time, type, value) values " +
             "(?, ?, ?, ?)");
-
-//        insert24HourData = session.prepare("insert into twenty_four_hour_metrics (schedule_id, time, type, value) " +
-//                "values (?, ?, ?, ?) USING TTL " + Minutes.minutes(60).toStandardSeconds().getSeconds());
 
         insert24HourData = session.prepare("insert into twenty_four_hour_metrics (schedule_id, time, type, value) " +
             "values (?, ?, ?, ?)");
@@ -216,51 +173,6 @@ public class MigrateAggregateMetricsTest extends SchemaUpgradeTest {
             }
             time = time.plus(duration);
         }
-    }
-
-    private void createResource() throws Exception {
-        String insertResourceType = "insert into rhq_resource_type (id, name, category, creation_data_type, " +
-            "create_delete_policy, singleton, supports_manual_add, missing_policy, deleted, ignored, supports_missing) " +
-            "values (" +  RESOURCE_TYPE_ID + ", 'migration-test-type', 'test', 'test', 'test', " + jdbcBooleanValue(true) + ", " +
-            jdbcBooleanValue(true) + ", 'test', " + jdbcBooleanValue(false) + ", " + jdbcBooleanValue(false) +
-            ", " + jdbcBooleanValue(false) + ")";
-
-        String insertResource = "insert into rhq_resource (id, resource_type_id, uuid, resource_key) values (" +
-            RESOURCE_ID + ", " + RESOURCE_TYPE_ID + ", 'migration-test', 'migration-test')";
-
-        executeUpdate(insertResourceType);
-        executeUpdate(insertResource);
-    }
-
-    private void createMeasurementSchedules(int count) throws Exception {
-        for (int i = -1; i > -count; --i) {
-            executeUpdate("insert into rhq_measurement_def (id, resource_type_id, name, data_type) values (" + i +
-                ", " + RESOURCE_TYPE_ID + ", 'migration-test-def" + i + "', 0)");
-            executeUpdate("insert into rhq_measurement_sched (id, definition, resource_id) values (" + i + ", " +
-                i + ", " + RESOURCE_ID + ")");
-        }
-    }
-
-    private void executeUpdate(String sql) throws Exception {
-        Statement statement = null;
-        try {
-            statement = connection.createStatement();
-            statement.executeUpdate(sql);
-        } finally {
-            JDBCUtil.safeClose(statement);
-        }
-    }
-
-    private Connection newJDBCConnection() throws SQLException {
-        return DriverManager.getConnection(System.getProperty("rhq.db.url"),
-            System.getProperty("rhq.db.username"), System.getProperty("rhq.db.password"));
-    }
-
-    private String jdbcBooleanValue(boolean value) {
-        if (System.getProperty("rhq.db.url").contains("postgres")) {
-            return value ? "true" : "false";
-        }
-        return value ? "1" : "0";
     }
 
     /**

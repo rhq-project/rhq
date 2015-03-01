@@ -86,7 +86,13 @@ public class RateMonitor implements Runnable {
 
     private static final double FAILURE_THRESHOLD = 0.01;
 
-    private static final double DEFAULT_RATE_INCREASE_STEP = 100;
+    private static final double MIN_READ_RATE = 25.0;
+
+    private static final double MIN_WRITE_RATE = 2500;
+
+    private static final double DEFAULT_WRITE_RATE_STEP_INCREASE = 25;
+
+    private static final double DEFAULT_READ_RATE_STEP_INCREASE = 10;
 
     private static final double RATE_DECREASE_FACTOR = 0.9;
 
@@ -114,7 +120,9 @@ public class RateMonitor implements Runnable {
 
     private AtomicReference<RateLimiter> writePermitsRef;
 
-    private double rateIncreaseStep = DEFAULT_RATE_INCREASE_STEP;
+    private double writeRateStepIncrease = DEFAULT_WRITE_RATE_STEP_INCREASE;
+
+    private double readRateStepIncrease = DEFAULT_READ_RATE_STEP_INCREASE;
 
     private int rateIncreaseCheckpoint = DEFAULT_RATE_INCREASE_CHECKPOINT;
 
@@ -150,21 +158,25 @@ public class RateMonitor implements Runnable {
                         decreaseRates();
                         clearStats();
                         stableRateTick = 0;
-                        rateIncreaseStep = DEFAULT_RATE_INCREASE_STEP;
+                        writeRateStepIncrease = DEFAULT_WRITE_RATE_STEP_INCREASE;
+                        readRateStepIncrease = DEFAULT_READ_RATE_STEP_INCREASE;
                         rateIncreaseCheckpoint = DEFAULT_RATE_INCREASE_CHECKPOINT;
                     } else if (fiveSecondStats.peek().thresholdExceeded) {
                         increaseWarmup();
                         oneSecondStats.clear();
                         stableRateTick = 0;
-                        rateIncreaseStep = DEFAULT_RATE_INCREASE_STEP;
+                        writeRateStepIncrease = DEFAULT_WRITE_RATE_STEP_INCREASE;
+                        readRateStepIncrease = DEFAULT_READ_RATE_STEP_INCREASE;
                         rateIncreaseCheckpoint = DEFAULT_RATE_INCREASE_CHECKPOINT;
                     } else if (isLongTermRateStable()) {
-                        rateIncreaseStep += 100;
+                        writeRateStepIncrease += DEFAULT_WRITE_RATE_STEP_INCREASE;
+                        readRateStepIncrease += DEFAULT_READ_RATE_STEP_INCREASE;
                         rateIncreaseCheckpoint = Math.max(30, rateIncreaseCheckpoint - 15);
                         stableRateTick = 0;
 
-                        log.info("Rates are stable. The rate increase step is now " + rateIncreaseStep +
-                            " and the rate increase checkpoint is now " + rateIncreaseCheckpoint);
+                        log.info("Rates are stable. The read rate step increase is now " + readRateStepIncrease +
+                            " . The write rate step increase is now " + writeRateStepIncrease +
+                            ". The rate increase checkpoint is now " + rateIncreaseCheckpoint);
 
                         increaseRates();
                         clearStats();
@@ -226,19 +238,6 @@ public class RateMonitor implements Runnable {
         return failures > 2;
     }
 
-    private boolean is5SecondStatsErrorFree() {
-        if (fiveSecondStats.size() < FIVE_SECOND_WINDOW_SIZE){
-            return false;
-        }
-
-        for (AggregateRequestStats stats : fiveSecondStats) {
-            if (stats.failedRequests > 0) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     private boolean isShortTermRateStable() {
         if (fiveSecondStats.size() < rateIncreaseCheckpoint) {
             return false;
@@ -263,8 +262,8 @@ public class RateMonitor implements Runnable {
 
     private void decreaseRates() {
         double readRate = readPermitsRef.get().getRate();
-        double newReadRate = readRate * RATE_DECREASE_FACTOR;
-        double writeRate = writePermitsRef.get().getRate();
+        double newReadRate = Math.max(readRate * RATE_DECREASE_FACTOR, MIN_READ_RATE);
+        double writeRate = Math.max(writePermitsRef.get().getRate(), MIN_WRITE_RATE);
         double newWriteRate = writeRate * RATE_DECREASE_FACTOR;
 
         log.info("Decreasing request rates:\n" +
@@ -278,9 +277,9 @@ public class RateMonitor implements Runnable {
 
     private void increaseRates() {
         double readRate = readPermitsRef.get().getRate();
-        double newReadRate = readRate + rateIncreaseStep;
+        double newReadRate = readRate + readRateStepIncrease;
         double writeRate = writePermitsRef.get().getRate();
-        double newWriteRate = writeRate + rateIncreaseStep;
+        double newWriteRate = writeRate + writeRateStepIncrease;
 
         log.info("Increasing request rates:\n" +
             readRate + " reads/sec --> " + newReadRate + " reads/sec\n" +
@@ -296,8 +295,7 @@ public class RateMonitor implements Runnable {
         double readRate = readPermitsRef.get().getRate();
         double writeRate = writePermitsRef.get().getRate();
 
-        log.info("Resetting read rate to " + readRate + " reads/sec and write rate to " + writeRate +
-            " writes/sec with an increased warm up of " + warmUp + " sec");
+        log.info("Resetting request rates with new warm up of " + warmUp + " sec");
 
         readPermitsRef.set(RateLimiter.create(readRate, warmUp, TimeUnit.SECONDS));
         writePermitsRef.set(RateLimiter.create(writeRate, warmUp, TimeUnit.SECONDS));

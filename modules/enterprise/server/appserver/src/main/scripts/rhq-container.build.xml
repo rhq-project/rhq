@@ -355,6 +355,8 @@
       <echo>Adding Astyanax modules to ${jboss.home}/modules</echo>
       <copy file="${settings.localRepository}/com/netflix/astyanax/astyanax-core/${astyanax.version}/astyanax-core-${astyanax.version}.jar"
             toDir="${jboss.modules.dir}/com/netflix/astyanax/astyanax-core/main" verbose="true"/>
+      <copy file="${settings.localRepository}/com/netflix/astyanax/astyanax-cassandra/${astyanax.version}/astyanax-cassandra-${astyanax.version}.jar"
+            toDir="${jboss.modules.dir}/com/netflix/astyanax/astyanax-core/main" verbose="true"/>
       <copy file="${settings.localRepository}/com/google/guava/guava/14.0.1/guava-14.0.1.jar"
             toDir="${jboss.modules.dir}/com/netflix/astyanax/astyanax-core/main" verbose="true"/>
       <copy file="${settings.localRepository}/commons-codec/commons-codec/1.5/commons-codec-1.5.jar"
@@ -375,6 +377,7 @@
 <module xmlns="urn:jboss:module:1.1" name="com.netflix.astyanax.astyanax-core">
     <resources>
         <resource-root path="astyanax-core-${astyanax.version}.jar"/>
+        <resource-root path="astyanax-cassandra-${astyanax.version}.jar"/>
         <resource-root path="guava-14.0.1.jar"/>
         <resource-root path="commons-codec-1.5.jar"/>
         <resource-root path="uuid-3.2.jar"/>
@@ -391,6 +394,8 @@
         <module name="org.codehaus.jackson.jackson-mapper-asl"/>
         <module name="org.slf4j"/>
         <module name="org.apache.commons.lang"/>
+        <module name="sun.jdk"/>
+        <module name="javax.api"/>
     </dependencies>
 </module>
 ]]></echo>
@@ -405,6 +410,7 @@
 
     <dependencies>
         <module name="com.netflix.astyanax.astyanax-core"/>
+        <module name="org.slf4j"/>
     </dependencies>
 </module>
 ]]></echo>
@@ -420,6 +426,7 @@
     <dependencies>
         <module name="com.netflix.astyanax.astyanax-core"/>
         <module name="com.netflix.astyanax.astyanax-thrift"/>
+        <module name="org.slf4j"/>
     </dependencies>
 </module>
 ]]></echo>

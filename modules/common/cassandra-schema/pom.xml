@@ -83,12 +83,6 @@
     </dependency>
 
     <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
-      <version>3.1.0</version>
-    </dependency>
-
-    <dependency>
       <groupId>com.netflix.astyanax</groupId>
       <artifactId>astyanax-core</artifactId>
       <version>${astyanax.version}</version>
@@ -103,7 +97,7 @@
     <dependency>
       <groupId>com.netflix.astyanax</groupId>
       <artifactId>astyanax-thrift</artifactId>
-      <version>2.0.2</version>
+      <version>${astyanax.version}</version>
     </dependency>
 
     <dependency>

@@ -233,7 +233,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/man/jboss-metatype/2.1.1.GA/jboss-metatype-2.1.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/sun/xml/bind/jaxb-impl/2.2.4/jaxb-impl-2.2.4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/i18nlog/i18nlog/1.0.10/i18nlog-1.0.10.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/gnu/getopt/java-getopt/1.0.13.redhat-4/java-getopt-1.0.13.redhat-4.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/gnu/getopt/java-getopt/1.0.13/java-getopt-1.0.13.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-httpclient/commons-httpclient/3.0.1/commons-httpclient-3.0.1.jar" sourcepath="/M2_REPO/commons-httpclient/commons-httpclient/3.0.1/commons-httpclient-3.0.1-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/remoting/jboss-remoting/2.5.4.SP5/jboss-remoting-2.5.4.SP5.jar" sourcepath="/M2_REPO/org/jboss/remoting/jboss-remoting/2.5.4.SP5/jboss-remoting-2.5.4.SP5-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/oswego-concurrent/concurrent/1.3.4-jboss-update1/concurrent-1.3.4-jboss-update1.jar"/>
@@ -382,11 +382,11 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/yaml/snakeyaml/1.8/snakeyaml-1.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/joda-time/joda-time/2.1/joda-time-2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/trove4j/trove4j/3.0.3/trove4j-3.0.3.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-all/1.2.12/cassandra-all-1.2.12.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-all/1.2.18-jboss-1/cassandra-all-1.2.18-jboss-1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/thrift/libthrift/0.7.0/libthrift-0.7.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/commons-cli/commons-cli/1.2/commons-cli-1.2.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/google/guava/guava/16.0.1/guava-16.0.1.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-thrift/1.2.12/cassandra-thrift-1.2.12.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-thrift/1.2.18-jboss-1/cassandra-thrift-1.2.18-jboss-1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/commons/commons-exec/1.1/commons-exec-1.1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/eclipse/jetty/aggregate/jetty-all/8.1.8.v20121106/jetty-all-8.1.8.v20121106.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>

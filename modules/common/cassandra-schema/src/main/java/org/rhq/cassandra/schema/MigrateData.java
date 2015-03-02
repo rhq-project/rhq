@@ -19,6 +19,8 @@ import com.google.common.util.concurrent.RateLimiter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateTime;
+import org.joda.time.Seconds;
 
 /**
  * @author John Sanda
@@ -37,12 +39,15 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
 
     private Session session;
 
+    private Seconds ttl;
+
     public MigrateData(Integer scheduleId, MigrateAggregateMetrics.Bucket bucket, RateLimiter writePermits,
-        Session session) {
+        Session session, Seconds ttl) {
         this.scheduleId = scheduleId;
         this.bucket = bucket;
         this.writePermits = writePermits;
         this.session = session;
+        this.ttl = ttl;
     }
 
     @Override
@@ -53,47 +58,49 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
                 return Futures.allAsList(insertFutures);
             }
             List<Row> rows = resultSet.all();
-            Date time = rows.get(0).getDate(1);
+            Date time = rows.get(0).getDate(0);
             Date nextTime;
             Double max = null;
             Double min = null;
             Double avg = null;
-            Long writeTime = rows.get(0).getLong(5);
-            Integer ttl = rows.get(0).getInt(4);
+            Seconds elapsedSeconds = Seconds.secondsBetween(DateTime.now(), new DateTime(time));
             List<Statement> statements = new ArrayList<Statement>(BATCH_SIZE);
 
             for (Row row : rows) {
-                nextTime = row.getDate(1);
+                nextTime = row.getDate(0);
                 if (nextTime.equals(time)) {
-                    int type = row.getInt(2);
+                    int type = row.getInt(1);
                     switch (type) {
                     case 0:
-                        max = row.getDouble(3);
+                        max = row.getDouble(2);
                         break;
                     case 1:
-                        min = row.getDouble(3);
+                        min = row.getDouble(2);
                         break;
                     default:
-                        avg = row.getDouble(3);
+                        avg = row.getDouble(2);
                     }
                 } else {
-                    if (isDataMissing(avg, max, min)) {
-                        log.debug("We only have a partial " + bucket + " metric for {scheduleId: " + scheduleId +
-                            ", time: " + time.getTime() + "}. It will not be migrated.");
-                    } else {
-                        statements.add(createInsertStatement(time, avg, max, min, ttl, writeTime));
-                        if (statements.size() == BATCH_SIZE) {
-                            insertFutures.add(writeBatch(statements));
-                            statements.clear();
+                    if (elapsedSeconds.isLessThan(ttl)) {
+                        if (isDataMissing(avg, max, min)) {
+                            if (log.isDebugEnabled()) {
+                                log.debug("We only have a partial " + bucket + " metric for {scheduleId: " +
+                                    scheduleId + ", time: " + time.getTime() + "}. It will not be migrated.");
+                            }
+                        } else {
+                            int newTTL = ttl.getSeconds() - elapsedSeconds.getSeconds();
+                            statements.add(createInsertStatement(time, avg, max, min, newTTL));
+                            if (statements.size() == BATCH_SIZE) {
+                                insertFutures.add(writeBatch(statements));
+                                statements.clear();
+                            }
                         }
-                    }
 
-                    time = nextTime;
-                    max = row.getDouble(3);
-                    min = null;
-                    avg = null;
-                    ttl = row.getInt(4);
-                    writeTime = row.getLong(5);
+                        time = nextTime;
+                        max = row.getDouble(2);
+                        min = null;
+                        avg = null;
+                    }
                 }
             }
             if (!statements.isEmpty()) {
@@ -120,11 +127,10 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
         return session.executeAsync(batch);
     }
 
-    private SimpleStatement createInsertStatement(Date time, Double avg, Double max, Double min, Integer ttl,
-        Long writeTime) {
+    private SimpleStatement createInsertStatement(Date time, Double avg, Double max, Double min, int newTTL) {
         return new SimpleStatement("INSERT INTO rhq.aggregate_metrics(schedule_id, bucket, time, avg, max, min) " +
             "VALUES (" + scheduleId + ", '" + bucket + "', " + time.getTime() + ", " + avg + ", " + max + ", " + min +
-            ") USING TTL " + ttl + " AND TIMESTAMP " + writeTime);
+            ") USING TTL " + newTTL);
     }
 
 }

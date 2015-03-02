@@ -340,34 +340,38 @@ public class MigrateAggregateMetrics implements Step {
         DateTime endTime = DateUtils.get1HourTimeSlice(DateTime.now());
         DateTime startTime = endTime.minus(Days.days(14));
         PreparedStatement query = session.prepare(
-            "SELECT schedule_id, time, type, value, ttl(value), writetime(value) FROM rhq.one_hour_metrics " +
-                "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
+            "SELECT time, type, value FROM rhq.one_hour_metrics " +
+            "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
         PreparedStatement delete = session.prepare("DELETE FROM rhq.one_hour_metrics WHERE schedule_id = ?");
-        migrateData(scheduleIds, query, delete, Bucket.ONE_HOUR, remaining1HourMetrics, migrated1HourMetrics);
+        migrateData(scheduleIds, query, delete, Bucket.ONE_HOUR, remaining1HourMetrics, migrated1HourMetrics,
+            Days.days(14));
     }
 
     private void migrate6HourData(Set<Integer> scheduleIds) throws IOException {
         DateTime endTime = DateUtils.get1HourTimeSlice(DateTime.now());
-        DateTime startTime = endTime.minus(Days.days(14));
+        DateTime startTime = endTime.minus(Days.days(31));
         PreparedStatement query = session.prepare(
-            "SELECT schedule_id, time, type, value, ttl(value), writetime(value) FROM rhq.six_hour_metrics " +
-                "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
+            "SELECT time, type, value FROM rhq.six_hour_metrics " +
+            "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
         PreparedStatement delete = session.prepare("DELETE FROM rhq.six_hour_metrics WHERE schedule_id = ?");
-        migrateData(scheduleIds, query, delete, Bucket.SIX_HOUR, remaining6HourMetrics, migrated6HourMetrics);
+        migrateData(scheduleIds, query, delete, Bucket.SIX_HOUR, remaining6HourMetrics, migrated6HourMetrics,
+            Days.days(31));
     }
 
     private void migrate24HourData(Set<Integer> scheduleIds) throws IOException {
         DateTime endTime = DateUtils.get1HourTimeSlice(DateTime.now());
-        DateTime startTime = endTime.minus(Days.days(14));
+        DateTime startTime = endTime.minus(Days.days(365));
         PreparedStatement query = session.prepare(
-            "SELECT schedule_id, time, type, value, ttl(value), writetime(value) FROM rhq.twenty_four_hour_metrics " +
-                "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
+            "SELECT time, type, value FROM rhq.twenty_four_hour_metrics " +
+            "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
         PreparedStatement delete = session.prepare("DELETE FROM rhq.twenty_four_hour_metrics WHERE schedule_id = ?");
-        migrateData(scheduleIds, query, delete, Bucket.TWENTY_FOUR_HOUR, remaining24HourMetrics, migrated24HourMetrics);
+        migrateData(scheduleIds, query, delete, Bucket.TWENTY_FOUR_HOUR, remaining24HourMetrics, migrated24HourMetrics,
+            Days.days(365));
     }
 
     private void migrateData(Set<Integer> scheduleIds, PreparedStatement query, final PreparedStatement delete, 
-        Bucket bucket, final AtomicInteger remainingMetrics, final AtomicInteger migratedMetrics) throws IOException {
+        Bucket bucket, final AtomicInteger remainingMetrics, final AtomicInteger migratedMetrics, Days ttl)
+        throws IOException {
 
         Stopwatch stopwatch = Stopwatch.createStarted();
         log.info("Scheduling data migration tasks for " + bucket + " data");
@@ -377,7 +381,7 @@ public class MigrateAggregateMetrics implements Step {
         for (final Integer scheduleId : scheduleIds) {
             if (!migratedScheduleIds.contains(scheduleId)) {
                 migrations.addTask();
-                migrateData(query, delete, bucket, remainingMetrics, migratedMetrics, migrationLog, scheduleId);
+                migrateData(query, delete, bucket, remainingMetrics, migratedMetrics, migrationLog, scheduleId, ttl);
             }
         }
 
@@ -388,11 +392,11 @@ public class MigrateAggregateMetrics implements Step {
 
     private void migrateData(PreparedStatement query, final PreparedStatement delete, final Bucket bucket,
         AtomicInteger remainingMetrics, AtomicInteger migratedMetrics, MigrationLog migrationLog,
-        final Integer scheduleId) {
+        final Integer scheduleId, Days ttl) {
         readPermitsRef.get().acquire();
         ResultSetFuture queryFuture = session.executeAsync(query.bind(scheduleId));
         ListenableFuture<List<ResultSet>> migrationFuture = Futures.transform(queryFuture,
-            new MigrateData(scheduleId, bucket, writePermitsRef.get(), session), threadPool);
+            new MigrateData(scheduleId, bucket, writePermitsRef.get(), session, ttl.toStandardSeconds()), threadPool);
         ListenableFuture<ResultSet> deleteFuture = Futures.transform(migrationFuture,
             new AsyncFunction<List<ResultSet>, ResultSet>() {
                 @Override
@@ -402,12 +406,12 @@ public class MigrateAggregateMetrics implements Step {
                 }
             }, threadPool);
         Futures.addCallback(deleteFuture, migrationFinished(query, delete, scheduleId, bucket, migrationLog,
-            remainingMetrics, migratedMetrics), threadPool);
+            remainingMetrics, migratedMetrics, ttl), threadPool);
     }
 
     private FutureCallback<ResultSet> migrationFinished(final PreparedStatement query, final PreparedStatement delete,
         final Integer scheduleId, final Bucket bucket, final MigrationLog migrationLog, final AtomicInteger
-        remainingMetrics, final AtomicInteger migratedMetrics) {
+        remainingMetrics, final AtomicInteger migratedMetrics, final Days ttl) {
 
         return new FutureCallback<ResultSet>() {
             @Override
@@ -438,7 +442,7 @@ public class MigrateAggregateMetrics implements Step {
                         ThrowableUtil.getRootMessage(t) + ". Migration will be rescheduled");
                 }
                 rateMonitor.requestFailed();
-                migrateData(query, delete, bucket, remainingMetrics, migratedMetrics, migrationLog, scheduleId);
+                migrateData(query, delete, bucket, remainingMetrics, migratedMetrics, migrationLog, scheduleId, ttl);
             }
         };
     }

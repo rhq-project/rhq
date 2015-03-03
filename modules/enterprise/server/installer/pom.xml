@@ -60,20 +60,6 @@
         <groupId>org.rhq</groupId>
         <artifactId>rhq-cassandra-schema</artifactId>
         <version>${rhq-cassandra-schema.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.netflix.astyanax</groupId>
-            <artifactId>astyanax-core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.netflix.astyanax</groupId>
-            <artifactId>astyanax-thrift</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.netflix.astyanax</groupId>
-            <artifactId>astyanax-recipes</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
         <dependency>

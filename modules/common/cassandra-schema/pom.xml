@@ -86,6 +86,7 @@
       <groupId>com.netflix.astyanax</groupId>
       <artifactId>astyanax-core</artifactId>
       <version>${astyanax.version}</version>
+      <scope>provided</scope>
       <exclusions>
         <exclusion>
           <groupId>org.xerial.snappy</groupId>
@@ -98,12 +99,14 @@
       <groupId>com.netflix.astyanax</groupId>
       <artifactId>astyanax-thrift</artifactId>
       <version>${astyanax.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>com.netflix.astyanax</groupId>
       <artifactId>astyanax-recipes</artifactId>
       <version>${astyanax.version}</version>
+      <scope>provided</scope>
       <exclusions>
         <exclusion>
           <groupId>org.xerial.snappy</groupId>

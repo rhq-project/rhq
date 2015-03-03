@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -606,7 +606,7 @@ public class ResourceClientProxy {
 
             ContentManagerRemote contentManager = remoteClient.getProxy(ContentManagerRemote.class);
 
-            ContentUploader contentUploader = new ContentUploader(contentManager);
+            ContentUploader contentUploader = new ContentUploader(remoteClient.getSubject(), contentManager);
             String temporaryContentHandle = contentUploader.upload(file);
 
             PackageVersion pv = contentManager.createPackageVersionWithDisplayVersion(remoteClient.getSubject(),

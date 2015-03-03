@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -2193,7 +2193,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     @Override
-    public String createTemporaryContentHandle() {
+    public String createTemporaryContentHandle(Subject subject) {
         try {
             return File.createTempFile(TMP_FILE_PREFIX, TMP_FILE_SUFFIX, getTempDirectory()).getName();
         } catch (IOException e) {
@@ -2207,7 +2207,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     @Override
-    public void uploadContentFragment(String temporaryContentHandle, byte[] fragment, int off, int len) {
+    public void uploadContentFragment(Subject subject, String temporaryContentHandle, byte[] fragment, int off, int len) {
         File temporaryContentFile = getTemporaryContentFile(temporaryContentHandle);
         ByteArrayInputStream inputStream = new ByteArrayInputStream(fragment, off, len);
         FileOutputStream fileOutputStream = null;

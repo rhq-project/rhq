@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -357,7 +357,7 @@ public interface ContentManagerLocal extends ContentManagerRemote {
     /**
      * Get the file denoted by this <code>temporaryContentHandle</code>.
      *
-     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
+     * @see ContentManagerRemote#createTemporaryContentHandle(org.rhq.core.domain.auth.Subject)
      * @param temporaryContentHandle
      * @return the file denoted by this <code>temporaryContentHandle</code>
      */

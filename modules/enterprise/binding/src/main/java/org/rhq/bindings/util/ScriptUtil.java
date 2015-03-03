@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -223,7 +223,8 @@ public class ScriptUtil {
         if (remoteClient == null) {
             throw new IllegalStateException("The uploadContent method requires a connection to the RHQ server.");
         }
-        ContentUploader contentUploader = new ContentUploader(remoteClient.getProxy(ContentManagerRemote.class));
+        ContentUploader contentUploader = new ContentUploader(getSubjectFromEngine(),
+            remoteClient.getProxy(ContentManagerRemote.class));
         return contentUploader.upload(filename);
     }
 }

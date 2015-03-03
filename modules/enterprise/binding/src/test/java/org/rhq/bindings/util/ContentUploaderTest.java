@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
@@ -55,6 +56,7 @@ import org.rhq.enterprise.server.content.ContentManagerRemote;
 public class ContentUploaderTest {
     private static final String TEST_HANDLE = "calanques";
 
+    private Subject subject;
     private ContentUploader contentUploader;
     @Mock
     private ContentManagerRemote contentManager;
@@ -62,8 +64,9 @@ public class ContentUploaderTest {
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        when(contentManager.createTemporaryContentHandle()).thenReturn(TEST_HANDLE);
-        contentUploader = new ContentUploader(contentManager);
+        subject = new Subject(TEST_HANDLE, true, false);
+        when(contentManager.createTemporaryContentHandle(eq(subject))).thenReturn(TEST_HANDLE);
+        contentUploader = new ContentUploader(subject, contentManager);
     }
 
     @AfterMethod
@@ -102,8 +105,9 @@ public class ContentUploaderTest {
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 Object[] invocationArguments = invocation.getArguments();
-                ByteArrayInputStream inputStream = new ByteArrayInputStream((byte[]) invocationArguments[1],
-                    (Integer) invocationArguments[2], (Integer) invocationArguments[3]);
+                int argIndex = 1;
+                ByteArrayInputStream inputStream = new ByteArrayInputStream((byte[]) invocationArguments[++argIndex],
+                    (Integer) invocationArguments[++argIndex], (Integer) invocationArguments[++argIndex]);
                 FileOutputStream fileOutputStream = null;
                 try {
                     fileOutputStream = new FileOutputStream(testFileReceived, true); // append == true
@@ -115,7 +119,8 @@ public class ContentUploaderTest {
                 }
                 return null;
             }
-        }).when(contentManager).uploadContentFragment(eq(TEST_HANDLE), any(byte[].class), anyInt(), anyInt());
+        }).when(contentManager).uploadContentFragment(eq(subject), eq(TEST_HANDLE), any(byte[].class), anyInt(),
+            anyInt());
         String temporaryContentHandle = contentUploader.upload(testFileToSend.getAbsolutePath());
         assertEquals(temporaryContentHandle, TEST_HANDLE);
         // If file sizes and file hashes are equal, we can say they have the same content

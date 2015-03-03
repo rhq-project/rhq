@@ -30,7 +30,8 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.io.InputStream;
 import java.util.Map;
 
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.testng.annotations.Test;
 
 /**

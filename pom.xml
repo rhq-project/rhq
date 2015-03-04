@@ -1882,6 +1882,7 @@
 
   <repositories>
 
+    <!-- spinder 3-4-15: removing this repo until invalid artifacts are removed.
     <repository>
        <id>eap</id>
        <name>EAP Repository</name>
@@ -1889,7 +1890,7 @@
        <snapshots>
          <enabled>false</enabled>
        </snapshots>
-    </repository>
+    </repository>-->
 
 <!--
     <repository>

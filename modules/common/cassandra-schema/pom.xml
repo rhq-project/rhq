@@ -39,16 +39,6 @@
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
       <version>${cassandra.driver.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.cassandra</groupId>
-          <artifactId>cassandra-all</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.apache.cassandra</groupId>
-          <artifactId>cassandra-thrift</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -80,63 +70,6 @@
       <groupId>postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.netflix.astyanax</groupId>
-      <artifactId>astyanax-core</artifactId>
-      <version>${astyanax.version}</version>
-      <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.xerial.snappy</groupId>
-          <artifactId>snappy-java</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>com.netflix.astyanax</groupId>
-      <artifactId>astyanax-thrift</artifactId>
-      <version>${astyanax.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.netflix.astyanax</groupId>
-      <artifactId>astyanax-recipes</artifactId>
-      <version>${astyanax.version}</version>
-      <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.xerial.snappy</groupId>
-          <artifactId>snappy-java</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!--
-    These cassandra dependencies are needed by astyanax
-    -->
-    <dependency>
-      <groupId>org.apache.cassandra</groupId>
-      <artifactId>cassandra-thrift</artifactId>
-      <version>1.2.11</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.thrift</groupId>
-      <artifactId>libthrift</artifactId>
-      <version>0.7.0</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.5</version>
-      <scope>provided</scope>
     </dependency>
   </dependencies>
 
@@ -181,26 +114,6 @@
             </property>
           </systemProperties>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.3</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>org.rhq.cassandra.schema.MigrateMetrics</mainClass>
-                </transformer>
-              </transformers>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

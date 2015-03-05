@@ -43,8 +43,6 @@ import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.Composite;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.recipes.reader.AllRowsReader;
-import com.netflix.astyanax.serializers.CompositeSerializer;
-import com.netflix.astyanax.serializers.IntegerSerializer;
 import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 import com.yammer.metrics.core.Meter;
 import com.yammer.metrics.core.MetricsRegistry;
@@ -164,21 +162,34 @@ public class MigrateAggregateMetrics implements Step {
                 return;
             }
 
-            AstyanaxContext<Keyspace> context = createContext();
-            context.start();
-            Keyspace keyspace = context.getClient();
+            KeyScanner keyScanner = new KeyScanner(session);
+            Set<Integer> scheduleIdsWith1HourData = keyScanner.scanFor1HourKeys();
+            Set<Integer> scheduleIdsWith6HourData = keyScanner.scanFor6HourKeys();
+            Set<Integer> scheduleIdsWith24HourData = keyScanner.scanFor24HourKeys();
+            keyScanner.shutdown();
 
-            Set<Integer> scheduleIdsWith1HourData = loadScheduleIds(keyspace, ColumnFamily.newColumnFamily(
-                "one_hour_metrics", IntegerSerializer.get(), CompositeSerializer.get()), Bucket.ONE_HOUR);
-            Set<Integer> scheduleIdsWith6HourData = loadScheduleIds(keyspace, ColumnFamily.newColumnFamily(
-                "six_hour_metrics", IntegerSerializer.get(), CompositeSerializer.get()), Bucket.SIX_HOUR);
-            Set<Integer> scheduleIdsWith24HourData = loadScheduleIds(keyspace, ColumnFamily.newColumnFamily(
-                "twenty_four_hour_metrics", IntegerSerializer.get(), CompositeSerializer.get()),
-                Bucket.TWENTY_FOUR_HOUR);
+            log.info("There are " + scheduleIdsWith1HourData.size() + " schedule ids with " +
+                Bucket.ONE_HOUR + " data");
+            log.info("There are " + scheduleIdsWith6HourData.size() + " schedule ids with " +
+                Bucket.SIX_HOUR + " data");
+            log.info("There are " + scheduleIdsWith24HourData.size() + " schedule ids with " +
+                Bucket.TWENTY_FOUR_HOUR + " data");
 
-            Stopwatch contextStopWatch = Stopwatch.createStarted();
-            context.shutdown();
-            contextStopWatch.stop();
+//            AstyanaxContext<Keyspace> context = createContext();
+//            context.start();
+//            Keyspace keyspace = context.getClient();
+//
+//            Set<Integer> scheduleIdsWith1HourData = loadScheduleIds(keyspace, ColumnFamily.newColumnFamily(
+//                "one_hour_metrics", IntegerSerializer.get(), CompositeSerializer.get()), Bucket.ONE_HOUR);
+//            Set<Integer> scheduleIdsWith6HourData = loadScheduleIds(keyspace, ColumnFamily.newColumnFamily(
+//                "six_hour_metrics", IntegerSerializer.get(), CompositeSerializer.get()), Bucket.SIX_HOUR);
+//            Set<Integer> scheduleIdsWith24HourData = loadScheduleIds(keyspace, ColumnFamily.newColumnFamily(
+//                "twenty_four_hour_metrics", IntegerSerializer.get(), CompositeSerializer.get()),
+//                Bucket.TWENTY_FOUR_HOUR);
+
+//            Stopwatch contextStopWatch = Stopwatch.createStarted();
+//            context.shutdown();
+//            contextStopWatch.stop();
 
             writePermitsRef.set(RateLimiter.create(getWriteLimit(getNumberOfUpNodes()), DEFAULT_WARM_UP,
                 TimeUnit.SECONDS));

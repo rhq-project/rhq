@@ -34,7 +34,7 @@ public class KeyScanner {
 
     private static final Log log = LogFactory.getLog(KeyScanner.class);
 
-    private static final int QUERY_FAILURE_THRESHOLD = 5;
+    private static final int QUERY_FAILURE_THRESHOLD = 3;
 
     private static class TokenRange {
         long startToken;
@@ -76,6 +76,8 @@ public class KeyScanner {
     private List<TokenRange> tokenRanges = new ArrayList<TokenRange>();
 
     private ExecutorService threadPool;
+
+    private boolean isShutdown;
 
     public KeyScanner(Session session) {
         this.session = session;
@@ -152,6 +154,7 @@ public class KeyScanner {
 
     public void shutdown() {
         log.info("Shutting down");
+        isShutdown = true;
         threadPool.shutdownNow();
     }
 
@@ -202,6 +205,9 @@ public class KeyScanner {
                     long lastToken = tokenRange.startToken;
 
                     while (token <= tokenRange.endToken) {
+                        if (isShutdown) {
+                            return;
+                        }
                         ResultSet resultSet = executeTokenQuery(query, token);
                         int count = 0;
                         for (Row row : resultSet) {
@@ -230,7 +236,7 @@ public class KeyScanner {
         for (int i = 0; i < QUERY_FAILURE_THRESHOLD; ++i) {
             try {
                 return session.execute(query.bind(token));
-            } catch (Exception e) {
+            }  catch (Exception e) {
                 if (log.isDebugEnabled()) {
                     log.debug("Failed to execute token query", e);
                 } else {

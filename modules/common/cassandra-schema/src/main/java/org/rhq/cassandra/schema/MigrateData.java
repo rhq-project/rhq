@@ -3,11 +3,11 @@ package org.rhq.cassandra.schema;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Batch;
@@ -15,12 +15,14 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.RateLimiter;
+import com.google.common.util.concurrent.ListeningExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
+
+import org.rhq.cassandra.schema.migration.QueryExecutor;
 
 /**
  * @author John Sanda
@@ -35,25 +37,31 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
 
     private MigrateAggregateMetrics.Bucket bucket;
 
-    private RateLimiter writePermits;
-
-    private Session session;
+    QueryExecutor queryExecutor;
 
     private Seconds ttl;
 
-    public MigrateData(Integer scheduleId, MigrateAggregateMetrics.Bucket bucket, RateLimiter writePermits,
-        Session session, Seconds ttl) {
+    private AtomicInteger writeErrors;
+
+    private ListeningExecutorService threadPool;
+
+    private RateMonitor rateMonitor;
+
+    public MigrateData(Integer scheduleId, MigrateAggregateMetrics.Bucket bucket, QueryExecutor queryExecutor,
+        Seconds ttl, AtomicInteger writeErrors, ListeningExecutorService threadPool, RateMonitor rateMonitor) {
         this.scheduleId = scheduleId;
         this.bucket = bucket;
-        this.writePermits = writePermits;
-        this.session = session;
+        this.queryExecutor = queryExecutor;
         this.ttl = ttl;
+        this.writeErrors = writeErrors;
+        this.threadPool = threadPool;
+        this.rateMonitor = rateMonitor;
     }
 
     @Override
     public ListenableFuture<List<ResultSet>> apply(ResultSet resultSet) throws Exception {
         try {
-            List<ResultSetFuture> insertFutures = new ArrayList<ResultSetFuture>();
+            List<ListenableFuture<ResultSet>> insertFutures = new ArrayList<ListenableFuture<ResultSet>>();
             if (resultSet.isExhausted()) {
                 return Futures.allAsList(insertFutures);
             }
@@ -95,12 +103,11 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
                                 statements.clear();
                             }
                         }
-
-                        time = nextTime;
-                        max = row.getDouble(2);
-                        min = null;
-                        avg = null;
                     }
+                    time = nextTime;
+                    max = row.getDouble(2);
+                    min = null;
+                    avg = null;
                 }
             }
             if (!statements.isEmpty()) {
@@ -121,10 +128,11 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
         return false;
     }
 
-    private ResultSetFuture writeBatch(List<Statement> statements) {
+    private ListenableFuture<ResultSet> writeBatch(List<Statement> statements) {
         Batch batch = QueryBuilder.batch(statements.toArray(new Statement[statements.size()]));
-        writePermits.acquire();
-        return session.executeAsync(batch);
+        ResultSetFuture future = queryExecutor.executeWrite(batch);
+        return Futures.withFallback(future, new RetryWrite(queryExecutor, batch, rateMonitor, writeErrors, threadPool),
+            threadPool);
     }
 
     private SimpleStatement createInsertStatement(Date time, Double avg, Double max, Double min, int newTTL) {

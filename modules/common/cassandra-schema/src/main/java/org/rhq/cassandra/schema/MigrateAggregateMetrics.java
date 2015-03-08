@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 
+import org.rhq.cassandra.schema.migration.QueryExecutor;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
@@ -118,6 +119,28 @@ public class MigrateAggregateMetrics implements Step {
 
     private MigrationProgressLogger progressLogger;
 
+    private AtomicInteger readErrors = new AtomicInteger();
+
+    private AtomicInteger writeErrors = new AtomicInteger();
+
+    private QueryExecutor queryExecutor;
+
+    private FutureFallback<ResultSet> countReadErrors = new FutureFallback<ResultSet>() {
+        @Override
+        public ListenableFuture<ResultSet> create(Throwable t) throws Exception {
+            readErrors.incrementAndGet();
+            return Futures.immediateFailedFuture(t);
+        }
+    };
+
+    private FutureFallback<List<ResultSet>> countWriteErrors = new FutureFallback<List<ResultSet>>() {
+        @Override
+        public ListenableFuture<List<ResultSet>> create(Throwable t) throws Exception {
+            writeErrors.incrementAndGet();
+            return Futures.immediateFailedFuture(t);
+        }
+    };
+
     @Override
     public void setSession(Session session) {
         this.session = session;
@@ -169,6 +192,8 @@ public class MigrateAggregateMetrics implements Step {
             log.info("The request limits are " + writePermitsRef.get().getRate() + " writes/sec and " +
                 readPermitsRef.get().getRate() + " reads/sec");
 
+            queryExecutor = new QueryExecutor(session, readPermitsRef, writePermitsRef);
+
             remaining1HourMetrics.set(scheduleIdsWith1HourData.size());
             remaining6HourMetrics.set(scheduleIdsWith6HourData.size());
             remaining24HourMetrics.set(scheduleIdsWith24HourData.size());
@@ -189,7 +214,7 @@ public class MigrateAggregateMetrics implements Step {
                     "run again.");
             }
 
-            dropTables();
+//            dropTables();
         } catch (IOException e) {
             throw new RuntimeException("There was an unexpected I/O error. The are still " +
                 migrations.getRemainingTasks() + " outstanding migration tasks. The upgrade must be run again to " +
@@ -304,18 +329,13 @@ public class MigrateAggregateMetrics implements Step {
         final Integer scheduleId, Days ttl) {
         readPermitsRef.get().acquire();
         try {
-            ResultSetFuture queryFuture = session.executeAsync(query.bind(scheduleId));
+            ListenableFuture<ResultSet> queryFuture = queryExecutor.executeRead(query.bind(scheduleId));
+            queryFuture = Futures.withFallback(queryFuture, countReadErrors);
             ListenableFuture<List<ResultSet>> migrationFuture = Futures.transform(queryFuture,
-                new MigrateData(scheduleId, bucket, writePermitsRef.get(), session, ttl.toStandardSeconds()), threadPool);
-            ListenableFuture<ResultSet> deleteFuture = Futures.transform(migrationFuture,
-                new AsyncFunction<List<ResultSet>, ResultSet>() {
-                    @Override
-                    public ListenableFuture<ResultSet> apply(List<ResultSet> resultSets) throws Exception {
-                        writePermitsRef.get().acquire();
-                        return session.executeAsync(delete.bind(scheduleId));
-                    }
-                }, threadPool);
-            Futures.addCallback(deleteFuture, migrationFinished(query, delete, scheduleId, bucket, migrationLog,
+                new MigrateData(scheduleId, bucket, queryExecutor, ttl.toStandardSeconds(), writeErrors, threadPool,
+                    rateMonitor), threadPool);
+            migrationFuture = Futures.withFallback(migrationFuture, countWriteErrors);
+              Futures.addCallback(migrationFuture, migrationFinished(query, delete, scheduleId, bucket, migrationLog,
                 remainingMetrics, migratedMetrics, ttl), threadPool);
         } catch (Exception e) {
             log.warn("FAILED to submit " + bucket + " data migration tasks for schedule id " + scheduleId, e);
@@ -328,7 +348,7 @@ public class MigrateAggregateMetrics implements Step {
 
         return new FutureCallback<ResultSet>() {
             @Override
-            public void onSuccess(ResultSet deleteResultSet) {
+            public void onSuccess(List<ResultSet> resultSet) {
                 try {
                     migrations.finishedTask();
                     remainingMetrics.decrementAndGet();

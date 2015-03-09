@@ -276,14 +276,16 @@ public class MigrateAggregateMetrics implements Step {
     }
 
     private void shutdown() {
-        try {
-            log.info("Shutting down migration thread pools...");
-            rateMonitor.shutdown();
-            progressLogger.finished();
-            keyScanner.shutdown();
-            threadPool.shutdown();
-            threadPool.awaitTermination(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
+        if (dbConnectionFactory != null) {
+            try {
+                log.info("Shutting down migration thread pools...");
+                rateMonitor.shutdown();
+                progressLogger.finished();
+                keyScanner.shutdown();
+                threadPool.shutdown();
+                threadPool.awaitTermination(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+            }
         }
     }
 

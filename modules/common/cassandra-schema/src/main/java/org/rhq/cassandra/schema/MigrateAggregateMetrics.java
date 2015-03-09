@@ -2,9 +2,12 @@ package org.rhq.cassandra.schema;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -13,11 +16,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.google.common.base.Stopwatch;
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -60,21 +63,28 @@ public class MigrateAggregateMetrics implements Step {
 
     public static enum Bucket {
 
-        ONE_HOUR("one_hour"),
+        ONE_HOUR("one_hour", "one_hour_metrics"),
 
-        SIX_HOUR("six_hour"),
+        SIX_HOUR("six_hour", "six_hour_metrics"),
 
-        TWENTY_FOUR_HOUR("twenty_four_hour");
+        TWENTY_FOUR_HOUR("twenty_four_hour", "twenty_four_hour_metrics");
+
+        private String text;
 
         private String tableName;
 
-        private Bucket(String tableName) {
+        private Bucket(String text, String tableName) {
+            this.text = text;
             this.tableName = tableName;
+        }
+
+        public String getTableName() {
+            return tableName;
         }
 
         @Override
         public String toString() {
-            return tableName;
+            return text;
         }
     }
 
@@ -92,17 +102,11 @@ public class MigrateAggregateMetrics implements Step {
 
     private AtomicReference<RateLimiter> writePermitsRef = new AtomicReference<RateLimiter>();
 
-    private AtomicInteger remaining1HourMetrics = new AtomicInteger();
+    private CountDownLatch remaining1HourMetrics;
 
-    private AtomicInteger remaining6HourMetrics = new AtomicInteger();
+    private CountDownLatch remaining6HourMetrics;
 
-    private AtomicInteger remaining24HourMetrics = new AtomicInteger();
-
-    private AtomicInteger migrated1HourMetrics = new AtomicInteger();
-
-    private AtomicInteger migrated6HourMetrics = new AtomicInteger();
-
-    private AtomicInteger migrated24HourMetrics = new AtomicInteger();
+    private CountDownLatch remaining24HourMetrics;
 
     private ListeningExecutorService threadPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(6,
         new SchemaUpdateThreadFactory()));
@@ -110,8 +114,6 @@ public class MigrateAggregateMetrics implements Step {
     private MetricsRegistry metricsRegistry;
 
     private Meter migrationsMeter;
-
-    private TaskTracker migrations = new TaskTracker();
 
     private RateMonitor rateMonitor;
 
@@ -168,22 +170,6 @@ public class MigrateAggregateMetrics implements Step {
                 return;
             }
 
-            progressLogger = new MigrationProgressLogger();
-            rateMonitor = new RateMonitor(readPermitsRef, writePermitsRef);
-
-            keyScanner = new KeyScanner(session);
-            Set<Integer> scheduleIdsWith1HourData = keyScanner.scanFor1HourKeys();
-            Set<Integer> scheduleIdsWith6HourData = keyScanner.scanFor6HourKeys();
-            Set<Integer> scheduleIdsWith24HourData = keyScanner.scanFor24HourKeys();
-            keyScanner.shutdown();
-
-            log.info("There are " + scheduleIdsWith1HourData.size() + " schedule ids with " +
-                Bucket.ONE_HOUR + " data");
-            log.info("There are " + scheduleIdsWith6HourData.size() + " schedule ids with " +
-                Bucket.SIX_HOUR + " data");
-            log.info("There are " + scheduleIdsWith24HourData.size() + " schedule ids with " +
-                Bucket.TWENTY_FOUR_HOUR + " data");
-
             writePermitsRef.set(RateLimiter.create(getWriteLimit(getNumberOfUpNodes()), DEFAULT_WARM_UP,
                 TimeUnit.SECONDS));
             readPermitsRef.set(RateLimiter.create(getReadLimit(getNumberOfUpNodes()), DEFAULT_WARM_UP,
@@ -192,48 +178,79 @@ public class MigrateAggregateMetrics implements Step {
             log.info("The request limits are " + writePermitsRef.get().getRate() + " writes/sec and " +
                 readPermitsRef.get().getRate() + " reads/sec");
 
+            progressLogger = new MigrationProgressLogger();
+            rateMonitor = new RateMonitor(readPermitsRef, writePermitsRef);
             queryExecutor = new QueryExecutor(session, readPermitsRef, writePermitsRef);
 
-            remaining1HourMetrics.set(scheduleIdsWith1HourData.size());
-            remaining6HourMetrics.set(scheduleIdsWith6HourData.size());
-            remaining24HourMetrics.set(scheduleIdsWith24HourData.size());
+            keyScanner = new KeyScanner(session);
+            Set<Integer> scheduleIdsWith1HourData = Collections.emptySet();
+            Set<Integer> scheduleIdsWith6HourData = Collections.emptySet();
+            Set<Integer> scheduleIdsWith24HourData = Collections.emptySet();
+
+            Set<String> tables = getTables();
+            if (tables.contains(Bucket.ONE_HOUR.getTableName())) {
+                scheduleIdsWith1HourData = keyScanner.scanFor1HourKeys();
+                log.info("There are " + scheduleIdsWith1HourData.size() + " schedule ids with " + Bucket.ONE_HOUR +
+                    " data");
+                remaining1HourMetrics = new CountDownLatch(scheduleIdsWith1HourData.size());
+            } else {
+                log.info(Bucket.ONE_HOUR + " data has already been migrated");
+                remaining1HourMetrics = new CountDownLatch(0);
+            }
+            if (tables.contains(Bucket.SIX_HOUR.getTableName())) {
+                scheduleIdsWith6HourData = keyScanner.scanFor6HourKeys();
+                log.info("There are " + scheduleIdsWith6HourData.size() + " schedule ids with " + Bucket.SIX_HOUR +
+                    " data");
+                remaining6HourMetrics = new CountDownLatch(scheduleIdsWith6HourData.size());
+            } else {
+                log.info(Bucket.SIX_HOUR + " data has already been migrated");
+                remaining6HourMetrics = new CountDownLatch(0);
+            }
+            if (tables.contains(Bucket.TWENTY_FOUR_HOUR.getTableName())) {
+                scheduleIdsWith24HourData = keyScanner.scanFor24HourKeys();
+                log.info("There are " + scheduleIdsWith24HourData.size() + " schedule ids with " +
+                    Bucket.TWENTY_FOUR_HOUR + " data");
+                remaining24HourMetrics = new CountDownLatch(scheduleIdsWith24HourData.size());
+            } else {
+                log.info(Bucket.TWENTY_FOUR_HOUR + " data has already been migrated");
+                remaining24HourMetrics = new CountDownLatch(0);
+            }
+            keyScanner.shutdown();
 
             threadPool.submit(progressLogger);
             threadPool.submit(rateMonitor);
 
-            migrate1HourData(scheduleIdsWith1HourData);
-            migrate6HourData(scheduleIdsWith6HourData);
-            migrate24HourData(scheduleIdsWith24HourData);
-
-            migrations.finishedSchedulingTasks();
-            migrations.waitForTasksToFinish();
-
-            if (remaining1HourMetrics.get() > 0 || remaining6HourMetrics.get() > 0 ||
-                remaining24HourMetrics.get() > 0) {
-                throw new RuntimeException("There are unfinished metrics migrations. The upgrade will have to be " +
-                    "run again.");
+            if (!scheduleIdsWith1HourData.isEmpty()) {
+                migrate1HourData(scheduleIdsWith1HourData);
+            }
+            if (!scheduleIdsWith6HourData.isEmpty()) {
+                migrate6HourData(scheduleIdsWith6HourData);
+            }
+            if (!scheduleIdsWith24HourData.isEmpty()) {
+                migrate24HourData(scheduleIdsWith24HourData);
             }
 
-//            dropTables();
-        } catch (IOException e) {
-            throw new RuntimeException("There was an unexpected I/O error. The are still " +
-                migrations.getRemainingTasks() + " outstanding migration tasks. The upgrade must be run again to " +
-                "complete the migration.", e);
-        } catch (AbortedException e) {
-            throw new RuntimeException("The migration was aborted. There are are still " +
-                migrations.getRemainingTasks() +" outstanding migration tasks. The upgrade must be run again to " +
-                "complete the migration.", e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException("The migration was interrupted. There are are still " +
-                migrations.getRemainingTasks() +" outstanding migration tasks. The upgrade must be run again to " +
-                "complete the migration.", e);
-        } finally {
             stopwatch.stop();
-            log.info("Finished migrating " + migrated1HourMetrics + " " + Bucket.ONE_HOUR + ", " +
-                migrated6HourMetrics + " " + Bucket.SIX_HOUR + ", and " + migrated24HourMetrics + " " +
-                Bucket.TWENTY_FOUR_HOUR + " metrics in " + stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
+            log.info("Finished migrating " + scheduleIdsWith1HourData.size() + " " + Bucket.ONE_HOUR + ", " +
+                scheduleIdsWith6HourData.size() + " " + Bucket.SIX_HOUR + ", " + scheduleIdsWith24HourData.size() +
+                " " + Bucket.TWENTY_FOUR_HOUR + " metrics in " + stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
+        } catch (IOException e) {
+            throw new RuntimeException("There was an unexpected I/O error. There are unfinished metrics migrations " +
+                "- " + getRemainingMetrics() + ". The upgrade will have to be run again.");
+        } catch (AbortedException e) {
+            throw new RuntimeException("The key scan was aborted. The upgrade will have to be rerun.", e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("The migration was interrupted. There are still " + getRemainingMetrics() +
+                " unfinished metrics migrations. The upgrade will have to be run again.");
+        } finally {
             shutdown();
         }
+    }
+
+    private String getRemainingMetrics() {
+        return "{" + Bucket.ONE_HOUR + ": " + remaining1HourMetrics.getCount() + ", " + Bucket.SIX_HOUR + ": " +
+            remaining6HourMetrics.getCount() + ", " + Bucket.TWENTY_FOUR_HOUR + ": " +
+            remaining24HourMetrics.getCount() + "}";
     }
 
     private double getWriteLimit(int numNodes) {
@@ -270,64 +287,63 @@ public class MigrateAggregateMetrics implements Step {
         }
     }
 
-    private void migrate1HourData(Set<Integer> scheduleIds) throws IOException {
+    private void migrate1HourData(Set<Integer> scheduleIds) throws IOException, InterruptedException {
         DateTime endTime = DateUtils.get1HourTimeSlice(DateTime.now());
         DateTime startTime = endTime.minus(Days.days(14));
         PreparedStatement query = session.prepare(
             "SELECT time, type, value FROM rhq.one_hour_metrics " +
             "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
         PreparedStatement delete = session.prepare("DELETE FROM rhq.one_hour_metrics WHERE schedule_id = ?");
-        migrateData(scheduleIds, query, delete, Bucket.ONE_HOUR, remaining1HourMetrics, migrated1HourMetrics,
-            Days.days(14));
+        migrateData(scheduleIds, query, delete, Bucket.ONE_HOUR, remaining1HourMetrics, Days.days(14));
     }
 
-    private void migrate6HourData(Set<Integer> scheduleIds) throws IOException {
+    private void migrate6HourData(Set<Integer> scheduleIds) throws IOException, InterruptedException {
         DateTime endTime = DateUtils.get1HourTimeSlice(DateTime.now());
         DateTime startTime = endTime.minus(Days.days(31));
         PreparedStatement query = session.prepare(
             "SELECT time, type, value FROM rhq.six_hour_metrics " +
             "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
         PreparedStatement delete = session.prepare("DELETE FROM rhq.six_hour_metrics WHERE schedule_id = ?");
-        migrateData(scheduleIds, query, delete, Bucket.SIX_HOUR, remaining6HourMetrics, migrated6HourMetrics,
-            Days.days(31));
+        migrateData(scheduleIds, query, delete, Bucket.SIX_HOUR, remaining6HourMetrics, Days.days(31));
     }
 
-    private void migrate24HourData(Set<Integer> scheduleIds) throws IOException {
+    private void migrate24HourData(Set<Integer> scheduleIds) throws IOException, InterruptedException {
         DateTime endTime = DateUtils.get1HourTimeSlice(DateTime.now());
         DateTime startTime = endTime.minus(Days.days(365));
         PreparedStatement query = session.prepare(
             "SELECT time, type, value FROM rhq.twenty_four_hour_metrics " +
             "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
         PreparedStatement delete = session.prepare("DELETE FROM rhq.twenty_four_hour_metrics WHERE schedule_id = ?");
-        migrateData(scheduleIds, query, delete, Bucket.TWENTY_FOUR_HOUR, remaining24HourMetrics, migrated24HourMetrics,
-            Days.days(365));
+        migrateData(scheduleIds, query, delete, Bucket.TWENTY_FOUR_HOUR, remaining24HourMetrics, Days.days(365));
     }
 
-    private void migrateData(Set<Integer> scheduleIds, PreparedStatement query, final PreparedStatement delete, 
-        Bucket bucket, final AtomicInteger remainingMetrics, final AtomicInteger migratedMetrics, Days ttl)
-        throws IOException {
+    private void migrateData(Set<Integer> scheduleIds, PreparedStatement query, PreparedStatement delete, Bucket bucket,
+        CountDownLatch remainingMetrics, Days ttl) throws IOException, InterruptedException {
 
         Stopwatch stopwatch = Stopwatch.createStarted();
-        log.info("Scheduling data migration tasks for " + bucket + " data");
+        log.info("Starting data migration for " + bucket + " data");
         final MigrationLog migrationLog = new MigrationLog(new File(dataDir, bucket + "_migration.log"));
         final Set<Integer> migratedScheduleIds = migrationLog.read();
 
         for (final Integer scheduleId : scheduleIds) {
-            if (!migratedScheduleIds.contains(scheduleId)) {
-                migrations.addTask();
-                migrateData(query, delete, bucket, remainingMetrics, migratedMetrics, migrationLog, scheduleId, ttl);
+            if (migratedScheduleIds.contains(scheduleId)) {
+                if (log.isDebugEnabled()) {
+                    log.debug(bucket + " data for schedule id " + scheduleId + " has already been migrated");
+                }
+                remainingMetrics.countDown();
+            } else {
+                migrateData(query, delete, bucket, remainingMetrics, migrationLog, scheduleId, ttl);
             }
         }
 
+        remainingMetrics.await();
+        dropTable(bucket);
         stopwatch.stop();
-        log.info("Finished scheduling migration tasks for " + bucket + " data in " +
-            stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
+        log.info("Finished migrating " + bucket + " data in " + stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
     }
 
-    private void migrateData(PreparedStatement query, final PreparedStatement delete, final Bucket bucket,
-        AtomicInteger remainingMetrics, AtomicInteger migratedMetrics, MigrationLog migrationLog,
-        final Integer scheduleId, Days ttl) {
-        readPermitsRef.get().acquire();
+    private void migrateData(PreparedStatement query, PreparedStatement delete, Bucket bucket,
+        CountDownLatch remainingMetrics, MigrationLog migrationLog, final Integer scheduleId, Days ttl) {
         try {
             ListenableFuture<ResultSet> queryFuture = queryExecutor.executeRead(query.bind(scheduleId));
             queryFuture = Futures.withFallback(queryFuture, countReadErrors);
@@ -336,23 +352,21 @@ public class MigrateAggregateMetrics implements Step {
                     rateMonitor), threadPool);
             migrationFuture = Futures.withFallback(migrationFuture, countWriteErrors);
               Futures.addCallback(migrationFuture, migrationFinished(query, delete, scheduleId, bucket, migrationLog,
-                remainingMetrics, migratedMetrics, ttl), threadPool);
+                remainingMetrics, ttl), threadPool);
         } catch (Exception e) {
             log.warn("FAILED to submit " + bucket + " data migration tasks for schedule id " + scheduleId, e);
         }
     }
 
-    private FutureCallback<ResultSet> migrationFinished(final PreparedStatement query, final PreparedStatement delete,
-        final Integer scheduleId, final Bucket bucket, final MigrationLog migrationLog, final AtomicInteger
-        remainingMetrics, final AtomicInteger migratedMetrics, final Days ttl) {
+    private FutureCallback<List<ResultSet>> migrationFinished(final PreparedStatement query, final PreparedStatement delete,
+        final Integer scheduleId, final Bucket bucket, final MigrationLog migrationLog,
+        final CountDownLatch remainingMetrics, final Days ttl) {
 
-        return new FutureCallback<ResultSet>() {
+        return new FutureCallback<List<ResultSet>>() {
             @Override
             public void onSuccess(List<ResultSet> resultSet) {
                 try {
-                    migrations.finishedTask();
-                    remainingMetrics.decrementAndGet();
-                    migratedMetrics.incrementAndGet();
+                    remainingMetrics.countDown();
                     migrationLog.write(scheduleId);
                     rateMonitor.requestSucceeded();
                     migrationsMeter.mark();
@@ -376,7 +390,7 @@ public class MigrateAggregateMetrics implements Step {
                 }
                 rateMonitor.requestFailed();
                 try {
-                    migrateData(query, delete, bucket, remainingMetrics, migratedMetrics, migrationLog, scheduleId, ttl);
+                    migrateData(query, delete, bucket, remainingMetrics, migrationLog, scheduleId, ttl);
                 } catch (Exception e) {
                     log.warn("FAILED to resubmit " + bucket + " data migration task for schedule id " + scheduleId);
                 }
@@ -399,9 +413,10 @@ public class MigrateAggregateMetrics implements Step {
             try {
                 while (!finished) {
                     log.info("Remaining metrics to migrate\n" +
-                        Bucket.ONE_HOUR + ": " + remaining1HourMetrics + "\n" +
-                        Bucket.SIX_HOUR + ": " + remaining6HourMetrics + "\n" +
-                        Bucket.TWENTY_FOUR_HOUR + ": " + remaining24HourMetrics + "\n");
+                        Bucket.ONE_HOUR + ": " + remaining1HourMetrics.getCount() + "\n" +
+                        Bucket.SIX_HOUR + ": " + remaining6HourMetrics.getCount() + "\n" +
+                        Bucket.TWENTY_FOUR_HOUR + ": " + remaining24HourMetrics.getCount() + "\n");
+                    log.info("ErrorCounts{read:" + readErrors + ", write: " + writeErrors + "}");
                     if (reportMigrationRates) {
                         log.info("Metrics migration rates:\n" +
                             "1 min rate: "  + migrationsMeter.oneMinuteRate() + "\n" +
@@ -419,17 +434,21 @@ public class MigrateAggregateMetrics implements Step {
         }
     }
 
-    private void dropTables() {
+    private void dropTable(Bucket bucket) {
+        log.info("Dropping table " + bucket.getTableName());
+        session.execute("DROP table rhq." + bucket.getTableName());
+    }
+
+    private Set<String> getTables() {
         ResultSet resultSet = session.execute("SELECT columnfamily_name FROM system.schema_columnfamilies " +
             "WHERE keyspace_name = 'rhq'");
-        for (com.datastax.driver.core.Row row : resultSet) {
-            String table = row.getString(0);
-            if (table.equals("one_hour_metrics") || table.equals("six_hour_metrics") ||
-                table.equals("twenty_four_hour_metrics")) {
-                log.info("Dropping table " +  table);
-                session.execute("DROP table rhq." + table);
-            }
+        Set<String> tables = new HashSet<String>();
+
+        for (Row row : resultSet) {
+            tables.add(row.getString(0));
         }
+
+        return tables;
     }
 
 }

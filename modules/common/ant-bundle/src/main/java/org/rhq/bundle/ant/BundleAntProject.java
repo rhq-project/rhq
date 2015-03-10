@@ -223,7 +223,11 @@ public class BundleAntProject extends Project {
         str.append("___");
         str.append((action != null) ? action : "Audit Message");
         str.append("___");
-        str.append((info != null) ? info : "Timestamp: ").append(new Date());
+        if (info != null) {
+            str.append(info);
+        } else {
+            str.append("Timestamp: ").append(new Date());
+        }
         str.append("___");
         str.append((message != null) ? message : "");
         str.append("___");

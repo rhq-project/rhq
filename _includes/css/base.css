@@ -23,11 +23,12 @@
 		border-spacing: 0; }
 
 	body {
-		background: #fff;
-		font: 14px/21px "Raleway", "HelveticaNeue-Light", Arial, sans-serif;
-		color: #444;
-		-webkit-font-smoothing: antialiased; /* Fix for webkit rendering */
-		-webkit-text-size-adjust: 100%;
+    background: #fff;
+    font: 14px/21px "Raleway", "HelveticaNeue-Light", Arial, sans-serif;
+    letter-spacing: 0.4px;
+    color: #444;
+    -webkit-font-smoothing: antialiased; /* Fix for webkit rendering */
+    -webkit-text-size-adjust: 100%;
  }
 
 	h1, h2, h3, h4, h5, h6 {

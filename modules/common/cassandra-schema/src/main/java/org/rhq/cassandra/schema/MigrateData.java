@@ -22,12 +22,14 @@ import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 
+import org.rhq.cassandra.schema.migration.BatchInsertFuture;
+import org.rhq.cassandra.schema.migration.BatchResult;
 import org.rhq.cassandra.schema.migration.QueryExecutor;
 
 /**
  * @author John Sanda
  */
-public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
+public class MigrateData implements AsyncFunction<ResultSet, List<BatchResult>> {
 
     private static final Log log = LogFactory.getLog(MigrateData.class);
 
@@ -59,11 +61,11 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
     }
 
     @Override
-    public ListenableFuture<List<ResultSet>> apply(ResultSet resultSet) throws Exception {
+    public ListenableFuture<List<BatchResult>> apply(ResultSet resultSet) throws Exception {
         try {
-            List<ListenableFuture<ResultSet>> insertFutures = new ArrayList<ListenableFuture<ResultSet>>();
+            List<ListenableFuture<BatchResult>> batchFutures = new ArrayList<ListenableFuture<BatchResult>>();
             if (resultSet.isExhausted()) {
-                return Futures.allAsList(insertFutures);
+                return Futures.allAsList(batchFutures);
             }
             List<Row> rows = resultSet.all();
             Date time = rows.get(0).getDate(0);
@@ -99,7 +101,7 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
                             int newTTL = ttl.getSeconds() - elapsedSeconds.getSeconds();
                             statements.add(createInsertStatement(time, avg, max, min, newTTL));
                             if (statements.size() == BATCH_SIZE) {
-                                insertFutures.add(writeBatch(statements));
+                                batchFutures.add(writeBatch(statements));
                                 statements.clear();
                             }
                         }
@@ -111,9 +113,9 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
                 }
             }
             if (!statements.isEmpty()) {
-                insertFutures.add(writeBatch(statements));
+                batchFutures.add(writeBatch(statements));
             }
-            return Futures.allAsList(insertFutures);
+            return Futures.allAsList(batchFutures);
         } catch (Exception e) {
             log.warn("An error occurred while migrating data", e);
             throw e;
@@ -128,11 +130,10 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
         return false;
     }
 
-    private ListenableFuture<ResultSet> writeBatch(List<Statement> statements) {
+    private BatchInsertFuture writeBatch(List<Statement> statements) {
         Batch batch = QueryBuilder.batch(statements.toArray(new Statement[statements.size()]));
         ResultSetFuture future = queryExecutor.executeWrite(batch);
-        return Futures.withFallback(future, new RetryWrite(queryExecutor, batch, rateMonitor, writeErrors, threadPool),
-            threadPool);
+        return new BatchInsertFuture(batch, future, queryExecutor, rateMonitor, writeErrors);
     }
 
     private SimpleStatement createInsertStatement(Date time, Double avg, Double max, Double min, int newTTL) {

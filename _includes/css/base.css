@@ -24,7 +24,7 @@
 
 	body {
     background: #fff;
-    font: 14px/21px "Raleway", "HelveticaNeue-Light", Arial, sans-serif;
+    font: 16px/25px "Raleway", "HelveticaNeue-Light", Arial, sans-serif;
     letter-spacing: 0.4px;
     color: #444;
     -webkit-font-smoothing: antialiased; /* Fix for webkit rendering */
@@ -74,7 +74,7 @@
 	ol ol li, ol ul li { margin-bottom: 6px; }
 	li { line-height: 18px; margin-bottom: 12px; }
 	ul.large li { line-height: 21px; }
-	li p { line-height: 21px; }
+	li p { line-height: 24px; }
 
 	img.scale-with-grid {
 		max-width: 100%;

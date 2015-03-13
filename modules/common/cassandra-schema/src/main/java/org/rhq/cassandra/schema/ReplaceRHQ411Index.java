@@ -70,10 +70,14 @@ public class ReplaceRHQ411Index {
             rateMonitor = new RateMonitor(readPermitsRef, writePermitsRef);
             threadPool.submit(rateMonitor);
 
+            waitForSchemaPropagation();
+
             updateRawIndex(dateRanges.rawStartTime, dateRanges.rawEndTime);
             update1HourIndex(dateRanges.oneHourStartTime, dateRanges.oneHourEndTime);
             update6HourIndex(dateRanges.sixHourStartTime, dateRanges.sixHourEndTime);
             drop411Index();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("The index update failed due to an interrupt", e);
         } finally {
             stopwatch.stop();
             shutdown();
@@ -96,6 +100,20 @@ public class ReplaceRHQ411Index {
 
         updateNewIndex = session.prepare(
             "INSERT INTO rhq.metrics_idx (bucket, partition, time, schedule_id) VALUES (?, ?, ?, ?)");
+    }
+
+    private void waitForSchemaPropagation() throws InterruptedException {
+        for (int i = 0; i < 10; ++i) {
+            ResultSet resultSet = session.execute("SELECT columnfamily_name FROM system.schema_columnfamilies " +
+                "WHERE keyspace_name = 'rhq' AND columnfamily_name = 'metrics_idx'");
+            if (resultSet.isExhausted()) {
+                Thread.sleep(1000);
+            } else {
+                return;
+            }
+        }
+        throw new RuntimeException("The metrics_idx table does not exist. The upgrade needs to be rerun to ensure " +
+            "that the index table is created and is updated.");
     }
 
     private void updateRawIndex(DateTime start, DateTime end) {

@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.google.common.base.Stopwatch;
@@ -36,8 +37,9 @@ import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 
-import org.rhq.cassandra.schema.migration.BatchResult;
+import org.rhq.cassandra.schema.migration.FailedBatch;
 import org.rhq.cassandra.schema.migration.QueryExecutor;
+import org.rhq.cassandra.schema.migration.ReadException;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
@@ -105,12 +107,6 @@ public class MigrateAggregateMetrics implements Step {
 
     private AtomicReference<RateLimiter> writePermitsRef = new AtomicReference<RateLimiter>();
 
-    private CountDownLatch remaining1HourMetrics;
-
-    private CountDownLatch remaining6HourMetrics = new CountDownLatch(0);
-
-    private CountDownLatch remaining24HourMetrics = new CountDownLatch(0);
-
     SchemaUpdateThreadFactory threadFactory = new SchemaUpdateThreadFactory();
 
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(6, threadFactory);
@@ -129,6 +125,12 @@ public class MigrateAggregateMetrics implements Step {
 
     private MigrationProgressLogger progressLogger;
 
+    private AtomicInteger remaining1HourMetrics = new AtomicInteger();
+
+    private AtomicInteger remaining6HourMetrics = new AtomicInteger();
+
+    private AtomicInteger remaining24HourMetrics = new AtomicInteger();
+
     private AtomicInteger readErrors = new AtomicInteger();
 
     private AtomicInteger writeErrors = new AtomicInteger();
@@ -138,8 +140,9 @@ public class MigrateAggregateMetrics implements Step {
     private FutureFallback<ResultSet> countReadErrors = new FutureFallback<ResultSet>() {
         @Override
         public ListenableFuture<ResultSet> create(Throwable t) throws Exception {
+            rateMonitor.requestFailed();
             readErrors.incrementAndGet();
-            return Futures.immediateFailedFuture(t);
+            return Futures.immediateFailedFuture(new ReadException(t));
         }
     };
 
@@ -198,30 +201,27 @@ public class MigrateAggregateMetrics implements Step {
             Set<String> tables = getTables();
             if (tables.contains(Bucket.ONE_HOUR.getTableName())) {
                 scheduleIdsWith1HourData = keyScanner.scanFor1HourKeys();
+                remaining1HourMetrics.set(scheduleIdsWith1HourData.size());
                 log.info("There are " + scheduleIdsWith1HourData.size() + " schedule ids with " + Bucket.ONE_HOUR +
                     " data");
-                remaining1HourMetrics = new CountDownLatch(scheduleIdsWith1HourData.size());
             } else {
                 log.info(Bucket.ONE_HOUR + " data has already been migrated");
-                remaining1HourMetrics = new CountDownLatch(0);
             }
             if (tables.contains(Bucket.SIX_HOUR.getTableName())) {
                 scheduleIdsWith6HourData = keyScanner.scanFor6HourKeys();
+                remaining6HourMetrics.set(scheduleIdsWith6HourData.size());
                 log.info("There are " + scheduleIdsWith6HourData.size() + " schedule ids with " + Bucket.SIX_HOUR +
                     " data");
-                remaining6HourMetrics = new CountDownLatch(scheduleIdsWith6HourData.size());
             } else {
                 log.info(Bucket.SIX_HOUR + " data has already been migrated");
-                remaining6HourMetrics = new CountDownLatch(0);
             }
             if (tables.contains(Bucket.TWENTY_FOUR_HOUR.getTableName())) {
                 scheduleIdsWith24HourData = keyScanner.scanFor24HourKeys();
+                remaining24HourMetrics.set(scheduleIdsWith24HourData.size());
                 log.info("There are " + scheduleIdsWith24HourData.size() + " schedule ids with " +
                     Bucket.TWENTY_FOUR_HOUR + " data");
-                remaining24HourMetrics = new CountDownLatch(scheduleIdsWith24HourData.size());
             } else {
                 log.info(Bucket.TWENTY_FOUR_HOUR + " data has already been migrated");
-                remaining24HourMetrics = new CountDownLatch(0);
             }
             keyScanner.shutdown();
 
@@ -256,9 +256,8 @@ public class MigrateAggregateMetrics implements Step {
     }
 
     private String getRemainingMetrics() {
-        return "{" + Bucket.ONE_HOUR + ": " + remaining1HourMetrics.getCount() + ", " + Bucket.SIX_HOUR + ": " +
-            remaining6HourMetrics.getCount() + ", " + Bucket.TWENTY_FOUR_HOUR + ": " +
-            remaining24HourMetrics.getCount() + "}";
+        return "{" + Bucket.ONE_HOUR + ": " + remaining1HourMetrics + ", " + Bucket.SIX_HOUR + ": " +
+            remaining6HourMetrics + ", " + Bucket.TWENTY_FOUR_HOUR + ": " + remaining24HourMetrics + "}";
     }
 
     private double getWriteLimit(int numNodes) {
@@ -303,8 +302,7 @@ public class MigrateAggregateMetrics implements Step {
         PreparedStatement query = session.prepare(
             "SELECT time, type, value FROM rhq.one_hour_metrics " +
             "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
-        PreparedStatement delete = session.prepare("DELETE FROM rhq.one_hour_metrics WHERE schedule_id = ?");
-        migrateData(scheduleIds, query, delete, Bucket.ONE_HOUR, remaining1HourMetrics, Days.days(14));
+        migrateData(scheduleIds, query, Bucket.ONE_HOUR, Days.days(14), remaining1HourMetrics);
     }
 
     private void migrate6HourData(Set<Integer> scheduleIds) throws IOException, InterruptedException {
@@ -313,8 +311,7 @@ public class MigrateAggregateMetrics implements Step {
         PreparedStatement query = session.prepare(
             "SELECT time, type, value FROM rhq.six_hour_metrics " +
             "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
-        PreparedStatement delete = session.prepare("DELETE FROM rhq.six_hour_metrics WHERE schedule_id = ?");
-        migrateData(scheduleIds, query, delete, Bucket.SIX_HOUR, remaining6HourMetrics, Days.days(31));
+        migrateData(scheduleIds, query, Bucket.SIX_HOUR, Days.days(31), remaining6HourMetrics);
     }
 
     private void migrate24HourData(Set<Integer> scheduleIds) throws IOException, InterruptedException {
@@ -323,63 +320,80 @@ public class MigrateAggregateMetrics implements Step {
         PreparedStatement query = session.prepare(
             "SELECT time, type, value FROM rhq.twenty_four_hour_metrics " +
             "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
-        PreparedStatement delete = session.prepare("DELETE FROM rhq.twenty_four_hour_metrics WHERE schedule_id = ?");
-        migrateData(scheduleIds, query, delete, Bucket.TWENTY_FOUR_HOUR, remaining24HourMetrics, Days.days(365));
+        migrateData(scheduleIds, query, Bucket.TWENTY_FOUR_HOUR, Days.days(365), remaining24HourMetrics);
     }
 
-    private void migrateData(Set<Integer> scheduleIds, PreparedStatement query, PreparedStatement delete, Bucket bucket,
-        CountDownLatch remainingMetrics, Days ttl) throws IOException, InterruptedException {
+    private void migrateData(Set<Integer> scheduleIds, PreparedStatement query, Bucket bucket, Days ttl,
+        AtomicInteger remainingMetrics) throws IOException, InterruptedException {
 
         Stopwatch stopwatch = Stopwatch.createStarted();
         log.info("Starting data migration for " + bucket + " data");
         MigrationLog migrationLog = new MigrationLog(new File(dataDir, bucket + "_migration.log"));
         try {
             Set<Integer> migratedScheduleIds = migrationLog.read();
-            Set<Integer> remainingScheduleIds = new ConcurrentSkipListSet<Integer>(migratedScheduleIds);
+            Set<FailedBatch> failedBatches = Collections.newSetFromMap(new ConcurrentHashMap<FailedBatch, Boolean>());
 
-            submitMigrationTasks(scheduleIds, query, delete, bucket, remainingMetrics, ttl, migrationLog,
-                migratedScheduleIds, remainingScheduleIds);
+            while (!scheduleIds.isEmpty()) {
+                scheduleIds = submitMigrationTasks(scheduleIds, query, bucket, ttl, migrationLog, migratedScheduleIds,
+                    failedBatches, remainingMetrics);
+                log.info("Schedule ids = " + scheduleIds);
+            }
 
-            boolean resubmitted = false;
-            long remaining = remainingMetrics.getCount();
-            int count = 0;
-            while (remainingMetrics.getCount() > 0) {
-                remainingMetrics.await(1, TimeUnit.SECONDS);
-                if (remainingMetrics.getCount() == remaining) {
-                    ++count;
-                } else {
-                    count = 0;
-                    remaining = remainingMetrics.getCount();
-                }
-                if (count >= 30) {
-                    // if the migration count has not changed in 30 seconds, then we are probably stuck; so, we will
-                    // try resubmitting the remaining schedule ids.
-                    if (!resubmitted) {
-                        log.warn("It appears that the " + bucket + " data migration is blocked with " +
-                            remainingScheduleIds.size() + " remaining schedule ids. Migration tasks will be resubmitted " +
-                            "for them now.");
-                        resubmitted = true;
-                        submitMigrationTasks(new HashSet<Integer>(remainingScheduleIds), query, delete, bucket,
-                            remainingMetrics, ttl, migrationLog, migratedScheduleIds, remainingScheduleIds);
-                    } else {
-                        // if we are stuck and have already resubmitted tasks, then there is not much else we can do
-                        // except restart the entire migration
-                        if (log.isDebugEnabled()) {
-                            log.debug("threadPool = " + executor);
-                            log.debug("worker queue " + executor.getQueue());
-                            for (Thread t : threadFactory.getThreads()) {
-                                log.info("\nstack trace for " + t);
-                                t.dumpStack();
-                            }
-                        }
-                        migrationLog.close();
-                        throw new RuntimeException(bucket + " data migration is blocked. Migration tasks have already " +
-                            "been resubmitted but there are still " + remainingMetrics.getCount() +
-                            " remaining metrics to migrate. The upgrade has to be restarted");
-                    }
+//            submitMigrationTasks(scheduleIds, query, delete, bucket, remainingMetrics, ttl, migrationLog,
+//                migratedScheduleIds, failedBatches);
+
+//            boolean resubmitted = false;
+//            long remaining = remainingMetrics.getCount();
+//            int count = 0;
+//            while (remainingMetrics.getCount() > 0) {
+//                remainingMetrics.await(1, TimeUnit.SECONDS);
+//                if (remainingMetrics.getCount() == remaining) {
+//                    ++count;
+//                } else {
+//                    count = 0;
+//                    remaining = remainingMetrics.getCount();
+//                }
+//                if (count >= 30) {
+//                    // if the migration count has not changed in 30 seconds, then we are probably stuck; so, we will
+//                    // try resubmitting the remaining schedule ids.
+//                    if (!resubmitted) {
+//                        log.warn("It appears that the " + bucket + " data migration is blocked with " +
+//                            remainingScheduleIds.size() + " remaining schedule ids. Migration tasks will be resubmitted " +
+//                            "for them now.");
+//                        resubmitted = true;
+//                        submitMigrationTasks(new HashSet<Integer>(remainingScheduleIds), query, delete, bucket,
+//                            remainingMetrics, ttl, migrationLog, migratedScheduleIds, remainingScheduleIds);
+//                    } else {
+//                        // if we are stuck and have already resubmitted tasks, then there is not much else we can do
+//                        // except restart the entire migration
+//                        if (log.isDebugEnabled()) {
+//                            log.debug("threadPool = " + executor);
+//                            log.debug("worker queue " + executor.getQueue());
+//                            for (Thread t : threadFactory.getThreads()) {
+//                                log.info("\nstack trace for " + t);
+//                                t.dumpStack();
+//                            }
+//                        }
+//                        migrationLog.close();
+//                        throw new RuntimeException(bucket + " data migration is blocked. Migration tasks have already " +
+//                            "been resubmitted but there are still " + remainingMetrics.getCount() +
+//                            " remaining metrics to migrate. The upgrade has to be restarted");
+//                    }
+//                }
+//            }
+
+            int totalFailedBatches = failedBatches.size();
+            log.info("Retrying " + failedBatches.size() + " failed batches for " + bucket + " data");
+            Stopwatch batchesStopwatch = Stopwatch.createStarted();
+            while (!failedBatches.isEmpty()) {
+                failedBatches = retryFailedBatches(failedBatches);
+                if (log.isDebugEnabled() && !failedBatches.isEmpty()) {
+                    log.debug("Retrying " + failedBatches.size() + " failed batches for " + bucket + " data");
                 }
             }
-            remainingMetrics.await();
+            batchesStopwatch.stop();
+            log.info("Successfully reinserted " + totalFailedBatches + " batches in " +
+                batchesStopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
             dropTable(bucket);
             stopwatch.stop();
             log.info("Finished migrating " + bucket + " data in " + stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
@@ -388,91 +402,182 @@ public class MigrateAggregateMetrics implements Step {
         }
     }
 
-    private void submitMigrationTasks(Set<Integer> scheduleIds, PreparedStatement query, PreparedStatement delete,
-        Bucket bucket, CountDownLatch remainingMetrics, Days ttl, MigrationLog migrationLog,
-        Set<Integer> migratedScheduleIds, Set<Integer> remainingScheduleIds) {
+    private Set<FailedBatch> retryFailedBatches(Set<FailedBatch> failedBatches) throws InterruptedException {
+        final Set<FailedBatch> remaining = Collections.newSetFromMap(new ConcurrentHashMap<FailedBatch, Boolean>());
+        final CountDownLatch latch = new CountDownLatch(failedBatches.size());
+
+        for (final FailedBatch failedBatch : failedBatches) {
+            ResultSetFuture future = queryExecutor.executeWrite(failedBatch.getBatch());
+            Futures.addCallback(future, new FutureCallback<ResultSet>() {
+                @Override
+                public void onSuccess(ResultSet result) {
+                    rateMonitor.requestSucceeded();
+                    latch.countDown();
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.info("Batch wrilte failed: " + ThrowableUtil.getRootMessage(t));
+                    rateMonitor.requestFailed();
+                    remaining.add(failedBatch);
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        return remaining;
+    }
+
+//    private void submitMigrationTasks(Set<Integer> scheduleIds, PreparedStatement query, PreparedStatement delete,
+//        Bucket bucket, CountDownLatch remainingMetrics, Days ttl, MigrationLog migrationLog,
+//        Set<Integer> migratedScheduleIds, Set<FailedBatch> failedBatches) {
+//        for (final Integer scheduleId : scheduleIds) {
+//            if (migratedScheduleIds.contains(scheduleId)) {
+//                if (log.isDebugEnabled()) {
+//                    log.debug(bucket + " data for schedule id " + scheduleId + " has already been migrated");
+//                }
+//                remainingMetrics.countDown();
+//            } else {
+//                migrateData(query, delete, bucket, remainingMetrics, migrationLog, scheduleId, ttl,
+//                    failedBatches);
+//            }
+//        }
+//    }
+
+    private Set<Integer> submitMigrationTasks(Set<Integer> scheduleIds, PreparedStatement query, final Bucket bucket,
+        Days ttl, final MigrationLog migrationLog, Set<Integer> migratedScheduleIds, Set<FailedBatch> failedBatches,
+        final AtomicInteger remainingMetrics)
+        throws InterruptedException {
+
+        final Set<Integer> failedScheduleIds = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>());
+        final CountDownLatch remaining = new CountDownLatch(scheduleIds.size());
+
         for (final Integer scheduleId : scheduleIds) {
             if (migratedScheduleIds.contains(scheduleId)) {
                 if (log.isDebugEnabled()) {
                     log.debug(bucket + " data for schedule id " + scheduleId + " has already been migrated");
                 }
-                remainingScheduleIds.remove(scheduleId);
-                remainingMetrics.countDown();
+                remainingMetrics.decrementAndGet();
+                remaining.countDown();
             } else {
-                migrateData(query, delete, bucket, remainingMetrics, migrationLog, scheduleId, ttl,
-                    remainingScheduleIds);
+                ListenableFuture<ResultSet> queryFuture = queryExecutor.executeRead(query.bind(scheduleId));
+                queryFuture = Futures.withFallback(queryFuture, countReadErrors);
+                ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(queryFuture,
+                    new MigrateData(scheduleId, bucket, queryExecutor, ttl.toStandardSeconds(), writeErrors,
+                        rateMonitor, failedBatches), threadPool);
+                Futures.addCallback(insertsFuture, new FutureCallback<List<ResultSet>>() {
+                    @Override
+                    public void onSuccess(List<ResultSet> result) {
+                        try {
+                            rateMonitor.requestSucceeded();
+                            migrationsMeter.mark();
+                            migrationLog.write(scheduleId);
+                            remainingMetrics.decrementAndGet();
+                            remaining.countDown();
+                        } catch (IOException e) {
+                            log.warn("Failed to log successful migration of " + bucket + " data for schedule id " +
+                                scheduleId, e);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        if (t instanceof ReadException) {
+                            if (log.isDebugEnabled()) {
+                                log.debug("Failed to fetch " + bucket + " data for schedule id " + scheduleId +
+                                    ". Migration will be retried.", t);
+                            } else {
+                                log.info("Failed to fetch " + bucket + " data for schedule id " + scheduleId + ": " +
+                                    ThrowableUtil.getRootMessage(t) + ". Migration will be retried.");
+                            }
+                            failedScheduleIds.add(scheduleId);
+                        }
+                        remaining.countDown();
+                    }
+                }, threadPool);
             }
         }
+        remaining.await();
+        return failedScheduleIds;
     }
 
-    private void migrateData(PreparedStatement query, PreparedStatement delete, Bucket bucket,
-        CountDownLatch remainingMetrics, MigrationLog migrationLog, final Integer scheduleId, Days ttl,
-        Set<Integer> remainingScheduleIds) {
-        try {
-            ListenableFuture<ResultSet> queryFuture = queryExecutor.executeRead(query.bind(scheduleId));
-            queryFuture = Futures.withFallback(queryFuture, countReadErrors);
-            ListenableFuture<List<BatchResult>> migrationFuture = Futures.transform(queryFuture,
-                new MigrateData(scheduleId, bucket, queryExecutor, ttl.toStandardSeconds(), writeErrors, threadPool,
-                    rateMonitor), threadPool);
-              Futures.addCallback(migrationFuture, migrationFinished(query, delete, scheduleId, bucket, migrationLog,
-                remainingMetrics, ttl, remainingScheduleIds), threadPool);
-        } catch (Exception e) {
-            log.warn("FAILED to submit " + bucket + " data migration tasks for schedule id " + scheduleId, e);
-        }
-    }
+//    private ListenableFuture<List<ResultSet>> migrateData(PreparedStatement query, Bucket bucket, Integer scheduleId,
+//        Days ttl, Set<FailedBatch> failedBatches) {
+//
+//        ListenableFuture<ResultSet> queryFuture = queryExecutor.executeRead(query.bind(scheduleId));
+//        queryFuture = Futures.withFallback(queryFuture, countReadErrors);
+//        return  Futures.transform(queryFuture,
+//            new MigrateData(scheduleId, bucket, queryExecutor, ttl.toStandardSeconds(), writeErrors, rateMonitor,
+//                failedBatches), threadPool);
+//        return migrationFuture;
+//
+////        try {
+////            ListenableFuture<ResultSet> queryFuture = queryExecutor.executeRead(query.bind(scheduleId));
+////            queryFuture = Futures.withFallback(queryFuture, countReadErrors);
+////            ListenableFuture<List<ResultSet>> migrationFuture = Futures.transform(queryFuture,
+////                new MigrateData(scheduleId, bucket, queryExecutor, ttl.toStandardSeconds(), writeErrors, rateMonitor,
+////                    failedBatches), threadPool);
+////            return migrationFuture;
+////        } catch (Exception e) {
+////            log.warn("FAILED to submit " + bucket + " data migration tasks for schedule id " + scheduleId, e);
+////        }
+////    }
 
-    private FutureCallback<List<BatchResult>> migrationFinished(final PreparedStatement query,
-        final PreparedStatement delete, final Integer scheduleId, final Bucket bucket, final MigrationLog migrationLog,
-        final CountDownLatch remainingMetrics, final Days ttl, final Set<Integer> remainingScheduleIds) {
-
-        return new FutureCallback<List<BatchResult>>() {
-            @Override
-            public void onSuccess(List<BatchResult> batchResults) {
-                try {
-                    remainingMetrics.countDown();
-                    if (remainingMetrics.getCount() < 5) {
-                        log.info("remainingScheduleIds: " + remainingScheduleIds);
-                    }
-                    remainingScheduleIds.remove(scheduleId);
-                    migrationLog.write(scheduleId);
-                    rateMonitor.requestSucceeded();
-                    migrationsMeter.mark();
-                    if (log.isDebugEnabled()) {
-                        log.debug("Finished migrating " + bucket + " data for schedule id " + scheduleId);
-                    }
-                } catch (IOException e) {
-                    log.warn("Failed to log successful migration of " + bucket + " data for schedule id " +
-                        scheduleId, e);
-                } catch (Exception e) {
-                    log.error("The migration finished callback failed. This should not happen. Please file a " +
-                        "bug report.", e);
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                try {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Failed to migrate " + bucket + " data for schedule id " + scheduleId +
-                            ". Migration will be rescheduled.", t);
-                    } else {
-                        log.info("Failed to migrate " + bucket + " data for schedule id " + scheduleId + ": " +
-                            ThrowableUtil.getRootMessage(t) + ". Migration will be rescheduled");
-                    }
-                    rateMonitor.requestFailed();
-                    try {
-                        migrateData(query, delete, bucket, remainingMetrics, migrationLog, scheduleId, ttl,
-                            remainingScheduleIds);
-                    } catch (Exception e) {
-                        log.warn("FAILED to resubmit " + bucket + " data migration task for schedule id " + scheduleId);
-                    }
-                } catch (Exception e) {
-                    log.error("The migration finished callback failed. This should not happen. Please file a bug " +
-                        "report.", e);
-                }
-            }
-        };
-    }
+//    private FutureCallback<List<ResultSet>> migrationFinished(final PreparedStatement query,
+//        final PreparedStatement delete, final Integer scheduleId, final Bucket bucket, final MigrationLog migrationLog,
+//        final CountDownLatch remainingMetrics, final Days ttl, final Set<FailedBatch> failedBatches) {
+//
+//        return new FutureCallback<List<ResultSet>>() {
+//            @Override
+//            public void onSuccess(List<ResultSet> batchResults) {
+//                try {
+//                    remainingMetrics.countDown();
+//                    migrationLog.write(scheduleId);
+//                    rateMonitor.requestSucceeded();
+//                    migrationsMeter.mark();
+//                    if (log.isDebugEnabled()) {
+//                        log.debug("Finished migrating " + bucket + " data for schedule id " + scheduleId);
+//                    }
+//                } catch (IOException e) {
+//                    log.warn("Failed to log successful migration of " + bucket + " data for schedule id " +
+//                        scheduleId, e);
+//                } catch (Exception e) {
+//                    log.error("The migration finished callback failed. This should not happen. Please file a " +
+//                        "bug report.", e);
+//                }
+//            }
+//
+//            @Override
+//            public void onFailure(Throwable t) {
+//                try {
+//                    if (t instanceof ReadException) {
+//                        if (log.isDebugEnabled()) {
+//                            log.debug("Failed to fetch " + bucket + " data for schedule id " + scheduleId +
+//                                ". Migration will be retried.", t);
+//                        } else {
+//                            log.info("Failed to fetch " + bucket + " data for schedule id " + scheduleId + ": " +
+//                                ThrowableUtil.getRootMessage(t) + ". Migration will be retried.");
+//                        }
+//                        migrateData(query, delete, bucket, remainingMetrics, migrationLog, scheduleId, ttl,
+//                            failedBatches);
+//                    } else {
+//                        if (log.isDebugEnabled()) {
+//                            log.debug("One or more writes of " + bucket + " data for schedule id " + scheduleId +
+//                                "failed. These will be retried.", t);
+//                        } else {
+//                            log.info("One or more writes of " + bucket + " data for schedule id " + scheduleId +
+//                                "failed: " + ThrowableUtil.getRootMessage(t) + ". These writes will be retried");
+//                        }
+//                        remainingMetrics.countDown();
+//                    }
+//                } catch (Exception e) {
+//                    log.error("The migration finished callback failed. This should not happen. Please file a bug " +
+//                        "report.", e);
+//                }
+//            }
+//        };
+//    }
 
     private class MigrationProgressLogger implements Runnable {
 
@@ -489,9 +594,9 @@ public class MigrateAggregateMetrics implements Step {
             try {
                 while (!finished) {
                     log.info("Remaining metrics to migrate\n" +
-                        Bucket.ONE_HOUR + ": " + remaining1HourMetrics.getCount() + "\n" +
-                        Bucket.SIX_HOUR + ": " + remaining6HourMetrics.getCount() + "\n" +
-                        Bucket.TWENTY_FOUR_HOUR + ": " + remaining24HourMetrics.getCount() + "\n");
+                        Bucket.ONE_HOUR + ": " + remaining1HourMetrics + "\n" +
+                        Bucket.SIX_HOUR + ": " + remaining6HourMetrics + "\n" +
+                        Bucket.TWENTY_FOUR_HOUR + ": " + remaining24HourMetrics + "\n");
                     log.info("ErrorCounts{read:" + readErrors + ", write: " + writeErrors + "}");
                     if (reportMigrationRates) {
                         log.info("Metrics migration rates:\n" +

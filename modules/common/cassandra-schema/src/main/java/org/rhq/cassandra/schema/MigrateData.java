@@ -23,13 +23,15 @@ import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 
+import org.rhq.cassandra.schema.migration.BatchInsertFuture;
+import org.rhq.cassandra.schema.migration.BatchResult;
 import org.rhq.cassandra.schema.migration.FailedBatch;
 import org.rhq.cassandra.schema.migration.QueryExecutor;
 
 /**
  * @author John Sanda
  */
-public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
+public class MigrateData implements AsyncFunction<ResultSet, List<BatchResult>> {
 
     private static final Log log = LogFactory.getLog(MigrateData.class);
 
@@ -91,9 +93,9 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
     }
 
     @Override
-    public ListenableFuture<List<ResultSet>> apply(ResultSet resultSet) throws Exception {
+    public ListenableFuture<List<BatchResult>> apply(ResultSet resultSet) throws Exception {
         try {
-            List<ListenableFuture<ResultSet>> batchFutures = new ArrayList<ListenableFuture<ResultSet>>();
+            List<ListenableFuture<BatchResult>> batchFutures = new ArrayList<ListenableFuture<BatchResult>>();
             if (resultSet.isExhausted()) {
                 return Futures.allAsList(batchFutures);
             }
@@ -160,11 +162,12 @@ public class MigrateData implements AsyncFunction<ResultSet, List<ResultSet>> {
         return false;
     }
 
-    private ListenableFuture<ResultSet> writeBatch(List<Statement> statements) {
+    private BatchInsertFuture writeBatch(List<Statement> statements) {
         Batch batch = QueryBuilder.batch(statements.toArray(new Statement[statements.size()]));
         ResultSetFuture future = queryExecutor.executeWrite(batch);
-        return Futures.withFallback(future, new LogFailedBatch(scheduleId, batch, failedBatches, rateMonitor,
-            writeErrors));
+        return new BatchInsertFuture(batch, future);
+//        return Futures.withFallback(future, new LogFailedBatch(scheduleId, batch, failedBatches, rateMonitor,
+//            writeErrors));
     }
 
     private SimpleStatement createInsertStatement(Date time, Double avg, Double max, Double min, int newTTL) {

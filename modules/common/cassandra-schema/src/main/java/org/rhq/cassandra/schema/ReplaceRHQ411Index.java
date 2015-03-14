@@ -58,6 +58,8 @@ public class ReplaceRHQ411Index {
         log.info("Updating indexes");
         Stopwatch stopwatch = Stopwatch.createStarted();
         try {
+            waitForSchemaPropagation();
+
             initPreparedStatements();
 
             writePermitsRef.set(RateLimiter.create(Integer.parseInt(System.getProperty(
@@ -69,8 +71,6 @@ public class ReplaceRHQ411Index {
 
             rateMonitor = new RateMonitor(readPermitsRef, writePermitsRef);
             threadPool.submit(rateMonitor);
-
-            waitForSchemaPropagation();
 
             updateRawIndex(dateRanges.rawStartTime, dateRanges.rawEndTime);
             update1HourIndex(dateRanges.oneHourStartTime, dateRanges.oneHourEndTime);

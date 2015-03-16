@@ -47,7 +47,7 @@ class WaitForRawInserts implements RawDataInsertedCallback {
     }
 
     @Override
-    public void onSuccess(MeasurementDataNumeric measurementDataNumeric) {
+    public void onSuccess(Void aVoid) {
         latch.countDown();
     }
 

@@ -443,6 +443,8 @@
 
     <metric property="CurrentWarmupTime" measurementType="dynamic" displayType="summary" description="Current throttling warmup period time in minutes." />
 
+    <metric property="QueueAvailableCapacity" measurementType="dynamic" displayType="summary" description="Length of the internal metric queue" />
+
     <resource-configuration>
       <c:simple-property name="RequestLimit" type="double" required="false" description="Sets throttling in terms of
                          requests per second. Defaults to 30,000 if undefined. Note that this setting is automatically

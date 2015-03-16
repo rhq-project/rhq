@@ -52,6 +52,7 @@ import javax.persistence.Query;
 import javax.sql.DataSource;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.FutureCallback;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -218,35 +219,26 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         }
 
         MetricsServer metricsServer = storageClientManager.getMetricsServer();
-        metricsServer.addNumericData(data, new RawDataInsertedCallback() {
-
-            private ReentrantLock lock = new ReentrantLock();
-
-            private Set<MeasurementData> insertedData = new TreeSet<MeasurementData>(new Comparator<MeasurementData>() {
-                @Override
-                public int compare(MeasurementData d1, MeasurementData d2) {
-                    return (d1.getTimestamp() < d2.getTimestamp()) ? -1 : ((d1.getTimestamp() == d2.getTimestamp()) ? 0 : 1);
-                }
-            });
+        metricsServer.addNumericData(data, new FutureCallback<Void>() {
 
             @Override
-            public void onFinish() {
+            public void onSuccess(@Nullable Void result) {
+                Set<MeasurementData> insertedData = new TreeSet<MeasurementData>(new Comparator<MeasurementData>() {
+                    @Override
+                    public int compare(MeasurementData d1, MeasurementData d2) {
+                        return (d1.getTimestamp() < d2.getTimestamp()) ? -1 : ((d1.getTimestamp() == d2.getTimestamp()) ? 0 : 1);
+                    }
+                });
+
+                insertedData.addAll(data);
                 measurementDataManager.updateAlertConditionCache("mergeMeasurementReport",
-                    insertedData.toArray(new MeasurementData[insertedData.size()]));
-            }
-
-            @Override
-            public void onSuccess(MeasurementDataNumeric measurementDataNumeric) {
-                try {
-                    lock.lock();
-                    insertedData.add(measurementDataNumeric);
-                }  finally {
-                    lock.unlock();
-                }
+                        insertedData.toArray(new MeasurementData[insertedData.size()]));
             }
 
             @Override
             public void onFailure(Throwable throwable) {
+                // This should cause rollback and agent to resubmit the raw data
+                throw new MeasurementStorageException(throwable);
             }
         });
     }

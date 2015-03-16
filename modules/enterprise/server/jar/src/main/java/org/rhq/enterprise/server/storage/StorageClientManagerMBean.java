@@ -62,4 +62,8 @@ public interface StorageClientManagerMBean {
     double getFifteenMinuteAvgRate();
     double getMeanRate();
     double getMeanLatency();
+
+    // Queue
+
+    int getQueueAvailableCapacity();
 }

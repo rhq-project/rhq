@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -45,9 +44,6 @@ import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.Seconds;
 
-import org.rhq.cassandra.schema.migration.BatchResult;
-import org.rhq.cassandra.schema.migration.FailedBatch;
-import org.rhq.cassandra.schema.migration.QueryExecutor;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
@@ -72,32 +68,26 @@ import org.rhq.core.util.exception.ThrowableUtil;
  */
 public class MigrateAggregateMetrics implements Step {
 
+
     private static final Log log = LogFactory.getLog(MigrateAggregateMetrics.class);
 
     public static enum Bucket {
 
-        ONE_HOUR("one_hour", "one_hour_metrics"),
+        ONE_HOUR("one_hour"),
 
-        SIX_HOUR("six_hour", "six_hour_metrics"),
+        SIX_HOUR("six_hour"),
 
-        TWENTY_FOUR_HOUR("twenty_four_hour", "twenty_four_hour_metrics");
-
-        private String text;
+        TWENTY_FOUR_HOUR("twenty_four_hour");
 
         private String tableName;
 
-        private Bucket(String text, String tableName) {
-            this.text = text;
+        private Bucket(String tableName) {
             this.tableName = tableName;
-        }
-
-        public String getTableName() {
-            return tableName;
         }
 
         @Override
         public String toString() {
-            return text;
+            return tableName;
         }
     }
 
@@ -115,13 +105,20 @@ public class MigrateAggregateMetrics implements Step {
 
     private AtomicReference<RateLimiter> writePermitsRef = new AtomicReference<RateLimiter>();
 
-    SchemaUpdateThreadFactory threadFactory = new SchemaUpdateThreadFactory();
+    private AtomicInteger remaining1HourMetrics = new AtomicInteger();
 
-    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(6, threadFactory);
+    private AtomicInteger remaining6HourMetrics = new AtomicInteger();
 
-//    private ListeningExecutorService threadPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(6,
-//        new SchemaUpdateThreadFactory()));
-    private ListeningExecutorService threadPool = MoreExecutors.listeningDecorator(executor);
+    private AtomicInteger remaining24HourMetrics = new AtomicInteger();
+
+    private AtomicInteger migrated1HourMetrics = new AtomicInteger();
+
+    private AtomicInteger migrated6HourMetrics = new AtomicInteger();
+
+    private AtomicInteger migrated24HourMetrics = new AtomicInteger();
+
+    private ListeningExecutorService threadPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(6,
+        new SchemaUpdateThreadFactory()));
 
     private MetricsRegistry metricsRegistry;
 
@@ -132,12 +129,6 @@ public class MigrateAggregateMetrics implements Step {
     private KeyScanner keyScanner;
 
     private MigrationProgressLogger progressLogger;
-
-    private AtomicInteger remaining1HourMetrics = new AtomicInteger();
-
-    private AtomicInteger remaining6HourMetrics = new AtomicInteger();
-
-    private AtomicInteger remaining24HourMetrics = new AtomicInteger();
 
     private AtomicInteger readErrors = new AtomicInteger();
 
@@ -170,6 +161,22 @@ public class MigrateAggregateMetrics implements Step {
                 return;
             }
 
+            progressLogger = new MigrationProgressLogger();
+            rateMonitor = new RateMonitor(readPermitsRef, writePermitsRef);
+
+            keyScanner = new KeyScanner(session);
+            Set<Integer> scheduleIdsWith1HourData = keyScanner.scanFor1HourKeys();
+            Set<Integer> scheduleIdsWith6HourData = keyScanner.scanFor6HourKeys();
+            Set<Integer> scheduleIdsWith24HourData = keyScanner.scanFor24HourKeys();
+            keyScanner.shutdown();
+
+            log.info("There are " + scheduleIdsWith1HourData.size() + " schedule ids with " +
+                Bucket.ONE_HOUR + " data");
+            log.info("There are " + scheduleIdsWith6HourData.size() + " schedule ids with " +
+                Bucket.SIX_HOUR + " data");
+            log.info("There are " + scheduleIdsWith24HourData.size() + " schedule ids with " +
+                Bucket.TWENTY_FOUR_HOUR + " data");
+
             writePermitsRef.set(RateLimiter.create(getWriteLimit(getNumberOfUpNodes()), DEFAULT_WARM_UP,
                 TimeUnit.SECONDS));
             readPermitsRef.set(RateLimiter.create(getReadLimit(getNumberOfUpNodes()), DEFAULT_WARM_UP,
@@ -196,10 +203,7 @@ public class MigrateAggregateMetrics implements Step {
                     remaining24HourMetrics + "}. The upgrade will have to be " + "run again.");
             }
 
-            stopwatch.stop();
-            log.info("Finished migrating " + scheduleIdsWith1HourData.size() + " " + Bucket.ONE_HOUR + ", " +
-                scheduleIdsWith6HourData.size() + " " + Bucket.SIX_HOUR + ", " + scheduleIdsWith24HourData.size() +
-                " " + Bucket.TWENTY_FOUR_HOUR + " metrics in " + stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
+            dropTables();
         } catch (IOException e) {
             throw new RuntimeException("There was an unexpected I/O error. There are unfinished metrics migrations " +
                 "- " + getRemainingMetrics() + ". The upgrade will have to be run again.");
@@ -209,6 +213,10 @@ public class MigrateAggregateMetrics implements Step {
             throw new RuntimeException("The migration was interrupted. There are still " + getRemainingMetrics() +
                 " unfinished metrics migrations. The upgrade will have to be run again.");
         } finally {
+            stopwatch.stop();
+            log.info("Finished migrating " + migrated1HourMetrics + " " + Bucket.ONE_HOUR + ", " +
+                migrated6HourMetrics + " " + Bucket.SIX_HOUR + ", and " + migrated24HourMetrics + " " +
+                Bucket.TWENTY_FOUR_HOUR + " metrics in " + stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
             shutdown();
         }
     }
@@ -241,16 +249,14 @@ public class MigrateAggregateMetrics implements Step {
     }
 
     private void shutdown() {
-        if (dbConnectionFactory != null) {
-            try {
-                log.info("Shutting down migration thread pools...");
-                rateMonitor.shutdown();
-                progressLogger.finished();
-                keyScanner.shutdown();
-                threadPool.shutdown();
-                threadPool.awaitTermination(5, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-            }
+        try {
+            log.info("Shutting down migration thread pools...");
+            rateMonitor.shutdown();
+            progressLogger.finished();
+            keyScanner.shutdown();
+            threadPool.shutdown();
+            threadPool.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
         }
     }
 
@@ -259,7 +265,7 @@ public class MigrateAggregateMetrics implements Step {
         DateTime startTime = endTime.minus(Days.days(14));
         PreparedStatement query = session.prepare(
             "SELECT time, type, value FROM rhq.one_hour_metrics " +
-            "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
+                "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
         migrate(scheduleIds, query, Bucket.ONE_HOUR, remaining1HourMetrics, Days.days(14));
     }
 
@@ -268,7 +274,7 @@ public class MigrateAggregateMetrics implements Step {
         DateTime startTime = endTime.minus(Days.days(31));
         PreparedStatement query = session.prepare(
             "SELECT time, type, value FROM rhq.six_hour_metrics " +
-            "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
+                "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
         migrate(scheduleIds, query, Bucket.SIX_HOUR, remaining6HourMetrics, Days.days(31));
     }
 
@@ -277,19 +283,17 @@ public class MigrateAggregateMetrics implements Step {
         DateTime startTime = endTime.minus(Days.days(365));
         PreparedStatement query = session.prepare(
             "SELECT time, type, value FROM rhq.twenty_four_hour_metrics " +
-            "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
+                "WHERE schedule_id = ? AND time >= " + startTime.getMillis() + " AND time <= " + endTime.getMillis());
         migrate(scheduleIds, query, Bucket.TWENTY_FOUR_HOUR, remaining24HourMetrics, Days.days(365));
     }
 
-    private void migrateData(Set<Integer> scheduleIds, PreparedStatement query, Bucket bucket, Days ttl,
-        AtomicInteger remainingMetrics) throws IOException, InterruptedException {
+    private void migrate(Set<Integer> scheduleIds, PreparedStatement query, Bucket bucket,
+        AtomicInteger remainingMetrics, Days ttl) throws IOException, InterruptedException {
 
         Stopwatch stopwatch = Stopwatch.createStarted();
-        log.info("Starting data migration for " + bucket + " data");
         MigrationLog migrationLog = new MigrationLog(new File(dataDir, bucket + "_migration.log"));
-        try {
-            Set<Integer> migratedScheduleIds = migrationLog.read();
-            Set<FailedBatch> failedBatches = Collections.newSetFromMap(new ConcurrentHashMap<FailedBatch, Boolean>());
+        Set<Integer> migratedScheduleIds = migrationLog.read();
+        Queue<Integer> remainingScheduleIds = new ArrayDeque<Integer>(scheduleIds);
 
         while (!remainingScheduleIds.isEmpty()) {
             List<Integer> batch = getNextBatch(remainingScheduleIds, migratedScheduleIds, remainingMetrics);
@@ -303,15 +307,9 @@ public class MigrateAggregateMetrics implements Step {
             }
         }
 
-            int totalFailedBatches = failedBatches.size();
-            Stopwatch batchesStopwatch = Stopwatch.createStarted();
-            while (!failedBatches.isEmpty()) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Retrying " + failedBatches.size() + " failed batches for " + bucket + " data - " +
-                        failedBatches);
-                } else {
-                    log.info("Retrying " + failedBatches.size() + " failed batches for " + bucket + " data");
-                }
+        stopwatch.stop();
+        log.info("Finished migrating " + bucket + " data in " + stopwatch.elapsed(TimeUnit.SECONDS) + " sec");
+    }
 
     private List<Integer> getNextBatch(Queue<Integer> scheduleIds, Set<Integer> migratedScheduleIds,
         AtomicInteger remainingMetrics) {
@@ -333,14 +331,15 @@ public class MigrateAggregateMetrics implements Step {
         Map<Integer, List<Row>> resultSets = new ConcurrentHashMap<Integer, List<Row>>();
     }
 
-    private Set<FailedBatch> retryFailedBatches(Bucket bucket, Set<FailedBatch> failedBatches)
+    private ReadResults readData(List<Integer> scheduleIds, PreparedStatement query, final Bucket bucket)
         throws InterruptedException {
 
-        final Set<FailedBatch> remaining = Collections.newSetFromMap(new ConcurrentHashMap<FailedBatch, Boolean>());
-        final CountDownLatch latch = new CountDownLatch(failedBatches.size());
+        final ReadResults results = new ReadResults();
+        final CountDownLatch queries = new CountDownLatch(scheduleIds.size());
 
-        for (final FailedBatch failedBatch : failedBatches) {
-            ResultSetFuture future = queryExecutor.executeWrite(failedBatch.getBatch());
+        for (final Integer scheduleId : scheduleIds) {
+            readPermitsRef.get().acquire();
+            ResultSetFuture future = session.executeAsync(query.bind(scheduleId));
             Futures.addCallback(future, new FutureCallback<ResultSet>() {
                 @Override
                 public void onSuccess(ResultSet resultSet) {
@@ -354,20 +353,24 @@ public class MigrateAggregateMetrics implements Step {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.info("Batch write failed: " + ThrowableUtil.getRootMessage(t));
-                    rateMonitor.requestFailed();
-                    remaining.add(failedBatch);
-                    writeErrors.incrementAndGet();
-                    latch.countDown();
+                    try {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Failed to read " + bucket + " data for schedule id " + scheduleId, t);
+                        } else {
+                            log.info("Failed to read " + bucket + " data for schedule id " + scheduleId + ": " +
+                                ThrowableUtil.getRootMessage(t));
+                        }
+                        results.failedReads.add(scheduleId);
+                        rateMonitor.requestFailed();
+                        readErrors.incrementAndGet();
+                    } finally {
+                        queries.countDown();
+                    }
                 }
             });
         }
-
-        String errorMsg = bucket + " data migration appears to be blocked. There are " + latch.getCount() +
-            " failed batches that have to be retried.";
-        await(latch, errorMsg);
-
-        return remaining;
+        queries.await();
+        return results;
     }
 
     private Map<Integer, List<Row>> writeData(Map<Integer, List<Row>> resultSets, final Bucket bucket,
@@ -464,23 +467,36 @@ public class MigrateAggregateMetrics implements Step {
                                     scheduleId + ", time: " + time.getTime() + "}. It will not be migrated.");
                             }
                         } else {
-                            log.info("Failed to fetch " + bucket + " data for schedule id " + scheduleId + ": " +
-                                ThrowableUtil.getRootMessage(t) + ". Migration will be retried.");
+                            int newTTL = ttl.getSeconds() - elapsedSeconds.getSeconds();
+                            statements.add(createInsertStatement(scheduleId, bucket, time, avg, max, min, newTTL));
+                            if (statements.size() == 45) {
+                                insertFutures.add(writeBatch(statements));
+                                statements.clear();
+                            }
                         }
-                        readErrors.incrementAndGet();
-                        failedScheduleIds.add(scheduleId);
-                        rateMonitor.requestFailed();
-                        remaining.countDown();
                     }
-                }, threadPool);
+                    time = nextTime;
+                    max = row.getDouble(2);
+                    min = null;
+                    avg = null;
+                }
             }
+            if (!statements.isEmpty()) {
+                insertFutures.add(writeBatch(statements));
+            }
+            return Futures.allAsList(insertFutures);
+        } catch (Exception e) {
+            return Futures.immediateFailedFuture(new Exception("There was an error writing " + bucket +
+                " data for schedule id " + scheduleId, e));
         }
-        String errorMsg = bucket + " data migration appears to be blocked. There are " + remaining.getCount() +
-            " remaining migrations out of " + scheduleIds.size() + " with " + failedScheduleIds.size() +
-            " that have failed. The migration will have to be restarted.";
-        await(remaining, errorMsg);
+    }
 
-        return failedScheduleIds;
+    private boolean isDataMissing(Double avg, Double max, Double min) {
+        if (avg == null || Double.isNaN(avg)) return true;
+        if (max == null || Double.isNaN(max)) return true;
+        if (min == null || Double.isNaN(min)) return true;
+
+        return false;
     }
 
     private ResultSetFuture writeBatch(List<Statement> statements) {
@@ -532,21 +548,17 @@ public class MigrateAggregateMetrics implements Step {
         }
     }
 
-    private void dropTable(Bucket bucket) {
-        log.info("Dropping table " + bucket.getTableName());
-        session.execute("DROP table rhq." + bucket.getTableName());
-    }
-
-    private Set<String> getTables() {
+    private void dropTables() {
         ResultSet resultSet = session.execute("SELECT columnfamily_name FROM system.schema_columnfamilies " +
             "WHERE keyspace_name = 'rhq'");
-        Set<String> tables = new HashSet<String>();
-
-        for (Row row : resultSet) {
-            tables.add(row.getString(0));
+        for (com.datastax.driver.core.Row row : resultSet) {
+            String table = row.getString(0);
+            if (table.equals("one_hour_metrics") || table.equals("six_hour_metrics") ||
+                table.equals("twenty_four_hour_metrics")) {
+                log.info("Dropping table " +  table);
+                session.execute("DROP table rhq." + table);
+            }
         }
-
-        return tables;
     }
 
 }

@@ -92,7 +92,7 @@ public class MeasurementCollector implements Runnable {
             }
 
             @Override
-            public void onSuccess(MeasurementDataNumeric result) {
+            public void onSuccess(Void avoid) {
                 metrics.rawInserts.mark();
             }
 

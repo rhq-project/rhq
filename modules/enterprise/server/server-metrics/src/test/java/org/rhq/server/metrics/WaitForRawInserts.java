@@ -10,8 +10,6 @@ import com.google.common.base.Throwables;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-
 /**
 * @author John Sanda
 */
@@ -28,11 +26,7 @@ class WaitForRawInserts implements RawDataInsertedCallback {
     }
 
     @Override
-    public void onFinish() {
-    }
-
-    @Override
-    public void onSuccess(MeasurementDataNumeric measurementDataNumeric) {
+    public void onSuccess(Void avoid) {
         latch.countDown();
     }
 
@@ -48,5 +42,10 @@ class WaitForRawInserts implements RawDataInsertedCallback {
         if (throwable != null) {
             fail(errorMsg, Throwables.getRootCause(throwable));
         }
+    }
+
+    @Override
+    public void onFinish() {
+
     }
 }

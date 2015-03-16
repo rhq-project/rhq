@@ -81,41 +81,4 @@ public class TimeoutTest extends CassandraIntegrationTest {
 
         log.info("Inserted " + data1.size() + " raw metrics in " + (end - start) + " ms");
     }
-
-    private static class WaitForRawInserts implements RawDataInsertedCallback {
-
-        private final Log log = LogFactory.getLog(WaitForRawInserts.class);
-
-        private CountDownLatch latch;
-
-        private Throwable throwable;
-
-        public WaitForRawInserts(int numInserts) {
-            latch = new CountDownLatch(numInserts);
-        }
-
-        @Override
-        public void onFinish() {
-        }
-
-        @Override
-        public void onSuccess(MeasurementDataNumeric measurementDataNumeric) {
-            latch.countDown();
-        }
-
-        @Override
-        public void onFailure(Throwable throwable) {
-            latch.countDown();
-            this.throwable = throwable;
-            log.error("An async operation failed", throwable);
-        }
-
-        public void await(String errorMsg) throws InterruptedException {
-            latch.await();
-            if (throwable != null) {
-                fail(errorMsg, Throwables.getRootCause(throwable));
-            }
-        }
-    }
-
 }

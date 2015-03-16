@@ -32,7 +32,7 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 /**
  * @author John Sanda
  */
-public interface RawDataInsertedCallback extends FutureCallback<MeasurementDataNumeric> {
+public interface RawDataInsertedCallback extends FutureCallback<Void> {
 
     void onFinish();
 

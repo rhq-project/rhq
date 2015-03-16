@@ -333,7 +333,7 @@ public class MigrateAggregateMetrics implements Step {
             Set<FailedBatch> failedBatches = Collections.newSetFromMap(new ConcurrentHashMap<FailedBatch, Boolean>());
 
         while (!remainingScheduleIds.isEmpty()) {
-            List<Integer> batch = getNextBatch(remainingScheduleIds, migratedScheduleIds);
+            List<Integer> batch = getNextBatch(remainingScheduleIds, migratedScheduleIds, remainingMetrics);
             ReadResults readResults = readData(batch, query, bucket);
             for (Integer scheduleId : readResults.failedReads) {
                 remainingScheduleIds.offer(scheduleId);
@@ -354,11 +354,14 @@ public class MigrateAggregateMetrics implements Step {
                     log.info("Retrying " + failedBatches.size() + " failed batches for " + bucket + " data");
                 }
 
-    private List<Integer> getNextBatch(Queue<Integer> scheduleIds, Set<Integer> migratedScheduleIds) {
+    private List<Integer> getNextBatch(Queue<Integer> scheduleIds, Set<Integer> migratedScheduleIds,
+        AtomicInteger remainingMetrics) {
         List<Integer> batch = new ArrayList<Integer>(500);
         while (!scheduleIds.isEmpty() && batch.size() < 500) {
             Integer scheduleId = scheduleIds.poll();
-            if (!migratedScheduleIds.contains(scheduleId)) {
+            if (migratedScheduleIds.contains(scheduleId)) {
+                remainingMetrics.decrementAndGet();
+            } else {
                 batch.add(scheduleId);
             }
         }

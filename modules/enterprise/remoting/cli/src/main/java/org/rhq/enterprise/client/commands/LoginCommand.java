@@ -21,6 +21,8 @@ package org.rhq.enterprise.client.commands;
 
 import java.io.PrintWriter;
 import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,6 +38,7 @@ import org.rhq.enterprise.clientapi.RemoteClient;
  */
 public class LoginCommand implements ClientCommand {
     private static final Log LOG = LogFactory.getLog(LoginCommand.class);
+    private static final List<String> SUPPORTED_TRANSPORTS = Arrays.asList("http", "https", "socket", "sslsocket");
 
     //Added to switch between jbossRemoting and WS subsystems
     private String subsystem = null;
@@ -82,8 +85,9 @@ public class LoginCommand implements ClientCommand {
         argIndex++;
         if (args.length > argIndex) {
             transport = args[argIndex];
-            if (!"http".equals(transport) || !"https".equals(transport)) {
-                printWriter.println("Invalid transport [" + transport + "], should be either http or https");
+            if (!SUPPORTED_TRANSPORTS.contains(transport)) {
+                printWriter.println("Invalid transport [" + transport + "], must be one of "
+                    + Arrays.toString(SUPPORTED_TRANSPORTS.toArray()));
                 return true;
             }
         }
@@ -164,7 +168,12 @@ public class LoginCommand implements ClientCommand {
 
     @Override
     public String getSyntax() {
-        return getPromptCommandString() + " username password [host]|[host port]|[host port <http>|<https>]";
+        StringBuilder transports = new StringBuilder();
+        for (String t : SUPPORTED_TRANSPORTS) {
+            transports.append("<" + t + ">|");
+        }
+        transports.deleteCharAt(transports.length() - 1);
+        return getPromptCommandString() + " username password [host]|[host port]|[host port " + transports + "]";
     }
 
     @Override
@@ -178,6 +187,6 @@ public class LoginCommand implements ClientCommand {
             + "name and port may optionally be specified. The host name defaults to "
             + "localhost and the port to 7080. You may also specify the transport "
             + "to use when communicating with the server; it must be one " //
-            + "of 'servlet' or 'sslservlet'.";
+            + "of " + SUPPORTED_TRANSPORTS + ".";
     }
 }

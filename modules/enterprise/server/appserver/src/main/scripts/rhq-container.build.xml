@@ -454,7 +454,7 @@
               failonerror="false"/>
 
         <echo>Deploying the latest command-line bundle deployer to the downloads location</echo>
-        <copy file="${settings.localRepository}/org/rhq/rhq-ant-bundle-common/${rhq.version}/rhq-ant-bundle-common-${rhq.version}.zip"
+        <copy file="${settings.localRepository}/org/rhq/rhq-ant-bundle-common/${rhq-ant-bundle-common.version}/rhq-ant-bundle-common-${rhq-ant-bundle-common.version}.zip"
               tofile="${rhq.ear.dir}/rhq-downloads/bundle-deployer/rhq-bundle-deployer-${rhq.version}.zip"
               verbose="true"
               failonerror="false"/>

@@ -10,6 +10,7 @@
   </parent>
 
   <artifactId>rhq-cassandra-schema</artifactId>
+  <version>4.12.0.JON330GA</version>
   <name>RHQ Cassandra Schema</name>
 
   <properties>
@@ -22,7 +23,7 @@
      <dependency>
        <groupId>${project.groupId}</groupId>
        <artifactId>rhq-cassandra-util</artifactId>
-       <version>${project.version}</version>
+       <version>${rhq-cassandra-util.version}</version>
     </dependency>
 
     <dependency>
@@ -56,13 +57,13 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-core-util</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-core-util.version}</version>
     </dependency>
 
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-cassandra-ccm-core</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-cassandra-ccm-core.version}</version>
       <scope>test</scope>
     </dependency>
 

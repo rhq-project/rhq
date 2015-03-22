@@ -189,6 +189,7 @@
                                     <property name="rhq.server.http.port"               value="${rhq.server.http.port}" />
                                     <property name="rhq.server.https.port"              value="${rhq.server.https.port}" />
                                     <property name="rhq.sync.endpoint-address"          value="${rhq.sync.endpoint-address}" />
+                                    <property name="rhq-ant-bundle-common.version"                 value="${rhq-ant-bundle-common.version}" />
                                 </ant>
                             </target>
                         </configuration>
@@ -222,6 +223,7 @@
                                     <property name="rhq.test.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
                                     <property name="rhq.dev.ds.type-mapping"  value="${rhq.dev.ds.type-mapping}" />
                                     <property name="rhq.dev.data.dir" location="${rhq.dev.data.dir}"/>
+                                    <property name="rhq-ant-bundle-common.version"                 value="${rhq-ant-bundle-common.version}" />
                                 </ant>
                             </target>
                         </configuration>

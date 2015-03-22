@@ -10,6 +10,7 @@
 
     <groupId>org.rhq</groupId>
     <artifactId>rhq-ant-bundle-common</artifactId>
+    <version>4.12.0.JON330GA</version>
     <packaging>jar</packaging>
 
     <name>RHQ Ant Bundle Plugins Common Library</name>
@@ -90,7 +91,7 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>test-utils</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq.pom.version}</version>
             <scope>test</scope>
         </dependency>
 

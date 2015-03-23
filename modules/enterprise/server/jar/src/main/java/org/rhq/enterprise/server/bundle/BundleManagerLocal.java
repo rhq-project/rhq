@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2014 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * Local interface to the manager responsible for creating and managing bundles.
@@ -392,5 +393,13 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      */
     BundleDeployment scheduleBundleDeploymentInNewTransaction(Subject subject, int bundleDeploymentId,
         boolean isCleanDeployment, boolean isRevert, Integer revertedDeploymentReplacedDeployment) throws Exception;
+
+    /**
+     * Deletes all Bundles, Bundle types connected to given resource type
+     * @param subject
+     * @param resourceType
+     * @throws Exception
+     */
+    void deleteMetadata(Subject subject, ResourceType resourceType) throws Exception;
 
 }

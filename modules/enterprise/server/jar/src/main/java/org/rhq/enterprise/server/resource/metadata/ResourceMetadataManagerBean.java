@@ -58,6 +58,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -123,6 +124,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private PluginConfigurationMetadataManagerLocal pluginConfigMetadataMgr;
+
+    @EJB
+    private BundleManagerLocal bundleMgr;
 
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void updateTypes(Set<ResourceType> resourceTypes) throws Exception {
@@ -252,6 +256,15 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         entityManager.merge(existingType);
 
         contentMetadataMgr.deleteMetadata(subject, existingType);
+
+        entityManager.flush();
+        existingType = entityManager.find(existingType.getClass(), existingType.getId());
+
+        try {
+            bundleMgr.deleteMetadata(subject, existingType);
+        } catch (Exception e) {
+            throw new RuntimeException("Bundle metadata deletion failed. Cannot finish deleting " + existingType, e);
+        }
 
         entityManager.flush();
         existingType = entityManager.find(existingType.getClass(), existingType.getId());

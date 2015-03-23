@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2014 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -2762,5 +2762,28 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             result.put(bundleGroup, assigned);
         }
         return result;
+    }
+
+    @Override
+    public void deleteMetadata(Subject subject, ResourceType resourceType) throws Exception {
+
+        // disconnect from explicitly targeting bundle types
+        for (BundleType bundleType : resourceType.getExplicitlyTargetingBundleTypes()) {
+            bundleType.getExplicitlyTargetedResourceTypes().remove(resourceType);
+            entityManager.merge(bundleType);
+        }
+        resourceType.getExplicitlyTargetingBundleTypes().clear();
+
+        // if our resourceType has associated bundleType, sadly we have to delete all bundles of that type
+        if (resourceType.getBundleType() != null) {
+            BundleType toRemove = resourceType.getBundleType();
+            BundleCriteria criteria = new BundleCriteria();
+            criteria.addFilterBundleTypeId(toRemove.getId());
+            for (Bundle bundle : bundleManager.findBundlesByCriteria(subject, criteria)) {
+                deleteBundle(subject, bundle.getId());
+            }
+            entityManager.remove(toRemove);
+        }
+
     }
 }

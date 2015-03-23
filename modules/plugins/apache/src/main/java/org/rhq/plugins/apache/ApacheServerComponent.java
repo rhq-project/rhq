@@ -21,13 +21,20 @@ package org.rhq.plugins.apache;
 import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.net.URLConnection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,10 +63,12 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -105,6 +114,7 @@ import org.rhq.rhqtransform.AugeasRHQComponent;
  *
  * @author Ian Springer
  * @author Lukas Krejci
+ * @author Maxime Beck (Remplacement of the SNMP Module with mod_bmx)
  */
 public class ApacheServerComponent implements AugeasRHQComponent, ResourceComponent<PlatformComponent>,
     MeasurementFacet, OperationFacet, ConfigurationFacet, CreateChildResourceFacet {
@@ -121,6 +131,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     public static final String PLUGIN_CONFIG_PROP_EXECUTABLE_PATH = "executablePath";
     public static final String PLUGIN_CONFIG_PROP_CONTROL_SCRIPT_PATH = "controlScriptPath";
     public static final String PLUGIN_CONFIG_PROP_URL = "url";
+    public static final String PLUGIN_CONFIG_PROP_BMX_URL = "bmxUrl";
     public static final String PLUGIN_CONFIG_PROP_HTTPD_CONF = "configFile";
     public static final String AUGEAS_HTTP_MODULE_NAME = "Httpd";
 
@@ -166,6 +177,10 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     private static final String[] CONTROL_SCRIPT_PATHS = { "bin/apachectl", "sbin/apachectl", "bin/apachectl2",
         "sbin/apachectl2" };
 
+    private String bmxUrl;
+    private boolean useBMX = false;
+    static Pattern typePattern = Pattern.compile(".*Type=([\\w-]+),.*");
+
     private ResourceContext<PlatformComponent> resourceContext;
     private EventContext eventContext;
     private SNMPClient snmpClient;
@@ -175,7 +190,6 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     private boolean augeasErrorLogged;
 
     private Map<String, String> moduleNames;
-
     /**
      * Delegate instance for handling all calls to invoke operations on this component.
      */
@@ -190,8 +204,9 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
         this.eventContext = resourceContext.getEventContext();
         this.snmpClient = new SNMPClient();
 
+        boolean configured = false;
+
         try {
-            boolean configured = false;
 
             SNMPSession snmpSession = getSNMPSession();
             if (!snmpSession.ping()) {
@@ -201,7 +216,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                     + ". Make sure\n1) the managed Apache server has been instrumented with the JON SNMP module,\n"
                     + "2) the Apache server is running, and\n"
                     + "3) the SNMP agent host, port, and community are set correctly in this resource's connection properties.\n"
-                    + "The agent will not be able to record metrics from apache httpd without SNMP");
+                    + "The agent might not be able to record metrics from apache httpd without SNMP");
             } else {
                 configured = true;
             }
@@ -209,10 +224,13 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
             String url = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_URL, null);
             if (url != null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Checking url " + bmxUrl);
+                }
                 try {
                     this.url = new URL(url);
                     if (this.url.getPort() == 0) {
-                        LOG.error("The 'url' connection property is invalid - 0 is not a valid port; please change the value to the "
+                        LOG.error("The 'URL' connection property is invalid - 0 is not a valid port; please change the value to the "
                             + "port the \"main\" Apache server is listening on. NOTE: If the 'url' property was set this way "
                             + "after autodiscovery, you most likely did not include the port in the ServerName directive for "
                             + "the \"main\" Apache server in httpd.conf.");
@@ -225,9 +243,52 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                 }
             }
 
+            bmxUrl = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_BMX_URL, null);
+            if (bmxUrl != null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Checking BMX url " + bmxUrl);
+                }
+                try {
+                    URL uurl = new URL(bmxUrl);
+                    if (uurl.getPort() == 0) {
+                        LOG.error("The 'BMX Handler' connection property is invalid - 0 is not a valid port; please change the value to the "
+                            + "port the Apache server is listening on.");
+                    } else {
+                        if (this.url == null) {
+                            this.url = uurl;
+                            configured = true;
+                        }
+                    }
+                } catch (MalformedURLException e) {
+                    throw new InvalidPluginConfigurationException("Value of '" + PLUGIN_CONFIG_PROP_BMX_URL
+                        + "' connection property ('" + bmxUrl + "') is not a valid URL.");
+                }
+            }
+            if (bmxUrl != null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Testing BMX connection on " + bmxUrl);
+                }
+                try {
+                    /* Check the BMX URL and use it if available */
+                    URL uurl = new URL(bmxUrl);
+                    HttpURLConnection conn = (HttpURLConnection) uurl.openConnection();
+                    conn.connect();
+                    if (conn.getResponseCode() == 200) {
+                        useBMX = true;
+                        LOG.info("BMX will be used to check availability");
+                    }
+                    conn.disconnect();
+                } catch (Exception ex) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("BMX connection fails on " + bmxUrl + " with " + ex);
+                    }
+                }
+            }
+
+
             if (!configured) {
                 throw new InvalidPluginConfigurationException(
-                    "Neither SNMP nor an URL for checking availability has been configured");
+                    "Neither SNMP, BMX nor an URL for checking availability has been configured");
             }
 
             File executablePath = getExecutablePath();
@@ -268,6 +329,9 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
             startEventPollers();
         } catch (Exception e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Initializing Resource component for Apache Server failed: " + e);
+            }
             if (this.snmpClient != null) {
                 this.snmpClient.close();
             }
@@ -284,6 +348,14 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             this.snmpClient.close();
         }
         this.lastKnownAvailability = null;
+    }
+
+    public String getBMXUrl() {
+        return bmxUrl;
+    }
+
+    public boolean getUseBMX() {
+        return useBMX;
     }
 
     public AvailabilityType getAvailability() {
@@ -346,6 +418,12 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
+        if (useBMX)
+            getBMXValues(report, schedules);
+        else
+            getSNMPValues(report, schedules);
+    }
+    private void getSNMPValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
         SNMPSession snmpSession = getSNMPSession();
         boolean snmpPresent = snmpSession.ping();
 
@@ -387,6 +465,163 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             }
         }
     }
+    private void getBMXValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
+         Map<String,String> values = parseBMXInput(null, this.getBMXUrl());
+         if (LOG.isDebugEnabled()) {
+                 LOG.debug("BMX map: " + values);
+         }
+
+         for (MeasurementScheduleRequest schedule : schedules) {
+             String metricName = convertStringToBMX(schedule.getName());
+             if (LOG.isDebugEnabled()) {
+                 LOG.debug("Collecting BMX metric [" + metricName + "]");
+             }
+             if (metricName.equals(SERVER_BUILT_TRAIT)) {
+                 MeasurementDataTrait trait = new MeasurementDataTrait(schedule, this.binaryInfo.getBuilt());
+                 report.addData(trait);
+             } else if (metricName.equals("rhq_avail_ping_time")) {
+                 if (availPingTime == -1)
+                     continue; // Skip if we have no data
+                 MeasurementDataNumeric num = new MeasurementDataNumeric(schedule, (double) availPingTime);
+                 report.addData(num);
+             } else if (values.containsKey(metricName)) {
+                 if (schedule.getDataType()== DataType.TRAIT) {
+                    String val = values.get(metricName);
+                    MeasurementDataTrait mdt = new MeasurementDataTrait(schedule,val);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Collected BMX metric [" + metricName + "], value = " + val);
+                    }
+                    report.addData(mdt);
+                 } else {
+                    String s = values.get(metricName);
+                    if (s.endsWith("u"))
+                        s = s.substring(0,s.length()-1);
+                    Double val = Double.valueOf(s);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Collected BMX metric [" + metricName + "], value = " + val);
+                    }
+                    MeasurementDataNumeric mdn = new MeasurementDataNumeric(schedule,val);
+                    report.addData(mdn);
+                 }
+             } else {
+                 LOG.warn("BMX metric [" + metricName + "] not found");
+             }
+         }
+    }
+
+    /* Convert the snmp name into the BMX one */
+    public static String convertStringToBMX(String string) {
+        if (string.equals("wwwServiceName"))
+            return "global:ServerName";
+        if (string.equals("wwwServiceStartTime"))
+            return "global:RestartTime";
+        if (string.equals("applInboundAssociations"))
+            return "global:BusyWorkers";
+        if (string.startsWith("wwwSummary")) {
+            return "forever:" + string.substring(10);
+        } else if (string.startsWith("wwwRequest")) {
+            int index =  string.indexOf('.');
+            return "restart:" + string.substring(10, index) +  string.substring(index+1);
+        } else if (string.startsWith("wwwResponse")) {
+            int index =  string.indexOf('.');
+            return "restart:" + string.substring(11, index) +  string.substring(index+1);
+        }
+        return string;
+    }
+    
+    public static Map<String, String> parseBMXInput(String vHost, String bmxUrl) throws Exception {
+        Map<String,String> ret = new HashMap<String, String>();
+    	// TODO do some clever caching of data here, so that we won't hammer mod_bmx
+        URL url = new URL(bmxUrl);
+        URLConnection conn = url.openConnection();
+        BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+
+        String line;
+
+        try {
+            while ((line = reader.readLine())!=null) {
+
+                if (!line.startsWith("Name: mod_bmx_"))
+                    continue;
+
+                // Skip over sample data - this is no real module
+                if (line.contains("mod_bmx_example"))
+                    continue;
+
+                // Now we have a modules output
+
+                // check for the status module
+                if (line.contains("mod_bmx_status")) {
+                    slurpSection(ret,reader,"global");
+                    continue;
+                }
+
+
+                // If the section does not match our vhost, ignore it.
+                // RHQ will do 3 kinds of vHost:
+                // null = Guessing Host=_GLOBAL_
+                // MainServer = ignore the Host and use Port=_ANY_
+                // |*:6666 = ignore the Host and use Port=6666
+                // neo4|*:7777 = Use the Host and ignore the Port.
+                if (vHost == null) {
+                    if (!line.contains("Host=_GLOBAL_,"))
+                        continue;
+                } else if (vHost.startsWith("|")) {
+                    if (line.contains("Host=_GLOBAL_,"))
+                        continue;
+                    String port = vHost.substring(vHost.indexOf(':')+1);
+                    if (!line.endsWith("Port=" + port))
+                        continue;
+                } else if (vHost.equals("MainServer")) {
+                    if (line.contains("Host=_GLOBAL_,"))
+                        continue;
+                    if (!line.endsWith("Port=_ANY_"))
+                        continue;
+                } else {
+                    if (line.contains("Host=_GLOBAL_,"))
+                        continue;
+                    String host = vHost.substring(0,vHost.indexOf('|'));
+                    if (!line.contains("Host=" + host + ","))
+                        continue;
+                }
+
+                // Now some global data
+                Matcher m = typePattern.matcher(line);
+
+                if (m.matches()) {
+                    String type = m.group(1);
+                    if (type.contains("-"))
+                        type= type.substring(type.indexOf("-")+1);
+
+                    slurpSection(ret, reader, type);
+                }
+                if (line.contains("Type=info,"))
+                    break; // We are done with the VirtualHost.
+            }
+        } catch (Exception e) {
+                 LOG.warn("parseBMXInput failed" + e);
+                 throw e;
+        } finally {
+            try {
+                 in.close();
+            } catch (Exception e) {
+                 // Ignore it.
+            }
+        }
+
+        return ret;
+    }
+    
+    private static void slurpSection(Map<String, String> ret, BufferedReader reader, String type) throws IOException {
+        String line;
+        while (!(line = reader.readLine()).equals("")) {
+            int pos = line.indexOf(":");
+            String key = line.substring(0,pos);
+            String val = line.substring(pos+2);
+            ret.put(type + ":" + key , val);
+        }
+    }    
 
     private boolean isValueTimestamp(String mibName) {
         return (mibName.equals("wwwServiceStartTime"));
@@ -832,9 +1067,14 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
     @NotNull
     public ConfigurationTimestamp getConfigurationTimestamp() {
-        AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getTemporaryDirectory()
-            .getAbsolutePath(), resourceContext.getPluginConfiguration());
-        return new ConfigurationTimestamp(config.getAllConfigurationFiles());
+        ApacheDirectiveTree tree = parseRuntimeConfiguration(true);
+        Set<String> paths = tree.getAllPaths();
+        Set<File> files = new HashSet<File>(paths.size());
+        for (String p : paths) {
+            files.add(new File(p));
+        }
+
+        return new ConfigurationTimestamp(files);
     }
 
     /**
@@ -1051,11 +1291,15 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     }
 
     public ApacheDirectiveTree parseRuntimeConfiguration(boolean suppressUnknownModuleWarnings) {
+        return parseRuntimeConfiguration(suppressUnknownModuleWarnings,false);
+    }
+    
+    public ApacheDirectiveTree parseRuntimeConfiguration(boolean suppressUnknownModuleWarnings, boolean keepConditional) {
         String httpdConfPath = getHttpdConfFile().getAbsolutePath();
         ProcessInfo processInfo = resourceContext.getNativeProcess();
 
         return ApacheServerDiscoveryComponent.parseRuntimeConfiguration(httpdConfPath, processInfo, binaryInfo,
-            getModuleNames(), suppressUnknownModuleWarnings);
+            getModuleNames(), suppressUnknownModuleWarnings, keepConditional);
     }
 
     public boolean isAugeasEnabled() {

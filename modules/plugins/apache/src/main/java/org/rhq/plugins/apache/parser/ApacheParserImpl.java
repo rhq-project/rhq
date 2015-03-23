@@ -39,7 +39,7 @@ public class ApacheParserImpl implements ApacheParser {
     private ApacheDirectiveStack stack;
     private String serverRootPath;
     private RuntimeApacheConfiguration.NodeInspector nodeInspector;
-
+    
     /**
      * 
      * @param tree the tree that this parser will fill in
@@ -98,13 +98,22 @@ public class ApacheParserImpl implements ApacheParser {
                 //ok, this node should be ignored, mark that fact with a null parent
                 stack.addDirective(null);
             } else if (res.nodeIsConditional && res.shouldRecurseIntoConditionalNode) {
-                //this is a little tricky..
-                //we need to leave out this directive, because it is conditional and we should be replacing it with its contents
-                //but also we need to keep the stack balanced (i.e. we're going down a nested directive, so we ought to put something
-                //on the stack). By duplicating the last known directive on the stack we actually achieve both of the goals - the 
-                //stack remains balanced and the child nodes get added to the parent of this directive (i.e. in the end it is going to
-                //look like we've replaced the directive with its child directives).
-                stack.addDirective(stack.getLastDirective());
+                if(!nodeInspector.keepConditional) {
+                    //this is a little tricky..
+                    //we need to leave out this directive, because it is conditional and we should be replacing it with its contents
+                    //but also we need to keep the stack balanced (i.e. we're going down a nested directive, so we ought to put something
+                    //on the stack). By duplicating the last known directive on the stack we actually achieve both of the goals - the 
+                    //stack remains balanced and the child nodes get added to the parent of this directive (i.e. in the end it is going to
+                    //look like we've replaced the directive with its child directives).
+                    stack.addDirective(stack.getLastDirective());
+                } else {
+                    //add valid conditional node
+                    if (stack.getLastDirective() != null) {
+                        directive.setParentNode(stack.getLastDirective());
+                        stack.getLastDirective().addChildDirective(directive);
+                    }
+                    stack.addDirective(directive);
+                }
             } else {
                 //ok, a "normal" (non-conditional) nested node
                 //we might be inside an ignored nested directive, so leave all the weaving stuff

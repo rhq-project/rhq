@@ -290,7 +290,7 @@
     <rhq.pom.version>4.12.0.JON330GA</rhq.pom.version>
     <rhq-code-coverage.version>${rhq.pom.version}</rhq-code-coverage.version>
     <rhq-cli-tests.version>${rhq.pom.version}</rhq-cli-tests.version>
-    <rhq-ant-bundle-common.version>${rhq.pom.version}</rhq-ant-bundle-common.version>
+    <rhq-ant-bundle-common.version>${rhq.pom.version}-redhat-1</rhq-ant-bundle-common.version>
     <rhq-cassandra-auth.version>${rhq.pom.version}</rhq-cassandra-auth.version>
     <rhq-cassandra-ccm-arquillian.version>${rhq.pom.version}</rhq-cassandra-ccm-arquillian.version>
     <rhq-cassandra-ccm-core.version>${rhq.pom.version}</rhq-cassandra-ccm-core.version>
@@ -298,7 +298,7 @@
     <rhq-cassandra-ccm-testng.version>${rhq.pom.version}</rhq-cassandra-ccm-testng.version>
     <rhq-cassandra-ccm.version>${rhq.pom.version}</rhq-cassandra-ccm.version>
     <rhq-cassandra-installer.version>${rhq.pom.version}</rhq-cassandra-installer.version>
-    <rhq-cassandra-schema.version>${rhq.pom.version}</rhq-cassandra-schema.version>
+    <rhq-cassandra-schema.version>${rhq.pom.version}-redhat-1</rhq-cassandra-schema.version>
     <rhq-cassandra-util.version>${rhq.pom.version}</rhq-cassandra-util.version>
     <rhq-common-drift.version>${rhq.pom.version}</rhq-common-drift.version>
     <rhq-filetemplate-bundle-common.version>${rhq.pom.version}</rhq-filetemplate-bundle-common.version>
@@ -1861,7 +1861,7 @@
 
   <repositories>
 
-    <!-- spinder 3-4-15: removing this repo until invalid artifacts are removed.
+    <!-- spinder 3-5-15: removing repository with bad artifacts.
     <repository>
        <id>eap</id>
        <name>EAP Repository</name>

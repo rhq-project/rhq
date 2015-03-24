@@ -37,7 +37,8 @@ public enum JBossProductType {
     JPP("JPP", "JBoss JPP 6", "JBoss Portal Platform 6", "Portal Platform"),
     SOA("SOA-P", "JBoss SOA-P 6", "Red Hat JBoss Fuse Service Works", "Red Hat JBoss Fuse Service Works"),
     WILDFLY8("WildFly", "WildFly 8", "WildFly Application Server 8", "WildFly"),
-    BRMS("BRMS", "JBoss BRMS", "Red Hat JBoss BRMS", "BRMS");
+    BRMS("BRMS", "JBoss BRMS", "Red Hat JBoss BRMS", "BRMS"),
+    BPMS("BPM Suite", "JBoss BPM Suite", "Red Hat JBoss BPM Suite", "BPM Suite");
 
     public final String SHORT_NAME;
     public final String NAME;
@@ -133,6 +134,8 @@ public enum JBossProductType {
                 productType = JBossProductType.SOA;
             } else if (slot.equals("brms")) {
                 productType = JBossProductType.BRMS;
+            } else if (slot.equals("bpms")) {
+                productType = JBossProductType.BPMS;
             } else {
                 throw new RuntimeException("Unknown product type: " + slot);
             }

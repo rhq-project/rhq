@@ -27,9 +27,10 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 
 /**
  * 
- * @author Stefan Negrea
+ * @author Stefan Negrea, Maxime Beck
  */
-public class ModClusterServiceComponent extends FileConfiguredMBeanResourceComponent {
+
+public class ModClusterServiceComponent extends CatalinaServiceComponent {
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {

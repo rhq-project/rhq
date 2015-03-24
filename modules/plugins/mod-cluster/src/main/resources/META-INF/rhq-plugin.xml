@@ -1,521 +1,518 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <plugin name="mod_cluster" displayName="mod_cluster" description="Monitoring and management of mod_cluster plugin." package="org.rhq.plugins.modcluster" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-plugin"
-   xmlns:c="urn:xmlns:rhq-configuration">
+        xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="JMX" />
+    <depends plugin="JMX" />
 
-   <service name="mod_cluster" 
-        discovery="ModClusterDiscoveryComponent" 
-        class="ModClusterServerComponent" 
-        supportsManualAdd="true" description="mod_cluster plugin" singleton="true">
+    <service name="mod_cluster"
+             discovery="ModClusterDiscoveryComponent"
+             class="ModClusterServerComponent"
+             supportsManualAdd="true" description="mod_cluster plugin" singleton="true">
 
-      <runs-inside>
-         <parent-resource-type name="JBossAS Server" plugin="JBossAS" />
-         <parent-resource-type name="JBossAS Server" plugin="JBossAS5" />
-         <parent-resource-type name="Tomcat Server" plugin="Tomcat" />
-      </runs-inside>
+        <runs-inside>
+            <parent-resource-type name="JBossAS Server" plugin="JBossAS" />
+            <parent-resource-type name="JBossAS Server" plugin="JBossAS5" />
+            <parent-resource-type name="Tomcat Server" plugin="Tomcat" />
+        </runs-inside>
 
-      <plugin-configuration>
-         <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*|jboss.web:service=ModCluster" />
-         <c:simple-property name="engineObjectName" readOnly="true" default="jboss.web:type=Engine|Catalina:type=Engine" />
-         <c:simple-property name="nameTemplate" default="mod_cluster" />
-         <c:simple-property name="modclusterConfigFile"/>
-      </plugin-configuration>
+        <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*|jboss.web:service=ModCluster" />
+            <c:simple-property name="engineObjectName" readOnly="true" default="jboss.web:type=Engine|Catalina:type=Engine" />
+            <c:simple-property name="nameTemplate" default="mod_cluster" />
+        </plugin-configuration>
 
-      <operation name="reset" displayName="Reset the node" description="Move this application server out of an error state." />
-      <operation name="refresh" displayName="Refresh configuration" description="Refresh configuration for this application server." />
-      
-      <metric property="ProxyInformation" displayName="Proxy Information" displayType="summary" dataType="trait" />
-      
+        <operation name="reset" displayName="Reset the node" description="Move this application server out of an error state." />
+        <operation name="storeconfig" displayName="Store Configuration" description="Store configuration for this application server." />
 
-      <!-- Start - Configuration for HAModClusterService -->
-      <service name="HA Service" discovery="ClassNameMBeanDiscoveryComponent" 
-        class="ModClusterServiceComponent" 
-        supportsManualAdd="true" 
-        description="HA Service" singleton="true">
+        <metric property="ProxyInformation" displayName="Proxy Information" displayType="summary" dataType="trait" />
 
-         <plugin-configuration>
-            <c:simple-property name="objectName" readOnly="true" default="jboss.web:service=ModCluster" />
-            <c:simple-property name="nameTemplate" default="HA Service" />
-            <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.ha.HAModClusterService" />
-            <c:simple-property name="proxyInfoProperty" readOnly="true" default="ProxyInfo" />
-         </plugin-configuration>
 
-         <!-- HA Operations -->
-         <operation name="disableDomain" displayName="Disable domain" description="Disables all contexts on each node within the current domain. If the current domain is null, then all nodes are stopped.">
-            <results>
-               <c:simple-property name="operationResult" description="The result of the operation" />
-            </results>
-         </operation>
-         <operation name="enableDomain" displayName="Enable domain" description="Enable all contexts on each node within the current domain. If the current domain is null, then all nodes are stopped.">
-            <results>
-               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
-            </results>
-         </operation>
-         <operation name="stopDomain" displayName="Stop domain" description="Gracefully stops all contexts on each node within the current domain. If the current domain is null, then all nodes are stopped.">
-            <parameters>
-               <c:simple-property required="true" name="p1" type="string" displayName="The number of units of time for which to wait for all sessions to drain on a given node." />
-               <c:simple-property required="true" name="p2" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
-                  <c:property-options allowCustomValue="false">
-                     <c:option value="MICROSECONDS" name="MICROSECONDS" />
-                     <c:option value="MILLISECONDS" name="MILLISECONDS" />
-                     <c:option value="NANOSECONDS" name="NANOSECONDS" />
-                     <c:option value="SECONDS" name="SECONDS" />
-                     <c:option value="HOURS" name="HOURS" />
-                     <c:option value="DAYS" name="DAYS" />
-                  </c:property-options>
-               </c:simple-property>
-            </parameters>
-            <results>
-               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
-            </results>
-         </operation>
+        <!-- Start - Configuration for HAModClusterService -->
+        <service name="HA Service" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="ModClusterServiceComponent"
+                 supportsManualAdd="true"
+                 description="HA Service" singleton="true">
 
-         <!-- Regular Operations -->
+            <plugin-configuration>
+                <c:simple-property name="objectName" default="Catalina:type=ModClusterListener,*|jboss.web:service=ModCluster" />
+                <c:simple-property name="nameTemplate" default="HA Service" />
+                <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.ha.HAModClusterService" />
+                <c:simple-property name="proxyInfoProperty" readOnly="true" default="ProxyInfo" />
+            </plugin-configuration>
 
-         <operation name="pingHTTPD" displayName="Ping httpd" description="Ping httpd and determine whether each proxy is accessible and healthy. Returns the PING_RSP grouped by proxy address.">
-            <results>
-               <c:simple-property name="operationResult" description="Map of PING_RPS response, grouped by proxy.">
-               </c:simple-property>
-            </results>
-         </operation>
-         <operation name="pingNodeByJVMRoute" displayName="Ping node by JVM Route"
-            description="Ping a node from httpd and returns the PING_RSP grouped by proxy address. Dtermines whether the node configured with the specified jvm route is accessible from each proxy returning the PING_RSP grouped by proxy address.">
-            <parameters>
-               <c:simple-property required="true" name="p1" type="string" displayName="JVM Route of node to ping." />
-            </parameters>
-            <results>
-               <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
-            </results>
-         </operation>
-         <operation name="pingNodeByAddress" displayName="Ping node by address"
-            description="Ping a node from httpd and returns the PING_RSP grouped by proxy address. Determines whether the node configured with the specified jvm route is accessible from each proxy returning the PING_RSP grouped by proxy address.">
-            <parameters>
-               <c:simple-property required="true" name="p1" type="string" displayName="Scheme (ajp, http, https)" />
-               <c:simple-property required="true" name="p2" type="string" displayName="Name or ip address of a node." />
-               <c:simple-property required="true" name="p3" type="integer" displayName="Port" />
-            </parameters>
-            <results>
-               <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
-            </results>
-         </operation>
+            <!-- HA Operations -->
+            <operation name="disableDomain" displayName="Disable domain" description="Disables all contexts on each node within the current domain. If the current domain is null, then all nodes are stopped.">
+                <results>
+                    <c:simple-property name="operationResult" description="The result of the operation" />
+                </results>
+            </operation>
+            <operation name="enableDomain" displayName="Enable domain" description="Enable all contexts on each node within the current domain. If the current domain is null, then all nodes are stopped.">
+                <results>
+                    <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
+                </results>
+            </operation>
+            <operation name="stopDomain" displayName="Stop domain" description="Gracefully stops all contexts on each node within the current domain. If the current domain is null, then all nodes are stopped.">
+                <parameters>
+                    <c:simple-property required="true" name="p1" type="string" displayName="The number of units of time for which to wait for all sessions to drain on a given node." />
+                    <c:simple-property required="true" name="p2" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
+                        <c:property-options allowCustomValue="false">
+                            <c:option value="MICROSECONDS" name="MICROSECONDS" />
+                            <c:option value="MILLISECONDS" name="MILLISECONDS" />
+                            <c:option value="NANOSECONDS" name="NANOSECONDS" />
+                            <c:option value="SECONDS" name="SECONDS" />
+                            <c:option value="HOURS" name="HOURS" />
+                            <c:option value="DAYS" name="DAYS" />
+                        </c:property-options>
+                    </c:simple-property>
+                </parameters>
+                <results>
+                    <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
+                </results>
+            </operation>
 
-         <operation name="addProxy" displayName="Add a proxy" description="Add a proxy.">
-            <parameters>
-               <c:simple-property required="true" name="p1" type="string" displayName="Proxy address" />
-               <c:simple-property required="true" name="p2" type="integer" displayName="Proxy port" />
-            </parameters>
-         </operation>
-         <operation name="removeProxy" displayName="Remove a proxy" description="Remove a proxy.">
-            <parameters>
-               <c:simple-property required="true" name="p1" type="string" displayName="Proxy address" />
-               <c:simple-property required="true" name="p2" type="integer" displayName="Proxy port" />
-            </parameters>
-         </operation>
-         
-         <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all virtual hosts of this application server.">
-            <results>
-               <c:simple-property name="operationResult" description="The result of the operation">
-               </c:simple-property>
-            </results>
-         </operation>
-         <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all virtual hosts of this application server.">
-            <results>
-               <c:simple-property name="operationResult" description="The result of the operation">
-               </c:simple-property>
-            </results>
-         </operation>
-         <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all virtual hosts of this application server.">
-            <parameters>
-               <c:simple-property required="true" name="p1" type="string" displayName="Session draining timeout" />
-               <c:simple-property required="true" name="p2" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
-                  <c:property-options allowCustomValue="false">
-                     <c:option value="MICROSECONDS" name="MICROSECONDS" />
-                     <c:option value="MILLISECONDS" name="MILLISECONDS" />
-                     <c:option value="NANOSECONDS" name="NANOSECONDS" />
-                     <c:option value="SECONDS" name="SECONDS" />
-                     <c:option value="HOURS" name="HOURS" />
-                     <c:option value="DAYS" name="DAYS" />
-                  </c:property-options>
-               </c:simple-property>
-            </parameters>
-            <results>
-               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
-            </results>
-         </operation>
+            <!-- Regular Operations -->
 
-         <metric property="MasterNode" displayName="Master Node" displayType="summary" dataType="trait" />
-         <metric property="ProxyConfiguration" displayName="Proxy Configuration" displayType="summary" dataType="trait" />
-         <metric property="ProxyInfo" displayName="Proxy Info" displayType="summary" dataType="trait" />
+            <operation name="pingHTTPD" displayName="Ping httpd" description="Ping httpd and determine whether each proxy is accessible and healthy. Returns the PING_RSP grouped by proxy address.">
+                <results>
+                    <c:simple-property name="operationResult" description="Map of PING_RPS response, grouped by proxy.">
+                    </c:simple-property>
+                </results>
+            </operation>
+            <operation name="pingNodeByJVMRoute" displayName="Ping node by JVM Route"
+                       description="Ping a node from httpd and returns the PING_RSP grouped by proxy address. Dtermines whether the node configured with the specified jvm route is accessible from each proxy returning the PING_RSP grouped by proxy address.">
+                <parameters>
+                    <c:simple-property required="true" name="p1" type="string" displayName="JVM Route of node to ping." />
+                </parameters>
+                <results>
+                    <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
+                </results>
+            </operation>
+            <operation name="pingNodeByAddress" displayName="Ping node by address"
+                       description="Ping a node from httpd and returns the PING_RSP grouped by proxy address. Determines whether the node configured with the specified jvm route is accessible from each proxy returning the PING_RSP grouped by proxy address.">
+                <parameters>
+                    <c:simple-property required="true" name="p1" type="string" displayName="Scheme (ajp, http, https)" />
+                    <c:simple-property required="true" name="p2" type="string" displayName="Name or ip address of a node." />
+                    <c:simple-property required="true" name="p3" type="integer" displayName="Port" />
+                </parameters>
+                <results>
+                    <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
+                </results>
+            </operation>
 
-         <resource-configuration>
-            <c:simple-property name="processStatusFrequency" type="integer" required="false" description="Process status frequency." />
-         </resource-configuration>
-      </service>
+            <operation name="addProxy" displayName="Add a proxy" description="Add a proxy.">
+                <parameters>
+                    <c:simple-property required="true" name="p1" type="string" displayName="Proxy address" />
+                    <c:simple-property required="true" name="p2" type="integer" displayName="Proxy port" />
+                </parameters>
+            </operation>
+            <operation name="removeProxy" displayName="Remove a proxy" description="Remove a proxy.">
+                <parameters>
+                    <c:simple-property required="true" name="p1" type="string" displayName="Proxy address" />
+                    <c:simple-property required="true" name="p2" type="integer" displayName="Proxy port" />
+                </parameters>
+            </operation>
 
-      <service name="HA Service Configuration" discovery="ClassNameMBeanDiscoveryComponent" class="FileConfiguredMBeanResourceComponent" supportsManualAdd="true" 
-            description="HA Service Configuration" singleton="true">
+            <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all virtual hosts of this application server.">
+                <results>
+                    <c:simple-property name="operationResult" description="The result of the operation">
+                    </c:simple-property>
+                </results>
+            </operation>
+            <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all virtual hosts of this application server.">
+                <results>
+                    <c:simple-property name="operationResult" description="The result of the operation">
+                    </c:simple-property>
+                </results>
+            </operation>
+            <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all virtual hosts of this application server.">
+                <parameters>
+                    <c:simple-property required="true" name="p1" type="string" displayName="Session draining timeout" />
+                    <c:simple-property required="true" name="p2" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
+                        <c:property-options allowCustomValue="false">
+                            <c:option value="MICROSECONDS" name="MICROSECONDS" />
+                            <c:option value="MILLISECONDS" name="MILLISECONDS" />
+                            <c:option value="NANOSECONDS" name="NANOSECONDS" />
+                            <c:option value="SECONDS" name="SECONDS" />
+                            <c:option value="HOURS" name="HOURS" />
+                            <c:option value="DAYS" name="DAYS" />
+                        </c:property-options>
+                    </c:simple-property>
+                </parameters>
+                <results>
+                    <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
+                </results>
+            </operation>
 
-         <plugin-configuration>
-            <c:simple-property name="objectName" readOnly="true" default="jboss.web:service=ModCluster" />
-            <c:simple-property name="nameTemplate" default="HA Service Configuration" />
-            <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.ha.HAModClusterService" />
-            <c:simple-property name="dependencyClassName" readOnly="true" default="org.jboss.modcluster.config.ha.HAModClusterConfig" />
-            <c:simple-property name="proxyInfoProperty" readOnly="true" default="ProxyInfo" />
-         </plugin-configuration>
+            <metric property="MasterNode" displayName="Master Node" displayType="summary" dataType="trait" />
+            <metric property="ProxyConfiguration" displayName="Proxy Configuration" displayType="summary" dataType="trait" />
+            <metric property="ProxyInfo" displayName="Proxy Info" displayType="summary" dataType="trait" />
 
-         <resource-configuration>
+            <resource-configuration>
+                <c:simple-property name="processStatusFrequency" type="integer" required="false" description="Process status frequency." />
+            </resource-configuration>
+        </service>
 
-            <!-- HA Configuration -->
-            <c:simple-property name="masterPerLoadBalancingGroup" type="boolean" required="false" description="Enable current node to be master in the load balancing group." />
+        <service name="HA Service Configuration" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="CatalinaServiceComponent" supportsManualAdd="true"
+                 description="HA Service Configuration" singleton="true">
 
-            <!-- Handler Configuration -->
-            <c:simple-property name="advertise" type="boolean" required="false" default="false" description="Enable autodiscovery of httpd servers." />
-            <c:simple-property name="advertiseGroupAddress" type="string" description="Multicast address on which to listen for advertisements." />
-            <c:simple-property name="advertisePort" type="string" required="false" description="Multicast port for discovery" />
-            <c:simple-property name="advertiseInterface" type="string" required="false" description="Multicast interface for discovery" />
-            <c:simple-property name="advertiseSecurityKey" type="string" required="false" description="Security key for discovery." />
-            <c:simple-property name="proxyList" type="string" required="false" description="Comma separated list of address:port listing the httpd servers where mod_cluster is running." />
-            <c:simple-property name="proxyURL" type="string" required="false" description="URL prefix to send with commands to mod_cluster.  Default is no prefix." />
-            <c:simple-property name="socketTimeout" type="integer" required="false" description="Connection timeout for communication with the proxy." />
-            <c:simple-property name="excludedContexts" type="string" required="false" description="Comma delimited list of contexts that should *not* be auto-registered with httpd. Contexts may be qualified by host using a colon, e.g. host1:context1. If no host is defined, localhost is assumed." />
-            <c:simple-property name="autoEnableContexts" type="boolean" required="false" default="true" description="Toggle for context auto-enable during mod_cluster startup." />
+            <plugin-configuration>
+                <c:simple-property name="objectName" default="Catalina:type=ModClusterListener,*|jboss.web:service=ModCluster" />
+                <c:simple-property name="nameTemplate" default="HA Service Configuration" />
+                <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.ha.HAModClusterService" />
+                <c:simple-property name="dependencyClassName" readOnly="true" default="org.jboss.modcluster.config.ha.HAModClusterConfig" />
+                <c:simple-property name="proxyInfoProperty" readOnly="true" default="ProxyInfo" />
+            </plugin-configuration>
 
-            <!-- Node Configuration -->
-            <c:simple-property name="loadBalancingGroup" type="string" required="false" description="Load balancing group." />
-            <c:simple-property name="flushPackets" type="boolean" required="false" description="Allows controlling flusing of packets." />
-            <c:simple-property name="flushWait" type="integer" required="false" description="Time in ms to wait before flushing packets." />
-            <c:simple-property name="ping" type="integer" required="false" description="Time in s to wait for a pong answer to a ping." />
-            <c:simple-property name="smax" type="integer" required="false" description="Maximum time on seconds for idle connections above smax." />
-            <c:simple-property name="ttl" type="integer" required="false" description="TTL" />
-            <c:simple-property name="nodeTimeout" type="integer" required="false" description="Node timeout" />
-            <c:simple-property name="balancer" type="string" required="false" description="Name of the balancer" />
+            <resource-configuration>
 
-            <!-- Balancer Configuration -->
-            <c:simple-property name="stickySession" type="boolean" description="Enables sticky session for the node." />
-            <c:simple-property name="stickySessionRemove" type="boolean" description="Remove session when the request cannot be routed to the right node for this cluster." />
-            <c:simple-property name="stickySessionForce" type="boolean" description="Return an error when the request cannot be routed to the right node." />
-            <c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)." />
-            <c:simple-property name="maxAttempts" type="integer" description="Maximum number of attempts to send the request to the backend server." />
-              
-            <!-- SSL Configuration -->
-            <c:simple-property name="ssl" type="boolean" description="Whether to use SSL to communicate with mod_cluster. Note this has nothing to do with handling of https requests by JBoss Web" />
-            <c:simple-property name="sslCiphers" type="string" required="false" description="SSL ciphers." />
-            <c:simple-property name="sslProtocol" type="string" required="false" description="SSL protocol." />
-            <c:simple-property name="sslCertificateEncodingAlgorithm" type="string" required="false" description="Certificate encoding algorithm." />
-            <c:simple-property name="sslKeyStore" type="string" required="false" description="SSL keystore." />
-            <c:simple-property name="sslKeyStorePassword" type="string" required="false" description="SSL keystore password." />
-            <c:simple-property name="sslKeyStoreType" type="string" required="false" description="SSL keystore type." />
-            <c:simple-property name="sslKeyStoreProvider" type="string" required="false" description="SSL keystore provider." />
-            <c:simple-property name="sslTrustAlgorithm" type="string" required="false" description="Truststore algorithm." />
-            <c:simple-property name="sslKeyAlias" type="string" required="false" description="Key alias." />
-            <c:simple-property name="sslCrlFile" type="string" required="false" description="Certificate revocation list." />
-            <c:simple-property name="sslTrustMaxCertLength" type="string" required="false" description="Trust max certificate length." />
-            <c:simple-property name="sslTrustStore" type="string" required="false" description="Trust store file." />
-            <c:simple-property name="sslTrustStorePassword" type="string" required="false" description="Trust store password." />
-            <c:simple-property name="sslTrustStoreType" type="string" required="false" description="Trust store type." />
-            <c:simple-property name="sslTrustStoreProvider" type="string" required="false" description="Trust store provider." />
-         </resource-configuration>
-      </service>
-      <!-- End - Configuration for HAModClusterService -->
+                <!-- HA Configuration -->
+                <c:simple-property name="masterPerLoadBalancingGroup" type="boolean" required="false" description="Enable current node to be master in the load balancing group." />
 
-      <!-- Start - Configuration for ModClusterService -->
-      <service name="Service" discovery="ClassNameMBeanDiscoveryComponent" class="ModClusterServiceComponent" supportsManualAdd="true" 
-            description="Service" singleton="true">
+                <!-- Handler Configuration -->
+                <c:simple-property name="advertise" type="boolean" required="false" description="Enable autodiscovery of httpd servers." />
+                <c:simple-property name="advertiseGroupAddress" type="string" required="false" description="Multicast address on which to listen for advertisements." />
+                <c:simple-property name="advertisePort" type="integer" required="false" description="Multicast port for discovery" />
+                <c:simple-property name="advertiseInterface" type="string" required="false" description="Multicast interface for discovery" />
+                <c:simple-property name="advertiseSecurityKey" type="string" required="false" description="Security key for discovery." />
+                <c:simple-property name="proxyList" type="string" required="false" description="Comma separated list of address:port listing the httpd servers where mod_cluster is running." />
+                <c:simple-property name="proxyURL" type="string" required="false" description="URL prefix to send with commands to mod_cluster.  Default is no prefix." />
+                <c:simple-property name="socketTimeout" type="integer" required="false" description="Connection timeout for communication with the proxy." />
+                <c:simple-property name="excludedContexts" type="string" required="false" description="Comma delimited list of contexts that should *not* be auto-registered with httpd. Contexts may be qualified by host using a colon, e.g. host1:context1. If no host is defined, localhost is assumed." />
+                <c:simple-property name="autoEnableContexts" type="boolean" required="false" description="Toggle for context auto-enable during mod_cluster startup." />
 
-         <plugin-configuration>
-            <c:simple-property name="objectName" readOnly="true" default="jboss.web:service=ModCluster" />
-            <c:simple-property name="nameTemplate" default="Service" />
-            <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.ModClusterService" />
-            <c:simple-property name="proxyInfoProperty" readOnly="true" default="ProxyInfo" />
-         </plugin-configuration>
+                <!-- Node Configuration -->
+                <c:simple-property name="loadBalancingGroup" type="string" required="false" description="Load balancing group." />
+                <c:simple-property name="flushPackets" type="boolean" required="false" description="Allows controlling flusing of packets." />
+                <c:simple-property name="flushWait" type="integer" required="false" description="Time in ms to wait before flushing packets." />
+                <c:simple-property name="ping" type="integer" required="false" description="Time in s to wait for a pong answer to a ping." />
+                <c:simple-property name="smax" type="integer" required="false" description="Maximum time on seconds for idle connections above smax." />
+                <c:simple-property name="ttl" type="integer" required="false" description="TTL" />
+                <c:simple-property name="nodeTimeout" type="integer" required="false" description="Node timeout" />
+                <c:simple-property name="balancer" type="string" required="false" description="Name of the balancer" />
 
-         <operation name="pingHTTPD" displayName="Ping httpd" description="Ping httpd and determine whether each proxy is accessible and healthy. Returns the PING_RSP grouped by proxy address.">
-            <results>
-               <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
-            </results>
-         </operation>
-         <operation name="pingNodeByJVMRoute" displayName="Ping node by JVM Route"
-            description="Ping a node from httpd and returns the PING_RSP grouped by proxy address. Dtermines whether the node configured with the specified jvm route is accessible from each proxy returning the PING_RSP grouped by proxy address.">
-            <parameters>
-               <c:simple-property required="true" name="p1" type="string" displayName="JVM Route of node to ping." />
-            </parameters>
-            <results>
-               <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
-            </results>
-         </operation>
-         <operation name="pingNodeByAddress" displayName="Ping node by address"
-            description="Ping a node from httpd and returns the PING_RSP grouped by proxy address. Determines whether the node configured with the specified jvm route is accessible from each proxy returning the PING_RSP grouped by proxy address.">
-            <parameters>
-               <c:simple-property required="true" name="p1" type="string" displayName="Scheme (ajp, http, https)" />
-               <c:simple-property required="true" name="p2" type="string" displayName="Name or ip address of a node." />
-               <c:simple-property required="true" name="p3" type="integer" displayName="Port" />
-            </parameters>
-            <results>
-               <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
-            </results>
-         </operation>
+                <!-- Balancer Configuration -->
+                <c:simple-property name="stickySession" type="boolean" required="false" description="Enables sticky session for the node." />
+                <c:simple-property name="stickySessionRemove" type="boolean" required="false" description="Remove session when the request cannot be routed to the right node for this cluster." />
+                <c:simple-property name="stickySessionForce" type="boolean" required="false" description="Return an error when the request cannot be routed to the right node." />
+                <c:simple-property name="workerTimeout" type="integer" required="false" description="Timeout to wait for an available worker (default is no wait)." />
+                <c:simple-property name="maxAttempts" type="integer" required="false" description="Maximum number of attempts to send the request to the backend server." />
 
-         <operation name="addProxy" displayName="Add a proxy" description="Add a proxy.">
-            <parameters>
-               <c:simple-property required="true" name="p1" type="string" displayName="Proxy address" />
-               <c:simple-property required="true" name="p2" type="integer" displayName="Proxy port" />
-            </parameters>
-         </operation>
-         <operation name="removeProxy" displayName="Remove a proxy" description="Remove a proxy.">
-            <parameters>
-               <c:simple-property required="true" name="p1" type="string" displayName="Proxy address" />
-               <c:simple-property required="true" name="p2" type="integer" displayName="Proxy port" />
-            </parameters>
-         </operation>
-         
-         <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all virtual hosts of this application server.">
-            <results>
-               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
-            </results>
-         </operation>
-         <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all virtual hosts of this application server.">
-            <results>
-               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
-            </results>
-         </operation>
-         <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all virtual hosts of this application server.">
-            <parameters>
-               <c:simple-property required="true" name="p1" type="string" displayName="Session draining timeout" />
-               <c:simple-property required="true" name="p2" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
-                  <c:property-options allowCustomValue="false">
-                     <c:option value="MICROSECONDS" name="MICROSECONDS" />
-                     <c:option value="MILLISECONDS" name="MILLISECONDS" />
-                     <c:option value="NANOSECONDS" name="NANOSECONDS" />
-                     <c:option value="SECONDS" name="SECONDS" />
-                     <c:option value="HOURS" name="HOURS" />
-                     <c:option value="DAYS" name="DAYS" />
-                  </c:property-options>
-               </c:simple-property>
-            </parameters>
-            <results>
-               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
-            </results>
-         </operation>
+                <!-- SSL Configuration -->
+                <c:simple-property name="ssl" type="boolean" required="false" description="Whether to use SSL to communicate with mod_cluster. Note this has nothing to do with handling of https requests by JBoss Web" />
+                <c:simple-property name="sslCiphers" type="string" required="false" description="SSL ciphers." />
+                <c:simple-property name="sslProtocol" type="string" required="false" description="SSL protocol." />
+                <c:simple-property name="sslCertificateEncodingAlgorithm" type="string" required="false" description="Certificate encoding algorithm." />
+                <c:simple-property name="sslKeyStore" type="string" required="false" description="SSL keystore." />
+                <c:simple-property name="sslKeyStorePassword" type="string" required="false" description="SSL keystore password." />
+                <c:simple-property name="sslKeyStoreType" type="string" required="false" description="SSL keystore type." />
+                <c:simple-property name="sslKeyStoreProvider" type="string" required="false" description="SSL keystore provider." />
+                <c:simple-property name="sslTrustAlgorithm" type="string" required="false" description="Truststore algorithm." />
+                <c:simple-property name="sslKeyAlias" type="string" required="false" description="Key alias." />
+                <c:simple-property name="sslCrlFile" type="string" required="false" description="Certificate revocation list." />
+                <c:simple-property name="sslTrustMaxCertLength" type="integer" required="false" description="Trust max certificate length." />
+                <c:simple-property name="sslTrustStore" type="string" required="false" description="Trust store file." />
+                <c:simple-property name="sslTrustStorePassword" type="string" required="false" description="Trust store password." />
+                <c:simple-property name="sslTrustStoreType" type="string" required="false" description="Trust store type." />
+                <c:simple-property name="sslTrustStoreProvider" type="string" required="false" description="Trust store provider." />
+            </resource-configuration>
+        </service>
+        <!-- End - Configuration for HAModClusterService -->
 
-         <metric property="ProxyConfiguration" displayName="Proxy Configuration" displayType="summary" dataType="trait" />
-         <metric property="ProxyInfo" displayName="Proxy Info" displayType="summary" dataType="trait" />
-      </service>
+        <!-- Start - Configuration for ModClusterService -->
+        <service name="Service" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="ModClusterServiceComponent" supportsManualAdd="true"
+                 description="Service" singleton="true">
 
-      <service name="Service Configuration" discovery="ClassNameMBeanDiscoveryComponent" class="FileConfiguredMBeanResourceComponent" supportsManualAdd="true" 
-            description="Service Configuration" singleton="true">
+            <plugin-configuration>
+                <c:simple-property name="objectName" default="Catalina:type=ModClusterListener,*|jboss.web:service=ModCluster" />
+                <c:simple-property name="nameTemplate" default="Service" />
+                <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.ModClusterService" />
+                <c:simple-property name="proxyInfoProperty" readOnly="true" default="ProxyInfo" />
+            </plugin-configuration>
 
-         <plugin-configuration>
-            <c:simple-property name="objectName" readOnly="true" default="jboss.web:service=ModCluster" />
-            <c:simple-property name="nameTemplate" default="Service Configuration" />
-            <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.ModClusterService" />
-            <c:simple-property name="dependencyClassName" readOnly="true" default="org.jboss.modcluster.config.ModClusterConfig" />
-            <c:simple-property name="proxyInfoProperty" readOnly="true" default="ProxyInfo" />
-         </plugin-configuration>
+            <operation name="pingHTTPD" displayName="Ping httpd" description="Ping httpd and determine whether each proxy is accessible and healthy. Returns the PING_RSP grouped by proxy address.">
+                <results>
+                    <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
+                </results>
+            </operation>
+            <operation name="pingNodeByJVMRoute" displayName="Ping node by JVM Route"
+                       description="Ping a node from httpd and returns the PING_RSP grouped by proxy address. Dtermines whether the node configured with the specified jvm route is accessible from each proxy returning the PING_RSP grouped by proxy address.">
+                <parameters>
+                    <c:simple-property required="true" name="p1" type="string" displayName="JVM Route of node to ping." />
+                </parameters>
+                <results>
+                    <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
+                </results>
+            </operation>
+            <operation name="pingNodeByAddress" displayName="Ping node by address"
+                       description="Ping a node from httpd and returns the PING_RSP grouped by proxy address. Determines whether the node configured with the specified jvm route is accessible from each proxy returning the PING_RSP grouped by proxy address.">
+                <parameters>
+                    <c:simple-property required="true" name="p1" type="string" displayName="Scheme (ajp, http, https)" />
+                    <c:simple-property required="true" name="p2" type="string" displayName="Name or ip address of a node." />
+                    <c:simple-property required="true" name="p3" type="integer" displayName="Port" />
+                </parameters>
+                <results>
+                    <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
+                </results>
+            </operation>
 
-         <resource-configuration>
-            <!-- Handler Configuration -->
-            <c:simple-property name="advertise" type="boolean" required="false" default="false" description="Enable autodiscovery of httpd servers." />
-            <c:simple-property name="advertiseGroupAddress" type="string" description="Multicast address on which to listen for advertisements." />
-            <c:simple-property name="advertisePort" type="string" required="false" description="Multicast port for discovery" />
-            <c:simple-property name="advertiseInterface" type="string" required="false" description="Multicast interface for discovery" />
-            <c:simple-property name="advertiseSecurityKey" type="string" required="false" description="Security key for discovery." />
-            <c:simple-property name="proxyList" type="string" required="false" description="Comma separated list of address:port listing the httpd servers where mod_cluster is running." />
-            <c:simple-property name="proxyURL" type="string" required="false" description="URL prefix to send with commands to mod_cluster.  Default is no prefix." />
-            <c:simple-property name="socketTimeout" type="integer" required="false" description="Connection timeout for communication with the proxy." />
-            <c:simple-property name="excludedContexts" type="string" required="false"
-               description="Comma delimited list of contexts that should *not* be auto-registered with httpd. Contexts may be qualified by host using a colon, e.g. host1:context1. If no host is defined, localhost is assumed." />
-            <c:simple-property name="autoEnableContexts" type="boolean" required="false" default="true" description="Toggle for context auto-enable during mod_cluster startup." />
+            <operation name="addProxy" displayName="Add a proxy" description="Add a proxy.">
+                <parameters>
+                    <c:simple-property required="true" name="p1" type="string" displayName="Proxy address" />
+                    <c:simple-property required="true" name="p2" type="integer" displayName="Proxy port" />
+                </parameters>
+            </operation>
+            <operation name="removeProxy" displayName="Remove a proxy" description="Remove a proxy.">
+                <parameters>
+                    <c:simple-property required="true" name="p1" type="string" displayName="Proxy address" />
+                    <c:simple-property required="true" name="p2" type="integer" displayName="Proxy port" />
+                </parameters>
+            </operation>
 
-            <!-- Node Configuration -->
-            <c:simple-property name="loadBalancingGroup" type="string" required="false" description="Load balancing group." />
-            <c:simple-property name="flushPackets" type="boolean" required="false" description="Allows controlling flusing of packets." />
-            <c:simple-property name="flushWait" type="integer" required="false" description="Time in ms to wait before flushing packets." />
-            <c:simple-property name="ping" type="integer" required="false" description="Time in s to wait for a pong answer to a ping." />
-            <c:simple-property name="smax" type="integer" required="false" description="Maximum time on seconds for idle connections above smax." />
-            <c:simple-property name="ttl" type="integer" required="false" description="TTL" />
-            <c:simple-property name="nodeTimeout" type="integer" required="false" description="Node timeout" />
-            <c:simple-property name="balancer" type="string" required="false" description="Name of the balancer" />
+            <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all virtual hosts of this application server.">
+                <results>
+                    <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
+                </results>
+            </operation>
+            <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all virtual hosts of this application server.">
+                <results>
+                    <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
+                </results>
+            </operation>
+            <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all virtual hosts of this application server.">
+                <parameters>
+                    <c:simple-property required="true" name="p1" type="string" displayName="Session draining timeout" />
+                    <c:simple-property required="true" name="p2" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
+                        <c:property-options allowCustomValue="false">
+                            <c:option value="MICROSECONDS" name="MICROSECONDS" />
+                            <c:option value="MILLISECONDS" name="MILLISECONDS" />
+                            <c:option value="NANOSECONDS" name="NANOSECONDS" />
+                            <c:option value="SECONDS" name="SECONDS" />
+                            <c:option value="HOURS" name="HOURS" />
+                            <c:option value="DAYS" name="DAYS" />
+                        </c:property-options>
+                    </c:simple-property>
+                </parameters>
+                <results>
+                    <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
+                </results>
+            </operation>
 
-            <!-- Balancer Configuration -->
-            <c:simple-property name="stickySession" type="boolean" description="Enables sticky session for the node." />
-            <c:simple-property name="stickySessionRemove" type="boolean" description="Remove session when the request cannot be routed to the right node for this cluster." />
-            <c:simple-property name="stickySessionForce" type="boolean" description="Return an error when the request cannot be routed to the right node." />
-            <c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)." />
-            <c:simple-property name="maxAttempts" type="integer" description="Maximum number of attempts to send the request to the backend server." />
-                      
-            <!-- SSL Configuration -->
-            <c:simple-property name="ssl" type="boolean" description="Whether to use SSL to communicate with mod_cluster. Note this has nothing to do with handling of https requests by JBoss Web" />
-            <c:simple-property name="sslCiphers" type="string" required="false" description="SSL ciphers." />
-            <c:simple-property name="sslProtocol" type="string" required="false" description="SSL protocol." />
-            <c:simple-property name="sslCertificateEncodingAlgorithm" type="string" required="false" description="Certificate encoding algorithm." />
-            <c:simple-property name="sslKeyStore" type="string" required="false" description="SSL keystore." />
-            <c:simple-property name="sslKeyStorePassword" type="string" required="false" description="SSL keystore password." />
-            <c:simple-property name="sslKeyStoreType" type="string" required="false" description="SSL keystore type." />
-            <c:simple-property name="sslKeyStoreProvider" type="string" required="false" description="SSL keystore provider." />
-            <c:simple-property name="sslTrustAlgorithm" type="string" required="false" description="Truststore algorithm." />
-            <c:simple-property name="sslKeyAlias" type="string" required="false" description="Key alias." />
-            <c:simple-property name="sslCrlFile" type="string" required="false" description="Certificate revocation list." />
-            <c:simple-property name="sslTrustMaxCertLength" type="string" required="false" description="Trust max certificate length." />
-            <c:simple-property name="sslTrustStore" type="string" required="false" description="Trust store file." />
-            <c:simple-property name="sslTrustStorePassword" type="string" required="false" description="Trust store password." />
-            <c:simple-property name="sslTrustStoreType" type="string" required="false" description="Trust store type." />
-            <c:simple-property name="sslTrustStoreProvider" type="string" required="false" description="Trust store provider." />
-         </resource-configuration>
-      </service>
-      <!-- End - Configuration for ModClusterService -->
+            <metric property="ProxyConfiguration" displayName="Proxy Configuration" displayType="summary" dataType="trait" />
+            <metric property="ProxyInfo" displayName="Proxy Info" displayType="summary" dataType="trait" />
+        </service>
 
-      <service name="Catalina Service" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="CatalinaServiceComponent" supportsManualAdd="true" 
-            description="Catalina Service" singleton="true">
+        <service name="Service Configuration" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="CatalinaServiceComponent" supportsManualAdd="true"
+                 description="Service Configuration" singleton="true">
 
-         <plugin-configuration>
-            <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*" />
-            <c:simple-property name="nameTemplate" default="Catalina Service" />
-         </plugin-configuration>
+            <plugin-configuration>
+                <c:simple-property name="objectName" default="Catalina:type=ModClusterListener,*|jboss.web:service=ModCluster" />
+                <c:simple-property name="nameTemplate" default="Service Configuration" />
+                <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.ModClusterService" />
+                <c:simple-property name="dependencyClassName" readOnly="true" default="org.jboss.modcluster.config.ModClusterConfig" />
+                <c:simple-property name="proxyInfoProperty" readOnly="true" default="ProxyInfo" />
+            </plugin-configuration>
 
-         <operation name="addProxy" displayName="Add a proxy" description="Add a proxy.">
-            <parameters>
-               <c:simple-property required="true" name="host" type="string" displayName="Proxy address" />
-               <c:simple-property required="true" name="port" type="string" displayName="Proxy port" />
-            </parameters>
-         </operation>
-         <operation name="removeProxy" displayName="Remove a proxy" description="Remove a proxy.">
-            <parameters>
-               <c:simple-property required="true" name="host" type="string" displayName="Proxy address" />
-               <c:simple-property required="true" name="port" type="string" displayName="Proxy port" />
-            </parameters>
-         </operation>
-         <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all virtual hosts of this application server.">
-            <results>
-               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
-            </results>
-         </operation>
-         <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all virtual hosts of this application server.">
-            <results>
-               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
-            </results>
-         </operation>
-         <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all virtual hosts of this application server.">
-            <parameters>
-               <c:simple-property required="true" name="timeout" type="string" displayName="Session draining timeout" />
-               <c:simple-property required="true" name="unit" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
-                  <c:property-options allowCustomValue="false">
-                     <c:option value="MICROSECONDS" name="MICROSECONDS" />
-                     <c:option value="MILLISECONDS" name="MILLISECONDS" />
-                     <c:option value="NANOSECONDS" name="NANOSECONDS" />
-                     <c:option value="SECONDS" name="SECONDS" />
-                     <c:option value="HOURS" name="HOURS" />
-                     <c:option value="DAYS" name="DAYS" />
-                  </c:property-options>
-               </c:simple-property>
-            </parameters>
-            <results>
-               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
-            </results>
-         </operation>
+            <resource-configuration>
+                <!-- Handler Configuration -->
+                <c:simple-property name="advertise" type="boolean" required="false" description="Enable autodiscovery of httpd servers." />
+                <c:simple-property name="advertiseGroupAddress" type="string" required="false" description="Multicast address on which to listen for advertisements." />
+                <c:simple-property name="advertisePort" type="integer" required="false" description="Multicast port for discovery" />
+                <c:simple-property name="advertiseInterface" type="string" required="false" description="Multicast interface for discovery" />
+                <c:simple-property name="advertiseSecurityKey" type="string" required="false" description="Security key for discovery." />
+                <c:simple-property name="proxyList" type="string" required="false" description="Comma separated list of address:port listing the httpd servers where mod_cluster is running." />
+                <c:simple-property name="proxyURL" type="string" required="false" description="URL prefix to send with commands to mod_cluster.  Default is no prefix." />
+                <c:simple-property name="socketTimeout" type="integer" required="false" description="Connection timeout for communication with the proxy." />
+                <c:simple-property name="excludedContexts" type="string" required="false" description="Comma delimited list of contexts that should *not* be auto-registered with httpd. Contexts may be qualified by host using a colon, e.g. host1:context1. If no host is defined, localhost is assumed." />
+                <c:simple-property name="autoEnableContexts" type="boolean" required="false" description="Toggle for context auto-enable during mod_cluster startup." />
 
-         <metric property="proxyConfiguration" displayName="Proxy Configuration" displayType="summary" dataType="trait" />
-         <metric property="proxyInfo" displayName="Proxy Info" displayType="summary" dataType="trait" />
-         <metric property="modelerType" displayName="Type of the modeled resource" displayType="summary" dataType="trait" />
-         <metric property="className" displayName="Fully qualified class name of the managed object" displayType="summary" dataType="trait" />
-         <metric property="advertise" displayName="Enable autodiscovery of httpd servers." displayType="summary" dataType="trait" />
+                <!-- Node Configuration -->
+                <c:simple-property name="loadBalancingGroup" type="string" required="false" description="Load balancing group." />
+                <c:simple-property name="flushPackets" type="boolean" required="false" description="Allows controlling flusing of packets." />
+                <c:simple-property name="flushWait" type="integer" required="false" description="Time in ms to wait before flushing packets." />
+                <c:simple-property name="ping" type="integer" required="false" description="Time in s to wait for a pong answer to a ping." />
+                <c:simple-property name="smax" type="integer" required="false" description="Maximum time on seconds for idle connections above smax." />
+                <c:simple-property name="ttl" type="integer" required="false" description="TTL" />
+                <c:simple-property name="nodeTimeout" type="integer" required="false" description="Node timeout" />
+                <c:simple-property name="balancer" type="string" required="false" description="Name of the balancer" />
 
-         <resource-configuration>
-            <c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)." />
-            <c:simple-property name="stickySession" type="boolean" description="Enables sticky session for the cluster." />
-            <c:simple-property name="stickySessionRemove" type="boolean" description="Remove session when the request cannot be routed to the right node for this cluster." />
-            <c:simple-property name="smax" type="integer" description="Maximum time on seconds for idle connections above smax." />
-            <c:simple-property name="maxAttempts" type="integer" description="Maximum number of attempts to send the request to the backend server." />
-            <c:simple-property name="advertiseSecurityKey" type="string" required="false" description="Security key for discovery." />
-            <c:simple-property name="stickySessionForce" type="boolean" description="Return an error when the request cannot be routed to the right node." />
-            <c:simple-property name="balancer" type="string" required="false" description="Name of the balancer." />
-            <c:simple-property name="flushPackets" type="boolean" description="Allows controlling flusing of packets." />
-            <c:simple-property name="socketTimeout" type="integer" description="Connection timeout for communication with the proxy." />
-            <c:simple-property name="advertisePort" type="integer" required="false" description="Multicast port for discovery" />
-            <c:simple-property name="advertiseGroupAddress" type="string" required="false" description="Multicast address for discovery." />
-            <c:simple-property name="flushWait" type="integer" description="Time in ms to wait before flushing packets." />
-            <c:simple-property name="ping" type="integer" description="Time in s to wait for a pong answer to a ping." />
-         </resource-configuration>
-      </service>
+                <!-- Balancer Configuration -->
+                <c:simple-property name="stickySession" type="boolean" required="false" description="Enables sticky session for the node." />
+                <c:simple-property name="stickySessionRemove" type="boolean" required="false" description="Remove session when the request cannot be routed to the right node for this cluster." />
+                <c:simple-property name="stickySessionForce" type="boolean" required="false" description="Return an error when the request cannot be routed to the right node." />
+                <c:simple-property name="workerTimeout" type="integer" required="false" description="Timeout to wait for an available worker (default is no wait)." />
+                <c:simple-property name="maxAttempts" type="integer" required="false" description="Maximum number of attempts to send the request to the backend server." />
 
-      <service name="Dynamic Load Balancer Factor" discovery="ClassNameMBeanDiscoveryComponent" class="FileConfiguredMBeanResourceComponent" supportsManualAdd="true" 
-            description="Dynamic Load balancer factor for mod_cluster" singleton="true">
+                <!-- SSL Configuration -->
+                <c:simple-property name="ssl" type="boolean" required="false" description="Whether to use SSL to communicate with mod_cluster. Note this has nothing to do with handling of https requests by JBoss Web" />
+                <c:simple-property name="sslCiphers" type="string" required="false" description="SSL ciphers." />
+                <c:simple-property name="sslProtocol" type="string" required="false" description="SSL protocol." />
+                <c:simple-property name="sslCertificateEncodingAlgorithm" type="string" required="false" description="Certificate encoding algorithm." />
+                <c:simple-property name="sslKeyStore" type="string" required="false" description="SSL keystore." />
+                <c:simple-property name="sslKeyStorePassword" type="string" required="false" description="SSL keystore password." />
+                <c:simple-property name="sslKeyStoreType" type="string" required="false" description="SSL keystore type." />
+                <c:simple-property name="sslKeyStoreProvider" type="string" required="false" description="SSL keystore provider." />
+                <c:simple-property name="sslTrustAlgorithm" type="string" required="false" description="Truststore algorithm." />
+                <c:simple-property name="sslKeyAlias" type="string" required="false" description="Key alias." />
+                <c:simple-property name="sslCrlFile" type="string" required="false" description="Certificate revocation list." />
+                <c:simple-property name="sslTrustMaxCertLength" type="integer" required="false" description="Trust max certificate length." />
+                <c:simple-property name="sslTrustStore" type="string" required="false" description="Trust store file." />
+                <c:simple-property name="sslTrustStorePassword" type="string" required="false" description="Trust store password." />
+                <c:simple-property name="sslTrustStoreType" type="string" required="false" description="Trust store type." />
+                <c:simple-property name="sslTrustStoreProvider" type="string" required="false" description="Trust store provider." />
+            </resource-configuration>
+        </service>
+        <!-- End - Configuration for ModClusterService -->
 
-         <plugin-configuration>
-            <c:simple-property name="objectName" readOnly="true" default="jboss.web:provider=LoadBalanceFactor,service=ModCluster,*" />
-            <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.load.impl.DynamicLoadBalanceFactorProvider" />
-            <c:simple-property name="nameTemplate" default="Dynamic Load Balancer Factor" />
-         </plugin-configuration>
+        <service name="Catalina Service" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="CatalinaServiceComponent" supportsManualAdd="true"
+                 description="Catalina Service" singleton="true">
 
-         <resource-configuration>
-            <c:simple-property name="decayFactor" type="integer" required="false" description="The number of historical load values used to determine load factor." />
-            <c:simple-property name="history" type="integer" required="false" description="The exponential decay factor for historical load values." />
-         </resource-configuration>
-      </service>
+            <plugin-configuration>
+                <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*" />
+                <c:simple-property name="nameTemplate" default="Catalina Service" />
+            </plugin-configuration>
 
-      <service name="Simple Load Balancer Factor" discovery="ClassNameMBeanDiscoveryComponent" class="FileConfiguredMBeanResourceComponent" supportsManualAdd="true" 
-            description="Simple load balancer factor for mod_cluster" singleton="true">
+            <operation name="addProxy" displayName="Add a proxy" description="Add a proxy.">
+                <parameters>
+                    <c:simple-property required="true" name="host" type="string" displayName="Proxy address" />
+                    <c:simple-property required="true" name="port" type="string" displayName="Proxy port" />
+                </parameters>
+            </operation>
+            <operation name="removeProxy" displayName="Remove a proxy" description="Remove a proxy.">
+                <parameters>
+                    <c:simple-property required="true" name="host" type="string" displayName="Proxy address" />
+                    <c:simple-property required="true" name="port" type="string" displayName="Proxy port" />
+                </parameters>
+            </operation>
+            <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all virtual hosts of this application server.">
+                <results>
+                    <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
+                </results>
+            </operation>
+            <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all virtual hosts of this application server.">
+                <results>
+                    <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
+                </results>
+            </operation>
+            <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all virtual hosts of this application server.">
+                <parameters>
+                    <c:simple-property required="true" name="timeout" type="string" displayName="Session draining timeout" />
+                    <c:simple-property required="true" name="unit" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
+                        <c:property-options allowCustomValue="false">
+                            <c:option value="MICROSECONDS" name="MICROSECONDS" />
+                            <c:option value="MILLISECONDS" name="MILLISECONDS" />
+                            <c:option value="NANOSECONDS" name="NANOSECONDS" />
+                            <c:option value="SECONDS" name="SECONDS" />
+                            <c:option value="HOURS" name="HOURS" />
+                            <c:option value="DAYS" name="DAYS" />
+                        </c:property-options>
+                    </c:simple-property>
+                </parameters>
+                <results>
+                    <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
+                </results>
+            </operation>
 
-         <plugin-configuration>
-            <c:simple-property name="objectName" readOnly="true" default="jboss.web:provider=LoadBalanceFactor,service=ModCluster,*" />
-            <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.load.impl.SimpleLoadBalanceFactorProvider" />
-            <c:simple-property name="nameTemplate" default="Simple Load Balancer Factor" />
-         </plugin-configuration>
+            <metric property="proxyConfiguration" displayName="Proxy Configuration" displayType="summary" dataType="trait" />
+            <metric property="proxyInfo" displayName="Proxy Info" displayType="summary" dataType="trait" />
+            <metric property="modelerType" displayName="Type of the modeled resource" displayType="summary" dataType="trait" />
+            <metric property="className" displayName="Fully qualified class name of the managed object" displayType="summary" dataType="trait" />
+            <metric property="advertise" displayName="Enable autodiscovery of httpd servers." displayType="summary" dataType="trait" />
 
-         <resource-configuration>
-            <c:simple-property name="loadBalanceFactor" type="integer" description="The load balance factor." />
-         </resource-configuration>
-      </service>
+            <resource-configuration>
+                <c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)." />
+                <c:simple-property name="stickySession" type="boolean" description="Enables sticky session for the cluster." />
+                <c:simple-property name="stickySessionRemove" type="boolean" description="Remove session when the request cannot be routed to the right node for this cluster." />
+                <c:simple-property name="smax" type="integer" description="Maximum time on seconds for idle connections above smax." />
+                <c:simple-property name="maxAttempts" type="integer" description="Maximum number of attempts to send the request to the backend server." />
+                <c:simple-property name="advertiseSecurityKey" type="string" required="false" description="Security key for discovery." />
+                <c:simple-property name="stickySessionForce" type="boolean" description="Return an error when the request cannot be routed to the right node." />
+                <c:simple-property name="balancer" type="string" required="false" description="Name of the balancer." />
+                <c:simple-property name="flushPackets" type="boolean" description="Allows controlling flusing of packets." />
+                <c:simple-property name="socketTimeout" type="integer" description="Connection timeout for communication with the proxy." />
+                <c:simple-property name="advertisePort" type="integer" required="false" description="Multicast port for discovery" />
+                <c:simple-property name="advertiseGroupAddress" type="string" required="false" description="Multicast address for discovery." />
+                <c:simple-property name="flushWait" type="integer" description="Time in ms to wait before flushing packets." />
+                <c:simple-property name="ping" type="integer" description="Time in s to wait for a pong answer to a ping." />
+            </resource-configuration>
+        </service>
 
-      <service name="Load Metric" discovery="LoadMetricDiscoveryComponent" class="org.rhq.plugins.jmx.MBeanResourceComponent" description="Load Metric">
+        <service name="Dynamic Load Balancer Factor" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="CatalinaServiceComponent" supportsManualAdd="true"
+                 description="Dynamic Load balancer factor for mod_cluster" singleton="true">
 
-         <plugin-configuration>
-            <c:simple-property name="objectName" readOnly="true" default="jboss.web:provider=LoadBalanceFactor,service=ModCluster,metric=*,*" />
-            <c:simple-property name="nameTemplate" default="Load Metric" />
-         </plugin-configuration>
+            <plugin-configuration>
+                <c:simple-property name="objectName" default="Catalina:type=ModClusterListener,*|jboss.web:provider=LoadBalanceFactor,service=ModCluster,*" />
+                <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.load.impl.DynamicLoadBalanceFactorProvider" />
+                <c:simple-property name="nameTemplate" default="Dynamic Load Balancer Factor" />
+            </plugin-configuration>
 
-         <metric property="Load" displayName="Load" category="utilization" 
-         description="The current load of this metric as a percent of the metric's capacity." dataType="measurement" 
-         displayType="summary"/>
+            <resource-configuration>
+                <c:simple-property name="decayFactor" type="integer" required="false" description="The number of historical load values used to determine load factor." />
+                <c:simple-property name="history" type="integer" required="false" description="The exponential decay factor for historical load values." />
+            </resource-configuration>
+        </service>
 
-         <resource-configuration>
-            <c:simple-property name="weight" type="integer" description="The significance of this load metric compared to the other metrics." />
-            <c:simple-property name="capacity" type="double" description="Used to normalize the value returned by load expressed as a percentage of the capacity, such that: 0 &lt; (load/capacity) &lt; 1" />
-         </resource-configuration>
-      </service>
+        <service name="Simple Load Balancer Factor" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="CatalinaServiceComponent" supportsManualAdd="true"
+                 description="Simple load balancer factor for mod_cluster" singleton="true">
 
-      <service name="Webapp Context" discovery="WebappContextDiscoveryComponent" class="WebappContextComponent" description="Webapp Context">
+            <plugin-configuration>
+                <c:simple-property name="objectName" default="Catalina:type=ModClusterListener,*|jboss.web:provider=LoadBalanceFactor,service=ModCluster,*" />
+                <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.load.impl.SimpleLoadBalanceFactorProvider" />
+                <c:simple-property name="nameTemplate" default="Simple Load Balancer Factor" />
+            </plugin-configuration>
 
-         <operation name="disableContext" displayName="Disable webapp" description="Disable this webapp.">
-            <results>
-               <c:simple-property name="operationResult" type="boolean" description="The result of the operation." />
-            </results>
-         </operation>
-         <operation name="stopContext" displayName="Stop webapp" description="Gracefully stops this webapp.">
-            <parameters>
-               <c:simple-property required="true" name="timeout" type="integer" displayName="Session draining timeout" />
-               <c:simple-property required="true" name="unit" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
-                  <c:property-options allowCustomValue="false">
-                     <c:option value="MICROSECONDS" name="MICROSECONDS" />
-                     <c:option value="MILLISECONDS" name="MILLISECONDS" />
-                     <c:option value="NANOSECONDS" name="NANOSECONDS" />
-                     <c:option value="SECONDS" name="SECONDS" />
-                     <c:option value="HOURS" name="HOURS" />
-                     <c:option value="DAYS" name="DAYS" />
-                  </c:property-options>
-               </c:simple-property>
-            </parameters>
-            <results>
-               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
-            </results>
-         </operation>
-         <operation name="enableContext" displayName="Enable webapp" description="Enable this webapp.">
-            <results>
-               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
-            </results>
-         </operation>
+            <resource-configuration>
+                <c:simple-property name="loadBalanceFactor" type="integer" description="The load balance factor." />
+            </resource-configuration>
+        </service>
 
-      </service>
-   </service>
+        <service name="Load Metric" discovery="LoadMetricDiscoveryComponent" class="org.rhq.plugins.jmx.MBeanResourceComponent" description="Load Metric">
+
+            <plugin-configuration>
+                <c:simple-property name="objectName" default="Catalina:type=ModClusterListener,*|jboss.web:provider=LoadBalanceFactor,service=ModCluster,metric=*,*" />
+                <c:simple-property name="nameTemplate" default="Load Metric" />
+            </plugin-configuration>
+
+            <metric property="Load" displayName="Load" category="utilization"
+                    description="The current load of this metric as a percent of the metric's capacity." dataType="measurement"
+                    displayType="summary"/>
+
+            <resource-configuration>
+                <c:simple-property name="weight" type="integer" description="The significance of this load metric compared to the other metrics." />
+                <c:simple-property name="capacity" type="double" description="Used to normalize the value returned by load expressed as a percentage of the capacity, such that: 0 &lt; (load/capacity) &lt; 1" />
+            </resource-configuration>
+        </service>
+
+        <service name="Webapp Context" discovery="WebappContextDiscoveryComponent" class="WebappContextComponent" description="Webapp Context">
+
+            <operation name="disableContext" displayName="Disable webapp" description="Disable this webapp.">
+                <results>
+                    <c:simple-property name="operationResult" type="boolean" description="The result of the operation." />
+                </results>
+            </operation>
+            <operation name="stopContext" displayName="Stop webapp" description="Gracefully stops this webapp.">
+                <parameters>
+                    <c:simple-property required="true" name="timeout" type="integer" displayName="Session draining timeout" />
+                    <c:simple-property required="true" name="unit" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
+                        <c:property-options allowCustomValue="false">
+                            <c:option value="MICROSECONDS" name="MICROSECONDS" />
+                            <c:option value="MILLISECONDS" name="MILLISECONDS" />
+                            <c:option value="NANOSECONDS" name="NANOSECONDS" />
+                            <c:option value="SECONDS" name="SECONDS" />
+                            <c:option value="HOURS" name="HOURS" />
+                            <c:option value="DAYS" name="DAYS" />
+                        </c:property-options>
+                    </c:simple-property>
+                </parameters>
+                <results>
+                    <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
+                </results>
+            </operation>
+            <operation name="enableContext" displayName="Enable webapp" description="Enable this webapp.">
+                <results>
+                    <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
+                </results>
+            </operation>
+
+        </service>
+    </service>
 </plugin>

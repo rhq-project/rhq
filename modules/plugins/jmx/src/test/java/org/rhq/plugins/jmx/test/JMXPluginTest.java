@@ -164,6 +164,7 @@ public class JMXPluginTest {
         outputStream.finish();
     }
 
+
     private Process startTestServerJvm(String... jvmArgs) throws IOException {
         String javaHome = System.getProperty("java.home");
         String javaCmd = javaHome + "/bin/java";
@@ -260,7 +261,8 @@ public class JMXPluginTest {
         Set<Resource> jmxServers = getChildResourcesOfType(platform, new ResourceType(SERVER_TYPE_NAME, PLUGIN_NAME,
             ResourceCategory.SERVER, null));
 
-        for (Resource jmxServer : jmxServers) {
+        for (Resource jmxServer : filterOutExternalJMXServers(jmxServers)) {
+
             Set<Resource> childResources = jmxServer.getChildResources();
             // Each JMX Server should have exactly six singleton child Resources with the following types:
             // Operating System, Threading, VM Class Loading System, VM Compilation System, VM Memory System, and
@@ -275,7 +277,7 @@ public class JMXPluginTest {
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testMeasurement() throws Exception {
         Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
-        for (Resource server : platform.getChildResources()) {
+        for (Resource server : filterOutExternalJMXServers(platform.getChildResources())) {
             List<Resource> services = new ArrayList<Resource>(server.getChildResources());
             Collections.sort(services);
             for (Resource service : services) {
@@ -306,7 +308,7 @@ public class JMXPluginTest {
     public void testOperation() throws Exception {
         Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
         boolean found = false;
-        for (Resource server : platform.getChildResources()) {
+        for (Resource server : filterOutExternalJMXServers(platform.getChildResources())) {
             List<Resource> services = new ArrayList<Resource>(server.getChildResources());
             Collections.sort(services);
             for (Resource service : services) {
@@ -369,7 +371,7 @@ public class JMXPluginTest {
         Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
         boolean found = false;
         String outcome = null;
-        for (Resource server : platform.getChildResources()) {
+        for (Resource server : filterOutExternalJMXServers(platform.getChildResources())) {
             List<Resource> services = new ArrayList<Resource>(server.getChildResources());
             Collections.sort(services);
             for (Resource service : services) {
@@ -434,6 +436,22 @@ public class JMXPluginTest {
      * } }
      */
 
+    private static Set<Resource> filterOutExternalJMXServers(Set<Resource> servers) {
+        Set<Resource> filtered = new HashSet<Resource>();
+        for (Resource server : servers) {
+            if (SERVER_TYPE_NAME.equals(server.getResourceType().getName())) {
+                if (server.getResourceKey().startsWith("org.rhq")) {
+                    filtered.add(server);
+                } else {
+                    System.out.println("Filtered out " + server);
+                }
+            } else {
+                filtered.add(server);
+            }
+
+        }
+        return filtered;
+    }
     private static Set<Resource> getChildResourcesOfType(Resource platform, ResourceType resourceType) {
         Set<Resource> childResources = platform.getChildResources();
         Set<Resource> results = new HashSet<Resource>();

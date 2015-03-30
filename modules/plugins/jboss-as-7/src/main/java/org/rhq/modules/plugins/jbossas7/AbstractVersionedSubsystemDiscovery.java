@@ -38,9 +38,9 @@ abstract public class AbstractVersionedSubsystemDiscovery extends SubsystemDisco
     static private final String PATTERN_DISABLE = "disable";
     static private final String PATTERN_PROP = "rhq.as7.VersionedSubsystemDiscovery.pattern";
 
-    static protected final Matcher MATCHER;
+    static public final Matcher MATCHER;
     static protected final String SUBDEPLOYMENT_TYPE = "Subdeployment";
-    static protected boolean DISABLED = false;
+    static public boolean DISABLED = false;
 
     static {
         Matcher m = null;

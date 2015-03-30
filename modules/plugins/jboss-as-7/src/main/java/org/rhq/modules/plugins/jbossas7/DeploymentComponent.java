@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 
 import org.codehaus.jackson.JsonNode;
 
@@ -58,10 +59,12 @@ import org.rhq.core.util.Base64;
 import org.rhq.core.util.ByteUtil;
 import org.rhq.core.util.file.ContentFileInfo;
 import org.rhq.core.util.file.JarContentFileInfo;
+import org.rhq.modules.plugins.jbossas7.helper.Deployer;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
+import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -156,6 +159,21 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         return new ArrayList<DeployPackageStep>();
     }
 
+    /**
+     * create new Deployer instance for {@link #deployPackages(Set, ContentServices)} code branch which *only* handles package update
+     * in case of Versioned Deployments
+     * @see {@link #deployPackages(Set, ContentServices)} and {@link DomainDeploymentComponent#createDeployerForPackageUpdate(String, String, String)}
+     * @param deploymentName
+     * @param runtimeName
+     * @param hash
+     * @return new Deployer which correctly undeploys original package and then deploys new package
+     */
+    protected Deployer createDeployerForPackageUpdate(String deploymentName, String runtimeName, String hash) {
+        Deployer deployer = new Deployer(deploymentName, runtimeName, hash, getASConnection());
+        deployer.addBeforeDeployStep(new Remove(getAddress()));
+        return deployer;
+    }
+
     @Override
     public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
         getLog().debug("Starting deployment..");
@@ -180,7 +198,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         }
         ResourceType resourceType = context.getResourceType();
 
-        getLog().info("Deploying " + resourceType.getName() + " Resource with key [" + detail.getKey() + "]...");
+        getLog().info("Deploying " + resourceType.getName() + " to Resource with key [" + detail.getKey() + "]...");
 
         try {
             contentServices.downloadPackageBits(context.getContentContext(), detail.getKey(), out, true);
@@ -206,19 +224,86 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         String hash = resultNode.get("BYTES_VALUE").getTextValue();
 
         try {
-            Redeployer redeployer = new Redeployer(detail.getKey().getName(), hash, getASConnection());
-            Result result = redeployer.redeployOnServer();
-            if (result.isRolledBack()) {
-                response.setOverallRequestResult(ContentResponseResult.FAILURE);
-                response.setOverallRequestErrorMessage("Rolled Back: " + result.getFailureDescription());
-            } else {
-                response.setOverallRequestResult(ContentResponseResult.SUCCESS);
-                //we just deployed a different file on the AS7 server, so let's refresh ourselves
-                deploymentFile = determineDeploymentFile();
-                DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(detail.getKey(),
-                    ContentResponseResult.SUCCESS);
-                response.addPackageResponse(packageResponse);
+            Result result = null;
+            // this deployment can be versioned 
+            // resource deployment name could be deployment-1.0.0.jar, but resourceKey (and name) would be deployment.jar and version 1.0.0
+            // if there is an attempt to deploy deployment-2.0.0.jar, we need to undeploy deployment-1.0.0.jar and then deploy the new content
+            // Sipmly redeploy won't work, because deployment-2.0.0.jar is not present on server
+
+            //detect whether we're dealing with versioned deployments
+            if (!AbstractVersionedSubsystemDiscovery.DISABLED) {
+
+                Result readResource = getASConnection().execute(new ReadResource(getAddress()));
+                Map<String, Object> resourceMap = (Map<String, Object>) readResource.getResult();
+
+                String resourceDeploymentName = (String) resourceMap.get("name");
+                String newDeploymentName = detail.getKey().getName();
+
+                Matcher versionedResourceMatch = AbstractVersionedSubsystemDiscovery.MATCHER.pattern().matcher(
+                    resourceDeploymentName);
+
+                if (versionedResourceMatch.matches()) {
+                    // we're dealing with versioned deployment resource
+                    String versionedDeploymentName = versionedResourceMatch.group(1);
+
+                    Matcher newContentMatch = AbstractVersionedSubsystemDiscovery.MATCHER.pattern().matcher(
+                        newDeploymentName);
+                    if (newContentMatch.matches()) {
+                        // we're strict and only undeploy/deploy in case we're dealing with same deployments (base names match)
+                        if (versionedDeploymentName.equals(newContentMatch.group(1))) {
+
+                            String runtimeName = (String) resourceMap.get("runtime-name");
+                            // preserver runtime-name only if it differs from deploymentName - it was explicitly defined at deploy time
+                            if (runtimeName.equals(resourceDeploymentName)) {
+                                runtimeName = newDeploymentName;
+                            }
+                            Boolean enabled = (Boolean) resourceMap.get("enabled");
+                            if (enabled == null) {
+                                enabled = false; // enabled attribute is null if we're dealing with DomainDeployment
+                            }
+
+                            Deployer deployer = createDeployerForPackageUpdate(newDeploymentName, runtimeName, hash);
+                            result = deployer.deployToServer(enabled);
+                        } else {
+                            response.setOverallRequestResult(ContentResponseResult.FAILURE);
+                            response
+                                .setOverallRequestErrorMessage("Failed to update package. Attempt to replace content of versioned resource with key="
+                                    + resourceDeploymentName
+                                    + " with package key="
+                                    + newDeploymentName
+                                    + " Given package key does not match.");
+                        }
+                    } else {
+                        response.setOverallRequestResult(ContentResponseResult.FAILURE);
+                        response
+                            .setOverallRequestErrorMessage("Failed to update package. This resource is versioned deployment and updating it's content by unversioned package is not allowed.");
+                    }
+
+                }
+                // else this resource is not versioned: deployment we default to redeploy
+
             }
+            if (response.getOverallRequestResult() == null) {
+
+                // if none of undeploy/deploy conditions were met 
+                if (result == null) {
+                    Redeployer redeployer = new Redeployer(detail.getKey().getName(), hash, getASConnection());
+                    result = redeployer.redeployOnServer();
+                }
+
+                if (result.isRolledBack()) {
+                    response.setOverallRequestResult(ContentResponseResult.FAILURE);
+                    response.setOverallRequestErrorMessage("Rolled Back: " + result.getFailureDescription());
+                } else {
+                    response.setOverallRequestResult(ContentResponseResult.SUCCESS);
+                    //we just deployed a different file on the AS7 server, so let's refresh ourselves
+                    deploymentFile = determineDeploymentFile();
+                    DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(
+                        detail.getKey(), ContentResponseResult.SUCCESS);
+                    response.addPackageResponse(packageResponse);
+                }
+            }
+
 
         } catch (Exception e) {
             response.setOverallRequestResult(ContentResponseResult.FAILURE);
@@ -251,7 +336,8 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             return Collections.emptySet();
         }
 
-        String name = getDeploymentName();
+        String deploymentName = getDeploymentName();
+        String name = String.valueOf(deploymentName);
         String sha256 = getSHA256(deploymentFile);
         String version = getVersion(sha256);
 
@@ -260,7 +346,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
         details.setDisplayVersion(getDisplayVersion(deploymentFile));
         details.setFileCreatedDate(null); //TODO figure this out from Sigar somehow?
-        details.setFileName(name);
+        details.setFileName(deploymentName);
         details.setFileSize(deploymentFile.length());
         details.setInstallationTimestamp(deploymentFile.lastModified());
         details.setLocation(deploymentFile.getAbsolutePath());
@@ -462,4 +548,5 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
         return (String) res.getResult();
     }
+
 }

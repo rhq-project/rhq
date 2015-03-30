@@ -36,12 +36,14 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.helper.Deployer;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenResources;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
+import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -173,6 +175,33 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
         return groups;
     }
 
+    @Override
+    protected Deployer createDeployerForPackageUpdate(String deploymentName, String runtimeName, String hash) {
+        Deployer deployer = new Deployer(deploymentName, runtimeName, hash, getASConnection());
+        // we need to find server-groups where this deployment is assigned
+        Configuration config = Configuration.builder().build();
+        loadAssignedServerGroups(config);
+        String originalDeploymentName = getManagementNodeName();
+        // then we add steps to remove from them, and at the same time we add steps to assign new deployment to same groups with same parameters
+        for (Property prop : config.getList("*1").getList()) {
+            PropertyMap map = (PropertyMap) prop;
+            String sgName = map.getSimpleValue("server-group", null);
+            String sgRuntimeName = map.getSimpleValue("runtime-name", null);
+            if (originalDeploymentName.equals(sgRuntimeName)) {
+                sgRuntimeName = null; // runtimeName was equal to deployment Name => not defined at deploy time
+            }
+            boolean sgEnabled = map.getSimple("enabled").getBooleanValue();
+            deployer.addBeforeDeployStep(createServerGroupAssignmentStep("remove", sgName, null, false));
+            // new assign-to-group step refers to new deploymentName
+            deployer.addAfterDeployStep(createServerGroupAssignmentStep("add", sgName, deploymentName, sgRuntimeName,
+                sgEnabled));
+        }
+
+        // this has to be the last beforeDeploy step as it would fail in case deployment is assigned to some server-group
+        deployer.addBeforeDeployStep(new Remove(getAddress()));
+        return deployer;
+    }
+
     @SuppressWarnings("unchecked")
     private void loadAssignedServerGroups(Configuration configuration) {
         String managementNodeName = getManagementNodeName();
@@ -201,11 +230,11 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
         }
     }
 
-    private Operation createServerGroupAssignmentStep(String action, String serverGroup, String runtimeName,
+    private Operation createServerGroupAssignmentStep(String action, String serverGroup,String deploymentName, String runtimeName,
         boolean enabled) {
         Address addr = new Address();
         addr.add("server-group", serverGroup);
-        addr.add("deployment", getManagementNodeName());
+        addr.add("deployment", deploymentName);
         Operation op = new Operation(action, addr);
         if ("add".equals(action)) {
             if (runtimeName != null && !runtimeName.isEmpty()) {
@@ -214,6 +243,11 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
             op.addAdditionalProperty("enabled", enabled);
         }
         return op;
+    }
+    
+    private Operation createServerGroupAssignmentStep(String action, String serverGroup, String runtimeName,
+        boolean enabled) {
+        return createServerGroupAssignmentStep(action, serverGroup,  getManagementNodeName(),  runtimeName, enabled);
     }
 
     @SuppressWarnings("unchecked")

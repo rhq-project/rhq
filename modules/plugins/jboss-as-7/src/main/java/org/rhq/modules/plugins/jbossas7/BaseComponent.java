@@ -23,7 +23,6 @@ import static org.rhq.modules.plugins.jbossas7.ASConnection.verbose;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,10 +65,9 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
+import org.rhq.modules.plugins.jbossas7.helper.Deployer;
 import org.rhq.modules.plugins.jbossas7.json.Address;
-import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
@@ -544,64 +542,12 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     public CreateResourceReport runDeploymentMagicOnServer(CreateResourceReport report, String runtimeName,
         String deploymentName, String hash) {
 
-        boolean toServerGroup = context.getResourceKey().contains("server-group=");
-        LOG.info(
-            "Deploying [" + deploymentName + " (runtimeName=" + runtimeName + ")] (toDomainOnly=" + !toServerGroup
-                + ")...");
+        LOG.info("Deploying [" + deploymentName + " (runtimeName=" + runtimeName + ")] ...");
 
-        ASConnection connection = getASConnection();
+        Deployer deployer = new Deployer(deploymentName, runtimeName, hash, getASConnection());
 
-        Operation step1 = new Operation("add", "deployment", deploymentName);
-        //        step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
-        List<Object> content = new ArrayList<Object>(1);
-        Map<String, Object> contentValues = new HashMap<String, Object>();
-        contentValues.put("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
-        content.add(contentValues);
-        step1.addAdditionalProperty("content", content);
-
-        step1.addAdditionalProperty("name", deploymentName);
-        step1.addAdditionalProperty("runtime-name", runtimeName);
-
-        String resourceKey;
-        Result result;
-
-        CompositeOperation cop = new CompositeOperation();
-        cop.addStep(step1);
-        /*
-         * We need to check here if this is an upload to /deployment only
-         * or if this should be deployed to a server group too
-         */
-
-        if (!toServerGroup) {
-
-            // if standalone, then :deploy the deployment anyway
-            if (context.getResourceType().getName().contains("Standalone")) {
-                Operation step2 = new Operation("deploy", step1.getAddress());
-                cop.addStep(step2);
-            }
-
-            result = connection.execute(cop, 300);
-            resourceKey = step1.getAddress().getPath();
-
-        } else {
-
-            Address serverGroupAddress = new Address(context.getResourceKey());
-            serverGroupAddress.add("deployment", deploymentName);
-            Operation step2 = new Operation("add", serverGroupAddress);
-
-            cop.addStep(step2);
-
-            Operation step3 = new Operation("deploy", serverGroupAddress);
-            cop.addStep(step3);
-
-            resourceKey = serverGroupAddress.getPath();
-
-            if (verbose) {
-                LOG.info("Deploy operation: " + cop);
-            }
-
-            result = connection.execute(cop, 300);
-        }
+        Result result = deployer.deployToServer(context.getResourceType().getName().contains("Standalone"));
+        String resourceKey = deployer.getNewResourceKey();
 
         if ((!result.isSuccess())) {
             String failureDescription = result.getFailureDescription();

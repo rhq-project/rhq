@@ -153,7 +153,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
         + "         ad.id, " // needed for avail duration
         + "         res.id, " //
         + "         (" //
-        + "           SELECT a.availabilityType " //
+        + "           SELECT max(a.availabilityType) " //
         + "             FROM Availability a " //
         + "             JOIN a.resource ar " //
         + "            WHERE ar = res " //

@@ -406,7 +406,7 @@ public class StorageClientManager implements StorageClientManagerMBean{
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void setRequestWarmupCounterMaximum(int requestWarmupCounterMaximum) {
-        session.setWarmupTimePeriod(requestWarmupCounterMaximum);
+        session.setMaxWarmupCounter(requestWarmupCounterMaximum);
         persistStorageProperty(REQUEST_WARMUP_PERIOD_MAX_COUNTER, Integer.toString(requestWarmupCounterMaximum));
     }
 

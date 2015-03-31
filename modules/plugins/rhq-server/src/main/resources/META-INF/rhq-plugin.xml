@@ -450,7 +450,7 @@
       <c:simple-property name="RequestLimitTopologyDelta" displayName="Request Limit Topology Change Delta"
                          required="false" description="The request limit will automatically change by this amount when
                          there is a topology change event. Topology change events include nodes being added/removed and
-                         nodes going up/down. Defaults to 30,000 if undefined."/>
+                         nodes going up/down. Defaults to 30,000 if undefined." type="double"/>
       <c:simple-property name="RequestWarmupPeriod" type="integer" required="false" description="The warmup period time during which the request limit is grown
                          from 50% to 100% of the calculated value. The value is in minutes. Defaults to 3 minutes if undefined." displayName="Warmup Period" />
       <c:simple-property name="RequestWarmupCounterMaximum" type="integer" required="false" description="Sets the maximum throttling value for warmup periods. If a timeout occurs

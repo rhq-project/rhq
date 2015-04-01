@@ -126,6 +126,7 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
             JsonNode uploadResult = uploadConnection.finishUpload();
 
             if (uploadResult.has(OUTCOME)) {
+                // TODO use Deployer class
                 String outcome = uploadResult.get(OUTCOME).getTextValue();
                 if (outcome.equals(SUCCESS)) { // Upload was successful, so now add the file to the server group
                     JsonNode resultNode = uploadResult.get("result");

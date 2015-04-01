@@ -52,6 +52,7 @@ import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.DataType;
@@ -209,7 +210,7 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
                 Collections.singleton(packageDetails));
 
             DeployPackagesResponse response = pluginContainer.getContentManager().deployPackagesImmediately(request);
-
+            assertEquals(response.getOverallRequestResult(), ContentResponseResult.SUCCESS);
             testContentRetrieval(TestDeployments.DEPLOYMENT_2);
         } finally {
             //switch the served deployment back, so that other tests aren't affected

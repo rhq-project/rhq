@@ -368,46 +368,4 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         }
     }
 
-    /**
-     * Test the real API code for uploading - case 2: upload to /deployment and a server group
-     * @throws Exception if anything goes wrong.
-     */
-    public void testUploadViaCreateChild2() throws Exception {
-        BaseComponent bc = new BaseComponent();
-        bc.setPath("server-group=main-server-group");
-        ResourceType rt = new ResourceType();
-        rt.setName("Deployment");
-        Resource resource = new Resource("server-group=main-server-group", TEST_WAR_FILE_NAME, rt);
-        resource.setUuid(UUID.randomUUID().toString());
-        StandaloneASComponent parentComponent = new StandaloneASComponent();
-        parentComponent.setConnection(getDomainControllerASConnection());
-        ResourceContext context = new ResourceContext(resource, parentComponent, null, null, null, null, null, null,
-            null, null, null, null, null, null);
-        bc.start(context);
-
-        String bytes_value = uploadToAs(TEST_WAR_PATH);
-
-        ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(TEST_WAR_FILE_NAME, "1.0",
-            "deployment", "all"));
-        CreateResourceReport report = new CreateResourceReport(TEST_WAR_FILE_NAME, rt, new Configuration(),
-            new Configuration(), details);
-        try {
-            report = bc.runDeploymentMagicOnServer(report, TEST_WAR_FILE_NAME, TEST_WAR_FILE_NAME, bytes_value);
-            assert report != null;
-            assert report.getErrorMessage() == null : "Report contained an unexpected error: "
-                + report.getErrorMessage();
-            assert report.getStatus() != null : "Report did not contain a status";
-            assert report.getStatus() == CreateResourceStatus.SUCCESS : "Status was no success";
-            assert report.getResourceName().equals(TEST_WAR_FILE_NAME);
-            assert report.getResourceKey().equals("server-group=main-server-group,deployment=" + TEST_WAR_FILE_NAME) : "Resource key was wrong";
-        } finally {
-            Address sgd = new Address("server-group", "main-server-group");
-            sgd.add("deployment", TEST_WAR_FILE_NAME);
-            Remove r = new Remove(sgd);
-            getDomainControllerASConnection().execute(r);
-            r = new Remove("deployment", TEST_WAR_FILE_NAME);
-            getDomainControllerASConnection().execute(r);
-        }
-    }
-
 }

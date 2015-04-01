@@ -40,9 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mockito.Mockito;
 
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.test.api.ArquillianResource;
-import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
@@ -449,7 +446,8 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
             if ((rhqVersion != null) && !(rhqVersion.trim().isEmpty())) {
                 return rhqVersion;
             }
-            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-core-plugin-container");
+            //            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-core-plugin-container");
+            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-enterprise-agent");
         } catch (MavenArtifactNotFoundException e) {
             throw new RuntimeException(e);
         }

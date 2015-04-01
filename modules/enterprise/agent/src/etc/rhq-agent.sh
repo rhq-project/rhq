@@ -276,12 +276,9 @@ if [ -n "$_LINUX" ]; then
    # JNA. Without this, the lookup of .so.x.y versions wouldn't work.
    # We also need to keep the LD_LIBRARY_PATH in place so that the default
    # system lookup works for libfa, which libaugeas depends on.
-   _JNA_LIBRARY_PATH="-Djna.platform.library.path=${LD_LIBRARY_PATH}"
+   _JNA_LIBRARY_PATH="\"-Djna.platform.library.path=${LD_LIBRARY_PATH}\""
 
    debug_msg "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
-
-   RHQ_AGENT_JAVA_OPTS="${RHQ_AGENT_JAVA_OPTS} ${_JNA_LIBRARY_PATH}"
-   debug_msg "RHQ_AGENT_JAVA_OPTS: $RHQ_AGENT_JAVA_OPTS"
 fi
 
 # ----------------------------------------------------------------------
@@ -325,9 +322,9 @@ debug_msg "$CMD"
 
 # Run the VM - put it in background if the caller wants it to be
 if [ -z "$RHQ_AGENT_IN_BACKGROUND" ]; then
-   exec $RHQ_JAVA_EXE_FILE_PATH "$_JAVA_ENDORSED_DIRS_OPT" "$_JAVA_LIBRARY_PATH_OPT" $RHQ_AGENT_JAVA_OPTS "$RHQ_AGENT_PREF_PROPERTIES" $RHQ_AGENT_ADDITIONAL_JAVA_OPTS $_LOG_CONFIG -cp "$CLASSPATH" $RHQ_AGENT_MAINCLASS $RHQ_AGENT_CMDLINE_OPTS
+   eval "$CMD"
 else
-   exec $RHQ_JAVA_EXE_FILE_PATH "$_JAVA_ENDORSED_DIRS_OPT" "$_JAVA_LIBRARY_PATH_OPT" $RHQ_AGENT_JAVA_OPTS "$RHQ_AGENT_PREF_PROPERTIES" $RHQ_AGENT_ADDITIONAL_JAVA_OPTS $_LOG_CONFIG -cp "$CLASSPATH" $RHQ_AGENT_MAINCLASS $RHQ_AGENT_CMDLINE_OPTS &
+   eval "$CMD &"
    RHQ_AGENT_BACKGROUND_PID=$!
    export RHQ_AGENT_BACKGROUND_PID
    if [ "$RHQ_AGENT_IN_BACKGROUND" != "nofile" ]; then

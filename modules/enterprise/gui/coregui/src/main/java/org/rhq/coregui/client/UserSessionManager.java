@@ -73,10 +73,10 @@ import org.rhq.coregui.client.util.preferences.UserPreferences;
 public class UserSessionManager {
     private static final Messages MSG = CoreGUI.getMessages();
 
+    private static int SESSION_TIMEOUT_MINIMUM = 60 * 1000;
     // The length of CoreGUI inactivity (no call to refresh()) before a CoreGUI session timeout    
     // Initially: 1 hour
-    private static int SESSION_TIMEOUT_MINIMUM = 60 * 60 * 1000;
-    private static int sessionTimeout = SESSION_TIMEOUT_MINIMUM;
+    private static int sessionTimeout = SESSION_TIMEOUT_MINIMUM * 60;
 
     // After CoreGUI logout, the delay before the server-side logout. This is the period in which we allow in-flight
     // async requests to complete.

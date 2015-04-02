@@ -104,7 +104,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 prop.setStringValue(convertMillisToMinutes(prop.getStringValue()));
 
                 prop = config.getSimple(SystemSetting.RHQ_SESSION_TIMEOUT.getInternalName());
-                prop.setStringValue(convertMillisToHours(prop.getStringValue()));
+                prop.setStringValue(convertMillisToMinutes(prop.getStringValue()));
 
                 prop = config.getSimple(SystemSetting.DATA_MAINTENANCE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToHours(prop.getStringValue()));
@@ -196,10 +196,10 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 // some of our properties actually need different values on the server than how they were
                 // visualized in the UI.
                 // -- some other numerical values need to be converted to milliseconds
-                if (SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED.getInternalName().equals(simple.getName())) {
-                    value = convertMinutesToMillis(value);
-                } else if (SystemSetting.DATA_MAINTENANCE_PERIOD.getInternalName().equals(simple.getName())
+                if (SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED.getInternalName().equals(simple.getName())
                     || SystemSetting.RHQ_SESSION_TIMEOUT.getInternalName().equals(simple.getName())) {
+                    value = convertMinutesToMillis(value);
+                } else if (SystemSetting.DATA_MAINTENANCE_PERIOD.getInternalName().equals(simple.getName())) {
                     value = convertHoursToMillis(value);
                 } else if (SystemSetting.AVAILABILITY_PURGE_PERIOD.getInternalName().equals(simple.getName())
                     || SystemSetting.ALERT_PURGE_PERIOD.getInternalName().equals(simple.getName())

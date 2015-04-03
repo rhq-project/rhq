@@ -453,12 +453,11 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                 return rhqVersion;
             }
             rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-core-plugin-container");
-            //            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-enterprise-agent");
-            return PLATFORM_PLUGIN_VERSION; //hard code for now.
         } catch (MavenArtifactNotFoundException e) {
             throw new RuntimeException(e);
         }
-        return rhqPluginContainerPom.getVersion();
+        return PLATFORM_PLUGIN_VERSION; //hard code for now.
+        //        return rhqPluginContainerPom.getVersion();
     }
 
     protected void assertOperationSucceeded(String operationName, Configuration params, OperationResult result) {

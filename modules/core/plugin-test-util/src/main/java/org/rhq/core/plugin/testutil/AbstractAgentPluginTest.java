@@ -113,6 +113,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         MavenResolverSystem mavenDependencyResolver = Maven.resolver();
         //check for system property specifiers before going to classpath
         String rhqPlatformPluginVersion = System.getProperty("rhq-platform-plugin.version");
+        rhqPlatformPluginVersion = "4.12.0.JON330GA"; //hard code for now.
         //complete maven gav construction.
         String platformPluginArtifact = "org.rhq:rhq-platform-plugin:jar:";
         if ((rhqPlatformPluginVersion == null) || rhqPlatformPluginVersion.trim().isEmpty()) {

@@ -108,12 +108,14 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
     private FakeServerInventory serverInventory;
 
+    private static String PLATFORM_PLUGIN_VERSION = "4.12.0.JON330GA"; //hard code for now.
+
     @Deployment(name = "platform", order = 1)
     protected static RhqAgentPluginArchive getPlatformPlugin() throws Exception {
         MavenResolverSystem mavenDependencyResolver = Maven.resolver();
         //check for system property specifiers before going to classpath
         String rhqPlatformPluginVersion = System.getProperty("rhq-platform-plugin.version");
-        rhqPlatformPluginVersion = "4.12.0.JON330GA"; //hard code for now.
+        rhqPlatformPluginVersion = PLATFORM_PLUGIN_VERSION; //hard code for now.
         //complete maven gav construction.
         String platformPluginArtifact = "org.rhq:rhq-platform-plugin:jar:";
         if ((rhqPlatformPluginVersion == null) || rhqPlatformPluginVersion.trim().isEmpty()) {
@@ -450,8 +452,9 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
             if ((rhqVersion != null) && !(rhqVersion.trim().isEmpty())) {
                 return rhqVersion;
             }
-            //            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-core-plugin-container");
-            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-enterprise-agent");
+            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-core-plugin-container");
+            //            rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-enterprise-agent");
+            return PLATFORM_PLUGIN_VERSION; //hard code for now.
         } catch (MavenArtifactNotFoundException e) {
             throw new RuntimeException(e);
         }

@@ -59,7 +59,7 @@
                               <pathelement location="../virt/target/rhq-virt-plugin-${project.version}.jar" />
                               <pathelement location="../kickstart/target/rhq-kickstart-plugin-${project.version}.jar" />
                               <pathelement location="../filetemplate-bundle/target/rhq-filetemplate-bundle-plugin-${project.version}.jar" />
-                              <pathelement location="../ant-bundle/target/rhq-ant-bundle-plugin-${project.version}.jar" />
+                              <pathelement location="../ant-bundle/target/rhq-ant-bundle-plugin-${rhq-ant-bundle-plugin.version}.jar" />
                               <pathelement location="../cassandra/target/rhq-cassandra-plugin-${rhq-cassandra-plugin.version}.jar" />
                               <pathelement location="../rhq-storage/target/rhq-rhqstorage-${project.version}.jar" />
                            </classpath>

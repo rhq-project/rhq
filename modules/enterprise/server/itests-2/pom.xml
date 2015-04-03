@@ -16,7 +16,7 @@
   <description>RHQ enterprise server JAR integration tests</description>
 
   <properties>
-    <rhq.ant-bundle.serverplugin.path>${settings.localRepository}/org/rhq/rhq-serverplugin-ant-bundle/${project.version}/rhq-serverplugin-ant-bundle-${project.version}.jar</rhq.ant-bundle.serverplugin.path>
+    <rhq.ant-bundle.serverplugin.path>${settings.localRepository}/org/rhq/rhq-serverplugin-ant-bundle/${rhq-serverplugin-ant-bundle.version}/rhq-serverplugin-ant-bundle-${rhq-serverplugin-ant-bundle.version}.jar</rhq.ant-bundle.serverplugin.path>
     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
     <jboss.unzip.location>${basedir}/target/${jboss.eap.version}</jboss.unzip.location>
     <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m
@@ -626,7 +626,7 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-serverplugin-ant-bundle</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-serverplugin-ant-bundle.version}</version>
             <scope>test</scope>
         </dependency>
 

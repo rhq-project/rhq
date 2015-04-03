@@ -391,7 +391,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>rhq-ant-bundle-plugin</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${rhq-ant-bundle-plugin.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>
@@ -425,7 +425,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>rhq-serverplugin-ant-bundle</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${rhq-serverplugin-ant-bundle.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>

@@ -10,6 +10,7 @@
 
     <groupId>org.rhq</groupId>
     <artifactId>rhq-ant-bundle-plugin</artifactId>
+    <version>4.12.0.JON330GA</version>
     <packaging>jar</packaging>
 
     <name>RHQ Ant Bundle Plugin</name>
@@ -104,7 +105,7 @@
                                 <phase>pre-integration-test</phase>
                                 <configuration>
                                     <target>
-                                        <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...</echo>
+                                        <echo>Setting up plugin dependencies for ${project.artifactId}-${rhq-ant-bundle-plugin.version}.jar...</echo>
                                         <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                                         <mkdir dir="target/itest" />
                                         <mkdir dir="target/itest/plugins" />
@@ -114,7 +115,7 @@
                                                 <include name="org/rhq/rhq-platform-plugin/${rhq-platform-plugin.version}/rhq-platform-plugin-${rhq-platform-plugin.version}.jar" />
                                             </fileset>
                                             <fileset dir="${project.build.directory}">
-                                                <include name="${project.artifactId}-${project.version}.jar" />
+                                                <include name="${project.artifactId}-${rhq-ant-bundle-plugin.version}.jar" />
                                             </fileset>
                                         </copy>
                                         <unzip dest="target/itest/lib">
@@ -171,7 +172,7 @@
                                         </property>
                                         <property>
                                             <name>project.version</name>
-                                            <value>${project.version}</value>
+                                            <value>${rhq-ant-bundle-plugin.version}</value>
                                         </property>
                                     </systemProperties>
                                 </configuration>

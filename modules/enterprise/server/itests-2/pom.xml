@@ -99,6 +99,7 @@
         <property name="project.version" value="${project.version}"/>
         <property name="rhq-core-client-api.version" value="${rhq-core-client-api.version}"/>
         <property name="rhq-platform-plugin.version" value="${rhq-platform-plugin.version}"/>
+        <property name="rhq-core-dbutils.version" value="${rhq-core-dbutils.version}"/>
         <property name="rhq.server.content.filesystem" value="${jboss.unzip.location}/standalone/data/packagebits" />
         <property name="jboss.socket.binding.port-offset" value="${jboss.socket.binding.port-offset}" />
         <property name="hibernate.dialect" value="${rhq.test.ds.hibernate-dialect}" />

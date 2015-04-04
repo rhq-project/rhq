@@ -137,7 +137,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         thirdPartyDeps.add("commons-codec:commons-codec");
         thirdPartyDeps.add("commons-io:commons-io");
         thirdPartyDeps.add("org.unitils:unitils-testng:3.1");
-        thirdPartyDeps.add("org.rhq:rhq-core-dbutils:" + System.getProperty("project.version")); // needed by SetupBean
+        //thirdPartyDeps.add("org.rhq:rhq-core-dbutils:" + System.getProperty("project.version")); // needed by SetupBean
+        thirdPartyDeps.add("org.rhq:rhq-core-dbutils:" + System.getProperty("rhq-core-dbutils.version")); // needed by SetupBean
 
         MavenResolverSystem resolver = Maven.resolver();
 

@@ -78,6 +78,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
     // its classloader isolation and module approach. So, we now deploy an EnterpriseArchive (ear)
     // where the domain jar is deployed as a module and the 3rd party libraries are put in the ear's /lib.
 
+    private static String RHQ_VERSION = "4.12.0.JON330GA"; //hard code for now. spinder 4/4/15. classpath for test quite confusing.
+
     @Deployment
     protected static EnterpriseArchive getBaseDeployment() {
 
@@ -138,7 +140,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         thirdPartyDeps.add("commons-io:commons-io");
         thirdPartyDeps.add("org.unitils:unitils-testng:3.1");
         //thirdPartyDeps.add("org.rhq:rhq-core-dbutils:" + System.getProperty("project.version")); // needed by SetupBean
-        thirdPartyDeps.add("org.rhq:rhq-core-dbutils:" + System.getProperty("rhq-core-dbutils.version")); // needed by SetupBean
+        //thirdPartyDeps.add("org.rhq:rhq-core-dbutils:" + System.getProperty("rhq-core-dbutils.version")); // needed by SetupBean
+        thirdPartyDeps.add("org.rhq:rhq-core-dbutils:" + RHQ_VERSION); // needed by SetupBean
 
         MavenResolverSystem resolver = Maven.resolver();
 

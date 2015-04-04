@@ -386,7 +386,7 @@
   <service
       name="RHQ Server Storage Client Subsystem"
       discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-      class="org.rhq.plugins.jmx.MBeanResourceComponent"
+      class="org.rhq.plugins.server.StorageClientResourceComponent"
       description="RHQ Server Storage Client Subsystem"
       singleton="true">
 

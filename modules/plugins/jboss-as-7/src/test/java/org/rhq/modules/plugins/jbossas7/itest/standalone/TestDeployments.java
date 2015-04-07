@@ -10,8 +10,8 @@ import org.rhq.core.util.stream.StreamUtil;
 * @author Thomas Segismont
 */
 enum TestDeployments {
-    DEPLOYMENT_1("test-simple-1.0.war", "test-simple.war"), //
-    DEPLOYMENT_2("test-simple-2.0.war"), //
+    DEPLOYMENT_1("test-simple-1.war"), //
+    DEPLOYMENT_2("test-simple-2.war"), //
     JAVAEE6_TEST_APP("javaee6-test-app.war");
 
     private String deploymentName;

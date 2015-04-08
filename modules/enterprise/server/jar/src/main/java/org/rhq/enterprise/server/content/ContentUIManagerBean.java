@@ -246,8 +246,8 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
     @SuppressWarnings("unchecked")
     public PageList<PackageVersionComposite> getPackageVersionCompositesByFilter(Subject user, int resourceId,
         String filter, PageControl pc) {
-        pc.initDefaultOrderingField("pv.generalPackage.name", PageOrdering.ASC);
         PageControl unlimitedpc = PageControl.getUnlimitedInstance();
+        unlimitedpc.initDefaultOrderingField("pv.generalPackage.name", PageOrdering.ASC);
 
         Query queryInstalled = PersistenceUtility.createQueryWithOrderBy(entityManager,
             InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE, unlimitedpc);
@@ -259,9 +259,10 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
 
         List<PackageListItemComposite> packagesInstalled = queryInstalled.getResultList();
 
-        List<String> installedPackageNames = new ArrayList<String>();
+        Map<String, String> installedPackages = new HashMap<String, String>();
+
         for (PackageListItemComposite packageInstalled : packagesInstalled) {
-            installedPackageNames.add(packageInstalled.getPackageName());
+            installedPackages.put(packageInstalled.getPackageName(), packageInstalled.getVersion());
         }
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -280,7 +281,8 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         List<PackageVersionComposite> modifiedResults = new ArrayList<PackageVersionComposite>();
 
         for (PackageVersionComposite result : results) {
-            if (installedPackageNames.contains(result.getPackageName())) {
+            String installedVersion = installedPackages.get(result.getPackageName());
+            if (installedVersion != null && installedVersion.equals(result.getPackageVersion().getVersion())) {
                 if (count > 0)
                     count--;
             } else {

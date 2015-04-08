@@ -80,6 +80,7 @@ import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
  * @author Fady Matar
  * @author Ian Springer
  * @author Heiko W. Rupp
+ * @author Maxime Beck
  */
 public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostComponent> implements ContentFacet,
     DeleteResourceFacet {
@@ -103,7 +104,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
     // Uppercase variables are filled in prior to searching, lowercase are matched by the returned beans
     private static final String QUERY_TEMPLATE_SERVLET = "Catalina:j2eeType=Servlet,J2EEApplication=none,J2EEServer=none,WebModule=%WEBMODULE%,name=%name%";
-    private static final String QUERY_TEMPLATE_SESSION = "Catalina:type=Manager,host=%HOST%,path=%PATH%";
+    private static final String QUERY_TEMPLATE_SESSION_TOMCAT6 = "Catalina:type=Manager,host=%HOST%,path=%PATH%";
+    private static final String QUERY_TEMPLATE_SESSION_TOMCAT7 = "Catalina:type=Manager,host=%HOST%,context=%PATH%";
     private static final String QUERY_TEMPLATE_HOST = "Catalina:type=Manager,path=%PATH%,host=%host%";
 
     protected static final String PROPERTY_NAME = "name";
@@ -256,14 +258,13 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
     private Double getSessionMetric(String metricName) {
         EmsConnection jmxConnection = getEmsConnection();
-        String servletMBeanNames = QUERY_TEMPLATE_SESSION;
-        Configuration config = getResourceContext().getPluginConfiguration();
-        servletMBeanNames = servletMBeanNames.replace("%PATH%", config.getSimpleValue(PROPERTY_CONTEXT_ROOT, ""));
-        servletMBeanNames = servletMBeanNames.replace("%HOST%", config.getSimpleValue(PROPERTY_VHOST, ""));
-        ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(servletMBeanNames);
-        List<EmsBean> mBeans = jmxConnection.queryBeans(queryUtility.getTranslatedQuery());
         String property = metricName.substring(METRIC_PREFIX_SESSION.length());
+        List<EmsBean> mBeans = null;
         Double ret = Double.NaN;
+
+        mBeans = getMBeans(jmxConnection, QUERY_TEMPLATE_SESSION_TOMCAT6);
+        if(mBeans.size() == 0)
+            mBeans = getMBeans(jmxConnection, QUERY_TEMPLATE_SESSION_TOMCAT7);
 
         if (mBeans.size() > 0) { // TODO flag error if != 1 ?
             EmsBean eBean = mBeans.get(0);
@@ -273,9 +274,20 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
                 Integer i = (Integer) att.getValue();
                 ret = Double.valueOf(i);
             }
-
         }
+
         return ret;
+    }
+
+    private List<EmsBean> getMBeans(EmsConnection jmxConnection, String query) {
+        String servletMBeanNames = query;
+        Configuration config = getResourceContext().getPluginConfiguration();
+        servletMBeanNames = servletMBeanNames.replace("%PATH%", config.getSimpleValue(PROPERTY_CONTEXT_ROOT, ""));
+        servletMBeanNames = servletMBeanNames.replace("%HOST%", config.getSimpleValue(PROPERTY_VHOST, ""));
+        ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(servletMBeanNames);
+        List<EmsBean> mBeans = jmxConnection.queryBeans(queryUtility.getTranslatedQuery());
+
+        return mBeans;
     }
 
     private Double getServletMetric(String metricName) {

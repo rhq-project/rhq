@@ -29,9 +29,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Stopwatch;
@@ -65,6 +67,7 @@ public class MetricsServer {
     private final Log log = LogFactory.getLog(MetricsServer.class);
 
     private static final int RAW_DATA_AGE_LIMIT_MAX = 5;
+    private static final int QUEUE_SIZE = 200000;
 
     private DateTimeService dateTimeService = new DateTimeService();
 
@@ -78,7 +81,11 @@ public class MetricsServer {
     private InvalidMetricsManager invalidMetricsManager;
 
     private AggregationManager aggregationManager;
-    
+
+    private volatile BlockingQueue<MeasurementDataNumeric> numericQueue;
+
+    private NumericQueueConsumer numericQueueConsumer;
+
     private Days rawDataAgeLimit = Days.days(Math.min(3, Integer.parseInt(
         System.getProperty("rhq.metrics.data.age-limit", "3"))));
 
@@ -113,6 +120,11 @@ public class MetricsServer {
     public void init() {
         aggregationManager = new AggregationManager(dao, dateTimeService, configuration);
         invalidMetricsManager = new InvalidMetricsManager(dateTimeService, dao);
+
+        numericQueue = new ArrayBlockingQueue<MeasurementDataNumeric>(QUEUE_SIZE);
+        numericQueueConsumer = new NumericQueueConsumer();
+        numericQueueConsumer.setName("MetricsServer numericQueueConsumer");
+        numericQueueConsumer.start();
     }
 
     /**
@@ -127,6 +139,12 @@ public class MetricsServer {
     }
 
     public void shutdown() {
+        numericQueueConsumer.shutdown();
+        try {
+            numericQueueConsumer.join(); // Lets wait for it to finish before we continue..
+        } catch (InterruptedException e) {
+            log.warn("Potential data loss while waiting for the queue to empty, ", e);
+        }
         aggregationManager.shutdown();
         invalidMetricsManager.shutdown();
     }
@@ -336,51 +354,23 @@ public class MetricsServer {
 
     }
 
-    public void addNumericData(final Set<MeasurementDataNumeric> dataSet, final RawDataInsertedCallback callback) {
-        if (log.isDebugEnabled()) {
-            log.debug("Inserting " + dataSet.size() + " raw metrics");
-        }
-        final Stopwatch stopwatch = new Stopwatch().start();
-        final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
-
-        for (final MeasurementDataNumeric data : dataSet) {
-            DateTime collectionTimeSlice = dateTimeService.getTimeSlice(new DateTime(data.getTimestamp()),
-                configuration.getRawTimeSliceDuration());
-            Days days = Days.daysBetween(collectionTimeSlice, dateTimeService.now());
-
-            if (days.isGreaterThan(rawDataAgeLimit)) {
-                log.info(data + " is older than the raw data age limit of " + rawDataAgeLimit.getDays() +
-                    " days. It will not be stored.");
-            } else {
-                StorageResultSetFuture rawFuture = dao.insertRawData(data);
-                StorageResultSetFuture indexFuture = dao.updateIndex(IndexBucket.RAW, collectionTimeSlice.getMillis(),
-                    data.getScheduleId());
-                ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(rawFuture, indexFuture);
-                Futures.addCallback(insertsFuture, new FutureCallback<List<ResultSet>>() {
-                    @Override
-                    public void onSuccess(List<ResultSet> result) {
-                        callback.onSuccess(data);
-                        if (remainingInserts.decrementAndGet() == 0) {
-                            stopwatch.stop();
-                            if (log.isDebugEnabled()) {
-                                log.debug("Finished inserting " + dataSet.size() + " raw metrics in " +
-                                    stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
-                            }
-                            callback.onFinish();
-                        }
+    public synchronized void addNumericData(final Set<MeasurementDataNumeric> dataSet, final FutureCallback<Void> callback) {
+        if(numericQueue.remainingCapacity() > dataSet.size()) {
+            for(final MeasurementDataNumeric data : dataSet) {
+                try {
+                    if(data != null) {
+                        numericQueue.offer(data, 1, TimeUnit.SECONDS);
                     }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("An error occurred while inserting raw data", ThrowableUtil.getRootCause(t));
-                        } else {
-                            log.warn("An error occurred while inserting raw data: " + ThrowableUtil.getRootMessage(t));
-                        }
-                        callback.onFailure(t);
-                    }
-                }, tasks);
+                } catch (InterruptedException e) {
+                    // Modify the exception to include sane message telling us even the buffer is full..
+                    // and actually do something with it in MeasurementDataManagerBean ..
+                    callback.onFailure(new RuntimeException("The queue insert timed out after one second, can't finish the queue loading.", e));
+                    return;
+                }
             }
+            callback.onSuccess(null);
+        } else {
+            callback.onFailure(new RuntimeException("The server is overloaded, queue is full."));
         }
     }
 
@@ -448,6 +438,73 @@ public class MetricsServer {
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
         return new AggregateNumericMetric(0, bucket, mean.getArithmeticMean(), min, max, timestamp);
+    }
+
+    public int getQueueAvailableCapacity() {
+        return this.numericQueue.remainingCapacity();
+    }
+
+    private class NumericQueueConsumer extends Thread {
+        private final MeasurementDataNumeric KILL_SIGNAL = new MeasurementDataNumeric(Long.MIN_VALUE, Integer.MIN_VALUE, Double.valueOf(Double.MIN_VALUE));
+
+        @Override
+        public void run() {
+            while(true) {
+                final MeasurementDataNumeric data;
+                try {
+                    data = numericQueue.take();
+                    if(data == KILL_SIGNAL) {
+                        return;
+                    }
+                } catch (InterruptedException e) {
+                    // We still keep getting interrupted.. we really need to die
+                    return;
+                }
+                DateTime collectionTimeSlice = dateTimeService.getTimeSlice(new DateTime(data.getTimestamp()),
+                        configuration.getRawTimeSliceDuration());
+                Days days = Days.daysBetween(collectionTimeSlice, dateTimeService.now());
+
+                if (days.isGreaterThan(rawDataAgeLimit)) {
+                    log.info(data + " is older than the raw data age limit of " + rawDataAgeLimit.getDays() +
+                            " days. It will not be stored.");
+                } else {
+                    StorageResultSetFuture rawFuture = dao.insertRawData(data);
+                    StorageResultSetFuture indexFuture = dao.updateIndex(IndexBucket.RAW, collectionTimeSlice.getMillis(),
+                            data.getScheduleId());
+                    ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(rawFuture, indexFuture);
+                    Futures.addCallback(insertsFuture, new FutureCallback<List<ResultSet>>() {
+                        @Override
+                        public void onSuccess(List<ResultSet> result) {
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            boolean offerSuccess = numericQueue.offer(data);
+                            if(!offerSuccess) {
+                                if (log.isDebugEnabled()) {
+                                    log.debug("An error occurred while inserting raw data", ThrowableUtil.getRootCause(t));
+                                } else {
+                                    log.warn("An error occurred while inserting raw data: " + ThrowableUtil.getRootMessage(t)
+                                    + ", data was: " + data);
+                                }
+                            }
+                        }
+                    }, tasks);
+                }
+            }
+        }
+
+        /**
+         * Push KILL_SIGNAL to the processing queue
+         */
+        public void shutdown() {
+            try {
+                numericQueue.put(KILL_SIGNAL);
+            } catch (InterruptedException e) {
+                log.warn("Could not push kill signal to the numericQueue. Possible data loss.");
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
 }

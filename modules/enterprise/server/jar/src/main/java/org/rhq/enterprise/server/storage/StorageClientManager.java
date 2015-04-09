@@ -626,4 +626,9 @@ public class StorageClientManager implements StorageClientManagerMBean{
         return driverMetrics.getRequestsTimer().mean();
     }
 
+    @Override
+    public int getQueueAvailableCapacity() {
+        return metricsServer.getQueueAvailableCapacity();
+    }
+
 }

@@ -31,8 +31,15 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * Discover Application Datasource
  * 
  * @author Jay Shaughnessy
+ * @author Maxime Beck
  */
 public class TomcatDatasourceDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatWarComponent> {
+
+    private static final String DATASOURCE_OBJECT_NAME_FROM_CONTEXT = "Catalina:type=DataSource,context=%path%,host=%host%,class=javax.sql.DataSource,name=%name%";
+    private static final String DATASOURCE_OBJECT_NAME_FROM_SERVER = "Catalina:type=DataSource,class=javax.sql.DataSource,name=%name%";
+
+    private String host;
+    private String path;
 
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatWarComponent> discoveryContext) {
@@ -41,23 +48,16 @@ public class TomcatDatasourceDiscoveryComponent extends MBeanResourceDiscoveryCo
     	Set<DiscoveredResourceDetails> resources;
 
         Configuration defaultPluginConfig = discoveryContext.getDefaultPluginConfiguration();
-        String host = discoveryContext.getParentResourceContext().getPluginConfiguration().getSimpleValue(TomcatWarComponent.PROPERTY_VHOST, null);
-        String path = discoveryContext.getParentResourceContext().getPluginConfiguration().getSimpleValue(TomcatWarComponent.PROPERTY_CONTEXT_ROOT, null);
+        host = discoveryContext.getParentResourceContext().getPluginConfiguration().getSimpleValue(TomcatWarComponent.PROPERTY_VHOST, null);
+        path = discoveryContext.getParentResourceContext().getPluginConfiguration().getSimpleValue(TomcatWarComponent.PROPERTY_CONTEXT_ROOT, null);
 
-        objectNameTemplate = defaultPluginConfig.getSimple(PROPERTY_OBJECT_NAME).getStringValue();
-        objectNameTemplate = objectNameTemplate.replace("%host%", host);
-        objectNameTemplate = objectNameTemplate.replace("%path%", path);
-        defaultPluginConfig.put(new PropertySimple(PROPERTY_OBJECT_NAME, objectNameTemplate));
-
-        resources = super.performDiscovery(defaultPluginConfig, discoveryContext.getParentResourceComponent(), discoveryContext.getResourceType());
-
+        resources = getResources(defaultPluginConfig, defaultPluginConfig.getSimple(PROPERTY_OBJECT_NAME).getStringValue());
         if (resources.size() == 0) {
-            objectNameTemplate = getDatasourceObjectName();
-            objectNameTemplate = objectNameTemplate.replace("%host%", host);
-            objectNameTemplate = objectNameTemplate.replace("%path%", path);
-            defaultPluginConfig.put(new PropertySimple(PROPERTY_OBJECT_NAME, objectNameTemplate));
-            resources = super.performDiscovery(defaultPluginConfig, discoveryContext.getParentResourceComponent(), discoveryContext.getResourceType());
+            resources = getResources(defaultPluginConfig, DATASOURCE_OBJECT_NAME_FROM_CONTEXT);
+            if (resources.size() == 0)
+                resources = getResources(defaultPluginConfig, DATASOURCE_OBJECT_NAME_FROM_SERVER);
         }
+
         // returns only one resource.
         for (DiscoveredResourceDetails detail : resources) {
             Configuration pluginConfiguration = detail.getPluginConfiguration();
@@ -69,7 +69,11 @@ public class TomcatDatasourceDiscoveryComponent extends MBeanResourceDiscoveryCo
         return resources;
     }
 
-    private String getDatasourceObjectName() {
-        return "Catalina:type=DataSource,context=%path%,host=%host%,class=javax.sql.DataSource,name=%name%";
+    private Set<DiscoveredResourceDetails> getResources(Configuration defaultPluginConfig, String objectNameTemplate) {
+        objectNameTemplate = objectNameTemplate.replace("%host%", host);
+        objectNameTemplate = objectNameTemplate.replace("%path%", path);
+        defaultPluginConfig.put(new PropertySimple(PROPERTY_OBJECT_NAME, objectNameTemplate));
+
+        return super.performDiscovery(defaultPluginConfig, discoveryContext.getParentResourceComponent(), discoveryContext.getResourceType());
     }
 }

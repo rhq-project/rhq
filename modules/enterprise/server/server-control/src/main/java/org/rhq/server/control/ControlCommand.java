@@ -463,32 +463,57 @@ public abstract class ControlCommand {
             // For the moment we have no better way to just wait some time
             Thread.sleep(WAIT_FOR_PROCESS_TO_STOP_TIMEOUT_SECS * 1000L);
         } else {
-            final int maxTries = 5;
-            int tries = 1;
-            while (tries <= maxTries) {
-                log.debug("Waiting for pid [" + pid + "] to stop. Try #" + tries);
-                if (!isUnixPidRunning(pid)) {
-                    break;
+            if (!waitForProcess(pid, WAIT_FOR_PROCESS_TO_STOP_TIMEOUT_SECS * 2, 10)) {
+
+                log.warn("Process [" + pid + "] did not finish yet, retrying with SIGKILL signal");
+                killPid(pid, "KILL");
+
+                if (!waitForProcess(pid, WAIT_FOR_PROCESS_TO_STOP_TIMEOUT_SECS, 5)) {
+                    throw new RHQControlException("Process [" + pid
+                        + "] did not finish yet. Terminate it manually and retry.");
                 }
-                Thread.sleep((WAIT_FOR_PROCESS_TO_STOP_TIMEOUT_SECS / maxTries) * 1000L);
-                tries++;
-            }
-            if (tries > maxTries) {
-                throw new RHQControlException("Process [" + pid
-                    + "] did not finish yet. Terminate it manually and retry.");
             }
         }
     }
 
-    protected void killPid(String pid) throws IOException {
+    /**
+     * waits until process with given pid dies
+     * @param pid process PID
+     * @param maxTries number of checks to be performed within timeout
+     * @param timeout waiting timeout in seconds
+     * @return true if process does not run anymore, false otherwise
+     * @throws Exception
+     */
+    private boolean waitForProcess(String pid, final int timeout, final int maxTries) throws Exception {
+        int tries = 1;
+        while (tries <= maxTries) {
+            log.debug("Waiting for pid [" + pid + "] to stop. Try #" + tries);
+            if (!isUnixPidRunning(pid)) {
+                return true;
+            }
+            Thread.sleep((timeout / maxTries) * 1000L);
+            tries++;
+        }
+        return false;
+    }
+
+    protected void killPid(String pid, String signal) throws IOException {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(getBinDir());
         PumpStreamHandler streamHandler = new PumpStreamHandler(createNullOutputStream(), createNullOutputStream());
         executor.setStreamHandler(streamHandler);
         org.apache.commons.exec.CommandLine commandLine;
 
-        commandLine = new org.apache.commons.exec.CommandLine("kill").addArgument(pid);
+        commandLine = new org.apache.commons.exec.CommandLine("kill");
+        if (signal != null) {
+            commandLine.addArgument("-" + signal);
+        }
+        commandLine.addArgument(pid);
         executor.execute(commandLine);
+    }
+
+    protected void killPid(String pid) throws IOException {
+        killPid(pid, null);
     }
 
     protected boolean isUnixPidRunning(String pid) {

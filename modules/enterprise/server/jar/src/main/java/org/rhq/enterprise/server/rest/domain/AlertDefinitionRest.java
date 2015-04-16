@@ -46,6 +46,7 @@ public class AlertDefinitionRest {
     int dampeningCount;
     int dampeningPeriod;
     String dampeningUnit;
+    boolean deleted;
     List<Link> links = new ArrayList<Link>();
 
     @SuppressWarnings("unused")
@@ -164,6 +165,15 @@ public class AlertDefinitionRest {
 
     public void setDampeningUnit(String dampeningUnit) {
         this.dampeningUnit = dampeningUnit;
+    }
+
+    @ApiProperty(value = "Whether definition was deleted")
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 
     public List<Link> getLinks() {

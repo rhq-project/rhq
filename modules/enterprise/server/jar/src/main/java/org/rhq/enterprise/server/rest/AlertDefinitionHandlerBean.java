@@ -205,10 +205,11 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @ApiError(code = 404, reason = "No definition found with the passed id.")
     public Response getAlertDefinition(@ApiParam("Id of the alert definition to retrieve") @PathParam("id") int definitionId,
                                        @ApiParam("Should conditions and notifications be returned too?") @QueryParam("full") @DefaultValue("true") boolean full,
+                                       @ApiParam("Should deleted definition be retrieved?") @QueryParam("deleted") @DefaultValue("true") boolean deleted,
             @Context Request request, @Context UriInfo uriInfo) {
 
         AlertDefinition def = alertDefinitionManager.getAlertDefinition(caller, definitionId);
-        if (def==null) {
+        if (def == null || (def.getDeleted() && !deleted)) {
             throw new StuffNotFoundException("AlertDefinition with id " + definitionId );
         }
 
@@ -1111,6 +1112,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         adr.setPriority(def.getPriority().getName());
         adr.setConditionMode(def.getConditionExpression().toString());
         adr.setRecoveryId(def.getRecoveryId());
+        adr.setDeleted(def.getDeleted());
 
         if (full) {
             Set<AlertCondition> conditions = def.getConditions();

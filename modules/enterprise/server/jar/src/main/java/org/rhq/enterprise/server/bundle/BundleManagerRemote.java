@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -338,8 +338,8 @@ public interface BundleManagerRemote {
      *         understand all that this method did. Bundle files specifically are returned.
      * @throws Exception
      *
-     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
-     * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle(org.rhq.core.domain.auth.Subject)
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(org.rhq.core.domain.auth.Subject, String, byte[], int, int)
      * @see #createBundleVersionViaFile(org.rhq.core.domain.auth.Subject, java.io.File)
      *
      * @since 4.10
@@ -383,8 +383,8 @@ public interface BundleManagerRemote {
      *         understand all that this method did. Bundle files specifically are returned.
      * @throws Exception
      *
-     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
-     * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle(org.rhq.core.domain.auth.Subject)
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(org.rhq.core.domain.auth.Subject, String, byte[], int, int)
      * @see #createInitialBundleVersionViaFile(org.rhq.core.domain.auth.Subject, int[], java.io.File)
      *
      * @since 4.10

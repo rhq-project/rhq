@@ -210,7 +210,7 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     }
 
     @Override
-    public ImportConfigurationDefinition getImportConfigurationDefinition(String synchronizerClass) {
+    public ImportConfigurationDefinition getImportConfigurationDefinition(Subject subject, String synchronizerClass) {
         try {
             Class<?> cls = Class.forName(synchronizerClass);
             if (!Synchronizer.class.isAssignableFrom(cls)) {
@@ -231,7 +231,7 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     }
 
     @Override
-    public List<ImportConfigurationDefinition> getImportConfigurationDefinitionOfAllSynchronizers() {
+    public List<ImportConfigurationDefinition> getImportConfigurationDefinitionOfAllSynchronizers(Subject subject) {
         List<ImportConfigurationDefinition> ret = new ArrayList<ImportConfigurationDefinition>();
 
         for (Synchronizer<?, ?> syn : synchronizerFactory.getAllSynchronizers()) {

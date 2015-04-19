@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2014 Red Hat, Inc.
+ * Copyright (C) 2014-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -114,8 +114,8 @@ public interface PluginManagerRemote {
      * @param handle the handle to the uploaded file
      *
      * @throws Exception on error
-     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
-     * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle(org.rhq.core.domain.auth.Subject)
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(org.rhq.core.domain.auth.Subject, String, byte[], int, int)
      */
     List<Plugin> deployUsingContentHandle(Subject subject, String pluginJarName, String handle) throws Exception;
 

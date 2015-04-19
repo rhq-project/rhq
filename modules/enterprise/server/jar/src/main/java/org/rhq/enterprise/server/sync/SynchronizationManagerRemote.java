@@ -69,13 +69,13 @@ public interface SynchronizationManagerRemote {
      * @param synchronizerClass
      * @return null if class not found
      */
-    ImportConfigurationDefinition getImportConfigurationDefinition(String synchronizerClass);
+    ImportConfigurationDefinition getImportConfigurationDefinition(Subject subject, String synchronizerClass);
 
     /**
      * Returns the configuration definitions of all known importers.
      * @return not null
      */
-    List<ImportConfigurationDefinition> getImportConfigurationDefinitionOfAllSynchronizers();
+    List<ImportConfigurationDefinition> getImportConfigurationDefinitionOfAllSynchronizers(Subject subject);
 
     /**
      * Imports everything from the export file.

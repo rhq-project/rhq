@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
@@ -42,9 +43,11 @@ import org.rhq.enterprise.server.content.ContentManagerRemote;
 public class ContentUploader {
     private static final int SIZE_32K = 1024 * 32;
 
-    private ContentManagerRemote contentManager;
+    private final Subject subject;
+    private final ContentManagerRemote contentManager;
 
-    public ContentUploader(ContentManagerRemote contentManager) {
+    public ContentUploader(Subject subject, ContentManagerRemote contentManager) {
+        this.subject = subject;
         this.contentManager = contentManager;
     }
 
@@ -52,9 +55,10 @@ public class ContentUploader {
      * Uploads the file specified by its absolute <code>filename</code>.
      *
      * @param filename absolute path of the file to upload
+     *
      * @return a temporary content handle
-     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
-     * @see ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle(org.rhq.core.domain.auth.Subject)
+     * @see ContentManagerRemote#uploadContentFragment(org.rhq.core.domain.auth.Subject, String, byte[], int, int)
      * @throws IllegalArgumentException if <code>filename</code> is empty, if the file does not exist or if it is a
      * directory
      */
@@ -69,9 +73,10 @@ public class ContentUploader {
      * Uploads a file.
      *
      * @param file the file to upload
+     *
      * @return a temporary content handle
-     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
-     * @see ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle(org.rhq.core.domain.auth.Subject)
+     * @see ContentManagerRemote#uploadContentFragment(org.rhq.core.domain.auth.Subject, String, byte[], int, int)
      * @throws IllegalArgumentException if <code>file</code> is null, if the file does not exist or if it is a directory
      */
     public String upload(File file) {
@@ -84,7 +89,7 @@ public class ContentUploader {
         if (file.isDirectory()) {
             throw new IllegalArgumentException("File expected, found directory: " + file.getAbsolutePath());
         }
-        String temporaryContentHandle = contentManager.createTemporaryContentHandle();
+        String temporaryContentHandle = contentManager.createTemporaryContentHandle(subject);
         FileInputStream fileInputStream = null;
         try {
             fileInputStream = new FileInputStream(file);
@@ -92,7 +97,7 @@ public class ContentUploader {
             int len;
             byte[] bytes = new byte[SIZE_32K];
             while ((len = bufferedInputStream.read(bytes, 0, bytes.length)) != -1) {
-                contentManager.uploadContentFragment(temporaryContentHandle, bytes, 0, len);
+                contentManager.uploadContentFragment(subject, temporaryContentHandle, bytes, 0, len);
             }
             return temporaryContentHandle;
         } catch (IOException e) {

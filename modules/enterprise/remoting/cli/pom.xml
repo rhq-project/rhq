@@ -296,6 +296,43 @@
             </plugins>
          </build>
       </profile>
+
+    <profile>
+      <id>testBZ1198008</id>
+      <activation>
+        <property>
+          <name>testBZ1198008</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>execute-test-broker</id>
+                <phase>install</phase>
+                <goals>
+                  <goal>java</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <mainClass>org.rhq.enterprise.client.RHQTestClient</mainClass>
+              <classpathScope>test</classpathScope>
+              <systemProperties>
+                <systemProperty>
+                  <key>log4j.configuration</key>
+                  <value>file:${basedir}/src/main/resources/log4j.xml</value>
+                </systemProperty>
+              </systemProperties>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
    </profiles>
 </project>
 

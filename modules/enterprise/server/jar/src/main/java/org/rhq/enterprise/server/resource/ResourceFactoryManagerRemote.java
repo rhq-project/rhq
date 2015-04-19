@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -103,8 +103,8 @@ public interface ResourceFactoryManagerRemote {
      * @param timeout                     number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default.
      * @return                            the create resource history record
      *
-     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
-     * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle(org.rhq.core.domain.auth.Subject)
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(org.rhq.core.domain.auth.Subject, String, byte[], int, int)
      * @see #createPackageBackedResource(org.rhq.core.domain.auth.Subject, int, int, String, org.rhq.core.domain.configuration.Configuration, String, String, Integer, org.rhq.core.domain.configuration.Configuration, byte[], Integer)
      *
      * @since 4.10

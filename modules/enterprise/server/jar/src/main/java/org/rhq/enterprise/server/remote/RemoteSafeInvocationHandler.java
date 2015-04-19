@@ -164,6 +164,9 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
     private static <T> String getRemoteJNDIName(Class<?> remoteClass) {
         String jndiName = REMOTE_JNDI_NAMES.get(remoteClass);
         if (jndiName == null) {
+            if (!remoteClass.getSimpleName().endsWith("Remote")) {
+                throw new RuntimeException("Illegal to access non-remote API: " + remoteClass);
+            }
             jndiName = "java:global/rhq/rhq-server/" + remoteClass.getSimpleName().replaceFirst("Remote$", "Bean")
                 + "!" + remoteClass.getName();
             REMOTE_JNDI_NAMES.put(remoteClass, jndiName);

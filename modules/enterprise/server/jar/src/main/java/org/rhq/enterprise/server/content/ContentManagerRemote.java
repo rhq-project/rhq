@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -241,11 +241,12 @@ public interface ContentManagerRemote {
     /**
      * Creates a temporary file for fragmented content upload.
      *
+     * @param subject logged in user
      * @return a temporary file handle
      *
      * @since 4.10
      */
-    String createTemporaryContentHandle();
+    String createTemporaryContentHandle(Subject subject);
 
     /**
      * Saves the fragment in the temporary file denoted by <code>temporaryContentHandle</code>.
@@ -253,14 +254,15 @@ public interface ContentManagerRemote {
      * The <code>fragment</code> bytes will be copied starting from the <code>off</code> index up to the minimum of
      * <code>off+len</code> and <code>fragment.length</code>.
      *
+     * @param subject logged in user
      * @param temporaryContentHandle temporary file handle
      * @param fragment fragment bytes
      * @param off the offset
-     * @param len
+     * @param len number of bytes
      *
      * @since 4.10
      */
-    void uploadContentFragment(String temporaryContentHandle, byte[] fragment, int off, int len);
+    void uploadContentFragment(Subject subject, String temporaryContentHandle, byte[] fragment, int off, int len);
 
     /**
      * Creates a new package version in the system with content denoted by the <code>temporaryContentHandle</code>.

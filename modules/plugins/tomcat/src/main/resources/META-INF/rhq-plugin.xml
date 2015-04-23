@@ -494,39 +494,13 @@
             <resource-configuration>
                <c:group name="Attributes">
                   <c:simple-property
-                     name="allowLinking"
-                     type="boolean"
-                     description="If the value of this flag is true, symlinks will be allowed inside the web application, pointing to resources outside the web application base path. If not specified, the default value of the flag is false. NOTE: This flag MUST NOT be set to true on the Windows platform (or any other OS which does not have a case sensitive filesystem), as it will disable case sensitivity checks, allowing JSP source code disclosure, among other security problems." />
-                  <c:simple-property
-                     name="antiJarLocking"
-                     type="boolean"
-                     description="If true, the Tomcat classloader will take extra measures to avoid JAR file locking when resources are accessed inside JARs through URLs. This will impact startup time of applications, but could prove to be useful on platforms or configurations where file locking can occur. If not specified, the default value is false." />
-                  <c:simple-property
                      name="antiResourceLocking"
                      type="boolean"
                      description="If true, Tomcat will prevent any file locking. This will significantly impact startup time of applications, but allows full webapp hot deploy and undeploy on platforms or configurations where file locking can occur. If not specified, the default value is false. Please note that setting this to true has some side effects, including the disabling of JSP reloading in a running server: see Bugzilla 37668. Please note that setting this flag to true in applications that are outside the appBase for the Host (the webapps directory by default) will cause the application to be deleted on Tomcat shutdown. You probably don't want to do this, so think twice before setting antiResourceLocking=true on a webapp that's outside the appBase for its Host. " />
                   <c:simple-property
-                     name="cachingAllowed"
-                     type="boolean"
-                     description="If the value of this flag is true, the cache for static resources will be used. If not specified, the default value of the flag is true." />
-                  <c:simple-property
-                     name="cacheTTL"
-                     displayName="Cache TTL"
-                     type="integer"
-                     description="Amount of time in milliseconds between cache entries revalidation. If not specified, the default value is 5000 (5 seconds)." />
-                  <c:simple-property
-                     name="cacheMaxSize"
-                     type="integer"
-                     description="Maximum size of the static resource cache in kilobytes. If not specified, the default value is 10240  (10 megabytes)." />
-                  <c:simple-property
                      name="cookies"
                      type="boolean"
                      description="Set to true if you want cookies to be used for session identifier communication if supported by the client (this is the default). Set to false if you want to disable the use of cookies for session identifier communication, and rely only on URL rewriting by the application." />
-                  <c:simple-property
-                     name="compilerClasspath"
-                     type="string"
-                     description="The compiler classpath to use"
-                     required="false" />
                   <c:simple-property
                      name="crossContext"
                      type="boolean"
@@ -545,10 +519,6 @@
                      type="boolean"
                      description="Set to true if you want Catalina to monitor classes in /WEB-INF/classes/ and /WEB-INF/lib for changes, and automatically reload the web application if a change is detected. This feature is very useful during application development, but it requires significant runtime overhead and is not recommended for use on deployed production applications. That's why the default setting for this attribute is false." />
                   <c:simple-property
-                     name="saveConfig"
-                     type="boolean"
-                     description="Write the configuration as needed on startup?" />
-                  <c:simple-property
                      name="swallowOutput"
                      type="boolean"
                      description="If the value of this flag is true, the bytes output to System.out and System.err by the web application will be redirected to the web application logger. If not specified, the default value of the flag is false." />
@@ -556,7 +526,7 @@
                      name="unloadDelay"
                      type="integer"
                      description="Amount of ms that the container will wait for servlets to unload. If not specified, the default value of the flag is 2000 ms." />
-                  <c:simple-property
+                   <c:simple-property
                      name="useNaming"
                      type="boolean"
                      description="Set to true (the default) to have Catalina enable a JNDI InitialContext for this web application that is compatible with Java2 Enterprise Edition (J2EE) platform conventions." />

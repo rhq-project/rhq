@@ -541,6 +541,20 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <testClassesDirectory>${project.build.directory}</testClassesDirectory>
+          <includes>
+            <include>**/classes/**</include>
+            <include>**/test-classes/**</include>
+            <include>**/docbkx/**</include>
+            <include>**/docbkx/*.html</include>
+            <include>**/docbkx/*.fo</include>
+            <include>**/docbkx/*.pdf</include>
+            <include>**/docs/*</include>
+            <include>**/docs/*.html</include>
+            <include>**/docs/*.xml</include>
+          </includes>
+        </configuration>
         <executions>
           <execution>
             <phase>package</phase>

@@ -190,7 +190,12 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         serverPluginConfig.setHostname(managementHostPort.host);
         serverPluginConfig.setPort(managementHostPort.port);
         pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());
-        JBossProductType productType = JBossProductType.determineJBossProductType(homeDir);
+        JBossProductType productType = JBossProductType.AS;
+        try {
+            JBossProductType.determineJBossProductType(homeDir);
+        } catch (Exception e) {
+            log.warn("Managed product type for [" + homeDir + "] could not be determined or is unsupported: " + e.getMessage(), e); //$NON-NLS-1$ //$NON-NLS-2$
+        }
         serverPluginConfig.setProductType(productType);
         pluginConfig.setSimpleValue("hostXmlFileName", getHostXmlFileName(commandLine));
 

@@ -26,8 +26,8 @@ import java.util.Set;
 
 import org.jetbrains.annotations.NotNull;
 
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
@@ -45,6 +45,18 @@ public class ResourceUtility {
             }
         }
         return null;
+    }
+
+    /**
+     * Check whether given resource is doomed
+     * @param resource doomed?
+     * @return true if given resource is doomed (= is null or is or is going to be deleted from server)
+     */
+    public static boolean isResourceDoomed(Resource resource) {
+        if (resource == null) {
+            return true;
+        }
+        return InventoryStatus.UNINVENTORIED.equals(resource.getInventoryStatus());
     }
 
     /**

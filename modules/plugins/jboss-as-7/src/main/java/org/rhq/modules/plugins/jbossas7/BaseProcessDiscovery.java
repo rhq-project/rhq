@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2011-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.modules.plugins.jbossas7;
 
@@ -190,7 +190,12 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         serverPluginConfig.setHostname(managementHostPort.host);
         serverPluginConfig.setPort(managementHostPort.port);
         pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());
-        JBossProductType productType = JBossProductType.determineJBossProductType(homeDir);
+        JBossProductType productType = JBossProductType.AS;
+        try {
+            JBossProductType.determineJBossProductType(homeDir);
+        } catch (Exception e) {
+            log.warn("Managed product type for [" + homeDir + "] could not be determined or is unsupported: " + e.getMessage(), e); //$NON-NLS-1$ //$NON-NLS-2$
+        }
         serverPluginConfig.setProductType(productType);
         pluginConfig.setSimpleValue("hostXmlFileName", getHostXmlFileName(commandLine));
 
@@ -604,8 +609,16 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             ASConnection connection = new ASConnection(hostname, port, user, pass);
             try {
                 String productName = getServerAttribute(connection, "product-name");
-                productType = ((productName != null) && !productName.isEmpty()) ?
+                try {
+                    productType = ((productName != null) && !productName.isEmpty()) ?
                         JBossProductType.getValueByProductName(productName) : JBossProductType.AS;
+                } catch (Exception e) {
+                    // if the product type can not be determined, log a warning
+                    // to indicate that the product may not be supported and
+                    // fall back to a product type of AS.
+                    log.warn("Unknown or unsupported product type for product [" + productName + "]: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+                    productType = JBossProductType.AS;
+                }
                 releaseVersion = getServerAttribute(connection, "release-version");
                 releaseCodeName = getServerAttribute(connection, "release-codename");
                 serverName = getServerAttribute(connection, "name");

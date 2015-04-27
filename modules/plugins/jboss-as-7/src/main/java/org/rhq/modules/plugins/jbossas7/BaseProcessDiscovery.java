@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2014 Red Hat, Inc.
+ * Copyright (C) 2011-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -222,6 +222,12 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         serverPluginConfig.setNativeLocalAuth(hostConfig.isNativeLocalOnly());
         pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());
         String apiVersion = hostConfig.getDomainApiVersion();
+        JBossProductType productType = JBossProductType.AS;
+        try {
+            productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
+        } catch (Exception e) {
+            log.warn("Managed product type for [" + homeDir + "] could not be determined or is unsupported: " + e.getMessage(), e); //$NON-NLS-1$ //$NON-NLS-2$
+        }
         JBossProductType productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
         if(productType == JBossProductType.EAP7) {
             // Ignore here, use EAP7 / Wildfly 10 plugin to do the detection
@@ -872,7 +878,15 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             try {
                 String productName = getServerAttribute(connection, "product-name");
                 if ((productName != null) && !productName.isEmpty())
-                    productType = JBossProductType.getValueByProductName(productName);
+                    try {
+                      productType = JBossProductType.getValueByProductName(productName);
+		    } catch (Exception e) {
+			// if the product type can not be determined, log a warning
+			// to indicate that the product may not be supported and
+			// fall back to a product type of AS.
+			log.warn("Unknown or unsupported product type for product [" + productName + "]: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+                        productType = JBossProductType.AS;
+		    }
                 else {
                     Integer apiVersion = getServerAttribute(connection, "management-major-version");
                     if (apiVersion == 1) {

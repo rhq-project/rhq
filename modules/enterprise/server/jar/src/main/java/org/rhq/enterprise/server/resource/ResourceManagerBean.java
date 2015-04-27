@@ -2243,8 +2243,20 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // or upgrade error per resource, so delete any currently existing ones before we add this new one
         Subject overlord = subjectManager.getOverlord();
         int resourceId = resourceError.getResource().getId();
+        if (isResourceDoomed(resourceId)) {
+            LOG.debug("Rejected request to store " + resourceError
+                + " because given resource was (or is going to be) deleted");
+            return;
+        }
         resourceManager.clearResourceConfigErrorByType(overlord, resourceId, resourceErrorType);
         entityManager.persist(resourceError);
+    }
+
+    @Override
+    public boolean isResourceDoomed(int resourceId) {
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_RESOURCE_EXISTS_BY_ID)
+            .setParameter("resourceId", resourceId);
+        return (Long) query.getSingleResult() == 0;
     }
 
     @Override
@@ -2254,6 +2266,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         if (!authorizationManager.canViewResource(subject, resourceId)) {
             throw new PermissionException("Cannot delete resource errors of type [" + resourceErrorType + "]. User ["
                 + subject.getName() + "] does not have permission to operate on resource ID [" + resourceId + "].");
+        }
+        if (isResourceDoomed(resourceId)) {
+            LOG.debug("Rejected to clear resource config errors for resource id= " + resourceId
+                + " because given resource was (or is going to be) deleted");
+            return 0;
         }
 
         TypedQuery<Integer> query = entityManager

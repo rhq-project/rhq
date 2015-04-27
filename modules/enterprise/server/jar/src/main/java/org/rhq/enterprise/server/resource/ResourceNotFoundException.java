@@ -46,4 +46,8 @@ public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String message) {
         super(message);
     }
+
+    public static ResourceNotFoundException doomedResource(int resourceId) {
+        return new ResourceNotFoundException("Resource with id " + resourceId + " was removed from inventory");
+    }
 }

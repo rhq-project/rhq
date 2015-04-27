@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2011-2012 Red Hat, Inc.
+ * Copyright (C) 2011-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -604,8 +604,16 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             ASConnection connection = new ASConnection(hostname, port, user, pass);
             try {
                 String productName = getServerAttribute(connection, "product-name");
-                productType = ((productName != null) && !productName.isEmpty()) ?
+                try {
+                    productType = ((productName != null) && !productName.isEmpty()) ?
                         JBossProductType.getValueByProductName(productName) : JBossProductType.AS;
+                } catch (Exception e) {
+                    // if the product type can not be determined, log a warning
+                    // to indicate that the product may not be supported and
+                    // fall back to a product type of AS.
+                    log.warn("Unknown or unsupported product type for product [" + productName + "]: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+                    productType = JBossProductType.AS;
+                }
                 releaseVersion = getServerAttribute(connection, "release-version");
                 releaseCodeName = getServerAttribute(connection, "release-codename");
                 serverName = getServerAttribute(connection, "name");

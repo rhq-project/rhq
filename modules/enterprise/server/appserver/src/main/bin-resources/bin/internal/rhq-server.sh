@@ -349,7 +349,10 @@ export JAVA
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_JAVA_OPTS" ]; then
-   RHQ_SERVER_JAVA_OPTS="-Xms1024M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=256M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true -Dsun.rmi.dgc.client.gcInterval=3600000 -Dsun.rmi.dgc.server.gcInterval=3600000"
+   RHQ_SERVER_JAVA_OPTS="-Xms1024M -Xmx1024M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true -Dsun.rmi.dgc.client.gcInterval=3600000 -Dsun.rmi.dgc.server.gcInterval=3600000"
+   [[ $("$JAVA_HOME/bin/java" -version 2>&1 | awk -F '"' '/version/ {print $2}') > "1.8" ]] || {
+      RHQ_SERVER_JAVA_OPTS="$RHQ_SERVER_JAVA_OPTS -XX:PermSize=256M -XX:MaxPermSize=256M"
+   }
 fi
 
 if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then

@@ -181,7 +181,10 @@ fi
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_DATA_MIGRATION_JAVA_OPTS" ]; then
-   RHQ_DATA_MIGRATION_JAVA_OPTS="-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=128M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true"
+   RHQ_DATA_MIGRATION_JAVA_OPTS="-Xms512M -Xmx512M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true"
+   [[ $("$JAVA_HOME/bin/java" -version 2>&1 | awk -F '"' '/version/ {print $2}') > "1.8" ]] || {
+      RHQ_DATA_MIGRATION_JAVA_OPTS="$RHQ_DATA_MIGRATION_JAVA_OPTS -XX:PermSize=128M -XX:MaxPermSize=128M"
+   }
 fi
 
 # Add the JVM opts that we always want to specify, whether or not the user set RHQ_CCM_JAVA_OPTS.

@@ -206,7 +206,8 @@ set_local_and_environment_variables()
    print_function_information $FUNCNAME
 
    # Set various environment variables.
-   MAVEN_OPTS="-Xms512M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M"
+   MAVEN_OPTS="-Xms512M -Xmx1024M"
+   [[ $("$JAVA_HOME/bin/java" -version 2>&1 | awk -F '"' '/version/ {print $2}') > "1.8" ]] || MAVEN_OPTS="$MAVEN_OPTS -XX:PermSize=128M -XX:MaxPermSize=256M"
    export MAVEN_OPTS
 
    # Set various local variables

@@ -31,8 +31,16 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * Discover Application Datasource
  * 
  * @author Jay Shaughnessy
+ * @author Maxime Beck
  */
 public class TomcatDatasourceDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatWarComponent> {
+
+    // Array of supported data source object names
+    private final String[] datasourceObjectNames = new String[] {
+            "Catalina:type=DataSource,context=%path%,host=%host%,class=javax.sql.DataSource,name=%name%",
+            "Catalina:type=DataSource,path=%path%,host=%host%,class=javax.sql.DataSource,name=%name%",
+            "Catalina:type=DataSource,class=javax.sql.DataSource,name=%name%"
+    };
 
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatWarComponent> discoveryContext) {
@@ -51,13 +59,14 @@ public class TomcatDatasourceDiscoveryComponent extends MBeanResourceDiscoveryCo
 
         resources = super.performDiscovery(defaultPluginConfig, discoveryContext.getParentResourceComponent(), discoveryContext.getResourceType());
 
-        if (resources.size() == 0) {
-            objectNameTemplate = getDatasourceObjectName();
+        for(int i = 0; i < datasourceObjectNames.length && resources.size() == 0; i++) {
+            objectNameTemplate = datasourceObjectNames[i];
             objectNameTemplate = objectNameTemplate.replace("%host%", host);
             objectNameTemplate = objectNameTemplate.replace("%path%", path);
             defaultPluginConfig.put(new PropertySimple(PROPERTY_OBJECT_NAME, objectNameTemplate));
             resources = super.performDiscovery(defaultPluginConfig, discoveryContext.getParentResourceComponent(), discoveryContext.getResourceType());
         }
+
         // returns only one resource.
         for (DiscoveredResourceDetails detail : resources) {
             Configuration pluginConfiguration = detail.getPluginConfiguration();
@@ -67,9 +76,5 @@ public class TomcatDatasourceDiscoveryComponent extends MBeanResourceDiscoveryCo
             detail.setResourceName(resourceName);
         }
         return resources;
-    }
-
-    private String getDatasourceObjectName() {
-        return "Catalina:type=DataSource,context=%path%,host=%host%,class=javax.sql.DataSource,name=%name%";
     }
 }

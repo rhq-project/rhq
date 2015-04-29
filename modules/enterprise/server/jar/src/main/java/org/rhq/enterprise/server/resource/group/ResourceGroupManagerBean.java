@@ -60,9 +60,11 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -354,6 +356,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         } catch (Exception e) {
             throw new ResourceGroupDeleteException("Failed to get jobs for a group being deleted [" + group
                 + "]; will not attempt to unschedule anything", e);
+        }
+        GroupOperationHistoryCriteria criteria = new GroupOperationHistoryCriteria();
+        criteria.addFilterResourceGroupIds(Arrays.asList(group.getId()));
+        for (GroupOperationHistory history : operationManager.findGroupOperationHistoriesByCriteria(subject, criteria)) {
+            operationManager.deleteOperationHistory(history.getId(), true);
         }
 
         groupAlertDefinitionManager.purgeAllGroupAlertDefinitions(subject, group.getId());

@@ -93,7 +93,9 @@ import org.rhq.core.domain.resource.Resource;
         + "      AND (UPPER(parent.name) LIKE :parentFilter ESCAPE :escapeChar OR :parentFilter IS NULL) " //
         + "      AND (roh.startedTime > :startTime OR :startTime IS NULL) " //
         + "      AND (roh.modifiedTime < :endTime OR :endTime IS NULL) " //
-        + "      AND (roh.status LIKE :status OR :status IS NULL) ") })
+        + "      AND (roh.status LIKE :status OR :status IS NULL) "),
+    @NamedQuery(name = ResourceOperationHistory.QUERY_DETACH_FROM_GROUP_HISTORY, query = ""
+        + "UPDATE ResourceOperationHistory h set  h.groupOperationHistory = NULL WHERE h.groupOperationHistory.id = :historyId") })
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ResourceOperationHistory extends OperationHistory {
     public static final String QUERY_FIND_ALL_IN_STATUS = "ResourceOperationHistory.findAllInStatus";
@@ -103,6 +105,7 @@ public class ResourceOperationHistory extends OperationHistory {
     public static final String QUERY_FIND_LATEST_COMPLETED_OPERATION = "ResourceOperationHistory.findLatestCompletedOperation";
     public static final String QUERY_FIND_OLDEST_INPROGRESS_OPERATION = "ResourceOperationHistory.findOldestInProgressOperation";
     public static final String QUERY_DELETE_BY_RESOURCES = "ResourceOperationHistory.deleteByResources";
+    public static final String QUERY_DETACH_FROM_GROUP_HISTORY = "ResourceOperationHistory.detachFromGroupHistory";
 
     // for subsystem views
     public static final String QUERY_FIND_ALL = "OperationHistory.findAll";

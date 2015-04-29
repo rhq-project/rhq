@@ -159,6 +159,13 @@ public interface OperationManagerLocal extends OperationManagerRemote {
     void deleteOperationScheduleEntity(ScheduleJobId jobId);
 
     /**
+     * Deletes operation history
+     * @param historyId ID of ResourceOperationHistory or GroupOperationHistory
+     * @param detachChilHistories if historyId is GroupOperationHistory set this to true to keep/detach related ResourceOperationHistories
+     */
+    void deleteOperationHistory(int historyId, boolean detachChilHistories);
+
+    /**
      * This allows you to update an operation schedule entity with a new next-fire-time.
      *
      * <p>This method is really just for the {@link OperationJob} objects to update the schedule tracking entity. The UI

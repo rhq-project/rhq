@@ -1329,11 +1329,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             List<ResourceOperationHistory> resourceHistories = ((GroupOperationHistory) doomedHistory)
                 .getResourceOperationHistories();
             for (ResourceOperationHistory child : resourceHistories) {
-                deleteOperationHistory_helper(child.getId());
+                deleteOperationHistory(child.getId(), false);
             }
         }
 
-        deleteOperationHistory_helper(doomedHistory.getId());
+        deleteOperationHistory(doomedHistory.getId(), false);
     }
 
     @Override
@@ -1380,7 +1380,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             if (isGroupPurge) {
                 deleteOperationHistory(subjectManager.getOverlord(), id, true);
             } else {
-                deleteOperationHistory_helper(id);
+                deleteOperationHistory(id, false);
             }
         }
 
@@ -1388,7 +1388,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    private void deleteOperationHistory_helper(int historyId) {
+    @Override
+    public void deleteOperationHistory(int historyId, boolean detachChildHistories) {
         Query historyArgumentsQuery = entityManager
             .createNamedQuery(OperationHistory.QUERY_GET_PARAMETER_CONFIGURATION_IDS);
         Query historyResultsQuery = entityManager.createNamedQuery(OperationHistory.QUERY_GET_RESULT_CONFIGURATION_IDS);
@@ -1397,6 +1398,13 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         List<Integer> historyArgumentConfigurationIds = historyArgumentsQuery.getResultList();
         List<Integer> historyResultConfigurationIds = historyResultsQuery.getResultList();
+
+        if (detachChildHistories) {
+            Query detachChildHistoriesQuery = entityManager
+                .createNamedQuery(ResourceOperationHistory.QUERY_DETACH_FROM_GROUP_HISTORY);
+            detachChildHistoriesQuery.setParameter("historyId", historyId);
+            detachChildHistoriesQuery.executeUpdate();
+        }
 
         Query operationHistoryDeleteQuery = entityManager
             .createNamedQuery(OperationHistory.QUERY_DELETE_BY_HISTORY_IDS);

@@ -23,7 +23,6 @@
 package org.rhq.core.system;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
@@ -206,14 +205,13 @@ public class JavaSystemInfo implements SystemInfo {
         process.setEnvironment(processExecution.getEnvironmentVariablesAsArray());
         process.setWorkingDirectory(processExecution.getWorkingDirectory());
         process.setWaitForExit(Long.valueOf(processExecution.getWaitForCompletion()));
-        process.setCaptureOutput(Boolean.valueOf(processExecution.isCaptureOutput()));
+        process.setCaptureOutput(Boolean.valueOf(processExecution.getCaptureMode().isCapture()));
         process.setKillOnTimeout(Boolean.valueOf(processExecution.isKillOnTimeout()));
 
-        if (processExecution.isCaptureOutput()) {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            process.setOutputStream(outputStream);
-            executionResults.setCapturedOutputStream(outputStream);
-        }
+        ProcessExecutionOutputStream outputStream = processExecution.getCaptureMode().createOutputStream();
+        process.setOutputStream(outputStream);
+        executionResults.setCapturedOutputStream(outputStream);
+
 
         ProcessExecutorResults javaExecResults = javaExec.execute(process);
         executionResults.setExitCode(javaExecResults.getExitCode());

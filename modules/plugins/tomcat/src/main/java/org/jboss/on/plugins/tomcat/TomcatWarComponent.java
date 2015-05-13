@@ -26,10 +26,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,6 +40,10 @@ import org.jboss.on.plugins.tomcat.helper.FileContentDelegate;
 import org.jboss.on.plugins.tomcat.helper.TomcatApplicationDeployer;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
@@ -104,6 +105,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
     // Uppercase variables are filled in prior to searching, lowercase are matched by the returned beans
     private static final String QUERY_TEMPLATE_SERVLET = "Catalina:j2eeType=Servlet,J2EEApplication=none,J2EEServer=none,WebModule=%WEBMODULE%,name=%name%";
+    private static final String QUERY_TEMPLATE_WEBMODULE = "Catalina:j2eeType=WebModule,name=%name%,J2EEApplication=none,J2EEServer=none";
     private static final String QUERY_TEMPLATE_SESSION_TOMCAT6 = "Catalina:type=Manager,host=%HOST%,path=%PATH%";
     private static final String QUERY_TEMPLATE_SESSION_TOMCAT7 = "Catalina:type=Manager,host=%HOST%,context=%PATH%";
     private static final String QUERY_TEMPLATE_HOST = "Catalina:type=Manager,path=%PATH%,host=%host%";
@@ -117,6 +119,23 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     protected static final String PROPERTY_VHOST = "vHost";
 
     protected static final String RESOURCE_TYPE_NAME = "Tomcat Web Application (WAR)";
+
+    protected static enum AttributeTypes {
+        BOOLEAN,
+        INTEGER,
+        STRING
+    }
+
+    protected static final Map<String, AttributeTypes> obsoleteAttributesInTomcat8 = Collections.unmodifiableMap(
+            new HashMap<String, AttributeTypes>() {{
+                put("allowLinking", AttributeTypes.BOOLEAN);
+                put("antiJarLocking", AttributeTypes.BOOLEAN);
+                put("cachingAllowed", AttributeTypes.BOOLEAN);
+                put("cacheTTL", AttributeTypes.INTEGER);
+                put("cacheMaxSize", AttributeTypes.INTEGER);
+                put("compilerClasspath", AttributeTypes.STRING);
+                put("saveConfig", AttributeTypes.BOOLEAN);
+            }});
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -194,6 +213,61 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             this.logParser.setExcludes(responseTimeConfig.getExcludes());
             this.logParser.setTransforms(responseTimeConfig.getTransforms());
         }
+    }
+
+    @Override
+    public Configuration loadResourceConfiguration() {
+        Configuration configuration = new Configuration();
+        ConfigurationDefinition configurationDefinition = this.getResourceContext().getResourceType()
+                .getResourceConfigurationDefinition();
+
+        try {
+            EmsConnection jmxConnection = getEmsConnection();
+
+            String webmoduleMBeanNames = QUERY_TEMPLATE_WEBMODULE;
+            Configuration config = getResourceContext().getPluginConfiguration();
+            webmoduleMBeanNames = webmoduleMBeanNames.replace("%name%", config.getSimpleValue(PROPERTY_NAME, ""));
+            ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(webmoduleMBeanNames);
+            List<EmsBean> mBeans = jmxConnection.queryBeans(queryUtility.getTranslatedQuery());
+
+            if (mBeans.size() > 0) {
+                EmsBean bean = mBeans.get(0);
+                Boolean isTomcat8 = false;
+
+                for (PropertyDefinition property : configurationDefinition.getPropertyDefinitions().values()) {
+                    if (property instanceof PropertyDefinitionSimple) {
+                        EmsAttribute attribute = bean.getAttribute(property.getName());
+                        if (attribute != null) {
+                            configuration.put(new PropertySimple(property.getName(), attribute.refresh()));
+                        } else {
+                            if(obsoleteAttributesInTomcat8.containsKey(property.getName()))
+                                isTomcat8 = true;
+                        }
+                    }
+
+                    // Set obsolete attributes to a default value for Tomcat 8
+                    if(isTomcat8) {
+                        for (Map.Entry<String, AttributeTypes> entry : obsoleteAttributesInTomcat8.entrySet()) {
+                            switch (entry.getValue()) {
+                                case BOOLEAN:
+                                    configuration.put(new PropertySimple(entry.getKey(), false));
+                                    break;
+                                case INTEGER:
+                                    configuration.put(new PropertySimple(entry.getKey(), 0));
+                                    break;
+                                case STRING:
+                                    configuration.put(new PropertySimple(entry.getKey(), ""));
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Unable to load mod_cluster configuration file.", e);
+        }
+
+        return configuration;
     }
 
     @Override

@@ -29,6 +29,8 @@ import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.RoleCriteria;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -102,16 +104,24 @@ public class RolesSender extends AlertSender {
     }
 
     private List<String> getRoleEmails(List<Integer> roleIds) {
-        RoleManagerLocal roleManager = LookupUtil.getRoleManager();
         List<String> results = new ArrayList<String>();
-        for (Integer nextRoleId : roleIds) {
-            Role nextRole = roleManager.getRoleById(nextRoleId);
-            if (nextRole != null) { // handle unknown role ids
-                for (Subject nextSubject : nextRole.getSubjects()) {
-                    String nextEmail = nextSubject.getEmailAddress();
-                    if (nextEmail != null) {
-                        results.add(nextEmail);
-                    }
+
+        if (null == roleIds || roleIds.isEmpty()) {
+            return results;
+        }
+
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        RoleManagerLocal roleManager = LookupUtil.getRoleManager();
+        RoleCriteria c = new RoleCriteria();
+        c.addFilterIds(roleIds.toArray(new Integer[roleIds.size()]));
+        c.fetchSubjects(true);
+        List<Role> roles = roleManager.findRolesByCriteria(subjectManager.getOverlord(), c);
+
+        for (Role role : roles) {
+            for (Subject subject : role.getSubjects()) {
+                String email = subject.getEmailAddress();
+                if (email != null) {
+                    results.add(email);
                 }
             }
         }

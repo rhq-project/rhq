@@ -49,9 +49,9 @@ public class ProcessExecution {
     private Map<String, String> environmentVariables;
     private String workingDirectory;
     private long waitForCompletion = 30000L;
-    private boolean captureOutput = false;
     private boolean killOnTimeout = false;
     private boolean checkExecutableExists = true;
+    private CaptureMode captureMode = CaptureMode.none();
 
     /**
      * Constructor for {@link ProcessExecution} that defines the full path to the executable that will be run. See the
@@ -209,8 +209,13 @@ public class ProcessExecution {
         this.waitForCompletion = waitForCompletion;
     }
 
+    /**
+     * 
+     * @return whether capture process output
+     * @deprecated
+     */
     public boolean isCaptureOutput() {
-        return captureOutput;
+        return this.captureMode.isCapture();
     }
 
     /**
@@ -218,12 +223,24 @@ public class ProcessExecution {
      * <code>waitForCompletion</code> is 0 or less. Be careful setting this to <code>true</code>, you must ensure that
      * the process will not write a lot of output - you might run out of memory if the process is a long-lived daemon
      * process that outputs a lot of log messages, for example. By default, output is *not* captured.
-     *
+     * @deprecated @see {@link #setCaptureMode(CaptureMode)}
      * @param captureOutput whether or not this process's output (stdout+stderr) should be captured and returned in the
      *                      results
      */
     public void setCaptureOutput(boolean captureOutput) {
-        this.captureOutput = captureOutput;
+        this.captureMode = captureOutput ? CaptureMode.memory() : CaptureMode.none();
+    }
+
+    /**
+     * get process output capture mode
+     * @return process output capture mode
+     */
+    public CaptureMode getCaptureMode() {
+        return captureMode;
+    }
+
+    public void setCaptureMode(CaptureMode captureMode) {
+        this.captureMode = captureMode;
     }
 
     public boolean isKillOnTimeout() {
@@ -267,12 +284,139 @@ public class ProcessExecution {
         buf.append("], env-vars=[").append(this.environmentVariables);
         buf.append("], working-dir=[").append(this.workingDirectory);
         buf.append("], wait=[").append(this.waitForCompletion);
-        buf.append("], capture-output=[").append(this.captureOutput);
+        buf.append("], capture-mode=[").append(this.captureMode);
         buf.append("], kill-on-timeout=[").append(this.killOnTimeout);
         buf.append("], executable-is-command=[").append(this.checkExecutableExists);
         buf.append("]");
 
         return buf.toString();
+    }
+
+    /**
+     * Process output capture mode.
+     * 
+     * @author lzoubek@redhat.com
+     *
+     */
+    public static class CaptureMode {
+
+        /**
+         * The process's output is *not* captured, this is the default.
+         * @return captureMode
+         */
+        public static CaptureMode none() {
+            return new CaptureMode(false);
+        }
+
+        /**
+         * The process's output will be captured and returned in the results. This may be ignored if
+         * <code>waitForCompletion</code> is 0 or less. By default capturing to memory is limited to 2MB of
+         * process output. If the process writes more output, it will be ignored.
+         * @return captureMode
+         */
+        public static CaptureMode memory() {
+            return new CaptureMode(true);
+        }
+
+        /**
+         * The process's output will be captured and returned in the results. This may be ignored if
+         * <code>waitForCompletion</code> is 0 or less. With <code>limit</code> parameter you can set maximum captured output size. 
+         * If the process writes more output, it will be ignored.
+         * 
+         * @param limit in Bytes (if given value < 0, it's ignored and default 2MB is used instead)
+         * @return captureMode
+         */
+        public static CaptureMode memory(int limit) {
+            return new CaptureMode(true, limit);
+        }
+
+        /**
+         * The process's output will be captured and returned in the results. This may be ignored if
+         * <code>waitForCompletion</code> is 0 or less. Process output will be redirected to agent.log and at the same time
+         * captured into memory. By default capturing to memory is limited to 2MB of process output. If the process writes more output,
+         * it will only be redirected to agent.log.
+         * 
+         * @return captureMode
+         */
+        public static CaptureMode agentLog() {
+            return new CaptureMode(true, true, -1);
+        }
+
+        /**
+         * The process's output will be captured and returned in the results. This may be ignored if
+         * <code>waitForCompletion</code> is 0 or less. Process output will be logged into agent.log and at the same time
+         * captured into memory. With <code>limit</code> parameter you can set maximum memory buffer to be captured (and possibly returned)
+         * captured output size. If the process writes more output, it will only be redirected to agent.log.
+         * 
+         * @param limit in Bytes (if given value < 0, it's ignored and default 2MB is used instead)
+         * @return captureMode
+         */
+        public static CaptureMode agentLog(int limit) {
+            return new CaptureMode(true, true, limit);
+        }
+
+        private final boolean capture;
+        private final int limit;
+        private final boolean log;
+
+        private CaptureMode(boolean capture) {
+            this(capture, -1);
+        }
+
+        private CaptureMode(boolean capture, int limit) {
+            this(capture, false, limit);
+        }
+
+        private CaptureMode(boolean capture, boolean log, int limit) {
+            this.capture = capture;
+            this.log = log;
+            this.limit = limit;
+        }
+
+        /**
+         * 
+         * @return true if capturing is enabled
+         */
+        public boolean isCapture() {
+            return capture;
+        }
+
+        /**
+         * 
+         * @return captured output size limit in Bytes, -1 if default should be used 
+         */
+        public int getLimit() {
+            return limit;
+        }
+
+        /**
+         * 
+         * @return true if output should be forwarded to logging subsystem
+         */
+        public boolean isLog() {
+            return log;
+        }
+
+        ProcessExecutionOutputStream createOutputStream() {
+            if (!this.capture) {
+                // capturing is disabled still return some output stream (this instance ignores everything)
+                return new ProcessExecutionOutputStream(0, this.log);
+            }
+            if (this.limit > 0) {
+                return new ProcessExecutionOutputStream(this.limit, this.log);
+            }
+            return new ProcessExecutionOutputStream(this.log);
+        }
+
+        @Override
+        public String toString() {
+            return new StringBuilder("CaptureMode: ")
+            .append(" [capture="+isCapture())
+            .append("], [memory-limit=" + getLimit() / 1024 + "kB")
+            .append("], [log="+isLog())
+            .append("]")
+            .toString();
+        }
     }
 
 }

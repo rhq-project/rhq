@@ -574,9 +574,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                     if (!line.endsWith("Port=" + port))
                         continue;
                 } else if (vHost.equals("MainServer")) {
-                    if (line.contains("Host=_GLOBAL_,"))
-                        continue;
-                    if (!line.endsWith("Port=_ANY_"))
+                    if (!line.contains("Type=forever") && !line.contains("Host=_GLOBAL_,") && !line.endsWith("Port=_ANY_"))
                         continue;
                 } else {
                     if (line.contains("Host=_GLOBAL_,"))
@@ -595,9 +593,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                         type= type.substring(type.indexOf("-")+1);
 
                     slurpSection(ret, reader, type);
+                    break;
                 }
-                if (line.contains("Type=info,"))
-                    break; // We are done with the VirtualHost.
             }
         } catch (Exception e) {
                  LOG.warn("parseBMXInput failed" + e);

@@ -62,27 +62,46 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
         return "host-controller.log";
     }
 
+    /**
+     * @deprecated since 4.14
+     */
+    @Deprecated
     @Override
     protected String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
         JBossProductType productType, String serverName) {
+        return super.buildDefaultResourceName(hostPort, managementHostPort, productType, serverName);
+    }
+
+    @Override
+    String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
+        JBossProduct product, String serverName) {
         boolean isDomainController = hostPort.isLocal;
         String instanceType = (isDomainController) ? "Domain Controller" : "Host Controller";
 
         if (serverName != null && !serverName.trim().isEmpty()) {
-            return String.format("%s %s (%s %s:%d)", productType.SHORT_NAME, instanceType, serverName,
+            return String.format("%s %s (%s %s:%d)", product.SHORT_NAME, instanceType, serverName,
                 managementHostPort.host, managementHostPort.port);
         }
 
-        return String.format("%s %s (%s:%d)", productType.SHORT_NAME, instanceType, managementHostPort.host,
+        return String.format("%s %s (%s:%d)", product.SHORT_NAME, instanceType, managementHostPort.host,
             managementHostPort.port);
     }
 
+    /**
+     * @deprecated since 4.14
+     */
+    @Deprecated
     @Override
     protected String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType) {
+        return super.buildDefaultResourceDescription(hostPort, productType);
+    }
+
+    @Override
+    String buildDefaultResourceDescription(HostPort hostPort, JBossProduct product) {
         boolean isDomainController = hostPort.isLocal;
         String prefix = (isDomainController) ? "Domain controller" : "Host controller";
         String suffix = (isDomainController) ? "domain" : "host";
-        return String.format("%s for a %s %s", prefix, productType.FULL_NAME, suffix);
+        return String.format("%s for a %s %s", prefix, product.FULL_NAME, suffix);
     }
 
     @Override

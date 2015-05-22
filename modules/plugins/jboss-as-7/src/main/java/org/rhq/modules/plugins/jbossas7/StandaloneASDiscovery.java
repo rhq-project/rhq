@@ -79,20 +79,39 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         return "server.log";
     }
 
+    /**
+     * @deprecated since 4.14
+     */
+    @Deprecated
     @Override
     protected String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
         JBossProductType productType, String serverName) {
-        if (serverName != null && !serverName.trim().isEmpty()) {
-            return String.format("%s (%s %s:%d)", productType.SHORT_NAME, serverName, managementHostPort.host,
-                managementHostPort.port);
-        }
-
-        return String.format("%s (%s:%d)", productType.SHORT_NAME, managementHostPort.host, managementHostPort.port);
+        return super.buildDefaultResourceName(hostPort, managementHostPort, productType, serverName);
     }
 
     @Override
+    String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
+        JBossProduct product, String serverName) {
+        if (serverName != null && !serverName.trim().isEmpty()) {
+            return String.format("%s (%s %s:%d)", product.SHORT_NAME, serverName, managementHostPort.host,
+                managementHostPort.port);
+        }
+
+        return String.format("%s (%s:%d)", product.SHORT_NAME, managementHostPort.host, managementHostPort.port);
+    }
+
+    /**
+     * @deprecated since 4.14
+     */
+    @Deprecated
+    @Override
     protected String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType) {
-        return String.format("Standalone %s server", productType.FULL_NAME);
+        return super.buildDefaultResourceDescription(hostPort, productType);
+    }
+
+    @Override
+    String buildDefaultResourceDescription(HostPort hostPort, JBossProduct product) {
+        return String.format("Standalone %s server", product.FULL_NAME);
     }
 
     @Override
@@ -108,7 +127,6 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
             discoverAdditionalJavaOpts(discoveredResource, discoveryContext);
         }
-
         return discoveredResources;
     }
 

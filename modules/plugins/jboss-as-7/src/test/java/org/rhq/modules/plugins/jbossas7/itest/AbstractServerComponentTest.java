@@ -47,7 +47,7 @@ import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
-import org.rhq.modules.plugins.jbossas7.JBossProductType;
+import org.rhq.modules.plugins.jbossas7.JBossProduct;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 
 /**
@@ -107,11 +107,11 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
             + "start() method due to invalid baseDir.");
 
         // Change the expectedRuntimeProductName property
-        String originalExpectedRuntimeProductName = pluginConfig.getSimpleValue("expectedRuntimeProductName");
-        if (originalExpectedRuntimeProductName.equals(JBossProductType.AS.PRODUCT_NAME)) {
-            pluginConfig.setSimpleValue("expectedRuntimeProductName", JBossProductType.EAP.PRODUCT_NAME);
+        String originalExpectedRuntimeProductName = serverPluginConfig.getExpectedRuntimeProductName();
+        if (originalExpectedRuntimeProductName.equals(JBossProduct.AS.PRODUCT_NAME)) {
+            serverPluginConfig.setExpectedRuntimeProductName(JBossProduct.EAP.PRODUCT_NAME);
         } else {
-            pluginConfig.setSimpleValue("expectedRuntimeProductName", JBossProductType.AS.PRODUCT_NAME);
+            serverPluginConfig.setExpectedRuntimeProductName(JBossProduct.AS.PRODUCT_NAME);
         }
 
         // Restart the server ResourceComponent so it picks up the changes we just made to the plugin config.
@@ -125,7 +125,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
 
         // Set the expectedRuntimeProductName property back to the original value and restart the component before
         // making any assertions, to ensure things aren't left in a corrupt state for remaining test methods.
-        pluginConfig.setSimpleValue("expectedRuntimeProductName", originalExpectedRuntimeProductName);
+        serverPluginConfig.setExpectedRuntimeProductName(originalExpectedRuntimeProductName);
         inventoryManager.activateResource(getServerResource(), serverContainer, true);
 
         Assert.assertNotNull(ipce, "InvalidPluginConfigurationException was not thrown by server component's "

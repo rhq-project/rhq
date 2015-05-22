@@ -25,9 +25,10 @@ import java.util.Properties;
 
 /**
  * Metadata describing a product based on JBoss AS 7.x.
- *
+ * @deprecated in favor of {@link JBossProduct} and {@link JBossProductDiscovery}
  * @author Ian Springer
  */
+@Deprecated
 public enum JBossProductType {
 
     AS("AS", "JBoss AS 7", "JBoss Application Server 7", "AS"),

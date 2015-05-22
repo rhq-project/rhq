@@ -220,9 +220,10 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         serverPluginConfig.setNativeLocalAuth(hostConfig.isNativeLocalOnly());
         pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());
         String apiVersion = hostConfig.getDomainApiVersion();
-        JBossProductType productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
-        serverPluginConfig.setProductType(productType);
-        pluginConfig.setSimpleValue("expectedRuntimeProductName", productType.PRODUCT_NAME);
+        JBossProduct product = JBossProductDiscovery.determineProduct(homeDir, apiVersion);
+
+        serverPluginConfig.setProduct(product);
+        serverPluginConfig.setExpectedRuntimeProductName(product.PRODUCT_NAME);
         pluginConfig.setSimpleValue("hostXmlFileName", getHostXmlFileName(commandLine));
 
         ProcessInfo agentProcess = discoveryContext.getSystemInformation().getThisProcess();
@@ -231,11 +232,11 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
         String key = createKeyForLocalResource(serverPluginConfig);
         HostPort hostPort = hostConfig.getDomainControllerHostPort(commandLine);
-        String name = buildDefaultResourceName(hostPort, managementHostPort, productType, hostConfig.getHostName());
-        String description = buildDefaultResourceDescription(hostPort, productType);
-        String version = getVersion(homeDir, productType);
+        String name = buildDefaultResourceName(hostPort, managementHostPort, product, hostConfig.getHostName());
+        String description = buildDefaultResourceDescription(hostPort, product);
+        String version = getVersion(homeDir, product);
 
-        pluginConfig.setSimpleValue("supportsPatching", Boolean.toString(supportsPatching(productType, version)));
+        pluginConfig.setSimpleValue("supportsPatching", Boolean.toString(supportsPatching(product, version)));
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version, description,
             pluginConfig, process);
@@ -441,10 +442,10 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
     protected abstract String getLogFileName();
 
-    protected abstract String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
-        JBossProductType productType, String serverName);
+    abstract String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
+        JBossProduct product, String serverName);
 
-    protected abstract String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType);
+    abstract String buildDefaultResourceDescription(HostPort hostPort, JBossProduct product);
 
     /**
      * Deprecated due to changes requiring a server name to build resource name. If no name
@@ -456,6 +457,25 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     protected String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
         JBossProductType productType) {
         return buildDefaultResourceName(hostPort, managementHostPort, productType, null);
+    }
+
+    /**
+     * Deprecated in favor of new implementation using {@link JBossProduct}
+     * @deprecated since 4.14
+     */
+    @Deprecated
+    protected String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
+        JBossProductType productType, String serverName) {
+        return buildDefaultResourceName(hostPort, managementHostPort, new JBossProduct(productType), serverName);
+    }
+
+    /**
+     * Deprecated in favor of new implementation using {@link JBossProduct}
+     * @deprecated since 4.14
+     */
+    @Deprecated
+    protected String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType) {
+        return buildDefaultResourceDescription(hostPort, new JBossProduct(productType));
     }
 
     // Manually add a (remote) AS7 instance.
@@ -473,9 +493,9 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         }
 
         ProductInfo productInfo = new ProductInfo(ASConnectionParams.createFrom(serverPluginConfig)).getFromRemote();
-        JBossProductType productType = productInfo.getProductType();
+        JBossProduct product = productInfo.getProduct();
 
-        if (productType == null) {
+        if (product == null) {
             throw new InvalidPluginConfigurationException("Can not connect to [" + hostname + ":" + port
                 + "] as user [" + user + "]. Did you provide the correct credentials?");
         }
@@ -485,15 +505,16 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         managementHostPort.host = hostname;
         managementHostPort.port = port;
         String key = createKeyForRemoteResource(hostname + ":" + port);
-        String name = buildDefaultResourceName(hostPort, managementHostPort, productType, null);
+        String name = buildDefaultResourceName(hostPort, managementHostPort, product, null);
         //FIXME this is inconsistent with how the version looks like when autodiscovered
         String version = productInfo.getProductVersion();
-        String description = buildDefaultResourceDescription(hostPort, productType);
+        String description = buildDefaultResourceDescription(hostPort, product);
 
         pluginConfig.put(new PropertySimple("manuallyAdded", true));
-        pluginConfig.put(new PropertySimple("productType", productType.name()));
-        pluginConfig.put(new PropertySimple("supportsPatching", supportsPatching(productType, version)));
-        pluginConfig.setSimpleValue("expectedRuntimeProductName", productType.PRODUCT_NAME);
+        pluginConfig
+            .put(new PropertySimple(ServerPluginConfiguration.Property.PRODUCT_TYPE, product.PLUGIN_CONFIG_NAME));
+        pluginConfig.put(new PropertySimple("supportsPatching", supportsPatching(product, version)));
+        pluginConfig.setSimpleValue(ServerPluginConfiguration.Property.EXPECTED_PRODUCT_NAME, product.PRODUCT_NAME);
 
         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), key, name, version,
             description, pluginConfig, null);
@@ -555,10 +576,10 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             }
         }
 
-        if (pluginConfiguration.getSimpleValue("expectedRuntimeProductName") == null) {
+        if (serverPluginConfiguration.getExpectedRuntimeProductName() == null) {
             upgraded = true;
-            pluginConfiguration.setSimpleValue("expectedRuntimeProductName",
-                serverPluginConfiguration.getProductType().PRODUCT_NAME);
+            serverPluginConfiguration
+                .setExpectedRuntimeProductName(serverPluginConfiguration.getProduct().PRODUCT_NAME);
             report.setNewPluginConfiguration(pluginConfiguration);
         }
 
@@ -566,18 +587,18 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         if (supportsPatching == null || supportsPatching.startsWith("__UNINITIALIZED_")) {
             upgraded = true;
 
-            JBossProductType productType = serverPluginConfiguration.getProductType();
-            if (productType == null) {
+            JBossProduct product = serverPluginConfiguration.getProduct();
+            if (product == null) {
                 if (inventoriedResource.getNativeProcess() != null) {
                     // if resource seems to run, detect product type
                     try {
                         AS7CommandLine commandLine = new AS7CommandLine(inventoriedResource.getNativeProcess());
                         File homeDir = getHomeDir(inventoriedResource.getNativeProcess(), commandLine);
                         String apiVersion = hostConfig.getDomainApiVersion();
-                        productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
-                        serverPluginConfiguration.setProductType(productType);
+                        product = JBossProductDiscovery.determineProduct(homeDir, apiVersion);
+                        serverPluginConfiguration.setProduct(product);
                         pluginConfiguration.setSimpleValue("supportsPatching",
-                            Boolean.toString(supportsPatching(productType, inventoriedResource.getVersion())));
+                            Boolean.toString(supportsPatching(product, inventoriedResource.getVersion())));
                         report.setNewPluginConfiguration(pluginConfiguration);
                     } catch (Exception e) {
                         LOG.warn("Unable to detect productType", e);
@@ -591,8 +612,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                     upgraded = false;
                 }
             } else {
-                pluginConfiguration
-                .setSimpleValue("supportsPatching", Boolean.toString(supportsPatching(productType, inventoriedResource.getVersion())));
+                pluginConfiguration.setSimpleValue("supportsPatching",
+                    Boolean.toString(supportsPatching(product, inventoriedResource.getVersion())));
                 report.setNewPluginConfiguration(pluginConfiguration);
             }
 
@@ -759,24 +780,25 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         }
     }
 
-    private String getVersion(File homeDir, JBossProductType productType) {
+    String getVersion(File homeDir, JBossProduct product) {
         // Products should have a version.txt file at root dir
         File versionFile = new File(homeDir, "version.txt");
-        String version = getProductVersionInFile(versionFile, " - Version ", productType);
-        if (version == null && productType != JBossProductType.AS && productType != JBossProductType.WILDFLY8) {
+        String version = getProductVersionInFile(versionFile, " - Version ", product);
+        if (version == null && !JBossProduct.AS.equals(product) && !JBossProduct.WILDFLY8.equals(product)) {
             // No version.txt file. Try modules/system/layers/base/org/jboss/as/product/slot/dir/META-INF/MANIFEST.MF
             String layeredProductManifestFilePath = arrayToString(
                 new String[] { "modules", "system", "layers", "base", "org", "jboss", "as", "product",
-                    productType.SHORT_NAME.toLowerCase(), "dir", "META-INF", "MANIFEST.MF" }, File.separatorChar);
+ product.SHORT_NAME.toLowerCase(), "dir", "META-INF", "MANIFEST.MF" },
+                File.separatorChar);
             File productManifest = new File(homeDir, layeredProductManifestFilePath);
-            version = getProductVersionInFile(productManifest, "JBoss-Product-Release-Version: ", productType);
+            version = getProductVersionInFile(productManifest, "JBoss-Product-Release-Version: ", product);
             if (version == null) {
                 // Try modules/org/jboss/as/product/slot/dir/META-INF/MANIFEST.MF
                 String productManifestFilePath = arrayToString(new String[] { "modules", "org", "jboss", "as",
-                    "product", productType.SHORT_NAME.toLowerCase(), "dir", "META-INF", "MANIFEST.MF" },
+                    "product", product.SHORT_NAME.toLowerCase(), "dir", "META-INF", "MANIFEST.MF" },
                     File.separatorChar);
                 productManifest = new File(homeDir, productManifestFilePath);
-                version = getProductVersionInFile(productManifest, "JBoss-Product-Release-Version: ", productType);
+                version = getProductVersionInFile(productManifest, "JBoss-Product-Release-Version: ", product);
             }
         }
         if (version == null) {
@@ -786,14 +808,14 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         return version;
     }
 
-    private String getProductVersionInFile(File file, String versionPrefix, JBossProductType productType) {
+    private String getProductVersionInFile(File file, String versionPrefix, JBossProduct product) {
         if (!file.exists() || file.isDirectory()) {
             return null;
         }
         try {
             String versionLine = FileUtils.findString(file.getAbsolutePath(), versionPrefix);
             if (isNotBlank(versionLine)) {
-                return productType.SHORT_NAME + " "
+                return product.SHORT_NAME + " "
                     + versionLine.substring(versionLine.lastIndexOf(versionPrefix) + versionPrefix.length());
             }
         } catch (IOException e) {
@@ -821,17 +843,17 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         return version;
     }
 
-    private boolean supportsPatching(JBossProductType productType, String version) {
-        if (version == null || productType == null) {
+    private boolean supportsPatching(JBossProduct product, String version) {
+        if (version == null || product == null) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Defaulting to supportsPatching = false - One of the following is null (productType="
-                    + productType + ", version=" + version + ")");
+                LOG.debug("Defaulting to supportsPatching = false - One of the following is null (product=" + product
+                    + ", version=" + version + ")");
             }
             return false;
         }
-        if (version.startsWith(productType.SHORT_NAME)) {
+        if (version.startsWith(product.SHORT_NAME)) {
             //version of the resource is SHORT_NAME space VERSION
-            version = version.substring(productType.SHORT_NAME.length() + 1);
+            version = version.substring(product.SHORT_NAME.length() + 1);
         }
         // EAP 6.1.0 version.txt file content is: "JBoss Enterprise Application Platform - Version 6.0.1 GA"
         // As a consequence, the version detected will be "6.0.1 GA" (notice the space instead of a dot)
@@ -848,20 +870,22 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             return false;
         }
 
-        switch (productType) {
-        case AS:
+        if (JBossProduct.AS.equals(product)) {
             return false;
-        case EAP:
+        }
+        if (JBossProduct.EAP.equals(product)) {
             return OSGI_VERSION_6_2_0.compareTo(osgiVersion) <= 0;
-        case WILDFLY8:
+        }
+        if (JBossProduct.WILDFLY8.equals(product)) {
             return true;
-        case JPP:
-            return false; //as of now
-        case SOA:
-            return false; //as of now
-        case ISPN:
+        }
+        if (JBossProduct.JPP.equals(product) || JBossProduct.SOA.equals(product)) {
+            return false; // as for now
+        }
+        if (JBossProduct.ISPN.equals(product)) {
             return OSGI_VERSION_7_0_0.compareTo(osgiVersion) <= 0;
-        case JDG:
+        }
+        if (JBossProduct.JDG.equals(product)) {
             return OSGI_VERSION_6_3_0.compareTo(osgiVersion) <= 0;
         }
 
@@ -873,7 +897,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     private class ProductInfo {
         private ASConnectionParams asConnectionParams;
         private String productVersion;
-        private JBossProductType productType;
+        private JBossProduct product;
         private String releaseVersion;
         private String releaseCodeName;
         private boolean fromRemote = false;
@@ -886,8 +910,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             return productVersion;
         }
 
-        public JBossProductType getProductType() {
-            return productType;
+        public JBossProduct getProduct() {
+            return product;
         }
 
         public ProductInfo getFromRemote() {
@@ -895,14 +919,17 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             try {
                 String productName = getServerAttribute(connection, "product-name");
                 if ((productName != null) && !productName.isEmpty())
-                    productType = JBossProductType.getValueByProductName(productName);
+                    product = JBossProductDiscovery.getKnownProductByProductName(productName);
+                if (JBossProduct.unknown().equals(product)) {
+                    product = JBossProduct.fromProductName(productName);
+                }
                 else {
                     Integer apiVersion = getServerAttribute(connection, "management-major-version");
                     if (apiVersion == 1) {
-                        productType = JBossProductType.AS;
+                        product = JBossProduct.AS;
                     } else {
                         // In the future also check for other versions of WildFly via the release-version
-                        productType = JBossProductType.WILDFLY8;
+                        product = JBossProduct.WILDFLY8;
                     }
                 }
                 releaseVersion = getServerAttribute(connection, "release-version");
@@ -926,8 +953,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         @Override
         public String toString() {
             return "ProductInfo{" + "hostname='" + asConnectionParams.getHost() + '\'' + ", port="
-                + asConnectionParams.getPort() + ", productVersion='" + productVersion + '\'' + ", productType='"
-                + productType + '\'' + ", releaseVersion='" + releaseVersion + '\'' + ", releaseCodeName='"
+                + asConnectionParams.getPort() + ", productVersion='" + productVersion + '\'' + ", product='" + product
+                + '\'' + ", releaseVersion='" + releaseVersion + '\'' + ", releaseCodeName='"
                 + releaseCodeName + '\'' + ", fromRemote=" + fromRemote + '}';
         }
     }

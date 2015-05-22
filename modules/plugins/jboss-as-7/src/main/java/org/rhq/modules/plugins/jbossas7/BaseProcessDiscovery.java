@@ -192,7 +192,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());
         JBossProductType productType = JBossProductType.AS;
         try {
-            JBossProductType.determineJBossProductType(homeDir);
+            productType = JBossProductType.determineJBossProductType(homeDir);
         } catch (Exception e) {
             log.warn("Managed product type for [" + homeDir + "] could not be determined or is unsupported: " + e.getMessage(), e); //$NON-NLS-1$ //$NON-NLS-2$
         }

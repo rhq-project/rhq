@@ -35,6 +35,7 @@ import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessExecution;
+import org.rhq.core.system.ProcessExecution.CaptureMode;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.file.FileUtil;
@@ -137,7 +138,7 @@ public final class ServerControl {
         // When running on Windows 9x, standalone.bat and domain.bat need the cwd to be the AS bin dir in order to find
         // standalone.bat.conf and domain.bat.conf respectively.
         processExecution.setWorkingDirectory(startScriptFile.getParent());
-        processExecution.setCaptureOutput(true);
+        processExecution.setCaptureMode(CaptureMode.memory());
         processExecution.setWaitForCompletion(MAX_PROCESS_WAIT_TIME);
         processExecution.setKillOnTimeout(false);
 

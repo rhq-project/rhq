@@ -465,14 +465,29 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             // Load the package version for the relationship
             PackageDetailsKey key = packageDetails.getKey();
             Query packageVersionQuery = entityManager
-                .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
+.createNamedQuery(
+                PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE, PackageVersion.class);
             packageVersionQuery.setParameter("packageName", key.getName());
             packageVersionQuery.setParameter("packageTypeName", key.getPackageTypeName());
             packageVersionQuery.setParameter("architectureName", key.getArchitectureName());
             packageVersionQuery.setParameter("version", key.getVersion());
             packageVersionQuery.setParameter("resourceTypeId", resource.getResourceType().getId());
 
-            PackageVersion packageVersion = (PackageVersion) packageVersionQuery.getSingleResult();
+            @SuppressWarnings("unchecked")
+            List<PackageVersion> packageVersions = packageVersionQuery.getResultList();
+            if (packageVersions.isEmpty()) {
+                StringBuilder supportedTypes = new StringBuilder("[");
+                for (PackageType pt : resource.getResourceType().getPackageTypes()) {
+                    supportedTypes.append(pt.getDisplayName() + ",");
+                }
+                supportedTypes.deleteCharAt(supportedTypes.length() - 1);
+                supportedTypes.append("]");
+                throw new RuntimeException("Package of PackageType[name=" + key.getPackageTypeName()
+                    + "] cannot be deployed to resource of " + resource.getResourceType()
+                    + " allowed packageTypes are "
+                    + supportedTypes.toString());
+            }
+            PackageVersion packageVersion = packageVersions.get(0);
 
             // Create the history entity
             InstalledPackageHistory history = new InstalledPackageHistory();

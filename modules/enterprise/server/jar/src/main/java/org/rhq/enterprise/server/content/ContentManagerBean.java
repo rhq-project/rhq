@@ -476,14 +476,15 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             @SuppressWarnings("unchecked")
             List<PackageVersion> packageVersions = packageVersionQuery.getResultList();
             if (packageVersions.isEmpty()) {
+                ResourceType type = resource.getResourceType();
                 StringBuilder supportedTypes = new StringBuilder("[");
                 for (PackageType pt : resource.getResourceType().getPackageTypes()) {
-                    supportedTypes.append(pt.getDisplayName() + ",");
+                    supportedTypes.append(pt.getDisplayName() + " [" + type.getName() + ":" + type.getPlugin() + "],");
                 }
                 supportedTypes.deleteCharAt(supportedTypes.length() - 1);
                 supportedTypes.append("]");
                 throw new RuntimeException("Package of PackageType[name=" + key.getPackageTypeName()
-                    + "] cannot be deployed to resource of " + resource.getResourceType()
+                    + "] cannot be deployed to resource of " + type
                     + " allowed packageTypes are "
                     + supportedTypes.toString());
             }

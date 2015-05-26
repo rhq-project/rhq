@@ -450,7 +450,7 @@
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/repoAssociations-plain.xhtml?id=#{param.id}</to-view-id>
+         <to-view-id>/portal/rhq/content/repoAssociations-plain.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 

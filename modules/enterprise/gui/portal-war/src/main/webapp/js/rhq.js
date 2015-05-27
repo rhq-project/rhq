@@ -654,6 +654,33 @@ function hideInitialDivs() {
 	hidediv('recur');
 	hidediv('end');
 }
+/**
+* set attribute to given value for element specified by ID
+* @param elementId element ID
+* @param attribute name
+* @param value - attribute value to set
+*/
+var setAttribute = function(elementId, attribute, value) {
+ var el = document.getElementById(elementId);
+ if (el && el != null) {
+   el.setAttribute(attribute, value);
+ } else {
+   console.log('Failed to set ['+attribute+'='+value+'] : node id=[' + elementId + '] not found');
+ }
+}
+/**
+* set 'action' attributes to elements based on given actionMap. If actionMap is for example
+* {elementID:'foo'}, then attribute 'action' is going to be set to 'foo' for element with id 'elementID'
+*
+* @param actionMap map<elementId,actionValue>
+*/
+var setFormActions = function(actionMap) {
+    for (key in actionMap) {
+        if (actionMap.hasOwnProperty(key)) {
+            setAttribute(key,'action',actionMap[key]);
+        }
+    }
+}
 
 /**
  * WindowResizeTracker can be used by scripts that need to keep track

@@ -505,10 +505,11 @@
          </rich:panel>
       </h:form>
 <script>
-document.getElementById('pollerForm').setAttribute('action', 'contentProvider-plain.xhtml');
-document.getElementById('contentProviderDetailsForm').setAttribute('action', 'contentProvider-plain.xhtml');
-document.getElementById('contentSourceSyncResultsListForm').setAttribute('action', 'contentProvider-plain.xhtml');
-document.getElementById('contentSourceRepoListForm').setAttribute('action', 'contentProvider-plain.xhtml');
+setFormActions({
+    pollerForm:'contentProvider-plain.xhtml',
+    contentProviderDetailsForm: 'contentProvider-plain.xhtml',
+    contentSourceSyncResultsListForm: 'contentProvider-plain.xhtml',
+    contentSourceRepoListForm: 'contentProvider-plain.xhtml'});
 </script>
 
    </ui:define>

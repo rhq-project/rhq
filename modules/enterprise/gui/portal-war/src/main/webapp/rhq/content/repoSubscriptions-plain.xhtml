@@ -276,8 +276,7 @@
          </rich:panel>
       </h:form>
 <script>
-document.getElementById('repoSubscriptionsListForm').setAttribute('action', 'repoSubscriptions-plain.xhtml');
-document.getElementById('repoUnsubscriptionsListForm').setAttribute('action', 'repoSubscriptions-plain.xhtml');
+setFormActions({repoSubscriptionsListForm: 'repoSubscriptions-plain.xhtml', repoUnsubscriptionsListForm: 'repoSubscriptions-plain.xhtml'});
 </script>
    </ui:define>
 </ui:composition>

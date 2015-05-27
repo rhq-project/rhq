@@ -282,8 +282,7 @@
          </rich:panel>
       </h:form>
 <script>
-document.getElementById('repoDisassociationsListForm').setAttribute('action', 'repoAssociations-plain.xhtml');
-document.getElementById('repoAssociationsListForm').setAttribute('action', 'repoAssociations-plain.xhtml');
+setFormActions({repoDisassociationsListForm: 'repoAssociations-plain.xhtml',repoAssociationsListForm: 'repoAssociations-plain.xhtml'});
 </script>
 
 

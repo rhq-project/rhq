@@ -894,13 +894,14 @@
     </h:form>
 
 <script>
-  document.getElementById('repoDetailsForm').setAttribute('action', 'repo-plain.xhtml');
-  document.getElementById('repoContentProvidersListForm').setAttribute('action', 'repo-plain.xhtml');
-  document.getElementById('repoResourcesListForm').setAttribute('action', 'repo-plain.xhtml');
-  document.getElementById('repoPackageVersionsListForm').setAttribute('action', 'repo-plain.xhtml');
-  document.getElementById('formFoo').setAttribute('action', 'repo-plain.xhtml');
-  document.getElementById('repoDistributionListForm').setAttribute('action', 'repo-plain.xhtml');
-  document.getElementById('repoAdvisoryListForm').setAttribute('action', 'repo-plain.xhtml');
+  setFormActions({
+    repoDetailsForm: 'repo-plain.xhtml',
+    repoContentProvidersListForm: 'repo-plain.xhtml',
+    repoResourcesListForm: 'repo-plain.xhtml',
+    repoPackageVersionsListForm: 'repo-plain.xhtml',
+    formFoo: 'repo-plain.xhtml',
+    repoDistributionListForm: 'repo-plain.xhtml',
+    repoAdvisoryListForm: 'repo-plain.xhtml'});
 </script>
 
   </ui:define>

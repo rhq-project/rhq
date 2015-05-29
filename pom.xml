@@ -371,7 +371,7 @@
     <rhq-serverplugin-yum.version>${rhq.pom.version}</rhq-serverplugin-yum.version>
     <rhq-enterprise-server-parent.version>${rhq.pom.version}</rhq-enterprise-server-parent.version>
     <safe-invoker.version>${rhq.pom.version}</safe-invoker.version>
-    <rhq-server-control.version>${rhq.pom.version}-redhat-2</rhq-server-control.version>
+    <rhq-server-control.version>${rhq.pom.version}-redhat-3</rhq-server-control.version>
     <rhq-server-metrics.version>${rhq.pom.version}-redhat-2</rhq-server-metrics.version>
     <server-startup.version>${rhq.pom.version}</server-startup.version>
     <rhq-enterprise-server-xml-schemas.version>${rhq.pom.version}</rhq-enterprise-server-xml-schemas.version>

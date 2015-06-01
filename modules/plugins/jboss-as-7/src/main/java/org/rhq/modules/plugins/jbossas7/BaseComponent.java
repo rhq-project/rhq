@@ -76,6 +76,7 @@ import org.rhq.modules.plugins.jbossas7.json.ResolveExpression;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.modules.plugins.jbossas7.json.ResultFailedException;
 import org.rhq.modules.plugins.jbossas7.json.SecurityRealmNotReadyException;
+import org.rhq.modules.plugins.jbossas7.json.UnauthorizedException;
 
 /**
  * The base class for all AS7 resource components.
@@ -818,6 +819,10 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             if (res.isTimedout()) {
                 throw new TimeoutException("Read attribute operation timed out");
             }
+            if (res.isRolledBack() && res.getFailureDescription().startsWith("JBAS013456")) {
+                throw new UnauthorizedException("Failed to read attribute [" + name + "] of address ["
+                    + getAddress().getPath() + "] - response: " + res);
+            }
             if (res.isRolledBack() && !res.getFailureDescription().startsWith("JBAS015135")) {
                 // this means we've connected, authenticated, but still failed
                 throw new ResultFailedException("Failed to read attribute [" + name + "] of address ["
@@ -828,6 +833,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 throw new SecurityRealmNotReadyException("Failed to read attribute [" + name + "] of address ["
                     + getAddress().getPath() + "] - response: " + res);
             }
+
             throw new Exception("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
                 + "] - response: " + res);
         }

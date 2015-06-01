@@ -79,6 +79,7 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.modules.plugins.jbossas7.json.ResultFailedException;
 import org.rhq.modules.plugins.jbossas7.json.SecurityRealmNotReadyException;
+import org.rhq.modules.plugins.jbossas7.json.UnauthorizedException;
 
 /**
  * Base component for functionality that is common to Standalone Servers and Host Controllers.
@@ -128,6 +129,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     public AvailabilityType getAvailability() {
         AvailabilityType availabilityType;
         boolean securityRealmReady = true;
+        boolean accessPermission = true;
         try {
             try {
                 readAttribute(getHostAddress(), "name", AVAIL_OP_TIMEOUT_SECONDS);
@@ -143,6 +145,10 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 previousAvailabilityType = DOWN;
                 availabilityType = DOWN;
                 securityRealmReady = false;
+            } catch (UnauthorizedException e) {
+                previousAvailabilityType = DOWN;
+                availabilityType = DOWN;
+                accessPermission = false;
             }
         } catch (TimeoutException e) {
             long now = new Date().getTime();
@@ -157,6 +163,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                     availabilityType = DOWN;
                 }
             }
+        } catch (InvalidPluginConfigurationException e) {
+            throw e;
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug(getResourceDescription() + ": exception while checking availability", e);
@@ -167,6 +175,11 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         if (!securityRealmReady) {
             throw new InvalidPluginConfigurationException("The security realm of the HTTP management interface"
                 + " is not ready to process requests. This usually indicates that no user is configured");
+        }
+        if (!accessPermission) {
+            throw new InvalidPluginConfigurationException("User authenticated via HTTP management interface does"
+                + " not have sufficient permissions. This can be fixed by either choosing different credential"
+                + " or assigning roles in EAP Administration Console.");
         }
 
         if (availabilityType == DOWN) {

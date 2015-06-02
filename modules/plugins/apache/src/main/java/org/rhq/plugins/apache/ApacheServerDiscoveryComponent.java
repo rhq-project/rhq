@@ -78,6 +78,7 @@ import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
 public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent>,
     ManualAddFacet<PlatformComponent>, ResourceUpgradeFacet<PlatformComponent> {
     private static final String PRODUCT_DESCRIPTION = "Apache Web Server";
+    private static final String REJECT_FORMAT_PATH_TO_CONTAIN_VHOST_FILES = "conf.modules.d/*.conf";
 
     private static final Log log = LogFactory.getLog(ApacheServerDiscoveryComponent.class);
 
@@ -680,9 +681,13 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
     public static String scanForGlobInclude(ApacheDirectiveTree tree) {
         try {
             List<ApacheDirective> includes = tree.search("/Include");
+            includes.addAll(tree.search("/IncludeOptional"));
+
             for (ApacheDirective n : includes) {
                 String include = n.getValuesAsString();
-                if (Glob.isWildcard(include)) {
+
+                if (!include.equals(REJECT_FORMAT_PATH_TO_CONTAIN_VHOST_FILES)
+                        && Glob.isWildcard(include)) {
                     //we only take the '*.something' into account here
                     //so that we have a useful mask to base the file names on.
 

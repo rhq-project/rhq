@@ -99,6 +99,9 @@ public class GroupOperationJob extends OperationJob {
             // thus it's safe to pass in the overlord here
             schedule = operationManager.getGroupOperationSchedule(LookupUtil.getSubjectManager().getOverlord(),
                 jobDetail);
+            if (schedule == null) {
+                throw new CancelJobException("Resource Schedule no longer exists, canceling job");
+            }
 
             // create a new session even if user is logged in elsewhere, we don't want to attach to that user's session
             user = getUserWithSession(schedule.getSubject(), false);

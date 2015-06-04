@@ -88,6 +88,9 @@ public class ResourceOperationJob extends OperationJob {
 
             // retrieve the stored schedule using the overlord so it succeeds no matter what
             schedule = operationManager.getResourceOperationSchedule(getOverlord(), jobDetail);
+            if (schedule == null) {
+                throw new CancelJobException("Resource Schedule no longer exists, canceling job");
+            }
 
             // Login the schedule's subject so its assigned a session, so our security tests pass.
             // Create a new session even if user is logged in elsewhere, we don't want to attach to that user's session

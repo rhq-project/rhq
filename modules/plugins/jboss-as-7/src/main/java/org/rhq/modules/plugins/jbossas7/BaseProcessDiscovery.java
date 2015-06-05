@@ -554,22 +554,30 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
             report.setNewPluginConfiguration(pluginConfiguration);
         }
-        // detect if server is running and has default values
-        if (inventoriedResource.getNativeProcess() != null
-            && "127.0.0.1".equals(serverPluginConfiguration.getNativeHost())
-            && Integer.valueOf(9999).equals(serverPluginConfiguration.getNativePort())) {
-            try {
-                AS7CommandLine commandLine = new AS7CommandLine(inventoriedResource.getNativeProcess());
-                HostConfiguration hostConfiguration = loadHostConfiguration(serverPluginConfiguration
-                    .getHostConfigFile());
-                HostPort hp = hostConfiguration.getNativeHostPort(commandLine, getMode());
-                serverPluginConfiguration.setNativeHost(hp.host);
-                serverPluginConfiguration.setNativePort(hp.port);
-                report.setNewPluginConfiguration(serverPluginConfiguration.getPluginConfig());
-                LOG.info("Detected native host/port " + hp + " for " + inventoriedResource.getResourceKey());
-                upgraded = true;
-            } catch (Exception e) {
-                LOG.error("Unable to detect and upgrade native management host and port", e);
+
+        if (inventoriedResource.getNativeProcess() != null) {
+            String origHost = serverPluginConfiguration.getNativeHost();
+            Integer origPort = serverPluginConfiguration.getNativePort();
+            // detect if server is running and has default values
+            if ("127.0.0.1".equals(origHost) && Integer.valueOf(9999).equals(origPort)) {
+                try {
+                    AS7CommandLine commandLine = new AS7CommandLine(inventoriedResource.getNativeProcess());
+                    HostConfiguration hostConfiguration = loadHostConfiguration(serverPluginConfiguration
+                        .getHostConfigFile());
+                    HostPort hp = hostConfiguration.getNativeHostPort(commandLine, getMode());
+
+                    // only update pluginConfig if we detected a difference
+                    if (!origHost.equals(hp.host) || origPort.intValue() != hp.port) {
+                        serverPluginConfiguration.setNativeHost(hp.host);
+                        serverPluginConfiguration.setNativePort(hp.port);
+                        report.setNewPluginConfiguration(serverPluginConfiguration.getPluginConfig());
+                        LOG.info("Detected native host/port " + hp + " for " + inventoriedResource.getResourceKey());
+                        upgraded = true;
+                    }
+
+                } catch (Exception e) {
+                    LOG.error("Unable to detect and upgrade native management host and port", e);
+                }
             }
         }
 

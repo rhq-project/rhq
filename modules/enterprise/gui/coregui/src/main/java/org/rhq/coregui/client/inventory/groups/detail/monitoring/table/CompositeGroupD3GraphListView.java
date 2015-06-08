@@ -83,7 +83,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     private int definitionId;
     private MeasurementDefinition definition;
     private ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
-    private String adjustedMeasurementUnits;
+    private MeasurementUnits adjustedMeasurementUnits;
     private Set<Resource> childResources;
 
     /**
@@ -371,19 +371,46 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         this.chartHeight = chartHeight;
     }
 
+    private MeasurementUnits findAdjustedMeasurementUnit(List<MultiLineGraphData> measurements) {
+        // find he highest value
+        MeasurementDataNumericHighLowComposite highestValue = null;
+        for (MultiLineGraphData data : measurements) {
+            for (MeasurementDataNumericHighLowComposite measurement : data.getMeasurementData()) {
+                if (!Double.isNaN(measurement.getValue())) {
+                    if (null == highestValue) {
+                        highestValue = measurement;
+                    }
+                    if (measurement.getValue() > highestValue.getValue()) {
+                        highestValue = measurement;
+                    }
+                }
+            }
+        }
+
+        if (null != highestValue) {
+            MeasurementNumericValueAndUnits adjustedMeasurementUnitsAndValue = MeasurementConverterClient.fit(
+                highestValue.getValue(), definition.getUnits());
+            Log.debug("Selected unit is " + adjustedMeasurementUnitsAndValue.getUnits().toString());
+            return adjustedMeasurementUnitsAndValue.getUnits();
+        } else {
+            return definition.getUnits();
+        }
+
+    }
+
     /**
      * Takes a measurementList for each resource and turn it into an array.
      * @return String
      */
     private String produceInnerValuesArray(List<MeasurementDataNumericHighLowComposite> measurementList) {
+
         StringBuilder sb = new StringBuilder("[");
         for (MeasurementDataNumericHighLowComposite measurement : measurementList) {
             sb.append("{ \"x\":" + measurement.getTimestamp() + ",");
             if (!Double.isNaN(measurement.getValue())) {
                 MeasurementNumericValueAndUnits dataValue = normalizeUnitsAndValues(measurement.getValue(),
-                        definition.getUnits());
+                    adjustedMeasurementUnits);
                 sb.append(" \"y\":" + dataValue.getValue() + "},");
-                adjustedMeasurementUnits = dataValue.getUnits().toString();
             }else {
                 sb.append(" \"y\": 0},");
             }
@@ -397,7 +424,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     public String getJsonMetrics() {
         StringBuilder sb = new StringBuilder();
         if (null != measurementForEachResource && !measurementForEachResource.isEmpty()) {
-
+            adjustedMeasurementUnits = findAdjustedMeasurementUnit(measurementForEachResource);
             sb = new StringBuilder("[");
             for (MultiLineGraphData multiLineGraphData : measurementForEachResource) {
                 if(null != multiLineGraphData.getMeasurementData() && multiLineGraphData.getMeasurementData().size() > 0){
@@ -417,7 +444,9 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     }
 
     protected MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits) {
-        MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(value, measurementUnits);
+        Double scaledValue = MeasurementConverterClient.scale(
+            new MeasurementNumericValueAndUnits(value, definition.getUnits()), adjustedMeasurementUnits);
+        MeasurementNumericValueAndUnits newValue = new MeasurementNumericValueAndUnits(scaledValue, measurementUnits);
         MeasurementNumericValueAndUnits returnValue;
 
         // adjust for percentage numbers
@@ -435,7 +464,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
             Log.warn("ResourceMetricD3GraphView.adjustedMeasurementUnits is populated by getJsonMetrics. Make sure it is called first.");
             return "";
         } else {
-            return adjustedMeasurementUnits;
+            return adjustedMeasurementUnits.toString();
         }
     }
 

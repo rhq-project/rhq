@@ -606,6 +606,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         String operationName = jobDataMap.getString(OperationJob.DATAMAP_STRING_OPERATION_NAME);
         String displayName = jobDataMap.getString(OperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME);
         int subjectId = jobDataMap.getIntFromString(OperationJob.DATAMAP_INT_SUBJECT_ID);
+        Subject ownerSubject = subjectManager.getSubjectById(subjectId);
+
+
         Configuration parameters = null;
 
         if (jobDataMap.containsKey(OperationJob.DATAMAP_INT_PARAMETERS_ID)) {
@@ -623,6 +626,23 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         // scheduling a very bad operation, and deleting that subject thus removing all traces
         // of the user.  If the user has been removed from the system, all of that users schedules
         // will need to be deleted and rescheduled.
+        if (ownerSubject == null) {
+            LOG.info("Deleting Scheduled Job " + jobName
+                + ". It will no longer be scheduled, because it's owner has been removed");
+            try {
+                ScheduleJobId jobId = new ScheduleJobId(jobDetail.getName(), jobDetail.getGroup());
+                boolean deleted = scheduler.deleteJob(jobId.getJobName(), jobId.getJobGroup());
+                if (deleted) {
+                    if (parameters != null) {
+                        entityManager.remove(parameters);
+                    }
+                    deleteOperationScheduleEntity(jobId);
+                }
+            } catch (SchedulerException e) {
+                LOG.info(e);
+            }
+            return null;
+        }
 
         ResourceOperationSchedule sched = new ResourceOperationSchedule();
         sched.setId(entityId);
@@ -631,8 +651,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setResource(resource);
         sched.setOperationName(operationName);
         sched.setOperationDisplayName(displayName);
-        Subject subject = subjectManager.getSubjectById(subjectId);
-        sched.setSubject(subject);
+        sched.setSubject(ownerSubject);
         sched.setParameters(parameters);
         sched.setDescription(description);
 
@@ -694,6 +713,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         String operationName = jobDataMap.getString(OperationJob.DATAMAP_STRING_OPERATION_NAME);
         String displayName = jobDataMap.getString(OperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME);
         int subjectId = jobDataMap.getIntFromString(OperationJob.DATAMAP_INT_SUBJECT_ID);
+        Subject ownerSubject = subjectManager.getSubjectById(subjectId);
         Configuration parameters = null;
 
         if (jobDataMap.containsKey(OperationJob.DATAMAP_INT_PARAMETERS_ID)) {
@@ -703,6 +723,25 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         int groupId = jobDataMap.getIntFromString(GroupOperationJob.DATAMAP_INT_GROUP_ID);
         ResourceGroup group = getCompatibleGroupIfAuthorized(subject, groupId);
+
+        if (ownerSubject == null) {
+            LOG.info("Deleting Scheduled Job " + jobDetail.getName()
+                + ". It will no longer be scheduled, because it's owner has been removed");
+
+            try {
+                ScheduleJobId jobId = new ScheduleJobId(jobDetail.getName(), jobDetail.getGroup());
+                boolean deleted = scheduler.deleteJob(jobId.getJobName(), jobId.getJobGroup());
+                if (deleted) {
+                    if (parameters != null) {
+                        entityManager.remove(parameters);
+                    }
+                    deleteOperationScheduleEntity(jobId);
+                }
+            } catch (SchedulerException e) {
+                LOG.info(e);
+            }
+            return null;
+        }
 
         List<Resource> executionOrder = null;
 
@@ -741,7 +780,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setGroup(group);
         sched.setOperationName(operationName);
         sched.setOperationDisplayName(displayName);
-        sched.setSubject(subjectManager.getSubjectById(subjectId));
+        sched.setSubject(ownerSubject);
         sched.setParameters(parameters);
         sched.setExecutionOrder(executionOrder);
         sched.setDescription(description);

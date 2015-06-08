@@ -90,7 +90,7 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
         var multiLineGraph = function () {
             "use strict";
             // privates
-            var margin = {top: 10, right: 5, bottom: 5, left: 40},
+            var margin = {top: 10, right: 5, bottom: 5, left: 50},
                     width = 750 - margin.left - margin.right,
                     adjustedChartHeight = chartContext.chartHeight - 50,
                     height = adjustedChartHeight - margin.top - margin.bottom,

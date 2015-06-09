@@ -67,6 +67,7 @@ import org.rhq.core.system.ProcessInfo;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
+import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -216,6 +217,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         HostPort nativeHostPort = hostConfig.getNativeHostPort(commandLine, getMode());
         serverPluginConfig.setNativeHost(nativeHostPort.host);
         serverPluginConfig.setNativePort(nativeHostPort.port);
+        serverPluginConfig.setNativeLocalAuth(hostConfig.isNativeLocalOnly());
         pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());
         String apiVersion = hostConfig.getDomainApiVersion();
         JBossProductType productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
@@ -508,6 +510,22 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         Configuration pluginConfiguration = inventoriedResource.getPluginConfiguration();
         ServerPluginConfiguration serverPluginConfiguration = new ServerPluginConfiguration(pluginConfiguration);
 
+        HostConfiguration hostConfig = null;
+        // load hostConfiguration just once - we need it several times
+        File hostXmlFile = serverPluginConfiguration.getHostConfigFile();
+        if (hostXmlFile.exists()) {
+            try {
+                hostConfig = loadHostConfiguration(hostXmlFile);
+            } catch (Exception e) {
+                LOG.error("Unable to upgrade resource " + inventoriedResource, e);
+                return null;
+            }
+        } else {
+            LOG.warn("Unable to upgrade resource " + inventoriedResource
+                + "Server configuration file not found at the expected location (" + hostXmlFile + ").");
+            return null;
+        }
+
         boolean hasLocalResourcePrefix = currentResourceKey.startsWith(LOCAL_RESOURCE_KEY_PREFIX);
         boolean hasRemoteResourcePrefix = currentResourceKey.startsWith(REMOTE_RESOURCE_KEY_PREFIX);
         if (!hasLocalResourcePrefix && !hasRemoteResourcePrefix) {
@@ -552,29 +570,18 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             if (productType == null) {
                 if (inventoriedResource.getNativeProcess() != null) {
                     // if resource seems to run, detect product type
-                    AS7CommandLine commandLine = new AS7CommandLine(inventoriedResource.getNativeProcess());
-                    File homeDir = getHomeDir(inventoriedResource.getNativeProcess(), commandLine);
-                    File baseDir = getBaseDir(inventoriedResource.getNativeProcess(), commandLine, homeDir);
-                    File configDir = getConfigDir(inventoriedResource.getNativeProcess(), commandLine, baseDir);
-                    File hostXmlFile = getHostXmlFile(commandLine, configDir);
-                    if (hostXmlFile.exists()) {
-                        try {
-                            HostConfiguration hostConfig = loadHostConfiguration(hostXmlFile);
-                            String apiVersion = hostConfig.getDomainApiVersion();
-                            productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
-                            serverPluginConfiguration.setProductType(productType);
-                            pluginConfiguration.setSimpleValue("supportsPatching",
-                                Boolean.toString(supportsPatching(productType, inventoriedResource.getVersion())));
-                            report.setNewPluginConfiguration(pluginConfiguration);
-                        } catch (Exception e) {
-                            LOG.warn("Unable to detect productType", e);
-                        }
-                    } else {
-                        LOG.warn("Unable to upgrade resource " + inventoriedResource
-                            + "Server configuration file not found at the expected location (" + hostXmlFile + ").");
-                        upgraded = false;
+                    try {
+                        AS7CommandLine commandLine = new AS7CommandLine(inventoriedResource.getNativeProcess());
+                        File homeDir = getHomeDir(inventoriedResource.getNativeProcess(), commandLine);
+                        String apiVersion = hostConfig.getDomainApiVersion();
+                        productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
+                        serverPluginConfiguration.setProductType(productType);
+                        pluginConfiguration.setSimpleValue("supportsPatching",
+                            Boolean.toString(supportsPatching(productType, inventoriedResource.getVersion())));
+                        report.setNewPluginConfiguration(pluginConfiguration);
+                    } catch (Exception e) {
+                        LOG.warn("Unable to detect productType", e);
                     }
-
 
                 } else {
                     // we have to skip upgrading at this point since it is not running and we're unable to detect productType
@@ -599,9 +606,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             if ("127.0.0.1".equals(origHost) && Integer.valueOf(9999).equals(origPort)) {
                 try {
                     AS7CommandLine commandLine = new AS7CommandLine(inventoriedResource.getNativeProcess());
-                    HostConfiguration hostConfiguration = loadHostConfiguration(serverPluginConfiguration
-                        .getHostConfigFile());
-                    HostPort hp = hostConfiguration.getNativeHostPort(commandLine, getMode());
+                    HostPort hp = hostConfig.getNativeHostPort(commandLine, getMode());
 
                     // only update pluginConfig if we detected a difference
                     if (!origHost.equals(hp.host) || origPort.intValue() != hp.port) {
@@ -616,6 +621,11 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                     LOG.error("Unable to detect and upgrade native management host and port", e);
                 }
             }
+        }
+
+        if (pluginConfiguration.getSimpleValue(Property.NATIVE_LOCAL_AUTH) == null) {
+            serverPluginConfiguration.setNativeLocalAuth(hostConfig.isNativeLocalOnly());
+            upgraded = true;
         }
 
         if (upgraded) {

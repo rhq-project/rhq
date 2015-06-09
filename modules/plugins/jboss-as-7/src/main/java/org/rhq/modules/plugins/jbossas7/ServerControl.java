@@ -227,9 +227,10 @@ public final class ServerControl {
         public ProcessExecutionResults executeCliCommand(String commands) {
             File executable = new File("bin", serverMode.getCliScriptFileName());
             String connect = disconnected ? null : "--connect";
+            boolean local = serverPluginConfig.isNativeLocalAuth();
             commands = commands.replace('\n', ',');
-            String user = disconnected ? null : "--user=" + serverPluginConfig.getUser();
-            String password = disconnected ? null : "--password=" + serverPluginConfig.getPassword();
+            String user = disconnected || local ? null : "--user=" + serverPluginConfig.getUser();
+            String password = disconnected || local ? null : "--password=" + serverPluginConfig.getPassword();
             String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
                 + serverPluginConfig.getNativePort();
 
@@ -254,9 +255,10 @@ public final class ServerControl {
             }
             File executable = new File("bin", serverMode.getCliScriptFileName());
             String connect = disconnected ? null : "--connect";
+            boolean local = serverPluginConfig.isNativeLocalAuth();
             String file = "--file=" + script.getAbsolutePath();
-            String user = disconnected ? null : "--user=" + serverPluginConfig.getUser();
-            String password = disconnected ? null : "--password=" + serverPluginConfig.getPassword();
+            String user = disconnected || local ? null : "--user=" + serverPluginConfig.getUser();
+            String password = disconnected || local ? null : "--password=" + serverPluginConfig.getPassword();
             String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
                 + serverPluginConfig.getNativePort();
 

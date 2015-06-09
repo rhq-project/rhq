@@ -43,6 +43,7 @@ public class ServerPluginConfiguration {
         public static final String SECURE = "secure";
         public static final String NATIVE_HOST = "nativeHost";
         public static final String NATIVE_PORT = "nativePort";
+        public static final String NATIVE_LOCAL_AUTH = "nativeLocalAuth";
         public static final String USER = "user";
         public static final String PASSWORD = "password";
         public static final String MANAGEMENT_CONNECTION_TIMEOUT = "managementConnectionTimeout";
@@ -136,6 +137,15 @@ public class ServerPluginConfiguration {
     public String getNativeHost() {
         return this.pluginConfig.getSimpleValue(Property.NATIVE_HOST);
 
+    }
+
+    public boolean isNativeLocalAuth() {
+        String stringValue = this.pluginConfig.getSimpleValue(Property.NATIVE_LOCAL_AUTH);
+        return stringValue != null && Boolean.parseBoolean(stringValue);
+    }
+
+    public void setNativeLocalAuth(boolean nativeLocalAuth) {
+        this.pluginConfig.setSimpleValue(Property.NATIVE_LOCAL_AUTH, String.valueOf(nativeLocalAuth));
     }
 
     public void setNativePort(int port) {

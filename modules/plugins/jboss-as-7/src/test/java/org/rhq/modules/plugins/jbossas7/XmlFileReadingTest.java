@@ -153,4 +153,18 @@ public class XmlFileReadingTest {
         assert "jboss.server.config.dir".equals(propsFilePathRel) : "Path was " + propsFileName;
     }
 
+    public void testIsLocalNativeAuth() throws Exception {
+        URL url = getClass().getClassLoader().getResource("standalone71.xml");
+        HostConfiguration hostConfig = new HostConfiguration(new File(url.getPath()));
+        assert hostConfig.isNativeLocalOnly() == false;
+
+        url = getClass().getClassLoader().getResource("standalone-1.5.xml");
+        hostConfig = new HostConfiguration(new File(url.getPath()));
+        assert hostConfig.isNativeLocalOnly() == false;
+
+        url = getClass().getClassLoader().getResource("standalone-1.5-local-native-only.xml");
+        hostConfig = new HostConfiguration(new File(url.getPath()));
+        assert hostConfig.isNativeLocalOnly() == true;
+    }
+
 }

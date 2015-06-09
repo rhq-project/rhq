@@ -372,6 +372,26 @@ public class HostConfiguration {
         return hp;
     }
 
+    /**
+     * 
+     * @return true if $local authentication is the only authentication configured for realm associated to native management interface
+     */
+    public boolean isNativeLocalOnly() {
+        String nativeRealm = getManagementSecurityRealm();
+        if (nativeRealm != null) {
+            XPath xpath = this.xpathFactory.newXPath();
+            try {
+                XPathExpression expr = xpath.compile("count(//management/security-realms/security-realm[@name='"
+                    + nativeRealm + "']/authentication[count(local) = count(*)]) = 1");
+                return (Boolean) expr.evaluate(this.document, XPathConstants.BOOLEAN);
+            } catch (XPathExpressionException e) {
+                log.error("Evaluation of XPath expression failed: " + e.getMessage());
+                return false;
+            }
+        }
+        return false;
+    }
+
     public String getManagementSecurityRealm() {
         String realm = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@security-realm");
         return realm;

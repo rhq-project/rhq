@@ -39,6 +39,7 @@ import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
@@ -92,6 +93,7 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
 
     public static final String CFG_RESOURCE_GROUP_ID = "resourceGroupId";
     public static final String CFG_DEFINITION_ID = "definitionId";
+    public static final String CFG_CUSTOM_TITLE = "customTitle";
 
     public ResourceGroupD3GraphPortlet() {
         setOverflow(Overflow.CLIP_H);
@@ -141,19 +143,20 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
     private void refreshFromConfiguration(DashboardPortlet storedPortlet) {
         PropertySimple resourceIdProperty = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID);
         PropertySimple measurementDefIdProperty = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
+        String customTitle = storedPortlet.getConfiguration().getSimpleValue(CFG_CUSTOM_TITLE, "");
         if (resourceIdProperty != null && measurementDefIdProperty != null) {
             final Integer entityId = resourceIdProperty.getIntegerValue();
             final Integer measurementDefId = measurementDefIdProperty.getIntegerValue();
             if (entityId != null && measurementDefId != null) {
-                queryResourceGroup(entityId, measurementDefId);
+                queryResourceGroup(entityId, measurementDefId, customTitle);
             }
 
         }
     }
 
-    private void queryResourceGroup(Integer entityId, final Integer measurementDefId) {
+    private void queryResourceGroup(Integer entityId, final Integer measurementDefId, String customTitle) {
         ResourceGroupGWTServiceAsync resourceService = GWTServiceLookup.getResourceGroupService();
-
+        final String portletTitle = customTitle == null || customTitle.isEmpty() ? NAME : customTitle;
         ResourceGroupCriteria resourceCriteria = new ResourceGroupCriteria();
         resourceCriteria.addFilterId(entityId);
         resourceService.findResourceGroupsByCriteria(resourceCriteria, new AsyncCallback<PageList<ResourceGroup>>() {
@@ -187,7 +190,7 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
                                     // Adding the resource group link in the portlet pushed the chart down too far, so
                                     // I'm adding it to the title. TODO: In the future (RHQ Metrics) the link
                                     // back should be done better.
-                                    portletWindow.setTitle(NAME
+                                    portletWindow.setTitle(portletTitle
                                         + " - "
                                         + LinkManager.getHref(LinkManager.getResourceGroupLink(group.getId()),
                                             group.getName()));
@@ -279,6 +282,11 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
                 return criteria;
             }
         };
+
+        final TextItem customTitle = new TextItem(CFG_CUSTOM_TITLE, MSG.view_portlet_configure_customTitle());
+        customTitle.setWidth(300);
+        customTitle.setTitleOrientation(TitleOrientation.TOP);
+
         metric.setWidth(300);
         metric.setTitleOrientation(TitleOrientation.TOP);
         metric.setValueField("id");
@@ -311,10 +319,11 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
             PropertySimple propertySimple = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
             if (propertySimple != null && propertySimple.getIntegerValue() != null)
                 form.setValue(CFG_DEFINITION_ID, propertySimple.getIntegerValue());
+            form.setValue(CFG_CUSTOM_TITLE, storedPortlet.getConfiguration().getSimpleValue(CFG_CUSTOM_TITLE));
         }
 
         selectorItem.setCanvas(resourceGroupSelector);
-        form.setFields(selectorItem, metric, new SpacerItem());
+        form.setFields(selectorItem, metric, customTitle, new SpacerItem());
 
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
             public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
@@ -323,7 +332,8 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
                 storedPortlet.getConfiguration().put(new PropertySimple(CFG_RESOURCE_GROUP_ID, groupId));
                 storedPortlet.getConfiguration().put(
                     new PropertySimple(CFG_DEFINITION_ID, form.getValue(CFG_DEFINITION_ID)));
-
+                storedPortlet.getConfiguration().put(
+                    new PropertySimple(CFG_CUSTOM_TITLE, form.getValueAsString(CFG_CUSTOM_TITLE)));
                 configure(portletWindow, storedPortlet);
 
                 redraw();

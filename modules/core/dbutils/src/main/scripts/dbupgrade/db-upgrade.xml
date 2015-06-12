@@ -1846,7 +1846,7 @@
                     <statement desc="Adding VIEW_USERS global permission to all existing roles">
                         INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION)
                         SELECT r.ID, 17 FROM RHQ_ROLE r
-                    </statement>
+                        </statement>
                 </schema-directSQL>
             </schemaSpec>
 
@@ -2605,7 +2605,7 @@
               <schema-directSQL>
                 <statement>
                   ALTER TABLE RHQ_DELETE_RES_HIST
-                  ADD CONSTRAINT RHQ_DELETE_RES_HIST_PARENT_RESOURCE_ID_ID_FK
+                  ADD CONSTRAINT RHQ_DRH_PARENT_RES_ID_FK
                   FOREIGN KEY ( PARENT_RESOURCE_ID ) REFERENCES RHQ_RESOURCE ( ID )
                 </statement>
               </schema-directSQL>
@@ -2613,19 +2613,14 @@
               <schema-directSQL>
                 <statement>
                   ALTER TABLE RHQ_DELETE_RES_HIST
-                  ADD CONSTRAINT RHQ_DELETE_RES_HIST_RESOURCE_TYPE_ID_ID_FK
+                  ADD CONSTRAINT RHQ_DRH_RES_TYPE_ID_FK
                   FOREIGN KEY ( RESOURCE_TYPE_ID ) REFERENCES RHQ_RESOURCE_TYPE ( ID )
-                </statement>
-              </schema-directSQL>
-              <schema-directSQL>
-                <statement>
-                  ALTER TABLE RHQ_DELETE_RES_HIST DROP CONSTRAINT RHQ_DELETE_RES_HIST_RESOURCE_ID_FKEY
                 </statement>
               </schema-directSQL>
               <schema-addColumn table="RHQ_DELETE_RES_HIST" column="RESOURCE_NAME" columnType="VARCHAR2" precision="500" />
               <schema-addColumn table="RHQ_DELETE_RES_HIST" column="RESOURCE_KEY" columnType="VARCHAR2" precision="500" />
               <schema-directSQL ignoreError="true">
-                <statement desc="Migrate data in RHQ_DELETE_RES_HIST - set RESOURCE_ID to NULL and update RESOURCE_TYPE_ID, RESOURCE_KEY and RESOURCE_NAME columns">
+                <statement desc="Migrate data in RHQ_DELETE_RES_HIST - update RESOURCE_TYPE_ID, RESOURCE_KEY and RESOURCE_NAME columns">
                   UPDATE rhq_delete_res_hist
                   SET 
                   parent_resource_id = rhq_resource.parent_resource_id,
@@ -2639,6 +2634,7 @@
               <schema-alterColumn table="RHQ_DELETE_RES_HIST" column="PARENT_RESOURCE_ID" nullable="FALSE" />
               <schema-alterColumn table="RHQ_DELETE_RES_HIST" column="RESOURCE_TYPE_ID" nullable="FALSE" />
               <schema-alterColumn table="RHQ_DELETE_RES_HIST" column="RESOURCE_NAME" nullable="FALSE" />
+              <schema-dropForeignKeys table="RHQ_DELETE_RES_HIST" column="RESOURCE_ID" ignoreError="true"/>
               <schema-deleteColumn table="RHQ_DELETE_RES_HIST" column="RESOURCE_ID" />
               <schema-alterColumn table="RHQ_DELETE_RES_HIST" column="RESOURCE_KEY" nullable="FALSE" />
               <!-- prepare the DELETED resources to be picked up by async uninventory job -->

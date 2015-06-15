@@ -95,7 +95,8 @@ import javax.persistence.Table;
         + "    go.nextFireTime, " //
         + "    go.group.id, " //
         + "    go.group.name, " //
-        + "    go.group.resourceType.name) " //
+        + "    go.group.resourceType.name, "
+        + "    go.group.autoGroupParentResource.id) " //
         + "  FROM GroupOperationScheduleEntity go " //
         + " WHERE go.nextFireTime IS NOT NULL "), //
     @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_GROUP, query = "" //
@@ -107,7 +108,8 @@ import javax.persistence.Table;
         + "    go.nextFireTime, " //
         + "    g.id, " //
         + "    g.name, " //
-        + "    g.resourceType.name) " //
+        + "    g.resourceType.name,"
+        + "    g.autoGroupParentResource.id) " //
         + "  FROM GroupOperationScheduleEntity go " //
         + "  JOIN go.group g " //
         + "  JOIN g.roles r " //
@@ -124,7 +126,7 @@ public abstract class OperationScheduleEntity implements Serializable {
     public static final String QUERY_GET_SCHEDULE_GROUP = "OperationScheduleEntity.getScheduleGroup";
     public static final String QUERY_GET_SCHEDULE_GROUP_ADMIN = "OperationScheduleEntity.getScheduleGroup_admin";
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_OPERATION_SCHEDULE_ID_SEQ")

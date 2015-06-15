@@ -212,6 +212,8 @@ public class MigrateAggregateMetrics implements Step {
         } catch (InterruptedException e) {
             throw new RuntimeException("The migration was interrupted. There are still " + getRemainingMetrics() +
                 " unfinished metrics migrations. The upgrade will have to be run again.");
+        } catch (Throwable t) {
+            throw new RuntimeException("There was an unexpected error. The upgrade will have to be rerun.", t);
         } finally {
             stopwatch.stop();
             log.info("Finished migrating " + migrated1HourMetrics + " " + Bucket.ONE_HOUR + ", " +
@@ -254,7 +256,9 @@ public class MigrateAggregateMetrics implements Step {
                 log.info("Shutting down migration thread pools...");
                 rateMonitor.shutdown();
                 progressLogger.finished();
-                keyScanner.shutdown();
+                if (keyScanner != null) {
+                    keyScanner.shutdown();
+                }
                 threadPool.shutdown();
                 threadPool.awaitTermination(5, TimeUnit.SECONDS);
             } catch (InterruptedException e) {

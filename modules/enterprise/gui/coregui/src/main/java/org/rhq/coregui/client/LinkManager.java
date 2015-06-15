@@ -74,7 +74,7 @@ public class LinkManager {
         }
     }
 
-    private static String getAutoGroupLink(int autoGroupId) {
+    public static String getAutoGroupLink(int autoGroupId) {
         return "#Resource/AutoGroup/" + autoGroupId;
     }
 
@@ -252,6 +252,10 @@ public class LinkManager {
 
     public static String getSubsystemGroupOperationScheduleLink(int groupId, int opScheduleId) {
         return "#ResourceGroup/" + groupId + "/Operations/Schedules/" + opScheduleId;
+    }
+
+    public static String getAutoGroupOperationScheduleLink(int groupId, int opScheduleId) {
+        return getAutoGroupLink(groupId) + "/Operations/Schedules/" + opScheduleId;
     }
 
     public static String getAlertDetailLink(EntityContext entityContext, int alertId) {

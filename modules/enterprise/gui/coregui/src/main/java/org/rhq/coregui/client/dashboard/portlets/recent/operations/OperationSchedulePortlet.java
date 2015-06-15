@@ -126,7 +126,13 @@ public class OperationSchedulePortlet extends EnhancedVLayout implements CustomS
                     Integer opScheduleId = record.getAttributeAsInt("id");
                     if (id == null) {
                         id = record.getAttributeAsInt(ScheduledOperationsDataSource.Field.GROUP_ID.propertyName());
-                        url = LinkManager.getSubsystemGroupOperationScheduleLink(id, opScheduleId);
+                        if (record.getAttributeAsBoolean(ScheduledOperationsDataSource.Field.IS_AUTO_GROUP
+                            .propertyName())) {
+                            url = LinkManager.getAutoGroupOperationScheduleLink(id, opScheduleId);
+                        } else {
+                            url = LinkManager.getSubsystemGroupOperationScheduleLink(id, opScheduleId);
+                        }
+
                     } else {
                         url = LinkManager.getSubsystemResourceOperationScheduleLink(id, opScheduleId);
                     }
@@ -152,7 +158,13 @@ public class OperationSchedulePortlet extends EnhancedVLayout implements CustomS
                 String url = null;
                 if (id == null) {
                     id = listGridRecord.getAttributeAsInt(ScheduledOperationsDataSource.Field.GROUP_ID.propertyName());
-                    url = LinkManager.getResourceGroupLink(id);
+                    if (listGridRecord.getAttributeAsBoolean(ScheduledOperationsDataSource.Field.IS_AUTO_GROUP
+                        .propertyName())) {
+                        url = LinkManager.getAutoGroupLink(id);
+                    } else {
+                        url = LinkManager.getResourceGroupLink(id);
+                    }
+
                 } else {
                     url = LinkManager.getResourceLink(id);
                 }

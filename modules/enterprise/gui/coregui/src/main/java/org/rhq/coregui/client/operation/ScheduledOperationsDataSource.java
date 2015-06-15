@@ -75,7 +75,9 @@ public class ScheduledOperationsDataSource extends RPCDataSource<OperationSchedu
         
         GROUP_ID("groupId", "groupId"),
         
-        GROUP_TYPE("groupType", MSG.common_title_resource_name());
+        GROUP_TYPE("groupType", MSG.common_title_resource_name()),
+
+        IS_AUTO_GROUP("isAutoGroup", "isAutoGroup");
 
         /**
          * Corresponds to a property name of Resource (e.g. resourceType.name).
@@ -287,6 +289,7 @@ public class ScheduledOperationsDataSource extends RPCDataSource<OperationSchedu
             record.setAttribute(Field.RESOURCE_OR_GROUP.propertyName, resource.getGroupName());
             record.setAttribute(Field.GROUP_ID.propertyName, resource.getGroupId());
             record.setAttribute(Field.GROUP_TYPE.propertyName, resource.getGroupResourceTypeName());
+            record.setAttribute(Field.IS_AUTO_GROUP.propertyName, resource.isAutoGroup());
         }
         record.setAttribute("id", from.getId());
         record.setAttribute(Field.OPERATION.propertyName, from.getOperationName());

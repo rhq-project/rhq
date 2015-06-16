@@ -599,6 +599,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
         if (pluginConfiguration.getSimpleValue(Property.NATIVE_LOCAL_AUTH) == null) {
             serverPluginConfiguration.setNativeLocalAuth(hostConfig.isNativeLocalOnly());
+            report.setNewPluginConfiguration(serverPluginConfiguration.getPluginConfig());
             upgraded = true;
         }
 

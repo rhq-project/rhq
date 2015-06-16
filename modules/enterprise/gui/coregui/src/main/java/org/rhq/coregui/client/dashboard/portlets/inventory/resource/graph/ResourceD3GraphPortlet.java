@@ -36,6 +36,7 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 
 import org.rhq.core.domain.common.EntityContext;
@@ -81,6 +82,7 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
     public static final String NAME = MSG.view_portlet_defaultName_resourceMetric();
     public static final String CFG_RESOURCE_ID = "resourceId";
     public static final String CFG_DEFINITION_ID = "definitionId";
+    public static final String CFG_CUSTOM_TITLE = "customTitle";
     // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
 
@@ -119,19 +121,20 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
     private void refreshFromConfiguration(DashboardPortlet storedPortlet) {
         PropertySimple resourceIdProperty = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
         PropertySimple measurementDefIdProperty = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
+        String customTitle = storedPortlet.getConfiguration().getSimpleValue(CFG_CUSTOM_TITLE, "");
         if (resourceIdProperty != null && measurementDefIdProperty != null) {
             final Integer entityId = resourceIdProperty.getIntegerValue();
             final Integer measurementDefId = measurementDefIdProperty.getIntegerValue();
             if (entityId != null && measurementDefId != null) {
-                queryResource(entityId, measurementDefId);
+                queryResource(entityId, measurementDefId, customTitle);
             }
 
         }
     }
 
-    private void queryResource(Integer entityId, final Integer measurementDefId) {
+    private void queryResource(Integer entityId, final Integer measurementDefId, String customTitle) {
         ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
-
+        final String portletTitle = customTitle == null || customTitle.isEmpty() ? NAME : customTitle;
         ResourceCriteria resourceCriteria = new ResourceCriteria();
         resourceCriteria.addFilterId(entityId);
         resourceService.findResourcesByCriteria(resourceCriteria, new AsyncCallback<PageList<Resource>>() {
@@ -169,7 +172,7 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
                                     // Adding the resource link in the portlet pushed the chart down too far, so
                                     // I'm adding it to the title. TODO: In the future (RHQ Metrics) the link
                                     // back should be done better and it should provide ancestry in a nice way.
-                                    portletWindow.setTitle(NAME
+                                    portletWindow.setTitle(portletTitle
                                         + " - "
                                         + LinkManager.getHref(LinkManager.getResourceLink(resource.getId()),
                                             resource.getName()));
@@ -178,7 +181,6 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
                                     // window is annoying.
                                     //portletWindow.setTooltip(AncestryUtil.getAncestryHoverHTMLForResource(resource,
                                     //    types, 0));
-
                                     graph.setEntityId(resource.getId());
                                     graph.setEntityName(resource.getName());
                                     graph.setDefinition(def);
@@ -267,6 +269,9 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
             }
         };
 
+        final TextItem customTitle = new TextItem(CFG_CUSTOM_TITLE, MSG.view_portlet_configure_customTitle());
+        customTitle.setWidth(300);
+
         final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
         metric.setWidth(300);
@@ -295,9 +300,10 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
             if (propertySimple != null && propertySimple.getIntegerValue() != null) {
                 form.setValue(CFG_DEFINITION_ID, propertySimple.getIntegerValue());
             }
+            form.setValue(CFG_CUSTOM_TITLE, storedPortlet.getConfiguration().getSimpleValue(CFG_CUSTOM_TITLE));
         }
 
-        form.setFields(resourceLookupComboBoxItem, metric);
+        form.setFields(resourceLookupComboBoxItem, metric, customTitle);
 
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
             public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
@@ -306,6 +312,8 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
                 storedPortlet.getConfiguration().put(
                     new PropertySimple(CFG_DEFINITION_ID, form.getValue(CFG_DEFINITION_ID)));
 
+                storedPortlet.getConfiguration().put(
+                    new PropertySimple(CFG_CUSTOM_TITLE, form.getValueAsString(CFG_CUSTOM_TITLE)));
                 // this will cause the graph to draw
                 configure(portletWindow, storedPortlet);
             }

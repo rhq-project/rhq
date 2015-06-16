@@ -72,7 +72,7 @@ public final class ResourceUpgradeCallbackImpl implements ResourceUpgradeCallbac
                 startScriptConfig.setStartScriptArgs(Arrays.asList("start", "--server"));
                 File homeDirFile = new File(
                     pluginConfiguration.getSimpleValue(DiscoveryCallbackImpl.PLUGIN_CONFIG_HOME_DIR));
-                startScriptConfig.setStartScript(new File(new File(homeDirFile, "bin"), "rhqctl"));
+                startScriptConfig.setStartScript(new File(new File(homeDirFile.getParentFile(), "bin"), "rhqctl"));
                 upgradeReport.setNewPluginConfiguration(pluginConfiguration);
             }
 

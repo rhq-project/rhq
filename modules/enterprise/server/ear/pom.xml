@@ -485,7 +485,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>alert-roles</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${alert-roles.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>

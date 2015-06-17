@@ -40,7 +40,7 @@
                               <pathelement location="../alert-irc/target/alert-irc-${project.version}.jar" />
                               <pathelement location="../alert-microblog/target/alert-microblog-${project.version}.jar" />
                               <pathelement location="../alert-mobicents/target/alert-mobicents-${project.version}.jar" />
-                              <pathelement location="../alert-roles/target/alert-roles-${project.version}.jar" />
+                              <pathelement location="../alert-roles/target/alert-roles-${alert-roles.version}.jar" />
                               <pathelement location="../alert-scriptlang/target/alert-scriptlang-${project.version}.jar" />
                               <pathelement location="../alert-sms/target/alert-sms-${project.version}.jar" />
                               <pathelement location="../alert-snmp/target/alert-snmp-${project.version}.jar" />

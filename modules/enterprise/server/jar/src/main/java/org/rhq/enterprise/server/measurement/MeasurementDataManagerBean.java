@@ -135,6 +135,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         + "        OR (? is not null AND lastValue.v is null) \n"
         + "              OR (? is not null AND lastValue.v is not null AND ? <> lastValue.v)) \n" + "      )";
 
+    private static final int TRAIT_VALUE_SIZE_IN_DB = 4000;
+
     private final Log log = LogFactory.getLog(MeasurementDataManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -256,6 +258,13 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
             for (MeasurementDataTrait aData : data) {
                 // time_stamp, schedule_id, value, schedule_id, schedule_id, value, value, value, value
+
+                // There's a limitation of 4000 database characters in Oracle, try to overcome the issue
+                // The character set in Oracle could vary, using UTF-8 for "worst-case"
+                while(aData.getValue().getBytes("UTF-8").length > TRAIT_VALUE_SIZE_IN_DB) {
+                    aData.setValue(aData.getValue().substring(0, aData.getValue().length() - 1));
+                }
+
                 ps.setLong(1, aData.getTimestamp());
                 ps.setInt(2, aData.getScheduleId());
                 ps.setString(3, aData.getValue());

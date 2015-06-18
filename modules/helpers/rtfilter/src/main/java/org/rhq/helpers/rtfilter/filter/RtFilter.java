@@ -20,9 +20,9 @@ package org.rhq.helpers.rtfilter.filter;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -472,22 +472,25 @@ public class RtFilter implements Filter {
          */
         String vhostMappingFileString = conf.getInitParameter(InitParams.VHOST_MAPPING_FILE);
         if (vhostMappingFileString != null) {
-            InputStream stream = getClass().getClassLoader().getResourceAsStream(vhostMappingFileString);
-            if (stream != null) {
+            String configDir = System.getProperty("jboss.server.config.dir");
+            File mappingFile = new File(configDir + File.separator + vhostMappingFileString);
+            if(mappingFile.exists()) {
+                FileInputStream fis = null;
                 try {
-                    vhostMappings.load(stream);
+                    fis = new FileInputStream(mappingFile);
+                    vhostMappings.load(fis);
                 } catch (IOException e) {
                     log.warn("Can't read vhost mappings from " + vhostMappingFileString + " :" + e.getMessage());
                 } finally {
-                    if (stream != null)
+                    if (fis != null)
                         try {
-                            stream.close();
+                            fis.close();
                         } catch (Exception e) {
                             log.debug(e);
                         }
                 }
             } else {
-                log.warn("Can't read vhost mappings from " + vhostMappingFileString);
+                log.warn("Can't find vhost mappings file from " + mappingFile.getAbsolutePath());
             }
         }
     }

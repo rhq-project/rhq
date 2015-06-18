@@ -49,17 +49,6 @@
     </resources>
 
     <plugins>
-
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <!-- Override what's in the root pom (1.6/1.6), since we want the filter to be deployable to
-               a wide array of app servers. -->
-          <source>1.4</source>
-          <target>1.4</target>
-        </configuration>
-      </plugin>
-
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>

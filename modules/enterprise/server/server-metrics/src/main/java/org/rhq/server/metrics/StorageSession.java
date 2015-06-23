@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2014 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -105,6 +105,9 @@ public class StorageSession implements Host.StateListener {
                 rate += topologyDelta;
             }
         }
+        if(rate < topologyDelta) {
+            rate = topologyDelta;
+        }
         return rate;
     }
 
@@ -164,6 +167,13 @@ public class StorageSession implements Host.StateListener {
             handleNoHostAvailable(e);
             throw e;
         }
+    }
+
+    /**
+     * Skips rate throttling and exception handling. Do NOT use for normal operations.
+     */
+    public ResultSet executeDirect(Query query) throws QueryTimeoutException, NoHostAvailableException {
+        return wrappedSession.execute(query);
     }
 
     public StorageResultSetFuture executeAsync(String query) {

@@ -1,7 +1,7 @@
 /*
  *
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,8 @@ import java.util.List;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.QueryTimeoutException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -72,6 +74,8 @@ public class MetricsDAO {
     private PreparedStatement findIndexEntriesAfterScheduleId;
     private PreparedStatement deleteIndexEntry;
     private PreparedStatement deleteAggregate;
+
+    private PreparedStatement aliveCheck;
 
     public MetricsDAO(StorageSession session, MetricsConfiguration configuration) {
         this.storageSession = session;
@@ -147,6 +151,9 @@ public class MetricsDAO {
         deleteAggregate = storageSession.prepare(
             "DELETE FROM " + MetricsTable.AGGREGATE + " " +
             "WHERE schedule_id = ? AND bucket = ? AND time = ?");
+
+        aliveCheck = storageSession.prepare(
+                "SELECT columnfamily_name FROM System.schema_columnfamilies WHERE keyspace_name = ?");
 
         long endTime = System.currentTimeMillis();
         log.info("Finished initializing prepared statements in " + (endTime - startTime) + " ms");
@@ -254,6 +261,11 @@ public class MetricsDAO {
         BoundStatement statement = deleteAggregate.bind(metric.getScheduleId(), metric.getBucket().toString(),
             new Date(metric.getTimestamp()));
         storageSession.execute(statement);
+    }
+
+    public ResultSet checkLiveness(String keyspace) throws QueryTimeoutException, NoHostAvailableException {
+        BoundStatement statement = aliveCheck.bind(keyspace);
+        return storageSession.executeDirect(statement);
     }
 
 }

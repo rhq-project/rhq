@@ -38,6 +38,7 @@ import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.NetConnection;
 import org.hyperic.sigar.Swap;
 
+import org.rhq.core.util.exec.ProcessExecutionOutputStream;
 import org.rhq.core.util.exec.ProcessExecutor;
 import org.rhq.core.util.exec.ProcessExecutorResults;
 import org.rhq.core.util.exec.ProcessToStart;

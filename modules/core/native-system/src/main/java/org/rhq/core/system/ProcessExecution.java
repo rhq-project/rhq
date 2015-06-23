@@ -30,6 +30,8 @@ import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.core.util.exec.ProcessExecutionOutputStream;
+
 /**
  * Provides information on what process to execute and how to execute it.
  * <p/>

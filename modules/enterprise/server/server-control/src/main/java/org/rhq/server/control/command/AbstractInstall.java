@@ -426,7 +426,7 @@ public abstract class AbstractInstall extends ControlCommand {
             int numTries = 0, maxTries = 30;
             do {
                 try {
-                    Thread.sleep(5000L);
+                    Thread.sleep(50L);
                 } catch (InterruptedException e) {
                     // just keep going
                 }
@@ -436,7 +436,13 @@ public abstract class AbstractInstall extends ControlCommand {
                 if (numTries > 1) {
                     log.info("Still waiting to run the server installer...");
                 }
-                exitCode = ExecutorAssist.execute(getBinDir(), commandLine);
+
+                // for first 10 tries ignore what "rhq-installer --test" produces, only care about exit code 
+                if (numTries < 10) {
+                    exitCode = ExecutorAssist.getSilent().exec(getBinDir(), commandLine);
+                } else {
+                    exitCode = ExecutorAssist.execute(getBinDir(), commandLine);
+                }
             } while (exitCode != 0);
 
             log.info("The RHQ Server is ready to be upgraded by the server installer.");

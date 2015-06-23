@@ -383,6 +383,11 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
             this.configuration = configuration;
         }
 
+        @Override
+        protected void setPagingInfo(DSResponse response, PageList<?> pageList) {
+            response.setTotalRows(pageList.size());
+        }
+
         /* (non-Javadoc)
          * This override allows us to set the total rows to the number of recent op history configured for
          * the portlet. This sets the counter appropriately and stops further queries to the server.

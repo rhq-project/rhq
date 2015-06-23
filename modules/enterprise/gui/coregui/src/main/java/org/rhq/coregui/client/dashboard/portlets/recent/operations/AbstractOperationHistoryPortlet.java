@@ -325,6 +325,11 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
         }
 
         @Override
+        protected void setPagingInfo(DSResponse response, PageList<?> pageList) {
+            response.setTotalRows(pageList.size());
+        }
+
+        @Override
         protected ResourceOperationHistoryCriteria getFetchCriteria(DSRequest request) {
             ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
 

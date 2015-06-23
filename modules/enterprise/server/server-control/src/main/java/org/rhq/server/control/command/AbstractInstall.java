@@ -426,7 +426,7 @@ public abstract class AbstractInstall extends ControlCommand {
             int numTries = 0, maxTries = 30;
             do {
                 try {
-                    Thread.sleep(50L);
+                    Thread.sleep(5000L);
                 } catch (InterruptedException e) {
                     // just keep going
                 }

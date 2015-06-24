@@ -191,6 +191,7 @@ public class StorageClientManager implements StorageClientManagerMBean{
             initMetricsServer();
             JMXUtil.registerMBean(this, OBJECT_NAME);
             aliveChecker = new SessionAliveChecker(this);
+            aliveChecker.setName("StorageNode SessionAliveChecker");
             aliveChecker.start();
 
             initialized = true;
@@ -688,6 +689,8 @@ public class StorageClientManager implements StorageClientManagerMBean{
                     }
                 } catch (InterruptedException e) {
                     // Alive should be false in the next iteration if shutdown was called
+                } catch(Exception e) {
+                    LOG.error("AliveCheck thread run into an unexpected exception: " + e.getLocalizedMessage());
                 }
             }
         }

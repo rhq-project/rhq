@@ -222,7 +222,8 @@ public class ResourceSearchView extends Table {
 
                 private boolean containsStorageNodeOrItsResource(ListGridRecord[] selection) {
                     for (ListGridRecord record : selection) {
-                        if ("RHQStorage".equals(record.getAttribute(PLUGIN.propertyName()))) {
+                        if (record.getAttribute(AncestryUtil.RESOURCE_ANCESTRY) == null
+                            || "RHQStorage".equals(record.getAttribute(PLUGIN.propertyName()))) {
                          // is a platform, storage node or child resource of storage node
                             return true;
                         }

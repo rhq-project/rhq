@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2014 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -52,6 +52,7 @@ import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.QueryTimeoutException;
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.policies.DefaultRetryPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
@@ -124,6 +125,8 @@ public class StorageClientManager implements StorageClientManagerMBean{
 
     private Metrics driverMetrics;
 
+    private SessionAliveChecker aliveChecker;
+
     public void scheduleStorageSessionMaintenance() {
         // each time the webapp is reloaded, we don't want to create duplicate jobs
         Collection<Timer> timers = timerService.getTimers();
@@ -187,7 +190,9 @@ public class StorageClientManager implements StorageClientManagerMBean{
 
             initMetricsServer();
             JMXUtil.registerMBean(this, OBJECT_NAME);
-            initialized = true;
+            aliveChecker = new SessionAliveChecker(this);
+            aliveChecker.setName("StorageNode SessionAliveChecker");
+            aliveChecker.start();
 
             initialized = true;
             LOG.info("Storage client subsystem is now initialized");
@@ -222,7 +227,7 @@ public class StorageClientManager implements StorageClientManagerMBean{
      * 2) If the credentials are different then create a new session with the
      *    new credentials and register it with the session manager.
      *
-     * @return <true> if a new session was sucessfully created or no new session is required; <false> otherwise
+     * @return <true> if a new session was successfully created or no new session is required; <false> otherwise
      */
     public synchronized boolean refreshCredentialsAndSession() {
         if (!initialized) {
@@ -236,26 +241,36 @@ public class StorageClientManager implements StorageClientManagerMBean{
 
         if ((username != null && !username.equals(this.cachedStorageUsername))
             || (password != null && !password.equals(this.cachedStoragePassword))) {
-
-            Session wrappedSession;
-            try {
-                wrappedSession = createSession();
-            } catch (NoHostAvailableException e) {
-                if (cluster != null) {
-                    cluster.shutdown();
-                }
-
-                LOG.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
-                    + " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster"
-                    + " as soon as possible.", e);
-                return false;
-            }
-
-            session.registerNewSession(wrappedSession);
-            metricsDAO.initPreparedStatements();
-            return true;
+            return refreshSession();
         }
 
+        return true;
+    }
+
+    /**
+     * Recreates the session used to connect to the storage node.
+     * @return true if success, false otherwise.
+     */
+    private synchronized boolean refreshSession() {
+        Session wrappedSession;
+        try {
+            wrappedSession = createSession();
+            initialized = true;
+        } catch (NoHostAvailableException e) {
+            if (cluster != null) {
+                cluster.shutdown();
+            }
+
+            LOG.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
+                    + " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster"
+                    + " as soon as possible.", e);
+            return false;
+        }
+
+        session.registerNewSession(wrappedSession);
+        storageClusterMonitor = new StorageClusterMonitor(session);
+        session.addStorageStateListener(storageClusterMonitor);
+        metricsDAO.initPreparedStatements();
         return true;
     }
 
@@ -287,6 +302,8 @@ public class StorageClientManager implements StorageClientManagerMBean{
 
     public synchronized void shutdown() {
         LOG.info("Shutting down storage client subsystem");
+
+        aliveChecker.shutdown();
 
         if (metricsServer != null) {
             metricsServer.shutdown();
@@ -631,4 +648,56 @@ public class StorageClientManager implements StorageClientManagerMBean{
         return metricsServer.getQueueAvailableCapacity();
     }
 
+    /**
+     * A thread that checks for liveness of the given session.
+     */
+    private static class SessionAliveChecker extends Thread {
+
+        private static long SLEEP_TIME = 5000L;
+        private static long EXTENDED_SLEEP = SLEEP_TIME * 5;
+        private static int ALLOWED_FAILS = 2;
+
+        private final StorageClientManager storageClientManager;
+        private boolean alive = true;
+        private int fails = 0;
+
+        public SessionAliveChecker(StorageClientManager manager) {
+            this.storageClientManager = manager;
+        }
+
+        @Override
+        public void run() {
+            while(alive) {
+                try {
+                    Thread.sleep(SLEEP_TIME);
+                    try {
+                        storageClientManager.getMetricsDAO().checkLiveness(RHQ_KEYSPACE);
+                        if(fails > 0) {
+                            // Query succeeded, set fails to 0
+                            fails = 0;
+                        }
+                    } catch(QueryTimeoutException e) {
+                        LOG.error("Storage node connection check timed out");
+                    } catch(NoHostAvailableException e) {
+                        fails++;
+                        if(fails >= ALLOWED_FAILS) {
+                            LOG.error("Failed to contact the storage node for live check, recreating connection session");
+                            // We have lost the connection to the storage node, refresh and try again..
+                            storageClientManager.refreshSession();
+                            Thread.sleep(EXTENDED_SLEEP); // Sleep for a longer time to allow storage node to restart
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    // Alive should be false in the next iteration if shutdown was called
+                } catch(Exception e) {
+                    LOG.error("AliveCheck thread run into an unexpected exception: " + e.getLocalizedMessage());
+                }
+            }
+        }
+
+        public void shutdown() {
+            this.alive = false;
+            this.interrupt();
+        }
+    }
 }

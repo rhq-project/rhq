@@ -203,6 +203,10 @@ public final class ServerControl {
 
     public final class Cli {
         private boolean disconnected;
+        /**
+         * whether to execute dummy CLI check prior running desired command
+         */
+        private boolean checkCertificate = true;
 
         Cli() {
             // When running the CLI on Windows, make sure no "pause" message is shown after script execution
@@ -212,9 +216,48 @@ public final class ServerControl {
             }
         }
 
+        private Cli dontCheckCertificate() {
+            this.checkCertificate = false;
+            return this;
+        }
+
         public Cli disconnected(boolean disconnected) {
             this.disconnected = disconnected;
             return this;
+        }
+
+        /**
+         * runs dummy CLI operation (:whoami) in order to detect, whether server (if configured to SSL)
+         * requires user to accept server's certificate. When running this command, jboss-cli can hang
+         * and wait for user input. For this reason, there is 10s timeout for this process to finish (hopefully 
+         * it is enough even in very slow environments)
+         * @param
+         * @return ProcessExecutionResults in case server <strong>requires</strong> accepting SSL certificate and subsequent 
+         * CLI executions would hang and wait for input, null otherwise.
+         */
+        private ProcessExecutionResults detectCertificateApprovalRequired() {
+            ProcessExecutionResults result = ServerControl.onServer(pluginConfiguration, serverMode, systemInfo)
+                .killingOnTimeout(true)
+                .waitingFor(10 * 1000L)
+                .cli()
+                    .disconnected(false)
+                    .dontCheckCertificate() // avoid stack overflow
+                    .executeCliCommand(":whoami");
+
+            if (result.getExitCode() == null) { // process was killed because of timeout (killingOnTimeout(true))
+                // we're interested in first 7 lines only (CLI prints SSL certificate details)
+                String[] output = result.getCapturedOutput().split("\n", 7);
+                if (output.length > 0
+                    && output[0].startsWith("Unable to connect due to unrecognised server certificate")) {
+                    int strip = Math.min(7, output.length);
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < strip; i++) {
+                        sb.append(output[i] + "\n");
+                    }
+                    return new SslCheckRequiredExecutionResults(result, sb.toString());
+                }
+            }
+            return null;
         }
 
         /**
@@ -233,6 +276,14 @@ public final class ServerControl {
             String password = disconnected || local ? null : "--password=" + serverPluginConfig.getPassword();
             String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
                 + serverPluginConfig.getNativePort();
+
+            if (!disconnected && checkCertificate) {
+                // check whether we're able to talk to server and CLI won't block because it needs user to accept SSL certificate
+                ProcessExecutionResults required = detectCertificateApprovalRequired();
+                if (required != null) {
+                    return required;
+                }
+            }
 
             if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) {
                 return execute(null, executable, connect, commands, user, password, controller);
@@ -261,6 +312,14 @@ public final class ServerControl {
             String password = disconnected || local ? null : "--password=" + serverPluginConfig.getPassword();
             String controller = disconnected ? null : "--controller=" + serverPluginConfig.getNativeHost() + ":"
                 + serverPluginConfig.getNativePort();
+
+            if (!disconnected && checkCertificate) {
+                // check whether we're able to talk to server and CLI won't block because it needs user to accept SSL certificate
+                ProcessExecutionResults required = detectCertificateApprovalRequired();
+                if (required != null) {
+                    return required;
+                }
+            }
 
             if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) {
                 return execute(null, executable, connect, file, user, password, controller);
@@ -302,6 +361,39 @@ public final class ServerControl {
                 FileUtil.purge(windowsCliWrapper, true);
             }
         }
+    }
 
+    /**
+     * Internal implementation of {@link ProcessExecutionResults} which we return instead of the original results
+     * in case CLI won't be able to talk to server (because it requires user to accept SSL certificate).
+     * @author lzoubek
+     *
+     */
+    private final class SslCheckRequiredExecutionResults extends ProcessExecutionResults {
+        private Integer exitCode;
+        private Throwable error;
+        private String output;
+
+        public SslCheckRequiredExecutionResults(ProcessExecutionResults results, String message) {
+            this.exitCode = results.getExitCode();
+            this.setProcess(results.getProcess());
+            this.error = new Exception(message);
+            this.output = message;
+        }
+
+        @Override
+        public Integer getExitCode() {
+            return exitCode;
+        }
+
+        @Override
+        public String getCapturedOutput() {
+            return output;
+        }
+
+        @Override
+        public Throwable getError() {
+            return error;
+        }
     }
 }

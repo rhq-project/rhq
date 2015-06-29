@@ -55,13 +55,6 @@
     <method>void setDeleteResourceRequests(java.util.List)</method>
     <justification>BZ 1168890</justification>
   </difference>
-    <difference>
-    <className>org/rhq/core/domain/operation/composite/GroupOperationScheduleComposite</className>
-    <differenceType>7004</differenceType><!-- number of args changed -->
-    <method>GroupOperationScheduleComposite(int, java.lang.String, java.lang.String, java.lang.String, long, int, java.lang.String, java.lang.String)</method>
-    <justification>Added autoGroupParentResourceId parameter - Bug 1202760</justification>
-  </difference>
-
   
 </differences>
 

@@ -41,6 +41,12 @@ public class GroupOperationScheduleComposite extends OperationScheduleComposite 
     }
     
     public GroupOperationScheduleComposite(int id, String jobName, String jobGroup, String operationName,
+        long operationNextFireTime, int groupId, String groupName, String groupResourceTypeName) {
+        this(id, jobName, jobGroup, operationName, operationNextFireTime, groupId, groupName, groupResourceTypeName,
+            null);
+    }
+
+    public GroupOperationScheduleComposite(int id, String jobName, String jobGroup, String operationName,
         long operationNextFireTime, int groupId, String groupName, String groupResourceTypeName,
         Integer autoGroupParentResourceId) {
         super(id, jobName, jobGroup, operationName, operationNextFireTime);

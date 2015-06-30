@@ -126,6 +126,8 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             operationResult = restartServer(parameters);
         } else if (name.equals("executeCommands") || name.equals("executeScript")) {
             return runCliCommand(parameters);
+        } else if (name.equals("setupCli")) {
+            return setupCli(parameters);
         } else if (name.equals("shutdown")) {
             // This is a bit trickier, as it needs to be executed on the level on /host=xx
             String domainHost = getASHostName();

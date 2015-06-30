@@ -25,7 +25,10 @@ import static org.w3c.dom.Node.ELEMENT_NODE;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
+import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -398,6 +401,54 @@ public class HostConfiguration {
     }
 
     /**
+     * read server SSL key-store information
+     * @return null if not present
+     */
+    public TruststoreConfig getServerIdentityKeystore() {
+        String mgmtRealm = getManagementSecurityRealm();
+        if (mgmtRealm != null) {
+            Node keyStoreNode = (Node) xpathExpression("//management/security-realms/security-realm[@name='"
+                + mgmtRealm + "']/server-identities/ssl/keystore", XPathConstants.NODE);
+            return TruststoreConfig.fromXmlNode(keyStoreNode);
+        }
+        return null;
+    }
+
+    /**
+     * read trust-store information for 2-way authentication
+     * @return null if not present
+     */
+    public TruststoreConfig getClientAuthenticationTruststore() {
+        String mgmtRealm = getManagementSecurityRealm();
+        if (mgmtRealm != null) {
+            Node keyStoreNode = (Node) xpathExpression("//management/security-realms/security-realm[@name='"
+                + mgmtRealm + "']/authentication/truststore", XPathConstants.NODE);
+            return TruststoreConfig.fromXmlNode(keyStoreNode);
+        }
+        return null;
+    }
+
+    /**
+     * read vault configuration
+     * @return vault configuration (key,value of vault-options) or null if vault is not present
+     */
+    public Map<String, String> getVault() {
+        
+        Node vaultNode = (Node) xpathExpression("//vault", XPathConstants.NODE);
+        if (vaultNode == null) {
+            return null;
+        }
+        Map<String, String> vault = new LinkedHashMap<String, String>();
+        NodeList vaultOptions = (NodeList) xpathExpression("//vault/vault-option", XPathConstants.NODESET);
+        for (int i=0; i< vaultOptions.getLength(); i++) {
+            Node option = vaultOptions.item(i);
+            vault.put(option.getAttributes().getNamedItem("name").getNodeValue(),
+                option.getAttributes().getNamedItem("value").getNodeValue());
+        }
+        return vault;
+    }
+
+    /**
      * @Deprecated use {@link HostConfiguration#getSecurityPropertyFile(ServerPluginConfiguration, String)} instead
      */
     public File getSecurityPropertyFile(File baseDir, AS7Mode mode, String realm) {
@@ -462,11 +513,14 @@ public class HostConfiguration {
      * @throws IllegalArgumentException if hostXml is null
      */
     public String obtainXmlPropertyViaXPath(String xpathExpression) {
+        return (String) xpathExpression(xpathExpression, XPathConstants.STRING);
+    }
+
+    private Object xpathExpression(String xpathExpression, QName returnType) {
         XPath xpath = this.xpathFactory.newXPath();
         try {
             XPathExpression expr = xpath.compile(xpathExpression);
-            Object result = expr.evaluate(this.document, XPathConstants.STRING);
-            return result.toString();
+            return expr.evaluate(this.document, returnType);
         } catch (XPathExpressionException e) {
             log.error("Evaluation of XPath expression failed: " + e.getMessage());
             return null;

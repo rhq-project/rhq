@@ -1055,6 +1055,39 @@
         	<c:simple-property name="operationResult" type="longString"/>
       	</results>
 	</operation>
+    <operation name="setupCli" displayName="Setup CLI" description="Setup jboss-cli.xml configuration file based on pluginConfiguration properties. Note that jboss-cli.xml was introduced in EAP 6.2 and this operation will fail for previous versions.">
+        <parameters>
+            <c:simple-property name="defaultController" required="false" type="boolean" defaultValue="false" description="Configure controller host and port defaults. When jboss-cli is executed later on, there is no need to specify controller address." />
+            <c:simple-property name="security" required="false" type="boolean" defaultValue="false">
+                <c:description>
+                    In case this server has secured management interface, jboss-cli.xml can be configured to trust server certificate
+                    from server truststore or to authenticate using Client certificate the same way as plugin does.
+                </c:description>
+            </c:simple-property>
+            <c:simple-property name="storePasswordMethod" defaultValue="PLAIN" type="string" required="false">
+                <c:description>
+                    Method to be used to store passwords to jboss-cli.xml when setting up Security. This setting is ignored unless &lt;strong&gt;Security&lt;/strong&gt; is enabled.
+                    &lt;ul&gt;
+                    &lt;li&gt;
+                        &lt;strong&gt;PLAIN&lt;/strong&gt; - Reads truststore/keystore passwords are read from server Plugin Configuration and written as plain text. This is default option.
+                    &lt;/li&gt;
+                    &lt;li&gt;
+                        &lt;strong&gt;VAULT&lt;/strong&gt; - Reads truststore/keystore passwords from server configuration file (ie. standalone.xml).
+                        Passwords must be obfuscated by vault. Vault must also be defined in server configuration file. If vault is not found, this operations results in Failure.
+                        Note that vaults in jboss-cli.xml were introduced in EAP 6.3, this operation will fail for earlier versions.
+                    &lt;/li&gt;
+                    &lt;/ul&gt;
+                 </c:description>
+                 <c:property-options>
+                     <c:option value="PLAIN"/>
+                     <c:option value="VAULT"/>
+                 </c:property-options>
+              </c:simple-property>
+        </parameters>
+        <results>
+            <c:simple-property name="operationResult" type="longString"/>
+        </results>
+    </operation>
 '>
     ]>
 <plugin name="&pluginName;"

@@ -69,6 +69,7 @@ import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
+import org.rhq.modules.plugins.jbossas7.helper.JBossCliConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
@@ -454,6 +455,50 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         context.getAvailabilityContext().requestAvailabilityCheck();
 
         return operationResult;
+    }
+
+    protected OperationResult setupCli(Configuration parameters) {
+        OperationResult result = new OperationResult();
+        ServerPluginConfiguration serverConfig = getServerPluginConfiguration();
+        File jbossCliXml = new File(new File(serverConfig.getHomeDir(), "bin"), "jboss-cli.xml");
+        try {
+            JBossCliConfiguration config = new JBossCliConfiguration(jbossCliXml, serverConfig);
+            StringBuilder response = new StringBuilder();
+            boolean madeChanges = false;
+            if (Boolean.parseBoolean(parameters.getSimpleValue("defaultController", "false"))) {
+                String m = config.configureDefaultController();
+                madeChanges |= m == null;
+                response.append(m == null ? "Setting up Default Controller" : "Default Controller skipped : " + m);
+                response.append("\n");
+            }
+            if (Boolean.parseBoolean(parameters.getSimpleValue("security", "false"))) {
+                String storeMethod = parameters.getSimpleValue("storePasswordMethod", "PLAIN");
+                String m = null;
+                String message = "Setting up Security";
+                if ("PLAIN".equals(storeMethod)) {
+                    message += " (using plain text)";
+                    m = config.configureSecurity();
+                } else {
+                    message += " (using vault)";
+                    m = config.configureSecurityUsingVault(getHostConfig());
+                }
+                madeChanges |= m == null;
+                response.append(m == null ? message : "Security skipped: " + m);
+                response.append("\n");
+            }
+
+            if (madeChanges) {
+                config.writeToFile();
+                response.append("Wrote changes to " + jbossCliXml);
+                result.setSimpleResult(response.toString());
+            } else {
+                result.setSimpleResult(jbossCliXml + " was not updated");
+            }
+        } catch (Exception e) {
+            getLog().error("Failed to setup CLI", e);
+            result.setErrorMessage("Failed to setup CLI : " + e.getMessage());
+        }
+        return result;
     }
 
     /**

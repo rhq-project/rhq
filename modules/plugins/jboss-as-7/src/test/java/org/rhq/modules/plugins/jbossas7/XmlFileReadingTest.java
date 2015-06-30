@@ -2,11 +2,13 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Map;
 
 import org.testng.annotations.Test;
 
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
+import org.rhq.modules.plugins.jbossas7.helper.TruststoreConfig;
 
 /**
  * Test the ability to read information from the AS7 standalone.xml or host.xml config files using
@@ -165,6 +167,43 @@ public class XmlFileReadingTest {
         url = getClass().getClassLoader().getResource("standalone-1.5-local-native-only.xml");
         hostConfig = new HostConfiguration(new File(url.getPath()));
         assert hostConfig.isNativeLocalOnly() == true;
+    }
+
+    public void testReadVault() throws Exception {
+        URL url = getClass().getClassLoader().getResource("standalone71.xml");
+        HostConfiguration hostConfig = new HostConfiguration(new File(url.getPath()));
+        assert hostConfig.getVault() == null;
+
+        url = getClass().getClassLoader().getResource("standalone711.xml");
+        hostConfig = new HostConfiguration(new File(url.getPath()));
+        Map<String, String> vaultOptions = hostConfig.getVault();
+        System.out.println(vaultOptions);
+        assert vaultOptions != null;
+        assert vaultOptions.size() == 6;
+
+        assert vaultOptions.containsKey("SALT");
+        assert vaultOptions.get("SALT").equals("1234abcd");
+    }
+
+    public void testReadTruststoreConfigs() throws Exception {
+        URL url = getClass().getClassLoader().getResource("standalone71.xml");
+        HostConfiguration hostConfig = new HostConfiguration(new File(url.getPath()));
+        assert hostConfig.getClientAuthenticationTruststore() == null;
+        assert hostConfig.getServerIdentityKeystore() == null;
+
+        url = getClass().getClassLoader().getResource("standalone711.xml");
+        hostConfig = new HostConfiguration(new File(url.getPath()));
+        TruststoreConfig serverIdentity = hostConfig.getServerIdentityKeystore();
+        assert serverIdentity != null;
+        assert serverIdentity.getPath().equals("keystore.jks");
+        assert serverIdentity.getAlias().equals("as7");
+        assert serverIdentity.getKeystorePassword().equals("secure");
+
+        TruststoreConfig clientTruststore = hostConfig.getClientAuthenticationTruststore();
+        assert clientTruststore != null;
+        assert clientTruststore.getPath().equals("truststore.jks");
+        assert clientTruststore.getAlias() == null;
+        assert clientTruststore.getKeystorePassword().equals("secured");
     }
 
 }

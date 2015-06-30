@@ -50,8 +50,14 @@
     <management>
         <security-realms>
             <security-realm name="ManagementRealm">
+                <server-identities>
+                    <ssl>
+                        <keystore alias="as7" keystore-password="secure" path="keystore.jks" />
+                    </ssl>
+                </server-identities>
                 <authentication>
                     <properties path="mgmt-users.properties" relative-to="jboss.server.config.dir"/>
+                    <truststore path="truststore.jks" keystore-password="secured"/>
                 </authentication>
             </security-realm>
             <security-realm name="ApplicationRealm">
@@ -69,7 +75,14 @@
             </http-interface>
         </management-interfaces>
     </management>
-
+    <vault>
+      <vault-option name="KEYSTORE_URL" value="EAP_HOME/vault/vault.keystore"/>
+      <vault-option name="KEYSTORE_PASSWORD" value="vault22"/>
+      <vault-option name="KEYSTORE_ALIAS" value="vault"/>
+      <vault-option name="SALT" value="1234abcd"/>
+      <vault-option name="ITERATION_COUNT" value="120"/>
+      <vault-option name="ENC_FILE_DIR" value="EAP_HOME/vault/vault/"/>
+    </vault>
     <profile>
         <subsystem xmlns="urn:jboss:domain:logging:1.1">
             <console-handler name="CONSOLE">

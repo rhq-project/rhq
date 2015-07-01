@@ -54,12 +54,15 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.components.ReportExporter;
@@ -74,6 +77,7 @@ import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.coregui.client.gwt.StorageGWTServiceAsync;
 import org.rhq.coregui.client.report.DriftComplianceReportResourceSearchView;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.StringUtility;
@@ -187,20 +191,48 @@ public class ResourceSearchView extends Table {
                     }
                 }) {
 
-                public void executeAction(final ListGridRecord[] selection, Object actionValue) {
-                    if (containsStorageNodeOrItsResource(selection)) {
-                        // ask again if we are going to remove platform, storage node or its child
-                        SC.confirm(MSG.view_inventory_resources_uninventoryStorageConfirm(),
-                            new BooleanCallback() {
-                            public void execute(Boolean test) {
-                                if (test) uninventoryItems(selection);
-                            }
-                        });
-                    } else {
-                        uninventoryItems(selection);
-                    }
-                }
+                    public void executeAction(final ListGridRecord[] selection, Object actionValue) {
+                        for (ListGridRecord record : selection) {
+                            if (record.getAttribute(AncestryUtil.RESOURCE_ANCESTRY) == null) {
+                                StorageGWTServiceAsync storageService = GWTServiceLookup.getStorageService();
+                                StorageNodeCriteria criteria = new StorageNodeCriteria();
+                                criteria.addFilterParentResourceId(record.getAttributeAsInt("id"));
+                                storageService.findStorageNodesByCriteria(criteria, new AsyncCallback<PageList<StorageNode>>() {
+                                    
+                                    @Override
+                                    public void onFailure(Throwable caught) {
+                                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_uninventoryFailed(),
+                                                caught);
+                                        refreshTableInfo();
+                                    }
 
+                                    @Override
+                                    public void onSuccess(PageList<StorageNode> storageNodes) {
+                                        if (storageNodes != null && !storageNodes.isEmpty()) {
+                                            // Ask now..
+                                            uninventoryAfterConfirmation(selection);
+                                        } else {
+                                            uninventoryItems(selection);
+                                        }
+                                    }
+                                });
+                            } else if ("RHQStorage".equals(record.getAttribute(PLUGIN.propertyName()))) {
+                                uninventoryAfterConfirmation(selection);
+                            } else {
+                                uninventoryItems(selection);
+                            }
+                        }
+                    }
+                    
+                private void uninventoryAfterConfirmation(final ListGridRecord[] selection) {
+                    SC.confirm(MSG.view_inventory_resources_uninventoryStorageConfirm(), new BooleanCallback() {
+                        public void execute(Boolean test) {
+                            if (test)
+                                uninventoryItems(selection);
+                        }
+                    });
+                }
+                    
                 private void uninventoryItems(ListGridRecord[] selection) {
                     int[] resourceIds = TableUtility.getIds(selection);
                     ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
@@ -218,17 +250,6 @@ public class ResourceSearchView extends Table {
                             onActionSuccess();
                         }
                     });
-                }
-
-                private boolean containsStorageNodeOrItsResource(ListGridRecord[] selection) {
-                    for (ListGridRecord record : selection) {
-                        if (record.getAttribute(AncestryUtil.RESOURCE_ANCESTRY) == null
-                            || "RHQStorage".equals(record.getAttribute(PLUGIN.propertyName()))) {
-                         // is a platform, storage node or child resource of storage node
-                            return true;
-                        }
-                    }
-                    return false;
                 }
             });
 
@@ -288,9 +309,10 @@ public class ResourceSearchView extends Table {
 
                         public void onSuccess(List<Integer> result) {
                             CoreGUI.getMessageCenter().notify(
-                                new Message(
-                                    MSG.view_inventory_resources_disableSuccessful(String.valueOf(result.size())),
-                                    Severity.Info));
+                                    new Message(
+                                            MSG.view_inventory_resources_disableSuccessful(String.valueOf(result.size
+                                                    ())),
+                                            Severity.Info));
                             onActionSuccess();
                         }
                     });

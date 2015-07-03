@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,6 +38,7 @@ import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecution.CaptureMode;
 import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
@@ -63,6 +65,7 @@ public final class ServerControl {
 
     private long waitTime;
     private boolean killOnTimeout;
+    private boolean ignoreOutput;
 
     private ServerControl(Configuration pluginConfiguration, AS7Mode serverMode, SystemInfo systemInfo) {
         this.pluginConfiguration = pluginConfiguration;
@@ -98,6 +101,11 @@ public final class ServerControl {
 
     public ServerControl killingOnTimeout(boolean kill) {
         killOnTimeout = kill;
+        return this;
+    }
+
+    private ServerControl ignoreOutput() {
+        this.ignoreOutput = true;
         return this;
     }
 
@@ -138,9 +146,10 @@ public final class ServerControl {
         // When running on Windows 9x, standalone.bat and domain.bat need the cwd to be the AS bin dir in order to find
         // standalone.bat.conf and domain.bat.conf respectively.
         processExecution.setWorkingDirectory(startScriptFile.getParent());
-        processExecution.setCaptureMode(CaptureMode.memory());
         processExecution.setWaitForCompletion(MAX_PROCESS_WAIT_TIME);
         processExecution.setKillOnTimeout(false);
+
+        processExecution.setCaptureMode(ignoreOutput ? CaptureMode.none() : CaptureMode.memory());
 
         if (waitTime > 0) {
             processExecution.setWaitForCompletion(waitTime);
@@ -208,6 +217,7 @@ public final class ServerControl {
          */
         private boolean checkCertificate = true;
 
+
         Cli() {
             // When running the CLI on Windows, make sure no "pause" message is shown after script execution
             // Otherwise the CLI process will just keep running so we'll never get the exit code
@@ -236,38 +246,47 @@ public final class ServerControl {
          * CLI executions would hang and wait for input, null otherwise.
          */
         private ProcessExecutionResults detectCertificateApprovalRequired() {
+            // uniquely identify our dummy process so we can find it later on
+            String rhqPid = UUID.randomUUID().toString();
             ProcessExecutionResults result = ServerControl.onServer(pluginConfiguration, serverMode, systemInfo)
                 .killingOnTimeout(true)
                 .waitingFor(10 * 1000L)
+                .ignoreOutput()// avoid potential OOM https://bugzilla.redhat.com/show_bug.cgi?id=1238263
                 .cli()
                     .disconnected(false)
                     .dontCheckCertificate() // avoid stack overflow
-                    .executeCliCommand(":whoami");
+                    .executeCliCommand(":whoami", "-Drhq.as7.plugin.exec-id=" + rhqPid);
 
             if (result.getExitCode() == null) { // process was killed because of timeout (killingOnTimeout(true))
-                // we're interested in first 7 lines only (CLI prints SSL certificate details)
-                String[] output = result.getCapturedOutput().split("\n", 7);
-                if (output.length > 0
-                    && output[0].startsWith("Unable to connect due to unrecognised server certificate")) {
-                    int strip = Math.min(7, output.length);
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < strip; i++) {
-                        sb.append(output[i] + "\n");
+
+                // it would be better if we parsed process output and make sure it did not end up within 10 seconds
+                // because it's waiting for input. But the fact, that the :whoami command did not end up within 10 seconds
+                // is enough to know, that CLI *is* waiting for user to accept certificate
+
+                // there is an issue with killing EAP CLI process. we've enabled killingOnTimeout, but only 
+                // shell wrapper script is affected and it's child java process survives.
+                // Find the java process and send SIGKILL
+                String piql = "process|basename|match=^java.*,arg|-Drhq.as7.plugin.exec-id|match=" + rhqPid;
+                List<ProcessInfo> processes = systemInfo.getProcesses(piql);
+                if (processes.size() > 0) {
+                    ProcessInfo pi = processes.get(0);
+                    try {
+                        LOG.debug("Killing " + pi.getPid());
+                        pi.kill("KILL");
+                    } catch (Exception e) {
+                        LOG.error("Unable to kill process", e);
                     }
-                    return new SslCheckRequiredExecutionResults(result, sb.toString());
+                } else {
+                    LOG.warn("We were unable to locate testing jboss-cli java process to clean it up, you may need to kill it manually");
                 }
+
+                return new SslCheckRequiredExecutionResults(result,
+                    "Unable to connect due to unrecognised server certificate. Server's certificate needs to be manually accepted by user.");
             }
             return null;
         }
 
-        /**
-         * Runs (a series of) CLI commands against the server.
-         * The commands are separated by either a newline or a comma (or a mix thereof).
-         *
-         * @param commands the commands to execute in order
-         * @return the execution results
-         */
-        public ProcessExecutionResults executeCliCommand(String commands) {
+        private ProcessExecutionResults executeCliCommand(String commands, String additionalArg) {
             File executable = new File("bin", serverMode.getCliScriptFileName());
             String connect = disconnected ? null : "--connect";
             boolean local = serverPluginConfig.isNativeLocalAuth();
@@ -286,10 +305,22 @@ public final class ServerControl {
             }
 
             if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) {
-                return execute(null, executable, connect, commands, user, password, controller);
+                return execute(null, executable, connect, commands, user, password, controller, additionalArg);
             }
-            WinCliHelper cliHelper = new WinCliHelper(executable, connect, commands, user, password, controller);
+            WinCliHelper cliHelper = new WinCliHelper(executable, connect, commands, user, password, controller,
+                additionalArg);
             return cliHelper.execute();
+        }
+
+        /**
+         * Runs (a series of) CLI commands against the server.
+         * The commands are separated by either a newline or a comma (or a mix thereof).
+         *
+         * @param commands the commands to execute in order
+         * @return the execution results
+         */
+        public ProcessExecutionResults executeCliCommand(String commands) {
+            return executeCliCommand(commands, null);
         }
 
         /**

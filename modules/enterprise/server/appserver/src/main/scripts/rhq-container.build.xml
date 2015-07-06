@@ -463,10 +463,10 @@
 
         <!-- we don't need these in our modules directory because we deploy the rtfilter directly in the EAR
         <echo>Deploying RT filter jar ...</echo>
-        <unzip src="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}/rhq-rtfilter-${project.version}.zip"
+        <unzip src="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${rhq-rtfilter.version}/rhq-rtfilter-${rhq-rtfilter.version}.zip"
                dest="${jboss.modules.dir}" />
 
-        <unzip src="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${project.version}/rhq-rtfilter-subsystem-${project.version}.zip"
+        <unzip src="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${rhq-rtfilter-subsystem.version}/rhq-rtfilter-subsystem-${rhq-rtfilter-subsystem.version}.zip"
                dest="${jboss.modules.dir}" />
         -->
 
@@ -552,8 +552,8 @@ checkIfRunning(16);]]>
         <echo>Packaging the response-time (RT) servlet filter connectors ...</echo>
         <delete file="${rhq.ear.dir}/rhq-downloads/connectors/connector-rtfilter.zip" />
         <zip destfile="${rhq.ear.dir}/rhq-downloads/connectors/connector-rtfilter.zip">
-            <zipfileset dir="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}">
-                <include name="rhq-rtfilter-${project.version}.jar" />
+            <zipfileset dir="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${rhq-rtfilter.version}">
+                <include name="rhq-rtfilter-${rhq-rtfilter.version}.jar" />
             </zipfileset>
             <zipfileset dir="${settings.localRepository}/commons-logging/commons-logging/1.1.1">
                 <include name="commons-logging-1.1.1.jar" />
@@ -561,7 +561,7 @@ checkIfRunning(16);]]>
         </zip>
 
         <!-- rtfilter AS7 modules -->
-        <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}/rhq-rtfilter-${project.version}.zip"
+        <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${rhq-rtfilter.version}/rhq-rtfilter-${rhq-rtfilter.version}.zip"
               tofile="${rhq.ear.dir}/rhq-downloads/connectors/rhq-rtfilter-module.zip" />
 
         <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${rhq-rtfilter-subsystem.version}/rhq-rtfilter-subsystem-${rhq-rtfilter-subsystem.version}.zip"

@@ -168,7 +168,7 @@
         <dependency>
             <groupId>org.rhq.helpers</groupId>
             <artifactId>rhq-rtfilter</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-rtfilter.version}</version>
         </dependency>
 
         <!-- 3rd Party Deps -->

@@ -381,6 +381,7 @@
     <perftest-support.version>${rhq.pom.version}</perftest-support.version>
     <rhq-helpers.version>${rhq.pom.version}</rhq-helpers.version>
     <rest-docs-generator.version>${rhq.pom.version}</rest-docs-generator.version>
+    <rhq-rtfilter.version>${rhq.pom.version}</rhq-rtfilter.version>
     <rhq-rtfilter-subsystem.version>${rhq.pom.version}</rhq-rtfilter-subsystem.version>
     <rhq-aliases-plugin.version>${rhq.pom.version}</rhq-aliases-plugin.version>
     <rhq-ant-bundle-plugin.version>${rhq.pom.version}-redhat-1</rhq-ant-bundle-plugin.version>

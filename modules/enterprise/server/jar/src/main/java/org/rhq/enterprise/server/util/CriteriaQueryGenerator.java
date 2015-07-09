@@ -84,6 +84,7 @@ public final class CriteriaQueryGenerator {
     private String projection;
     private String groupByClause;
     private String havingClause;
+    private String fromClause;
     private static String NL = System.getProperty("line.separator");
 
     private static List<String> EXPRESSION_START_KEYWORDS;
@@ -108,6 +109,10 @@ public final class CriteriaQueryGenerator {
         this.alias = this.criteria.getAlias();
 
         initializeJPQLFragmentFromSearchExpression();
+    }
+
+    public void overrideFromClause(String fromClause) {
+        this.fromClause = fromClause;
     }
 
     public void setAuthorizationCustomConditionFragment(String fragment) {
@@ -325,10 +330,15 @@ public final class CriteriaQueryGenerator {
                 results.append(projection).append(NL);
             }
         }
-        results.append("FROM ").append(className).append(' ').append(alias).append(NL);
-        if (countQuery == false) {
-            /* 
-             * don't fetch in the count query to avoid: "query specified join fetching, 
+        if (fromClause != null) {
+            results.append("FROM ").append(fromClause).append(' ').append(NL);
+        } else {
+            results.append("FROM ").append(className).append(' ').append(alias).append(NL);
+        }
+
+        if (!countQuery) {
+            /*
+             * don't fetch in the count query to avoid: "query specified join fetching,
              * but the owner of the fetched association was not present in the select list"
              */
             for (String fetchField : getFetchFields(criteria)) {

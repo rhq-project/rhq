@@ -1547,63 +1547,155 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         CriteriaAuthzType authzType = getCriteriaAuthzType(subject, criteria);
 
-        String compositeProjection = null;
+        // JPA queries does not allow to nest SELECT (ie Select x from (Select y) ..)
+        // we'd need to run 2 (or 3) queries
+        // first JOIN ON implicitResources
+        // then JOIN ON explicitResources
+        // then (AUTO_CLUSTER) join on roles/permissions
+        // we're reusing ResourceGroupComposite for selected data
+        String compositeProjection = ""
+            + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
+            + "  SUM(CASE WHEN res.inventoryStatus = 'COMMITTED' THEN 1 ELSE 0 END), "
+            + "  SUM(CASE WHEN res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 THEN 1 ELSE 0 END), "
+            + "  SUM(CASE WHEN res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 THEN 1 ELSE 0 END), "
+            + "  SUM(CASE WHEN res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 THEN 1 ELSE 0 END), "
+            + "  0L,0L, 0L, 0L, %alias%) ";
+
+        String compositeFromCause = criteria.getPersistentClass().getSimpleName()
+            + " %alias% "
+            + " JOIN %alias%.%membership%Resources res "
+            + " JOIN res.currentAvailability avail ";
+
+        String permissionsProjection = null;
+        String permissionsFromCause = null;
         switch (authzType) {
         case NONE:
         case SUBJECT_OWNED:
-            compositeProjection = ""
-                + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' ) AS explicitCount," // explicit member count
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 ) AS explicitDown," // explicit member count with DOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 ) AS explicitUnknown," // explicit member count with UNKNOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail                
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' ) AS implicitCount," // implicit member count
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 ) AS implicitDown," // implicit member count with DOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 ) AS implicitUnknown," // implicit member count with UNKNOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 ) AS implicitDisabled," // implicit member count with DISABLED avail
-                + "    %alias% ) "; // ResourceGroup
             break;
         case ROLE_OWNED:
         case AUTO_CLUSTER:
-            compositeProjection = ""
+
+            permissionsProjection = ""
                 + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' ) AS explicitCount," // explicit member count
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 ) AS explicitDown," // explicit member count with DOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 ) AS explicitUnknown," // explicit member count with UNKNOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail                
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' ) AS implicitCount," // implicit member count
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 ) AS implicitDown," // implicit member count with DOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 ) AS implicitUnknown," // implicit member count with UNKNOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 ) AS implicitDisabled," // implicit member count with DISABLED avail
-                + "    %alias%, " // ResourceGroup
-                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 8 ), " // MANAGE_MEASUREMENTS
-                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 4 ), " // MODIFY_RESOURCE
-                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 10 ), " // CONTROL
-                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 7 ), " // MANAGE_ALERTS
-                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 14 ), " // MANAGE_EVENTS
-                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 13 ), " // CONFIGURE_READ
-                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 11 ), " // CONFIGURE_WRITE
-                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 9 ), " // MANAGE_CONTENT
-                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 6 ), " // CREATE_CHILD_RESOURCES
-                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 5 ), " // DELETE_RESOURCES
-                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 16 ))"; // MANAGE_DRIFT
-            compositeProjection = compositeProjection.replace("%subjectId%", String.valueOf(subject.getId()));
+                + "    0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, %alias%, "
+                + "    SUM(CASE WHEN s.id = %subjectId% and p = 8 THEN 1 ELSE 0 END), " // MANAGE_MEASUREMENTS
+                + "    SUM(CASE WHEN s.id = %subjectId% and p = 4 THEN 1 ELSE 0 END), " // MODIFY_RESOURCE
+                + "    SUM(CASE WHEN s.id = %subjectId% and p = 10 THEN 1 ELSE 0 END), " // CONTROL
+                + "    SUM(CASE WHEN s.id = %subjectId% and p = 7 THEN 1 ELSE 0 END), " // MANAGE_ALERTS
+                + "    SUM(CASE WHEN s.id = %subjectId% and p = 14 THEN 1 ELSE 0 END), " // MANAGE_EVENTS
+                + "    SUM(CASE WHEN s.id = %subjectId% and p = 13 THEN 1 ELSE 0 END), " // CONFIGURE_READ
+                + "    SUM(CASE WHEN s.id = %subjectId% and p = 11 THEN 1 ELSE 0 END), " // CONFIGURE_WRITE
+                + "    SUM(CASE WHEN s.id = %subjectId% and p = 9 THEN 1 ELSE 0 END), " // MANAGE_CONTENT
+                + "    SUM(CASE WHEN s.id = %subjectId% and p = 6 THEN 1 ELSE 0 END), " // CREATE_CHILD_RESOURCES
+                + "    SUM(CASE WHEN s.id = %subjectId% and p = 5 THEN 1 ELSE 0 END), " // DELETE_RESOURCES
+                + "    SUM(CASE WHEN s.id = %subjectId% and p = 16 THEN 1 ELSE 0 END) " // MANAGE_DRIFT
+                + ") ";
+            permissionsProjection = permissionsProjection.replace("%subjectId%", String.valueOf(subject.getId()));
+            permissionsFromCause = criteria.getPersistentClass().getSimpleName()
+                + " %alias% "
+                + " JOIN %permAlias%.roles r"
+                + " JOIN r.subjects s"
+                + " JOIN r.permissions p";
+
             break;
         default:
             throw new IllegalStateException("Unexpected CriteriaAuthzType: " + authzType);
         }
 
         String alias = criteria.getAlias();
-        compositeProjection = compositeProjection.replace("%alias%", alias);
         String permAlias = alias + ((authzType == CriteriaAuthzType.AUTO_CLUSTER) ? ".clusterResourceGroup" : "");
-        compositeProjection = compositeProjection.replace("%permAlias%", permAlias);
+        String from = compositeFromCause.replace("%membership%", "implicit").replace("%alias%", alias)
+            .replace("%permAlias%", permAlias);
+        String projection = compositeProjection.replace("%alias%", alias);
 
         CriteriaQueryGenerator generator = getCriteriaQueryGenerator(subject, criteria, authzType);
-        generator.alterProjection(compositeProjection);
+
+        generator.alterProjection(projection);
+        generator.overrideFromClause(from);
+        generator.setGroupByClause(alias);
 
         CriteriaQueryRunner<ResourceGroupComposite> queryRunner = new CriteriaQueryRunner<ResourceGroupComposite>(
             criteria, generator, entityManager, false); // don't auto-init bags, we're returning composites not entities
-        PageList<ResourceGroupComposite> results = queryRunner.execute();
+
+        // query implicit members
+        PageList<ResourceGroupComposite> implicitResults = queryRunner.execute();
+
+        from = compositeFromCause.replace("%membership%", "explicit").replace("%alias%", alias)
+            .replace("%permAlias%", permAlias);
+        generator.overrideFromClause(from);
+
+        // query explicit members
+        PageList<ResourceGroupComposite> explicitResults = queryRunner.execute();
+
+        PageList<ResourceGroupComposite> permissionResults = null;
+
+        if (permissionsProjection != null) {
+            from = permissionsFromCause.replace("%alias%", alias).replace("%permAlias%", permAlias);
+
+            generator.alterProjection(permissionsProjection.replaceFirst("%alias%", alias));
+            generator.overrideFromClause(from);
+
+            // query permissions
+            permissionResults = queryRunner.execute();
+        }
+        // now "join" results together
+        PageList<ResourceGroupComposite> results = new PageList<ResourceGroupComposite>(explicitResults.getTotalSize(),
+            explicitResults.getPageControl());
+        if (explicitResults.size() == implicitResults.size()
+            && (permissionResults == null || permissionResults.size() == implicitResults.size())) {
+            // in case we selected same groups sets using all 2 (or 3) queries (99% of cases) just "join" them by index
+            for (int i = 0; i < explicitResults.size(); i++) {
+                ResourceGroupComposite imp = implicitResults.get(i);
+                ResourceGroupComposite exp = explicitResults.get(i);
+                ResourceGroupComposite perm = permissionResults != null ? permissionResults.get(i) : null;
+                ResourceGroupComposite composite = createComposite(imp, exp, perm);
+                results.add(composite);
+            }
+        } else {
+            // we did not get same results, this means some groups are being added/removed in the meantime
+            // we must join it using resourceGroup ID (this is a bit more expensive approach)
+            // map ResourceGroupID and [implicitComposite, explicitComposite, permComposite]
+
+            results.setTotalSize(Math.min(explicitResults.getTotalSize(), implicitResults.getTotalSize()));
+            Map<Integer,List<ResourceGroupComposite>> joinMap = new HashMap<Integer, List<ResourceGroupComposite>>();
+            for (ResourceGroupComposite c : implicitResults) {
+                if (!joinMap.containsKey(c.getResourceGroup().getId())) {
+                    joinMap.put(c.getResourceGroup().getId(), new ArrayList<ResourceGroupComposite>(3));
+                }
+                joinMap.get(c.getResourceGroup().getId()).add(c);
+            }
+            for (ResourceGroupComposite c : explicitResults) {
+                if (!joinMap.containsKey(c.getResourceGroup().getId())) {
+                    joinMap.put(c.getResourceGroup().getId(), new ArrayList<ResourceGroupComposite>(3));
+                }
+                joinMap.get(c.getResourceGroup().getId()).add(c);
+            }
+            if (permissionResults != null) {
+                for (ResourceGroupComposite c : permissionResults) {
+                    if (!joinMap.containsKey(c.getResourceGroup().getId())) {
+                        joinMap.put(c.getResourceGroup().getId(), new ArrayList<ResourceGroupComposite>(3));
+                    }
+                    joinMap.get(c.getResourceGroup().getId()).add(c);
+                }
+                // produce results (include permissionResults)
+                for (List<ResourceGroupComposite> list : joinMap.values()) {
+                    if (list.size() < 3) {
+                        continue; // we did not fully select this composite with all 3 queries, ignore it
+                    }
+                    ResourceGroupComposite composite = createComposite(list.get(0), list.get(1), list.get(2));
+                    results.add(composite);
+                }
+            } else {
+                // prouduce results, but exclude permissionResults
+                for (List<ResourceGroupComposite> list : joinMap.values()) {
+                    if (list.size() < 2) {
+                        continue; // we did not fully select this composite with all 2 queries, ignore it
+                    }
+                    ResourceGroupComposite composite = createComposite(list.get(0), list.get(1), null);
+                    results.add(composite);
+                }
+            }
+        }
 
         results = getAuthorizedGroupComposites(subject, authzType, results);
 
@@ -1617,6 +1709,23 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             composite.setResourceFacets(facets);
         }
         return results;
+    }
+
+    private ResourceGroupComposite createComposite(ResourceGroupComposite implicit, ResourceGroupComposite explicit,
+        ResourceGroupComposite permission) {
+        return new ResourceGroupComposite(
+            explicit.getExplicitCount(),
+            explicit.getExplicitDown(),
+            explicit.getExplicitUnknown(),
+            explicit.getExplicitDisabled(),
+            implicit.getExplicitCount(),
+            implicit.getExplicitDown(),
+            implicit.getExplicitUnknown(),
+            implicit.getExplicitDisabled(),
+            implicit.getResourceGroup(),
+            null,
+            permission != null ? permission.getResourcePermission() : new ResourcePermission()
+        );
     }
 
     private enum CriteriaAuthzType {

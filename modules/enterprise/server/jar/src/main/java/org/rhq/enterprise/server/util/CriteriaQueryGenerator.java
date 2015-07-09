@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2015 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -84,6 +84,9 @@ public final class CriteriaQueryGenerator {
     private String projection;
     private String groupByClause;
     private String havingClause;
+    private String fromClause;
+    private boolean groupByOrderAliases;
+
     private static String NL = System.getProperty("line.separator");
 
     private static List<String> EXPRESSION_START_KEYWORDS;
@@ -108,6 +111,23 @@ public final class CriteriaQueryGenerator {
         this.alias = this.criteria.getAlias();
 
         initializeJPQLFragmentFromSearchExpression();
+    }
+
+    /**
+     * set this to override FROM clause
+     * @param fromClause new clause
+     */
+    public void overrideFromClause(String fromClause) {
+        this.fromClause = fromClause;
+    }
+
+    /**
+     * if enabled, adds ordering field aliases to GROUP BY statement. This is useful in case of custom projection together with
+     * {@link #overrideFromClause(String)} and {@link #setGroupByClause(String)}.
+     * @param groupByOrderAliases
+     */
+    public void setGroupByOrderAliases(boolean groupByOrderAliases) {
+        this.groupByOrderAliases = groupByOrderAliases;
     }
 
     public void setAuthorizationCustomConditionFragment(String fragment) {
@@ -325,10 +345,15 @@ public final class CriteriaQueryGenerator {
                 results.append(projection).append(NL);
             }
         }
-        results.append("FROM ").append(className).append(' ').append(alias).append(NL);
-        if (countQuery == false) {
-            /* 
-             * don't fetch in the count query to avoid: "query specified join fetching, 
+        if (fromClause != null) {
+            results.append("FROM ").append(fromClause).append(' ').append(NL);
+        } else {
+            results.append("FROM ").append(className).append(' ').append(alias).append(NL);
+        }
+
+        if (!countQuery) {
+            /*
+             * don't fetch in the count query to avoid: "query specified join fetching,
              * but the owner of the fetched association was not present in the select list"
              */
             for (String fetchField : getFetchFields(criteria)) {
@@ -360,6 +385,7 @@ public final class CriteriaQueryGenerator {
         PageControl pc = getPageControl(criteria);
         List<String> orderingFieldRequiredJoins = new ArrayList<String>();
         List<String> orderingFieldTokens = new ArrayList<String>();
+        List<String> orderingFieldAliases = new ArrayList<String>();
 
         for (OrderingField orderingField : pc.getOrderingFields()) {
             PageOrdering ordering = orderingField.getOrdering();
@@ -386,6 +412,7 @@ public final class CriteriaQueryGenerator {
             if (lastDelimiterIndex == -1) {
                 // does not require joins, just add the ordering field token directly
                 orderingFieldTokens.add(sortFragment + " " + ordering);
+                orderingFieldAliases.add(sortFragment);
                 continue;
             }
 
@@ -394,6 +421,7 @@ public final class CriteriaQueryGenerator {
                 // only one dot implies its a property/field directly off of the primary alias
                 // thus, also does not require joins, just add the ordering field token directly
                 orderingFieldTokens.add(sortFragment + " " + ordering);
+                orderingFieldAliases.add(sortFragment);
                 continue;
             }
 
@@ -410,7 +438,7 @@ public final class CriteriaQueryGenerator {
             } else {
                 joinAlias = "orderingField" + expressionRootIndex;
             }
-
+            orderingFieldAliases.add(joinAlias + "." + expressionLeaf);
             orderingFieldTokens.add(joinAlias + "." + expressionLeaf + " " + ordering);
         }
 
@@ -503,6 +531,15 @@ public final class CriteriaQueryGenerator {
             // group by clause
             if (groupByClause != null) {
                 results.append(NL).append("GROUP BY ").append(groupByClause);
+                if (groupByOrderAliases) {
+                    results.append(", ");
+                    for (String field : orderingFieldAliases) {
+                        if (!field.equals(groupByClause)) { // avoid duplicities in groupby fields
+                            results.append(field).append(", ");
+                        }
+                    }
+                    results.deleteCharAt(results.length() - 2); // always delete last comma
+                }
             }
 
             // having clause

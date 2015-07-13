@@ -1555,7 +1555,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         // we're reusing ResourceGroupComposite for selected data
         String compositeProjection = ""
             + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
-            + "  COUNT(avail), "
+            + "  SUM(CASE WHEN res.inventoryStatus = 'COMMITTED' THEN 1 ELSE 0 END), "
             + "  SUM(CASE WHEN res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 THEN 1 ELSE 0 END), "
             + "  SUM(CASE WHEN res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 THEN 1 ELSE 0 END), "
             + "  SUM(CASE WHEN res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 THEN 1 ELSE 0 END), "
@@ -1563,8 +1563,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         String compositeFromCause = criteria.getPersistentClass().getSimpleName()
             + " %alias% "
-            + " LEFT JOIN %alias%.%membership%Resources res "
-            + " LEFT JOIN res.currentAvailability avail ";
+            + " JOIN %alias%.%membership%Resources res "
+            + " JOIN res.currentAvailability avail ";
 
         String permissionsProjection = null;
         String permissionsFromCause = null;
@@ -1591,10 +1591,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 + "    SUM(CASE WHEN s.id = %subjectId% and p = 16 THEN 1 ELSE 0 END) " // MANAGE_DRIFT
                 + ") ";
             permissionsProjection = permissionsProjection.replace("%subjectId%", String.valueOf(subject.getId()));
-            permissionsFromCause = criteria.getPersistentClass().getSimpleName() + " %alias% "
-                + "     LEFT JOIN %permAlias%.roles r"
-                + "     LEFT JOIN r.subjects s"
-                + "     LEFT JOIN r.permissions p";
+            permissionsFromCause = criteria.getPersistentClass().getSimpleName()
+                + " %alias% "
+                + " JOIN %permAlias%.roles r"
+                + " JOIN r.subjects s"
+                + " JOIN r.permissions p";
 
             break;
         default:

@@ -2666,7 +2666,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     public BundleVersion createInitialBundleVersionViaToken(Subject subject, int[] bundleGroupIds, String token)
         throws Exception {
 
-        File distributionFile = new File(System.getProperty("java.io.tmpdir"), token);
+        File distributionFile = new File(System.getProperty("jboss.server.temp.dir"), token);
         if (!distributionFile.isFile()) {
             throw new IllegalArgumentException("Token did not result in valid file ["
                 + distributionFile.getAbsolutePath() + "]");

@@ -45,6 +45,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
+import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * Plugin component for representing Tomcat connectors. Much of the functionality is left to the super class,
@@ -240,13 +241,26 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        this.saveResouceConfigurationToFile(report, false);
 
+        // If all went well, persist the changes to the Tomcat server.xml
+        try {
+            storeConfig();
+        } catch (Exception e) {
+            report
+                .setErrorMessage("Failed to persist configuration change.  Changes will not survive Tomcat restart unless a successful Store Configuration operation is performed.");
+        }
+    }
+
+    private void saveResouceConfigurationToFile(ConfigurationUpdateReport report, boolean ignoreReadOnly) {
         // When starting the component get the connector type specific property keys
         ResourceContext<TomcatServerComponent<?>> context = getResourceContext();
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
         String protocol = report.getConfiguration().getSimpleValue(CONFIG_PROTOCOL, null);
+        EmsBean bean = null;
+
         if ((null == protocol) || protocol.toUpperCase().contains("HTTP")) {
-            // remove AJP only properties            
+            // remove AJP only properties
             for (PropertyDefinition propDef : configDef.getPropertiesInGroup("AJP")) {
                 report.getConfiguration().remove(propDef.getName());
             }
@@ -263,61 +277,58 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
         if (getResourceContext().getParentResourceComponent().getResourceContext().getVersion().startsWith("5")) {
             report.getConfiguration().remove(CONFIG_V5_KEEP_ALIVE_TIMEOUT);
         }
-        
-        EmsBean bean = super.getEmsBean();
+
+        // assume we succeed - we'll set to failure if we can't set all properties
+        report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+
         for (String key : report.getConfiguration().getSimpleProperties().keySet()) {
-        	EmsAttribute attribute = bean.getAttribute(key); 
-        	if (attribute == null) {
-        		log.debug("Removing " + key + " does correspond to an attribut");
-        		report.getConfiguration().remove(key);
-        		continue; // skip unsupported attributes
-        	}
-        	PropertyDefinitionSimple def = configDef.getPropertyDefinitionSimple(key);
-        	if (!def.isRequired()) {
-        		PropertySimple prop = report.getConfiguration().getSimple(key); 
-        		if (prop instanceof PropertySimple) {
-        			PropertySimple pro = (PropertySimple) prop;
-        			if (pro.getStringValue() == null || (pro.getStringValue() != null && pro.getStringValue().equals("null"))) {
-        				String p = context.getResourceType().getResourceConfigurationDefinition().getDefaultTemplate().getConfiguration().getSimpleValue(key);
-        				log.debug("Using default value for " + key + " value: " + def.getDefaultValue());
-        				switch (def.getType()) {
-        				case INTEGER: {
-        					pro.setIntegerValue(Integer.valueOf(p));
-        					break;
-        				}
-        				case LONG: {
-        					pro.setLongValue((long) Long.valueOf(p));
-        					break;
-        				}
-        				case BOOLEAN: {
-        					pro.setBooleanValue(Boolean.valueOf(p));
-        				}
-        				/* Other type are not used in storeconfig */
-        				default:
-        					if (p !=null)
-        						pro.setStringValue(p);
-        					else if (pro.getStringValue() != null)
-        						pro.setStringValue(null);
-        					break;
-        				}
-        			}
-        		}
-        	}
-        }
+            PropertySimple property = report.getConfiguration().getSimple(key);
+            if (property != null) {
+                try {
+                    if (null == bean)
+                        bean = super.getEmsBean();
+                    EmsAttribute attribute = bean.getAttribute(key);
+                    if (attribute == null) {
+                        log.debug("Removing " + key + " does correspond to an attribut");
+                        report.getConfiguration().remove(key);
+                        continue; // skip unsupported attributes
+                    }
+                    PropertyDefinitionSimple def = configDef.getPropertyDefinitionSimple(property
+                            .getName());
+                    if (!(ignoreReadOnly && def.isReadOnly())) {
+                        switch (def.getType()) {
+                            case INTEGER: {
+                                if (property.getIntegerValue() != null)
+                                    attribute.setValue(property.getIntegerValue());
+                                break;
+                            }
 
-        super.updateResourceConfiguration(report);
+                            case LONG: {
+                                if (property.getLongValue() != null)
+                                    attribute.setValue(property.getLongValue());
+                                break;
+                            }
 
-        // if the mbean update failed, return now
-        if (ConfigurationUpdateStatus.SUCCESS != report.getStatus()) {
-            return;
-        }
+                            case BOOLEAN: {
+                                if (property.getBooleanValue() != null)
+                                    attribute.setValue(property.getBooleanValue());
+                                break;
+                            }
 
-        // If all went well, persist the changes to the Tomcat server.xml
-        try {
-            storeConfig();
-        } catch (Exception e) {
-            report
-                .setErrorMessage("Failed to persist configuration change.  Changes will not survive Tomcat restart unless a successful Store Configuration operation is performed.");
+                            /*With StoreConfig, every other types are Sting*/
+                            default: {
+                                if (property.getStringValue() != null)
+                                    attribute.setValue(property.getStringValue());
+                                break;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    property.setErrorMessage(ThrowableUtil.getStackAsString(e));
+                    report.setErrorMessage("Failed setting resource configuration - see property error messages for details");
+                    log.info("Failure setting MBean Resource configuration value for " + key, e);
+                }
+            }
         }
     }
 

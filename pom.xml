@@ -344,7 +344,7 @@
     <rhq-server-client-api.version>${rhq.pom.version}</rhq-server-client-api.version>
     <rhq-data-migration.version>${rhq.pom.version}</rhq-data-migration.version>
     <rhq-enterprise-server-ear.version>${rhq.pom.version}</rhq-enterprise-server-ear.version>
-    <rhq-installer-util.version>${rhq.pom.version}-redhat-1</rhq-installer-util.version>
+    <rhq-installer-util.version>${rhq.pom.version}-redhat-2</rhq-installer-util.version>
     <rhq-server-itests-2.version>${rhq.pom.version}</rhq-server-itests-2.version>
     <rhq-enterprise-server.version>${rhq.pom.version}-redhat-3</rhq-enterprise-server.version>
     <alert-cli.version>${rhq.pom.version}</alert-cli.version>

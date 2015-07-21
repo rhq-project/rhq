@@ -50,7 +50,7 @@ public class StorageNodeCriteria extends Criteria {
     private Integer filterCqlPort;
     private List<OperationMode> filterOperationMode; // requires override
     private Integer filterResourceId; // requires override
-    private Integer parentResourceId; // requires override
+    private Integer filterParentResourceId; // requires override
 
     private boolean fetchResource;
 
@@ -90,7 +90,7 @@ public class StorageNodeCriteria extends Criteria {
     }
 
     public void addFilterParentResourceId(Integer filterParentResourceId) {
-        this.parentResourceId = filterParentResourceId;
+        this.filterParentResourceId = filterParentResourceId;
     }
     
     public void fetchResource(boolean fetchResource) {

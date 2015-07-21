@@ -209,7 +209,9 @@ public class InstallerServiceImpl implements InstallerService {
 
         info.append("\n");
         if (upgradeRequired) {
-            info.append("  ==> At least one Server or Storage Node requires an upgrade to the current version!");
+            info.append("  ==> At least one Server or Storage Node may require an upgrade to the current version!");
+            info.append("  ==> Note: If you have applied updates to a Server directory(pre-installation or pre-upgrade) or are in the middle of an HA install/update/upgrade, you may experience temporary version upgrade messaging that no longer applies.");
+            info.append("  ==> Note: The application of updates must happen with each server in the HA environment.");
 
         } else {
             info.append("  ==> All Servers and Storage Nodes are at the same version. No upgrades required.");

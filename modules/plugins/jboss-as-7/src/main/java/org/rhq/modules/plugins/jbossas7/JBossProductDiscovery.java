@@ -142,8 +142,10 @@ public class JBossProductDiscovery {
     public static JBossProduct getKnownProduct(String pluginConfigSetting) {
         JBossProduct product = KNOWN_PRODUCTS.get(pluginConfigSetting);
         if (product == null) {
-            LOG.debug("Requested product by pluginConfigSetting=" + pluginConfigSetting
-                + " which we don't know, returning UNKNOWN");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Requested product by pluginConfigSetting=" + pluginConfigSetting
+                    + " which we don't know, returning UNKNOWN");
+            }
             return JBossProduct.unknown();
         }
 
@@ -156,7 +158,9 @@ public class JBossProductDiscovery {
                 return product;
             }
         }
-        LOG.debug("No product type with product-name '" + productName + "' is known. returning UNKNOWN");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("No product type with product-name '" + productName + "' is known. returning UNKNOWN");
+        }
         return JBossProduct.unknown();
     }
 }

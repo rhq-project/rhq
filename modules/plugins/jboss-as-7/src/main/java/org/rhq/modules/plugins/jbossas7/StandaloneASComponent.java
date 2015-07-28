@@ -194,6 +194,8 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
             return installManagementUser(parameters, pluginConfiguration);
         } else if (name.equals("executeCommands") || name.equals("executeScript")) {
             return runCliCommand(parameters);
+        } else if (name.equals("setupCli")) {
+            return setupCli(parameters);
         }
 
         // reload, shutdown go to the remote server

@@ -1639,7 +1639,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             permissionResults = queryRunner.execute();
         }
         // now "join" results together
-        PageList<ResourceGroupComposite> results = new PageList<ResourceGroupComposite>();
+        PageList<ResourceGroupComposite> results = new PageList<ResourceGroupComposite>(explicitResults.getTotalSize(),
+            explicitResults.getPageControl());
         if (explicitResults.size() == implicitResults.size()
             && (permissionResults == null || permissionResults.size() == implicitResults.size())) {
             // in case we selected same groups sets using all 2 (or 3) queries (99% of cases) just "join" them by index
@@ -1654,6 +1655,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             // we did not get same results, this means some groups are being added/removed in the meantime
             // we must join it using resourceGroup ID (this is a bit more expensive approach)
             // map ResourceGroupID and [implicitComposite, explicitComposite, permComposite]
+
+            results.setTotalSize(Math.min(explicitResults.getTotalSize(), implicitResults.getTotalSize()));
             Map<Integer,List<ResourceGroupComposite>> joinMap = new HashMap<Integer, List<ResourceGroupComposite>>();
             for (ResourceGroupComposite c : implicitResults) {
                 if (!joinMap.containsKey(c.getResourceGroup().getId())) {

@@ -1563,8 +1563,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         String compositeFromCause = criteria.getPersistentClass().getSimpleName()
             + " %alias% "
-            + " JOIN %alias%.%membership%Resources res "
-            + " JOIN res.currentAvailability avail ";
+            + " LEFT JOIN %alias%.%membership%Resources res "
+            + " LEFT JOIN res.currentAvailability avail ";
 
         String permissionsProjection = null;
         String permissionsFromCause = null;
@@ -1593,9 +1593,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             permissionsProjection = permissionsProjection.replace("%subjectId%", String.valueOf(subject.getId()));
             permissionsFromCause = criteria.getPersistentClass().getSimpleName()
                 + " %alias% "
-                + " JOIN %permAlias%.roles r"
-                + " JOIN r.subjects s"
-                + " JOIN r.permissions p";
+                + " LEFT JOIN %permAlias%.roles r"
+                + " LEFT JOIN r.subjects s"
+                + " LEFT JOIN r.permissions p";
 
             break;
         default:

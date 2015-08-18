@@ -88,6 +88,8 @@ public final class CriteriaQueryGenerator {
     private String groupByClause;
     private String havingClause;
     private String fromClause;
+    private boolean groupByOrderAliases;
+
     private static String NL = System.getProperty("line.separator");
 
     private static List<String> EXPRESSION_START_KEYWORDS;
@@ -114,8 +116,21 @@ public final class CriteriaQueryGenerator {
         initializeJPQLFragmentFromSearchExpression();
     }
 
+    /**
+     * set this to override FROM clause
+     * @param fromClause new clause
+     */
     public void overrideFromClause(String fromClause) {
         this.fromClause = fromClause;
+    }
+
+    /**
+     * if enabled, adds ordering field aliases to GROUP BY statement. This is useful in case of custom projection together with
+     * {@link #overrideFromClause(String)} and {@link #setGroupByClause(String)}.
+     * @param groupByOrderAliases
+     */
+    public void setGroupByOrderAliases(boolean groupByOrderAliases) {
+        this.groupByOrderAliases = groupByOrderAliases;
     }
 
     public void setAuthorizationCustomConditionFragment(String fragment) {
@@ -489,6 +504,7 @@ public final class CriteriaQueryGenerator {
         // figure out the 'LEFT JOIN's needed for 'ORDER BY' tokens
         List<String> orderingFieldRequiredJoins = new ArrayList<String>();
         List<String> orderingFieldTokens = new ArrayList<String>();
+        List<String> orderingFieldAliases = new ArrayList<String>();
 
         for (OrderingField orderingField : pc.getOrderingFields()) {
             PageOrdering ordering = orderingField.getOrdering();
@@ -539,7 +555,7 @@ public final class CriteriaQueryGenerator {
             } else {
                 joinAlias = "orderingField" + expressionRootIndex;
             }
-
+            orderingFieldAliases.add(joinAlias);
             orderingFieldTokens.add(joinAlias + "." + expressionLeaf + " " + ordering);
         }
 
@@ -630,6 +646,13 @@ public final class CriteriaQueryGenerator {
             // group by clause
             if (groupByClause != null) {
                 results.append(NL).append("GROUP BY ").append(groupByClause);
+
+                if (groupByOrderAliases) {
+                    for (String field : orderingFieldAliases) {
+                        results.append(" , ").append(field);
+                    }
+                }
+
             }
 
             // having clause

@@ -30,14 +30,18 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.test.LargeGroupTestBase;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
+import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.SessionTestHelper;
 
@@ -47,6 +51,7 @@ public class LargeGroupCriteriaTest extends LargeGroupTestBase {
     private static final boolean TEST_ENABLED = true;
 
     private ArrayList<LargeGroupEnvironment> env;
+    private List<ResourceGroup> globalGroups;
 
     private class GroupAvailCounts {
         public final int up;
@@ -95,6 +100,13 @@ public class LargeGroupCriteriaTest extends LargeGroupTestBase {
                 SessionTestHelper.simulateLogout(doomed.normalSubject);
             }
             env = null;
+        }
+        if (globalGroups != null) {
+            Iterator<ResourceGroup> iter = globalGroups.iterator();
+            while (iter.hasNext()) {
+                resourceGroupManager.deleteResourceGroup(getOverlord(), iter.next().getId());
+            }
+            globalGroups = null;
         }
     }
 
@@ -195,6 +207,48 @@ public class LargeGroupCriteriaTest extends LargeGroupTestBase {
             gacs.add(new GroupAvailCounts(20, 20, 20, 20));
         }
         testGroupQueries(gacs);
+    }
+
+    @Test(enabled = TEST_ENABLED)
+    public void testVariousCriteriaQueries() throws Exception {
+
+        globalGroups = new ArrayList<ResourceGroup>();
+        // create 10 empty groups
+        executeInTransaction(false, new TransactionCallback() {
+
+            @Override
+            public void execute() throws Exception {
+                for (int i = 0; i < 10; i++) {
+                    ResourceGroup group = SessionTestHelper.createNewCompatibleGroupForRole(em, null,
+                        "LargeGroupTestCompatGroup", null);
+                    globalGroups.add(group);
+                }
+            }
+        });
+
+        ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
+
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+
+        // test ordering
+        criteria.addSortName(PageOrdering.DESC);
+        PageList<ResourceGroupComposite> result = groupManager.findResourceGroupCompositesByCriteria(getOverlord(),
+            criteria);
+        assert result.size() == 10 : "Expected to return 10 group composites, but was " + result.size();
+
+        // test custom page size
+        criteria = new ResourceGroupCriteria();
+        criteria.setPageControl(new PageControl(0, 2));
+        result = groupManager.findResourceGroupCompositesByCriteria(getOverlord(), criteria);
+        assert result.size() == 2 : "Expected to return 2 group composites when paging is enabled";
+        assert result.getTotalSize() == 10 : "Expected 10 group composites as total pageList size";
+
+        // test custom page size and ordering within pageControl
+        criteria = new ResourceGroupCriteria();
+        criteria.setPageControl(new PageControl(0, 2, new OrderingField("name", PageOrdering.DESC)));
+        result = groupManager.findResourceGroupCompositesByCriteria(getOverlord(), criteria);
+        assert result.size() == 2 : "Expected to return 2 group composites when paging is enabled";
+        assert result.getTotalSize() == 10 : "Expected 10 group composites as total pageList size";
     }
 
     // test findResourcesByCriteriaBounded here instead of ResourceGroupManagerBeanTest because we want

@@ -531,6 +531,7 @@ public final class CriteriaQueryGenerator {
             if (lastDelimiterIndex == -1) {
                 // does not require joins, just add the ordering field token directly
                 orderingFieldTokens.add(sortFragment + " " + ordering);
+                orderingFieldAliases.add(sortFragment);
                 continue;
             }
 
@@ -539,6 +540,7 @@ public final class CriteriaQueryGenerator {
                 // only one dot implies its a property/field directly off of the primary alias
                 // thus, also does not require joins, just add the ordering field token directly
                 orderingFieldTokens.add(sortFragment + " " + ordering);
+                orderingFieldAliases.add(sortFragment);
                 continue;
             }
 
@@ -555,7 +557,7 @@ public final class CriteriaQueryGenerator {
             } else {
                 joinAlias = "orderingField" + expressionRootIndex;
             }
-            orderingFieldAliases.add(joinAlias);
+            orderingFieldAliases.add(joinAlias + "." + expressionLeaf);
             orderingFieldTokens.add(joinAlias + "." + expressionLeaf + " " + ordering);
         }
 
@@ -646,13 +648,15 @@ public final class CriteriaQueryGenerator {
             // group by clause
             if (groupByClause != null) {
                 results.append(NL).append("GROUP BY ").append(groupByClause);
-
                 if (groupByOrderAliases) {
+                    results.append(", ");
                     for (String field : orderingFieldAliases) {
-                        results.append(" , ").append(field);
+                        if (!field.equals(groupByClause)) { // avoid duplicities in groupby fields
+                            results.append(field).append(", ");
+                        }
                     }
+                    results.deleteCharAt(results.length() - 2); // always delete last comma
                 }
-
             }
 
             // having clause

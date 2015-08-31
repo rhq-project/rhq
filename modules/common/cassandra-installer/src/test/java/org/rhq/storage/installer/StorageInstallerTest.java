@@ -82,7 +82,7 @@ public class StorageInstallerTest {
 
         int status = installer.run(cmdLine);
 
-        String address = "127.0.0.1";
+        String address = InetAddress.getLocalHost().getHostName();
 
         assertEquals(status, 0, "Expected to get back a status code of 0 for a successful default install");
         assertNodeIsRunning();

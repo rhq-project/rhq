@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -51,6 +52,7 @@ import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -138,6 +140,8 @@ public class CassandraClusterManager {
         this.jmxPorts = new int[deploymentOptions.getNumNodes()];
         this.cqlPort = deploymentOptions.getCqlPort();
 
+        boolean useRemoteJMX = this.nodes.length > 1;
+
         for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
             File basedir = new File(deploymentOptions.getClusterDir(), "node" + i);
             String address = getLocalIPAddress(i + 1);
@@ -163,6 +167,23 @@ public class CassandraClusterManager {
                 deployer.applyConfigChanges();
                 deployer.updateFilePerms();
                 deployer.updateStorageAuthConf(calculateLocalIPAddresses(deploymentOptions.getNumNodes()));
+
+                if (useRemoteJMX) {
+                    File confDir = new File(nodeOptions.getBasedir(), "conf");
+                    File cassandraJvmPropsFile = new File(confDir, "cassandra-jvm.properties");
+                    PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(
+                        cassandraJvmPropsFile.getAbsolutePath());
+                    Properties properties = propertiesUpdater.loadExistingProperties();
+                    String jmxOpts =
+                        "\"-Djava.rmi.server.hostname=" + nodeOptions.getRpcAddress() +
+                        " -Dcom.sun.management.jmxremote.port=" + nodeOptions.getJmxPort() +
+                        " -Dcom.sun.management.jmxremote.rmi.port=" + nodeOptions.getJmxPort() +
+                        " -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false \"";
+
+                    properties.setProperty("JMX_OPTS", jmxOpts);
+
+                    propertiesUpdater.update(properties);
+                }
 
                 this.nodes[i] = address;
                 this.jmxPorts[i] = deploymentOptions.getJmxPort() + i;

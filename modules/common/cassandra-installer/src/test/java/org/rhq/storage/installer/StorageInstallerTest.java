@@ -403,7 +403,7 @@ public class StorageInstallerTest {
 
     private void assertNodeIsRunning() {
         try {
-            installer.verifyNodeIsUp("127.0.0.1", 7299, 3, 1000);
+            installer.verifyNodeIsUp(7299, 3, 1000);
         } catch (Exception e) {
             fail("Failed to verify that node is up", e);
         }

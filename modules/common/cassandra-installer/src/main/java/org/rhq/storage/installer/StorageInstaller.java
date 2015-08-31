@@ -353,7 +353,7 @@ public class StorageInstaller {
         if (startNode) {
             boolean checkStatus = Boolean.parseBoolean(cmdLine.getOptionValue("check-status", "true"));
             if (checkStatus || isWindows()) { // no reliable pid file on windows
-                if (verifyNodeIsUp(installerInfo.hostname, installerInfo.jmxPort, 5, 3000)) {
+                if (verifyNodeIsUp(installerInfo.jmxPort, 5, 3000)) {
                     log.info("RHQ Storage Node is up and running and ready to service client requests");
                     log.info("Installation of the storage node has completed successfully.");
                     return STATUS_NO_ERRORS;
@@ -911,7 +911,8 @@ public class StorageInstaller {
         return new File(binDir, "cassandra.pid").exists();
     }
 
-    boolean verifyNodeIsUp(String address, int jmxPort, int retries, long timeout) throws Exception {
+    boolean verifyNodeIsUp(int jmxPort, int retries, long timeout) throws Exception {
+        String address = "127.0.0.1";
         String url = "service:jmx:rmi:///jndi/rmi://" + address + ":" + jmxPort + "/jmxrmi";
         JMXServiceURL serviceURL = new JMXServiceURL(url);
         JMXConnector connector;

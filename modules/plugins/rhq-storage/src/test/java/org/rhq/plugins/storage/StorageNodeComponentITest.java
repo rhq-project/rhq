@@ -146,6 +146,10 @@ public class StorageNodeComponentITest {
     }
 
     private void doDeployment(DeploymentOptions deploymentOptions) throws Exception {
+        doDeployment(deploymentOptions, false);
+    }
+
+    private void doDeployment(DeploymentOptions deploymentOptions, boolean useRemoteJMX) throws Exception {
         Deployer deployer = new Deployer();
         deployer.setDeploymentOptions(deploymentOptions);
 
@@ -158,6 +162,13 @@ public class StorageNodeComponentITest {
         File cassandraJvmPropsFile = new File(confDir, "cassandra-jvm.properties");
         PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(cassandraJvmPropsFile.getAbsolutePath());
         Properties properties = propertiesUpdater.loadExistingProperties();
+
+        if (useRemoteJMX) {
+            String jmxOpts = "\"-Dcom.sun.management.jmxremote.port=" + deploymentOptions.getJmxPort() +
+                " -Dcom.sun.management.jmxremote.rmi.port=" + deploymentOptions.getJmxPort() +
+                " -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false \"";
+            properties.setProperty("JMX_OPTS", jmxOpts);
+        }
 
         String jvmOpts = properties.getProperty("JVM_OPTS");
         jvmOpts = jvmOpts.substring(0, jvmOpts.lastIndexOf("\""));
@@ -479,7 +490,7 @@ public class StorageNodeComponentITest {
             deploymentOptions.setHeapNewSize("64M");
             deploymentOptions.load();
 
-            doDeployment(deploymentOptions);
+            doDeployment(deploymentOptions, true);
             ClusterInitService clusterInitService = new ClusterInitService();
             clusterInitService.waitForClusterToStart(new String [] {"127.0.0.2"}, new int[] {7400});
 

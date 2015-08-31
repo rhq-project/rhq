@@ -15,8 +15,8 @@
     description="RHQ Storage Node">
 
     <plugin-configuration>
-      <c:simple-property name="connectorAddress" displayName="Manager URL" default="service:jmx:rmi:///jndi/rmi://127.0.0.1:7299/jmxrmi"
-                         description="The RMI URL with which to connect to the RHQ Storage Node (e.g. service:jmx:rmi:///jndi/rmi://127.0.0.1:7299/jmxrmi)."/>
+      <c:simple-property name="connectorAddress" displayName="Manager URL" default="service:jmx:rmi:///jndi/rmi://127.0.0.1:7399/jmxrmi"
+                         description="The RMI URL with which to connect to the RHQ Storage Node (e.g. service:jmx:rmi:///jndi/rmi://127.0.0.1:7399/jmxrmi)."/>
       <c:simple-property name="type" readOnly="true" default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"
                          description="The type used to establish the EMS connection to the RHQ Storage Node."/>
       <c:simple-property name="baseDir" displayName="Base Directory" description="The base directory from which the Cassandra Daemon was launched." required="false"/>

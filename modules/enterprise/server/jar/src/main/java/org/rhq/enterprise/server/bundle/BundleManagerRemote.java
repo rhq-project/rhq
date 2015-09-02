@@ -615,6 +615,21 @@ public interface BundleManagerRemote {
     void deleteBundleVersion(Subject subject, int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception;
 
     /**
+     * Remove bundle destination. This only removes bundle destination from database, all bundle content that was
+     * deployed to this destination on remote machines will remain.
+     * <pre>
+     * Required Permissions: Either:
+     * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
+     * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
+     * </pre>
+     *
+     * @param subject
+     * @param bundleDestinationId
+     * @throws Exception if any part of the removal fails.
+     */
+    void deleteBundleDestination(Subject subject, int bundleDestinationId) throws Exception;
+
+    /**
      * Return the <code>Bundles</code> narrowed by the supplied Criteria. The results are implicitly
      * narrowed to those bundles viewable by the <code>subject</code>.
      * @param subject

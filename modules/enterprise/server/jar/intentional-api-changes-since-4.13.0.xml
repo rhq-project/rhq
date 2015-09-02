@@ -31,4 +31,10 @@
     <method>void purgeResourceConfigurationUpdates(*)</method>
     <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1155693</justification>
   </difference>
+  <difference>
+    <className>org/rhq/enterprise/server/bundle/BundleManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added -->
+    <method>void deleteBundleDestination(*)</method>
+    <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1255821</justification>
+  </difference>
 </differences>

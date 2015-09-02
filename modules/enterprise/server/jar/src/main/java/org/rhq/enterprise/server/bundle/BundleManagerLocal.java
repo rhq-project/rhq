@@ -260,21 +260,6 @@ public interface BundleManagerLocal extends BundleManagerRemote {
     void deleteBundleDeployment(Subject subject, int bundleDeploymentId) throws Exception;
 
     /**
-     * Used by GUI. This is a simple attempt at delete, typically used for removing a poorly defined destination. It will
-     * fail if any actual deployments are referring to the destination.
-     * <pre>
-     * Required Permissions: Either:
-     * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
-     * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
-     * </pre>
-     *
-     * @param subject
-     * @param bundleDestinationId
-     * @throws Exception if any part of the removal fails.
-     */
-    void deleteBundleDestination(Subject subject, int bundleDestinationId) throws Exception;
-
-    /**
      * Internal use only. Called internally to set deployment status. Typically to a completion status when deployment
      * ends.  Exists for transaction boundary reasons only.
      * </p>

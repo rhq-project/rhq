@@ -34,7 +34,7 @@ class DriftDetectionScheduleQueueComparator implements java.util.Comparator<Drif
         if (diff == 0) {
             long nextScan1 = schedule1.getNextScan();
             long nextScan2 = schedule2.getNextScan();
-            diff = (nextScan1 == nextScan2) ? 0 : (nextScan2 > nextScan1 ? 1 : -1);
+            diff = (nextScan1 == nextScan2) ? 0 : (nextScan1 > nextScan2 ? 1 : -1);
         }
         return diff;
     }

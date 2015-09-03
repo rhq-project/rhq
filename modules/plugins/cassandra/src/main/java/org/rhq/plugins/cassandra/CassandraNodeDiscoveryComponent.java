@@ -114,7 +114,7 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         for (int i = 0; i < arguments.length; i++) {
             String arg = arguments[i];
 
-            if (arg.startsWith("-D-Dcassandra.jmx.local.port") ||
+            if (arg.startsWith("-Dcassandra.jmx.local.port") ||
                 arg.startsWith("-Dcom.sun.management.jmxremote.port")) {
 
                 String[] jmxPortArg = arg.split("=");

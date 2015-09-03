@@ -37,6 +37,7 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.plugins.cassandra.CassandraNodeDiscoveryComponent;
+import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 
 /**
  * @author Stefan Negrea
@@ -122,6 +123,23 @@ public class StorageNodeDiscoveryComponent extends CassandraNodeDiscoveryCompone
                 String oldYaml = oldPluginConfig.getSimpleValue(YAML_PROPERTY);
                 if (null != newYaml && !newYaml.equals(oldYaml)) {
                     oldPluginConfig.put(new PropertySimple(YAML_PROPERTY, newYaml));
+                    upgrade = true;
+                }
+
+                String newPort = newPluginConfig.getSimpleValue(JMX_PORT_PROPERTY);
+                String oldPort = oldPluginConfig.getSimpleValue(JMX_PORT_PROPERTY);
+                if (null != newPort && !newPort.equals(oldPort)) {
+                    oldPluginConfig.put(new PropertySimple(JMX_PORT_PROPERTY, newPort));
+                    upgrade = true;
+                }
+
+                String newJmxUrl = newPluginConfig
+                    .getSimpleValue(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY);
+                String oldJmxurl = oldPluginConfig
+                    .getSimpleValue(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY);
+                if (null != newJmxUrl && !newJmxUrl.equals(oldJmxurl)) {
+                    oldPluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,
+                        newJmxUrl));
                     upgrade = true;
                 }
 

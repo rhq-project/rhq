@@ -91,6 +91,7 @@ import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
 import org.rhq.enterprise.server.scheduler.jobs.DynaGroupAutoRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
+import org.rhq.enterprise.server.scheduler.jobs.ReplicationFactorCheckJob;
 import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.StorageClusterReadRepairJob;
 import org.rhq.enterprise.server.storage.StorageClientManager;
@@ -805,6 +806,17 @@ public class StartupBean implements StartupLocal {
             schedulerBean.scheduleSimpleCronJob(StorageClusterReadRepairJob.class, true, true, cronString, null);
         } catch (Exception e) {
             log.error("Cannot create storage cluster read repair job", e);
+        }
+
+        // Storage cluster replication factor check Job
+        try {
+            // TODO set appropriate timing
+            final long initialDelay = 1000L * 10 * 0; // 2 mins
+            final long interval = 1000L * 60 * 5; // 5 mins
+            schedulerBean.scheduleSimpleRepeatingJob(ReplicationFactorCheckJob.class, true, false, initialDelay,
+                interval);
+        } catch (Exception e) {
+            log.error("Cannot schedule Storage cluster replication factor check job.", e);
         }
     }
 

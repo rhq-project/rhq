@@ -224,7 +224,7 @@ public class FileUploadServlet extends HttpServlet {
             }
             name = new File(name).getName();
 
-            File tmpFile = File.createTempFile(name, null);
+            File tmpFile = File.createTempFile(name, null, LookupUtil.getCoreServer().getJBossServerTempDir());
             try {
                 fileItem.write(tmpFile);
                 return tmpFile;

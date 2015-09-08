@@ -64,6 +64,10 @@ public class StorageNodeDiscoveryComponent extends CassandraNodeDiscoveryCompone
                 discoveredResource.setResourceKey(resourceKey);
                 discoveredResource.setResourceName(resourceName);
 
+                String jmxPort = configuration.getSimpleValue(JMX_PORT_PROPERTY);
+                configuration.put(new PropertySimple(CONNECTOR_ADDRESS_CONFIG_PROPERTY,
+                    "service:jmx:rmi:///jndi/rmi://127.0.0.1:" + jmxPort + "/jmxrmi"));
+
                 try {
                     Properties properties = new Properties();
                     properties.load(getClass().getResourceAsStream("/rhq-storage.properties"));

@@ -39,6 +39,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.scheduler.jobs.ReplicationFactorCheckJob;
 import org.rhq.server.metrics.StorageSession;
 
 /**
@@ -886,24 +887,22 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         }
 
         if (isRepairNeeded) {
-            updateReplicationFactor(replicationFactor);
+            updateReplicationFactor(replicationFactor, newClusterSize);
             if (previousClusterSize == 1) {
                 updateGCGraceSeconds(691200); // 8 days
             }
         } else if (newClusterSize == 1) {
-            updateReplicationFactor(1);
+            updateReplicationFactor(1, 1);
             updateGCGraceSeconds(0);
         }
 
         return isRepairNeeded;
     }
 
-    private void updateReplicationFactor(int replicationFactor) {
+    private void updateReplicationFactor(int replicationFactor, int clusterSize) {
         StorageSession session = storageClientManager.getSession();
-        session.execute("ALTER KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', 'replication_factor': "
-            + replicationFactor + "}");
-        session.execute("ALTER KEYSPACE system_auth WITH replication = {'class': 'SimpleStrategy', "
-            + "'replication_factor': " + replicationFactor + "}");
+        ReplicationFactorCheckJob.updateReplicationFactor(session, "rhq", replicationFactor);
+        ReplicationFactorCheckJob.updateReplicationFactor(session, "system_auth", clusterSize);
     }
 
     private void updateGCGraceSeconds(int seconds) {

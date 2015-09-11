@@ -293,11 +293,11 @@
     <rhq-ant-bundle-common.version>${rhq.pom.version}-redhat-1</rhq-ant-bundle-common.version>
     <rhq-cassandra-auth.version>${rhq.pom.version}</rhq-cassandra-auth.version>
     <rhq-cassandra-ccm-arquillian.version>${rhq.pom.version}</rhq-cassandra-ccm-arquillian.version>
-    <rhq-cassandra-ccm-core.version>${rhq.pom.version}</rhq-cassandra-ccm-core.version>
+    <rhq-cassandra-ccm-core.version>${rhq.pom.version}-redhat-1</rhq-cassandra-ccm-core.version>
     <rhq-cassandra-ccm-maven-plugin.version>${rhq.pom.version}</rhq-cassandra-ccm-maven-plugin.version>
     <rhq-cassandra-ccm-testng.version>${rhq.pom.version}</rhq-cassandra-ccm-testng.version>
     <rhq-cassandra-ccm.version>${rhq.pom.version}</rhq-cassandra-ccm.version>
-    <rhq-cassandra-installer.version>${rhq.pom.version}</rhq-cassandra-installer.version>
+    <rhq-cassandra-installer.version>${rhq.pom.version}-redhat-1</rhq-cassandra-installer.version>
     <rhq-cassandra-schema.version>${rhq.pom.version}-redhat-2</rhq-cassandra-schema.version>
     <rhq-cassandra-util.version>${rhq.pom.version}</rhq-cassandra-util.version>
     <rhq-common-drift.version>${rhq.pom.version}</rhq-common-drift.version>
@@ -344,7 +344,7 @@
     <rhq-server-client-api.version>${rhq.pom.version}</rhq-server-client-api.version>
     <rhq-data-migration.version>${rhq.pom.version}</rhq-data-migration.version>
     <rhq-enterprise-server-ear.version>${rhq.pom.version}</rhq-enterprise-server-ear.version>
-    <rhq-installer-util.version>${rhq.pom.version}-redhat-2</rhq-installer-util.version>
+    <rhq-installer-util.version>${rhq.pom.version}-redhat-3</rhq-installer-util.version>
     <rhq-server-itests-2.version>${rhq.pom.version}</rhq-server-itests-2.version>
     <rhq-enterprise-server.version>${rhq.pom.version}-redhat-3</rhq-enterprise-server.version>
     <alert-cli.version>${rhq.pom.version}</alert-cli.version>
@@ -388,7 +388,7 @@
     <rhq-apache-plugin.version>${rhq.pom.version}</rhq-apache-plugin.version>
     <rhq-augeas-plugin.version>${rhq.pom.version}</rhq-augeas-plugin.version>
     <rhq-byteman-plugin.version>${rhq.pom.version}</rhq-byteman-plugin.version>
-    <rhq-cassandra-plugin.version>${rhq.pom.version}</rhq-cassandra-plugin.version>
+    <rhq-cassandra-plugin.version>${rhq.pom.version}-redhat-1</rhq-cassandra-plugin.version>
     <rhq-cobbler-plugin.version>${rhq.pom.version}</rhq-cobbler-plugin.version>
     <rhq-cron-plugin.version>${rhq.pom.version}</rhq-cron-plugin.version>
     <rhq-database-plugin.version>${rhq.pom.version}</rhq-database-plugin.version>
@@ -420,7 +420,7 @@
     <rhq-postgres-plugin.version>${rhq.pom.version}</rhq-postgres-plugin.version>
     <rhq-agent-plugin.version>${rhq.pom.version}</rhq-agent-plugin.version>
     <rhq-rhqserver-plugin.version>${rhq.pom.version}</rhq-rhqserver-plugin.version>
-    <rhq-rhqstorage-plugin.version>${rhq.pom.version}</rhq-rhqstorage-plugin.version>
+    <rhq-rhqstorage-plugin.version>${rhq.pom.version}-redhat-1</rhq-rhqstorage-plugin.version>
     <rhq-samba-plugin.version>${rhq.pom.version}</rhq-samba-plugin.version>
     <rhq-script-plugin.version>${rhq.pom.version}</rhq-script-plugin.version>
     <rhq-script2-plugin.version>${rhq.pom.version}</rhq-script2-plugin.version>

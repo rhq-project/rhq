@@ -10,6 +10,7 @@
   </parent>
 
   <artifactId>rhq-cassandra-ccm-core</artifactId>
+  <version>4.12.0.JON330GA</version>
   <name>RHQ Cassandra CCM Core</name>
 
   <properties>
@@ -99,7 +100,7 @@
           <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-cassandra-auth</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-cassandra-auth.version}</version>
           </dependency>
           <dependency>
             <groupId>io.netty</groupId>
@@ -176,7 +177,7 @@
                 <delete file="${cassandra.dir}/lib/snappy-java-1.0.5.jar"/>
                 <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/${cassandra.snappy.version}/snappy-java-${cassandra.snappy.version}.jar"
                       todir="${cassandra.dir}/lib"/>
-                <copy file="${settings.localRepository}/org/rhq/rhq-cassandra-auth/${project.version}/rhq-cassandra-auth-${project.version}.jar"
+                <copy file="${settings.localRepository}/org/rhq/rhq-cassandra-auth/${rhq-cassandra-auth.version}/rhq-cassandra-auth-${rhq-cassandra-auth.version}.jar"
                       todir="${cassandra.dir}/lib"/>
                 <move file="${project.build.outputDirectory}/cassandra/conf" todir="${cassandra.dir}"/>
                 <delete file="${cassandra.dir}/bin/cassandra"/>

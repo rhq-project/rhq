@@ -10,6 +10,7 @@
 
    <groupId>org.rhq</groupId>
    <artifactId>rhq-rhqstorage-plugin</artifactId>
+   <version>4.12.0.JON330GA</version>
 
    <name>RHQ Storage Plugin</name>
    <description>A plugin for managing RHQ Storage Nodes</description>
@@ -64,7 +65,7 @@
      <dependency>
        <groupId>${project.groupId}</groupId>
        <artifactId>rhq-cassandra-ccm-core</artifactId>
-       <version>${project.version}</version>
+       <version>${rhq-cassandra-ccm-core.version}</version>
        <scope>test</scope>
      </dependency>
 
@@ -78,7 +79,7 @@
      <dependency>
        <groupId>${rhq.groupId}</groupId>
        <artifactId>test-utils</artifactId>
-       <version>${project.version}</version>
+       <version>${project.parent.version}</version>
        <scope>test</scope>
        <exclusions>
          <exclusion>

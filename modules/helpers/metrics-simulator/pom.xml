@@ -18,7 +18,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-cassandra-ccm-core</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-cassandra-ccm-core.version}</version>
     </dependency>
 
     <dependency>

@@ -407,7 +407,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>rhq-rhqstorage-plugin</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${rhq-rhqstorage-plugin.version}</version>
                                 </artifactItem>
                             </artifactItems>
                             <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>

@@ -2656,6 +2656,15 @@
               </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.167">
+                <schema-dropForeignKeys table="RHQ_BUNDLE_DEPLOYMENT" column="REPLACED_BUNDLE_DEPLOYMENT_ID" ignoreError="true"/>
+                <schema-directSQL ignoreError="true">
+                    <statement desc="Re-create RHQ_BUNDLE_DEPLOYMENT(REPLACED_BUNDLE_DEPLOYMENT_ID) foreign key with ON DELETE CASCADE">
+                        ALTER TABLE RHQ_BUNDLE_DEPLOYMENT ADD FOREIGN KEY (REPLACED_BUNDLE_DEPLOYMENT_ID) REFERENCES RHQ_BUNDLE_DEPLOYMENT ON DELETE CASCADE
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

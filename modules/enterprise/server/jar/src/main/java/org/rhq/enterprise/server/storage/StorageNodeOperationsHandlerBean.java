@@ -15,7 +15,7 @@ import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.joda.time.Hours;
+import org.joda.time.Days;
 
 import org.rhq.cassandra.schema.Table;
 import org.rhq.core.domain.auth.Subject;
@@ -54,6 +54,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     private final static String RUN_REPAIR_PROPERTY = "runRepair";
     private final static String UPDATE_SEEDS_LIST = "updateSeedsList";
     private final static String SEEDS_LIST = "seedsList";
+    private static final int LONG_RUNNING_OPERATION_TIMEOUT = Days.SEVEN.toStandardSeconds().getSeconds();
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -286,8 +287,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         params.put(new PropertySimple(UPDATE_SEEDS_LIST, Boolean.TRUE));
         params.put(new PropertySimple("newNodeAddress", newNodeAddress));
 
-        scheduleOperation(subject, storageNode, params, "addNodeMaintenance", Hours.EIGHT.toStandardSeconds()
-            .getSeconds());
+        scheduleOperation(subject, storageNode, params, "addNodeMaintenance", LONG_RUNNING_OPERATION_TIMEOUT);
         StorageClusterSettings settings = storageClusterSettingsManager.getClusterSettings(subject);
         storageNodeManager.scheduleSnapshotManagementOperationsForStorageNode(subject, storageNode, settings);
     }
@@ -325,8 +325,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         params.put(new PropertySimple(UPDATE_SEEDS_LIST, true));
         params.put(new PropertySimple("removedNodeAddress", removedNodeAddress));
 
-        scheduleOperation(subject, storageNode, params, "removeNodeMaintenance", Hours.EIGHT.toStandardSeconds()
-            .getSeconds());
+        scheduleOperation(subject, storageNode, params, "removeNodeMaintenance", LONG_RUNNING_OPERATION_TIMEOUT);
     }
 
     @Override
@@ -622,13 +621,11 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         }
         StorageNode storageNode = storageNodeOperationsHandler.setMode(clusterNodes.get(0),
             StorageNode.OperationMode.MAINTENANCE);
-        scheduleOperation(subject, storageNode, new Configuration(), "repair", Hours.SIX.toStandardSeconds()
-            .getSeconds());
+        scheduleOperation(subject, storageNode, new Configuration(), "repair", LONG_RUNNING_OPERATION_TIMEOUT);
     }
 
     private void runRepair(Subject subject, StorageNode storageNode) {
-        scheduleOperation(subject, storageNode, new Configuration(), "repair", Hours.SIX.toStandardSeconds()
-            .getSeconds());
+        scheduleOperation(subject, storageNode, new Configuration(), "repair", LONG_RUNNING_OPERATION_TIMEOUT);
     }
 
     @Override

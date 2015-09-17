@@ -84,6 +84,9 @@ public abstract class AbstractInstall extends ControlCommand {
     private static final String PREF_RHQ_AGENT_SERVER_BINDPORT = "rhq.agent.server.bind-port";
     private static final String PREF_RHQ_AGENT_SERVER_TRANSPORTPARAMS = "rhq.agent.server.transport-params";
 
+    // EAP related
+    private static final String PREF_JBOSS_MANAGEMENT_NATIVE_PORT = "jboss.management.native.port";
+
     protected int installWindowsService(File workingDir, String batFile, boolean replaceExistingService, boolean start)
         throws Exception {
         org.apache.commons.exec.CommandLine commandLine;
@@ -388,9 +391,20 @@ public abstract class AbstractInstall extends ControlCommand {
             // when you unzip the distro, you are getting a fresh, unadulterated, out-of-box EAP installation, which by default listens
             // to port 9999 for its native management subsystem. Make sure some other independent EAP server (or anything for that matter)
             // isn't already listening to that port.
-            if (isPortInUse("127.0.0.1", 9999)) {
+
+            String nativeManagementPortProperty = System.getProperty(PREF_JBOSS_MANAGEMENT_NATIVE_PORT);
+            int nativeManagementPort = 9999;
+            if(nativeManagementPortProperty != null) {
+                try {
+                    nativeManagementPort = Integer.valueOf(nativeManagementPortProperty);
+                } catch(NumberFormatException nfe) {
+                    log.error("Given " + PREF_JBOSS_MANAGEMENT_NATIVE_PORT + " could not be parsed as a valid port number, using default 9999 for installation");
+                }
+            }
+
+            if (isPortInUse("127.0.0.1", nativeManagementPort)) {
                 throw new IOException(
-                    "Something is already listening to port 9999 - shut it down before installing the server.");
+                    "Something is already listening to port " + nativeManagementPort + " - shut it down before installing the server.");
             }
 
             org.apache.commons.exec.CommandLine commandLine;

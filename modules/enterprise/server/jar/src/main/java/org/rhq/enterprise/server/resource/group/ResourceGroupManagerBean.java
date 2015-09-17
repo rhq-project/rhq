@@ -1543,6 +1543,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
      * explicitCount (ordinal 0) - the count of the number of children in the group
      * implicitCount (ordinal 2) - the count of the number of descendents in the group
      */
+    @SuppressWarnings("unchecked")
     public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(Subject subject,
         ResourceGroupCriteria criteria) {
 
@@ -1632,7 +1633,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             + alias + ".id";
 
         // query implicit group members
-        List<ResourceGroupComposite> implicitResults = entityManager.createQuery(compositeQuery, ResourceGroupComposite.class)
+        List<ResourceGroupComposite> implicitResults = entityManager.createQuery(compositeQuery)
             .setParameter("ids", groupIds).getResultList();
 
         from = compositeFromCause.replace("%membership%", "explicit").replace("%alias%", alias)
@@ -1642,7 +1643,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             + ".id";
 
         // query explicit members
-        List<ResourceGroupComposite> explicitResults = entityManager.createQuery(compositeQuery, ResourceGroupComposite.class)
+        List<ResourceGroupComposite> explicitResults = entityManager.createQuery(compositeQuery)
             .setParameter("ids", groupIds).getResultList();
 
         List<ResourceGroupComposite> permissionResults = null;
@@ -1655,8 +1656,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 + alias + ".id";
 
             // query permissions
-            permissionResults = entityManager
-                .createQuery(compositeQuery, ResourceGroupComposite.class).setParameter("ids", groupIds).getResultList();
+            permissionResults = entityManager.createQuery(compositeQuery).setParameter("ids", groupIds).getResultList();
 
         }
         // now "join" results together

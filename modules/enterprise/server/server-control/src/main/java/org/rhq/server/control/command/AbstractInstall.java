@@ -386,6 +386,16 @@ public abstract class AbstractInstall extends ControlCommand {
 
         try {
             validateServerPropertiesFile();
+            File serverPropsFile = getServerPropertiesFile();
+            Properties serverProps = new PropertiesFileUpdate(serverPropsFile).loadExistingProperties();
+
+            for (Map.Entry<Object, Object> entry : serverProps.entrySet()) {
+                String key = (String) entry.getKey();
+                if(key.startsWith("jboss.")) {
+                    System.setProperty(key, (String) entry.getValue());
+                }
+            }
+
             log.info("The RHQ Server must be started to complete its installation. Starting the RHQ server in preparation of running the server installer...");
 
             // when you unzip the distro, you are getting a fresh, unadulterated, out-of-box EAP installation, which by default listens

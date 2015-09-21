@@ -195,6 +195,17 @@
         </parameters>
       </operation>
 
+      <operation name="TokenToEndpointMap" displayName="View Token To Endpoint Map">
+        <results>
+          <c:list-property name="operationResult" description="Token To Endpoint Map">
+            <c:map-property name="entry">
+              <c:simple-property name="token" type="string" />
+              <c:simple-property name="endpoint" type="string" />
+            </c:map-property>
+          </c:list-property>
+        </results>
+      </operation>
+
       <metric property="Calculated.DataDiskUsedPercentage" displayName="Data File Disk Used Percentage" dataType="measurement" units="percentage" displayType="summary" description="Percentage of disk space used by Cassandra data files. The aggregate accross all the partitions will be reported if multiple data locations are specified. This is a calculated metric derived from system and Cassandra runtime information."/>
       <metric property="Calculated.TotalDiskUsedPercentage" displayName="Total Disk Used Percentage" dataType="measurement" units="percentage" displayType="summary" description="Percentage of total disk space used. The metric acounts overall disk usage (including system files), not just disk space used by Cassandra. The aggregate accross all the partitions will be reported if multiple data locations are specified. This is a calculated metric derived from system and Cassandra runtime information."/>
       <metric property="Calculated.FreeDiskToDataSizeRatio" displayName="Free Disk to Data Size Ratio" dataType="measurement" displayType="summary" description="Ratio of (Free Disk)/(Data File Size). A value below 1 is not recommended since a compaction or repair process could double the amount of disk space used by data files. The aggregate accross all the partitions will be reported if multiple data locations are specified. This is a calculated metric derived from system and Cassandra runtime information."/>
@@ -248,26 +259,8 @@
           <c:list-property name="JoiningNodes" readOnly="true" description="List of nodes currently joining the ring.">
             <c:simple-property name="node" readOnly="true"/>
           </c:list-property>
-          <c:list-property name="LoadMap" readOnly="true" description="Human-readable load values for the cluster.">
-              <c:map-property name="entry" readOnly="true">
-                <c:simple-property name="endpoint" readOnly="true"/>
-                <c:simple-property name="load" readOnly="true"/>
-              </c:map-property>
-          </c:list-property>
           <c:list-property name="MovingNodes" readOnly="true" description="List of nodes currently moving the ring.">
             <c:simple-property name="node" readOnly="true"/>
-          </c:list-property>
-          <c:list-property name="Ownership" readOnly="true" description="Mapping of token -> percentage of cluster owned by that token">
-              <c:map-property name="entry" readOnly="true">
-                <c:simple-property name="token" readOnly="true"/>
-                <c:simple-property name="percentage" readOnly="true"/>
-              </c:map-property>
-          </c:list-property>
-          <c:list-property name="TokenToEndpointMap" readOnly="true" description="Token To Endpoint Map">
-              <c:map-property name="entry" readOnly="true">
-                <c:simple-property name="token" readOnly="true"/>
-                <c:simple-property name="endpoint" readOnly="true"/>
-              </c:map-property>
           </c:list-property>
           <c:list-property name="UnreachableNodes" readOnly="true" description="List of unreachable nodes in the cluster, as determined by this node's failure detector.">
             <c:simple-property name="node" readOnly="true"/>
@@ -598,7 +591,7 @@
 
     <service name="MessagingService"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-             class="org.rhq.plugins.cassandra.ComplexConfigurationResourceComponent"
+             class="org.rhq.plugins.cassandra.MessagingServiceComponent"
              singleton="true"
              subCategory="Network Services">
 
@@ -606,63 +599,40 @@
         <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.net:type=MessagingService"/>
         <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Messaging Service"/>
       </plugin-configuration>
+      
+      <operation name="DroppedMessages" displayName="List Dropped Messages">
+        <results>
+          <c:list-property name="operationResult" description="Dropped Messages">
+            <c:map-property name="entry">
+              <c:simple-property name="name" type="string" />
+              <c:simple-property name="value" type="string" />
+            </c:map-property>
+          </c:list-property>
+        </results>
+      </operation>
+      <operation name="RecentlyDroppedMessages" displayName="List Recently Dropped Messages">
+        <results>
+          <c:list-property name="operationResult" description="Recently Dropped Messages">
+            <c:map-property name="entry">
+              <c:simple-property name="name" type="string" />
+              <c:simple-property name="value" type="string" />
+            </c:map-property>
+          </c:list-property>
+        </results>
+      </operation>
 
       <metric property="TotalTimeouts" measurementType="trendsup" displayType="detail" description="Total timeouts."/>
-      <metric property="RecentTotalTimouts" measurementType="trendsup" displayType="detail" description="Recent total timeouts."/>
+      <metric property="RecentTotalTimouts" measurementType="trendsup" displayType="detail" description="Recent total timeouts"/>
 
-      <resource-configuration>
-        <c:list-property name="CommandPendingTasks" readOnly="true">
-          <c:map-property name="CommandPendingTask" readOnly="true">
-              <c:simple-property name="name" type="string" readOnly="true"/>
-              <c:simple-property name="value" type="string" readOnly="true"/>
-          </c:map-property>
-        </c:list-property>
-        <c:list-property name="CommandCompletedTasks" readOnly="true">
-          <c:map-property name="CommandCompletedTask" readOnly="true">
-              <c:simple-property name="name" type="string" readOnly="true"/>
-              <c:simple-property name="value" type="string" readOnly="true"/>
-          </c:map-property>
-        </c:list-property>
+      <metric property="host:CommandPendingTasks" displayName="Command Pending Tasks" dataType="measurement"  displayType="detail" />
+      <metric property="host:CommandCompletedTasks" measurementType="trendsup" displayName="Command Completed Tasks" dataType="measurement"  displayType="detail" />
+      
+      <metric property="host:ResponsePendingTasks" displayName="Response Pending Tasks" dataType="measurement"  displayType="detail" />
+      <metric property="host:ResponseCompletedTasks" measurementType="trendsup" displayName="Response Completed Tasks" dataType="measurement"  displayType="detail" />
+      
+      <metric property="host:TimeoutsPerHost" measurementType="trendsup" displayName="Host Timeouts" dataType="measurement"  displayType="detail" />
+      <metric property="host:RecentTimeoutsPerHost" displayName="Host Recent Timeouts" dataType="measurement"  displayType="detail" />
 
-        <c:list-property name="ResponsePendingTasks" readOnly="true">
-          <c:map-property name="ResponsePendingTask" readOnly="true">
-              <c:simple-property name="name" type="string" readOnly="true"/>
-              <c:simple-property name="value" type="string" readOnly="true"/>
-          </c:map-property>
-        </c:list-property>
-        <c:list-property name="ResponseCompletedTasks" readOnly="true">
-          <c:map-property name="ResponseCompletedTask" readOnly="true">
-              <c:simple-property name="name" type="string" readOnly="true"/>
-              <c:simple-property name="value" type="string" readOnly="true"/>
-          </c:map-property>
-        </c:list-property>
-
-        <c:list-property name="DroppedMessages" readOnly="true">
-          <c:map-property name="DroppedMessage" readOnly="true">
-              <c:simple-property name="name" type="string" readOnly="true"/>
-              <c:simple-property name="value" type="string" readOnly="true"/>
-          </c:map-property>
-        </c:list-property>
-        <c:list-property name="RecentlyDroppedMessages" readOnly="true">
-          <c:map-property name="RecentlyDroppedMessage" readOnly="true">
-              <c:simple-property name="name" type="string" readOnly="true"/>
-              <c:simple-property name="value" type="string" readOnly="true"/>
-          </c:map-property>
-        </c:list-property>
-
-        <c:list-property name="TimeoutsPerHost" readOnly="true">
-          <c:map-property name="TimeoutPerHost" readOnly="true">
-              <c:simple-property name="name" type="string" readOnly="true"/>
-              <c:simple-property name="value" type="string" readOnly="true"/>
-          </c:map-property>
-        </c:list-property>
-        <c:list-property name="RecentTimeoutsPerHost" readOnly="true">
-          <c:map-property name="RecentTimeoutPerHost" readOnly="true">
-              <c:simple-property name="name" type="string" readOnly="true"/>
-              <c:simple-property name="value" type="string" readOnly="true"/>
-          </c:map-property>
-        </c:list-property>
-      </resource-configuration>
     </service>
 
 

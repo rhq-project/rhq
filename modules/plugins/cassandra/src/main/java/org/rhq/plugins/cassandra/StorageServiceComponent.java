@@ -30,7 +30,6 @@ import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +49,6 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.FileSystemInfo;
-import org.rhq.plugins.jmx.JMXComponent;
 
 /**
  * @author John Sanda
@@ -65,20 +63,6 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
     private static final String LOAD_NAME = "Load";
 
     private Log log = LogFactory.getLog(StorageServiceComponent.class);
-    private InetAddress host;
-
-    @Override
-    public void start(ResourceContext<JMXComponent<?>> context) {
-        super.start(context);
-        CassandraNodeComponent parrent = (CassandraNodeComponent) context.getParentResourceComponent();
-        try {
-            host = InetAddress.getByName(parrent.getHost());
-        } catch (UnknownHostException e) {
-            log.error(
-                "Unable to convert hostname[" + parrent.getHost() + "] into IP address for " + context.getResourceKey(),
-                e);
-        }
-    }
 
     @Override
     public AvailabilityType getAvailability() {
@@ -125,6 +109,8 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
             return takeSnapshot(parameters);
         } else if (name.equals("setLog4jLevel")) {
             return setLog4jLevel(parameters);
+        } else if (name.equals("TokenToEndpointMap")) {
+            return invokeReadAttributeOperationComplexResult(name, "token", "endpoint");
         }
 
         return super.invokeOperation(name, parameters);
@@ -174,8 +160,11 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
             load = load / 1024d; //transform in MB
         }
 
+        InetAddress host = getCassandraComponent().getHostAddress();
         for (MeasurementScheduleRequest request : requests) {
             if (OWNERSHIP_METRIC_NAME.equals(request.getName()) && host != null) {
+                // this code would not be necessary and we could use "host:" prefix
+                // but we keep it for compatibility reasons (metric name is not changed)
                 EmsAttribute attribute = bean.getAttribute(OWNERSHIP_METRIC_NAME);
                 Object valueObject = attribute.refresh();
                 if (valueObject instanceof Map<?, ?>) {
@@ -198,6 +187,7 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
                 }
                 break;
             } else if (DATA_DISK_USED_PERCENTAGE_METRIC_NAME.equals(request.getName())
+
                 || TOTAL_DISK_USED_PERCENTAGE_METRIC_NAME.equals(request.getName())
                 || FREE_DISK_TO_DATA_SIZE_RATIO_METRIC_NAME.equals(request.getName())) {
                 double metricValue = getDiskUsageMetric(request, load, (String[]) dataFileLocationValue);

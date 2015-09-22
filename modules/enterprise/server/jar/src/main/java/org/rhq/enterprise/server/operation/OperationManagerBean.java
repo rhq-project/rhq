@@ -1628,8 +1628,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 // In either case, we can't wait forever, so we'll mark them as failed with an appropriate error message.
                 long duration = history.getDuration();
                 long createdTime = history.getCreatedTime();
-                boolean timedOut = (duration > timeout);
-                boolean neverStarted = ((System.currentTimeMillis() - createdTime) > (1000 * 60 * 60 * 24));
+                boolean started = history.getStartedTime() > 0;
+                boolean timedOut = (duration > timeout) && started;
+                boolean neverStarted = !started && ((System.currentTimeMillis() - createdTime) > (1000 * 60 * 60 * 24));
                 if (timedOut || neverStarted) {
                     if (timedOut) {
                         // the operation started, but the agent never told us how it finished prior to exceeding the timeout

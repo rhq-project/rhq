@@ -1740,7 +1740,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         resultPageList = getAuthorizedGroupComposites(subject, authzType, resultPageList);
 
-        for (ResourceGroupComposite composite : results) {
+        for (ResourceGroupComposite composite : resultPageList) {
             ResourceGroup group = composite.getResourceGroup();
             ResourceType type = group.getResourceType();
             ResourceFacets facets = (type != null) ? resourceTypeManager.getResourceFacets(type.getId())

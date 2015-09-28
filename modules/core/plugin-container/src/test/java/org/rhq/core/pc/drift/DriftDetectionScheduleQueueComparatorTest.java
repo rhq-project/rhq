@@ -59,7 +59,7 @@ public class DriftDetectionScheduleQueueComparatorTest {
             }
             foundDisabled = !enabled;
             if (!foundDisabled) {
-                assertTrue(schedule.getNextScan() < previousSchedule.getNextScan(), "getNextScan priority failure");
+                assertTrue(schedule.getNextScan() > previousSchedule.getNextScan(), "getNextScan priority failure");
             }
             previousSchedule = schedule;
         }

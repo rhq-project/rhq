@@ -306,6 +306,14 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
     }
 
     private BundleHandoverResponse handleDeployment(BundleHandoverRequest request) {
+        // first make sure our server is UP. We need to check it, because this handover
+        // could happen right after "execute-script" handover, which could have reloaded the server
+        // @see https://bugzilla.redhat.com/show_bug.cgi?id=1252930
+        if (!ensureServerUp(BUNDLE_HANDOVER_SERVER_CHECK_TIMEOUT)) {
+            return BundleHandoverResponse.failure(EXECUTION,
+                "Failed to upload deployment content, " + this.context.getResourceDetails()
+                    + " is currently not responding or " + AvailabilityType.DOWN);
+        }
         HandoverContentUploader contentUploader = new HandoverContentUploader(request, getASConnection());
         boolean uploaded = contentUploader.upload();
         if (!uploaded) {

@@ -37,4 +37,16 @@
     <method>void deleteBundleDestination(*)</method>
     <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1255821</justification>
   </difference>
+  <difference>
+    <className>org/rhq/enterprise/server/event/EventManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added -->
+    <method>int deleteEventsForContext(*)</method>
+    <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1258870</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/enterprise/server/event/EventManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added -->
+    <method>int purgeEventsForContext(*)</method>
+    <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1258870</justification>
+  </difference>
 </differences>

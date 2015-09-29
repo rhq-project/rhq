@@ -18,9 +18,12 @@
  */
 package org.rhq.enterprise.server.event;
 
+import java.util.List;
+
 import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
@@ -74,4 +77,21 @@ public interface EventManagerRemote {
      * @return not null
      */
     PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria);
+
+    /**
+     *
+     * @param subject Requires MANAGE_EVENT user rights or AutoGroupRights for AutoGroups
+     * @param context Acceptable values: Resource, ResourceGroup and AutoGroup
+     * @param eventIds
+     * @return
+     */
+    int deleteEventsForContext(Subject subject, EntityContext context, List<Integer> eventIds);
+
+    /**
+     *
+     * @param subject Requires MANAGE_EVENT user rights
+     * @param context Acceptable values: Resource and ResourceGroup
+     * @return
+     */
+    int purgeEventsForContext(Subject subject, EntityContext context);
 }

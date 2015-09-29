@@ -78,10 +78,6 @@ public interface EventManagerLocal extends EventManagerRemote {
 
     void deleteEventSourcesForDefinition(EventDefinition def);
 
-    int deleteEventsForContext(Subject subject, EntityContext context, List<Integer> eventIds);
-
-    int purgeEventsForContext(Subject subject, EntityContext context);
-
     PageList<EventComposite> findEventComposites(Subject subject, EntityContext context, long begin, long end,
         EventSeverity[] severities, String source, String detail, PageControl pc);
 

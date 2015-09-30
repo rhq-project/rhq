@@ -28,6 +28,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -79,6 +81,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
     private String host;
     private ProcessInfo processInfo;
+    private InetAddress hostAddress;
 
     @SuppressWarnings("rawtypes")
     @Override
@@ -87,7 +90,18 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
         processInfo = context.getNativeProcess();
         host = context.getPluginConfiguration().getSimpleValue("host", "localhost");
+
+        try {
+            hostAddress = InetAddress.getByName(this.host);
+        } catch (UnknownHostException e) {
+            log.error("Unable to convert hostname[" + this.host + "] into IP address for " + context.getResourceKey(),
+                e);
+        }
     };
+
+    public InetAddress getHostAddress() {
+        return hostAddress;
+    }
 
     @Override
     public void stop() {

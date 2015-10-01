@@ -404,6 +404,9 @@ public class ApplicationServerComponent<T extends ResourceComponent<?>> implemen
                     "Values of 'principal' and/or 'credentials' connection properties are invalid.", rootCause);
             }
             log.debug("Failed to connect to Profile Service.", e);
+            // it is not a good idea to catch RuntimeException. If we really have to do it
+            // we need to re-throw it (as it can be InterrupedException or SocketTimoeout..)
+            throw e;
         }
     }
 

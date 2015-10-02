@@ -57,6 +57,12 @@ import org.rhq.coregui.client.util.message.Message;
  */
 public class BundleGroupsStep extends AbstractWizardStep {
 
+    // BZ 1252142: We don't want the usual 30s timeout for GWT service calls when creating the initial bundle
+    // version. We can't advance the wizard until the bundle version creation is complete and for large
+    // distribution files it can take some time to move the uploaded [tmp] file from disk into the DB. So, use
+    // a liberal timeout here...
+    private static final int BUNDLE_CREATE_INITIAL_VERSION_TIMEOUT = 10 * 60 * 1000;
+
     private EnhancedVLayout canvas;
     private DynamicForm radioForm;
     private AbstractBundleCreateWizard wizard = null;
@@ -71,7 +77,7 @@ public class BundleGroupsStep extends AbstractWizardStep {
         canvas = new EnhancedVLayout();
         canvas.setWidth100();
 
-        // go get the assignable/assigned bundle groups for this new bundle version, initial or not 
+        // go get the assignable/assigned bundle groups for this new bundle version, initial or not
         this.isInitialVersion = this.wizard.getBundleVersion() == null
             || this.wizard.getBundleVersion().getVersionOrder() == 0;
 
@@ -280,7 +286,7 @@ public class BundleGroupsStep extends AbstractWizardStep {
 
     private void processRecipe() {
 
-        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService(BUNDLE_CREATE_INITIAL_VERSION_TIMEOUT);
         bundleServer.createInitialBundleVersionViaRecipe(getInitialBundleIds(),
             this.wizard.getCreateInitialBundleVersionRecipe(), new AsyncCallback<BundleVersion>() {
                 @Override
@@ -305,7 +311,7 @@ public class BundleGroupsStep extends AbstractWizardStep {
 
     private void processToken() {
 
-        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService(BUNDLE_CREATE_INITIAL_VERSION_TIMEOUT);
         bundleServer.createInitialBundleVersionViaToken(getInitialBundleIds(),
             this.wizard.getCreateInitialBundleVersionToken(), new AsyncCallback<BundleVersion>() {
                 @Override
@@ -323,7 +329,7 @@ public class BundleGroupsStep extends AbstractWizardStep {
                     wizard.getView().showMessage(caught.getMessage());
                     CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
                     wizard.setBundleVersion(null);
-                    wizard.setCreateInitialBundleVersionToken("");
+                    wizard.setCreateInitialBundleVersionToken(null);
                 }
             });
     }

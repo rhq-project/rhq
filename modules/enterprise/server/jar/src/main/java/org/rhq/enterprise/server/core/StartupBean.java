@@ -866,8 +866,7 @@ public class StartupBean implements StartupLocal {
 
         // Storage cluster replication factor check Job
         try {
-            // TODO set appropriate timing
-            final long initialDelay = 1000L * 10 * 0; // 2 mins
+            final long initialDelay = 1000L * 60 * 2; // 2 mins
             final long interval = 1000L * 60 * 5; // 5 mins
             schedulerBean.scheduleSimpleRepeatingJob(ReplicationFactorCheckJob.class, true, false, initialDelay,
                 interval);

@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ProtocolOptions;
@@ -154,11 +153,9 @@ public class ReplicationFactorCheckJob extends AbstractStatefulJob {
             log.error("Failed to connect to storage cluster", ex);
         } finally {
             if (session != null) {
-                boolean closed = session.shutdown(1, TimeUnit.MINUTES);
-                if (!closed) {
-                    log.warn("Failed to shutdown storage cluster session within 1 minute");
-                }
+                session.shutdown();
             }
+            cluster.shutdown();
         }
     }
 

@@ -52,6 +52,7 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pluginapi.configuration.ListPropertySimpleWrapper;
 import org.rhq.core.pluginapi.configuration.MapPropertySimpleWrapper;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
@@ -268,7 +269,11 @@ public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
         InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
         inventoryManager.deactivateResource(getServerResource());
         ResourceContainer serverContainer = inventoryManager.getResourceContainer(getServerResource());
-        inventoryManager.activateResource(getServerResource(), serverContainer, true);
+        try {
+            inventoryManager.activateResource(getServerResource(), serverContainer, true);
+        } catch (InvalidPluginConfigurationException ex) {
+            // we may fail to start the component in case the server is down and connection to ProfileService cannot be obtained
+        }
     }
 
     protected String getExpectedStartScriptFileName() {

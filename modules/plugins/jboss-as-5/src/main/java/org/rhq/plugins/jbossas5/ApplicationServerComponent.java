@@ -134,7 +134,11 @@ public class ApplicationServerComponent<T extends ResourceComponent<?>> implemen
     private CreateChildResourceFacetDelegate createChildResourceDelegate;
 
     public AvailabilityType getAvailability() {
+        try {
         connectToProfileService();
+        } catch (RuntimeException re) {
+            return AvailabilityType.DOWN;
+        }
         AvailabilityType availability;
         if (this.connection != null) {
             try {
@@ -336,7 +340,12 @@ public class ApplicationServerComponent<T extends ResourceComponent<?>> implemen
 
     @Nullable
     public ProfileServiceConnection getConnection() {
-        connectToProfileService();
+        try {
+            connectToProfileService();
+        } catch (RuntimeException ex) {
+
+        }
+
         return this.connection;
     }
 

@@ -33,7 +33,6 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
 
@@ -48,8 +47,6 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion, Bundle
     public static final String FIELD_NAME = "name";
     public static final String FIELD_DESCRIPTION = "description";
     public static final String FIELD_FILECOUNT = "fileCount";
-
-    private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     public BundleVersionDataSource() {
         super();
@@ -84,7 +81,8 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion, Bundle
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, final BundleVersionCriteria criteria) {
-        bundleService.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+        GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(criteria,
+            new AsyncCallback<PageList<BundleVersion>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_bundleVersion_loadFailure(), caught);
                 response.setStatus(DSResponse.STATUS_FAILURE);

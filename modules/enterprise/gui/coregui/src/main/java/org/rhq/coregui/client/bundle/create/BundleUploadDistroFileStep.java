@@ -51,7 +51,6 @@ import org.rhq.coregui.client.components.upload.DynamicFormHandler;
 import org.rhq.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
 import org.rhq.coregui.client.components.upload.TextFileRetrieverForm;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.message.Message;
@@ -266,9 +265,9 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             return;
         }
 
-        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService(10 * 60 * 1000); // if upload takes more than 10m, you have other things to worry about
-        bundleServer.createOrStoreBundleVersionViaURL(urlString, urlUserName, urlPassword,
-            new AsyncCallback<BundleVersion>() {
+        // if upload takes more than 10m, you have other things to worry about
+        GWTServiceLookup.getBundleService(10 * 60 * 1000).createOrStoreBundleVersionViaURL(urlString, urlUserName,
+            urlPassword, new AsyncCallback<BundleVersion>() {
                 @Override
                 public void onSuccess(BundleVersion result) {
                     CoreGUI.getMessageCenter().notify(
@@ -318,8 +317,8 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             || this.wizard.getBundleVersion().getVersionOrder() == 0;
         int bundleId = isInitialVersion ? 0 : this.wizard.getBundleVersion().getBundle().getId();
 
-        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-        bundleServer.getAssignableBundleGroups(bundleId, new AsyncCallback<BundleGroupAssignmentComposite>() {
+        GWTServiceLookup.getBundleService().getAssignableBundleGroups(bundleId,
+            new AsyncCallback<BundleGroupAssignmentComposite>() {
 
             public void onSuccess(BundleGroupAssignmentComposite result) {
                 wizard.setBundleGroupAssignmentComposite(result);
@@ -346,8 +345,8 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                 BundleVersionCriteria criteria = new BundleVersionCriteria();
                 criteria.addFilterId(bvId);
                 criteria.fetchBundle(true);
-                BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-                bundleServer.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+                GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(criteria,
+                    new AsyncCallback<PageList<BundleVersion>>() {
                     @Override
                     public void onSuccess(PageList<BundleVersion> result) {
                         BundleVersion bv = result.get(0);
@@ -387,8 +386,8 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         }
 
         this.wizard.setRecipe(recipeString);
-        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-        bundleServer.createBundleVersionViaRecipe(this.wizard.getRecipe(), new AsyncCallback<BundleVersion>() {
+        GWTServiceLookup.getBundleService().createBundleVersionViaRecipe(this.wizard.getRecipe(),
+            new AsyncCallback<BundleVersion>() {
             @Override
             public void onSuccess(BundleVersion result) {
                 CoreGUI.getMessageCenter().notify(

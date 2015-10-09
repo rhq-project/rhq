@@ -32,7 +32,6 @@ import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
 
@@ -48,8 +47,6 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
     public static final String FIELD_LATEST_VERSION = "latestVersion";
     public static final String FIELD_VERSIONS_COUNT = "deploymentCount";
 
-    private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
-
     public BundlesWithLatestVersionDataSource() {
         super();
         List<DataSourceField> fields = addDataSourceFields();
@@ -58,7 +55,7 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, final BundleCriteria criteria) {
-        bundleService.findBundlesWithLatestVersionCompositesByCriteria(criteria,
+        GWTServiceLookup.getBundleService().findBundlesWithLatestVersionCompositesByCriteria(criteria,
             new AsyncCallback<PageList<BundleWithLatestVersionComposite>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_loadWithLatestFailure(), caught);

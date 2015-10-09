@@ -59,7 +59,6 @@ import org.rhq.coregui.client.components.HeaderLabel;
 import org.rhq.coregui.client.components.buttons.BackButton;
 import org.rhq.coregui.client.components.tagging.TagEditorView;
 import org.rhq.coregui.client.components.tagging.TagsChangedCallback;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton.ButtonColor;
@@ -71,7 +70,6 @@ import org.rhq.coregui.client.util.message.Message;
  */
 public class BundleVersionView extends EnhancedVLayout implements BookmarkableView {
 
-    private BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
     private BundleVersion version;
     private boolean canDelete;
     private boolean canDeploy;
@@ -194,7 +192,7 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
             .getBundle().getName());
         getMessageCenter().notify(new Message(deleteSubmittedMessage, Message.Severity.Info));
         final Duration duration = new Duration();
-        bundleManager.deleteBundleVersion(version.getId(), false, new AsyncCallback<Void>() {
+        GWTServiceLookup.getBundleService().deleteBundleVersion(version.getId(), false, new AsyncCallback<Void>() {
             @Override
             public void onFailure(final Throwable caught) {
                 Timer timer = new Timer() {
@@ -304,7 +302,8 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
         criteria.fetchConfigurationDefinition(true);
         criteria.fetchTags(true);
 
-        bundleManager.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+        GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(criteria,
+            new AsyncCallback<PageList<BundleVersion>>() {
             @Override
             public void onFailure(Throwable caught) {
                 getErrorHandler().handleError(MSG.view_bundle_version_loadFailure(), caught);

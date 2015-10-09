@@ -78,7 +78,6 @@ import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.components.tagging.TagEditorView;
 import org.rhq.coregui.client.components.tagging.TagsChangedCallback;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
@@ -247,25 +246,26 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
                             if (aBoolean) {
                                 final int destinationId = deployment.getDestination().getId();
                                 final String destinationName = deployment.getDestination().getName();
-                                BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService(600000); // 10m should be enough right?
-                                bundleService.purgeBundleDestination(destinationId, new AsyncCallback<Void>() {
-                                    @Override
-                                    public void onFailure(Throwable caught) {
-                                        getErrorHandler().handleError(
-                                            MSG.view_bundle_dest_purgeFailure(destinationName), caught);
-                                    }
+                                // 10m should be enough right?
+                                GWTServiceLookup.getBundleService(600000).purgeBundleDestination(destinationId,
+                                    new AsyncCallback<Void>() {
+                                        @Override
+                                        public void onFailure(Throwable caught) {
+                                            getErrorHandler().handleError(
+                                                MSG.view_bundle_dest_purgeFailure(destinationName), caught);
+                                        }
 
-                                    @Override
-                                    public void onSuccess(Void result) {
-                                        getMessageCenter().notify(
-                                            new Message(MSG.view_bundle_dest_purgeSuccessful(destinationName),
-                                                Message.Severity.Info));
-                                        // Bundle destination is purged, go back to bundle deployment view - it is not live anymore
-                                        goToView(
-                                            LinkManager.getBundleDeploymentLink(bundle.getId(), deployment.getId()),
-                                            true);
-                                    }
-                                });
+                                        @Override
+                                        public void onSuccess(Void result) {
+                                            getMessageCenter().notify(
+                                                new Message(MSG.view_bundle_dest_purgeSuccessful(destinationName),
+                                                    Message.Severity.Info));
+                                            // Bundle destination is purged, go back to bundle deployment view - it is not live anymore
+                                            goToView(
+                                                LinkManager.getBundleDeploymentLink(bundle.getId(), deployment.getId()),
+                                                true);
+                                        }
+                                    });
                             }
                         }
                     });
@@ -307,8 +307,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         String deleteSubmittedMessage = MSG.view_bundle_deploy_deleteSubmitted(deployment.getName());
         getMessageCenter().notify(new Message(deleteSubmittedMessage, Message.Severity.Info));
         final Duration duration = new Duration();
-        BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
-        bundleService.deleteBundleDeployment(deployment.getId(), new AsyncCallback<Void>() {
+        GWTServiceLookup.getBundleService().deleteBundleDeployment(deployment.getId(), new AsyncCallback<Void>() {
             @Override
             public void onFailure(final Throwable caught) {
                 Timer timer = new Timer() {
@@ -476,49 +475,50 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         criteria.fetchDestination(true);
         criteria.fetchTags(true);
 
-        final BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
-        bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
-            @Override
-            public void onFailure(Throwable caught) {
-                getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);
-            }
+        GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(criteria,
+            new AsyncCallback<PageList<BundleDeployment>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);
+                }
 
-            @Override
-            public void onSuccess(PageList<BundleDeployment> result) {
-                final BundleDeployment deployment = result.get(0);
-                BundleCriteria bundleCriteria = new BundleCriteria();
-                bundleCriteria.addFilterId(deployment.getBundleVersion().getBundle().getId());
-                bundleService.findBundlesByCriteria(bundleCriteria, new AsyncCallback<PageList<Bundle>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        getErrorHandler().handleError(MSG.view_bundle_deploy_loadBundleFailure(), caught);
-                    }
+                @Override
+                public void onSuccess(PageList<BundleDeployment> result) {
+                    final BundleDeployment deployment = result.get(0);
+                    BundleCriteria bundleCriteria = new BundleCriteria();
+                    bundleCriteria.addFilterId(deployment.getBundleVersion().getBundle().getId());
+                    GWTServiceLookup.getBundleService().findBundlesByCriteria(bundleCriteria,
+                        new AsyncCallback<PageList<Bundle>>() {
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                getErrorHandler().handleError(MSG.view_bundle_deploy_loadBundleFailure(), caught);
+                            }
 
-                    @Override
-                    public void onSuccess(PageList<Bundle> result) {
-                        final Bundle bundle = result.get(0);
-                        deployment.getBundleVersion().setBundle(bundle);
-                        BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
-                        criteria.addFilterBundleDeploymentId(deployment.getId());
-                        criteria.fetchResource(true);
-                        criteria.fetchBundleDeployment(true);
-                        bundleService.findBundleResourceDeploymentsByCriteria(criteria,
-                            new AsyncCallback<PageList<BundleResourceDeployment>>() {
-                                @Override
-                                public void onFailure(Throwable caught) {
-                                    getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);
-                                }
+                            @Override
+                            public void onSuccess(PageList<Bundle> result) {
+                                final Bundle bundle = result.get(0);
+                                deployment.getBundleVersion().setBundle(bundle);
+                                BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
+                                criteria.addFilterBundleDeploymentId(deployment.getId());
+                                criteria.fetchResource(true);
+                                criteria.fetchBundleDeployment(true);
+                                GWTServiceLookup.getBundleService().findBundleResourceDeploymentsByCriteria(criteria,
+                                    new AsyncCallback<PageList<BundleResourceDeployment>>() {
+                                        @Override
+                                        public void onFailure(Throwable caught) {
+                                            getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);
+                                        }
 
-                                @Override
-                                public void onSuccess(PageList<BundleResourceDeployment> result) {
-                                    deployment.setResourceDeployments(result);
-                                    viewBundleDeployment(deployment);
-                                }
-                            });
-                    }
-                });
-            }
-        });
+                                        @Override
+                                        public void onSuccess(PageList<BundleResourceDeployment> result) {
+                                            deployment.setResourceDeployments(result);
+                                            viewBundleDeployment(deployment);
+                                        }
+                                    });
+                            }
+                        });
+                }
+            });
     }
 
 }

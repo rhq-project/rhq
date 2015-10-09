@@ -34,7 +34,6 @@ import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
@@ -48,7 +47,6 @@ public class ConfirmationStep extends AbstractWizardStep {
     private VLayout layout;
     private boolean nextPage = true;
     private final BundleRevertWizard wizard;
-    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
     public ConfirmationStep(BundleRevertWizard wizard) {
         this.wizard = wizard;
@@ -68,7 +66,7 @@ public class ConfirmationStep extends AbstractWizardStep {
             c.addFilterDestinationId(this.wizard.getDestination().getId());
             c.addFilterIsLive(true);
             c.fetchBundleVersion(true);
-            bundleServer.findBundleDeploymentsByCriteria(c, //
+            GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(c, //
                 new AsyncCallback<PageList<BundleDeployment>>() {
 
                     public void onSuccess(PageList<BundleDeployment> liveDeployments) {
@@ -99,7 +97,7 @@ public class ConfirmationStep extends AbstractWizardStep {
                         // Get the Replaced Deployment (the one we want to revert to_
                         BundleDeploymentCriteria c = new BundleDeploymentCriteria();
                         c.addFilterId(replacedBundleDeploymentId);
-                        bundleServer.findBundleDeploymentsByCriteria(c, //
+                        GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(c, //
                             new AsyncCallback<PageList<BundleDeployment>>() {
 
                                 public void onSuccess(PageList<BundleDeployment> replacedBundleDeployments) {
@@ -212,7 +210,8 @@ public class ConfirmationStep extends AbstractWizardStep {
             if (prev.getBundleVersion().getVersion() == null) {
                 BundleVersionCriteria c = new BundleVersionCriteria();
                 c.addFilterId(prev.getBundleVersion().getId());
-                bundleServer.findBundleVersionsByCriteria(c, new AsyncCallback<PageList<BundleVersion>>() {
+                GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(c,
+                    new AsyncCallback<PageList<BundleVersion>>() {
 
                     @Override
                     public void onSuccess(PageList<BundleVersion> result) {

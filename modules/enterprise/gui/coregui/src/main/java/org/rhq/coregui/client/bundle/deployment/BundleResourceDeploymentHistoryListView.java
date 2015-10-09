@@ -54,7 +54,6 @@ import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ErrorMessageWindow;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -156,8 +155,7 @@ public class BundleResourceDeploymentHistoryListView extends EnhancedVLayout {
     }
 
     private void loadData() {
-        BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService(30000);
-        bundleService.getBundleResourceDeploymentHistories(resourceDeployment.getId(),
+        GWTServiceLookup.getBundleService(30000).getBundleResourceDeploymentHistories(resourceDeployment.getId(),
             new AsyncCallback<List<BundleResourceDeploymentHistory>>() {
                 @Override
                 public void onFailure(Throwable caught) {

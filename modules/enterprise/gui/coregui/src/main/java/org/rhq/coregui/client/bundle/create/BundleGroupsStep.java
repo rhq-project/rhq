@@ -46,7 +46,6 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.bundle.group.BundleGroupSelector;
 import org.rhq.coregui.client.bundle.group.BundleGroupsDataSource;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.FormUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
@@ -286,9 +285,9 @@ public class BundleGroupsStep extends AbstractWizardStep {
 
     private void processRecipe() {
 
-        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService(BUNDLE_CREATE_INITIAL_VERSION_TIMEOUT);
-        bundleServer.createInitialBundleVersionViaRecipe(getInitialBundleIds(),
-            this.wizard.getCreateInitialBundleVersionRecipe(), new AsyncCallback<BundleVersion>() {
+        GWTServiceLookup.getBundleService(BUNDLE_CREATE_INITIAL_VERSION_TIMEOUT).createInitialBundleVersionViaRecipe(
+            getInitialBundleIds(), this.wizard.getCreateInitialBundleVersionRecipe(),
+            new AsyncCallback<BundleVersion>() {
                 @Override
                 public void onSuccess(BundleVersion result) {
                     CoreGUI.getMessageCenter().notify(
@@ -311,9 +310,9 @@ public class BundleGroupsStep extends AbstractWizardStep {
 
     private void processToken() {
 
-        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService(BUNDLE_CREATE_INITIAL_VERSION_TIMEOUT);
-        bundleServer.createInitialBundleVersionViaToken(getInitialBundleIds(),
-            this.wizard.getCreateInitialBundleVersionToken(), new AsyncCallback<BundleVersion>() {
+        GWTServiceLookup.getBundleService(BUNDLE_CREATE_INITIAL_VERSION_TIMEOUT).createInitialBundleVersionViaToken(
+            getInitialBundleIds(), this.wizard.getCreateInitialBundleVersionToken(),
+            new AsyncCallback<BundleVersion>() {
                 @Override
                 public void onSuccess(BundleVersion result) {
                     CoreGUI.getMessageCenter().notify(
@@ -336,9 +335,8 @@ public class BundleGroupsStep extends AbstractWizardStep {
 
     private void processAssignment() {
 
-        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-        bundleServer.assignBundlesToBundleGroups(getInitialBundleIds(), new int[] { wizard.getBundleVersion()
-            .getBundle().getId() }, new AsyncCallback<Void>() {
+        GWTServiceLookup.getBundleService().assignBundlesToBundleGroups(getInitialBundleIds(),
+            new int[] { wizard.getBundleVersion().getBundle().getId() }, new AsyncCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
                 CoreGUI.getMessageCenter().notify(

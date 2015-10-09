@@ -57,7 +57,6 @@ import org.rhq.coregui.client.components.table.RecordExtractor;
 import org.rhq.coregui.client.components.table.RoleAuthorizedTableAction;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.ErrorHandler;
 import org.rhq.coregui.client.util.StringUtility;
@@ -68,7 +67,7 @@ import org.rhq.coregui.client.util.message.Message.Severity;
 /**
  * Shows a list of bundles in the system. The list gives you some actions like new, delete and deploy but
  * only if you provide the proper permissions. If you give null permissions, no action buttons are shown.
- * 
+ *
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
@@ -78,7 +77,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
 
     /**
      * Creates a new list view.
-     * 
+     *
      * @param perms if perms is null, no button actions will be shown in the table
      */
     public BundlesListView(Set<Permission> perms) {
@@ -143,7 +142,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
             }
         });
 
-        // only show the buttons if we were given a set of permissions - passing in null is a way to say you only want the list, no actions 
+        // only show the buttons if we were given a set of permissions - passing in null is a way to say you only want the list, no actions
         if (globalPermissions != null) {
             boolean hasGlobalDelete = globalPermissions.contains(Permission.DELETE_BUNDLES);
 
@@ -197,9 +196,8 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
                 doomedIds[i++] = object.getBundleId();
             }
 
-            BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
             final Duration duration = new Duration();
-            bundleManager.deleteBundles(doomedIds, new AsyncCallback<Void>() {
+            GWTServiceLookup.getBundleService().deleteBundles(doomedIds, new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(final Throwable caught) {
                     Timer timer = new Timer() {
@@ -261,8 +259,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
             final BundleWithLatestVersionComposite object = dataSource.copyValues(selection[0]);
             BundleCriteria bc = new BundleCriteria();
             bc.addFilterId(object.getBundleId());
-            BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
-            bundleManager.findBundlesByCriteria(bc, new AsyncCallback<PageList<Bundle>>() {
+            GWTServiceLookup.getBundleService().findBundlesByCriteria(bc, new AsyncCallback<PageList<Bundle>>() {
                 @Override
                 public void onFailure(Throwable caught) {
                     getErrorHandler().handleError(MSG.view_bundle_list_loadFailure(object.getBundleName()), caught);

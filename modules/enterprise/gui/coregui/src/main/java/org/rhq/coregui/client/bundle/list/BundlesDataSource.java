@@ -33,7 +33,6 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
 
@@ -41,8 +40,6 @@ import org.rhq.coregui.client.util.RPCDataSource;
  * @author Greg Hinkle
  */
 public class BundlesDataSource extends RPCDataSource<Bundle, BundleCriteria> {
-
-    private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     public BundlesDataSource() {
         super();
@@ -72,7 +69,7 @@ public class BundlesDataSource extends RPCDataSource<Bundle, BundleCriteria> {
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, final BundleCriteria criteria) {
-        bundleService.findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
+        GWTServiceLookup.getBundleService().findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.dataSource_bundle_loadFailed(), caught);
                 response.setStatus(DSResponse.STATUS_FAILURE);

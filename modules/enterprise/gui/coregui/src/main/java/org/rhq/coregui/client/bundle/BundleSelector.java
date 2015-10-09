@@ -37,7 +37,6 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.bundle.list.BundlesDataSource;
 import org.rhq.coregui.client.components.form.SortedSelectItem;
 import org.rhq.coregui.client.components.selector.AbstractSelector;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
 
@@ -46,7 +45,6 @@ import org.rhq.coregui.client.util.RPCDataSource;
  */
 public class BundleSelector extends AbstractSelector<Bundle, BundleCriteria> {
 
-    private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
     private boolean canAssign;
     private boolean canUnassign;
 
@@ -69,7 +67,7 @@ public class BundleSelector extends AbstractSelector<Bundle, BundleCriteria> {
         final TextItem search = new TextItem("search", MSG.common_title_search());
 
         final SelectItem bundleTypeSelect = new SortedSelectItem("bundleType", MSG.view_bundle_bundleType());
-        bundleService.getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
+        GWTServiceLookup.getBundleService().getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.dataSource_bundle_loadFailed(), caught);
             }
@@ -94,7 +92,7 @@ public class BundleSelector extends AbstractSelector<Bundle, BundleCriteria> {
 
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
         String search = (String) availableFilterForm.getValue("search");
-        String bundleType = (String) availableFilterForm.getValueAsString("bundleType");
+        String bundleType = availableFilterForm.getValueAsString("bundleType");
 
         Criteria latestCriteria = new Criteria();
         latestCriteria.addCriteria("search", search);

@@ -40,7 +40,6 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.admin.users.UsersDataSource.Field;
 import org.rhq.coregui.client.bundle.list.BundlesDataSource;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
 
@@ -54,8 +53,6 @@ public class BundleGroupsDataSource extends RPCDataSource<BundleGroup, BundleGro
     public static final String FIELD_NAMELINK = "nameLink";
     public static final String FIELD_DESCRIPTION = "description";
     public static final String FIELD_BUNDLES = "bundles";
-
-    private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     private static BundleGroupsDataSource INSTANCE;
 
@@ -92,7 +89,8 @@ public class BundleGroupsDataSource extends RPCDataSource<BundleGroup, BundleGro
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, final BundleGroupCriteria criteria) {
-        bundleService.findBundleGroupsByCriteria(criteria, new AsyncCallback<PageList<BundleGroup>>() {
+        GWTServiceLookup.getBundleService().findBundleGroupsByCriteria(criteria,
+            new AsyncCallback<PageList<BundleGroup>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.dataSource_bundle_loadFailed(), caught);
                 response.setStatus(DSResponse.STATUS_FAILURE);
@@ -114,7 +112,7 @@ public class BundleGroupsDataSource extends RPCDataSource<BundleGroup, BundleGro
         // may support tags in future, but not in rev1
         //criteria.addFilterTagNamespace(getFilter(request, "tagNamespace", String.class));
         //criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
-        //criteria.addFilterTagName(getFilter(request, "tagName", String.class));       
+        //criteria.addFilterTagName(getFilter(request, "tagName", String.class));
         //criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
 
         criteria.addFilterId(getFilter(request, FIELD_ID, Integer.class));
@@ -129,7 +127,7 @@ public class BundleGroupsDataSource extends RPCDataSource<BundleGroup, BundleGro
     protected void executeAdd(final Record recordToAdd, final DSRequest request, final DSResponse response) {
         final BundleGroup newBundleGroup = copyValues(recordToAdd);
 
-        bundleService.createBundleGroup(newBundleGroup, new AsyncCallback<BundleGroup>() {
+        GWTServiceLookup.getBundleService().createBundleGroup(newBundleGroup, new AsyncCallback<BundleGroup>() {
             public void onFailure(Throwable caught) {
                 // TODO: Throw more specific SLSB exceptions so we can set the right validation errors.
                 String message = caught.getMessage();
@@ -154,7 +152,7 @@ public class BundleGroupsDataSource extends RPCDataSource<BundleGroup, BundleGro
         final DSRequest request, final DSResponse response) {
         final BundleGroup editedBundleGroup = copyValues(editedBundleGroupRecord);
 
-        bundleService.updateBundleGroup(editedBundleGroup, new AsyncCallback<BundleGroup>() {
+        GWTServiceLookup.getBundleService().updateBundleGroup(editedBundleGroup, new AsyncCallback<BundleGroup>() {
             public void onFailure(Throwable caught) {
                 String message = "Failed to update bundle group [" + editedBundleGroup.getName() + "].";
                 sendFailureResponse(request, response, message, caught);

@@ -54,7 +54,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.bundle.deploy.selection.SingleCompatibleResourceGroupSelector;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.groups.wizard.AbstractGroupCreateWizard;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -71,7 +70,6 @@ import org.rhq.coregui.client.util.message.Message.Severity;
  */
 public class GetDestinationStep extends AbstractWizardStep {
 
-    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private final BundleDeployWizard wizard;
     private VLayout form;
     DynamicForm valForm = new DynamicForm();
@@ -229,7 +227,7 @@ public class GetDestinationStep extends AbstractWizardStep {
         // protect against re-execution of this step via the "Previous" button. If we had created
         // a dest previously it must be deleted before we try to create a new one.
         if (wizard.isNewDestination() && (null != wizard.getDestination())) {
-            bundleServer.deleteBundleDestination(wizard.getDestination().getId(), //
+            GWTServiceLookup.getBundleService().deleteBundleDestination(wizard.getDestination().getId(), //
                 new AsyncCallback<Void>() {
                     public void onSuccess(Void voidReturn) {
                         createDestination();
@@ -252,8 +250,9 @@ public class GetDestinationStep extends AbstractWizardStep {
     private void createDestination() {
         int selectedGroup = (Integer) this.valForm.getValue("group");
 
-        bundleServer.createBundleDestination(wizard.getBundleId(), destination.getName(), destination.getDescription(),
-            destination.getDestinationSpecificationName(), destination.getDeployDir(), selectedGroup, //
+        GWTServiceLookup.getBundleService().createBundleDestination(wizard.getBundleId(), destination.getName(),
+            destination.getDescription(), destination.getDestinationSpecificationName(), destination.getDeployDir(),
+            selectedGroup, //
             new AsyncCallback<BundleDestination>() {
                 public void onSuccess(BundleDestination result) {
                     wizard.setDestination(result);
@@ -289,7 +288,7 @@ public class GetDestinationStep extends AbstractWizardStep {
 
         // this will be null if there is no true group actually selected (e.g. user is typing a partial name to search)
         if (selectedGroupId != null) {
-            bundleServer.getResourceTypeBundleConfiguration(selectedGroupId.intValue(),
+            GWTServiceLookup.getBundleService().getResourceTypeBundleConfiguration(selectedGroupId.intValue(),
                 new AsyncCallback<ResourceTypeBundleConfiguration>() {
                     public void onSuccess(ResourceTypeBundleConfiguration result) {
                         // populate the base location drop down with all the possible dest base directories

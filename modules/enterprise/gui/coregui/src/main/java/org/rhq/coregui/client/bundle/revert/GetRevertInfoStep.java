@@ -30,7 +30,6 @@ import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.StringUtility;
 
@@ -42,7 +41,6 @@ public class GetRevertInfoStep extends AbstractWizardStep {
 
     private DynamicForm form;
     private final BundleRevertWizard wizard;
-    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
     public GetRevertInfoStep(BundleRevertWizard wizard) {
         this.wizard = wizard;
@@ -59,8 +57,8 @@ public class GetRevertInfoStep extends AbstractWizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            bundleServer.getBundleDeploymentName(wizard.getDestination().getId(), -1, wizard.getPreviousDeployment()
-                .getId(), //
+            GWTServiceLookup.getBundleService().getBundleDeploymentName(wizard.getDestination().getId(), -1,
+                wizard.getPreviousDeployment().getId(), //
                 new AsyncCallback<String>() {
 
                     public void onSuccess(String bundleDeploymentName) {

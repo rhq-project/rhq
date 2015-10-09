@@ -30,7 +30,6 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
@@ -44,8 +43,6 @@ public class RevertStep extends AbstractWizardStep {
 
     private VLayout canvas;
     private final BundleRevertWizard wizard;
-
-    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
     public RevertStep(BundleRevertWizard wizard) {
         this.wizard = wizard;
@@ -73,7 +70,7 @@ public class RevertStep extends AbstractWizardStep {
             canvas.addMember(deployingImage);
             canvas.addMember(deployingMessage);
 
-            bundleServer.scheduleRevertBundleDeployment(this.wizard.getDestination().getId(),
+            GWTServiceLookup.getBundleService().scheduleRevertBundleDeployment(this.wizard.getDestination().getId(),
                 this.wizard.getDeploymentDescription(), this.wizard.isCleanDeployment(), //
                 new AsyncCallback<BundleDeployment>() {
                     public void onSuccess(BundleDeployment result) {

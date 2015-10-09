@@ -53,7 +53,6 @@ import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.StringUtility;
@@ -66,8 +65,6 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
 
     // this is the field that will contain data which can be used to sort the tree nodes
     public static final String FIELD_SORT_VALUE = "sortValue";
-
-    private final BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     public BundleTreeDataSource() {
         super();
@@ -110,7 +107,7 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
             BundleCriteria criteria = new BundleCriteria();
             criteria.fetchBundleGroups(true);
 
-            bundleService.findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
+            GWTServiceLookup.getBundleService().findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_bundle_tree_loadFailure(), caught);
                     response.setStatus(DSResponse.STATUS_FAILURE);
@@ -150,7 +147,8 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
 
                     BundleGroupCriteria bundleGroupCriteria = new BundleGroupCriteria();
                     bundleGroupCriteria.addFilterIds(visibleBundleGroups.keySet().toArray(new Integer[0]));
-                    bundleService.findBundleGroupsByCriteria(bundleGroupCriteria, new AsyncCallback<PageList<BundleGroup>>() {
+                    GWTServiceLookup.getBundleService().findBundleGroupsByCriteria(bundleGroupCriteria,
+                        new AsyncCallback<PageList<BundleGroup>>() {
                         public void onFailure(Throwable caught) {
                             // just log a message, but keep going, this just means we can't show lock icons where applicable
                             CoreGUI.getErrorHandler().handleError(MSG.view_bundle_tree_loadFailure(), caught);
@@ -199,7 +197,8 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
             if (parentId.endsWith("_versions")) {
                 BundleVersionCriteria criteria = new BundleVersionCriteria();
                 criteria.addFilterBundleId(bundleId);
-                bundleService.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+                GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(criteria,
+                    new AsyncCallback<PageList<BundleVersion>>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.view_bundle_tree_loadFailure(), caught);
                         response.setStatus(DSResponse.STATUS_FAILURE);
@@ -217,7 +216,7 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
                 BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
                 criteria.fetchBundleVersion(true);
                 criteria.addFilterBundleId(bundleId);
-                bundleService.findBundleDeploymentsByCriteria(criteria,
+                GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(criteria,
                         new AsyncCallback<PageList<BundleDeployment>>() {
                             public void onFailure(Throwable caught) {
                                 CoreGUI.getErrorHandler().handleError(MSG.view_bundle_tree_loadFailure(), caught);
@@ -233,7 +232,7 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
                 BundleDestinationCriteria criteria = new BundleDestinationCriteria();
                 criteria.addFilterBundleId(bundleId);
                 criteria.fetchDeployments(true);
-                bundleService.findBundleDestinationsByCriteria(criteria,
+                GWTServiceLookup.getBundleService().findBundleDestinationsByCriteria(criteria,
                     new AsyncCallback<PageList<BundleDestination>>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(MSG.view_bundle_tree_loadFailure(), caught);
@@ -250,7 +249,8 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
                 criteria.addFilterId(bundleId);
                 criteria.fetchDestinations(true);
 
-                bundleService.findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
+                GWTServiceLookup.getBundleService().findBundlesByCriteria(criteria,
+                    new AsyncCallback<PageList<Bundle>>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.view_bundle_tree_loadFailure(), caught);
                         response.setStatus(DSResponse.STATUS_FAILURE);

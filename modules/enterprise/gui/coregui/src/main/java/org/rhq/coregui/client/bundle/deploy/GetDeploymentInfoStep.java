@@ -34,7 +34,6 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 
 /**
@@ -45,7 +44,6 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
 
     private DynamicForm form;
     private final BundleDeployWizard wizard;
-    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
     public GetDeploymentInfoStep(BundleDeployWizard wizard) {
         this.wizard = wizard;
@@ -62,8 +60,8 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            bundleServer.getBundleDeploymentName(wizard.getDestination().getId(), wizard.getBundleVersion().getId(),
-                -1, //
+            GWTServiceLookup.getBundleService().getBundleDeploymentName(wizard.getDestination().getId(),
+                wizard.getBundleVersion().getId(), -1, //
                 new AsyncCallback<String>() {
 
                     public void onSuccess(String result) {

@@ -61,7 +61,6 @@ import org.rhq.coregui.client.components.buttons.BackButton;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.tagging.TagEditorView;
 import org.rhq.coregui.client.components.tagging.TagsChangedCallback;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
@@ -227,8 +226,9 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
                     @Override
                     public void execute(Boolean aBoolean) {
                         if (aBoolean) {
-                            BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService(600000); // 10m should be enough right?
-                            bundleService.purgeBundleDestination(destination.getId(), new AsyncCallback<Void>() {
+                            // 10m should be enough right?
+                            GWTServiceLookup.getBundleService(600000).purgeBundleDestination(destination.getId(),
+                                new AsyncCallback<Void>() {
                                 @Override
                                 public void onFailure(Throwable caught) {
                                     getErrorHandler().handleError(
@@ -288,8 +288,7 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
             .getBundle().getName());
         getMessageCenter().notify(new Message(deleteSubmittedMessage, Message.Severity.Info));
         final Duration duration = new Duration();
-        BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
-        bundleService.deleteBundleDestination(destination.getId(), new AsyncCallback<Void>() {
+        GWTServiceLookup.getBundleService().deleteBundleDestination(destination.getId(), new AsyncCallback<Void>() {
             @Override
             public void onFailure(final Throwable caught) {
                 Timer timer = new Timer() {
@@ -321,12 +320,12 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
     }
 
     private void checkIfDisabled(final IButton purgeButton) {
-        BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
         BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
         criteria.addFilterDestinationId(destination.getId());
         criteria.addFilterIsLive(Boolean.TRUE);
         criteria.setPageControl(PageControl.getSingleRowInstance());
-        bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
+        GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(criteria,
+            new AsyncCallback<PageList<BundleDeployment>>() {
             @Override
             public void onFailure(Throwable caught) {
                 purgeButton.setDisabled(false);
@@ -359,8 +358,8 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         criteria.fetchDeployments(true);
         criteria.fetchTags(true);
 
-        BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
-        bundleService.findBundleDestinationsByCriteria(criteria, new AsyncCallback<PageList<BundleDestination>>() {
+        GWTServiceLookup.getBundleService().findBundleDestinationsByCriteria(criteria,
+            new AsyncCallback<PageList<BundleDestination>>() {
             @Override
             public void onFailure(Throwable caught) {
                 getErrorHandler().handleError(MSG.view_bundle_dest_loadFailure(), caught);

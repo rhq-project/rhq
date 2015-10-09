@@ -36,7 +36,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.form.SortedSelectItem;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 
 /**
@@ -50,7 +49,6 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
     static private final String SELECT_VERSION = "select";
 
     private final BundleDeployWizard wizard;
-    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private DynamicForm form;
 
     private RadioGroupItem radioGroupItem = new RadioGroupItem("options", "Deploy Options");
@@ -119,7 +117,7 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
         BundleVersionCriteria criteria = new BundleVersionCriteria();
         criteria.addFilterBundleId(wizard.getBundleId());
         criteria.fetchConfigurationDefinition(true);
-        bundleServer.findBundleVersionsByCriteria(criteria, //
+        GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(criteria, //
             new AsyncCallback<PageList<BundleVersion>>() {
 
                 public void onSuccess(PageList<BundleVersion> result) {
@@ -143,7 +141,7 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
                     criteria.addFilterIsLive(true);
                     criteria.fetchBundleVersion(true);
                     criteria.fetchConfiguration(true);
-                    bundleServer.findBundleDeploymentsByCriteria(criteria, //
+                    GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(criteria, //
                         new AsyncCallback<PageList<BundleDeployment>>() {
 
                             public void onSuccess(PageList<BundleDeployment> result) {

@@ -23,15 +23,23 @@ import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
 import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.PermissionsLoader;
 import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.util.Log;
 
 /**
- * This lookup service retrieves each RPC service and sets a custom RpcRequestBuilder that adds the login session 
+ * This lookup service retrieves each RPC service and sets a custom RpcRequestBuilder that adds the login session
  * id to be security checked on the server.  Where timeouts can be specified: -1=default, 0=disable,
  * >0=specifiedValueInMilliseconds.
- *
+ * <p><b>IMPORTANT:</b></p>
+ * <p>
+ * A lookup for any given service returns a cached instance of the service.  That instance is given a new
+ * RequestBuilder with the requested timeout (or the default if a no-timeout lookup signature is used). That means the
+ * the timeout lives <i>only until the next lookup is performed for the same service!</i>.  So, it is highly
+ * recommended that you chain the service lookup directly to the service method being invoked.  Do not declare
+ * the service in advance, especially as a class-level field where it may be instantiated at unexpected times.
+ * The lookups are lightweight, so don't be afraid to perform a lookup for each service call. For example:
+ * <pre>GWTServiceLookup.getBundleService().deleteBundleDestination(args)</pre>
+ * </p>
  * @author Greg Hinkle
  * @author Joseph Marques
  * @author John Mazzitelli
@@ -201,7 +209,7 @@ public class GWTServiceLookup {
     public static PlatformUtilizationGWTServiceAsync getPlatformUtilizationService() {
         return secure(PlatformUtilizationGWTServiceAsync.Util.getInstance());
     }
-    
+
     public static PlatformUtilizationGWTServiceAsync getPlatformUtilizationService(int timeout) {
         return secure(PlatformUtilizationGWTServiceAsync.Util.getInstance(), timeout);
     }
@@ -209,7 +217,7 @@ public class GWTServiceLookup {
     public static TopologyGWTServiceAsync getTopologyService() {
         return secure(TopologyGWTServiceAsync.Util.getInstance());
     }
-    
+
     public static StorageGWTServiceAsync getStorageService() {
         return secure(StorageGWTServiceAsync.Util.getInstance());
     }
@@ -224,7 +232,8 @@ public class GWTServiceLookup {
         if (!(sdt instanceof ServiceDefTarget))
             return null;
 
-        ((ServiceDefTarget) sdt).setRpcRequestBuilder(new SessionRpcRequestBuilder(timeout));
+        SessionRpcRequestBuilder rb = new SessionRpcRequestBuilder(timeout);
+        ((ServiceDefTarget) sdt).setRpcRequestBuilder(rb);
 
         return (T) sdt;
     }

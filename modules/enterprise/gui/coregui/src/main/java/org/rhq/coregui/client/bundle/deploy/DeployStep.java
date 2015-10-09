@@ -30,7 +30,6 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.ErrorHandler;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
@@ -45,8 +44,6 @@ public class DeployStep extends AbstractWizardStep {
 
     private VLayout canvas;
     private final BundleDeployWizard wizard;
-
-    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
     public DeployStep(BundleDeployWizard wizard) {
         this.wizard = wizard;
@@ -74,8 +71,9 @@ public class DeployStep extends AbstractWizardStep {
             canvas.addMember(deployingImage);
             canvas.addMember(deployingMessage);
 
-            bundleServer.createBundleDeployment(wizard.getBundleVersion().getId(), wizard.getDestination().getId(),
-                wizard.getNewDeploymentDescription(), wizard.getNewDeploymentConfig(), false, -1, false, //
+            GWTServiceLookup.getBundleService().createBundleDeployment(wizard.getBundleVersion().getId(),
+                wizard.getDestination().getId(), wizard.getNewDeploymentDescription(), wizard.getNewDeploymentConfig(),
+                false, -1, false, //
                 new AsyncCallback<BundleDeployment>() {
                     public void onSuccess(BundleDeployment result) {
                         deployingImage.setSrc(ImageManager.getStatusComplete());
@@ -86,7 +84,7 @@ public class DeployStep extends AbstractWizardStep {
                                     result.getDescription()), Severity.Info));
                         wizard.setNewDeployment(result);
 
-                        bundleServer.scheduleBundleDeployment(wizard.getNewDeployment().getId(),
+                        GWTServiceLookup.getBundleService().scheduleBundleDeployment(wizard.getNewDeployment().getId(),
                             wizard.isCleanDeployment(), //
                             new AsyncCallback<BundleDeployment>() {
                                 public void onSuccess(BundleDeployment result) {

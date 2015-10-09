@@ -31,7 +31,6 @@ import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.wizard.WizardStep;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 
 /**
@@ -92,11 +91,10 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
         // the deployment fails and they user wants to Cancel as opposed to Finish, let's
         // clean up as best as possible.
         if ((null != getNewDeployment()) && (0 < getNewDeployment().getId())) {
-            BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
             BundleDeploymentCriteria c = new BundleDeploymentCriteria();
             c.addFilterId(getNewDeployment().getId());
             c.fetchResourceDeployments(true);
-            bundleServer.findBundleDeploymentsByCriteria(c, //
+            GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(c, //
                 new AsyncCallback<PageList<BundleDeployment>>() {
                     public void onSuccess(PageList<BundleDeployment> newDeploymentList) {
                         if (!newDeploymentList.isEmpty()) {
@@ -111,8 +109,7 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
                             // if the deployment can't be deleted then don't try to delete the destination,
                             // it's now in use by the deployment
                             if (isFailedToLaunch && hasNoResourceDeployments) {
-                                BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-                                bundleServer.deleteBundleDeployment(newDeployment.getId(), //
+                                GWTServiceLookup.getBundleService().deleteBundleDeployment(newDeployment.getId(), //
                                     new AsyncCallback<Void>() {
                                         public void onSuccess(Void voidReturn) {
                                             deleteNewDestination();
@@ -140,9 +137,7 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
     private void deleteNewDestination() {
         if (this.isNewDestination() && (null != this.getDestination())) {
-            BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-
-            bundleServer.deleteBundleDestination(this.getDestination().getId(), //
+            GWTServiceLookup.getBundleService().deleteBundleDestination(this.getDestination().getId(), //
                 new AsyncCallback<Void>() {
                     public void onSuccess(Void voidReturn) {
                         CoreGUI.refresh();

@@ -37,7 +37,6 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
 
@@ -46,7 +45,6 @@ import org.rhq.coregui.client.util.RPCDataSource;
  */
 public class BundleResourceDeploymentDataSource extends
     RPCDataSource<BundleResourceDeployment, BundleResourceDeploymentCriteria> {
-    private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     public BundleResourceDeploymentDataSource() {
         super();
@@ -74,7 +72,7 @@ public class BundleResourceDeploymentDataSource extends
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response,
         final BundleResourceDeploymentCriteria criteria) {
-        bundleService.findBundleResourceDeploymentsByCriteria(criteria,
+        GWTServiceLookup.getBundleService().findBundleResourceDeploymentsByCriteria(criteria,
             new AsyncCallback<PageList<BundleResourceDeployment>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_bundle_resDeployDS_loadFailure(), caught);

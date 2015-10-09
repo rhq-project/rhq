@@ -43,7 +43,6 @@ import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.view.HasViewName;
 import org.rhq.coregui.client.components.view.ViewName;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.ErrorHandler;
 import org.rhq.coregui.client.util.StringUtility;
@@ -53,7 +52,7 @@ import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * Shows a list of bundle groups in the system. The list gives you some actions but proper permissions are required.
- * 
+ *
  * @author Jay Shaughnessy
  */
 public class BundleGroupsListView extends TableSection<BundleGroupsDataSource> implements HasViewName {
@@ -65,7 +64,7 @@ public class BundleGroupsListView extends TableSection<BundleGroupsDataSource> i
 
     /**
      * Creates a new list view.
-     * 
+     *
      * @param globalPermissions if null, no buttons will be active, otherwise normal authz in place
      */
     public BundleGroupsListView(Set<Permission> globalPermissions) {
@@ -128,40 +127,39 @@ public class BundleGroupsListView extends TableSection<BundleGroupsDataSource> i
 
         addTableAction(MSG.common_button_delete(), MSG.view_bundleGroup_deleteConfirm(), ButtonColor.RED,
             new AbstractTableAction((hasAuthz) ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
-            public void executeAction(ListGridRecord[] selections, Object actionValue) {
-                if (selections == null || selections.length == 0) {
-                    return;
-                }
-
-                BundleGroupsDataSource ds = (BundleGroupsDataSource) getDataSource();
-                final ArrayList<String> doomedNames = new ArrayList<String>(selections.length);
-                int[] doomedIds = new int[selections.length];
-                int i = 0;
-                for (ListGridRecord selection : selections) {
-                    BundleGroup object = ds.copyValues(selection);
-                    doomedNames.add(object.getName());
-                    doomedIds[i++] = object.getId();
-                }
-
-                BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
-                bundleManager.deleteBundleGroups(doomedIds, new AsyncCallback<Void>() {
-                    public void onFailure(Throwable caught) {
-                        String names = doomedNames.toString();
-                        String error = ErrorHandler.getAllMessages(caught);
-                        Message m = new Message(MSG.view_bundleGroup_deletesFailure(), names + "<br/>\n" + error,
-                            Severity.Error);
-                        CoreGUI.getMessageCenter().notify(m);
+                public void executeAction(ListGridRecord[] selections, Object actionValue) {
+                    if (selections == null || selections.length == 0) {
+                        return;
                     }
 
-                    public void onSuccess(Void result) {
-                        Message m = new Message(MSG.view_bundleGroup_deletesSuccessful(), doomedNames.toString(),
-                            Severity.Info);
-                        CoreGUI.getMessageCenter().notify(m);
-                        CoreGUI.refresh();
+                    BundleGroupsDataSource ds = getDataSource();
+                    final ArrayList<String> doomedNames = new ArrayList<String>(selections.length);
+                    int[] doomedIds = new int[selections.length];
+                    int i = 0;
+                    for (ListGridRecord selection : selections) {
+                        BundleGroup object = ds.copyValues(selection);
+                        doomedNames.add(object.getName());
+                        doomedIds[i++] = object.getId();
                     }
-                });
-            }
-        });
+
+                    GWTServiceLookup.getBundleService().deleteBundleGroups(doomedIds, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            String names = doomedNames.toString();
+                            String error = ErrorHandler.getAllMessages(caught);
+                            Message m = new Message(MSG.view_bundleGroup_deletesFailure(), names + "<br/>\n" + error,
+                                Severity.Error);
+                            CoreGUI.getMessageCenter().notify(m);
+                        }
+
+                        public void onSuccess(Void result) {
+                            Message m = new Message(MSG.view_bundleGroup_deletesSuccessful(), doomedNames.toString(),
+                                Severity.Info);
+                            CoreGUI.getMessageCenter().notify(m);
+                            CoreGUI.refresh();
+                        }
+                    });
+                }
+            });
     }
 
     @Override

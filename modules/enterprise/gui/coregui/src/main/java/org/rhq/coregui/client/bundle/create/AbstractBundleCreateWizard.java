@@ -28,7 +28,6 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.wizard.AbstractWizard;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
@@ -110,9 +109,8 @@ public abstract class AbstractBundleCreateWizard extends AbstractWizard {
     public void cancel() {
         final BundleVersion bv = getBundleVersion();
         if (bv != null) {
-            // the user must have created it already after verification step, delete it, if possible
-            BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-            bundleServer.deleteBundleVersion(bv.getId(), true, new AsyncCallback<Void>() {
+            // the user must have created it already after verification step, delete it, if possible 
+            GWTServiceLookup.getBundleService().deleteBundleVersion(bv.getId(), true, new AsyncCallback<Void>() {
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.view_bundle_createWizard_cancelSuccessful(bv.getName(), bv.getVersion()),

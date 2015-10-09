@@ -29,7 +29,6 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.form.SortedSelectItem;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
@@ -69,8 +68,7 @@ public class BundleTypeDropDownSelectItem extends SortedSelectItem {
             }
         });
 
-        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-        bundleServer.getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
+        GWTServiceLookup.getBundleService().getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
             public void onSuccess(ArrayList<BundleType> result) {
                 if (result == null || result.size() == 0) {
                     setSelected(null);

@@ -68,7 +68,6 @@ import org.rhq.coregui.client.components.buttons.BackButton;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.tagging.TagEditorView;
 import org.rhq.coregui.client.components.tagging.TagsChangedCallback;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
@@ -89,7 +88,6 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
     private boolean canDeploy;
     private boolean canTag;
 
-    private BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
     private Bundle bundle;
 
     public BundleView(Set<Permission> perms) {
@@ -234,8 +232,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
 
                 BundleCriteria bc = new BundleCriteria();
                 bc.addFilterId(bundle.getId());
-                BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
-                bundleManager.findBundlesByCriteria(bc, new AsyncCallback<PageList<Bundle>>() {
+                GWTServiceLookup.getBundleService().findBundlesByCriteria(bc, new AsyncCallback<PageList<Bundle>>() {
                     @Override
                     public void onFailure(Throwable caught) {
                         getErrorHandler().handleError(MSG.view_bundle_list_error1(bundle.getName()), caught);
@@ -282,7 +279,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         String deleteSubmittedMessage = MSG.view_bundle_deleteSubmitted(bundle.getName());
         getMessageCenter().notify(new Message(deleteSubmittedMessage, Message.Severity.Info));
         final Duration duration = new Duration();
-        bundleManager.deleteBundle(bundleBeingViewed, new AsyncCallback<Void>() {
+        GWTServiceLookup.getBundleService().deleteBundle(bundleBeingViewed, new AsyncCallback<Void>() {
             @Override
             public void onFailure(final Throwable caught) {
                 Timer timer = new Timer() {

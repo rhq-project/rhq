@@ -38,7 +38,6 @@ import org.rhq.coregui.client.components.upload.BundleFileUploadForm;
 import org.rhq.coregui.client.components.upload.DynamicFormHandler;
 import org.rhq.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
 import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
@@ -47,7 +46,6 @@ import org.rhq.coregui.client.util.message.Message.Severity;
 public class BundleUploadDataStep extends AbstractWizardStep {
 
     private final AbstractBundleCreateWizard wizard;
-    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private ArrayList<BundleFileUploadForm> uploadForms;
     private Boolean noFilesNeedToBeUploaded = null; // will be non-null when we know the answer
 
@@ -61,7 +59,7 @@ public class BundleUploadDataStep extends AbstractWizardStep {
         mainLayout.setWidth100();
         mainLayout.setHeight(10);
 
-        bundleServer.getAllBundleVersionFilenames(this.wizard.getBundleVersion().getId(),
+        GWTServiceLookup.getBundleService().getAllBundleVersionFilenames(this.wizard.getBundleVersion().getId(),
             new AsyncCallback<HashMap<String, Boolean>>() {
 
                 public void onSuccess(HashMap<String, Boolean> result) {

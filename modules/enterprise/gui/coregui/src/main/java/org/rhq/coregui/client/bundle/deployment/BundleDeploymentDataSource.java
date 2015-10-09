@@ -39,7 +39,6 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
 
@@ -60,8 +59,6 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment, 
     public static final String FIELD_BUNDLE_VERSION_VERSION = "bundleVersionVersion";
     public static final String FIELD_BUNDLE_VERSION_ID = "bundleVersionId";
     public static final String FIELD_BUNDLE_ID = "bundleId";
-
-    private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     public BundleDeploymentDataSource() {
         super();
@@ -99,7 +96,8 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment, 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response,
         final BundleDeploymentCriteria criteria) {
-        bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
+        GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(criteria,
+            new AsyncCallback<PageList<BundleDeployment>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadDeployFailure(), caught);
             }

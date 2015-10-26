@@ -172,9 +172,8 @@ public class JavascriptCompletor implements CodeCompletion {
      * @return location of relative completion
      */
     private int contextComplete(PrintWriter output, Object baseObject, String s, int i, List<String> list) {
-        String temp = s.split("\\(", 2)[0];
-        if (temp.contains(".")) {
-            String[] call = temp.split("\\.", 2);
+        if (s.contains(".")) {
+            String[] call = s.split("\\.", 2);
 
             String next = call[0];
             if (next.contains("(")) {
@@ -358,7 +357,7 @@ public class JavascriptCompletor implements CodeCompletion {
             if (params.endsWith(")")) {
                 return -1;
             } else {
-                list.add(params + ")");
+                list.add(")");
                 return (params + ")").length();
             }
         } else {

@@ -216,7 +216,7 @@ public class AgentUpdateThread extends Thread {
 
         // We should only ever get here if everything was successful.
         // We now need to exit the thread; and if everything goes according to plan, the VM will now exit
-        shutdownHook.spawnKillThread(1000L * 60 * 1); // pull the pin - FIRE IN THE HOLE!
+        shutdownHook.spawnKillThread(this.agent.getConfiguration().getAgentUpdateExitTimeout()); // pull the pin - FIRE IN THE HOLE!
         return;
     }
 

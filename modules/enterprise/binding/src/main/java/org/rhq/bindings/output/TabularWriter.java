@@ -122,24 +122,34 @@ public class TabularWriter {
 
     public void print(Object object) {
 
+        if (object == null) {
+            this.out.println("null");
+            return;
+        }
+
         if (object instanceof Map) {
-            print((Map) object);
+            printMap((Map) object);
             return;
         }
 
         if (object instanceof Collection) {
-            print((Collection) object);
+            printCollection((Collection) object);
             return;
         }
 
         if (object instanceof Configuration) {
-            print((Configuration) object);
+            printConfiguration((Configuration) object);
+            return;
+        }
+
+        if (object instanceof String[][]) {
+            printMultidimensionalStringArray((String[][])object);
             return;
         }
 
         if (object != null && object.getClass().isArray()) {
             if (!object.getClass().getComponentType().isPrimitive()) {
-                print((Object[]) object);
+                printArray((Object[]) object);
             } else {
                 Class<?> oClass = object.getClass();
                 // note: we assume single-dimension arrays!
@@ -293,7 +303,7 @@ public class TabularWriter {
         return "..." + string.substring(string.length() - (maxWidth - 3));
     }
 
-    public void print(Map map) {
+    public void printMap(Map map) {
 
         String[][] data = new String[map.size()][];
         int i = 0;
@@ -305,10 +315,10 @@ public class TabularWriter {
             i++;
         }
         this.headers = new String[] { "Key", "Value" };
-        print(data);
+        printArray(data);
     }
 
-    public void print(Collection list) {
+    public void printCollection(Collection list) {
         // List of arbitrary objects
         if (list == null || list.size() == 0) {
             if (!hideRowCount) {
@@ -337,7 +347,7 @@ public class TabularWriter {
                         for (Object object : list) {
                             data[i++][0] = (String) object;
                         }
-                        this.print(data);
+                        this.printArray(data);
                     } else {
 
                         if (consistentMaps(list)) {
@@ -395,7 +405,7 @@ public class TabularWriter {
                                     i++;
                                 }
 
-                                this.print(data);
+                                this.printArray(data);
                             }
                         }
                     }
@@ -473,7 +483,7 @@ public class TabularWriter {
 
         if (keys != null) {
             headers = keys.toArray(new String[keys.size()]);
-            print(data);
+            printArray(data);
             return true;
         } else {
             return false;
@@ -481,7 +491,7 @@ public class TabularWriter {
 
     }
 
-    public void print(Configuration config) {
+    public void printConfiguration(Configuration config) {
         out.println("Configuration [" + config.getId() + "] - " + config.getNotes());
         for (PropertySimple p : config.getSimpleProperties().values()) {
             print(p, 1);
@@ -556,7 +566,7 @@ public class TabularWriter {
         return true;
     }
 
-    public void print(Object[] data) {
+    public void printArray(Object[] data) {
         if (data == null || data.length == 0) {
             if (!hideRowCount) {
                 out.println("0 rows");
@@ -565,7 +575,7 @@ public class TabularWriter {
         }
         out.println("Array of " + (data.getClass().getComponentType().getName()));
 
-        print(Arrays.asList(data));
+        printCollection(Arrays.asList(data));
     }
 
     private void resizeColumns(int[] actualColumnWidths, int maxColumnWidth, List<Integer> columns) {
@@ -599,7 +609,7 @@ public class TabularWriter {
         }
     }
 
-    public void print(String[][] data) {
+    public void printMultidimensionalStringArray(String[][] data) {
 
         if (data == null || data.length == 0) {
             if (!hideRowCount) {

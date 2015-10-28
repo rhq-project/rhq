@@ -592,7 +592,6 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                         type= type.substring(type.indexOf("-")+1);
 
                     slurpSection(ret, reader, type);
-                    break;
                 }
             }
         } catch (Exception e) {

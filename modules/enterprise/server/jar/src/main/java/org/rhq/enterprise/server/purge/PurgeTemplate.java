@@ -149,6 +149,9 @@ abstract class PurgeTemplate<KEY extends Serializable> {
             resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {
+                if(count % BATCH_SIZE == 0) {
+                    objectOutputStream.reset();
+                }
                 objectOutputStream.writeObject(getKeyFromResultSet(resultSet));
                 count++;
             }

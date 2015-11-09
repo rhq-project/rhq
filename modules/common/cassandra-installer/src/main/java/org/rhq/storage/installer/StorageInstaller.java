@@ -933,6 +933,10 @@ public class StorageInstaller {
                 Boolean nativeTransportRunning = (Boolean) serverConnection.getAttribute(storageService,
                     "NativeTransportRunning");
 
+                if(!nativeTransportRunning) {
+                    throw new RuntimeException("Storage node reported native transport is not running");
+                }
+
                 return nativeTransportRunning;
             } catch (Exception e) {
                 if (i < retries) {

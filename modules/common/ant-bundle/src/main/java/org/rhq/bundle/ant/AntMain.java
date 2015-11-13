@@ -32,12 +32,27 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
-import org.apache.tools.ant.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.BuildListener;
+import org.apache.tools.ant.BuildLogger;
+import org.apache.tools.ant.DefaultLogger;
+import org.apache.tools.ant.DemuxInputStream;
+import org.apache.tools.ant.DemuxOutputStream;
+import org.apache.tools.ant.Diagnostics;
+import org.apache.tools.ant.ExitStatusException;
+import org.apache.tools.ant.MagicNames;
+import org.apache.tools.ant.Main;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.ProjectHelper;
+import org.apache.tools.ant.Target;
 import org.apache.tools.ant.input.DefaultInputHandler;
 import org.apache.tools.ant.input.InputHandler;
 import org.apache.tools.ant.util.ClasspathUtils;
 import org.apache.tools.ant.util.FileUtils;
 import org.apache.tools.ant.util.ProxySetup;
+
 import org.rhq.core.util.updater.DeploymentsMetadata;
 
 /**
@@ -50,6 +65,11 @@ import org.rhq.core.util.updater.DeploymentsMetadata;
  * org.apache.tools.ant.Main class from Ant 1.8.0.
  */
 public class AntMain implements org.apache.tools.ant.launch.AntMain {
+
+    private static final Log LOG = LogFactory.getLog(AntMain.class);
+
+    private static final String ANTCONTRIB_ANT_TASKS = "net/sf/antcontrib/antcontrib.properties";
+    private static final String LIQUIBASE_ANT_TASKS = "liquibasetasks.properties";
 
     /**
      * A Set of args are are handled by the launcher and should
@@ -691,6 +711,10 @@ public class AntMain implements org.apache.tools.ant.launch.AntMain {
     }
 
     private void initProject(Project project, ClassLoader coreLoader, DeploymentPhase phase) {
+        if(coreLoader == null) {
+            coreLoader = getClass().getClassLoader();
+        }
+
         project.setCoreLoader(coreLoader);
         project.setProperty(DeployPropertyNames.DEPLOY_PHASE, phase.name());
 
@@ -745,6 +769,14 @@ public class AntMain implements org.apache.tools.ant.launch.AntMain {
                 project.setProperty(arg, value);
             }
 
+            try {
+                addTaskDefsForBundledTasks(project);
+            } catch (IOException ie) {
+                throw new RuntimeException(ie);
+            } catch (ClassNotFoundException ce) {
+                throw new RuntimeException(ce);
+            }
+
             project.setProperty(MagicNames.ANT_FILE,
                                     buildFile.getAbsolutePath());
             project.setProperty(MagicNames.ANT_FILE_TYPE,
@@ -770,6 +802,40 @@ public class AntMain implements org.apache.tools.ant.launch.AntMain {
             System.setErr(savedErr);
             System.setIn(savedIn);
         }
+    }
+
+    private void addTaskDefsForBundledTasks(Project project) throws IOException, ClassNotFoundException {
+        Properties taskDefs = buildTaskDefProperties(project.getCoreLoader());
+
+        for (Map.Entry<Object, Object> taskDef : taskDefs.entrySet()) {
+            project.addTaskDefinition(taskDef.getKey().toString(),
+                    Class.forName(taskDef.getValue().toString(), true, project.getCoreLoader()));
+        }
+    }
+
+    private Properties buildTaskDefProperties(ClassLoader classLoader) throws IOException {
+        Set<String> customTaskDefs = new HashSet<String>(1);
+
+        customTaskDefs.add(ANTCONTRIB_ANT_TASKS);
+        customTaskDefs.add(LIQUIBASE_ANT_TASKS);
+
+        Properties taskDefProps = new Properties();
+        for (String customTaskDef : customTaskDefs) {
+            InputStream taskDefsStream = classLoader.getResourceAsStream(customTaskDef);
+            if (taskDefsStream != null) {
+                try {
+                    taskDefProps.load(taskDefsStream);
+                } catch (Exception e) {
+                    LOG.warn("Ant task definitions [" + customTaskDef
+                            + "] failed to load - ant bundles cannot use their tasks", e);
+                } finally {
+                    taskDefsStream.close();
+                }
+            } else {
+                LOG.warn("Missing ant task definitions [" + customTaskDef + "] - ant bundles cannot use their tasks");
+            }
+        }
+        return taskDefProps;
     }
 
     /**

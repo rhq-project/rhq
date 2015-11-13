@@ -205,6 +205,10 @@ public class PluginMetadataManager {
                         throw new InvalidPluginDescriptorException("Type [" + resourceType
                             + "] is duplicate for this plugin. This is illegal.");
                     }
+                    if (resourceType.getName().length() > 100) {
+                        throw new InvalidPluginDescriptorException("Type [" + resourceType
+                            + "] has longer name than allowed 100 characters.");
+                    }
                     addType(resourceType);
                 }
             }

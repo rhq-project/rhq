@@ -36,6 +36,12 @@ public enum StorageNodeDatasourceField {
 
     FIELD_ALERTS("alerts", CoreGUI.getMessages().view_adminTopology_storageNodes_field_alerts()),
 
+    FIELD_RHQ_REPLICATION_FACTOR("RHQ",
+        CoreGUI.getMessages().view_adminTopology_storageNodes_field_rhq_replication_factor()),
+
+    FIELD_SYSTEM_AUTH_REPLICATION_FACTOR("systemAuth",
+        CoreGUI.getMessages().view_adminTopology_storageNodes_field_system_auth_replication_factor()),
+
     FIELD_CQL_PORT("cqlPort", CoreGUI.getMessages().view_adminTopology_storageNodes_field_cqlPort()),
 
     FIELD_OPERATION_MODE("operationMode", CoreGUI.getMessages().view_adminTopology_storageNodes_field_operationMode()),

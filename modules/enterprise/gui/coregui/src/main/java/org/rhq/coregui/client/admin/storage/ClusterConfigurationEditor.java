@@ -19,6 +19,8 @@
 package org.rhq.coregui.client.admin.storage;
 
 import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RHQ_REPLICATION_FACTOR;
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_SYSTEM_AUTH_REPLICATION_FACTOR;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,6 +71,7 @@ import org.rhq.coregui.client.util.message.Message;
  */
 public class ClusterConfigurationEditor extends EnhancedVLayout implements RefreshableView {
 
+    private EnhancedDynamicForm schemaForm;
     private EnhancedDynamicForm clusterForm;
     private EnhancedDynamicForm deploymentForm;
     private EnhancedDynamicForm credentialsForm;
@@ -165,15 +168,37 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
 
     private void prepareForms() {
         setWidth100();
+        schemaForm = buildForm("<div align='left' class='storageConfig'><div>" +
+            MSG.view_adminTopology_storageNodes_clusterSettings_replication_settings() + "</div>" + "<div>" +
+            MSG.view_adminTopology_storageNodes_clusterSettings_replication_settings_desc() + "</div>");
+        FormItemBuilder builder = new FormItemBuilder();
+        List<FormItem> rhqSchemaItems = builder.withName(FIELD_RHQ_REPLICATION_FACTOR.propertyName())
+            .withTitle(FIELD_RHQ_REPLICATION_FACTOR.title())
+            .withValue(Integer.toString(settings.getRhqReplicationFactor()))
+            .withDescription(MSG.view_adminTopology_storageNodes_field_rhq_replication_factor_desc())
+            .withReadOnlySetTo(true)
+            .build();
+        List<FormItem> systemAuthSchemaItems = builder.withName(FIELD_SYSTEM_AUTH_REPLICATION_FACTOR.propertyName())
+            .withTitle(FIELD_SYSTEM_AUTH_REPLICATION_FACTOR.title())
+            .withValue(Integer.toString(settings.getSystemAuthReplicationFactor()))
+            .withDescription(MSG.view_adminTopology_storageNodes_field_system_auth_replication_factor_desc())
+            .withReadOnlySetTo(true)
+            .build();
+
+        List<FormItem> items = buildHeaderItems();
+        items.addAll(rhqSchemaItems);
+        items.addAll(systemAuthSchemaItems);
+        schemaForm.setFields(items.toArray(new FormItem[items.size()]));
+
         clusterForm = buildForm("<div align='left' class='storageConfig'><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings() + "</div><div>"
             + MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings_desc() + "</div>");
 
-        List<FormItem> items = buildHeaderItems();
+        items = buildHeaderItems();
         Validator validator = new IsIntegerValidator();
 
         // cql port field
-        FormItemBuilder builder = new FormItemBuilder();
+        builder = new FormItemBuilder();
         List<FormItem> cqlPortItems = builder.withName(FIELD_CQL_PORT.propertyName()).withTitle(FIELD_CQL_PORT.title())
             .withValue(String.valueOf(settings.getCqlPort()))
             .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings_cqlPort())
@@ -348,7 +373,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         spacer.setWidth100();
 
         ToolStrip toolStrip = buildToolStrip();
-        setMembers(clusterForm, deploymentForm, credentialsForm, regularSnapshotsForm, spacer, toolStrip);
+        setMembers(schemaForm, clusterForm, deploymentForm, credentialsForm, regularSnapshotsForm, spacer, toolStrip);
         clusterForm.validate();
         deploymentForm.validate();
         credentialsForm.validate();

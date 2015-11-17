@@ -32,6 +32,10 @@ public class StorageClusterSettings implements Serializable {
 
     private static final long serialVersionUID = 1;
 
+    private int rhqReplicationFactor;
+
+    private int systemAuthReplicationFactor;
+
     private int cqlPort;
 
     private int gossipPort;
@@ -92,6 +96,22 @@ public class StorageClusterSettings implements Serializable {
         this.passwordHash = passwordHash;
     }
 
+    public int getRhqReplicationFactor() {
+        return rhqReplicationFactor;
+    }
+
+    public void setRhqReplicationFactor(int rhqReplicationFactor) {
+        this.rhqReplicationFactor = rhqReplicationFactor;
+    }
+
+    public int getSystemAuthReplicationFactor() {
+        return systemAuthReplicationFactor;
+    }
+
+    public void setSystemAuthReplicationFactor(int systemAuthReplicationFactor) {
+        this.systemAuthReplicationFactor = systemAuthReplicationFactor;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -99,6 +119,8 @@ public class StorageClusterSettings implements Serializable {
 
         StorageClusterSettings that = (StorageClusterSettings) o;
 
+        if (rhqReplicationFactor != that.rhqReplicationFactor) return false;
+        if (systemAuthReplicationFactor != that.systemAuthReplicationFactor) return false;
         if (cqlPort != that.cqlPort) return false;
         if (gossipPort != that.gossipPort) return false;
         if (automaticDeployment != that.automaticDeployment) return false;
@@ -115,6 +137,8 @@ public class StorageClusterSettings implements Serializable {
     @Override
     public int hashCode() {
         int result = cqlPort;
+        result = 29 * result + rhqReplicationFactor;
+        result = 29 * result + systemAuthReplicationFactor;
         result = 29 * result + gossipPort;
         result = 29 * result + (automaticDeployment ? 1231 : 1237);
         result = 29 * result + (username == null ? 0 : username.hashCode());
@@ -128,7 +152,8 @@ public class StorageClusterSettings implements Serializable {
     public String toString() {
         return "StorageClusterSettings[cqlPort=" + cqlPort + ", gossipPort=" + gossipPort + ", automaticDeployment="
             + automaticDeployment + ", username (read-only)=" + username + ", passwordHash=********, regularSnapshots="
-            + regularSnapshots + "]";
+            + regularSnapshots + ", rhqReplicationFactor=" + rhqReplicationFactor + ", systemAuthReplicationFactor="
+            + systemAuthReplicationFactor + "]";
     }
 
     public static class RegularSnapshots implements Serializable {

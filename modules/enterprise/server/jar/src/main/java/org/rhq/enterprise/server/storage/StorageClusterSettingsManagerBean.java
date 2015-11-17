@@ -28,6 +28,9 @@ public class StorageClusterSettingsManagerBean implements StorageClusterSettings
     @EJB
     private StorageClientManager storageClienManager;
 
+    @EJB
+    private ReplicationSettingsManagerBean replicationSettingsManager;
+
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public StorageClusterSettings getClusterSettings(Subject subject) {
@@ -79,6 +82,13 @@ public class StorageClusterSettingsManagerBean implements StorageClusterSettings
             rs.setDeletion(settings.get(SystemSetting.STORAGE_REGULAR_SNAPSHOTS_DELETION));
             rs.setLocation(settings.get(SystemSetting.STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION));
         }
+
+        // The replication settings are not stored in the RDBMS. We query the system tables
+        // in Cassandra to get these settings.
+        ReplicationSettings replicationSettings = replicationSettingsManager.getReplicationSettings();
+        clusterSettings.setRhqReplicationFactor(replicationSettings.getRhqReplicationFactor());
+        clusterSettings.setSystemAuthReplicationFactor(replicationSettings.getSystemAuthReplicationFactor());
+
         return clusterSettings;
     }
 

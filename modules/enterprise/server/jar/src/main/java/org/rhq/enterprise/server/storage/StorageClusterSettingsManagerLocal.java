@@ -9,8 +9,7 @@ import org.rhq.core.domain.cloud.StorageClusterSettings;
  * @author John Sanda
  */
 @Local
-public interface StorageClusterSettingsManagerLocal {
-    StorageClusterSettings getClusterSettings(Subject subject);
+public interface StorageClusterSettingsManagerLocal extends StorageClusterSettingsManagerRemote {
 
     void setClusterSettings(Subject subject, StorageClusterSettings clusterSettings);
 }

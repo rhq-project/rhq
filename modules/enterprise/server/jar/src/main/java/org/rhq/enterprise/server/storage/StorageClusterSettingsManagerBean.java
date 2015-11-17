@@ -18,7 +18,8 @@ import org.rhq.server.metrics.StorageSession;
  * @author John Sanda
  */
 @Stateless
-public class StorageClusterSettingsManagerBean implements StorageClusterSettingsManagerLocal {
+public class StorageClusterSettingsManagerBean implements StorageClusterSettingsManagerLocal,
+    StorageClusterSettingsManagerRemote {
 
     private static final String UPDATE_PASSWORD_QUERY = "ALTER USER '%s' WITH PASSWORD '%s'";
 

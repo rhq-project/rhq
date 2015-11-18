@@ -34,8 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import au.com.bytecode.opencsv.CSVWriter;
-
 import org.rhq.bindings.util.LazyLoadScenario;
 import org.rhq.bindings.util.ShortOutput;
 import org.rhq.bindings.util.SummaryFilter;
@@ -47,6 +45,8 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.ResourceType;
+
+import au.com.bytecode.opencsv.CSVWriter;
 
 /**
  * @author Greg Hinkle
@@ -315,7 +315,7 @@ public class TabularWriter {
             i++;
         }
         this.headers = new String[] { "Key", "Value" };
-        printArray(data);
+        printMultidimensionalStringArray(data);
     }
 
     public void printCollection(Collection list) {
@@ -347,7 +347,7 @@ public class TabularWriter {
                         for (Object object : list) {
                             data[i++][0] = (String) object;
                         }
-                        this.printArray(data);
+                        printMultidimensionalStringArray(data);
                     } else {
 
                         if (consistentMaps(list)) {
@@ -405,7 +405,7 @@ public class TabularWriter {
                                     i++;
                                 }
 
-                                this.printArray(data);
+                                printMultidimensionalStringArray(data);
                             }
                         }
                     }
@@ -483,7 +483,7 @@ public class TabularWriter {
 
         if (keys != null) {
             headers = keys.toArray(new String[keys.size()]);
-            printArray(data);
+            printMultidimensionalStringArray(data);
             return true;
         } else {
             return false;

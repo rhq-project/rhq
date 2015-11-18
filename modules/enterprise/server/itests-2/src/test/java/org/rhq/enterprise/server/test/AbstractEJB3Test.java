@@ -384,7 +384,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         thirdPartyDeps.add("org.rhq.helpers:perftest-support:" + projectVersion);
         thirdPartyDeps.add("org.rhq:rhq-core-client-api:jar:tests:" + rhqCoreClientApiVersion);
         thirdPartyDeps.add("org.rhq:rhq-platform-plugin:jar:" + rhqPlatformPluginVersion);
-
+        thirdPartyDeps.add("org.codehaus.jackson:jackson-core-asl:1.9.13");
+        thirdPartyDeps.add("org.codehaus.jackson:jackson-mapper-asl:1.9.13");
         thirdPartyDeps.add("org.rhq:test-utils:" + projectVersion);
 
         MavenResolverSystem resolver = Maven.resolver();

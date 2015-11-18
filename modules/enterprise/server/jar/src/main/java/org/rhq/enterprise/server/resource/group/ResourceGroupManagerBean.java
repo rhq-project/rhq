@@ -59,6 +59,7 @@ import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
@@ -88,6 +89,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -109,6 +111,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
+    @EJB
+    private BundleManagerLocal bundleManager;
     @EJB
     //@IgnoreDependency
     private OperationManagerLocal operationManager;
@@ -313,6 +317,15 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP);
         q.setParameter("groupId", group.getId());
         q.executeUpdate();
+
+        // Delete all the bundleDestinations to avoid FK issues
+        for (BundleDestination bundleDestination : group.getBundleDestinations()) {
+            try {
+                bundleManager.deleteBundleDestination(subject, bundleDestination.getId());
+            } catch (Exception e) {
+                throw new RuntimeException("Could not delete bundle destination " + bundleDestination.toString(), e);
+            }
+        }
 
         entityManager.remove(group);
     }

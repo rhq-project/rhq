@@ -8,7 +8,7 @@ import org.rhq.core.domain.cloud.StorageClusterSettings;
 /**
  * @author John Sanda
  */
-@Stateless
+@Stateless(name = "StorageClusterSettingsManagerBean")
 public class FakeStorageClusterSettingsManagerBean implements StorageClusterSettingsManagerLocal {
 
     @Override

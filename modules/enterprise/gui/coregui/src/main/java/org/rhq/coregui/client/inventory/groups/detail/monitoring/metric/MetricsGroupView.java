@@ -182,6 +182,7 @@ public class MetricsGroupView extends AbstractD3GraphListView implements
 
     @Override
     public void refreshData() {
+        buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
         addAvailabilityGraph();
         metricsTableView.refresh();
     }

@@ -229,6 +229,7 @@ public class GroupOobsPortlet extends EnhancedVLayout implements CustomSettingsP
                     public void onFailure(Throwable caught) {
                         Log.debug("Error retrieving resource group composite for group [" + groupId + "]:"
                                 + caught.getMessage());
+                    currentlyLoading = false;
                     }
 
                     @Override

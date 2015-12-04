@@ -71,6 +71,11 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
     }
 
     @Override
+    protected void onDraw() {
+        buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
+    }
+
+    @Override
     protected void onDestroy() {
         AutoRefreshUtil.onDestroy(refreshTimer);
 
@@ -88,7 +93,6 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
         if (isVisible() && !isRefreshing()) {
             isRefreshing = true;
             try {
-                buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
                 refreshData();
             } finally {
                 isRefreshing = false;

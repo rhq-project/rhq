@@ -191,6 +191,8 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
                                                 }
                                             }
 
+                                    buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
+
                                             for (final Resource childResource : childResources) {
                                                 Log.debug("Adding child composite: " + childResource.getName()
                                                         + childResource.getId());
@@ -499,7 +501,6 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         if (isVisible() && !isRefreshing()) {
             isRefreshing = true;
             try {
-                buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
                 refreshData();
             } finally {
                 isRefreshing = false;

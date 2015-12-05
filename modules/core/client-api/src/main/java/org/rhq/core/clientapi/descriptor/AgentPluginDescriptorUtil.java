@@ -25,7 +25,6 @@ package org.rhq.core.clientapi.descriptor;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,8 +75,8 @@ public abstract class AgentPluginDescriptorUtil {
 
     private static final String PLUGIN_DESCRIPTOR_PATH = "META-INF/rhq-plugin.xml";
     private static final String PLUGIN_SCHEMA_PATH = "rhq-plugin.xsd";
-    private static final String CANNED_GROUP_EXPRESSION_SCHEMA_PATH="rhq-canned-groups.xsd";
-    private static final String CANNED_GROUP_EXPRESSION_DESCRIPTOR_PATH="META-INF/rhq-group-expressions.xml";
+    private static final String CANNED_GROUP_EXPRESSION_SCHEMA_PATH = "rhq-canned-groups.xsd";
+    private static final String CANNED_GROUP_EXPRESSION_DESCRIPTOR_PATH = "META-INF/rhq-group-expressions.xml";
 
     /**
      * Determines which of the two plugins is obsolete - in other words, this determines which
@@ -251,7 +250,6 @@ public abstract class AgentPluginDescriptorUtil {
         addOptionalDependency(server.getRunsInside(), dependencies);
         addOptionalDependency(server.getSourcePlugin(), dependencies);
 
-
         addOptionalBundleDependency(server, dependencies);
         return;
     }
@@ -309,7 +307,8 @@ public abstract class AgentPluginDescriptorUtil {
      * @return content of additionPath file as String, or null if file does not exist in JAR
      * @throws PluginContainerException if we fail to read content
      */
-    public static CannedGroupExpressions loadCannedExpressionsFromUrl(URL pluginJarFileUrl) throws PluginContainerException {
+    public static CannedGroupExpressions loadCannedExpressionsFromUrl(URL pluginJarFileUrl)
+        throws PluginContainerException {
         final Log logger = LogFactory.getLog(AgentPluginDescriptorUtil.class);
 
         if (pluginJarFileUrl == null) {
@@ -374,9 +373,50 @@ public abstract class AgentPluginDescriptorUtil {
 
         testPluginJarIsReadable(pluginJarFileUrl);
 
+        PluginDescriptor pluginDescriptor = null;
+        ValidationEventCollector validationEventCollector = null;
+
+        try {
+            validationEventCollector = new ValidationEventCollector();
+            pluginDescriptor = loadPluginDescriptorFromUrl(pluginJarFileUrl, validationEventCollector, false, logger);
+
+        } catch (PluginContainerException e) {
+            if (skipValidation()) {
+                // retry without validation, this is a jvm version with known issues
+                validationEventCollector = new ValidationEventCollector();
+                pluginDescriptor = loadPluginDescriptorFromUrl(pluginJarFileUrl, validationEventCollector, true, logger);
+
+            } else {
+                // probably a valid schema issue
+                logValidationEvents(pluginJarFileUrl, validationEventCollector, logger);
+                throw e;
+            }
+        }
+
+        return pluginDescriptor;
+    }
+
+    // BZ 1264395 On certain JDKs there are bugs running the schema validation. Only add validation on approved JDKs.
+    private static boolean skipValidation() {
+        String vm = System.getProperty("java.vm.name", "unknown");
+        String version = System.getProperty("java.version", "unknown");
+        String java = vm + " " + version;
+        String skipPattern = System.getProperty("org.rhq.xsl.validation.skip", "OpenJDK.*1\\.6.*");
+
+        if (java.matches(skipPattern)) {
+            LOG.debug("Skipping Agent Plugin XSL Validation because of known issues with [" + java + "]");
+            return true;
+        }
+
+        return false;
+    }
+
+    private static PluginDescriptor loadPluginDescriptorFromUrl(URL pluginJarFileUrl,
+        ValidationEventCollector validationEventCollector, boolean skipValidation, final Log logger)
+        throws PluginContainerException {
+
         JarInputStream jis = null;
         JarEntry descriptorEntry = null;
-        ValidationEventCollector validationEventCollector = new ValidationEventCollector();
         try {
             jis = new JarInputStream(pluginJarFileUrl.openStream());
             JarEntry nextEntry = jis.getNextJarEntry();
@@ -393,11 +433,14 @@ public abstract class AgentPluginDescriptorUtil {
                 throw new Exception("The plugin descriptor does not exist");
             }
 
-            return parsePluginDescriptor(jis, validationEventCollector);
+            return (PluginDescriptor) parsePluginDescriptor(jis, validationEventCollector, PLUGIN_SCHEMA_PATH,
+                DescriptorPackages.PC_PLUGIN, skipValidation);
+
         } catch (Exception e) {
             throw new PluginContainerException("Could not successfully parse the plugin descriptor ["
                 + PLUGIN_DESCRIPTOR_PATH + "] found in plugin jar at [" + pluginJarFileUrl + "].",
                 new WrappedRemotingException(e));
+
         } finally {
             if (jis != null) {
                 try {
@@ -406,13 +449,10 @@ public abstract class AgentPluginDescriptorUtil {
                     logger.warn("Cannot close jar stream [" + pluginJarFileUrl + "]. Cause: " + e);
                 }
             }
-
-            logValidationEvents(pluginJarFileUrl, validationEventCollector, logger);
         }
     }
 
     /**
-     * Parses a descriptor from InputStream without a validator.
      * @param is input to check
      * @return parsed PluginDescriptor
      * @throws PluginContainerException if validation fails
@@ -422,37 +462,37 @@ public abstract class AgentPluginDescriptorUtil {
     }
 
     /**
-     * Parses a descriptor from InputStream without a validator.
      * @param is input to check
      * @return parsed PluginDescriptor
      * @throws PluginContainerException if validation fails
      */
     public static PluginDescriptor parsePluginDescriptor(InputStream is,
-            ValidationEventCollector validationEventCollector) throws PluginContainerException {
+        ValidationEventCollector validationEventCollector) throws PluginContainerException {
         JAXBContext jaxbContext;
-        return (PluginDescriptor) parsePluginDescriptor(is, validationEventCollector, PLUGIN_SCHEMA_PATH, DescriptorPackages.PC_PLUGIN);
+        return (PluginDescriptor) parsePluginDescriptor(is, validationEventCollector, PLUGIN_SCHEMA_PATH,
+            DescriptorPackages.PC_PLUGIN, false);
     }
-    
+
     /**
-     * Parses a descriptor from InputStream without a validator.
      * @param is input to check
      * @return parsed PluginDescriptor
      * @throws PluginContainerException if validation fails
      */
     public static CannedGroupExpressions parseCannedGroupExpressionsDescriptor(InputStream is,
-            ValidationEventCollector validationEventCollector) throws PluginContainerException {
+        ValidationEventCollector validationEventCollector) throws PluginContainerException {
         JAXBContext jaxbContext;
-        return (CannedGroupExpressions) parsePluginDescriptor(is, validationEventCollector, CANNED_GROUP_EXPRESSION_SCHEMA_PATH, DescriptorPackages.CANNED_EXPRESSIONS);
+        return (CannedGroupExpressions) parsePluginDescriptor(is, validationEventCollector,
+            CANNED_GROUP_EXPRESSION_SCHEMA_PATH, DescriptorPackages.CANNED_EXPRESSIONS, false);
     }
-    
+
     /**
      * Parses a descriptor from InputStream without a validator.
      * @param is input to check
      * @return parsed PluginDescriptor
      * @throws PluginContainerException if validation fails
      */
-    private static Object parsePluginDescriptor(InputStream is,
-            ValidationEventCollector validationEventCollector, String xsd, String jaxbPackage) throws PluginContainerException {
+    private static Object parsePluginDescriptor(InputStream is, ValidationEventCollector validationEventCollector,
+        String xsd, String jaxbPackage, boolean skipValidation) throws PluginContainerException {
         JAXBContext jaxbContext;
         try {
             jaxbContext = JAXBContext.newInstance(jaxbPackage);
@@ -463,14 +503,17 @@ public abstract class AgentPluginDescriptorUtil {
         Unmarshaller unmarshaller;
         try {
             unmarshaller = jaxbContext.createUnmarshaller();
-            // Enable schema validation
-            URL pluginSchemaURL = AgentPluginDescriptorUtil.class.getClassLoader().getResource(xsd);
-            Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(
-                    pluginSchemaURL);
-            unmarshaller.setSchema(pluginSchema);
-            unmarshaller.setEventHandler(validationEventCollector);
 
+            if (!skipValidation) {
+                URL pluginSchemaURL = AgentPluginDescriptorUtil.class.getClassLoader().getResource(xsd);
+                Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(
+                    pluginSchemaURL);
+                unmarshaller.setSchema(pluginSchema);
+            }
+
+            unmarshaller.setEventHandler(validationEventCollector);
             return unmarshaller.unmarshal(is);
+
         } catch (JAXBException e) {
             throw new PluginContainerException(e);
         } catch (SAXException e) {
@@ -479,7 +522,7 @@ public abstract class AgentPluginDescriptorUtil {
     }
 
     private static void logValidationEvents(URL pluginJarFileUrl, ValidationEventCollector validationEventCollector,
-                                            Log logger) {
+        Log logger) {
         for (ValidationEvent event : validationEventCollector.getEvents()) {
             // First build the message to be logged. The message will look something like this:
             //
@@ -489,34 +532,35 @@ public abstract class AgentPluginDescriptorUtil {
             //
             StringBuilder message = new StringBuilder();
             String severity = null;
-            switch(event.getSeverity()) {
-                case ValidationEvent.WARNING:
-                    severity = "warning";
-                    break;
-                case ValidationEvent.ERROR:
-                    severity = "error";
-                    break;
-                case ValidationEvent.FATAL_ERROR:
-                    severity = "fatal error";
-                    break;
+            switch (event.getSeverity()) {
+            case ValidationEvent.WARNING:
+                severity = "warning";
+                break;
+            case ValidationEvent.ERROR:
+                severity = "error";
+                break;
+            case ValidationEvent.FATAL_ERROR:
+                severity = "fatal error";
+                break;
             }
             message.append("Validation ").append(severity);
             File pluginJarFile = new File(pluginJarFileUrl.getPath());
-            message.append(" while parsing [").append(pluginJarFile.getName()).append(":").append(PLUGIN_DESCRIPTOR_PATH).append("]");
+            message.append(" while parsing [").append(pluginJarFile.getName()).append(":")
+                .append(PLUGIN_DESCRIPTOR_PATH).append("]");
             ValidationEventLocator locator = event.getLocator();
             message.append(" at line ").append(locator.getLineNumber());
             message.append(", column ").append(locator.getColumnNumber());
             message.append(": ").append(event.getMessage());
 
             // Now write the message to the log at an appropriate level.
-            switch(event.getSeverity()) {
-                case ValidationEvent.WARNING:
-                case ValidationEvent.ERROR:
-                    logger.warn(message);
-                    break;
-                case ValidationEvent.FATAL_ERROR:
-                    logger.error(message);
-                    break;
+            switch (event.getSeverity()) {
+            case ValidationEvent.WARNING:
+            case ValidationEvent.ERROR:
+                logger.warn(message);
+                break;
+            case ValidationEvent.FATAL_ERROR:
+                logger.error(message);
+                break;
             }
         }
     }

@@ -75,6 +75,9 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     private static final String URL_OPTION_PASSWORD = MSG.common_title_password();
     private static final String URL_OPTION_TOOLTIP = MSG.view_bundle_createWizard_urlTooltip();
 
+    final String BUNDLE_NOT_FOUND_EXCEPTION_PATTERN_START = "org.rhq.core.domain.bundle.BundleNotFoundException:[";
+    final String BUNDLE_NOT_FOUND_EXCEPTION_PATTERN_END = "]";
+
     public BundleUploadDistroFileStep(AbstractBundleCreateWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
@@ -282,8 +285,9 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                 @Override
                 public void onFailure(Throwable caught) {
                     // This signals that the bundle does not yet exist
-                    if (caught instanceof BundleNotFoundException) {
-                        handleBundleNotFoundException((BundleNotFoundException) caught);
+                    BundleNotFoundException bnfe = unpackBundleNotFoundException(caught);
+                    if (bnfe != null) {
+                        handleBundleNotFoundException(bnfe);
 
                     } else {
                         // Escape it, since it contains the URL, which the user entered.
@@ -295,6 +299,24 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                     }
                 }
             });
+    }
+
+    private BundleNotFoundException unpackBundleNotFoundException(Throwable caught) {
+        if (caught instanceof RuntimeException) {
+            String message = caught.getMessage();
+            int patternStart = message.indexOf(BUNDLE_NOT_FOUND_EXCEPTION_PATTERN_START);
+            if (patternStart > -1) {
+                int patternEnd = message.indexOf(BUNDLE_NOT_FOUND_EXCEPTION_PATTERN_END,
+                        patternStart + BUNDLE_NOT_FOUND_EXCEPTION_PATTERN_START.length());
+                if (patternEnd > -1) {
+                    return new BundleNotFoundException(
+                        message.substring(
+                            patternStart + BUNDLE_NOT_FOUND_EXCEPTION_PATTERN_START.length(),
+                            patternEnd));
+                }
+            }
+        }
+        return null;
     }
 
     private void handleBundleNotFoundException(BundleNotFoundException e) {

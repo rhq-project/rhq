@@ -71,7 +71,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     public BundleVersion createOrStoreBundleVersionViaURL(String url, String username, String password)
         throws RuntimeException {
         try {
-            BundleVersion results = bundleManager.createBundleVersionViaURL(getSessionSubject(), url, username,
+            BundleVersion results = bundleManager.createOrStoreBundleVersionViaURL(getSessionSubject(), url, username,
                 password);
             return SerialUtility.prepare(results, "createOrStoreBundleVersionViaURL");
         } catch (Throwable t) {

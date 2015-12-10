@@ -883,7 +883,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             if (null != e.getCause() && e.getCause() instanceof BundleNotFoundException) {
                 deleteFile = false;
                 // This application exception indicates the special token handling workflow
-                throw new BundleNotFoundException("[" + distributionFileUrl + "]");
+                throw new BundleNotFoundException("[" + file.getName() + "]");
             } else {
                 throw e;
             }
@@ -929,7 +929,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     private File slurp(InputStream is) throws IOException {
-        File file = File.createTempFile("bundle-distribution", ".zip");
+        File file = File.createTempFile("bundle-distribution", ".zip",
+            new File(System.getProperty("jboss.server.temp.dir")));
 
         StreamUtil.copy(is, new FileOutputStream(file));
 

@@ -37,7 +37,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.ReentrantLock;
 
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
@@ -106,7 +105,6 @@ import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.server.metrics.MetricsServer;
-import org.rhq.server.metrics.RawDataInsertedCallback;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 
@@ -224,9 +222,15 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             @Override
             public void onSuccess(@Nullable Void result) {
                 Set<MeasurementData> insertedData = new TreeSet<MeasurementData>(new Comparator<MeasurementData>() {
+                    // Note, if the logic in this comparator is updated please ensure that you also
+                    // update MeasurementDataTest.testComparator(), where this logic is tested.
                     @Override
                     public int compare(MeasurementData d1, MeasurementData d2) {
-                        return (d1.getTimestamp() < d2.getTimestamp()) ? -1 : ((d1.getTimestamp() == d2.getTimestamp()) ? 0 : 1);
+                        int c = Integer.compare(d1.getScheduleId(), d2.getScheduleId());
+                        if (c != 0) {
+                            return c;
+                        }
+                        return Long.compare(d1.getTimestamp(), d2.getTimestamp());
                     }
                 });
 

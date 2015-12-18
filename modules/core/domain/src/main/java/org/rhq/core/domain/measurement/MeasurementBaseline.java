@@ -217,13 +217,7 @@ public class MeasurementBaseline implements Serializable {
         sb.append(", baselineMax=").append(baselineMax);
         sb.append(", baselineMean=").append(baselineMean);
         sb.append(", computeTime=").append(computeTime);
-
-        if (schedule != null) {
-            sb.append(", scheduleId=").append(schedule.getId());
-        } else {
-            sb.append(", scheduleId=null");
-        }
-
+        sb.append(", scheduleId=").append(scheduleId);
         sb.append('}');
         return sb.toString();
     }

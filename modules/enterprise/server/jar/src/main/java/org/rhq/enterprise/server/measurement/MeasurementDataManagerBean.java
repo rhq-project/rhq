@@ -226,11 +226,11 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                     // update MeasurementDataTest.testComparator(), where this logic is tested.
                     @Override
                     public int compare(MeasurementData d1, MeasurementData d2) {
-                        int c = Integer.compare(d1.getScheduleId(), d2.getScheduleId());
+                        int c = Integer.valueOf(d1.getScheduleId()).compareTo(d2.getScheduleId());
                         if (c != 0) {
                             return c;
                         }
-                        return Long.compare(d1.getTimestamp(), d2.getTimestamp());
+                        return Long.valueOf(d1.getTimestamp()).compareTo(d2.getTimestamp());
                     }
                 });
 

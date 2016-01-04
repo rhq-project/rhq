@@ -86,7 +86,7 @@ public class ConfigurationMetadataParser {
             return null;
         }
 
-        if (configurationName==null) {
+        if (configurationName == null) {
             throw new IllegalArgumentException("ConfigurationName must not be null");
         }
 
@@ -252,7 +252,7 @@ public class ConfigurationMetadataParser {
         if (simpleProperty.getOptionSource() != null) {
             PropertyOptionsSource optionsSource = new PropertyOptionsSource();
             OptionSource source = simpleProperty.getOptionSource();
-            optionsSource.setTarget(source.getTarget().toString());
+            optionsSource.setTarget(source.getTarget().value());
             optionsSource.setLinkToTarget(source.isLinkToTarget());
             if (source.getFilter() != null && source.getFilter().length() > 40) {
                 throw new IllegalArgumentException("Filter expression must be less than 40 chars long");
@@ -323,7 +323,7 @@ public class ConfigurationMetadataParser {
 
         String displayName = (listProperty.getDisplayName() != null) ? listProperty.getDisplayName() : StringUtils
             .deCamelCase(listProperty.getName());
-        if (displayName!=null) {
+        if (displayName != null) {
             list.setDisplayName(displayName.intern());
         }
         list.setReadOnly(listProperty.isReadOnly());
@@ -348,7 +348,7 @@ public class ConfigurationMetadataParser {
 
         String displayName = (mapProperty.getDisplayName() != null) ? mapProperty.getDisplayName() : StringUtils
             .deCamelCase(mapProperty.getName());
-        if (displayName!=null) {
+        if (displayName != null) {
             propDefMap.setDisplayName(displayName.intern());
         }
         propDefMap.setReadOnly(mapProperty.isReadOnly());

@@ -228,7 +228,11 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 Set<MeasurementData> insertedData = new TreeSet<MeasurementData>(new Comparator<MeasurementData>() {
                     @Override
                     public int compare(MeasurementData d1, MeasurementData d2) {
-                        return (d1.getTimestamp() < d2.getTimestamp()) ? -1 : ((d1.getTimestamp() == d2.getTimestamp()) ? 0 : 1);
+                        int c = Integer.valueOf(d1.getScheduleId()).compareTo(d2.getScheduleId());
+                        if (c != 0) {
+                            return c;
+                        }
+                        return Long.valueOf(d1.getTimestamp()).compareTo(d2.getTimestamp());
                     }
                 });
 

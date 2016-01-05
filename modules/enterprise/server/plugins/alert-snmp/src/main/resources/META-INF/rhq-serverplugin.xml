@@ -28,7 +28,7 @@
         <c:simple-property name="defaultTargetHost" displayName="Default trap target host" required="false" default="localhost"/>
         <c:simple-property name="defaultPort" displayName="Default trap target port" required="false" type="integer"
             default="162" defaultValue="162"/>
-        <c:simple-property name="transport" defaultValue="UDP">
+        <c:simple-property name="transport" default="UDP">
           <c:property-options allowCustomValue="false">
             <c:option value="UDP" name="UDP"/>
             <c:option value="TCP" name="TCP"/>

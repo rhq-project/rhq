@@ -51,6 +51,7 @@ import org.rhq.core.domain.criteria.BundleGroupCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -106,6 +107,8 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
             // get the bundles and build the bundle groups (including unassigned) from that
             BundleCriteria criteria = new BundleCriteria();
             criteria.fetchBundleGroups(true);
+            criteria.clearPaging();
+            criteria.addSortName(PageOrdering.ASC);
 
             GWTServiceLookup.getBundleService().findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
                 public void onFailure(Throwable caught) {

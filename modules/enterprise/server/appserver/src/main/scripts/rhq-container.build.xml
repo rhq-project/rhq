@@ -771,7 +771,7 @@ rhq.communications.multicast-detector.port=16162
 # for all other JVMs, the algorithm will default to "SunX509"). If you need a specific algorithm value,
 # you may hardcode it here in this file by uncommenting the lines and setting the values explicitly.
 rhq.server.tomcat.security.client-auth-mode=false
-rhq.server.tomcat.security.secure-socket-protocol=TLS
+rhq.server.tomcat.security.secure-socket-protocol=TLSv1,TLSv1.1,TLSv1.2
 #rhq.server.tomcat.security.algorithm=SunX509
 rhq.server.tomcat.security.keystore.alias=RHQ
 rhq.server.tomcat.security.keystore.file=${jboss.server.config.dir}/rhq.keystore

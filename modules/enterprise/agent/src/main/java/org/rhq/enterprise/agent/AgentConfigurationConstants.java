@@ -162,6 +162,16 @@ public interface AgentConfigurationConstants {
     String AGENT_UPDATE_DOWNLOAD_URL = PROPERTY_NAME_PREFIX + "agent-update.download-url";
 
     /**
+     * The amount of milliseconds the agent will wait before force closing after an update.
+     */
+    String AGENT_UPDATE_EXIT_TIMEOUT_MSECS = PROPERTY_NAME_PREFIX + "agent-update.exit-timeout-msecs";
+
+    /**
+     * If the update-exit timeout is not defined, this is the default.
+     */
+    long DEFAULT_AGENT_UPDATE_EXIT_TIMEOUT_MSECS = 1000L * 60 * 1;
+
+    /**
      * The amount of milliseconds the agent will wait at startup for the server to be detected.
      */
     String WAIT_FOR_SERVER_AT_STARTUP_MSECS = PROPERTY_NAME_PREFIX + "wait-for-server-at-startup-msecs";

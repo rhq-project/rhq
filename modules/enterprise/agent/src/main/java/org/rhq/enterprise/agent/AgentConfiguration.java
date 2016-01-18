@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import mazz.i18n.Logger;
-
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.util.obfuscation.ObfuscatedPreferences;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
@@ -37,6 +35,8 @@ import org.rhq.enterprise.communications.ServiceContainerConfiguration;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderConfiguration;
 import org.rhq.enterprise.communications.command.client.PersistentFifo;
 import org.rhq.enterprise.communications.util.SecurityUtil;
+
+import mazz.i18n.Logger;
 
 /**
  * Just provides some convienence methods to extract agent configuration properties.
@@ -372,6 +372,11 @@ public class AgentConfiguration {
         String str = m_preferences.get(AgentConfigurationConstants.AGENT_UPDATE_VERSION_URL, null);
 
         return str;
+    }
+
+    public long getAgentUpdateExitTimeout() {
+        return m_preferences.getLong(AgentConfigurationConstants.AGENT_UPDATE_EXIT_TIMEOUT_MSECS,
+            AgentConfigurationConstants.DEFAULT_AGENT_UPDATE_EXIT_TIMEOUT_MSECS);
     }
 
     /**

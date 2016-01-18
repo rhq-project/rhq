@@ -151,25 +151,25 @@
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-core-domain</artifactId>
-                <version>${project.version}</version>
+                <version>${rhq-core-domain.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-core-plugin-api</artifactId>
-                <version>${project.version}</version>
+                <version>${rhq-core-plugin-api.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-core-native-system</artifactId>
-                <version>${project.version}</version>
+                <version>${rhq-core-native-system.version}</version>
                 <scope>provided</scope>
             </dependency>
           <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-jboss-as-7-plugin</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-jboss-as-7-plugin.version}</version>
             <scope>provided</scope>
           </dependency>
 

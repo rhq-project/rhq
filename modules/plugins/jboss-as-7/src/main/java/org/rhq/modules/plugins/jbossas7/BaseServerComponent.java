@@ -100,6 +100,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     protected static final Integer BUNDLE_HANDOVER_SERVER_CHECK_TIMEOUT = Integer.getInteger(
         "as7.plugin.handover-deployment.server-check-timeout.seconds", 120);
 
+    protected static final String BUNDLE_HANDOVER_SERVER_CHECK_TIMEOUT_PARAM = "waitForServer";
+
     private ASConnection connection;
     private LogFileEventResourceComponentHelper logFileEventDelegate;
     private StartScriptConfiguration startScriptConfig;

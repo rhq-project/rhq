@@ -244,7 +244,6 @@
 
             <plugin>
               <artifactId>maven-ear-plugin</artifactId>
-
                 <configuration>
                     <version>6</version> <!-- version of the generated application.xml -->
                     <displayName>RHQ</displayName>

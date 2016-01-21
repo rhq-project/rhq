@@ -553,9 +553,6 @@ public class ResourceTreeView extends EnhancedVLayout {
         }
         resourceContextMenu.addItem(operations);
 
-        // this menu item will be the last one
-        final OpenSupportCaseMenuItem openSupportCase = new OpenSupportCaseMenuItem(resourceComposite);
-
         // Create Child Menu and Manual Import Menu
         final Set<ResourceType> creatableChildTypes = getCreatableChildTypes(resourceType);
         final Set<ResourceType> importableChildTypes = getImportableChildTypes(resourceType);
@@ -589,20 +586,12 @@ public class ResourceTreeView extends EnhancedVLayout {
                             addMenu(MSG.common_button_import(), true, singletonChildren, resource, displayNameMap,
                                 false);
                         }
-                        if (openSupportCase.isToBeIncluded()) {
-                            resourceContextMenu.addItem(new MenuItemSeparator());
-                            resourceContextMenu.addItem(openSupportCase);
-                        }
                         resourceContextMenu.showContextMenu();
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
                         Log.error("Error resources with parentId:" + resource.getId(), caught);
-                        if (openSupportCase.isToBeIncluded()) {
-                            resourceContextMenu.addItem(new MenuItemSeparator());
-                            resourceContextMenu.addItem(openSupportCase);
-                        }
                         resourceContextMenu.showContextMenu();
                     }
                 });
@@ -616,10 +605,6 @@ public class ResourceTreeView extends EnhancedVLayout {
                 Map<String, ResourceType> displayNameMap = getDisplayNames(importableChildTypes);
                 addMenu(MSG.common_button_import(), true, null, resource, displayNameMap, false);
             }
-            if (openSupportCase.isToBeIncluded()) {
-                resourceContextMenu.addItem(new MenuItemSeparator());
-                resourceContextMenu.addItem(openSupportCase);
-            }
             resourceContextMenu.showContextMenu();
 
         } else {
@@ -628,10 +613,6 @@ public class ResourceTreeView extends EnhancedVLayout {
             }
             if (!canCreate && hasImportableTypes) {
                 addMenu(MSG.common_button_import(), false, null, null, null, false);
-            }
-            if (openSupportCase.isToBeIncluded()) {
-                resourceContextMenu.addItem(new MenuItemSeparator());
-                resourceContextMenu.addItem(openSupportCase);
             }
             resourceContextMenu.showContextMenu();
         }

@@ -298,7 +298,7 @@ set_local_and_environment_variables()
 
    if [ "$RELEASE_TYPE" = "enterprise" ];
    then
-      MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Pdisable-tags,enable-rha -DTagManager=false -Dfiltered.location=target/filtered-sources/java"
+      MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Pdisable-tags -DTagManager=false -Dfiltered.location=target/filtered-sources/java"
    fi
 
    if [ -n "$DEBUG_MODE" ]; then

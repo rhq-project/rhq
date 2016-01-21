@@ -53,7 +53,6 @@ import org.rhq.coregui.client.bundle.BundleTopView;
 import org.rhq.coregui.client.dashboard.DashboardsView;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.help.HelpView;
-import org.rhq.coregui.client.help.RhAccessView;
 import org.rhq.coregui.client.inventory.InventoryView;
 import org.rhq.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.coregui.client.inventory.groups.detail.ResourceGroupTopView;
@@ -440,8 +439,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             canvas = new AlertHistoryView();
         } else if (viewName.equals(TestTopView.VIEW_ID.getName())) {
             canvas = new TestTopView();
-        } else if (!isRHQ() && viewName.equals(RhAccessView.VIEW_ID.getName())) {
-            canvas = new RhAccessView();
         } else {
             canvas = null;
         }

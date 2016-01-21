@@ -64,7 +64,6 @@ import org.rhq.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet
 import org.rhq.coregui.client.drift.DriftHistoryView;
 import org.rhq.coregui.client.footer.FavoritesMenu;
 import org.rhq.coregui.client.help.HelpView;
-import org.rhq.coregui.client.help.RhAccessView;
 import org.rhq.coregui.client.inventory.InventoryView;
 import org.rhq.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
@@ -78,7 +77,6 @@ import org.rhq.coregui.client.report.tag.TaggedView;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.MessageBar;
 import org.rhq.coregui.client.util.message.MessageCenterView;
-import org.rhq.coregui.client.util.preferences.UserPreferences;
 import org.rhq.coregui.client.util.preferences.UserPreferenceNames.UiSubsystem;
 
 /**
@@ -309,25 +307,6 @@ public class MenuBarView extends EnhancedVLayout {
             return "<a href='#" + view.getName() + "'>" + view.getTitle() + "</a>";
         }
 
-        private String createCspButtonContent() {
-            if (CoreGUI.isRHQ()) {
-                return "";
-            }
-            MenuItem search = new MenuItem(RhAccessView.PAGE_SEARCH, RhAccessView.VIEW_ID);
-            MenuItem newCase = new MenuItem(RhAccessView.PAGE_NEW_CASE, RhAccessView.VIEW_ID);
-            MenuItem myCases = new MenuItem(RhAccessView.PAGE_MY_CASES, RhAccessView.VIEW_ID);
-
-            return "<li class='dropdown'>"
-                + "<a href='#' class='dropdown-toggle' data-toggle='dropdown'>"+RhAccessView.VIEW_ID.getTitle()+" <b class='caret'></b></a>"
-                + "<ul class='dropdown-menu'>"
-                + "<li>"+getViewLink(search.getView())+"</li>"
-                + "<li class='dropdown-submenu'><a href='#' tabindex='-1' data-toggle='dropdown'>Support</a>"
-                + "<ul class='dropdown-menu'>"
-                + "<li>"+getViewLink(newCase.getView())+"</li>"
-                + "<li>"+getViewLink(myCases.getView())+"</li>"
-                + "</ul></li></ul></li>";
-        }
-
         private String createBarContent() {
             Subject user = UserSessionManager.getSessionSubject();
             StringBuilder sb = new StringBuilder();
@@ -347,7 +326,6 @@ public class MenuBarView extends EnhancedVLayout {
        +"</div>"
        +"<div class='navbar-collapse navbar-collapse-1 collapse'>"
          +"<ul class='nav navbar-nav navbar-utility'>"
-                + createCspButtonContent()
            +"<li>"
              +"<a id='"+BTN_FAV_ID+"' onclick='__gwt_showFavoritesMenu(); return false;'><i class='fa fa-star'></i><b class='caret'></b></a>"
            +"</li>"

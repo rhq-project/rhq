@@ -1053,7 +1053,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         long now = System.currentTimeMillis();
         long timedOut = now + (timeout * 1000L);
         // wait 1/60 of timeout, but at least 1s, for default timeout (120s) we'll wait 2s between checks
-        long waitTime = Math.min(timeout * 1000L / 60, 1000L);
+        long waitTime = Math.max(timeout * 1000L / 60, 1000L);
         int check = 0;
         while (now < timedOut) {
             check++;

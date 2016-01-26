@@ -50,6 +50,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.authz.RequiredPermissions;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.purge.PurgeManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QueryUtility;
@@ -79,6 +80,9 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
 
     @EJB
     FailoverListManagerLocal failoverListManager;
+
+    @EJB
+    PurgeManagerLocal purgeManager;
 
     @EJB
     //@IgnoreDependency
@@ -157,17 +161,8 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
     @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
         @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public int purgeAllEvents(Subject subject) {
-        List<PartitionEvent> events = getPartitionEvents(subject, null, null, null, PageControl.getUnlimitedInstance());
-
-        int i = 0;
-        Integer[] eventIds = new Integer[events.size()];
-        for (PartitionEvent event : events) {
-            eventIds[i++] = event.getId();
-        }
-
-        deletePartitionEvents(subject, eventIds);
-
-        return eventIds.length;
+        long deleteUpToTime = System.currentTimeMillis();
+        return purgeManager.purgePartitionEvents(deleteUpToTime);
     }
 
     public void processRequestedPartitionEvents() {

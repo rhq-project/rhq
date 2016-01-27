@@ -82,7 +82,7 @@ public class ConditionsEditor extends EnhancedVLayout {
      * Returns the conditions that this editor currently has in memory.
      * This will never be <code>null</code>. This collection serves for new
      * or deleted conditions.
-     * 
+     *
      * @return conditions set that was possibly edited by the user
      */
     public HashSet<AlertCondition> getConditions() {
@@ -93,7 +93,7 @@ public class ConditionsEditor extends EnhancedVLayout {
      * Returns the conditions that this editor currently has in memory.
      * This will never be <code>null</code>. This collection holds modified
      * existing conditions.
-     * 
+     *
      * @return modifiedConditions map of modified conditions that exist in the db, key is id
      */
     public Map<Integer, AlertCondition> getModifiedConditions() {
@@ -209,8 +209,10 @@ public class ConditionsEditor extends EnhancedVLayout {
         private void showConditionEditor(final AlertCondition existingCondition) {
 
             // we need the drift definition templates (if there are any) so we know if we should offer drift conditions as an option
-            ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceType.getId(),
-                EnumSet.of(MetadataType.driftDefinitionTemplates), new ResourceTypeRepository.TypeLoadedCallback() {
+            ResourceTypeRepository.Cache.getInstance()
+                .getResourceTypes(resourceType.getId(), EnumSet.of(MetadataType.driftDefinitionTemplates,
+                    MetadataType.events, MetadataType.resourceConfigurationDefinition),
+                new ResourceTypeRepository.TypeLoadedCallback() {
                     @Override
                     public void onTypesLoaded(ResourceType type) {
                         // the resource type repo caches types - so if this resource type was already cached prior

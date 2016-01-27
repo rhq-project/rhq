@@ -93,6 +93,13 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private static final Log LOG = LogFactory.getLog(BaseServerComponent.class);
 
     protected static final long MAX_TIMEOUT_FAILURE_WAIT = 5 * 60 * 1000L;
+    /**
+     * timeout (seconds) used in bundle:handover deployment action to make sure server is running
+     */
+    protected static final Integer BUNDLE_HANDOVER_SERVER_CHECK_TIMEOUT = Integer.getInteger(
+        "as7.plugin.handover-deployment.server-check-timeout.seconds", 120);
+
+    protected static final String BUNDLE_HANDOVER_SERVER_CHECK_TIMEOUT_PARAM = "waitForServer";
 
     private ASConnection connection;
     private LogFileEventResourceComponentHelper logFileEventDelegate;
@@ -981,6 +988,52 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         } else if (LOG.isDebugEnabled()) {
             LOG.debug("getSKMRequests failed: " + res.getFailureDescription());
         }
+    }
+
+    /**
+     * Checks for server's response until server returns valid response or timeout is reached.
+     * Check period is 1/60 of timeout but not less than 1s. This method does not use {@link #getAvailability()} to check
+     * availability because it may change component's state
+     * @param timeout in seconds ( <= 0 to disable check)
+     * @return true iff Server responded to simple http request within given timeout, false otherwise
+     */
+    protected boolean ensureServerUp(Integer timeout) {
+        if (timeout <= 0) {
+            // invalid/disabled
+            return true;
+        }
+        if (getLog().isDebugEnabled()) {
+            getLog().debug("Ensuring server " + context.getResourceDetails() + " is responding");
+        }
+        long now = System.currentTimeMillis();
+        long timedOut = now + (timeout * 1000L);
+        // wait 1/60 of timeout, but at least 1s, for default timeout (120s) we'll wait 2s between checks
+        long waitTime = Math.max(timeout * 1000L / 60, 1000L);
+        int check = 0;
+        while (now < timedOut) {
+            check++;
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Server check attempt #" + check);
+            }
+            try {
+                readAttribute(getHostAddress(), "name", AVAIL_OP_TIMEOUT_SECONDS);
+                return true;
+            } catch (Exception e) {
+            }
+            now = System.currentTimeMillis();
+            try {
+                Thread.currentThread().join(waitTime);
+            } catch (InterruptedException e) {
+                return false;
+            }
+        }
+        // one last check before we give up
+        try {
+            readAttribute(getHostAddress(), "name", AVAIL_OP_TIMEOUT_SECONDS);
+            return true;
+        } catch (Exception e) {
+        }
+        return false;
     }
 
     protected String collectPatches() {

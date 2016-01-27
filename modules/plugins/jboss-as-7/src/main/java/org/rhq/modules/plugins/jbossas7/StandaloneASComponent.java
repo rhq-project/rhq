@@ -304,6 +304,25 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
     }
 
     private BundleHandoverResponse handleDeployment(BundleHandoverRequest request) {
+        // first make sure our server is UP. We need to check it, because this handover
+        // could happen right after "execute-script" handover, which could have reloaded the server
+        // @see https://bugzilla.redhat.com/show_bug.cgi?id=1252930
+        Integer timeout = BUNDLE_HANDOVER_SERVER_CHECK_TIMEOUT;
+        String waitForServer = request.getParams().get(BUNDLE_HANDOVER_SERVER_CHECK_TIMEOUT_PARAM);
+        if(waitForServer != null && waitForServer.length() > 0) {
+            try {
+                timeout = Integer.valueOf(waitForServer);
+            } catch(NumberFormatException e) {
+                return BundleHandoverResponse.failure(EXECUTION,
+                        "Given server timeout parameter is not a valid number: " + waitForServer);
+            }
+        }
+        if (!ensureServerUp(timeout)) { // Value 0 disables the check
+            return BundleHandoverResponse.failure(EXECUTION,
+                    "Failed to upload deployment content, " + this.context.getResourceDetails()
+                            + " is currently not responding or " + AvailabilityType.DOWN);
+        }
+
         HandoverContentUploader contentUploader = new HandoverContentUploader(request, getASConnection());
         boolean uploaded = contentUploader.upload();
         if (!uploaded) {

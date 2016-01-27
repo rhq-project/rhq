@@ -40,6 +40,7 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -321,6 +322,25 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
         String serverGroup = handoverRequest.getParams().get("serverGroup");
         if (isBlank(serverGroup)) {
             return BundleHandoverResponse.failure(MISSING_PARAMETER, "serverGroup parameter is missing");
+        }
+
+        // make sure our server is UP. We need to check it, because this handover
+        // could happen right after "execute-script" handover, which could have reloaded the server
+        // @see https://bugzilla.redhat.com/show_bug.cgi?id=1252930
+        Integer timeout = BUNDLE_HANDOVER_SERVER_CHECK_TIMEOUT;
+        String waitForServer = handoverRequest.getParams().get(BUNDLE_HANDOVER_SERVER_CHECK_TIMEOUT_PARAM);
+        if(waitForServer != null && waitForServer.length() > 0) {
+            try {
+                timeout = Integer.valueOf(waitForServer);
+            } catch(NumberFormatException e) {
+                return BundleHandoverResponse.failure(EXECUTION,
+                        "Given server timeout parameter is not a valid number: " + waitForServer);
+            }
+        }
+        if (!ensureServerUp(timeout)) { // Value 0 disables the check
+            return BundleHandoverResponse.failure(EXECUTION,
+                    "Failed to upload deployment content, " + this.context.getResourceDetails()
+                            + " is currently not responding or " + AvailabilityType.DOWN);
         }
 
         HandoverContentUploader contentUploader = new HandoverContentUploader(handoverRequest, getASConnection());

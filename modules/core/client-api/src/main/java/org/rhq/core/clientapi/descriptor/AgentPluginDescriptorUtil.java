@@ -377,20 +377,17 @@ public abstract class AgentPluginDescriptorUtil {
         ValidationEventCollector validationEventCollector = null;
 
         try {
-            validationEventCollector = new ValidationEventCollector();
-            pluginDescriptor = loadPluginDescriptorFromUrl(pluginJarFileUrl, validationEventCollector, false, logger);
+            if (skipValidation()) {
+                validationEventCollector = new DoNotFailValidationEventCollector();
+            } else {
+                validationEventCollector = new ValidationEventCollector();
+            }
+            pluginDescriptor = loadPluginDescriptorFromUrl(pluginJarFileUrl, validationEventCollector, logger);
 
         } catch (PluginContainerException e) {
-            if (skipValidation()) {
-                // retry without validation, this is a jvm version with known issues
-                validationEventCollector = new ValidationEventCollector();
-                pluginDescriptor = loadPluginDescriptorFromUrl(pluginJarFileUrl, validationEventCollector, true, logger);
-
-            } else {
-                // probably a valid schema issue
-                logValidationEvents(pluginJarFileUrl, validationEventCollector, logger);
-                throw e;
-            }
+            // probably a valid schema issue
+            logValidationEvents(pluginJarFileUrl, validationEventCollector, logger);
+            throw e;
         }
 
         return pluginDescriptor;
@@ -401,10 +398,10 @@ public abstract class AgentPluginDescriptorUtil {
         String vm = System.getProperty("java.vm.name", "unknown");
         String version = System.getProperty("java.version", "unknown");
         String java = vm + " " + version;
-        String skipPattern = System.getProperty("org.rhq.xsl.validation.skip", "OpenJDK.*1\\.6.*");
+        String skipPattern = System.getProperty("org.rhq.xsd.validation.skip", "OpenJDK.*1\\.6.*");
 
         if (java.matches(skipPattern)) {
-            LOG.debug("Skipping Agent Plugin XSL Validation because of known issues with [" + java + "]");
+            LOG.debug("Skipping Agent Plugin XSD Validation because of known issues with [" + java + "]");
             return true;
         }
 
@@ -412,7 +409,7 @@ public abstract class AgentPluginDescriptorUtil {
     }
 
     private static PluginDescriptor loadPluginDescriptorFromUrl(URL pluginJarFileUrl,
-        ValidationEventCollector validationEventCollector, boolean skipValidation, final Log logger)
+        ValidationEventCollector validationEventCollector, final Log logger)
         throws PluginContainerException {
 
         JarInputStream jis = null;
@@ -434,7 +431,7 @@ public abstract class AgentPluginDescriptorUtil {
             }
 
             return (PluginDescriptor) parsePluginDescriptor(jis, validationEventCollector, PLUGIN_SCHEMA_PATH,
-                DescriptorPackages.PC_PLUGIN, skipValidation);
+                DescriptorPackages.PC_PLUGIN);
 
         } catch (Exception e) {
             throw new PluginContainerException("Could not successfully parse the plugin descriptor ["
@@ -468,9 +465,8 @@ public abstract class AgentPluginDescriptorUtil {
      */
     public static PluginDescriptor parsePluginDescriptor(InputStream is,
         ValidationEventCollector validationEventCollector) throws PluginContainerException {
-        JAXBContext jaxbContext;
         return (PluginDescriptor) parsePluginDescriptor(is, validationEventCollector, PLUGIN_SCHEMA_PATH,
-            DescriptorPackages.PC_PLUGIN, false);
+            DescriptorPackages.PC_PLUGIN);
     }
 
     /**
@@ -480,9 +476,8 @@ public abstract class AgentPluginDescriptorUtil {
      */
     public static CannedGroupExpressions parseCannedGroupExpressionsDescriptor(InputStream is,
         ValidationEventCollector validationEventCollector) throws PluginContainerException {
-        JAXBContext jaxbContext;
         return (CannedGroupExpressions) parsePluginDescriptor(is, validationEventCollector,
-            CANNED_GROUP_EXPRESSION_SCHEMA_PATH, DescriptorPackages.CANNED_EXPRESSIONS, false);
+            CANNED_GROUP_EXPRESSION_SCHEMA_PATH, DescriptorPackages.CANNED_EXPRESSIONS);
     }
 
     /**
@@ -492,7 +487,7 @@ public abstract class AgentPluginDescriptorUtil {
      * @throws PluginContainerException if validation fails
      */
     private static Object parsePluginDescriptor(InputStream is, ValidationEventCollector validationEventCollector,
-        String xsd, String jaxbPackage, boolean skipValidation) throws PluginContainerException {
+        String xsd, String jaxbPackage) throws PluginContainerException {
         JAXBContext jaxbContext;
         try {
             jaxbContext = JAXBContext.newInstance(jaxbPackage);
@@ -504,12 +499,10 @@ public abstract class AgentPluginDescriptorUtil {
         try {
             unmarshaller = jaxbContext.createUnmarshaller();
 
-            if (!skipValidation) {
-                URL pluginSchemaURL = AgentPluginDescriptorUtil.class.getClassLoader().getResource(xsd);
-                Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(
+            URL pluginSchemaURL = AgentPluginDescriptorUtil.class.getClassLoader().getResource(xsd);
+            Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(
                     pluginSchemaURL);
-                unmarshaller.setSchema(pluginSchema);
-            }
+            unmarshaller.setSchema(pluginSchema);
 
             unmarshaller.setEventHandler(validationEventCollector);
             return unmarshaller.unmarshal(is);

@@ -291,12 +291,6 @@ public enum SystemSetting {
     STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION("STORAGE_REGULAR_SNAPSHOTS_DELETION_LOCATION",
         PropertySimpleType.STRING, true, true, false),
 
-    /** How long do we keep partition events */
-    PARTITION_EVENT_PURGE_PERIOD("PARTITION_EVENT_PURGE", PropertySimpleType.LONG, false, true, true),
-
-    /** How long do we keep resource config history */
-    RESOURCE_CONFIG_HISTORY_PURGE_PERIOD("RESOURCE_CONFIG_HISTORY_PURGE", PropertySimpleType.LONG, false, true, true),
-
     /** Hidden setting where we keep configuration id of storage cluster state configuration **/
     STORAGE_CLUSTER_STATE_CONFIGURATION_ID("STORAGE_CLUSTER_STATE_CONFIGURATION_ID", PropertySimpleType.LONG, true,
         false, false);

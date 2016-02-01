@@ -83,7 +83,6 @@ public class StorageNodeConfigurationUtil {
     public static void updateValuesToConfiguration(StorageNodeConfigurationComposite storageNodeConfigurationComposite, Configuration storageNodeConfiguration) {
         storageNodeConfiguration.setSimpleValue(RHQ_STORAGE_JMX_PORT_PROPERTY, Integer.toString(storageNodeConfigurationComposite.getJmxPort()));
         storageNodeConfiguration.setSimpleValue(RHQ_STORAGE_HEAP_MAX_PROPERTY, storageNodeConfigurationComposite.getHeapSize());
-        storageNodeConfiguration.setSimpleValue(RHQ_STORAGE_HEAP_MIN_PROPERTY, storageNodeConfigurationComposite.getHeapSize());
         storageNodeConfiguration.setSimpleValue(RHQ_STORAGE_HEAP_NEW_PROPERTY, storageNodeConfigurationComposite.getHeapNewSize());
 
         storageNodeConfiguration.setSimpleValue(RHQ_STORAGE_THREAD_STACK_PROPERTY, storageNodeConfigurationComposite.getThreadStackSize());

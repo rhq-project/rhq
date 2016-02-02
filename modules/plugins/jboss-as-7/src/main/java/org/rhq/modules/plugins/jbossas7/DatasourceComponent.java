@@ -154,8 +154,15 @@ public class DatasourceComponent extends BaseComponent<DatasourcesComponent> {
 
                 Object o = results.get(name);
                 if (o != null) {
-                    String tmp = (String) o;
-                    Double val = Double.valueOf(tmp);
+                    Double val;
+                    if(o instanceof Integer) {
+                        val = ((Integer) o).doubleValue();
+                    } else if(o instanceof Double) {
+                        val = (Double) o;
+                    } else {
+                        String tmp = (String) o;
+                        val = Double.valueOf(tmp);
+                    }
                     MeasurementDataNumeric data = new MeasurementDataNumeric(metric, val);
                     report.addData(data);
                 }

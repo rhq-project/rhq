@@ -78,6 +78,7 @@ import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.InitializableView;
 import org.rhq.coregui.client.RefreshableView;
+import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.components.TitleBar;
 import org.rhq.coregui.client.components.form.DateFilterItem;
 import org.rhq.coregui.client.components.form.EnhancedSearchBarItem;
@@ -683,6 +684,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
             refreshButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
+                    UserSessionManager.refresh();
                     disableAllFooterControls();
                     refresh();
                 }

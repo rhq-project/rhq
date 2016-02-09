@@ -415,6 +415,10 @@ public class ApplicationServerComponent<T extends ResourceComponent<?>> implemen
             log.debug("Failed to connect to Profile Service.", e);
             // it is not a good idea to catch RuntimeException. If we really have to do it
             // we need to re-throw it (as it can be InterrupedException or SocketTimoeout..)
+            if(rootCause instanceof java.net.ConnectException) {
+                // Acceptable situation to allow non-started containers to be added
+                return;
+            }
             throw e;
         }
     }

@@ -46,12 +46,6 @@ public interface SystemManagerLocal extends SystemManagerRemote {
     void enableHibernateStatistics();
 
     /**
-     * Performs some reconfiguration things on the server where we are running.
-     * This includes redeploying the configured JAAS modules.
-     */
-    void reconfigureSystem(Subject whoami);
-
-    /**
      * Run analyze command on PostgreSQL databases. On non-PostgreSQL, this returns -1.
      *
      * @param whoami the user requesting the operation

@@ -91,4 +91,10 @@ public interface SystemManagerRemote {
      * @throws Exception
      */
     void setSystemSettings(Subject subject, SystemSettings settings) throws Exception;
+
+    /**
+     * Performs some reconfiguration things on the server where we are running.
+     * This includes redeploying the configured JAAS modules.
+     */
+    void reconfigureSystem(Subject whoami);
 }

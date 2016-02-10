@@ -633,9 +633,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void reconfigureSystem(Subject whoami) {
         try {
-            Object mbean;
-
-            mbean = MBeanServerInvocationHandler.newProxyInstance(ManagementFactory.getPlatformMBeanServer(),
+            Object mbean = MBeanServerInvocationHandler.newProxyInstance(ManagementFactory.getPlatformMBeanServer(),
                 CustomJaasDeploymentServiceMBean.OBJECT_NAME, CustomJaasDeploymentServiceMBean.class, false);
             ((CustomJaasDeploymentServiceMBean) mbean).installJaasModules();
         } catch (Exception e) {

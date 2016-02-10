@@ -49,4 +49,10 @@
     <method>int purgeEventsForContext(*)</method>
     <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1258870</justification>
   </difference>
+  <difference>
+    <className>org/rhq/enterprise/server/system/SystemManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added -->
+    <method>void reconfigureSystem(*)</method>
+    <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1306231</justification>
+  </difference>
 </differences>

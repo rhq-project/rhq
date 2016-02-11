@@ -301,6 +301,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 runtimeProductName = AS.PRODUCT_NAME;
             }
         }
+        if(runtimeProductName.equals("JBoss EAP")) {
+            runtimeProductName = "EAP";
+        }
         if (!runtimeProductName.equals(expectedRuntimeProductName)) {
             throw new InvalidPluginConfigurationException("The original product type discovered for this server was "
                 + expectedRuntimeProductName + ", but the server is now reporting its product type is ["

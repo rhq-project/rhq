@@ -32,6 +32,7 @@ public enum JBossProductType {
 
     AS("AS", "JBoss AS 7", "JBoss Application Server 7", "AS"),
     EAP("EAP", "JBoss EAP 6", "JBoss Enterprise Application Platform 6", "EAP"),
+    EAP7("EAP", "JBoss EAP 7", "JBoss Enterprise Application Platform 7", "EAP"),
     ISPN("ISPN", "Infinispan Server", "Infinispan Server", "Infinispan Server"),
     JDG("JDG", "JBoss JDG 6", "JBoss Data Grid 6", "Data Grid"),
     JPP("JPP", "JBoss JPP 6", "JBoss Portal Platform 6", "Portal Platform"),
@@ -76,7 +77,7 @@ public enum JBossProductType {
      */
     public static JBossProductType determineJBossProductType(File homeDir, String apiVersion) {
         try {
-            JBossProductType jBossProductType = determineJBossProductTypeViaProductConfFile(homeDir);
+            JBossProductType jBossProductType = determineJBossProductTypeViaProductConfFile(homeDir, apiVersion);
             if (jBossProductType==null) {
                 // Wildfly and The Server Formerly Known AS JBossAS share the same absence of a slot
                 // and thus have no product type. So we need to check differently
@@ -105,7 +106,7 @@ public enum JBossProductType {
         throw new IllegalArgumentException("No product type with product-name '" + productName + "' is known.");
     }
 
-    private static JBossProductType determineJBossProductTypeViaProductConfFile(File homeDir) throws Exception {
+    private static JBossProductType determineJBossProductTypeViaProductConfFile(File homeDir, String apiVersion) throws Exception {
         JBossProductType productType;
         File productConfFile = new File(homeDir, "bin/product.conf");
         if (productConfFile.exists()) {
@@ -125,6 +126,9 @@ public enum JBossProductType {
             }
             if (slot.equals("eap")) {
                 productType = JBossProductType.EAP;
+                if(apiVersion.startsWith("4")) {
+                    productType = JBossProductType.EAP7;
+                }
             } else if (slot.equals("ispn")) {
                 productType = JBossProductType.ISPN;
             } else if (slot.equals("jdg")) {

@@ -334,8 +334,7 @@ public class ModuleOptionsComponent extends BaseComponent implements Configurati
             Result result = getASConnection().execute(op);
             if (result.isSuccess()) {
                 //populate attribute values
-                List<Value> currentAttributeState = new ArrayList<Value>();
-                currentAttributeState = ModuleOptionsComponent.populateSecurityDomainModuleOptions(result,
+                List<Value> currentAttributeState = ModuleOptionsComponent.populateSecurityDomainModuleOptions(result,
                     ModuleOptionsComponent.loadModuleOptionType(attribute));
 
                 //locate specific node and populate the config

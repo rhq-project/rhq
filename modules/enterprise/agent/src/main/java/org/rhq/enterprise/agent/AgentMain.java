@@ -20,8 +20,6 @@
 package org.rhq.enterprise.agent;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -76,9 +74,6 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
-import mazz.i18n.Logger;
-import mazz.i18n.Msg;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -188,6 +183,11 @@ import org.rhq.enterprise.communications.command.server.CommandListener;
 import org.rhq.enterprise.communications.command.server.IncomingCommandTrace;
 import org.rhq.enterprise.communications.util.CommandTraceUtil;
 import org.rhq.enterprise.communications.util.SecurityUtil;
+
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
+import mazz.i18n.Logger;
+import mazz.i18n.Msg;
 
 /**
  * The main class of the agent runtime container.
@@ -2872,8 +2872,11 @@ public class AgentMain {
                 m_configuration.getClientSenderSecurityTruststoreAlgorithm());
             config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_TYPE,
                 m_configuration.getClientSenderSecurityTruststoreType());
-            config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_PASSWORD,
-                m_configuration.getClientSenderSecurityTruststorePassword());
+            // ClientSenderSecurityTruststorePassword property is optional and should not be stored if null.
+            if (m_configuration.getClientSenderSecurityTruststorePassword() != null) {
+                config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_PASSWORD,
+                    m_configuration.getClientSenderSecurityTruststorePassword());
+            }
             config.put(SSLSocketBuilder.REMOTING_SSL_PROTOCOL, m_configuration.getClientSenderSecuritySocketProtocol());
             config.put(SSLSocketBuilder.REMOTING_KEY_ALIAS, m_configuration.getClientSenderSecurityKeystoreAlias());
             config.put(SSLSocketBuilder.REMOTING_SERVER_AUTH_MODE,

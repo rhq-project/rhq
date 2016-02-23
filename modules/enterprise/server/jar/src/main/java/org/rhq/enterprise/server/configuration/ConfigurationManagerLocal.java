@@ -40,8 +40,6 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
-import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
-import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdateJob;
@@ -125,42 +123,6 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
      * @return the resource configuration update
      */
     ResourceConfigurationUpdate getResourceConfigurationUpdate(Subject subject, int configurationUpdateId);
-
-    /**
-     * This method is called when a user has requested to change the resource configuration for an existing resource to
-     * one of its previous values. If the user does not have the proper permissions to change the resource's
-     * configuration, an exception is thrown.
-     *
-     * <p>This will not wait for the agent to finish the configuration update. This will return after the request is
-     * sent. Once the agent finishes with the request, it will send the completed request information to
-     * {@link #completeResourceConfigurationUpdate}.</p>
-     *
-     * @param  subject          the user who is requesting the update
-     * @param  resourceId      identifies the resource to be updated
-     * @param  configHistoryId the id of the resource's previous configuration to rollback to
-     *
-     * @throws ConfigurationUpdateException if the configHistoryId does not exist
-     */
-    void rollbackResourceConfiguration(Subject subject, int resourceId, int configHistoryId)
-        throws ConfigurationUpdateException;
-
-    /**
-     * This method is called when a user has requested to change the plugin configuration for an existing resource to
-     * one of its previous values. If the user does not have the proper permissions to change the resource's
-     * plugin configuration, an exception is thrown.
-     *
-     * <p>This will not wait for the agent to finish the configuration update. This will return after the request is
-     * sent. Once the agent finishes with the request, it will send the completed request information to
-     * {@link #completePluginConfigurationUpdate}.</p>
-     *
-     * @param  subject          the user who is requesting the update
-     * @param  resourceId      identifies the resource to be updated
-     * @param  configHistoryId the id of the resource's previous configuration to rollback to
-     *
-     * @throws ConfigurationUpdateException if the configHistoryId does not exist
-     */
-    void rollbackPluginConfiguration(Subject subject, int resourceId, int configHistoryId)
-        throws ConfigurationUpdateException;
 
     /**
      * For internal use only - do not call this method. This is for
@@ -372,12 +334,6 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
     void setResourceConfiguration(int resourceId, Configuration configuration);
 
     Configuration mergeConfiguration(Configuration config);
-
-    PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(Subject subject,
-        ResourceConfigurationUpdateCriteria criteria);
-
-    PageList<PluginConfigurationUpdate> findPluginConfigurationUpdatesByCriteria(Subject subject,
-        PluginConfigurationUpdateCriteria criteria);
 
 
 

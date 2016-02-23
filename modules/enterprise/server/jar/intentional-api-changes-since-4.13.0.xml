@@ -32,6 +32,30 @@
     <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1155693</justification>
   </difference>
   <difference>
+    <className>org/rhq/enterprise/server/configuration/ConfigurationManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added -->
+    <method>org.rhq.core.domain.util.PageList findPluginConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria)</method>
+    <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1309481</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/enterprise/server/configuration/ConfigurationManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added -->
+    <method>org.rhq.core.domain.util.PageList findResourceConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria)</method>
+    <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1309481</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/enterprise/server/configuration/ConfigurationManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added -->
+    <method>void rollbackPluginConfiguration(org.rhq.core.domain.auth.Subject, int, int)</method>
+    <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1309481</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/enterprise/server/configuration/ConfigurationManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added -->
+    <method>void rollbackResourceConfiguration(org.rhq.core.domain.auth.Subject, int, int)</method>
+    <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1309481</justification>
+  </difference>
+  <difference>
     <className>org/rhq/enterprise/server/bundle/BundleManagerRemote</className>
     <differenceType>7012</differenceType>  <!-- method added -->
     <method>void deleteBundleDestination(*)</method>

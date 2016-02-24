@@ -711,7 +711,9 @@ public class Domain2Descriptor {
         builder.append("  <results>\n");
         doIndent(indent, builder);
         if (replyMap != null && !replyMap.isEmpty()) {
-            generatePropertiesForMap(builder, replyMap, indent + 4);
+            // This fools the generateProperty to write simpleProperty, otherwise we get ClassCastException
+            replyMap.remove("value-type");
+            builder.append(generateProperty(indent, replyMap, Type.STRING, "operationResult", null));
         } else {
             builder.append("     <c:simple-property name=\"operationResult\" description=\"" + description + "\" />\n");
             doIndent(indent, builder);
@@ -781,10 +783,6 @@ public class Domain2Descriptor {
         description = description.replace("-", "&#45;");
         //TODO: spinder should we add the other escape elements as well?
         return description;
-    }
-
-    private void generatePropertiesForMap(StringBuilder builder, Map<String, Object> map) {
-        generatePropertiesForMap(builder, map, 0);
     }
 
     private void generatePropertiesForMap(StringBuilder builder, Map<String, Object> map, int indent) {

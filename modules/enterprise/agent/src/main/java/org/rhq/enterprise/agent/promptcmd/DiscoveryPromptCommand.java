@@ -131,13 +131,13 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         String resourceTypeName = null;
         Integer resourceId = null;
         boolean verbose = false;
-        boolean full = false;
+        boolean full = true;
 
-        String sopts = "-p:i:r:fvb:";
+        String sopts = "-p:i:r:dvb:";
         LongOpt[] lopts = { new LongOpt("plugin", LongOpt.REQUIRED_ARGUMENT, null, 'p'), //
             new LongOpt("resourceId", LongOpt.REQUIRED_ARGUMENT, null, 'i'), //
             new LongOpt("resourceType", LongOpt.REQUIRED_ARGUMENT, null, 'r'), //
-            new LongOpt("full", LongOpt.NO_ARGUMENT, null, 'f'), //
+            new LongOpt("dry-run", LongOpt.NO_ARGUMENT, null, 'd'), //
             new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v'), //
             new LongOpt("blacklist", LongOpt.REQUIRED_ARGUMENT, null, 'b') };
 
@@ -168,8 +168,8 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
                 break;
             }
 
-            case 'f': {
-                full = true;
+            case 'd': {
+                full = false;
                 break;
             }
 

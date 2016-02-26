@@ -1907,9 +1907,10 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("discovery")
     String DISCOVERY = "PromptCommand.discovery";
 
-    @I18NMessage("discovery [--plugin=<plugin name>] [--resourceType=<type name>]\\n\\\n" //
+    @I18NMessage("discovery [--verbose]\\n\\\n"
+        + "\\        discovery --dry-run [--plugin=<plugin name>]\\n\\\n"
+        + "\\                  [--resourceType=<type name>]\\n\\\n" //
         + "\\                  [--resourceId=<id>] [--verbose]\\n\\\n" //
-        + "\\        discovery --full [--verbose]\\n\\\n" //
         + "\\        discovery --blacklist={list|clear}")
     String DISCOVERY_SYNTAX = "PromptCommand.discovery.syntax";
 
@@ -1917,15 +1918,13 @@ public interface AgentI18NResourceKeys {
     String DISCOVERY_HELP = "PromptCommand.discovery.help";
 
     @I18NMessage("Asks a plugin to run a discovery scan. This is a way to determine what\\n\\\n"
-        + "resources a plugin can actually find.  Note that this will run a server scan\\n\\\n"
-        + "not a service scan (i.e. it will not try to discover child services for parent\\n\\\n"
-        + "servers already in inventory) unless you use --full or --resourceId. Also\\n\\\n"
-        + "note that only --full will actually send an inventory report to the server.\\n\\\n"
+        + "resources a plugin can actually find.  Note that this will run a detailed server\\n\\\n "
+        + "scan inside the plugin container.\\n\\\n"
+        + "This will update the actual agent inventory by sending an inventory report to the server.\\n\\\n"
+        + "Ignores --plugin, --resourceType and --resourceId unless --dry-run is used.\\n\\\n"
         + "The valid command line arguments are:\\n\\\n"
-        + "\\  -f, --full : Runs a detailed discovery inside the plugin container.\\n\\\n"
-        + "\\               This will update the actual agent inventory by sending\\n\\\n"
-        + "\\               an inventory report to the server.\\n\\\n"
-        + "\\               This ignores --plugin, --resourceType and --resourceId.\\n\\\n"
+        + "\\  -d, --dry-run : Runs a server scan (i.e. it will not try to discover child services\\n\\\n"
+        + "\\                  for parent servers already in inventory).\\n\\\n"
         + "\\  -p, --plugin=<name> : The name of the plugin whose discovery will run.\\n\\\n"
         + "\\                        If you do not specify a plugin, all plugins will\\n\\\n"
         + "\\                        run their discovery.\\n\\\n"
@@ -1940,9 +1939,9 @@ public interface AgentI18NResourceKeys {
         + "\\                          a service scan is performed as opposed to a\\n\\\n"
         + "\\                          server scan and the --plugin/--resourceType\\n\\\n"
         + "\\                          options are ignored.\\n\\\n"
-        + "\\  -v, --verbose : If doing a non-full discovery, this prints the plugin\\n\\\n"
-        + "\\                  configuration of each discovered resource. For --full\\n\\\n"
-        + "\\                  scans, this will dump all resources and errors found.\\n\\\n"
+        + "\\  -v, --verbose : Dump all resources and errors found.\\n\\\n "
+        + "\\                  For --dry-run, this prints the plugin\\n\\\n"
+        + "\\                  configuration of each discovered resource.\\n\\\n"
         + "\\  -b, --blacklist={list|clear} : Operates on the blacklist which determines\\n\\\n"
         + "\\                                 which resource types are not discoverable.\\n\\\n"
         + "\\                                 (note that specifying this option will not\\n\\\n"

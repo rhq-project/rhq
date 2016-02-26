@@ -113,7 +113,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
                 }
             });
 
-            ResourceDatasource resourceDatasource = new ResourceDatasource();
+            GroupOperationScheduleResourceDatasource resourceDatasource = new GroupOperationScheduleResourceDatasource();
             Criteria criteria = new Criteria(ResourceDatasource.FILTER_GROUP_ID, String.valueOf(this.groupComposite
                 .getResourceGroup().getId()));
             resourceDatasource.fetchData(criteria, new LoadResourcesCallback(latch));
@@ -209,7 +209,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
             for (Resource resource : executionOrder) {
                 resourceIds[i++] = resource.getId();
             }
-            ResourceDatasource resourceDatasource = new ResourceDatasource();
+            GroupOperationScheduleResourceDatasource resourceDatasource = new GroupOperationScheduleResourceDatasource();
             Criteria criteria = new Criteria();
             criteria.addCriteria(ResourceDatasource.FILTER_RESOURCE_IDS, resourceIds);
             resourceDatasource.fetchData(criteria, new DSCallback() {

@@ -206,7 +206,7 @@ public class DatasourceComponent extends BaseComponent<DatasourcesComponent> {
         allSimplePropertyNames.addAll(currentConfigSimpleProperties.keySet());
         // Read-only
         allSimplePropertyNames.remove(ENABLED_ATTRIBUTE);
-        if (getServerComponent().getServerPluginConfiguration().getProductType() == JBossProductType.AS) {
+        if (getServerComponent().getServerPluginConfiguration().getProduct().equals(JBossProduct.AS)) {
             // Only supported on EAP
             allSimplePropertyNames.remove(ALLOW_MULTIPLE_USERS_ATTRIBUTE);
             allSimplePropertyNames.remove(TRACK_STATEMENTS_ATTRIBUTE);

@@ -22,8 +22,9 @@ package org.rhq.modules.plugins.jbossas7.itest.nonpc;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.Mockito.when;
 import static org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP;
-import static org.rhq.modules.plugins.jbossas7.JBossProductType.AS;
+import static org.rhq.modules.plugins.jbossas7.JBossProduct.AS;
 import static org.rhq.modules.plugins.jbossas7.helper.HostnameVerification.SKIP;
+import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property.EXPECTED_PRODUCT_NAME;
 import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property.HOSTNAME;
 import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property.HOSTNAME_VERIFICATION;
 import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property.MANAGEMENT_CONNECTION_TIMEOUT;
@@ -143,7 +144,7 @@ public class InterruptibleOperationsTest {
         pluginConfig.getMap().put(LOG_EVENT_SOURCES_CONFIG_PROP, new PropertyList());
         pluginConfig.setSimpleValue(TRUST_STRATEGY, TRUST_ANY.name);
         pluginConfig.setSimpleValue(HOSTNAME_VERIFICATION, SKIP.name);
-        pluginConfig.setSimpleValue("expectedRuntimeProductName", AS.PRODUCT_NAME);
+        pluginConfig.setSimpleValue(EXPECTED_PRODUCT_NAME, AS.PRODUCT_NAME);
         return pluginConfig;
     }
 

@@ -27,6 +27,8 @@ import java.security.KeyStoreException;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.modules.plugins.jbossas7.JBossProduct;
+import org.rhq.modules.plugins.jbossas7.JBossProductDiscovery;
 import org.rhq.modules.plugins.jbossas7.JBossProductType;
 
 /**
@@ -53,6 +55,7 @@ public class ServerPluginConfiguration {
         public static final String LOG_DIR = "logDir";
         public static final String PRODUCT_TYPE = "productType";
         public static final String HOST_CONFIG_FILE = "hostConfigFile";
+        public static final String EXPECTED_PRODUCT_NAME = "expectedRuntimeProductName";
         @Deprecated
         public static final String AVAIL_CHECK_PERIOD_CONFIG_PROP = "availabilityCheckPeriod";
         public static final String TRUST_STRATEGY = "trustStrategy";
@@ -208,13 +211,39 @@ public class ServerPluginConfiguration {
         this.pluginConfig.setSimpleValue(Property.LOG_DIR, (logDir != null) ? logDir.toString() : null);
     }
 
+    /**
+     * @deprecated since 4.14
+     */
+    @Deprecated
     public JBossProductType getProductType() {
         String stringValue = this.pluginConfig.getSimpleValue(Property.PRODUCT_TYPE);
         return (stringValue != null && !stringValue.isEmpty()) ? JBossProductType.valueOf(stringValue) : null;
     }
 
+    /**
+     * @deprecated since 4.14
+     */
+    @Deprecated
     public void setProductType(JBossProductType productType) {
         this.pluginConfig.setSimpleValue(Property.PRODUCT_TYPE, (productType != null) ? productType.name() : null);
+    }
+
+    public JBossProduct getProduct() {
+        String stringValue = this.pluginConfig.getSimpleValue(Property.PRODUCT_TYPE);
+        return (stringValue != null && !stringValue.isEmpty()) ? JBossProductDiscovery.getKnownProduct(stringValue)
+            : null;
+    }
+
+    public void setProduct(JBossProduct product) {
+        this.pluginConfig.setSimpleValue(Property.PRODUCT_TYPE, (product != null) ? product.PLUGIN_CONFIG_NAME : null);
+    }
+
+    public void setExpectedRuntimeProductName(String expectedRuntimeProductName) {
+        this.pluginConfig.setSimpleValue(Property.EXPECTED_PRODUCT_NAME, expectedRuntimeProductName);
+    }
+
+    public String getExpectedRuntimeProductName() {
+        return this.pluginConfig.getSimpleValue(Property.EXPECTED_PRODUCT_NAME);
     }
 
     public File getHostConfigFile() {

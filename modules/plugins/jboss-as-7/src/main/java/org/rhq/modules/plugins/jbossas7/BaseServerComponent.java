@@ -280,7 +280,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         }
 
         // Validate the product type (e.g. AS or EAP).
-        String expectedRuntimeProductName = pluginConfiguration.getSimpleValue("expectedRuntimeProductName");
+        String expectedRuntimeProductName = serverPluginConfig.getExpectedRuntimeProductName();
         String runtimeProductName;
         try {
             runtimeProductName = readAttribute(getHostAddress(), "product-name");

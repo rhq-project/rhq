@@ -1,0 +1,25 @@
+{
+  "outcome" : "success",
+  "result" : {
+    "name" : "ejb3-async",
+    "max-threads" : {
+      "count" : 10,
+      "per-cpu" : 20
+    },
+    "keepalive-time" : {
+      "time" : 10,
+      "unit" : "SECONDS"
+    },
+    "blocking" : true,
+    "allow-core-timeout" : false,
+    "queue-length" : {
+      "count" : 10,
+      "per-cpu" : 20
+    },
+    "core-threads" : {
+      "count" : 10,
+      "per-cpu" : 20
+    }
+  },
+  "compensating-operation" : null
+}

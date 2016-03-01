@@ -1,0 +1,62 @@
+{
+  "outcome" : "success",
+  "result" :
+
+
+    {"default-virtual-server" : "default-host",
+        "native" : true,
+        "configuration" : {
+            "container" : {},
+            "static-resources" : {
+                "disabled" : false,
+                "listings" : false,
+                "max-depth" : 3,
+                "read-only" : true,
+                "sendfile" : 49152,
+                "webdav" : false},
+            "jsp-configuration" : {
+                "check-interval" : 17,
+                "development" : false,
+                "disabled" : true,
+                "display-source-fragment" : true,
+                "dump-smap" : false,
+                "error-on-use-bean-invalid-class-attribute" : false,
+                "generate-strings-as-char-arrays" : false,
+                "java-encoding" : "UTF-8",
+                "keep-generated" : true,
+                "mapped-file" : true,
+                "modification-test-interval" : "7",
+                "recompile-on-fail" : false,
+                "smap" : false,
+                "source-vm" : "1.5",
+                "tag-pooling" : true,
+                "target-vm" : "1.5",
+                "trim-spaces" : true,
+                "x-powered-by" : true}
+        },
+        "connector" : {
+            "http" : {
+                "enable-lookups" : true,
+                "enabled" : true,
+                "max-post-size" : 2097152,
+                "max-save-post-size" : 4096,
+                "protocol" : "HTTP/1.1",
+                "redirect-port" : 8443,
+                "scheme" : "http",
+                "secure" : false,
+                "socket-binding" : "http",
+                "ssl" : null,
+                "virtual-server" : null}
+        },
+
+        "virtual-server" : {
+            "default-host" : {
+                "access-log" : null,
+                "alias" : ["localhost","example.com"],
+                "default-web-module" : "ROOT.war",
+                "enable-welcome-root" : true,
+                "rewrite" : null,
+                "sso" : null}
+        }
+    }
+}

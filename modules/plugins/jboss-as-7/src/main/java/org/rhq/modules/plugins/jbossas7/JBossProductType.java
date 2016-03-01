@@ -125,8 +125,9 @@ public enum JBossProductType {
                 throw new Exception("'slot' property not found in " + productConfFile + ".");
             }
             if (slot.equals("eap")) {
-                productType = JBossProductType.EAP;
-                if(apiVersion.startsWith("4")) {
+                if(apiVersion.startsWith("1")) {
+                    productType = JBossProductType.EAP;
+                } else {
                     productType = JBossProductType.EAP7;
                 }
             } else if (slot.equals("ispn")) {

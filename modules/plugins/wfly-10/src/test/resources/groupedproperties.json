@@ -1,0 +1,24 @@
+{
+    "outcome" : "success",
+    "result" : {
+        "first-group" : {
+            "first-group" : {
+                "firstprop" : "123",
+                "secondprop" : [ "test1", "test2", "test3" ],
+                "thirdprop" : {
+                    "value" : "123"
+                }
+            }
+        },
+        "second-group" : {
+            "second-group" : {
+                "firstprop" : "456",
+                "secondprop" : [ "test4", "test5", "test6" ],
+                "thirdprop" : {
+                    "value" : "456"
+                }
+            }
+        }
+    },
+    "response-headers" : {"process-state" : "reload-required"}
+}

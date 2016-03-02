@@ -9715,21 +9715,7 @@
       <c:group name="address" displayName="Wildcard selection (exactly one property must be set to true)">
         <c:simple-property name="any-address" required="false" type="boolean" readOnly="false" default="true" defaultValue="false"
                            description="Attribute indicating that sockets using this interface should be bound to a wildcard address. The IPv6 wildcard address (&#58;&#58;) will be used unless the java.net.preferIpV4Stack system property is set to true, in which case the IPv4 wildcard address (0.0.0.0) will be used. If a socket is bound to an IPv6 anylocal address on a dual&#45;stack machine, it can accept both IPv6 and IPv4 traffic; if it is bound to an IPv4 (IPv4&#45;mapped) anylocal address, it can only accept IPv4 traffic."/>
-        <c:simple-property name="any-ipv4-address" required="false" type="boolean" readOnly="false" default="false" defaultValue="false"
-                           description="Attribute indicating that sockets using this interface should be bound to the IPv4 wildcard address (0.0.0.0)."/>
-        <c:simple-property name="any-ipv6-address" required="false" type="boolean" readOnly="false" default="false" defaultValue="false"
-                           description="Attribute indicating that sockets using this interface should be bound to the IPv6 wildcard address (&#58;&#58;)."/>
       </c:group>
-<!-- TODO revisit later BZ 825169
-      <c:simple-property name="wildcard:ignore" displayName="Address family selection" defaultValue="any-address" default="any-address"
-          description="Attribute indicating that sockets using this interface should be bound to a wildcard address. If set to 'Any', the IPv6 wildcard address (&#58;&#58;) will be used unless the java.net.preferIpV4Stack system property is set to true, in which case the IPv4 wildcard address (0.0.0.0) will be used. If a socket is bound to an IPv6 anylocal address on a dual&#45;stack machine, it can accept both IPv6 and IPv4 traffic; if it is bound to an IPv4 (IPv4&#45;mapped) anylocal address, it can only accept IPv4 traffic.">
-        <c:property-options>
-          <c:option value="any-address" name="Any"/>
-          <c:option value="any-ipv4-address" name="Any IPv4"/>
-          <c:option value="any-ipv6-address" name="Any IPv6"/>
-        </c:property-options>
-      </c:simple-property>
--->
 
       <c:group name="advanced" displayName="Advanced settings" hiddenByDefault="true">
         <c:simple-property name="link-local-address" required="false" type="boolean" readOnly="false"

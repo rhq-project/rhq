@@ -21,7 +21,7 @@
 
 <!DOCTYPE plugin [
 
-    <!ENTITY pluginName 'Wildfly10'>
+    <!ENTITY pluginName 'EAP7'>
 
     <!ENTITY startScriptPluginConfigGroup '
     <c:group name="operations">
@@ -1091,7 +1091,7 @@
 '>
     ]>
 <plugin name="&pluginName;"
-        displayName="Wildfly 10"
+        displayName="Enterprise Application Server 7"
         description="provides monitoring and management of Wildfly 10 and JBoss EAP7"
         package="org.rhq.modules.plugins.wildfly10"
         pluginLifecycleListener="PluginLifecycleListener"
@@ -1102,7 +1102,7 @@
   ~~      additional 'Personalities' for the kinds of servers (PM, SM, Standalone AS, Managed AS)
   -->
 
-  <server name="Wildfly10 Host Controller"
+  <server name="EAP7 Host Controller"
           discovery="HostControllerDiscovery"
           class="HostControllerComponent"
           description="Domain controller (delegate) for this host">
@@ -1275,7 +1275,7 @@
         <value-name>domain-temp-dir</value-name>
       </destination-base-dir>
       <destination-definition name="Patches">
-          <accepts bundle-type="Wildfly10 Patch"/>
+          <accepts bundle-type="EAP7 Patch"/>
           <description>Use this location to apply patches to the server</description>
           <connection>DOMAIN</connection>
           <referenced-configuration>
@@ -1295,7 +1295,7 @@
 <li>Start Script Arguments - arguments to be passed to the start script (e.g. "--host-config=host-master.xml")</li>
 <li>Start Script Environment - environment variables to be set in the start script's environment (e.g. "JAVA_HOME=/usr/java/jdk1.6.0_30")</li>
       </ul>
-      These settings are automatically initialized by the Wildfly10 plugin discovery code to match the currently running
+      These settings are automatically initialized by the EAP7 plugin discovery code to match the currently running
       server process' command line and environment.
       <p/>
       The settings are not used by the Stop operation, since it stops the server via the management interface, not via
@@ -1483,10 +1483,10 @@
       </resource-configuration>
     </service>
 
-  </server> <!-- Wildfly10 Host Controller -->
+  </server> <!-- EAP7 Host Controller -->
 
 
-  <server name="Wildfly10 Standalone Server"
+  <server name="EAP7 Standalone Server"
           discovery="StandaloneASDiscovery"
           class="StandaloneASComponent"
           description="Standalone AS7 server"
@@ -1770,7 +1770,7 @@
         <value-name>temp-dir</value-name>
       </destination-base-dir>
       <destination-definition name="Patches">
-        <accepts bundle-type="Wildfly10 Patch"/>
+        <accepts bundle-type="EAP7 Patch"/>
         <description>Use this location to apply patches to the server</description>
         <connection>STANDALONE</connection>
         <referenced-configuration>
@@ -1790,7 +1790,7 @@
 <li>Start Script Arguments - arguments to be passed to the start script (e.g. "--server-config=standalone-full-ha.xml")</li>
 <li>Start Script Environment - environment variables to be set in the start script's environment (e.g. "JAVA_HOME=/usr/java/jdk1.6.0_30")</li>
       </ul>
-      These settings are automatically initialized by the Wildfly10 plugin discovery code to match the currently running
+      These settings are automatically initialized by the EAP7 plugin discovery code to match the currently running
       server process' command line and environment.
       <p/>
       The settings are not used by the Stop operation, since it stops the server via the management interface, not via
@@ -1810,7 +1810,7 @@
              subCategory="Subsystems|Web">
 
       <runs-inside>
-        <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+        <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
         <!-- FAKE as "runs inside Profile" only does not work -->
       </runs-inside>
 
@@ -2040,7 +2040,7 @@
      </service><!-- End of Standalone Modcluster Service Configuration -->
     </service><!-- End of ModCluster Standalone Service -->
 
-  </server> <!-- Wildfly10 Standalone Server -->
+  </server> <!-- EAP7 Standalone Server -->
 
   <server name="Managed Server"
           discovery="ManagedASDiscovery"
@@ -2048,7 +2048,7 @@
           createDeletePolicy="both">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Host Controller" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Host Controller" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -5763,7 +5763,7 @@
            class="BaseComponent">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Host Controller" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Host Controller" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -7708,7 +7708,7 @@
     <runs-inside>
       <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
       <parent-resource-type name="Host" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -7995,7 +7995,7 @@
            subCategory="Subsystems|Web">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -8234,7 +8234,7 @@
            subCategory="Subsystems|Connector">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -8263,7 +8263,7 @@
            subCategory="Subsystems|Connector">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -8464,7 +8464,7 @@
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -8860,7 +8860,7 @@
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -8951,7 +8951,7 @@
            subCategory="Subsystems">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -9014,7 +9014,7 @@
            subCategory="Subsystems|Container">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -9277,9 +9277,9 @@
            subCategory="Server Configuration">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Host Controller" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Host Controller" plugin="&pluginName;"/>
       <parent-resource-type name="Host" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -9351,8 +9351,8 @@
            class="SocketBindingGroupComponent">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Host Controller" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Host Controller" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -9430,7 +9430,7 @@
            creationDataType="content">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -10865,7 +10865,7 @@
            subCategory="Subsystems|Core">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -10910,7 +10910,7 @@
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -10975,7 +10975,7 @@
            subCategory="Subsystems">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
       <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
@@ -11003,7 +11003,7 @@
            subCategory="Subsystems|Connector">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -11143,7 +11143,7 @@
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -11182,7 +11182,7 @@
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -11205,7 +11205,7 @@
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -11250,7 +11250,7 @@
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -11277,7 +11277,7 @@
            subCategory="Subsystems">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -11634,7 +11634,7 @@
            subCategory="Subsystems|Core">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -11716,7 +11716,7 @@
            subCategory="Subsystems|Container">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -11948,7 +11948,7 @@
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -11986,7 +11986,7 @@
            subCategory="Subsystems|Connector">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -12121,7 +12121,7 @@
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -12313,7 +12313,7 @@
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -12334,7 +12334,7 @@
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -12361,7 +12361,7 @@
            subCategory="Subsystems">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -12434,7 +12434,7 @@
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -12535,8 +12535,7 @@
 
   </service>
 
-
-  <service name="Messaging"
+  <service name="ActiveMQ Messaging"
            discovery="SubsystemDiscovery"
            class="BaseComponent"
            description="The messaging subsystems"
@@ -12544,276 +12543,613 @@
            subCategory="Subsystems">
 
     <runs-inside>
-      <parent-resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
-      <c:simple-property name="path" readOnly="true" default="subsystem=messaging"/>
+      <c:simple-property name="path" readOnly="true" default="subsystem=messaging-activemq"/>
     </plugin-configuration>
 
-    <service name="HornetQ"
+    <service name="ActiveMQ Artemis"
              discovery="SubsystemDiscovery"
              class="HornetQComponent"
-             description="The HornetQ based messaging subsystem"
+             description="The ActiveMQ Artemis based messaging subsystem"
              createDeletePolicy="both">
 
       <plugin-configuration>
-        <c:simple-property name="path" readOnly="true" default="hornetq-server"/>
+        <c:simple-property name="path" readOnly="true" default="server"/>
       </plugin-configuration>
 
-      <operation name="subsystem:close-connections-for-address" displayName="Close Connections for Address" description="Closes all the connections of clients connected to this server whose remote address contains the specified IP address. Returns true if any connections were closed, false otherwise.">
+      <operation name="subsystem:close-connections-for-address" displayName="Close Connections for Address"
+                 description="Closes all the connections of clients connected to this server whose remote address contains the specified IP address.">
         <parameters>
-          <c:simple-property name="ip-address" required="true" type="string" readOnly="false" description="An IP address in string format."/>
+          <c:simple-property name="ip-address" required="true" type="string" readOnly="false"
+                             description="An IP address in string format."/>
         </parameters>
         <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="True if any connections were closed, false otherwise."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:close-connections-for-user" displayName="Close Connections for User"
+                 description="Closes all the connections of clients connected to this server under the specified user name.">
+        <parameters>
+          <c:simple-property name="user" required="true" type="string" readOnly="false" description="An user name."/>
+
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="True if any connections were closed, false otherwise."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:close-consumer-connections-for-address" displayName="Close Consumer Connections for Address"
+                 description="Closes all the connections of consumers that are consuming from queues bound to the specified address.">
+        <parameters>
+          <c:simple-property name="address-match" required="true" type="string" readOnly="false"
+                             description="An ActiveMQ address match."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="True if any connections were closed, false otherwise."/>
         </results>
       </operation>
 
       <operation name="subsystem:commit-prepared-transaction" displayName="Commit Prepared Transaction" description="Heuristically commits a prepared transaction.">
         <parameters>
-          <c:simple-property name="transaction-as-base-64" required="false" type="string" readOnly="false" description="The Base64 representation of a transaction XID. Returns true if the transaction was successfully committed, false otherwise."/>
+          <c:simple-property name="transaction-as-base-64" required="true" type="string" readOnly="false"
+                             description="The Base64 representation of a transaction XID."/>
         </parameters>
         <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="True if the transaction was successfully committed, false otherwise."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:export-journal" displayName="Export Journal" description="Export the journal to a XML file">
+        <results>
+          <c:simple-property name="operationResult" description="Export the journal to a XML file"/>
         </results>
       </operation>
 
       <operation name="subsystem:force-failover" displayName="Force Failover" description="Force the messaging server to stop and notify clients to failover.">
         <results>
-          <c:simple-property name="operationResult" description="Force the messaging server to stop and notify clients to failover."/>
+          <c:simple-property name="operationResult"
+                             description="Force the messaging server to stop and notify clients to failover."/>
         </results>
       </operation>
 
-      <operation name="subsystem:get-address-settings-as-json" displayName="Get Address Settings as JSON" description="Returns the address settings as a JSON string for an address match. The returned String is a JSON string containing an array of address settings details.">
+      <operation name="subsystem:get-address-settings-as-json" displayName="Get address settings as JSON"
+                 description="Returns the address settings as a JSON string for an address match.">
         <parameters>
-          <c:simple-property name="address-match" required="true" type="string" readOnly="false" description="An address match."/>
+          <c:simple-property name="address-match" required="true" type="string" readOnly="false"
+                             description="An address match."/>
+
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A JSON string containing an array of address settings details."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:get-connectors-as-json" displayName="Get connectors as JSON"
+                 description="Returns the connectors configured for this server in a JSON string containing the connectors information.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A JSON string containing the connectors information."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:get-last-sent-message-id" displayName="Get last sent message ID"
+                 description="Returns the ID of the last message sent from the given session to the given address.">
+        <parameters>
+          <c:simple-property name="session-id" required="true" type="string" readOnly="false"
+                             description="The session id."/>
+          <c:simple-property name="address-name" required="true" type="string" readOnly="false"
+                             description="The name of the address."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="The message id."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:get-roles" displayName="Get roles" description="Get the security roles for a specific address match.">
+        <parameters>
+          <c:simple-property name="address-match" required="true" type="string" readOnly="false"
+                             description="An address match."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A list, each element of which is a set of properties describing a security role."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:get-roles-as-json" displayName="Get roles as JSON" description="Gets the roles (as a JSON string) for a specific address match.">
+        <parameters>
+          <c:simple-property name="address-match" required="true" type="string" readOnly="false"
+                             description="An address match."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A JSON string containing a list, each element of which is a set of properties describing a security role."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:get-session-creation-time" displayName="Get session creation time" description="Gets the session&apos;s creation time.">
+        <parameters>
+          <c:simple-property name="session-id" required="true" type="string" readOnly="false"
+                             description="The session id."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="The creation time, represented as a string showing the number of milliseconds since the epoch."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:import-journal" displayName="Import Journal" description="Import an XML file to the journal">
+        <parameters>
+          <c:simple-property name="file" required="true" type="string" readOnly="false"
+                             description="The XML file to import in the journal"/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" description="Import an XML file to the journal"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-add" displayName="List add" description="Add entry to list attribute">
+        <parameters>
+          <c:simple-property name="name" required="true" type="string" readOnly="false"
+                             description="Name of list attribute to add entry to"/>
+          <c:simple-property name="value" required="false" type="string" readOnly="false"
+                             description="Value to add to list"/>
+          <c:simple-property name="index" required="false" type="integer" readOnly="false"
+                             description="Optional 0 based index where to insert value to"/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" description="Add entry to list attribute"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-all-consumers-as-json" displayName="List all consumers as JSON" description="Lists all the consumers.">
+        <results>
+          <c:simple-property name="operationResult" description="Lists all the consumers."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-clear" displayName="List clear" description="Clear all entries from list attribute">
+        <parameters>
+          <c:simple-property name="name" required="true" type="string" readOnly="false"
+                             description="Name of list attribute"/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" description="Clear all entries from list attribute"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-connection-ids" displayName="List connection IDs"
+                 description="Lists the IDs of all the connections connected to this server.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A list of strings, where each string is a connection ID."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-connections-as-json" displayName="List connections as JSON" description="Lists all JMS connections.">
+        <results>
+          <c:simple-property name="operationResult" description="Lists all JMS connections."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-consumers-as-json" displayName="List consumers as JSON"
+                 description="Lists all the consumers which belongs to the JMS Connection specified by the connection id.">
+        <parameters>
+          <c:simple-property name="connection-id" required="true" type="string" readOnly="false"
+                             description="The connection id."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult"
+                             description="Lists all the consumers which belongs to the JMS Connection specified by the connection id."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-get" displayName="List get" description="Get entry from list attribute">
+        <parameters>
+          <c:simple-property name="name" required="true" type="string" readOnly="false"
+                             description="Name of list attribute"/>
+          <c:simple-property name="index" required="false" type="integer" readOnly="false"
+                             description="Index entry to get"/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" description="Get entry from list attribute"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-heuristic-committed-transactions" displayName="List heuristic committed transactions"
+                 description="Lists transactions which have been heuristically committed.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A list of strings. The Strings are Base&#45;64 representation of the transaction XID."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-heuristic-rolled-back-transactions" displayName="List heuristic rolled back transactions"
+                 description="Lists transactions which have been heuristically rolled back.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A list of strings. The Strings are Base&#45;64 representation of the transaction XID."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-prepared-transaction-details-as-html" displayName="List prepared transaction details as HTML"
+                 description="Lists all the prepared transaction, sorted by date, oldest first, with details, in HTML format.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A HTML string containing a table of transaction details."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-prepared-transaction-details-as-json" displayName="List prepared transaction details as JSON"
+                 description="Lists all the prepared transaction, sorted by date, oldest first, with details, in JSON format.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A JSON string containing an array of transaction details."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-prepared-transaction-jms-details-as-html" displayName="List prepared transaction JMS details as HTML"
+                 description="Lists all the prepared transactions, sorted by date, oldest first, in a HTML format.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="The returned String is an HTML string containing a table of transaction details."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-prepared-transaction-jms-details-as-json" displayName="List prepared transaction JMS details as JSON"
+                 description="Lists all the prepared transactions, sorted by date, oldest first, in a JSON format.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="The returned String is a JSON string containing an array of transaction details."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-prepared-transactions" displayName="List prepared transactions"
+                 description="Lists all the prepared transaction, sorted by date, oldest first.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A list of strings. The Strings are Base&#45;64 representation of the transaction XID and can be used to heuristically commit or rollback the transactions."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-producers-info-as-json" displayName="List producers info as JSON"
+                 description="For all sessions, lists information about message producers using JSON serialization.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A JSON string containing an array of producer details."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-remote-addresses" displayName="List remote addresses"
+                 description="Lists the addresses of all the clients connected to the given address. If an ip&#45;address argument is supplied, only those clients whose remote address string includes the given ip&#45;address string will be returned.">
+        <parameters>
+          <c:simple-property name="ip-address" required="false" type="string" readOnly="false"
+                             description="An IP address in string format."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A list of strings, where the strings are remote client addresses."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-remove" displayName="List remove" description="Remove entry from list attribute">
+        <parameters>
+          <c:simple-property name="name" required="true" type="string" readOnly="false"
+                             description="Name of list attribute to remove entry from"/>
+          <c:simple-property name="value" required="false" type="string" readOnly="false"
+                             description="Value remove from list"/>
+          <c:simple-property name="index" required="false" type="integer" readOnly="false"
+                             description="Optional 0 based index to tell what element to remove"/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" description="Remove entry from list attribute"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-sessions" displayName="List sessions" description="Lists all the sessions IDs for the specified connection ID.">
+        <parameters>
+          <c:simple-property name="connection-id" required="true" type="string" readOnly="false"
+                             description="The connection id."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A list of strings, where each string is a session ID."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-sessions-as-json" displayName="List sessions as JSON" description="Lists all the sessions IDs for the specified connection id.">
+        <parameters>
+          <c:simple-property name="connection-id" required="true" type="string" readOnly="false"
+                             description="The connection id."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A JSON string containing an array of session ids."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-target-destinations" displayName="List target destinations"
+                 description="Lists all addresses to which the designated session has sent messages.">
+        <parameters>
+          <c:simple-property name="session-id" required="true" type="string" readOnly="false"
+                             description="The session id."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="A JSON string containing an array of address names."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:map-clear" displayName="Map clear" description="Clear all entries from map attribute">
+        <parameters>
+          <c:simple-property name="name" required="true" type="string" readOnly="false"
+                             description="Name of list attribute"/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" description="Clear all entries from map attribute"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:map-get" displayName="Map get" description="Get entry from map attribute">
+        <parameters>
+          <c:simple-property name="name" required="true" type="string" readOnly="false"
+                             description="Name of map attribute"/>
+
+          <c:simple-property name="key" required="true" type="string" readOnly="false"
+                             description="Key of entry to return"/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" description="Get entry from map attribute"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:map-put" displayName="Map put" description="Add entry to map attribute">
+        <parameters>
+          <c:simple-property name="name" required="true" type="string" readOnly="false"
+                             description="Name of map attribute to add entry to"/>
+
+          <c:simple-property name="key" required="true" type="string" readOnly="false"
+                             description="Key under which value will be added"/>
+
+          <c:simple-property name="value" required="false" type="string" readOnly="false"
+                             description="Value to be added"/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" description="Add entry to map attribute"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:map-remove" displayName="Map remove" description="Remove entry from map attribute">
+        <parameters>
+          <c:simple-property name="name" required="true" type="string" readOnly="false"
+                             description="Name of map attribute"/>
+
+          <c:simple-property name="key" required="true" type="string" readOnly="false"
+                             description="Key of entry to remove"/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" description="Remove entry from map attribute"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:query" displayName="Query" description="Query a resource">
+        <parameters>
+          <c:simple-property name="select" required="false" type="string" readOnly="false"
+                             description="a list of attribute names to reduce to"/>
+          <c:map-property name="where" required="false"
+                          description="a list of filter criteria tuples (i.e. &apos;running=true&apos;)">
+            <c:simple-property name="TYPE_MODEL_VALUE" required="false" type="string" readOnly="false"/>
+          </c:map-property>
         </parameters>
         <results>
           <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
         </results>
       </operation>
 
-      <operation name="subsystem:get-connectors-as-json" displayName="Get Connectors as JSON" description="Returns the connectors configured for this server using JSON serialization.">
+      <operation name="remove" description="Operation removing a ActiveMQ server.">
         <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          <c:simple-property name="operationResult" description="Operation removing a ActiveMQ server."/>
         </results>
       </operation>
 
-      <operation name="subsystem:get-last-sent-message-id" displayName="Get Last Sent Message ID" description="Returns the ID of the last message sent from the given session to the given address.">
+      <operation name="subsystem:reset-all-message-counter-histories" displayName="Reset all message counter histories" description="Resets all message counters history.">
+        <results>
+          <c:simple-property name="operationResult" description="Resets all message counters history."/>
+        </results>
+      </operation>
+
+      <operation name="reset-all-message-counters" description="Resets all message counters.">
+        <results>
+          <c:simple-property name="operationResult" description="Resets all message counters."/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:resolve-address-setting" displayName="Resolve address setting"
+                 description="Resolve the address settings using ActiveMQ hierarchy of address settings.">
         <parameters>
-          <c:simple-property name="session-id" required="true" type="string" readOnly="false" description="The session id."/>
-          <c:simple-property name="address-name" required="true" type="string" readOnly="false"/>
+          <c:simple-property name="activemq-address" required="true" type="string" readOnly="false"
+                             description="The address to resolve."/>
         </parameters>
         <results>
           <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
         </results>
       </operation>
 
-      <operation name="subsystem:get-session-creation-time" displayName="Get Session Creation Time" description="Gets the session&apos;s creation time. Returns the creation time, represented as a string showing the number of milliseconds since the epoch.">
+      <operation name="subsystem:rollback-prepared-transaction" displayName="Rollback prepared transaction" description="Heuristically rolls back a prepared transaction.">
         <parameters>
-          <c:simple-property name="session-id" required="true" type="string" readOnly="false" description="The session id."/>
+          <c:simple-property name="transaction-as-base-64" required="true" type="string" readOnly="false"
+                             description="The Base64 representation of a transaction XID."/>
         </parameters>
         <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
+                             description="True if the transaction was successfully rolled back, false otherwise."/>
         </results>
       </operation>
 
-      <operation name="subsystem:list-all-consumers-as-json" displayName="List All Consumers as JSON" description="Lists all the consumers.">
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-connection-ids" displayName="List Connection IDs" description="Lists the IDs of all the connections connected to this server.">
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-connections-as-json" displayName="List Connections as JSON" description="List all JMS connections.">
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-consumers-as-json" displayName="List Consumers as JSON" description="Lists all the consumers which belongs to the JMS Connection specified by the connection&#45;id.">
-        <parameters>
-          <c:simple-property name="connection-id" required="true" type="string" readOnly="false" description="The connection id."/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-heuristic-committed-transactions" displayName="List Heuristic Committed Transactions" description="Lists transactions which have been heuristically committed. Returns a list of strings. The Strings are Base-64 representation of the transaction XID.">
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-heuristic-rolled-back-transactions" displayName="List Heuristic Rolled Back Transactions" description="Lists transactions which have been heuristically rolled back. Returns a list of strings. The Strings are Base-64 representation of the transaction XID.">
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-prepared-transaction-details-as-html" displayName="List Prepared Transaction Details as HTML" description="List all the prepared transaction, sorted by date, oldest first, with details, in HTML format.">
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-prepared-transaction-details-as-json" displayName="List Prepared Transaction Details as JSON" description="List all the prepared transaction, sorted by date, oldest first, with details, in JSON format.">
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-prepared-transaction-jms-details-as-html" displayName="List Prepared Transaction JMS Details as HTML" description="List all the prepared transactions, sorted by date, oldest first, with details in JMS, in HTML format">
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-prepared-transaction-jms-details-as-json" displayName="List Prepared Transaction JMS details as JSON" description="List all the prepared transactions, sorted by date, oldest first, with details in JMS format, in JSON format">
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-prepared-transactions" displayName="List Prepared Transactions" description="List all the prepared transaction, sorted by date, oldest first. Returns a list of strings. The Strings are Base-64 representation of the transaction XID and can be used to heuristically commit or rollback the transactions.">
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-producers-info-as-json" displayName="List Producers Info as JSON" description="For all sessions, lists information about message producers using JSON serialization.">
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-remote-addresses" displayName="List Remote Addresses" description="Lists the addresses of all the clients connected to the given address. If an ip&#45;address argument is supplied, only those clients whose remote address string includes the given ip&#45;address string will be returned.">
-        <parameters>
-          <c:simple-property name="ip-address" required="false" type="string" readOnly="false" description="An IP address in string format."/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-sessions" displayName="List Sessions" description="Lists all the sessions IDs for the specified connection ID.">
-        <parameters>
-          <c:simple-property name="connection-id" required="false" type="string" readOnly="false" description="The connection id."/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-sessions-as-json" displayName="List Sessions as JSON" description="Lists all the sessions IDs for the specified connection ID. The returned String is a JSON string containing an array of session ids.">
-        <parameters>
-          <c:simple-property name="connection-id" required="true" type="string" readOnly="false" description="The connection id."/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-target-destinations" displayName="List Target Destinations" description="Lists all addresses to which the designated session has sent messages. The returned String is a JSON string containing an array of address names.">
-        <parameters>
-          <c:simple-property name="session-id" required="true" type="string" readOnly="false" description="The session id."/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:reset-all-message-counter-histories" displayName="Reset All Message Counter Histories" description="Reset all message counters history.">
-        <results>
-          <c:simple-property name="operationResult" description="Reset all message counters history."/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:reset-all-message-counters" displayName="Reset All Message Counters" description="Reset all message counters.">
-        <results>
-          <c:simple-property name="operationResult" description="Reset all message counters."/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:rollback-prepared-transaction" displayName="Rollback Prepared Transaction" description="Heuristically rolls back a prepared transaction. Returns true if the transaction was successfully rolled back, false otherwise.">
-        <parameters>
-          <c:simple-property name="transaction-as-base-64" required="false" type="string" readOnly="false" description="The Base64 representation of a transaction XID."/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-        </results>
-      </operation>
-
+      <metric property="active" displayName="Active" dataType="trait" description="Whether the server is active (and accepting connections) or passive (in backup mode, waiting for failover)."/>
       <metric property="started" displayName="Started" dataType="trait" defaultInterval="3600000" description="Whether this server is started."/>
       <metric property="version" displayName="Version" dataType="trait" defaultInterval="3600000" description="The server&apos;s version."/>
 
       <resource-configuration>
-        <c:simple-property name="allow-failback" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether this server will automatically shutdown if the original live server comes back up. The default value is true."/>
-        <c:simple-property name="async-connection-execution-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether incoming packets on the server should be handed off to a thread from the thread pool for processing. False if they should be handled on the remoting thread. The default value is true."/>
-        <c:simple-property name="backup" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether this server is a backup server. The default value is false."/>
-        <c:simple-property name="cluster-password" required="false" type="string" readOnly="false" defaultValue="CHANGE ME!!" description="The password used by cluster connections to communicate between the clustered nodes. The default value is CHANGE ME!!."/>
-        <c:simple-property name="cluster-user" required="false" type="string" readOnly="false" defaultValue="HORNETQ.CLUSTER.ADMIN.USER" description="The user used by cluster connections to communicate between the clustered nodes. The default value is HORNETQ.CLUSTER.ADMIN.USER."/>
-        <c:simple-property name="clustered" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the server is clustered. The default value is false."/>
-        <c:simple-property name="connection-ttl-override" required="false" type="long" readOnly="false" defaultValue="&#45;1" description="If set, this will override how long (in ms) to keep a connection alive without receiving a ping. The default value is &#45;1."/>
-        <c:simple-property name="create-bindings-dir" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server should create the bindings directory on start up. The default value is true."/>
-        <c:simple-property name="create-journal-dir" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server should create the journal directory on start up. The default value is true."/>
-        <c:simple-property name="failback-delay" required="false" type="long" readOnly="false" defaultValue="5000" description="How long to wait before failback occurs on live server restart. The default value is 5000."/>
-        <c:simple-property name="failover-on-shutdown" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether this backup server (if it is a backup server) should come live on a normal server shutdown. The default value is false."/>
-        <c:simple-property name="id-cache-size" required="false" type="integer" readOnly="false" defaultValue="2000" description="The size of the cache for pre&#45;creating message IDs. The default value is 2000."/>
-        <c:simple-property name="jmx-domain" required="false" type="string" readOnly="false" defaultValue="org.hornetq" description="The JMX domain used to register internal HornetQ MBeans in the MBeanServer. The default value is org.hornetq."/>
-        <c:simple-property name="jmx-management-enabled" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether HornetQ should expose its internal management API via JMX. This is not recommended, as accessing these MBeans can lead to inconsistent configuration. The default value is false."/>
-        <c:simple-property name="journal-buffer-size" required="false" type="long" readOnly="false" description="The size of the internal buffer on the journal."/>
-        <c:simple-property name="journal-buffer-timeout" required="false" type="long" readOnly="false" description="The timeout (in nanoseconds) used to flush internal buffers on the journal."/>
-        <c:simple-property name="journal-compact-min-files" required="false" type="integer" readOnly="false" defaultValue="10" description="The minimal number of journal data files before we can start compacting. The default value is 10."/>
-        <c:simple-property name="journal-compact-percentage" required="false" type="integer" readOnly="false" defaultValue="30" description="The percentage of live data on which we consider compacting the journal. The default value is 30."/>
-        <c:simple-property name="journal-file-size" required="false" type="long" readOnly="false" defaultValue="10485760" description="The size (in bytes) of each journal file. The default value is 10485760."/>
-        <c:simple-property name="journal-max-io" required="false" type="integer" readOnly="false" description="The maximum number of write requests that can be in the AIO queue at any one time."/>
-        <c:simple-property name="journal-min-files" required="false" type="integer" readOnly="false" defaultValue="2" description="How many journal files to pre&#45;create. The default value is 2."/>
-        <c:simple-property name="journal-sync-non-transactional" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether to wait for non transaction data to be synced to the journal before returning a response to the client. The default value is true."/>
-        <c:simple-property name="journal-sync-transactional" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether to wait for transaction data to be synchronized to the journal before returning a response to the client. The default value is true."/>
-        <c:simple-property name="journal-type" required="false" type="string" readOnly="false" defaultValue="ASYNCIO" description="The type of journal to use. The default value is ASYNCIO.">
+        <c:simple-property name="async-connection-execution-enabled" required="false" type="boolean" readOnly="false"
+                           defaultValue="true"
+                           description="Whether incoming packets on the server should be handed off to a thread from the thread pool for processing. False if they should be handled on the remoting thread. The default value is true."/>
+        <c:simple-property name="cluster-password" required="false" type="string" readOnly="false"
+                           defaultValue="CHANGE ME!!"
+                           description="The password used by cluster connections to communicate between the clustered nodes. The default value is CHANGE ME!!."/>
+
+        <c:simple-property name="cluster-user" required="false" type="string" readOnly="false"
+                           defaultValue="ACTIVEMQ.CLUSTER.ADMIN.USER"
+                           description="The user used by cluster connections to communicate between the clustered nodes. The default value is ACTIVEMQ.CLUSTER.ADMIN.USER."/>
+
+        <c:simple-property name="connection-ttl-override:expr" required="false" type="string" readOnly="false"
+                           defaultValue="&#45;1"
+                           description="If set, this will override how long (in ms) to keep a connection alive without receiving a ping. The default value is &#45;1."/>
+        <c:simple-property name="create-bindings-dir" required="false" type="boolean" readOnly="false"
+                           defaultValue="true"
+                           description="Whether the server should create the bindings directory on start up. The default value is true."/>
+        <c:simple-property name="create-journal-dir" required="false" type="boolean" readOnly="false"
+                           defaultValue="true"
+                           description="Whether the server should create the journal directory on start up. The default value is true."/>
+        <c:simple-property name="id-cache-size:expr" required="false" type="string" readOnly="false"
+                           defaultValue="20000"
+                           description="The size of the cache for pre&#45;creating message IDs. The default value is 20000."/>
+        <c:list-property name="incoming-interceptors" required="false"
+                         description="The list of incoming interceptor classes used by this server.">
+          <c:simple-property name="incoming-interceptors"/>
+        </c:list-property>
+        <c:simple-property name="jmx-domain" required="false" type="string" readOnly="false"
+                           defaultValue="org.apache.activemq.artemis"
+                           description="The JMX domain used to register internal ActiveMQ MBeans in the MBeanServer. The default value is org.apache.activemq.artemis."/>
+        <c:simple-property name="jmx-management-enabled" required="false" type="boolean" readOnly="false"
+                           defaultValue="false"
+                           description="Whether ActiveMQ should expose its internal management API via JMX. This is not recommended, as accessing these MBeans can lead to inconsistent configuration. The default value is false."/>
+        <c:simple-property name="journal-buffer-size:expr" required="false" type="string" readOnly="false"
+                           description="The size of the internal buffer on the journal."/>
+        <c:simple-property name="journal-buffer-timeout:expr" required="false" type="string" readOnly="false"
+                           description="The timeout (in nanoseconds) used to flush internal buffers on the journal."/>
+        <c:simple-property name="journal-compact-min-files:expr" required="false" type="string" readOnly="false"
+                           defaultValue="10"
+                           description="The minimal number of journal data files before we can start compacting. The default value is 10."/>
+        <c:simple-property name="journal-compact-percentage:expr" required="false" type="string" readOnly="false"
+                           defaultValue="30"
+                           description="The percentage of live data on which we consider compacting the journal. The default value is 30."/>
+        <c:simple-property name="journal-file-size:expr" required="false" type="string" readOnly="false"
+                           defaultValue="10485760"
+                           description="The size (in bytes) of each journal file. The default value is 10485760."/>
+        <c:simple-property name="journal-max-io:expr" required="false" type="string" readOnly="false"
+                           description="The maximum number of write requests that can be in the AIO queue at any one time."/>
+        <c:simple-property name="journal-min-files:expr" required="false" type="string" readOnly="false"
+                           defaultValue="2"
+                           description="How many journal files to pre&#45;create. The default value is 2."/>
+        <c:simple-property name="journal-pool-files:expr" required="false" type="string" readOnly="false"
+                           defaultValue="&#45;1"
+                           description="The number of journal files that can be reused. ActiveMQ will create as many files as needed however when reclaiming files it will shrink back to the value (&#45;1 means no limit). The default value is &#45;1."/>
+        <c:simple-property name="journal-sync-non-transactional" required="false" type="boolean" readOnly="false"
+                           defaultValue="true"
+                           description="Whether to wait for non transaction data to be synced to the journal before returning a response to the client. The default value is true."/>
+        <c:simple-property name="journal-sync-transactional" required="false" type="boolean" readOnly="false"
+                           defaultValue="true"
+                           description="Whether to wait for transaction data to be synchronized to the journal before returning a response to the client. The default value is true."/>
+        <c:simple-property name="journal-type" required="false" type="string" readOnly="false" defaultValue="ASYNCIO"
+                           description="The type of journal to use. The default value is ASYNCIO.">
           <c:property-options>
             <c:option value="ASYNCIO" name="ASYNCIO"/>
             <c:option value="NIO" name="NIO"/>
           </c:property-options>
         </c:simple-property>
-        <c:simple-property name="live-connector-ref" required="false" type="string" readOnly="false" description="The name of the connector used to connect to the live connector. If this server is not a backup that uses shared nothing HA, it&apos;s value is &apos;undefined&apos;."/>
-        <c:simple-property name="log-journal-write-rate" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether to periodically log the journal&apos;s write rate and flush rate. The default value is false."/>
-        <c:simple-property name="management-address" required="false" type="string" readOnly="false" defaultValue="jms.queue.hornetq.management" description="Address to send management messages to. The default value is jms.queue.hornetq.management."/>
-        <c:simple-property name="management-notification-address" required="false" type="string" readOnly="false" defaultValue="hornetq.notifications" description="The name of the address that consumers bind to  to receive management notifications. The default value is hornetq.notifications."/>
-        <c:simple-property name="memory-measure-interval:expr" displayName="Memory Measure Interval" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="Frequency to sample JVM memory in ms (or &#45;1 to disable memory sampling). The default value is &#45;1."/>
-        <c:simple-property name="memory-warning-threshold:expr" displayName="Memory Warning Threshold" required="false" type="string" readOnly="false" defaultValue="25" description="Percentage of available memory which if exceeded results in a warning log. The default value is 25."/>
-        <c:simple-property name="message-counter-enabled" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether message counters are enabled. The default value is false."/>
-        <c:simple-property name="message-counter-max-day-history" required="false" type="integer" readOnly="false" defaultValue="10" description="How many days to keep message counter history. The default value is 10."/>
-        <c:simple-property name="message-counter-sample-period" required="false" type="long" readOnly="false" defaultValue="10000" description="The sample period (in ms) to use for message counters. The default value is 10000."/>
-        <c:simple-property name="message-expiry-scan-period" required="false" type="long" readOnly="false" defaultValue="30000" description="How often (in ms) to scan for expired messages. The default value is 30000."/>
-        <c:simple-property name="message-expiry-thread-priority" required="false" type="integer" readOnly="false" defaultValue="3" description="The priority of the thread expiring messages. The default value is 3."/>
-        <c:simple-property name="page-max-concurrent-io" required="false" type="integer" readOnly="false" defaultValue="5" description="The maximum number of concurrent reads allowed on paging. The default value is 5."/>
-        <c:simple-property name="perf-blast-pages" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="TODO. The default value is &#45;1."/>
-        <c:simple-property name="persist-delivery-count-before-delivery" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the delivery count is persisted before delivery. False means that this only happens after a message has been cancelled. The default value is false."/>
-        <c:simple-property name="persist-id-cache" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether IDs are persisted to the journal. The default value is true."/>
-        <c:simple-property name="persistence-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server will use the file based journal for persistence. The default value is true."/>
-        <c:list-property name="remoting-interceptors:nullable" required="false" displayName="Remoting Interceptors" description="The list of interceptor classes used by this server.">
-          <c:simple-property name="remoting-interceptors"/>
+        <c:simple-property name="log-journal-write-rate" required="false" type="boolean" readOnly="false"
+                           defaultValue="false"
+                           description="Whether to periodically log the journal&apos;s write rate and flush rate. The default value is false."/>
+        <c:simple-property name="management-address" required="false" type="string" readOnly="false"
+                           defaultValue="jms.queue.activemq.management"
+                           description="Address to send management messages to. The default value is jms.queue.activemq.management."/>
+
+        <c:simple-property name="management-notification-address" required="false" type="string" readOnly="false"
+                           defaultValue="activemq.notifications"
+                           description="The name of the address that consumers bind to  to receive management notifications. The default value is activemq.notifications."/>
+        <c:simple-property name="memory-measure-interval:expr" required="false" type="string" readOnly="false"
+                           defaultValue="&#45;1"
+                           description="Frequency to sample JVM memory in ms (or &#45;1 to disable memory sampling). The default value is &#45;1."/>
+        <c:simple-property name="memory-warning-threshold:expr" required="false" type="string" readOnly="false"
+                           defaultValue="25"
+                           description="Percentage of available memory which if exceeded results in a warning log. The default value is 25."/>
+        <c:simple-property name="message-counter-max-day-history:expr" required="false" type="string" readOnly="false"
+                           defaultValue="10"
+                           description="How many days to keep message counter history. The default value is 10."/>
+        <c:simple-property name="message-counter-sample-period:expr" required="false" type="string" readOnly="false"
+                           defaultValue="10000"
+                           description="The sample period (in ms) to use for message counters. The default value is 10000."/>
+        <c:simple-property name="message-expiry-scan-period:expr" required="false" type="string" readOnly="false"
+                           defaultValue="30000"
+                           description="How often (in ms) to scan for expired messages. The default value is 30000."/>
+        <c:simple-property name="message-expiry-thread-priority:expr" required="false" type="string" readOnly="false"
+                           defaultValue="3"
+                           description="The priority of the thread expiring messages. The default value is 3."/>
+        <c:list-property name="outgoing-interceptors" required="false"
+                         description="The list of outgoing interceptor classes used by this server.">
+          <c:simple-property name="outgoing-interceptors"/>
         </c:list-property>
-        <c:simple-property name="run-sync-speed-test" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether on startup to perform a diagnostic test on how fast your disk can sync. Useful when determining performance issues. The default value is false."/>
-        <c:simple-property name="scheduled-thread-pool-max-size:expr" displayName="Scheduled Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="5" description="The number of threads that the main scheduled thread pool has. The default value is 5."/>
-        <c:simple-property name="security-domain" required="false" type="string" readOnly="false" defaultValue="other" description="The security domain to use to verify user and role information. The default value is other."/>
-        <c:simple-property name="security-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether security is enabled. The default value is true."/>
-        <c:simple-property name="security-invalidation-interval" required="false" type="long" readOnly="false" defaultValue="10000" description="How long (in ms) to wait before invalidating the security cache. The default value is 10000."/>
-        <c:simple-property name="server-dump-interval" required="false" type="long" readOnly="false" defaultValue="&#45;1" description="How often to dump basic runtime information to the server log. A value less than 1 disables this feature. The default value is &#45;1."/>
-        <c:simple-property name="shared-store" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether this server is using a shared store for failover. The default value is true."/>
-        <c:simple-property name="thread-pool-max-size:expr" displayName="Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="30" description="The number of threads that the main thread pool has. &#45;1 means no limit. The default value is 30."/>
-        <c:simple-property name="transaction-timeout" required="false" type="long" readOnly="false" defaultValue="300000" description="How long (in ms) before a transaction can be removed from the resource manager after create time. The default value is 300000."/>
-        <c:simple-property name="transaction-timeout-scan-period" required="false" type="long" readOnly="false" defaultValue="1000" description="How often (in ms) to scan for timeout transactions. The default value is 1000."/>
-        <c:simple-property name="wild-card-routing-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server supports wild card routing. The default value is true."/>
+        <c:simple-property name="override-in-vm-security" required="false" type="boolean" readOnly="false"
+                           defaultValue="true"
+                           description="Whether the ActiveMQ server will override security credentials for in&#45;vm connections. The default value is true."/>
+        <c:simple-property name="page-max-concurrent-io:expr" required="false" type="string" readOnly="false"
+                           defaultValue="5"
+                           description="The maximum number of concurrent reads allowed on paging. The default value is 5."/>
+        <c:simple-property name="perf-blast-pages:expr" required="false" type="string" readOnly="false"
+                           defaultValue="&#45;1"
+                           description="TODO. The default value is &#45;1."/>
+        <c:simple-property name="persist-delivery-count-before-delivery" required="false" type="boolean"
+                           readOnly="false"
+                           defaultValue="false"
+                           description="Whether the delivery count is persisted before delivery. False means that this only happens after a message has been cancelled. The default value is false."/>
+        <c:simple-property name="persist-id-cache" required="false" type="boolean" readOnly="false" defaultValue="true"
+                           description="Whether IDs are persisted to the journal. The default value is true."/>
+        <c:simple-property name="persistence-enabled" required="false" type="boolean" readOnly="false"
+                           defaultValue="true"
+                           description="Whether the server will use the file based journal for persistence. The default value is true."/>
+        <c:simple-property name="run-sync-speed-test" required="false" type="boolean" readOnly="false"
+                           defaultValue="false"
+                           description="Whether on startup to perform a diagnostic test on how fast your disk can sync. Useful when determining performance issues. The default value is false."/>
+        <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false"
+                           defaultValue="5"
+                           description="The number of threads that the main scheduled thread pool has. The default value is 5."/>
+        <c:simple-property name="security-domain" required="false" type="string" readOnly="false" defaultValue="other"
+                           description="The security domain to use to verify user and role information. The default value is other."/>
+
+        <c:simple-property name="security-enabled" required="false" type="boolean" readOnly="false" defaultValue="true"
+                           description="Whether security is enabled. The default value is true."/>
+        <c:simple-property name="security-invalidation-interval:expr" required="false" type="string" readOnly="false"
+                           defaultValue="10000"
+                           description="How long (in ms) to wait before invalidating the security cache. The default value is 10000."/>
+        <c:simple-property name="server-dump-interval:expr" required="false" type="string" readOnly="false"
+                           defaultValue="&#45;1"
+                           description="How often to dump basic runtime information to the server log. A value less than 1 disables this feature. The default value is &#45;1."/>
+        <c:simple-property name="statistics-enabled" required="false" type="boolean" readOnly="false"
+                           defaultValue="false"
+                           description="Whether gathering of statistics such as message counters are enabled. The default value is false."/>
+        <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false"
+                           defaultValue="30"
+                           description="The number of threads that the main thread pool has. &#45;1 means no limit. The default value is 30."/>
+        <c:simple-property name="transaction-timeout:expr" required="false" type="string" readOnly="false"
+                           defaultValue="300000"
+                           description="How long (in ms) before a transaction can be removed from the resource manager after create time. The default value is 300000."/>
+        <c:simple-property name="transaction-timeout-scan-period:expr" required="false" type="string" readOnly="false"
+                           defaultValue="1000"
+                           description="How often (in ms) to scan for timeout transactions. The default value is 1000."/>
+        <c:simple-property name="wild-card-routing-enabled" required="false" type="boolean" readOnly="false"
+                           defaultValue="true"
+                           description="Whether the server supports wild card routing. The default value is true."/>
       </resource-configuration>
 
       <service name="JMS Queue"
@@ -12827,7 +13163,7 @@
 
         <operation name="subsystem:change-message-priority" displayName="Change Message Priority" description="Change the priority of the message corresponding to the given message&#45;id. Returns true if the message was expired, false otherwise.">
           <parameters>
-            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+            <c:simple-property name="message-id" required="true" type="string" readOnly="false" description="A message id."/>
             <c:simple-property name="new-priority" required="true" type="integer" readOnly="false" description="The new priority (between 0 and 9)."/>
           </parameters>
           <results>
@@ -12856,7 +13192,7 @@
 
         <operation name="subsystem:expire-message" displayName="Expire Message" description="Expire the message corresponding to the given message&#45;id. Returns true if the message was expired, false otherwise.">
           <parameters>
-            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+            <c:simple-property name="message-id" required="true" type="string" readOnly="false" description="A message id."/>
           </parameters>
           <results>
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
@@ -12872,9 +13208,51 @@
           </results>
         </operation>
 
+        <operation name="list-add" description="Add entry to list attribute">
+          <parameters>
+            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of list attribute to add entry to"/>
+            <c:simple-property name="value" required="false" type="string" readOnly="false" description="Value to add to list"/>
+            <c:simple-property name="index" required="false" type="integer" readOnly="false" description="Optional 0 based index where to insert value to"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Add entry to list attribute" />
+          </results>
+        </operation>
+
+        <operation name="list-clear" description="Clear all entries from list attribute">
+          <parameters>
+            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of list attribute"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Clear all entries from list attribute" />
+          </results>
+        </operation>
+
         <operation name="subsystem:list-consumers-as-json" displayName="List Consumers as JSON" description="A string in JSON format.">
           <results>
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-delivering-messages" description="List the messages are currently being delivered.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false" description="A list where each element is a map of message properties to their value."/>
+          </results>
+        </operation>
+
+        <operation name="list-delivering-messages-as-json" description="List the messages are currently being delivered as a string in JSON format">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false" description="A string in JSON format representing a list where each element is a map of message properties to their value."/>
+          </results>
+        </operation>
+
+        <operation name="list-get" description="Get entry from list attribute">
+          <parameters>
+            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of list attribute"/>
+            <c:simple-property name="index" required="false" type="integer" readOnly="false" description="Index entry to get"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Get entry from list attribute" />
           </results>
         </operation>
 
@@ -12920,10 +13298,51 @@
           </results>
         </operation>
 
+        <operation name="map-clear" description="Clear all entries from map attribute">
+          <parameters>
+            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of list attribute"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Clear all entries from map attribute" />
+          </results>
+        </operation>
+
+        <operation name="map-get" description="Get entry from map attribute">
+          <parameters>
+            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of map attribute"/>
+            <c:simple-property name="key" required="true" type="string" readOnly="false" description="Key of entry to return"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Get entry from map attribute" />
+          </results>
+        </operation>
+
+        <operation name="map-put" description="Add entry to map attribute">
+          <parameters>
+            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of map attribute to add entry to"/>
+            <c:simple-property name="key" required="true" type="string" readOnly="false" description="Key under which value will be added"/>
+            <c:simple-property name="value" required="false" type="string" readOnly="false" description="Value to be added"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Add entry to map attribute" />
+          </results>
+        </operation>
+
+        <operation name="map-remove" description="Remove entry from map attribute">
+          <parameters>
+            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of map attribute"/>
+            <c:simple-property name="key" required="true" type="string" readOnly="false" description="Key of entry to remove"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Remove entry from map attribute" />
+          </results>
+        </operation>
+
         <operation name="subsystem:move-message" displayName="Move Message" description="Move the message corresponding to the given message&#45;id to another queue">
           <parameters>
-            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+            <c:simple-property name="message-id" required="true" type="string" readOnly="false" description="A message id."/>
             <c:simple-property name="other-queue-name" required="true" type="string" readOnly="false" description="The name of the queue to move the message to."/>
+            <c:simple-property name="reject-duplicates" required="false" type="boolean" readOnly="false" description="Whether to reject messages identified as duplicate."/>
           </parameters>
           <results>
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
@@ -12934,6 +13353,7 @@
           <parameters>
             <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
             <c:simple-property name="other-queue-name" required="true" type="string" readOnly="false" description="The name of the queue to move the message to."/>
+            <c:simple-property name="reject-duplicates" required="false" type="boolean" readOnly="false" description="Whether to reject messages identified as duplicate."/>
           </parameters>
           <results>
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
@@ -12948,7 +13368,7 @@
 
         <operation name="subsystem:remove-message" displayName="Remove Message" description="Remove the message corresponding to the given message&#45;id.">
           <parameters>
-            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+            <c:simple-property name="message-id" required="true" type="string" readOnly="false" description="A message id."/>
           </parameters>
           <results>
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
@@ -12978,7 +13398,7 @@
 
         <operation name="subsystem:send-message-to-dead-letter-address" displayName="Send Message to Dead Letter Address" description="Send the message corresponding to the given message&#45;id to this queue&apos;s Dead Letter Address.">
           <parameters>
-            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+            <c:simple-property name="message-id" required="true" type="string" readOnly="false" description="A message id."/>
           </parameters>
           <results>
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
@@ -13496,7 +13916,7 @@
 
         <operation name="subsystem:change-message-priority" displayName="Change Message Priority" description="Change the priority of the message corresponding to the given message&#45;id. Returns true if the message was expired, false otherwise.">
           <parameters>
-            <c:simple-property name="message-id" required="false" type="long" readOnly="false" description="A message id."/>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="A message id."/>
             <c:simple-property name="new-priority" required="true" type="integer" readOnly="false" description="The new priority (between 0 and 9)."/>
           </parameters>
           <results>
@@ -13525,7 +13945,7 @@
 
         <operation name="subsystem:expire-message" displayName="Expire Message" description="Expire the message corresponding to the given message&#45;id. Returns true if the message was expired, false otherwise.">
           <parameters>
-            <c:simple-property name="message-id" required="false" type="long" readOnly="false" description="A message id."/>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="A message id."/>
           </parameters>
           <results>
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
@@ -13603,7 +14023,7 @@
 
         <operation name="subsystem:move-message" displayName="Move Message" description="Move the message corresponding to the given message&#45;id to another queue">
           <parameters>
-            <c:simple-property name="message-id" required="false" type="long" readOnly="false" description="A message id."/>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="A message id."/>
             <c:simple-property name="other-queue-name" required="true" type="string" readOnly="false" description="The name of the queue to move the message to."/>
           </parameters>
           <results>
@@ -13629,7 +14049,7 @@
 
         <operation name="subsystem:remove-message" displayName="Remove Message" description="Remove the message corresponding to the given message&#45;id.">
           <parameters>
-            <c:simple-property name="message-id" required="false" type="long" readOnly="false" description="A message id."/>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="A message id."/>
           </parameters>
           <results>
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
@@ -13659,7 +14079,7 @@
 
         <operation name="subsystem:send-message-to-dead-letter-address" displayName="Send Message to Dead Letter Address" description="Send the message corresponding to the given message&#45;id to this queue&apos;s Dead Letter Address.">
           <parameters>
-            <c:simple-property name="message-id" required="false" type="long" readOnly="false" description="A message id."/>
+            <c:simple-property name="message-id" required="true" type="long" readOnly="false" description="A message id."/>
           </parameters>
           <results>
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
@@ -13689,7 +14109,7 @@
       <service name="Core Address"
                discovery="SubsystemDiscovery"
                class="BaseComponent"
-               description="A runtime-only resource representing a HornetQ address. Zero or more queues can be bound to a single address. When a message is routed, it is routed to the set of queues bound to the message's address."
+               description="A runtime-only resource representing an ActiveMQ address. Zero or more queues can be bound to a single address. When a message is routed, it is routed to the set of queues bound to the message's address."
                createDeletePolicy="both">
 
         <plugin-configuration>
@@ -13931,12 +14351,12 @@
       </service>
 
       <service name="Runtime Queue"
-            discovery="SubsystemDiscovery"
-            class="BaseComponent"
-            supportsMissingAvailabilityType="true">
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               supportsMissingAvailabilityType="true">
         <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="runtime-queue"/>
-            <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
+          <c:simple-property name="path" readOnly="true" default="runtime-queue"/>
+          <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
         </plugin-configuration>
 
         <operation name="list-scheduled-messages-as-json" displayName="List Scheduled Messages as JSON" description="List the messages scheduled for delivery as a string in JSON format.">
@@ -13981,7 +14401,7 @@
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
           </results>
         </operation>
-        
+
         <operation name="pause" displayName="Pause" description="Pause the queue.">
           <results>
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
@@ -14141,7 +14561,6 @@
 
   </service> <!-- Messaging-Provider -->
 
-
   <service name="Param"
            discovery="SubsystemDiscovery"
            class="BaseComponent"
@@ -14157,7 +14576,7 @@
       <parent-resource-type name="Connector Service" plugin="&pluginName;"/>
 
       <parent-resource-type name="Acceptor (Profile)" plugin="&pluginName;"/>
-      <parent-resource-type name="Connector (HornetQ - Profile)" plugin="&pluginName;"/>
+      <parent-resource-type name="Connector (ActiveMQ - Profile)" plugin="&pluginName;"/>
       <parent-resource-type name="In VM Acceptor (Profile)" plugin="&pluginName;"/>
       <parent-resource-type name="In VM Connector (Profile)" plugin="&pluginName;"/>
       <parent-resource-type name="Remote Acceptor (Profile)" plugin="&pluginName;"/>
@@ -14181,7 +14600,7 @@
 
     <runs-inside>
       <parent-resource-type name="Acceptor (Managed Server)" plugin="&pluginName;"/>
-      <parent-resource-type name="Connector (HornetQ - Managed Server)" plugin="&pluginName;"/>
+      <parent-resource-type name="Connector (ActiveMQ - Managed Server)" plugin="&pluginName;"/>
       <parent-resource-type name="In VM Acceptor (Managed Server)" plugin="&pluginName;"/>
       <parent-resource-type name="In VM Connector (Managed Server)" plugin="&pluginName;"/>
       <parent-resource-type name="Remote Acceptor (Managed Server)" plugin="&pluginName;"/>
@@ -14298,10 +14717,10 @@
           <parent-resource-type name="Mac OS X" plugin="Platforms"/>
       </runs-inside>
 
-      <bundle type="Wildfly10 Patch">
+      <bundle type="EAP7 Patch">
           <targets>
-              <resource-type name="Wildfly10 Standalone Server" plugin="&pluginName;"/>
-              <resource-type name="Wildfly10 Host Controller" plugin="&pluginName;"/>
+              <resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
+              <resource-type name="EAP7 Host Controller" plugin="&pluginName;"/>
           </targets>
       </bundle>
   </service>

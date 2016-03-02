@@ -1,38 +1,38 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <expressions xmlns="urn:xmlns:rhq-canned-groups">
   <definition>
-    <id>Managed Wildfly10 Servers in domain</id>
+    <id>Managed EAP7 Servers in domain</id>
     <name>Managed Servers in domain</name>
     <createByDefault>true</createByDefault>
     <recalcInMinutes>10</recalcInMinutes>
     <recursive>false</recursive>
-    <description>Wildfly 10 Managed servers in server in domains</description>
+    <description>EAP 7 Managed servers in server in domains</description>
     <expression>groupby resource.parent.trait[domain-name]</expression>
-    <expression>resource.type.plugin = Wildfly10</expression>
+    <expression>resource.type.plugin = EAP7</expression>
     <expression>resource.type.name = Managed Server</expression>
   </definition>
   <definition>
-    <id>Managed Wildfly10 Servers in server-group</id>
+    <id>Managed EAP7 Servers in server-group</id>
     <name>Managed Servers in server-group</name>
     <createByDefault>true</createByDefault>
     <recalcInMinutes>10</recalcInMinutes>
     <recursive>false</recursive>
-    <description>Wildfly 10 Managed servers in server in server-groups</description>
+    <description>EAP 7 Managed servers in server in server-groups</description>
     <expression>groupby resource.parent.trait[domain-name]</expression>
     <expression>groupby resource.resourceConfiguration[group]</expression>
-    <expression>resource.type.plugin = Wildfly10</expression>
+    <expression>resource.type.plugin = EAP7</expression>
     <expression>resource.type.name = Managed Server</expression>
   </definition>
   <definition>
-    <id>Deployments in Wildfly10 server-group</id>
+    <id>Deployments in EAP7 server-group</id>
     <name>Deployments in server-group</name>
     <createByDefault>false</createByDefault>
     <recalcInMinutes>10</recalcInMinutes>
     <recursive>false</recursive>
-    <description>Wildfly10 Deployments in server-groups</description>
+    <description>EAP7 Deployments in server-groups</description>
     <expression>groupby resource.grandParent.trait[domain-name]</expression>
     <expression>groupby resource.parent.resourceConfiguration[group]</expression>
-    <expression>resource.type.plugin = Wildfly10</expression>
+    <expression>resource.type.plugin = EAP7</expression>
     <expression>resource.type.name = ManagedServerDeployment</expression>
   </definition>
 </expressions>

@@ -1085,17 +1085,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     }
 
     protected String collectPatches() {
-
-        JBossProductType productType = serverPluginConfig.getProductType();
-
-        String cliCommand = "patch info";
-        if(productType.equals(JBossProductType.EAP7)) {
-            cliCommand += " --json-output";
-        }
-
         ProcessExecutionResults results = ServerControl.onServer(context.getPluginConfiguration(), getMode(),
                 context.getSystemInformation())
-            .cli().disconnected(true).executeCliCommand(cliCommand);
+            .cli().disconnected(true).executeCliCommand("patch info");
 
         if (results.getError() != null) {
             LOG.info("Failed to determine the list of installed patches on " + context.getResourceDetails() +

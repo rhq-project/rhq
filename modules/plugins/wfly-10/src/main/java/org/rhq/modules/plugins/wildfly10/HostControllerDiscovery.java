@@ -69,11 +69,11 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
         String instanceType = (isDomainController) ? "Domain Controller" : "Host Controller";
 
         if (serverName != null && !serverName.trim().isEmpty()) {
-            return String.format("%s %s (%s %s:%d)", productType.SHORT_NAME, instanceType, serverName,
+            return String.format("%s %s (%s %s:%d)", productType.NAME, instanceType, serverName,
                 managementHostPort.host, managementHostPort.port);
         }
 
-        return String.format("%s %s (%s:%d)", productType.SHORT_NAME, instanceType, managementHostPort.host,
+        return String.format("%s %s (%s:%d)", productType.NAME, instanceType, managementHostPort.host,
             managementHostPort.port);
     }
 

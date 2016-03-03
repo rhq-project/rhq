@@ -156,7 +156,9 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 ProcessInfo process = processScanResult.getProcessInfo();
                 AS7CommandLine commandLine = new AS7CommandLine(process);
                 DiscoveredResourceDetails details = buildResourceDetails(discoveryContext, process, commandLine);
-                discoveredResources.add(details);
+                if (details != null) {
+                    discoveredResources.add(details);
+                }
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Discovered new " + discoveryContext.getResourceType().getName() + " Resource (key=["
                         + details.getResourceKey() + "], name=[" + details.getResourceName() + "], version=["
@@ -221,6 +223,10 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());
         String apiVersion = hostConfig.getDomainApiVersion();
         JBossProductType productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
+        if(productType == JBossProductType.EAP7) {
+            // Ignore here, use EAP7 / Wildfly 10 plugin to do the detection
+            return null;
+        }
         serverPluginConfig.setProductType(productType);
         pluginConfig.setSimpleValue("expectedRuntimeProductName", productType.PRODUCT_NAME);
         pluginConfig.setSimpleValue("hostXmlFileName", getHostXmlFileName(commandLine));
@@ -478,6 +484,10 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         if (productType == null) {
             throw new InvalidPluginConfigurationException("Can not connect to [" + hostname + ":" + port
                 + "] as user [" + user + "]. Did you provide the correct credentials?");
+        }
+
+        if (productType == JBossProductType.EAP7) {
+            throw new InvalidPluginConfigurationException("EAP7 / Wildfly 10 are not supported by this plugin.");
         }
 
         HostPort hostPort = new HostPort(false);

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<arquillian xmlns="http://jboss.org/schema/arquillian"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+
+  <!-- JBoss AS 7 -->
+  <container qualifier="jboss-as" default="true">
+    <!-- NOTE: Default values for the system properties referenced below are defined in this module's pom and can be
+               overridden via the mvn command line. -->
+    <configuration>
+      <property name="jbossHome">${jboss7.home}</property>
+      <property name="javaVmArguments">-Djava.net.preferIPv4Stack=true -Xmx512M -XX:MaxPermSize=128M -Djboss.bind.address.management=${jboss.standalone.bindAddress} -Djboss.bind.address=${jboss.standalone.bindAddress} -Djboss.bind.address.unsecure=${jboss.standalone.bindAddress} -Djboss.socket.binding.port-offset=${jboss.standalone.portOffset}</property>
+      <property name="managementAddress">${jboss.standalone.bindAddress}</property>
+      <property name="managementPort">${jboss.standalone.nativeManagementPort}</property>
+    </configuration>
+  </container>
+
+</arquillian>

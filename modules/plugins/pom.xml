@@ -135,6 +135,7 @@
            <module>jboss-as</module>
            <module>jboss-as-5</module>
            <module>jboss-as-7</module>
+           <module>wfly-10</module>
            <module>jboss-as-7-jmx</module>
            <module>rhq-server</module>
            <module>jboss-cache-v3</module>

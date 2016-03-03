@@ -1,0 +1,363 @@
+<plugin name="JBossAS7"
+        displayName="JBoss Application Server 7.x"
+        description="Management of JBossAS 7"
+        package="org.rhq.modules.plugins.jbossas7"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        version="4.0.0-SNAPSHOT"
+        >
+
+    <server class="foo" discovery="foo" name="socketBinding">
+        <resource-configuration>
+            <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" />
+            <!-- note: at domain level there is no port-offset -->
+            <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" required="false"/>
+            <c:list-property name="includes">
+                <c:simple-property name="includes" displayName="Included bindings" />
+            </c:list-property>
+            <c:list-property name="socket-binding">
+                <c:map-property name="binding">
+                    <c:simple-property name="name" />
+                    <c:simple-property name="interface"  required="false"/>
+                    <c:simple-property name="port"  type="integer"/>
+                    <c:simple-property name="fixed-port"  type="boolean"/>
+                    <c:simple-property name="multicast-address"  />
+                    <c:simple-property name="multicast-port" type="integer"/>
+                </c:map-property>
+            </c:list-property>
+        </resource-configuration>
+
+    </server>
+
+    <server class="foo" discovery="foo" name="test4">
+        <resource-configuration>
+            <c:group name="children:extension" displayName="Installed extensions">
+
+                <c:list-property name="extension" displayName="Installed extensions">
+                    <c:map-property name="name">
+                        <c:map-property name="*">
+                            <c:simple-property name="module"/>
+                        </c:map-property>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+        </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="test5">
+        <resource-configuration>
+            <c:group name="attribute:schema-locations" displayName="Schema-locations">
+
+                <c:list-property name="schema-locations" displayName="Schema locations">
+                    <c:map-property name="*">
+                        <c:simple-property name="*" readOnly="true"/>
+                        <!--<c:simple-property name="location" readOnly="true"/>-->
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="test6and7">
+        <resource-configuration>
+
+            <c:simple-property name="name" />
+            <c:simple-property name="criteria"/>
+
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="test8">
+        <resource-configuration>
+            <c:simple-property name="default-workmanager-short-running-thread-pool" required="true" type="string" readOnly="true"
+                               description="Specify the name of short running thread pool"/>
+            <c:simple-property name="default-workmanager-long-running-thread-pool" required="true" type="string" readOnly="true"
+                               description="Specify the name of long running thread pool"/>
+            <c:simple-property name="bean-validation-enabled" required="true" type="boolean" readOnly="true"
+                               description="Specify whether bean validation is enabled"/>
+            <c:simple-property name="archive-validation-enabled" type="boolean" readOnly="true" description="Enabling the validation"/>
+            <c:simple-property name="archive-validation-fail-on-error" type="boolean" readOnly="true" defaultValue="true"
+                               description="Should an archive validation error report fail the deployment. Default: true"/>
+            <c:simple-property name="archive-validation-fail-on-warn" type="boolean" readOnly="true" defaultValue="false"
+                               description="Should an archive validation warning report fail the deployment. Default: false"/>
+            <c:simple-property name="cached-connection-manager-debug" type="boolean" readOnly="true" defaultValue="false"
+                               description="enable/disable debug information logging for cached connection manager"/>
+            <c:simple-property name="cached-connection-manager-error" type="boolean" readOnly="true" defaultValue="false"
+                               description="enable/disable error information logging for cached connection manager"/>
+        </resource-configuration>
+
+    </server>
+
+    <server class="foo" discovery="foo" name="test9">
+        <resource-configuration>
+            <c:simple-property name="default-virtual-server" type="string" readOnly="true"/>
+            <c:simple-property name="test-prop" type="string" required="true" defaultValue="Hello"/>
+            <c:group name="child:configuration=jsp-configuration">
+                <c:simple-property name="check-interval" type="integer" units="seconds" readOnly="false" default="1"/>
+                <c:simple-property name="disabled" type="boolean" default="false"/>
+            </c:group>
+            <c:group name="child:configuration=static-resources">
+                <c:simple-property name="listings" default="true" type="boolean"/>
+                <c:simple-property name="max-depth" default="9" type="integer" />
+            </c:group>
+        </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="test10">
+        <resource-configuration>
+            <c:group name="children:system-property:name+" displayName="System-properties">
+                <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+                    <c:map-property name="*:name" displayName="Name" readOnly="true">
+                        <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+                        <c:simple-property name="value" displayName="Value"/>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+        </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="test11">
+        <resource-configuration>
+            <c:group name="children:system-property:name+-" displayName="System-properties">
+                <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+                    <c:map-property name="*:name" displayName="Name" readOnly="true">
+                        <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+                        <c:simple-property name="value" displayName="Value"/>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+        </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="test12">
+        <resource-configuration>
+            <c:simple-property name="foo:expr" />
+            <c:simple-property name="foo2:expr" />
+            <c:simple-property name="bar"  type="integer"/>
+        </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="test13">
+        <resource-configuration>
+            <c:map-property name="connector:collapsed" >
+                <c:simple-property name="name:0" />
+                <c:simple-property name="backup:1"/>
+            </c:map-property>
+        </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="test13a">
+        <resource-configuration>
+            <c:map-property name="connector:collapsed" >
+                <c:simple-property name="name:0" />
+            </c:map-property>
+        </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="simple1">
+
+        <resource-configuration>
+
+            <c:simple-property name="readOnly" readOnly="true" />
+            <c:simple-property name="optional" readOnly="false" required="false"/>
+            <c:simple-property name="needed" readOnly="false" required="true"/>
+
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="testIgnore">
+
+      <resource-configuration>
+        <c:simple-property name="normal" readOnly="false"/>
+        <c:simple-property name="test:ignore" readOnly="false" required="false"/>
+      </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="listOfSimple1">
+
+        <resource-configuration>
+
+            <c:list-property name="foo">
+                <c:simple-property name="optional" readOnly="false" required="false"/>
+            </c:list-property>
+
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="mapOfSimple1">
+
+        <resource-configuration>
+
+            <c:map-property name="foo">
+                <c:simple-property name="readOnly" readOnly="true" />
+                <c:simple-property name="optional" readOnly="false" required="false"/>
+                <c:simple-property name="needed" readOnly="false" required="true"/>
+            </c:map-property>
+
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="listOfMaps1">
+
+        <resource-configuration>
+            <c:list-property name="foo">
+                <c:map-property name="theMap">
+                    <c:simple-property name="readOnly" readOnly="true" />
+                    <c:simple-property name="optional" readOnly="false" required="false"/>
+                    <c:simple-property name="needed" readOnly="false" required="true"/>
+                </c:map-property>
+            </c:list-property>
+       </resource-configuration>
+    </server>
+
+    <!-- This socket binding plugin setup is for Standalone AS instances -->
+    <server name="SocketBindingGroupStandalone"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+            >
+
+        <resource-configuration>
+            <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface"
+                               description="Default Interface for these bindings. See Network Interfaces for its definition"
+                               required="true">
+                <c:option-source target="resource" expression="type=Network Interface plugin=JBossAS7"/>
+            </c:simple-property>
+            <!-- note: at domain level there is no port-offset -->
+            <c:simple-property name="port-offset" readOnly="false" displayName="Port Offset"
+                               description="Offset from standard ports for this group."
+                               required="false"/>
+            <c:group name="children:socket-binding:name" displayName="Individual socket bindings">
+            <c:list-property name="*" displayName="Bindings">
+                <c:map-property name="binding">
+                    <c:simple-property name="name"  readOnly="true"/>
+                    <c:simple-property name="interface"
+                                       required="false">
+                        <c:option-source target="resource" expression="type=Network Interface plugin=JBossAS7"/>
+                    </c:simple-property>
+                    <c:simple-property name="port"  type="integer"/>
+                    <c:simple-property name="fixed-port"
+                                       type="boolean" defaultValue="false"/>
+                    <c:simple-property name="multicast-address"  required="false"/>
+                    <c:simple-property name="multicast-port" type="integer" required="false"/>
+                </c:map-property>
+            </c:list-property>
+            </c:group>
+        </resource-configuration>
+
+    </server>
+
+    <server name="listOfPlainMaps"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="list of plain maps"
+             singleton="true">
+
+        <resource-configuration>
+            <c:list-property name="properties" description="A list of generic key/value properties.">
+                <c:map-property name="property:collapsed" displayName="Property">
+                   <c:simple-property name="name:0" type="string" displayName="Name" required="true"/>
+                   <c:simple-property name="value:1" type="string" displayName="Value" required="true"/>
+                </c:map-property>
+            </c:list-property>
+        </resource-configuration>
+    </server>
+
+    <server name="groupedproperties"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="same name grouped properties"
+             singleton="true">
+        <resource-configuration>
+            <c:group name="child:first-group=first-group" displayName="First group">
+               <c:simple-property name="firstprop:1"  type="string"/>
+               <c:list-property name="secondprop:2" displayName="Properties" required="false" readOnly="false">
+                    <c:simple-property name="name" displayName="Property-Name"/>
+               </c:list-property>
+               <c:map-property name="thirdprop:3" displayName="Keepalive Time" description="Sample map property." >
+                    <c:simple-property name="value" required="true" type="string" description="value"/>
+               </c:map-property>
+            </c:group>
+            <c:group name="child:second-group=second-group" displayName="First group">
+               <c:simple-property name="firstprop:4" type="string"/>
+               <c:list-property name="secondprop:5" displayName="Properties" required="false" readOnly="false">
+                    <c:simple-property name="name" displayName="Property-Name"/>
+               </c:list-property>
+               <c:map-property name="thirdprop:6" displayName="Keepalive Time" description="Sample map property." >
+                    <c:simple-property name="value" required="true" type="string" description="value"/>
+               </c:map-property>
+            </c:group>
+        </resource-configuration>
+    </server>
+
+  <server name="simpleWithDefault1"
+           class="BaseComponent"
+           discovery="SubsystemDiscovery">
+
+    <resource-configuration>
+      <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" defaultValue="SYNC" >
+        <c:property-options>
+          <c:option value="SYNC"/>
+          <c:option value="ASYNC"/>
+        </c:property-options>
+      </c:simple-property>
+    </resource-configuration>
+
+  </server>
+
+  <server name="simpleWithDefault2"
+           class="BaseComponent"
+           discovery="SubsystemDiscovery">
+
+    <resource-configuration>
+      <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" >
+        <c:property-options>
+          <c:option value="SYNC"/>
+          <c:option value="ASYNC"/>
+        </c:property-options>
+      </c:simple-property>
+    </resource-configuration>
+
+  </server>
+
+
+    <!-- Simple c:group entries from descriptor with no special handling. -->
+    <service name="simpleGroupNoSpecial"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="simple grouped properties. No special handling"
+             singleton="true">
+        <resource-configuration>
+          <c:group name="proxy" displayName="Proxy Options">
+            <c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separated with comas."/>
+            <c:simple-property name="proxy-url" required="false" type="string" readOnly="false" defaultValue="/" description="Base URL for MCMP requests."/>
+          </c:group>
+
+          <c:group name="advertise" displayName="Advertise Options">
+            <c:simple-property name="advertise" required="false" type="boolean" readOnly="false" defaultValue="true" description="Use Advertise logic or not."/>
+            <c:simple-property name="advertise-socket" required="false" type="string" readOnly="false" defaultValue="224.0.1.105:23364"
+                               description="Name of Socket binding to use for the Advertise socket."/>
+            <c:simple-property name="connector" required="true" type="string" readOnly="false" defaultValue="ajp" description="Name of the web connector used to communicate with the load balancer.">
+              <!--<c:option-source target="resource" expression="type=Connector plugin=&pluginName;"/>-->
+            </c:simple-property>
+          </c:group>
+       </resource-configuration>
+    </service>
+
+    <!-- Same as previous but for update. -->
+    <service name="simpleGroupNoSpecialUpdate"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="simple grouped properties. No special handling"
+             singleton="true">
+        <resource-configuration>
+          <c:group name="proxy" displayName="Proxy Options">
+            <c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separated with comas."/>
+            <c:simple-property name="proxy-url" required="false" type="string" readOnly="false" defaultValue="/" description="Base URL for MCMP requests."/>
+          </c:group>
+       </resource-configuration>
+    </service>
+
+
+
+</plugin>

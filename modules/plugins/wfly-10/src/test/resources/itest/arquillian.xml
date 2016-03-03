@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<arquillian xmlns="http://jboss.org/schema/arquillian"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+
+  <!-- RHQ Plugin Container -->
+  <container qualifier="pc" default="true">
+    <configuration>
+      <property name="serverServicesImplementationClassName">org.rhq.test.arquillian.MockingServerServices</property>
+      <property name="insideAgent">true</property>
+      <property name="startManagementBean">false</property>
+      <property name="nativeSystemInfoEnabled">true</property>
+      <property name="additionalPackagesForRootPluginClassLoaderToExclude">org.rhq.modules.plugins.jbossas7|org.jboss</property>
+    </configuration>
+  </container>
+
+  <!-- We actually have to exclude all the classes from instrumentation by Arquillian Jacoco extension, because our
+  Arquillian RHQ agent plugin extension only runs in-process with the test execution that does the Jacoco instrumentation, too. -->
+  <extension qualifier="jacoco">
+    <property name="excludes">*</property>
+  </extension>
+</arquillian>

@@ -1,0 +1,9 @@
+{
+  "outcome" : "success",
+  "result" : {
+    "name" : "default",
+    "criteria" : [ {
+      "inet-address" : "127.0.0.1"
+    } ]
+  }
+}

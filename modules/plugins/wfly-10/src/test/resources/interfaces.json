@@ -1,0 +1,8 @@
+{
+  "outcome" : "success",
+  "result" : {
+    "name" : "public",
+    "criteria" : "any-ipv4-address"
+  },
+  "response-headers" : null
+}

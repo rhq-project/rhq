@@ -1,0 +1,10 @@
+{
+  "outcome" : "success",
+  "result" :
+      {
+       "bar" :
+           {"value" : "44"},
+       "hello" :
+           {"value" : "world"}
+      }
+}

@@ -1,0 +1,1021 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-plugins-parent</artifactId>
+    <version>4.14.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-wfly-10-plugin</artifactId>
+  <packaging>jar</packaging>
+
+  <name>RHQ Wildfly 10 Plugin</name>
+  <description>a plugin for monitoring and managing Wildfly 10 and JBoss platforms based on it (e.g. JBoss EAP 7)</description>
+
+
+  <properties>
+    <json.version>${project.json.version}</json.version>
+    <jboss.sasl.version>1.0.0.Final</jboss.sasl.version>
+    <!-- If you change httpclient4.version make sure to update httpcore version below accordingly  -->
+    <httpclient4.version>${apache.httpcomponents.version}</httpclient4.version>
+    <as7.version>6.1.0.Alpha</as7.version>
+    <as7.url>http://download.jboss.org/jbosseap/6/jboss-eap-6.1.0.Alpha/jboss-eap-6.1.0.Alpha.zip</as7.url>
+    <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
+    <java.tieredCompilation>-Dxxx</java.tieredCompilation>
+    <java.useCompressedOOPS>-Dxxx</java.useCompressedOOPS>
+    <rhq.internal>false</rhq.internal>
+  </properties>
+
+
+  <dependencies>
+
+    <!-- === Provided Deps === -->
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-jmx-plugin</artifactId>
+      <version>${rhq-jmx-plugin.version}</version>
+      <scope>provided</scope>
+      <!-- by the plugin container -->
+    </dependency>
+
+    <!-- === Compile Deps === -->
+
+    <!-- NOTE: jackson 2.0.0 has moved to a new groupId - artifacts are under
+               http://repo1.maven.org/maven2/com/fasterxml/jackson/ -->
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-core-asl</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-mapper-asl</artifactId>
+    </dependency>
+
+    <!-- for the password hashing - we may want to copy the relevant stuff over ourselves -->
+    <dependency>
+      <groupId>org.jboss.sasl</groupId>
+      <artifactId>jboss-sasl</artifactId>
+      <version>${jboss.sasl.version}</version>
+    </dependency>
+
+    <!-- For communication with AS7 http management interface -->
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>${httpclient4.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-codec</groupId>
+          <artifactId>commons-codec</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpmime</artifactId>
+      <version>${httpclient4.version}</version>
+    </dependency>
+
+    <!-- For patch file parsing -->
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-wfly-patch-parser</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- === Test Deps === -->
+
+    <dependency>
+      <groupId>postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.jetty.aggregate</groupId>
+      <artifactId>jetty-all</artifactId>
+      <version>8.1.8.v20121106</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-platform-plugin</artifactId>
+      <version>${rhq-platform-plugin.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- For native subsystem -->
+    <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>sigar-dist</artifactId>
+        <type>zip</type>
+        <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-libs</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+
+                <artifactItem>
+                  <groupId>org.codehaus.jackson</groupId>
+                  <artifactId>jackson-core-asl</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.codehaus.jackson</groupId>
+                  <artifactId>jackson-mapper-asl</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.jboss.sasl</groupId>
+                  <artifactId>jboss-sasl</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.apache.httpcomponents</groupId>
+                  <artifactId>httpcore</artifactId>
+                  <version>${httpclient4.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.apache.httpcomponents</groupId>
+                  <artifactId>httpclient</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>commons-codec</groupId>
+                  <artifactId>commons-codec</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.apache.httpcomponents</groupId>
+                  <artifactId>httpmime</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                    <groupId>org.rhq</groupId>
+                    <artifactId>rhq-wfly-patch-parser</artifactId>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <!-- The surefire plugin only does the unit tests in src/test
+            -  integration test are handled below in the *** as7-itest ** profile
+            -->
+            <exclude>org/rhq/modules/plugins/jbossas7/itest/**</exclude>
+          </excludes>
+          <!-- This is where the antrun below puts the sigar native libs -->
+          <argLine>${jacoco.unit-test.args} -Djava.library.path=${project.build.directory}/test-libs</argLine>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+            <execution>
+                <id>deploy-sigar-native-to-test-classpath</id>
+                <phase>generate-test-resources</phase>
+                <configuration>
+                    <tasks>
+                       <echo>Copying SIGAR native libs to test-libs</echo>
+                       <unzip dest="${project.build.directory}/test-libs">
+                         <fileset
+                             dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}"
+                             includes="*.zip"/>
+                         <patternset>
+                           <include name="**/lib/sigar.jar"/>
+                           <include name="**/lib/bcel*.jar"/>
+                           <include name="**/lib/*.so"/>
+                           <include name="**/lib/*.sl"/>
+                           <include name="**/lib/*.dll"/>
+                           <include name="**/lib/*.dylib"/>
+                         </patternset>
+                       </unzip>
+                       <move todir="${project.build.directory}/test-libs" flatten="true">
+                       <fileset dir="${project.build.directory}/test-libs">
+                          <include name="**/lib/*"/>
+                       </fileset>
+                       </move>
+                       <delete dir="${project.build.directory}/test-libs/hyperic-sigar-${sigar.version}"/>
+                    </tasks>
+                </configuration>
+                <goals>
+                    <goal>run</goal>
+                </goals>
+            </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+
+  <profiles>
+
+     <profile>
+	     <!--
+	        This profile has been created to avoid unnecessary resolution of test dependencies during a build that
+	        does not run, compile or need tests.
+	        More test dependencies are to be moved here if the set of sub-dependencies is complex, references project
+	        test jars, or conflicts with changing the container version.
+	       -->
+	     <id>test.dependencies</id>
+	     <activation>
+	        <property>
+	           <name>maven.test.skip</name>
+	           <value>!true</value>
+	        </property>
+	     </activation>
+
+	     <dependencies>
+	       <dependency>
+		       <groupId>${rhq.groupId}</groupId>
+		       <artifactId>rhq-core-plugin-test-api</artifactId>
+		       <version>${project.version}</version>
+		       <type>pom</type>
+		       <scope>test</scope>
+		    </dependency>
+
+		    <dependency>
+		       <groupId>${rhq.groupId}</groupId>
+		       <artifactId>rhq-core-plugin-test-util</artifactId>
+		       <version>${project.version}</version>
+		       <scope>test</scope>
+		    </dependency>
+	     </dependencies>
+    </profile>
+
+    <profile>
+      <id>java7</id>
+      <activation>
+        <property>
+          <name>java.specification.version</name>
+          <value>1.7</value>
+        </property>
+      </activation>
+
+      <properties>
+        <java.tieredCompilation>-XX:+TieredCompilation</java.tieredCompilation>
+      </properties>
+
+    </profile>
+
+    <profile>
+      <id>java64bit</id>
+
+      <activation>
+        <property>
+          <name>sun.arch.data.model</name>
+          <value>64</value>
+        </property>
+      </activation>
+
+      <properties>
+        <java.useCompressedOOPS>-XX:+UseCompressedOops</java.useCompressedOOPS>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>as700Final.itest.setup</id>
+
+      <activation>
+        <property>
+          <name>as7.version</name>
+          <value>7.0.0.Final</value>
+        </property>
+      </activation>
+
+      <properties>
+        <jboss-as-arquillian-container-managed.version>${as7.version}</jboss-as-arquillian-container-managed.version>
+        <as7.url>https://repository.jboss.org/nexus/content/repositories/releases/org/jboss/as/jboss-as-dist/${as7.version}/jboss-as-dist-${as7.version}.zip</as7.url>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>as701Final.itest.setup</id>
+
+      <activation>
+        <property>
+          <name>as7.version</name>
+          <value>7.0.1.Final</value>
+        </property>
+      </activation>
+
+      <properties>
+        <jboss-as-arquillian-container-managed.version>${as7.version}</jboss-as-arquillian-container-managed.version>
+        <as7.url>https://repository.jboss.org/nexus/content/repositories/releases/org/jboss/as/jboss-as-dist/${as7.version}/jboss-as-dist-${as7.version}.zip</as7.url>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>as710Final.itest.setup</id>
+
+      <activation>
+        <property>
+          <name>as7.version</name>
+          <value>7.1.0.Final</value>
+        </property>
+      </activation>
+
+      <properties>
+        <jboss-as-arquillian-container-managed.version>${as7.version}</jboss-as-arquillian-container-managed.version>
+        <as7.url>https://repository.jboss.org/nexus/content/repositories/releases/org/jboss/as/jboss-as-dist/${as7.version}/jboss-as-dist-${as7.version}.zip</as7.url>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>as711Final.itest.setup</id>
+
+      <activation>
+        <property>
+          <name>as7.version</name>
+          <value>7.1.1.Final</value>
+        </property>
+      </activation>
+
+      <properties>
+        <jboss-as-arquillian-container-managed.version>${as7.version}</jboss-as-arquillian-container-managed.version>
+        <as7.url>https://repository.jboss.org/nexus/content/repositories/releases/org/jboss/as/jboss-as-dist/${as7.version}/jboss-as-dist-${as7.version}.zip</as7.url>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>eap600.itest.setup</id>
+
+      <activation>
+        <property>
+          <name>as7.version</name>
+          <value>6.0.0</value>
+        </property>
+      </activation>
+
+      <properties>
+        <as7.url>Please set the as7.url system property to the location of the EAP ${as7.version} distribution zipfile.</as7.url>
+        <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
+      </properties>
+    </profile>
+
+    <!-- Activate this profile to run the integration tests (these can take a while to complete). -->
+    <!-- activate with -Das7.itest. See also http://rhq-project.org/display/RHQ/Notes#Notes-IntegrationTests -->
+    <profile>
+      <id>as7.itest</id>
+
+      <activation>
+        <property>
+          <name>as7.itest</name>
+        </property>
+      </activation>
+
+      <properties>
+        <jboss7.home>${basedir}/target/jboss-as-${as7.version}</jboss7.home>
+
+        <jboss.standalone.bindAddress>127.0.0.1</jboss.standalone.bindAddress>
+        <jboss.standalone.portOffset>40000</jboss.standalone.portOffset>
+        <!-- IMPORTANT: The management port must be the port offset + 9999. -->
+        <jboss.standalone.nativeManagementPort>49999</jboss.standalone.nativeManagementPort>
+
+        <jboss.domain.bindAddress>127.0.0.1</jboss.domain.bindAddress>
+        <jboss.domain.portOffset>50000</jboss.domain.portOffset>
+        <!-- IMPORTANT: The native management port must be the port offset + 9999. -->
+        <jboss.domain.nativeManagementPort>59999</jboss.domain.nativeManagementPort>
+        <!-- IMPORTANT: The native management port must be the port offset + 9990. -->
+        <jboss.domain.httpManagementPort>59990</jboss.domain.httpManagementPort>
+        <!-- IMPORTANT: The native management port must be the port offset + 9943. -->
+        <jboss.domain.httpsManagementPort>59943</jboss.domain.httpsManagementPort>
+      </properties>
+
+      <build>
+        <plugins>
+
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>downloadAndUnzip</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <!-- Set as7.zipfile name before download -->
+                    <property name="as7.zipfile" location="${java.io.tmpdir}/jboss-as7-${as7.version}.zip"/>
+                    <!-- Defensive clean (jboss7.home is a POM property) -->
+                    <delete dir="${jboss7.home}" quiet="true"/>
+                    <!-- Download as7 dist if not already present -->
+                    <get src="${as7.url}" dest="${as7.zipfile}" usetimestamp="true" verbose="true" />
+                    <!-- Unzip as7 dist to jboss7.home -->
+                    <unzip src="${as7.zipfile}" dest="${jboss7.home}">
+                        <!-- cutdirsmapper available since ANT 1.8.2. See http://ant.apache.org/manual/Types/mapper.html -->
+                        <!-- All as7 dist zip files have a top level directory in their hierarchy -->
+                        <!-- Sometimes this top level directory is not even named like the zip file (e.g. snapshot dists) -->
+                        <!-- So we use the cutdirsmapper to extract as7 files straight to as7.home -->
+                        <cutdirsmapper dirs="1"/>
+                    </unzip>
+                    <chmod perm="u+rx">
+                      <fileset dir="${jboss7.home}/bin" includes="*.sh"/>
+                    </chmod>
+                    <replace dir="${jboss7.home}"
+                             includes="standalone/configuration/standalone*.xml, domain/configuration/host*.xml"
+                             token="&lt;inet-address " value="&lt;loopback-address "/>
+                    <!-- TODO (ips, 05/24/12): The below starts the managed servers in HA mode, but it also causes a
+                                               slew of HornetQ authentication errors - figure out how to make those go
+                                               away. -->
+                    <!--<replace dir="${jboss7.home}"
+                             includes="domain/configuration/host.xml"
+                             token=' group="main-server-group"' value=' group="other-server-group"'/>-->
+                  </target>
+                </configuration>
+              </execution>
+              <execution>
+                 <id>delete-post</id>
+                 <phase>post-integration-test</phase>
+                 <goals>
+                    <goal>run</goal>
+                </goals>
+                <configuration>
+                   <target>
+                      <echo>*** Deleting AS7 ${jboss7.home}...</echo>                   
+                      <delete dir="${jboss7.home}" />
+                      <echo>*** Deleting data ./data...</echo>
+                      <delete dir="./data" />                      
+                   </target>
+                </configuration>
+              </execution>
+              <execution>
+                 <id>delete-clean</id>
+                 <phase>clean</phase>
+                 <goals>
+                    <goal>run</goal>
+                </goals>
+                <configuration>
+                   <target>
+                      <echo>*** Deleting AS7 ${jboss7.home}...</echo>                   
+                      <delete dir="${jboss7.home}" />
+                   </target>
+                </configuration>
+              </execution>              
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.2.1.jbossorg-3</version>
+
+            <executions>
+
+              <execution>
+                <id>start-as7-standalone</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <background>true</background>
+                  <!-- test blocks until the port at backgroundPollingAddress is available (waiting for starting) -->
+                  <!-- when maven jvm exits, this plugin will kill the running servers -->
+                  <backgroundPollingAddress>${jboss.standalone.bindAddress}:${jboss.standalone.nativeManagementPort}
+                  </backgroundPollingAddress>
+                  <executable>${java.home}/bin/java</executable>
+                  <arguments>
+                    <!-- Process Controller Java options -->
+                    <argument>-D[Standalone]</argument>
+                    <argument>-server</argument>
+                    <argument>${java.useCompressedOOPS}</argument>
+                    <argument>${java.tieredCompilation}</argument>
+                    <argument>-Xms64m</argument>
+                    <argument>-Xmx512m</argument>
+                    <argument>-XX:MaxPermSize=256m</argument>
+                    <argument>-Djava.net.preferIPv4Stack=true</argument>
+                    <argument>-Dorg.jboss.resolver.warning=true</argument>
+                    <argument>-Dsun.rmi.dgc.client.gcInterval=3600000</argument>
+                    <argument>-Dsun.rmi.dgc.server.gcInterval=3600000</argument>
+                    <argument>-Djboss.modules.system.pkgs=org.jboss.byteman</argument>
+                    <argument>-Djava.awt.headless=true</argument>
+                    <argument>-Djboss.server.default.config=standalone.xml</argument>
+                    <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/standalone/log/boot.log</argument>
+                    <argument>-Dlogging.configuration=file:${jboss7.home}/standalone/configuration/logging.properties</argument>
+                    <argument>-jar</argument>
+                    <argument>${jboss7.home}/jboss-modules.jar</argument>
+                    <argument>-mp</argument>
+                    <argument>${jboss7.home}/modules</argument>
+                    <argument>-jaxpmodule</argument>
+                    <argument>javax.xml.jaxp-provider</argument>
+                    <argument>org.jboss.as.standalone</argument>
+                    <argument>-Djboss.home.dir=${jboss7.home}</argument>
+                    <argument>--server-config=standalone-full-ha.xml</argument>
+                    <argument>-Djboss.bind.address.management=${jboss.standalone.bindAddress}</argument>
+                    <argument>-Djboss.bind.address=${jboss.standalone.bindAddress}</argument>
+                    <argument>-Djboss.bind.address.unsecure=${jboss.standalone.bindAddress}</argument>
+                    <argument>-Djboss.socket.binding.port-offset=${jboss.standalone.portOffset}</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+
+              <execution>
+                <id>start-as7-domain</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <background>true</background>
+                  <!-- test blocks until the port at backgroundPollingAddress is available (waiting for starting) -->
+                  <!-- when maven jvm exits, this plugin will kill the running servers -->
+                  <backgroundPollingAddress>${jboss.domain.bindAddress}:${jboss.domain.nativeManagementPort}
+                  </backgroundPollingAddress>
+                  <executable>${java.home}/bin/java</executable>
+                  <arguments>
+                    <!-- Process Controller Java options -->
+                    <argument>-D[Process Controller]</argument>
+                    <argument>-Xms64M</argument>
+                    <argument>-Xmx512M</argument>
+                    <argument>-XX:MaxPermSize=256M</argument>
+                    <argument>-Djava.net.preferIPv4Stack=true</argument>
+                    <argument>-Dorg.jboss.resolver.warning=true</argument>
+                    <argument>-Dsun.rmi.dgc.client.gcInterval=3600000</argument>
+                    <argument>-Dsun.rmi.dgc.server.gcInterval=3600000</argument>
+                    <argument>-Djboss.modules.system.pkgs=org.jboss.byteman</argument>
+                    <argument>-Djava.awt.headless=true</argument>
+                    <argument>-Djboss.domain.default.config=domain.xml</argument>
+                    <argument>-Djboss.host.default.config=host.xml</argument>
+                    <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/process-controller.log</argument>
+                    <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
+                    <argument>-Djboss.bind.address.management=${jboss.domain.bindAddress}</argument>
+                    <argument>-Djboss.bind.address=${jboss.domain.bindAddress}</argument>
+                    <argument>-Djboss.bind.address.unsecure=${jboss.domain.bindAddress}</argument>
+                    <argument>-Djboss.socket.binding.port-offset=${jboss.domain.portOffset}</argument>
+                    <argument>-jar</argument>
+                    <argument>${jboss7.home}/jboss-modules.jar</argument>
+                    <argument>-mp</argument>
+                    <argument>${jboss7.home}/modules</argument>
+                    <argument>org.jboss.as.process-controller</argument>
+                    <argument>-jboss-home</argument>
+                    <argument>${jboss7.home}</argument>
+                    <argument>-jvm</argument>
+                    <argument>${java.home}/bin/java</argument>
+                    <argument>-mp</argument>
+                    <argument>${jboss7.home}/modules</argument>
+                    <argument>--</argument>
+
+                    <!-- Host Controller Java options to be inserted *before* the built-in options -->
+                    <argument>-Xms64M</argument>
+                    <argument>-Xmx512M</argument>
+                    <argument>-XX:MaxPermSize=256M</argument>
+                    <argument>-Djava.net.preferIPv4Stack=true</argument>
+                    <argument>-Dorg.jboss.resolver.warning=true</argument>
+                    <argument>-Dsun.rmi.dgc.client.gcInterval=3600000</argument>
+                    <argument>-Dsun.rmi.dgc.server.gcInterval=3600000</argument>
+                    <argument>-Djboss.modules.system.pkgs=org.jboss.byteman</argument>
+                    <argument>-Djava.awt.headless=true</argument>
+                    <argument>-Djboss.domain.default.config=domain.xml</argument>
+                    <argument>-Djboss.host.default.config=host.xml</argument>
+                    <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/host-controller.log</argument>
+                    <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
+                    <argument>--</argument>
+
+                    <!-- Host Controller Java options to be inserted *after* the built-in options -->
+                    <!-- (e.g. "-jar /tmp/jboss-as-6.0.0.ER5/jboss-modules.jar -mp /tmp/jboss-as-6.0.0.ER5/modules -jaxpmodule javax.xml.jaxp-provider") -->
+                    <argument>-default-jvm</argument>
+                    <argument>${java.home}/bin/java</argument>
+                    <!-- The remaining props are all our custom options (the ones that would be passed to domain.sh) -->
+                    <argument>-Djboss.bind.address.management=${jboss.domain.bindAddress}</argument>
+                    <argument>-Djboss.bind.address=${jboss.domain.bindAddress}</argument>
+                    <argument>-Djboss.bind.address.unsecure=${jboss.domain.bindAddress}</argument>
+                    <argument>-Djboss.socket.binding.port-offset=${jboss.domain.portOffset}</argument>
+                    <argument>-Djboss.management.native.port=${jboss.domain.nativeManagementPort}</argument>
+                    <argument>-Djboss.management.http.port=${jboss.domain.httpManagementPort}</argument>
+                    <argument>-Djboss.management.https.port=${jboss.domain.httpsManagementPort}</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+
+            </executions>
+
+          </plugin>
+
+          <plugin>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <!-- failsafe plugin prevents a test failure to abort the build, so that the post-integration-test phase
+            -  can still shut down the servers fired up.
+            -->
+            <configuration>
+              <skipTests>false</skipTests>
+              <skipITs>false</skipITs>
+              <properties>
+                <property>
+                  <name>listener</name>
+                  <value>org.rhq.test.testng.StdoutReporter</value>
+                </property>
+              </properties>
+              <systemPropertyVariables>
+                <arquillian.xml>${project.build.testSourceDirectory}/../resources/itest/arquillian.xml</arquillian.xml>
+                <jboss7.home>${jboss7.home}</jboss7.home>
+                <as7.version>${as7.version}</as7.version>
+                <!--<as7plugin.verbose>true</as7plugin.verbose>-->
+                <jboss.standalone.bindAddress>${jboss.standalone.bindAddress}</jboss.standalone.bindAddress>
+                <jboss.standalone.portOffset>${jboss.standalone.portOffset}</jboss.standalone.portOffset>
+                <jboss.domain.bindAddress>${jboss.domain.bindAddress}</jboss.domain.bindAddress>
+                <jboss.domain.portOffset>${jboss.domain.portOffset}</jboss.domain.portOffset>
+                <jboss.domain.httpManagementPort>${jboss.domain.httpManagementPort}</jboss.domain.httpManagementPort>
+                <settings.localRepository>${settings.localRepository}</settings.localRepository>
+              </systemPropertyVariables>
+            </configuration>
+            <executions>
+              <!-- AS7 tests have been sensitive to test interaction issues.  As such all tests have
+                   explicit execution decls. Even executing independently, they do all use and affect a single test EAP
+                   server, so it is possible that one test class can affect another downstream by manipulating the EAP
+                   server. Test execution order:
+                   1) GenericJbossAS7PluginTest, it doesn't alter anything in the EAP instance, so let it go first
+                   2) The startup/shutdown tests are sensitive to the effects the other test classes have on the EAP test server:
+                      - DomainServerComponentTests
+                      - StandaloneServerComponentTests
+                      - ManagedServerTest
+                   3) The standalone tests in no particular order.
+                   4) The domain tests in no particular order.  
+                   5) The nonpc tests, together, which seems to be OK
+                   6) AfterSuiteTest, always run at the end to ensure we kill any leftover processes                 
+              -->
+              <execution>
+                <id>GenericJbossAS7PluginTest</id>              
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/GenericJBossAS7PluginTest.java</include>                
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              
+              <execution>
+                <id>DomainServerComponentTests</id>              
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>StandaloneServerComponentTests</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/StandaloneServerComponentTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>ManagedServerTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/ManagedServerTest.java</include>                
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>DatasourceStandaloneTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DatasourceStandaloneTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>DatasourceDomainTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/DatasourceDomainTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>DeploymentRuntimeResourcesTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentRuntimeResourcesTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>DeploymentTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>SocketBindingTests</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/SocketBindingTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>NamingTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/NamingTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>ResourcesStandaloneServerTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/ResourcesStandaloneServerTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>TemplatedResourcesTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/TemplatedResourcesTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>WebConnectorComponentTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/WebConnectorComponentTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>BundleContentHandoverStandaloneTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/BundleContentHandoverTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>SecurityModuleOptionsTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>DomainSocketBindingTests</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainSocketBindingTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>ResourcesDomainServerTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/ResourcesDomainServerTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>BundleContentHandoverDomainTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/BundleContentHandoverTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+
+              <execution>
+                <id>nonpc</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/nonpc/**Test.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+
+              <execution>
+                <id>AfterSuiteTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/AfterSuiteTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+
+      <dependencies>
+
+        <dependency>
+          <groupId>${rhq.groupId}</groupId>
+          <artifactId>rhq-core-plugin-test-api</artifactId>
+          <version>${project.version}</version>
+          <type>pom</type>
+          <scope>test</scope>
+        </dependency>
+
+      </dependencies>
+
+    </profile>
+
+    <profile>
+      <id>dev</id>
+
+      <properties>
+        <rhq.rootDir>../../..</rhq.rootDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
+        <rhq.deploymentDir>${rhq.containerDir}/${rhq.agentPluginDir}</rhq.deploymentDir>
+      </properties>
+
+      <build>
+        <plugins>
+
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+
+              <execution>
+                <id>deploy</id>
+                <phase>compile</phase>
+                <configuration>
+                  <target>
+                    <mkdir dir="${rhq.deploymentDir}"/>
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                    <echo>*** Updating ${deployment.file}...</echo>
+                    <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+              <execution>
+                <id>deploy-jar-meta-inf</id>
+                <phase>package</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                    <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
+                    <unjar src="${project.build.directory}/${project.build.finalName}.jar"
+                           dest="${project.build.outputDirectory}">
+                      <patternset>
+                        <include name="META-INF/**"/>
+                      </patternset>
+                    </unjar>
+                    <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF"
+                         update="true">
+                    </jar>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+              <execution>
+                <id>undeploy</id>
+                <phase>clean</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                    <echo>*** Deleting ${deployment.file}...</echo>
+                    <delete file="${deployment.file}"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+
+    </profile>
+  </profiles>
+
+</project>

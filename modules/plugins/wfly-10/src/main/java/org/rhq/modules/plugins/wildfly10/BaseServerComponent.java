@@ -286,9 +286,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             throw new InvalidPluginConfigurationException("Failed to validate product type for "
                 + getResourceDescription(), e);
         }
-        if(runtimeProductName.equals("JBoss EAP")) {
-            runtimeProductName = "EAP"; // @TODO Fix this kludge at some point
-        }
         if (!runtimeProductName.equals(expectedRuntimeProductName)) {
             throw new InvalidPluginConfigurationException("The original product type discovered for this server was "
                 + expectedRuntimeProductName + ", but the server is now reporting its product type is ["

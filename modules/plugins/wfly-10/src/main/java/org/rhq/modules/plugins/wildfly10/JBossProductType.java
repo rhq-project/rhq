@@ -30,7 +30,7 @@ import java.util.Properties;
  */
 public enum JBossProductType {
 
-    EAP7("EAP", "EAP 7", "JBoss Enterprise Application Platform 7", "EAP"),
+    EAP7("EAP", "EAP 7", "JBoss Enterprise Application Platform 7", "JBoss EAP"),
     WILDFLY10("WildFly", "WildFly 10", "WildFly Application Server 10", "WildFly");
 
     public final String SHORT_NAME;

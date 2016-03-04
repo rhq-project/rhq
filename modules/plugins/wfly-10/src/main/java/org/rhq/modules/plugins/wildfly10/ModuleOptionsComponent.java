@@ -300,8 +300,7 @@ public class ModuleOptionsComponent extends BaseComponent implements Configurati
             Result result = getASConnection().execute(op);
             if (result.isSuccess()) {
                 //populate attribute values
-                List<Value> currentAttributeState = new ArrayList<Value>();
-                currentAttributeState = ModuleOptionsComponent.populateSecurityDomainModuleOptions(result,
+                List<Value> currentAttributeState = ModuleOptionsComponent.populateSecurityDomainModuleOptions(result,
                     ModuleOptionsComponent.loadModuleOptionType(attribute));
                 if (currentNodeIsModuleType) {//grab first available module type
                     Value loaded = currentAttributeState.get(0);
@@ -313,11 +312,15 @@ public class ModuleOptionsComponent extends BaseComponent implements Configurati
                     String moduleTypeIdentifier = attribute + ":";
                     int index = path.indexOf(moduleTypeIdentifier);
                     String loginModuleIndex = path.substring(index + moduleTypeIdentifier.length());
-                    int lmi = Integer.valueOf(loginModuleIndex);//Ex 0,1,30
-                    if (currentAttributeState.size() > lmi) {//then retrieve.
-                        Value loaded = currentAttributeState.get(lmi);
-                        //populate configuration
-                        populateCodeFlagType(configuration, attribute, loaded);
+                    try {
+                        int lmi = Integer.valueOf(loginModuleIndex);//Ex 0,1,30
+                        if (currentAttributeState.size() > lmi) {//then retrieve.
+                            Value loaded = currentAttributeState.get(lmi);
+                            //populate configuration
+                            populateCodeFlagType(configuration, attribute, loaded);
+                        }
+                    } catch(NumberFormatException e) {
+                        // Ignore it, the value just wasn't available
                     }
                 }
             }
@@ -343,22 +346,26 @@ public class ModuleOptionsComponent extends BaseComponent implements Configurati
                 int index = path.indexOf(moduleTypeIdentifier);
                 String loginModuleIndex = path.substring(index + moduleTypeIdentifier.length());
                 String[] split = loginModuleIndex.split(",");
-                int lmi = Integer.valueOf(split[0]);//Ex 0,1,30
-                if (lmi < currentAttributeState.size()) {//then proceed
-                    Value loaded = currentAttributeState.get(lmi);
-                    //populate configuration: module-options
-                    LinkedHashMap<String, Object> currentModuleOptions = loaded.getOptions();
+                try {
+                    int lmi = Integer.valueOf(split[0]);//Ex 0,1,30
+                    if (lmi < currentAttributeState.size()) {//then proceed
+                        Value loaded = currentAttributeState.get(lmi);
+                        //populate configuration: module-options
+                        LinkedHashMap<String, Object> currentModuleOptions = loaded.getOptions();
 
-                    //This must match exactly the mapping identifier from descriptor, otherwise loadResource fails silently.
-                    String id = "Module Options";
-                    PropertyMap map = new PropertyMap(id);
-                    for (String key : currentModuleOptions.keySet()) {
-                        PropertySimple option = new PropertySimple(key, currentModuleOptions.get(key));
-                        map.put(option);
+                        //This must match exactly the mapping identifier from descriptor, otherwise loadResource fails silently.
+                        String id = "Module Options";
+                        PropertyMap map = new PropertyMap(id);
+                        for (String key : currentModuleOptions.keySet()) {
+                            PropertySimple option = new PropertySimple(key, currentModuleOptions.get(key));
+                            map.put(option);
+                        }
+                        if (!currentModuleOptions.isEmpty()) {//check that keyset is non empty before adding to config.
+                            configuration.put(map);
+                        }
                     }
-                    if (!currentModuleOptions.isEmpty()) {//check that keyset is non empty before adding to config.
-                        configuration.put(map);
-                    }
+                } catch(NumberFormatException e) {
+                    // Ignore it, it just wasn't available
                 }
             }
             return configuration;

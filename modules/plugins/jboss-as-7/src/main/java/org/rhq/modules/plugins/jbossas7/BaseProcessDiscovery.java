@@ -523,7 +523,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         HostConfiguration hostConfig = null;
         // load hostConfiguration just once - we need it several times
         File hostXmlFile = serverPluginConfiguration.getHostConfigFile();
-        if (hostXmlFile.exists()) {
+        if (hostXmlFile != null && hostXmlFile.exists()) {
             try {
                 hostConfig = loadHostConfiguration(hostXmlFile);
             } catch (Exception e) {

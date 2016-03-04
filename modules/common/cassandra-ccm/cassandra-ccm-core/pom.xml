@@ -86,6 +86,10 @@
                 <exclude>src/main/resources/cassandra/conf/cassandra-env.sh</exclude>
               </excludes>
             </resource>
+            <resource>
+              <directory>src/main/bundle</directory>
+              <filtering>false</filtering>
+            </resource>
           </resources>
           <delimiters>
             <delimiter>${*}</delimiter>

@@ -13,17 +13,6 @@
   <artifactId>raw-config-test</artifactId>
   <name>raw-config-test</name>
 
-  <repositories>
-    <repository>
-      <id>codehaus</id>
-      <name>Codehaus Releases</name>
-      <url>http://repository.codehaus.org/</url>
-      <snapshots>
-         <enabled>false</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-
   <dependencies>
     <dependency>
       <groupId>org.codehaus.groovy</groupId>

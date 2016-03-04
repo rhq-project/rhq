@@ -543,15 +543,4 @@
         </profile>
     </profiles>
 
-    <pluginRepositories>
-        <pluginRepository>
-            <id>codehaus-snapshots</id>
-            <name>codehaus snapshots</name>
-            <url>http://snapshots.repository.codehaus.org</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
-
 </project>

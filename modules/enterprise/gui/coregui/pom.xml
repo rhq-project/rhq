@@ -534,16 +534,6 @@
         <enabled>false</enabled>
       </snapshots>
     </repository>
-
-    <repository>
-      <id>codehaus</id>
-      <name>Codehaus Releases</name>
-      <url>http://repository.codehaus.org/</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
   </repositories>
 
 </project>

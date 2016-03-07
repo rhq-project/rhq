@@ -780,6 +780,12 @@
                                             <artifactId>rhq-jboss-as-7-plugin</artifactId>
                                             <version>${project.version}</version>
                                         </artifactItem>
+
+                                        <artifactItem>
+                                            <groupId>${project.groupId}</groupId>
+                                            <artifactId>rhq-wfly-10-plugin</artifactId>
+                                            <version>${project.version}</version>
+                                        </artifactItem>
                                     </artifactItems>
                                     <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
                                 </configuration>

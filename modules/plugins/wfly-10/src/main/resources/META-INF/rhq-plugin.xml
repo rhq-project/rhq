@@ -1092,7 +1092,7 @@
     ]>
 <plugin name="&pluginName;"
         displayName="Enterprise Application Server 7"
-        description="provides monitoring and management of Wildfly 10 and JBoss EAP7"
+        description="Provides monitoring and management of Wildfly 10 and JBoss EAP7"
         package="org.rhq.modules.plugins.wildfly10"
         pluginLifecycleListener="PluginLifecycleListener"
         xmlns="urn:xmlns:rhq-plugin"

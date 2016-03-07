@@ -402,6 +402,7 @@
     <rhq-irc-plugin.version>${rhq.pom.version}</rhq-irc-plugin.version>
     <jopr-jboss-as-5-plugin.version>${rhq.pom.version}</jopr-jboss-as-5-plugin.version>
     <rhq-jboss-as-7-plugin.version>${rhq.pom.version}</rhq-jboss-as-7-plugin.version>
+    <rhq-wfly-10-plugin.version>${rhq.pom.version}</rhq-wfly-10-plugin.version>
     <jopr-jboss-as-plugin.version>${rhq.pom.version}</jopr-jboss-as-plugin.version>
     <jopr-jboss-cache-v3-plugin.version>${rhq.pom.version}</jopr-jboss-cache-v3-plugin.version>
     <jopr-jboss-cache-plugin.version>${rhq.pom.version}</jopr-jboss-cache-plugin.version>

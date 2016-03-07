@@ -15,7 +15,7 @@
   <packaging>jar</packaging>
 
   <name>RHQ Wildfly 10 Plugin</name>
-  <description>a plugin for monitoring and managing Wildfly 10 and JBoss platforms based on it (e.g. JBoss EAP 7)</description>
+  <description>A plugin for monitoring and managing Wildfly 10 and JBoss platforms based on it (e.g. JBoss EAP 7)</description>
 
 
   <properties>

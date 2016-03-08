@@ -7915,7 +7915,7 @@
         </plugin-configuration>
 
         <metric property="collection-count" description="The total number of collections that have occurred." measurementType="trendsup"/>
-        <metric property="collection-time" description="The approximate accumulated collection elapsed time in milliseconds." measurementType="trendsup"/>
+        <metric property="collection-time" description="The approximate accumulated collection elapsed time in milliseconds." units="milliseconds" measurementType="trendsup"/>
         <metric property="name" dataType="trait" description="The name representing this garbage collector"/>
         <metric property="valid" dataType="trait" description="Whether this this memory manager is valid in the Java virtual machine."/>
 

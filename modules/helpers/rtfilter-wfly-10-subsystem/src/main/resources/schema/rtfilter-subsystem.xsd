@@ -1,0 +1,149 @@
+<!--
+  ~ RHQ Management Platform
+  ~ Copyright 2016, Red Hat Middleware LLC, and individual contributors
+  ~ as indicated by the @author tags. See the copyright.txt file in the
+  ~ distribution for a full listing of individual contributors.
+  ~
+  ~ This program is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation version 2 of the License.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along
+  ~ with this program; if not, write to the Free Software Foundation, Inc.,
+  ~ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+  -->
+
+<xsd:schema
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="urn:org.rhq:rtfilter:1.0"
+    xmlns="urn:rhq:rtfilter:1.0"
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified"
+    version="1.0">
+
+  <!-- The subsystem root element -->
+  <xsd:element name="subsystem" type="subsystemType"/>
+
+  <xsd:complexType name="subsystemType">
+    <xsd:sequence>
+      <xsd:element name="init-param"
+                   type="param-valueType"
+                   minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            The init-param element contains a name/value pair as
+            an initialization param of the RHQ response-time servlet filter
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <!-- **************************************************** -->
+
+  <xsd:complexType name="param-valueType">
+    <xsd:annotation>
+      <xsd:documentation>
+        This type is a general type that can be used to declare
+        parameter/value lists.
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="description"
+                   type="descriptionType"
+                   minOccurs="0"
+                   maxOccurs="unbounded"/>
+      <xsd:element name="param-name"
+                   type="string">
+        <xsd:annotation>
+          <xsd:documentation>
+            The param-name element contains the name of a
+            parameter.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="param-value"
+                   type="xsdStringType">
+        <xsd:annotation>
+          <xsd:documentation>
+            The param-value element contains the value of a
+            parameter.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="id" type="xsd:ID"/>
+  </xsd:complexType>
+
+  <!-- **************************************************** -->
+
+  <xsd:complexType name="descriptionType">
+    <xsd:annotation>
+      <xsd:documentation>
+
+        The description type is used by a description element to
+        provide text describing the parent element. The elements
+        that use this type should include any information that the
+        Deployment Component's Deployment File file producer wants
+        to provide to the consumer of the Deployment Component's
+        Deployment File (i.e., to the Deployer). Typically, the
+        tools used by such a Deployment File consumer will display
+        the description when processing the parent element that
+        contains the description.
+
+        The lang attribute defines the language that the
+        description is provided in. The default value is "en" (English).
+
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleContent>
+      <xsd:extension base="xsdStringType">
+        <xsd:attribute ref="xml:lang"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+
+  <!-- **************************************************** -->
+
+  <xsd:complexType name="string">
+    <xsd:annotation>
+      <xsd:documentation>
+
+        This is a special string datatype that is defined by J2EE as
+        a base type for defining collapsed strings. When schemas
+        require trailing/leading space elimination as well as
+        collapsing the existing whitespace, this base type may be
+        used.
+
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:token">
+        <xsd:attribute name="id" type="xsd:ID"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+
+  <!-- **************************************************** -->
+
+  <xsd:complexType name="xsdStringType">
+    <xsd:annotation>
+      <xsd:documentation>
+        This type adds an "id" attribute to xsd:string.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:string">
+        <xsd:attribute name="id" type="xsd:ID"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+
+</xsd:schema>

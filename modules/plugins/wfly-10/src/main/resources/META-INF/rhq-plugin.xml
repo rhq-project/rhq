@@ -5069,31 +5069,37 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:map-property name="connector:collapsed" required="false" readOnly="true" displayName="Connector" description="Defines the connector to be used. This is mutually exclusive with discovery-group-name">
-              <c:simple-property name="name:0" readOnly="true" displayName="Name" description="Connector name. Mutually exclusive with discovery-group-name" required="false"/>
-            </c:map-property>
-            <c:list-property name="entries" required="true" readOnly="true" displayName="JNDI Names" min="1"  description="The jndi names the connection factory should be bound to.">
-              <c:simple-property name="entry" type="string" readOnly="true" description="A single JNDI entry"/>
+            <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether or not message grouping is automatically used. The default value is false."/>
+            <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on acknowledge. The default value is false."/>
+            <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to set block on durable send. The default value is true."/>
+            <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" defaultValue="false"
+                               description="True to set block on non durable send. The default value is false."/>
+            <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" defaultValue="false"
+                               description="True to cache large messages. The default value is false."/>
+            <c:simple-property name="call-failover-timeout:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1"
+                               description="The timeout to use when fail over is in process (in ms). The default value is &#45;1."/>
+            <c:simple-property name="call-timeout:expr" required="false" type="string" readOnly="false" defaultValue="30000" description="The call time out. The default value is 30000."/>
+            <c:simple-property name="client-failure-check-period:expr" required="false" type="string" readOnly="false" defaultValue="30000"
+                               description="The client failure check period. The default value is 30000."/>
+            <c:simple-property name="client-id" required="false" type="string" readOnly="false" description="The client id."/>
+            <c:simple-property name="compress-large-messages" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether large messages should be compressed. The default value is false."/>
+            <c:simple-property name="confirmation-window-size:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1"
+                               description="The confirmation window size. The default value is &#45;1."/>
+            <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy"
+                               description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
+            <c:simple-property name="connection-ttl:expr" required="false" type="string" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
+            <c:list-property name="connectors" required="false" description="Defines the connectors. These are stored in a map by connector name (with an undefined value). It is possible to pass a list of connector names when writing this attribute." >
+              <c:simple-property name="connectors" />
             </c:list-property>
-
-            <c:simple-property name="auto-group" required="false" type="boolean" readOnly="true" defaultValue="false" description="Whether or not message grouping is automatically used. The default value is false."/>
-            <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="true" defaultValue="false" description="True to set block on acknowledge. The default value is false."/>
-            <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="true" defaultValue="true" description="True to set block on durable send. The default value is true."/>
-            <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="true" defaultValue="false" description="True to set block on non durable send. The default value is false."/>
-            <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="true" defaultValue="false" description="True to cache large messages. The default value is false."/>
-            <c:simple-property name="call-timeout" required="false" type="long" readOnly="true" defaultValue="30000" description="The call time out. The default value is 30000."/>
-            <c:simple-property name="client-failure-check-period" required="false" type="integer" readOnly="true" defaultValue="30000" description="The client failure check period. The default value is 30000."/>
-            <c:simple-property name="client-id" required="false" type="string" readOnly="true" description="The client id."/>
-            <c:simple-property name="compress-large-messages" required="false" type="boolean" readOnly="true" defaultValue="false" description="Whether large messages should be compressed. The default value is false."/>
-            <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="true" defaultValue="&#45;1" description="The confirmation window size. The default value is &#45;1."/>
-            <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="true" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy" description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
-            <c:simple-property name="connection-ttl" required="false" type="long" readOnly="true" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
-            <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="true" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
-            <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="true" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
-            <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="true" description="The discovery group name."/>
-            <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="true" description="The discovery initial wait time out."/>
-            <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="true" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
-            <c:simple-property name="factory-type" required="false" type="string" readOnly="true" description="The type of connection factory.">
+            <c:simple-property name="consumer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
+            <c:simple-property name="consumer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576"
+                               description="The consumer window size. The default value is 1048576."/>
+            <c:simple-property name="discovery-group" required="false" type="string" readOnly="false" description="The discovery group name."/>
+            <c:simple-property name="dups-ok-batch-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
+            <c:list-property name="entries" required="true" description="The jndi names the connection factory should be bound to." >
+              <c:simple-property name="entries" />
+            </c:list-property>
+            <c:simple-property name="factory-type" required="false" type="string" readOnly="false" defaultValue="GENERIC" description="The type of connection factory. The default value is GENERIC.">
               <c:property-options>
                 <c:option value="GENERIC" name="GENERIC"/>
                 <c:option value="QUEUE" name="QUEUE"/>
@@ -5103,23 +5109,27 @@
                 <c:option value="XA_TOPIC" name="XA_TOPIC"/>
               </c:property-options>
             </c:simple-property>
-            <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="true" defaultValue="false" description="True to fail over on initial connection. The default value is false."/>
-            <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="true" description="True to fail over on server shutdown."/>
-            <c:simple-property name="group-id" required="false" type="string" readOnly="true" description="The group id."/>
-            <c:simple-property name="ha" required="true" type="boolean" readOnly="true" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
-            <c:simple-property name="initial-message-packet-size" required="true" type="integer" readOnly="true" description="The initial size of messages created through this factory."/>
-            <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="true" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
-            <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="true" defaultValue="102400" description="The min large message size. The default value is 102400."/>
-            <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="true" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
-            <c:simple-property name="producer-max-rate" required="false" type="integer" readOnly="true" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
-            <c:simple-property name="producer-window-size" required="false" type="integer" readOnly="true" defaultValue="65536" description="The producer window size. The default value is 65536."/>
-            <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="true" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
-            <c:simple-property name="retry-interval" required="false" type="long" readOnly="true" defaultValue="2000" description="The retry interval. The default value is 2000."/>
-            <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="true" defaultValue="1.0" description="The retry interval multiplier. The default value is 1.0."/>
-            <c:simple-property name="scheduled-thread-pool-max-size:expr" displayName="Scheduled Thread Pool Max Size" required="false" type="string" readOnly="true" defaultValue="5" description="The scheduled thread pool max size. The default value is 5."/>
-            <c:simple-property name="thread-pool-max-size:expr" displayName="Thread Pool Max Size" required="false" type="string" readOnly="true" defaultValue="30" description="The thread pool max size. The default value is 30."/>
-            <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="true" defaultValue="1048576" description="The transaction batch size. The default value is 1048576."/>
-            <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="true" defaultValue="true" description="True to use global pools. The default value is true."/>
+            <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false"
+                               description="True to fail over on initial connection. The default value is false."/>
+            <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
+            <c:simple-property name="ha" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
+            <c:simple-property name="max-retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
+            <c:simple-property name="min-large-message-size:expr" required="false" type="string" readOnly="false" defaultValue="102400"
+                               description="The min large message size. The default value is 102400."/>
+            <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
+            <c:simple-property name="producer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
+            <c:simple-property name="producer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
+            <c:simple-property name="protocol-manager-factory" required="false" type="string" readOnly="false" description="The protocol manager factory used by this connection factory."/>
+            <c:simple-property name="reconnect-attempts:expr" required="false" type="string" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
+            <c:simple-property name="retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
+            <c:simple-property name="retry-interval-multiplier:expr" required="false" type="string" readOnly="false" defaultValue="1.0"
+                               description="The retry interval multiplier. The default value is 1.0."/>
+            <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="5"
+                               description="The scheduled thread pool max size. The default value is 5."/>
+            <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
+            <c:simple-property name="transaction-batch-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576"
+                               description="The transaction batch size. The default value is 1048576."/>
+            <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to use global pools. The default value is true."/>
           </resource-configuration>
         </service>
 
@@ -5133,55 +5143,67 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:map-property name="connector:collapsed" required="false" readOnly="true" displayName="Connector" description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
-              <c:simple-property name="name:0" displayName="Name" description="Connector name." required="false"/>
-            </c:map-property>
-            <c:list-property name="entries" required="true" readOnly="true" displayName="JNDI Names" min="1"  description="The jndi names the connection factory should be bound to.">
-              <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
+            <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether or not message grouping is automatically used. The default value is false."/>
+            <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on acknowledge. The default value is false."/>
+            <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to set block on durable send. The default value is true."/>
+            <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" defaultValue="false"
+                               description="True to set block on non durable send. The default value is false."/>
+            <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" defaultValue="false"
+                               description="True to cache large messages. The default value is false."/>
+            <c:simple-property name="call-failover-timeout:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1"
+                               description="The timeout to use when fail over is in process (in ms). The default value is &#45;1."/>
+            <c:simple-property name="call-timeout:expr" required="false" type="string" readOnly="false" defaultValue="30000" description="The call time out. The default value is 30000."/>
+            <c:simple-property name="client-failure-check-period:expr" required="false" type="string" readOnly="false" defaultValue="30000"
+                               description="The client failure check period. The default value is 30000."/>
+            <c:simple-property name="client-id" required="false" type="string" readOnly="false" description="The client id."/>
+            <c:simple-property name="compress-large-messages" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether large messages should be compressed. The default value is false."/>
+            <c:simple-property name="confirmation-window-size:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1"
+                               description="The confirmation window size. The default value is &#45;1."/>
+            <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy"
+                               description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
+            <c:simple-property name="connection-ttl:expr" required="false" type="string" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
+            <c:list-property name="connectors" required="false" description="Defines the connectors. These are stored in a map by connector name (with an undefined value). It is possible to pass a list of connector names when writing this attribute." >
+              <c:simple-property name="connectors" />
             </c:list-property>
-
-            <c:simple-property name="auto-group" required="false" type="boolean" readOnly="true" defaultValue="false" description="The autogroup. The default value is false."/>
-            <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="true" defaultValue="false" description="True to set block on acknowledge. The default value is false."/>
-            <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="true" defaultValue="true" description="True to set block on durable send. The default value is true."/>
-            <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="true" defaultValue="false" description="True to set block on non durable send. The default value is false."/>
-            <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="true" defaultValue="false" description="True to cache large messages. The default value is false."/>
-            <c:simple-property name="call-timeout" required="false" type="long" readOnly="true" defaultValue="30000" description="The call time out. The default value is 30000."/>
-            <c:simple-property name="client-failure-check-period" required="false" type="integer" readOnly="true" defaultValue="30000" description="The client failure check period. The default value is 30000."/>
-            <c:simple-property name="client-id" required="false" type="string" readOnly="true" description="The client id."/>
-            <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="true" defaultValue="&#45;1" description="The confirmation window size. The default value is &#45;1."/>
-            <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="true" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy" description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
-            <c:simple-property name="connection-ttl" required="false" type="long" readOnly="true" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
-            <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="true" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
-            <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="true" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
-            <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="true" description="The discovery group name."/>
-            <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="true" description="The discovery initial wait time out."/>
-            <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="true" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
-            <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="true" defaultValue="false" description="True to fail over on initial connection. The default value is false."/>
-            <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="true" description="True to fail over on server shutdown."/>
-            <c:simple-property name="group-id" required="false" type="string" readOnly="true" description="The group id."/>
-            <c:simple-property name="ha" required="false" type="boolean" readOnly="true" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
-            <c:simple-property name="jndi-params" required="false" type="string" readOnly="true" description="The JNDI params to use for locating the destination for incoming connections."/>
-            <c:simple-property name="max-pool-size:expr" displayName="Max Pool Size" required="false" type="string" readOnly="true" defaultValue="&#45;1" description="The maximum size for the pool. The default value is &#45;1."/>
-            <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="true" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
-            <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="true" defaultValue="102400" description="The min large message size. The default value is 102400."/>
-            <c:simple-property name="min-pool-size:expr" displayName="Min Pool Size" required="false" type="string" readOnly="true" defaultValue="&#45;1" description="The minimum size for the pool. The default value is &#45;1."/>
-            <c:simple-property name="password" required="false" type="string" readOnly="true" description="The default password to use with this connection factory. This is only needed when pointing the connection factory to a remote host."/>
-            <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="true" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
-            <c:simple-property name="producer-max-rate" required="false" type="integer" readOnly="true" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
-            <c:simple-property name="producer-window-size" required="false" type="integer" readOnly="true" defaultValue="65536" description="The producer window size. The default value is 65536."/>
-            <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="true" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
-            <c:simple-property name="retry-interval" required="false" type="long" readOnly="true" defaultValue="2000" description="The retry interval. The default value is 2000."/>
-            <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="true" defaultValue="1.0" description="The retry interval multiplier. The default value is 1.0."/>
-            <c:simple-property name="scheduled-thread-pool-max-size:expr" displayName="Scheduled Thread Pool Max Size" required="false" type="string" readOnly="true" defaultValue="5" description="The scheduled thread pool max size. The default value is 5."/>
-            <c:simple-property name="setup-attempts" required="false" type="integer" readOnly="true" description="The number of times to set up an MDB endpoint"/>
-            <c:simple-property name="setup-interval" required="false" type="long" readOnly="true" description="The interval between attempts at setting up an MDB endpoint."/>
-            <c:simple-property name="thread-pool-max-size:expr" displayName="Thread Pool Max Size" required="false" type="string" readOnly="true" defaultValue="30" description="The thread pool max size. The default value is 30."/>
-            <c:simple-property name="transaction" required="false" type="string" readOnly="true" defaultValue="transaction" description="TODO. The default value is transaction."/>
-            <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="true" defaultValue="1048576" description="The transaction batch size. The default value is 1048576."/>
-            <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="true" defaultValue="true" description="True to use global pools. The default value is true."/>
-            <c:simple-property name="use-jndi" required="false" type="boolean" readOnly="true" description="Use JNDI to locate the destination for incoming connections"/>
-            <c:simple-property name="use-local-tx" required="false" type="boolean" readOnly="true" description="Use a local transaction for incoming sessions"/>
-            <c:simple-property name="user" required="false" type="string" readOnly="true" description="The default username to use with this connection factory. This is only needed when pointing the connection factory to a remote host."/>
+            <c:simple-property name="consumer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
+            <c:simple-property name="consumer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576"
+                               description="The consumer window size. The default value is 1048576."/>
+            <c:simple-property name="discovery-group" required="false" type="string" readOnly="false" description="The discovery group name."/>
+            <c:simple-property name="dups-ok-batch-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
+            <c:list-property name="entries" required="true" description="The jndi names the connection factory should be bound to." >
+              <c:simple-property name="entries" />
+            </c:list-property>
+            <c:simple-property name="factory-type" required="false" type="string" readOnly="false" defaultValue="GENERIC" description="The type of connection factory. The default value is GENERIC.">
+              <c:property-options>
+                <c:option value="GENERIC" name="GENERIC"/>
+                <c:option value="QUEUE" name="QUEUE"/>
+                <c:option value="TOPIC" name="TOPIC"/>
+                <c:option value="XA_GENERIC" name="XA_GENERIC"/>
+                <c:option value="XA_QUEUE" name="XA_QUEUE"/>
+                <c:option value="XA_TOPIC" name="XA_TOPIC"/>
+              </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false"
+                               description="True to fail over on initial connection. The default value is false."/>
+            <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
+            <c:simple-property name="ha" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
+            <c:simple-property name="max-retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
+            <c:simple-property name="min-large-message-size:expr" required="false" type="string" readOnly="false" defaultValue="102400"
+                               description="The min large message size. The default value is 102400."/>
+            <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
+            <c:simple-property name="producer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
+            <c:simple-property name="producer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
+            <c:simple-property name="protocol-manager-factory" required="false" type="string" readOnly="false" description="The protocol manager factory used by this connection factory."/>
+            <c:simple-property name="reconnect-attempts:expr" required="false" type="string" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
+            <c:simple-property name="retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
+            <c:simple-property name="retry-interval-multiplier:expr" required="false" type="string" readOnly="false" defaultValue="1.0"
+                               description="The retry interval multiplier. The default value is 1.0."/>
+            <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="5"
+                               description="The scheduled thread pool max size. The default value is 5."/>
+            <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
+            <c:simple-property name="transaction-batch-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576"
+                               description="The transaction batch size. The default value is 1048576."/>
+            <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to use global pools. The default value is true."/>
           </resource-configuration>
         </service>
 
@@ -7892,30 +7914,37 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector" description="Defines the connector to be used. This is mutually exclusive with discovery-group-name">
-              <c:simple-property name="name:0" displayName="Name" description="Connector name. Mutually exclusive with discovery-group-name" required="false"/>
-            </c:map-property>
-            <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1"  description="The jndi names the connection factory should be bound to.">
-              <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
-            </c:list-property>
             <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether or not message grouping is automatically used. The default value is false."/>
             <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on acknowledge. The default value is false."/>
             <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to set block on durable send. The default value is true."/>
-            <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on non durable send. The default value is false."/>
-            <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to cache large messages. The default value is false."/>
-            <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" defaultValue="30000" description="The call time out. The default value is 30000."/>
-            <c:simple-property name="client-failure-check-period" required="false" type="integer" readOnly="false" defaultValue="30000" description="The client failure check period. The default value is 30000."/>
+            <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" defaultValue="false"
+                               description="True to set block on non durable send. The default value is false."/>
+            <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" defaultValue="false"
+                               description="True to cache large messages. The default value is false."/>
+            <c:simple-property name="call-failover-timeout:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1"
+                               description="The timeout to use when fail over is in process (in ms). The default value is &#45;1."/>
+            <c:simple-property name="call-timeout:expr" required="false" type="string" readOnly="false" defaultValue="30000" description="The call time out. The default value is 30000."/>
+            <c:simple-property name="client-failure-check-period:expr" required="false" type="string" readOnly="false" defaultValue="30000"
+                               description="The client failure check period. The default value is 30000."/>
             <c:simple-property name="client-id" required="false" type="string" readOnly="false" description="The client id."/>
             <c:simple-property name="compress-large-messages" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether large messages should be compressed. The default value is false."/>
-            <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The confirmation window size. The default value is &#45;1."/>
-            <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy" description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
-            <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
-            <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
-            <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
-            <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
-            <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
-            <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
-            <c:simple-property name="factory-type" required="false" type="string" readOnly="true" description="The type of connection factory.">
+            <c:simple-property name="confirmation-window-size:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1"
+                               description="The confirmation window size. The default value is &#45;1."/>
+            <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy"
+                               description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
+            <c:simple-property name="connection-ttl:expr" required="false" type="string" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
+            <c:list-property name="connectors" required="false" description="Defines the connectors. These are stored in a map by connector name (with an undefined value). It is possible to pass a list of connector names when writing this attribute." >
+              <c:simple-property name="connectors" />
+            </c:list-property>
+            <c:simple-property name="consumer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
+            <c:simple-property name="consumer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576"
+                               description="The consumer window size. The default value is 1048576."/>
+            <c:simple-property name="discovery-group" required="false" type="string" readOnly="false" description="The discovery group name."/>
+            <c:simple-property name="dups-ok-batch-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
+            <c:list-property name="entries" required="true" description="The jndi names the connection factory should be bound to." >
+              <c:simple-property name="entries" />
+            </c:list-property>
+            <c:simple-property name="factory-type" required="false" type="string" readOnly="false" defaultValue="GENERIC" description="The type of connection factory. The default value is GENERIC.">
               <c:property-options>
                 <c:option value="GENERIC" name="GENERIC"/>
                 <c:option value="QUEUE" name="QUEUE"/>
@@ -7925,21 +7954,26 @@
                 <c:option value="XA_TOPIC" name="XA_TOPIC"/>
               </c:property-options>
             </c:simple-property>
-            <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to fail over on initial connection. The default value is false."/>
-            <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="True to fail over on server shutdown."/>
+            <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false"
+                               description="True to fail over on initial connection. The default value is false."/>
             <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
-            <c:simple-property name="ha" required="true" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
-            <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
-            <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The min large message size. The default value is 102400."/>
+            <c:simple-property name="ha" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
+            <c:simple-property name="max-retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
+            <c:simple-property name="min-large-message-size:expr" required="false" type="string" readOnly="false" defaultValue="102400"
+                               description="The min large message size. The default value is 102400."/>
             <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
-            <c:simple-property name="producer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
-            <c:simple-property name="producer-window-size" required="false" type="integer" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
-            <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
-            <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
-            <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="The retry interval multiplier. The default value is 1.0."/>
-            <c:simple-property name="scheduled-thread-pool-max-size:expr" displayName="Scheduled Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="5" description="The scheduled thread pool max size. The default value is 5."/>
-            <c:simple-property name="thread-pool-max-size:expr" displayName="Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
-            <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The transaction batch size. The default value is 1048576."/>
+            <c:simple-property name="producer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
+            <c:simple-property name="producer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
+            <c:simple-property name="protocol-manager-factory" required="false" type="string" readOnly="false" description="The protocol manager factory used by this connection factory."/>
+            <c:simple-property name="reconnect-attempts:expr" required="false" type="string" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
+            <c:simple-property name="retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
+            <c:simple-property name="retry-interval-multiplier:expr" required="false" type="string" readOnly="false" defaultValue="1.0"
+                               description="The retry interval multiplier. The default value is 1.0."/>
+            <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="5"
+                               description="The scheduled thread pool max size. The default value is 5."/>
+            <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
+            <c:simple-property name="transaction-batch-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576"
+                               description="The transaction batch size. The default value is 1048576."/>
             <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to use global pools. The default value is true."/>
           </resource-configuration>
         </service>
@@ -7954,55 +7988,67 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector" description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
-              <c:simple-property name="name:0" displayName="Name" description="Connector name." required="false"/>
-            </c:map-property>
-            <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1"  description="The jndi names the connection factory should be bound to.">
-              <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
-            </c:list-property>
-
-            <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" defaultValue="false" description="The autogroup. The default value is false."/>
+            <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether or not message grouping is automatically used. The default value is false."/>
             <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on acknowledge. The default value is false."/>
             <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to set block on durable send. The default value is true."/>
-            <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on non durable send. The default value is false."/>
-            <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to cache large messages. The default value is false."/>
-            <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" defaultValue="30000" description="The call time out. The default value is 30000."/>
-            <c:simple-property name="client-failure-check-period" required="false" type="integer" readOnly="false" defaultValue="30000" description="The client failure check period. The default value is 30000."/>
+            <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" defaultValue="false"
+                               description="True to set block on non durable send. The default value is false."/>
+            <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" defaultValue="false"
+                               description="True to cache large messages. The default value is false."/>
+            <c:simple-property name="call-failover-timeout:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1"
+                               description="The timeout to use when fail over is in process (in ms). The default value is &#45;1."/>
+            <c:simple-property name="call-timeout:expr" required="false" type="string" readOnly="false" defaultValue="30000" description="The call time out. The default value is 30000."/>
+            <c:simple-property name="client-failure-check-period:expr" required="false" type="string" readOnly="false" defaultValue="30000"
+                               description="The client failure check period. The default value is 30000."/>
             <c:simple-property name="client-id" required="false" type="string" readOnly="false" description="The client id."/>
-            <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The confirmation window size. The default value is &#45;1."/>
-            <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy" description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
-            <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
-            <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
-            <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
-            <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
-            <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
-            <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
-            <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to fail over on initial connection. The default value is false."/>
-            <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="True to fail over on server shutdown."/>
+            <c:simple-property name="compress-large-messages" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether large messages should be compressed. The default value is false."/>
+            <c:simple-property name="confirmation-window-size:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1"
+                               description="The confirmation window size. The default value is &#45;1."/>
+            <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy"
+                               description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
+            <c:simple-property name="connection-ttl:expr" required="false" type="string" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
+            <c:list-property name="connectors" required="false" description="Defines the connectors. These are stored in a map by connector name (with an undefined value). It is possible to pass a list of connector names when writing this attribute." >
+              <c:simple-property name="connectors" />
+            </c:list-property>
+            <c:simple-property name="consumer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
+            <c:simple-property name="consumer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576"
+                               description="The consumer window size. The default value is 1048576."/>
+            <c:simple-property name="discovery-group" required="false" type="string" readOnly="false" description="The discovery group name."/>
+            <c:simple-property name="dups-ok-batch-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
+            <c:list-property name="entries" required="true" description="The jndi names the connection factory should be bound to." >
+              <c:simple-property name="entries" />
+            </c:list-property>
+            <c:simple-property name="factory-type" required="false" type="string" readOnly="false" defaultValue="GENERIC" description="The type of connection factory. The default value is GENERIC.">
+              <c:property-options>
+                <c:option value="GENERIC" name="GENERIC"/>
+                <c:option value="QUEUE" name="QUEUE"/>
+                <c:option value="TOPIC" name="TOPIC"/>
+                <c:option value="XA_GENERIC" name="XA_GENERIC"/>
+                <c:option value="XA_QUEUE" name="XA_QUEUE"/>
+                <c:option value="XA_TOPIC" name="XA_TOPIC"/>
+              </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false"
+                               description="True to fail over on initial connection. The default value is false."/>
             <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
             <c:simple-property name="ha" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
-            <c:simple-property name="jndi-params" required="false" type="string" readOnly="false" description="The JNDI params to use for locating the destination for incoming connections."/>
-            <c:simple-property name="max-pool-size:expr" displayName="Max Pool Size" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The maximum size for the pool. The default value is &#45;1."/>
-            <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
-            <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The min large message size. The default value is 102400."/>
-            <c:simple-property name="min-pool-size:expr" displayName="Min Pool Size" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The minimum size for the pool. The default value is &#45;1."/>
-            <c:simple-property name="password" required="false" type="string" readOnly="false" description="The default password to use with this connection factory. This is only needed when pointing the connection factory to a remote host."/>
+            <c:simple-property name="max-retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
+            <c:simple-property name="min-large-message-size:expr" required="false" type="string" readOnly="false" defaultValue="102400"
+                               description="The min large message size. The default value is 102400."/>
             <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
-            <c:simple-property name="producer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
-            <c:simple-property name="producer-window-size" required="false" type="integer" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
-            <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
-            <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
-            <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="The retry interval multiplier. The default value is 1.0."/>
-            <c:simple-property name="scheduled-thread-pool-max-size:expr" displayName="Scheduled Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="5" description="The scheduled thread pool max size. The default value is 5."/>
-            <c:simple-property name="setup-attempts" required="false" type="integer" readOnly="false" description="The number of times to set up an MDB endpoint"/>
-            <c:simple-property name="setup-interval" required="false" type="long" readOnly="false" description="The interval between attempts at setting up an MDB endpoint."/>
-            <c:simple-property name="thread-pool-max-size:expr" displayName="Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
-            <c:simple-property name="transaction" required="false" type="string" readOnly="false" defaultValue="transaction" description="TODO. The default value is transaction."/>
-            <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The transaction batch size. The default value is 1048576."/>
+            <c:simple-property name="producer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
+            <c:simple-property name="producer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
+            <c:simple-property name="protocol-manager-factory" required="false" type="string" readOnly="false" description="The protocol manager factory used by this connection factory."/>
+            <c:simple-property name="reconnect-attempts:expr" required="false" type="string" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
+            <c:simple-property name="retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
+            <c:simple-property name="retry-interval-multiplier:expr" required="false" type="string" readOnly="false" defaultValue="1.0"
+                               description="The retry interval multiplier. The default value is 1.0."/>
+            <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="5"
+                               description="The scheduled thread pool max size. The default value is 5."/>
+            <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
+            <c:simple-property name="transaction-batch-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576"
+                               description="The transaction batch size. The default value is 1048576."/>
             <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to use global pools. The default value is true."/>
-            <c:simple-property name="use-jndi" required="false" type="boolean" readOnly="false" description="Use JNDI to locate the destination for incoming connections"/>
-            <c:simple-property name="use-local-tx" required="false" type="boolean" readOnly="false" description="Use a local transaction for incoming sessions"/>
-            <c:simple-property name="user" required="false" type="string" readOnly="false" description="The default username to use with this connection factory. This is only needed when pointing the connection factory to a remote host."/>
           </resource-configuration>
         </service>
 
@@ -14747,31 +14793,37 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector" description="Defines the connector to be used. This is mutually exclusive with discovery-group-name">
-            <c:simple-property name="name:0" displayName="Name" description="Connector name. Mutually exclusive with discovery-group-name" required="false"/>
-          </c:map-property>
-          <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1" description="The jndi names the connection factory should be bound to.">
-            <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
-          </c:list-property>
-
           <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether or not message grouping is automatically used. The default value is false."/>
           <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on acknowledge. The default value is false."/>
           <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to set block on durable send. The default value is true."/>
-          <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on non durable send. The default value is false."/>
-          <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to cache large messages. The default value is false."/>
-          <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" defaultValue="30000" description="The call time out. The default value is 30000."/>
-          <c:simple-property name="client-failure-check-period" required="false" type="integer" readOnly="false" defaultValue="30000" description="The client failure check period. The default value is 30000."/>
+          <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" defaultValue="false"
+                             description="True to set block on non durable send. The default value is false."/>
+          <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" defaultValue="false"
+                             description="True to cache large messages. The default value is false."/>
+          <c:simple-property name="call-failover-timeout:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1"
+                             description="The timeout to use when fail over is in process (in ms). The default value is &#45;1."/>
+          <c:simple-property name="call-timeout:expr" required="false" type="string" readOnly="false" defaultValue="30000" description="The call time out. The default value is 30000."/>
+          <c:simple-property name="client-failure-check-period:expr" required="false" type="string" readOnly="false" defaultValue="30000"
+                             description="The client failure check period. The default value is 30000."/>
           <c:simple-property name="client-id" required="false" type="string" readOnly="false" description="The client id."/>
           <c:simple-property name="compress-large-messages" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether large messages should be compressed. The default value is false."/>
-          <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The confirmation window size. The default value is &#45;1."/>
-          <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy" description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
-          <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
-          <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
-          <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
-          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
-          <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
-          <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
-          <c:simple-property name="factory-type" required="false" type="string" readOnly="true" description="The type of connection factory.">
+          <c:simple-property name="confirmation-window-size:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1"
+                             description="The confirmation window size. The default value is &#45;1."/>
+          <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy"
+                             description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
+          <c:simple-property name="connection-ttl:expr" required="false" type="string" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
+          <c:list-property name="connectors" required="false" description="Defines the connectors. These are stored in a map by connector name (with an undefined value). It is possible to pass a list of connector names when writing this attribute." >
+            <c:simple-property name="connectors" />
+          </c:list-property>
+          <c:simple-property name="consumer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
+          <c:simple-property name="consumer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576"
+                             description="The consumer window size. The default value is 1048576."/>
+          <c:simple-property name="discovery-group" required="false" type="string" readOnly="false" description="The discovery group name."/>
+          <c:simple-property name="dups-ok-batch-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
+          <c:list-property name="entries" required="true" description="The jndi names the connection factory should be bound to." >
+            <c:simple-property name="entries" />
+          </c:list-property>
+          <c:simple-property name="factory-type" required="false" type="string" readOnly="false" defaultValue="GENERIC" description="The type of connection factory. The default value is GENERIC.">
             <c:property-options>
               <c:option value="GENERIC" name="GENERIC"/>
               <c:option value="QUEUE" name="QUEUE"/>
@@ -14781,22 +14833,26 @@
               <c:option value="XA_TOPIC" name="XA_TOPIC"/>
             </c:property-options>
           </c:simple-property>
-          <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to fail over on initial connection. The default value is false."/>
-          <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="True to fail over on server shutdown."/>
+          <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false"
+                             description="True to fail over on initial connection. The default value is false."/>
           <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
-          <c:simple-property name="ha" required="true" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
-          <c:simple-property name="initial-message-packet-size" required="true" type="integer" readOnly="true" description="The initial size of messages created through this factory."/>
-          <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
-          <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The min large message size. The default value is 102400."/>
+          <c:simple-property name="ha" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
+          <c:simple-property name="max-retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
+          <c:simple-property name="min-large-message-size:expr" required="false" type="string" readOnly="false" defaultValue="102400"
+                             description="The min large message size. The default value is 102400."/>
           <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
-          <c:simple-property name="producer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
-          <c:simple-property name="producer-window-size" required="false" type="integer" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
-          <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
-          <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
-          <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="The retry interval multiplier. The default value is 1.0."/>
-          <c:simple-property name="scheduled-thread-pool-max-size:expr" displayName="Scheduled Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="5" description="The scheduled thread pool max size. The default value is 5."/>
-          <c:simple-property name="thread-pool-max-size:expr" displayName="Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
-          <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The transaction batch size. The default value is 1048576."/>
+          <c:simple-property name="producer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
+          <c:simple-property name="producer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
+          <c:simple-property name="protocol-manager-factory" required="false" type="string" readOnly="false" description="The protocol manager factory used by this connection factory."/>
+          <c:simple-property name="reconnect-attempts:expr" required="false" type="string" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
+          <c:simple-property name="retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
+          <c:simple-property name="retry-interval-multiplier:expr" required="false" type="string" readOnly="false" defaultValue="1.0"
+                             description="The retry interval multiplier. The default value is 1.0."/>
+          <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="5"
+                             description="The scheduled thread pool max size. The default value is 5."/>
+          <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
+          <c:simple-property name="transaction-batch-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576"
+                             description="The transaction batch size. The default value is 1048576."/>
           <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to use global pools. The default value is true."/>
         </resource-configuration>
       </service>
@@ -14811,55 +14867,67 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector" description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
-            <c:simple-property name="name:0" displayName="Name" description="Connector name." required="false"/>
-          </c:map-property>
-          <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1" description="The jndi names the connection factory should be bound to.">
-            <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
-          </c:list-property>
-
-          <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" defaultValue="false" description="The autogroup. The default value is false."/>
+          <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether or not message grouping is automatically used. The default value is false."/>
           <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on acknowledge. The default value is false."/>
           <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to set block on durable send. The default value is true."/>
-          <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on non durable send. The default value is false."/>
-          <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to cache large messages. The default value is false."/>
-          <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" defaultValue="30000" description="The call time out. The default value is 30000."/>
-          <c:simple-property name="client-failure-check-period" required="false" type="integer" readOnly="false" defaultValue="30000" description="The client failure check period. The default value is 30000."/>
+          <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" defaultValue="false"
+                             description="True to set block on non durable send. The default value is false."/>
+          <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" defaultValue="false"
+                             description="True to cache large messages. The default value is false."/>
+          <c:simple-property name="call-failover-timeout:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1"
+                             description="The timeout to use when fail over is in process (in ms). The default value is &#45;1."/>
+          <c:simple-property name="call-timeout:expr" required="false" type="string" readOnly="false" defaultValue="30000" description="The call time out. The default value is 30000."/>
+          <c:simple-property name="client-failure-check-period:expr" required="false" type="string" readOnly="false" defaultValue="30000"
+                             description="The client failure check period. The default value is 30000."/>
           <c:simple-property name="client-id" required="false" type="string" readOnly="false" description="The client id."/>
-          <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The confirmation window size. The default value is &#45;1."/>
-          <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy" description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
-          <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
-          <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
-          <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
-          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
-          <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
-          <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
-          <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to fail over on initial connection. The default value is false."/>
-          <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="True to fail over on server shutdown."/>
+          <c:simple-property name="compress-large-messages" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether large messages should be compressed. The default value is false."/>
+          <c:simple-property name="confirmation-window-size:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1"
+                             description="The confirmation window size. The default value is &#45;1."/>
+          <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy"
+                             description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
+          <c:simple-property name="connection-ttl:expr" required="false" type="string" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
+          <c:list-property name="connectors" required="false" description="Defines the connectors. These are stored in a map by connector name (with an undefined value). It is possible to pass a list of connector names when writing this attribute." >
+            <c:simple-property name="connectors" />
+          </c:list-property>
+          <c:simple-property name="consumer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
+          <c:simple-property name="consumer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576"
+                             description="The consumer window size. The default value is 1048576."/>
+          <c:simple-property name="discovery-group" required="false" type="string" readOnly="false" description="The discovery group name."/>
+          <c:simple-property name="dups-ok-batch-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
+          <c:list-property name="entries" required="true" description="The jndi names the connection factory should be bound to." >
+            <c:simple-property name="entries" />
+          </c:list-property>
+          <c:simple-property name="factory-type" required="false" type="string" readOnly="false" defaultValue="GENERIC" description="The type of connection factory. The default value is GENERIC.">
+            <c:property-options>
+              <c:option value="GENERIC" name="GENERIC"/>
+              <c:option value="QUEUE" name="QUEUE"/>
+              <c:option value="TOPIC" name="TOPIC"/>
+              <c:option value="XA_GENERIC" name="XA_GENERIC"/>
+              <c:option value="XA_QUEUE" name="XA_QUEUE"/>
+              <c:option value="XA_TOPIC" name="XA_TOPIC"/>
+            </c:property-options>
+          </c:simple-property>
+          <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false"
+                             description="True to fail over on initial connection. The default value is false."/>
           <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
           <c:simple-property name="ha" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
-          <c:simple-property name="jndi-params" required="false" type="string" readOnly="false" description="The JNDI params to use for locating the destination for incoming connections."/>
-          <c:simple-property name="max-pool-size:expr" displayName="Max Pool Size" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The maximum size for the pool. The default value is &#45;1."/>
-          <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
-          <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The min large message size. The default value is 102400."/>
-          <c:simple-property name="min-pool-size:expr" displayName="Min Pool Size" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The minimum size for the pool. The default value is &#45;1."/>
-          <c:simple-property name="password" required="false" type="string" readOnly="false" description="The default password to use with this connection factory. This is only needed when pointing the connection factory to a remote host."/>
+          <c:simple-property name="max-retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
+          <c:simple-property name="min-large-message-size:expr" required="false" type="string" readOnly="false" defaultValue="102400"
+                             description="The min large message size. The default value is 102400."/>
           <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
-          <c:simple-property name="producer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
-          <c:simple-property name="producer-window-size" required="false" type="integer" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
-          <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
-          <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
-          <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="The retry interval multiplier. The default value is 1.0."/>
-          <c:simple-property name="scheduled-thread-pool-max-size:expr" displayName="Scheduled Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="5" description="The scheduled thread pool max size. The default value is 5."/>
-          <c:simple-property name="setup-attempts" required="false" type="integer" readOnly="false" description="The number of times to set up an MDB endpoint"/>
-          <c:simple-property name="setup-interval" required="false" type="long" readOnly="false" description="The interval between attempts at setting up an MDB endpoint."/>
-          <c:simple-property name="thread-pool-max-size:expr" displayName="Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
-          <c:simple-property name="transaction" required="false" type="string" readOnly="false" defaultValue="transaction" description="TODO. The default value is transaction."/>
-          <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The transaction batch size. The default value is 1048576."/>
+          <c:simple-property name="producer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
+          <c:simple-property name="producer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
+          <c:simple-property name="protocol-manager-factory" required="false" type="string" readOnly="false" description="The protocol manager factory used by this connection factory."/>
+          <c:simple-property name="reconnect-attempts:expr" required="false" type="string" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
+          <c:simple-property name="retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
+          <c:simple-property name="retry-interval-multiplier:expr" required="false" type="string" readOnly="false" defaultValue="1.0"
+                             description="The retry interval multiplier. The default value is 1.0."/>
+          <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="5"
+                             description="The scheduled thread pool max size. The default value is 5."/>
+          <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
+          <c:simple-property name="transaction-batch-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576"
+                             description="The transaction batch size. The default value is 1048576."/>
           <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to use global pools. The default value is true."/>
-          <c:simple-property name="use-jndi" required="false" type="boolean" readOnly="false" description="Use JNDI to locate the destination for incoming connections"/>
-          <c:simple-property name="use-local-tx" required="false" type="boolean" readOnly="false" description="Use a local transaction for incoming sessions"/>
-          <c:simple-property name="user" required="false" type="string" readOnly="false" description="The default username to use with this connection factory. This is only needed when pointing the connection factory to a remote host."/>
         </resource-configuration>
       </service>
 

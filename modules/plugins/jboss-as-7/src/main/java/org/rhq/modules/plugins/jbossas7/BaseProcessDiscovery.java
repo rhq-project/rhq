@@ -226,9 +226,10 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         try {
             productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
         } catch (Exception e) {
-            log.warn("Managed product type for [" + homeDir + "] could not be determined or is unsupported: " + e.getMessage(), e); //$NON-NLS-1$ //$NON-NLS-2$
+            LOG.warn(
+                "Managed product type for [" + homeDir + "] could not be determined or is unsupported: " + e.getMessage(), e); //$NON-NLS-1$ //$NON-NLS-2$
         }
-        JBossProductType productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
+        productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
         if(productType == JBossProductType.EAP7) {
             // Ignore here, use EAP7 / Wildfly 10 plugin to do the detection
             return null;
@@ -884,7 +885,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 			// if the product type can not be determined, log a warning
 			// to indicate that the product may not be supported and
 			// fall back to a product type of AS.
-			log.warn("Unknown or unsupported product type for product [" + productName + "]: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+                        LOG.warn("Unknown or unsupported product type for product [" + productName + "]: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
                         productType = JBossProductType.AS;
 		    }
                 else {

@@ -10342,7 +10342,7 @@
     </runs-inside>
 
     <plugin-configuration>
-      <c:simple-property name="path" default="subsystem=web" readOnly="true"/>
+      <c:simple-property name="path" default="subsystem=undertow" readOnly="true"/>
 
       <c:group name="responseTime">
         <c:simple-property name="responseTimeLogFile" required="false"
@@ -10356,13 +10356,13 @@
 
     <metric property="virtual-host" dataType="trait" defaultOn="true" displayName="Virtual Host" description="the virtual host this webapp is deployed to"/>
     <metric property="context-root" dataType="trait" defaultOn="true" displayName="Context Root" description="the context root of this webapp"/>
+    <metric property="server" dataType="trait" defaultOn="true" displayName="Server"
+            description="The name of server this application belongs to"/>
     <metric property="responseTime"
             dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
             description="the minimum, maximum, and average response times for requests serviced by this webapp"/>
     <metric property="active-sessions" displayName="Currently Active Sessions"
             description="The number of sessions that are currently active"/>
-    <metric property="duplicated-session-ids" displayName="Duplicated Session Ids"
-            description="The number of duplicated session identifiers"/>
     <metric property="expired-sessions" measurementType="trendsup" displayName="Expired Sessions"
             description="The number of expired sessions"/>
     <metric property="max-active-sessions" displayName="Maximum Active Sessions"

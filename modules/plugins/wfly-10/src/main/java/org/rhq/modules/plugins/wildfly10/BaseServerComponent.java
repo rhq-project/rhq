@@ -272,7 +272,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         if (runtimeMode != null) {
             String mode = getMode().name();
             if (!runtimeMode.equals(mode)) {
-                throw new InvalidPluginConfigurationException("The original mode discovered for this AS7 server was "
+                throw new InvalidPluginConfigurationException("The original mode discovered for this server was "
                     + getMode() + ", but the server is now reporting its mode is [" + runtimeMode + "].");
             }
         }
@@ -287,9 +287,11 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 + getResourceDescription(), e);
         }
         if (!runtimeProductName.equals(expectedRuntimeProductName)) {
-            throw new InvalidPluginConfigurationException("The original product type discovered for this server was "
-                + expectedRuntimeProductName + ", but the server is now reporting its product type is ["
-                + runtimeProductName + "]");
+            if(serverPluginConfig.getProductType() != JBossProductType.WILDFLY10) {
+                throw new InvalidPluginConfigurationException("The original product type discovered for this server was "
+                        + expectedRuntimeProductName + ", but the server is now reporting its product type is ["
+                        + runtimeProductName + "]");
+            }
         }
     }
 

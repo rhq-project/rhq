@@ -31,7 +31,7 @@ import java.util.Properties;
 public enum JBossProductType {
 
     EAP7("EAP", "EAP 7", "JBoss Enterprise Application Platform 7", "JBoss EAP"),
-    WILDFLY10("WildFly", "WildFly 10", "WildFly Application Server 10", "WildFly");
+    WILDFLY10("WildFly", "WildFly 10", "WildFly Application Server 10", "WildFly Full");
 
     public final String SHORT_NAME;
     public final String NAME;
@@ -67,7 +67,6 @@ public enum JBossProductType {
         JBossProductType productType = null;
         File productConfFile = new File(homeDir, "bin/product.conf");
         if (productConfFile.exists()) {
-            // It's some product (i.e. not community AS).
             Properties productConfProps = new Properties();
             FileInputStream inputStream = new FileInputStream(productConfFile);
             try {
@@ -81,9 +80,13 @@ public enum JBossProductType {
             if (slot.isEmpty()) {
                 throw new Exception("'slot' property not found in " + productConfFile + ".");
             }
-//            @TODO Add proper support for Wildfly 10 here as well
-            if (slot.equals("eap") && apiVersion.startsWith("4")) {
-                    productType = JBossProductType.EAP7;
+            if(apiVersion.startsWith("4")) {
+                if(slot.equals("eap")) {
+                    productType = EAP7;
+                } else {
+                    // Fallback
+                    productType = WILDFLY10;
+                }
             }
         }
 

@@ -18,6 +18,7 @@
  */
 package org.rhq.modules.plugins.wildfly10;
 
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 
@@ -26,8 +27,19 @@ public class Ejb3Component extends BaseComponent<BaseComponent<?>> {
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+
+        PropertySimple derive = report.getConfiguration().getSimple("derive-size");
+        PropertySimple maxPoolSize = report.getConfiguration().getSimple("max-pool-size:expr");
+        if(derive != null) {
+            if("none".equals(derive.getStringValue()) && (maxPoolSize != null && maxPoolSize.getStringValue() != null)) {
+                configDef.getPropertyDefinitions().remove(derive.getName());
+            } else if(derive.getStringValue() != null && maxPoolSize != null) { // Verify this
+                configDef.getPropertyDefinitions().remove(maxPoolSize.getName());
+            }
+        }
+
         ConfigurationReadWriteDelegate delegate = new ConfigurationReadWriteDelegate(configDef, getASConnection(),
-            address);
+                address);
         delegate.updateResourceConfiguration(report);
     }
 

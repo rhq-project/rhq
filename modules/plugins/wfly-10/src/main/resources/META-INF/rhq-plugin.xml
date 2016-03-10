@@ -3410,7 +3410,7 @@
 
       <service name="Strict Max Bean Instance Pool (Managed Server)"
                discovery="SubsystemDiscovery"
-               class="BaseComponent"
+               class="Ejb3Component"
                description="A bean instance pool with a strict upper limit">
 
         <plugin-configuration>
@@ -3418,9 +3418,26 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="max-pool-size:expr" displayName="Max Pool Size" required="false" type="string" readOnly="true" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
-          <c:simple-property name="timeout:expr" displayName="Timeout" required="false" type="string" readOnly="true" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
-          <c:simple-property name="timeout-unit" required="false" type="string" readOnly="true" defaultValue="MINUTES" description="The instance acquisition timeout unit. The default value is MINUTES."/>
+          <c:simple-property name="derive-size" required="false" type="string" readOnly="false" defaultValue="none" description="Specifies if and what the max pool size should be derived from. A value of &apos;none&apos;, the default, indicates that the explicit value of max&#45;pool&#45;size should be used. A value of &apos;from&#45;worker&#45;pools&apos; indicates that the max pool size should be derived from the size of the total threads for all worker pools configured on the system. A value of &apos;from&#45;cpu&#45;count&apos; indicates that the max pool size should be derived from the total number of processors available on the system. Note that the computation isn&apos;t a 1&#58;1 mapping, the values may or may not be augmented by other factors. The default value is none.">
+            <c:property-options>
+              <c:option value="from-cpu-count" name="from-cpu-count"/>
+              <c:option value="from-worker-pools" name="from-worker-pools"/>
+              <c:option value="none" name="none"/>
+            </c:property-options>
+          </c:simple-property>
+          <c:simple-property name="max-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
+          <c:simple-property name="timeout:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
+          <c:simple-property name="timeout-unit" required="false" type="string" readOnly="false" defaultValue="MINUTES" description="The instance acquisition timeout unit. The default value is MINUTES.">
+            <c:property-options>
+              <c:option value="DAYS" name="DAYS"/>
+              <c:option value="HOURS" name="HOURS"/>
+              <c:option value="MICROSECONDS" name="MICROSECONDS"/>
+              <c:option value="MILLISECONDS" name="MILLISECONDS"/>
+              <c:option value="MINUTES" name="MINUTES"/>
+              <c:option value="NANOSECONDS" name="NANOSECONDS"/>
+              <c:option value="SECONDS" name="SECONDS"/>
+            </c:property-options>
+          </c:simple-property>
         </resource-configuration>
       </service>
 
@@ -6988,7 +7005,7 @@
 
       <service name="Strict Max Bean Instance Pool (Profile)"
                discovery="SubsystemDiscovery"
-               class="BaseComponent"
+               class="Ejb3Component"
                description="A bean instance pool with a strict upper limit"
                createDeletePolicy="both">
 
@@ -6997,9 +7014,26 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="max-pool-size:expr" displayName="Max Pool Size" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
-          <c:simple-property name="timeout:expr" displayName="Timeout" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
-          <c:simple-property name="timeout-unit" required="false" type="string" readOnly="false" defaultValue="MINUTES" description="The instance acquisition timeout unit. The default value is MINUTES."/>
+          <c:simple-property name="derive-size" required="false" type="string" readOnly="false" defaultValue="none" description="Specifies if and what the max pool size should be derived from. A value of &apos;none&apos;, the default, indicates that the explicit value of max&#45;pool&#45;size should be used. A value of &apos;from&#45;worker&#45;pools&apos; indicates that the max pool size should be derived from the size of the total threads for all worker pools configured on the system. A value of &apos;from&#45;cpu&#45;count&apos; indicates that the max pool size should be derived from the total number of processors available on the system. Note that the computation isn&apos;t a 1&#58;1 mapping, the values may or may not be augmented by other factors. The default value is none.">
+            <c:property-options>
+              <c:option value="from-cpu-count" name="from-cpu-count"/>
+              <c:option value="from-worker-pools" name="from-worker-pools"/>
+              <c:option value="none" name="none"/>
+            </c:property-options>
+          </c:simple-property>
+          <c:simple-property name="max-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
+          <c:simple-property name="timeout:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
+          <c:simple-property name="timeout-unit" required="false" type="string" readOnly="false" defaultValue="MINUTES" description="The instance acquisition timeout unit. The default value is MINUTES.">
+            <c:property-options>
+              <c:option value="DAYS" name="DAYS"/>
+              <c:option value="HOURS" name="HOURS"/>
+              <c:option value="MICROSECONDS" name="MICROSECONDS"/>
+              <c:option value="MILLISECONDS" name="MILLISECONDS"/>
+              <c:option value="MINUTES" name="MINUTES"/>
+              <c:option value="NANOSECONDS" name="NANOSECONDS"/>
+              <c:option value="SECONDS" name="SECONDS"/>
+            </c:property-options>
+          </c:simple-property>
         </resource-configuration>
       </service>
 
@@ -12882,7 +12916,7 @@
 
     <service name="Strict Max Bean Instance Pool"
              discovery="SubsystemDiscovery"
-             class="BaseComponent"
+             class="Ejb3Component"
              description="A bean instance pool with a strict upper limit"
              createDeletePolicy="both">
 
@@ -12891,9 +12925,26 @@
       </plugin-configuration>
 
       <resource-configuration>
-        <c:simple-property name="max-pool-size:expr" displayName="Max Pool Size" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
-        <c:simple-property name="timeout:expr" displayName="Timeout" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
-        <c:simple-property name="timeout-unit" required="false" type="string" readOnly="false" defaultValue="MINUTES" description="The instance acquisition timeout unit. The default value is MINUTES."/>
+        <c:simple-property name="derive-size" required="false" type="string" readOnly="false" defaultValue="none" description="Specifies if and what the max pool size should be derived from. A value of &apos;none&apos;, the default, indicates that the explicit value of max&#45;pool&#45;size should be used. A value of &apos;from&#45;worker&#45;pools&apos; indicates that the max pool size should be derived from the size of the total threads for all worker pools configured on the system. A value of &apos;from&#45;cpu&#45;count&apos; indicates that the max pool size should be derived from the total number of processors available on the system. Note that the computation isn&apos;t a 1&#58;1 mapping, the values may or may not be augmented by other factors. The default value is none.">
+          <c:property-options>
+            <c:option value="from-cpu-count" name="from-cpu-count"/>
+            <c:option value="from-worker-pools" name="from-worker-pools"/>
+            <c:option value="none" name="none"/>
+          </c:property-options>
+        </c:simple-property>
+        <c:simple-property name="max-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
+        <c:simple-property name="timeout:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
+        <c:simple-property name="timeout-unit" required="false" type="string" readOnly="false" defaultValue="MINUTES" description="The instance acquisition timeout unit. The default value is MINUTES.">
+          <c:property-options>
+            <c:option value="DAYS" name="DAYS"/>
+            <c:option value="HOURS" name="HOURS"/>
+            <c:option value="MICROSECONDS" name="MICROSECONDS"/>
+            <c:option value="MILLISECONDS" name="MILLISECONDS"/>
+            <c:option value="MINUTES" name="MINUTES"/>
+            <c:option value="NANOSECONDS" name="NANOSECONDS"/>
+            <c:option value="SECONDS" name="SECONDS"/>
+          </c:property-options>
+        </c:simple-property>
       </resource-configuration>
     </service>
 

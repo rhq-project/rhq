@@ -46,6 +46,24 @@ public class CreateResourceDelegate extends ConfigurationWriteDelegate implement
     @Override
     public CreateResourceReport createResource(CreateResourceReport report) {
         report.setStatus(CreateResourceStatus.INVALID_CONFIGURATION);
+
+        Address createAddress = getCreateAddress(report);
+        Operation op = getOperation(report, createAddress);
+
+        Result result = this.connection.execute(op);
+        if (result.isSuccess()) {
+            report.setStatus(CreateResourceStatus.SUCCESS);
+            report.setResourceKey(createAddress.getPath());
+            report.setResourceName(report.getUserSpecifiedResourceName());
+        } else {
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setErrorMessage(result.getFailureDescription());
+        }
+
+        return report;
+    }
+
+    Address getCreateAddress(CreateResourceReport report) {
         Address createAddress = new Address(this.address);
 
         String path = report.getPluginConfiguration().getSimpleValue("path", "");
@@ -62,7 +80,10 @@ public class CreateResourceDelegate extends ConfigurationWriteDelegate implement
         }
 
         createAddress.add(path, resourceName);
+        return createAddress;
+    }
 
+    Operation getOperation(CreateResourceReport report, Address createAddress) {
         Operation op = new Operation("add", createAddress);
         for (Property prop : report.getResourceConfiguration().getProperties()) {
             SimpleEntry<String, ?> entry = null;
@@ -106,17 +127,6 @@ public class CreateResourceDelegate extends ConfigurationWriteDelegate implement
                 op.addAdditionalProperty(entry.getKey(), entry.getValue());
             }
         }
-
-        Result result = this.connection.execute(op);
-        if (result.isSuccess()) {
-            report.setStatus(CreateResourceStatus.SUCCESS);
-            report.setResourceKey(createAddress.getPath());
-            report.setResourceName(report.getUserSpecifiedResourceName());
-        } else {
-            report.setStatus(CreateResourceStatus.FAILURE);
-            report.setErrorMessage(result.getFailureDescription());
-        }
-
-        return report;
+        return op;
     }
 }

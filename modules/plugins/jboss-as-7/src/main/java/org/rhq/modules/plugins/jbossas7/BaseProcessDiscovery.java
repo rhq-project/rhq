@@ -229,7 +229,6 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             LOG.warn(
                 "Managed product type for [" + homeDir + "] could not be determined or is unsupported: " + e.getMessage(), e); //$NON-NLS-1$ //$NON-NLS-2$
         }
-        productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
         if(productType == JBossProductType.EAP7) {
             // Ignore here, use EAP7 / Wildfly 10 plugin to do the detection
             return null;

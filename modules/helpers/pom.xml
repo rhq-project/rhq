@@ -20,6 +20,7 @@
 
     <module>rtfilter</module>
     <module>rtfilter-subsystem</module>
+    <module>rtfilter-wfly-10-subsystem</module>
     <module>bundleGen</module>
     <module>jeeGen</module>
     <module>perftest-support</module>

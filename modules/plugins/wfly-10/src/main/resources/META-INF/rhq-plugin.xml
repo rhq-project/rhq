@@ -2435,23 +2435,20 @@
           <c:simple-property name="path" readOnly="true" default="cache-container"/>
         </plugin-configuration>
 
+        <metric property="cache-manager-status" dataType="trait" displayName="Cache Manager Status" defaultOn="false" description="The status of the cache manager component. May return null if the cache manager is not started."/>
+        <metric property="cluster-name" dataType="trait" displayName="Cluster Name" defaultOn="false" description="The name of the cluster this node belongs to. May return null if the cache manager is not started."/>
+        <metric property="coordinator-address" dataType="trait" displayName="Coordinator Address" defaultOn="false" description="The logical address of the cluster's coordinator. May return null if the cache manager is not started."/>
+        <metric property="is-coordinator" dataType="trait" displayName="Is Coordinator" defaultOn="false" description="True if this node is the cluster's coordinator. May return null if the cache manager is not started."/>
+        <metric property="local-address" dataType="trait" displayName="Local Address" defaultOn="false" description="The local address of the node. May return null if the cache manager is not started."/>
+
         <resource-configuration>
-          <c:simple-property name="default-cache" required="false" type="string" readOnly="true" description="The default infinispan cache"/>
-          <!-- TODO select from child cache services -->
-          <c:list-property name="aliases" required="false" description="The list of aliases for this cache container" readOnly="true">
+          <c:list-property name="aliases" required="false" readOnly="true" description="The list of aliases for this cache container">
             <c:simple-property name="alias" readOnly="true"/>
           </c:list-property>
+          <c:simple-property name="default-cache" required="false" type="string" readOnly="true" description="The default infinispan cache"/>
           <c:simple-property name="jndi-name" required="false" type="string" readOnly="true" description="The jndi name to which to bind this cache container"/>
-          <c:simple-property name="start" required="false" type="string" readOnly="true" defaultValue="LAZY" description="The cache container start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
-            <c:property-options>
-              <c:option value="LAZY"/>
-              <c:option value="EAGER"/>
-            </c:property-options>
-          </c:simple-property>
-          <c:simple-property name="listener-executor" required="false" type="string" readOnly="true" description="The executor used for the replication queue"/>
-          <c:simple-property name="eviction-executor" required="false" type="string" readOnly="true" description="The scheduled executor used for eviction"/>
           <c:simple-property name="module" required="false" type="string" readOnly="true" defaultValue="org.jboss.as.clustering.infinispan" description="The module whose class loader should be used when building this cache container&apos;s configuration. The default value is org.jboss.as.clustering.infinispan."/>
-          <c:simple-property name="replication-queue-executor" required="false" type="string" readOnly="true" description="The executor used for asynchronous cache operations"/>
+          <c:simple-property name="statistics-enabled" required="false" type="boolean" readOnly="true" description="If enabled, statistics will be collected for this cache container."/>
         </resource-configuration>
 
         <service name="Cache (Managed Server)"
@@ -2462,46 +2459,36 @@
             <c:simple-property name="path" readOnly="true" default="invalidation-cache|replicated-cache"/>
           </plugin-configuration>
 
+          <metric property="activations" dataType="measurement" measurementType="trendsup" displayName="Activations" defaultOn="false" description="The number of cache node activations (bringing a node into memory from a cache store). May return null if the cache is not started."/>
+          <metric property="average-read-time" dataType="measurement" displayName="Average Read Time" units="milliseconds" defaultOn="false" description="Average time (in ms) for cache reads. Includes hits and misses. May return null if the cache is not started."/>
+          <metric property="average-write-time" dataType="measurement" displayName="Average Write Time" units="milliseconds" defaultOn="false" description="Average time (in ms) for cache writes. May return null if the cache is not started."/>
+          <metric property="cache-status" dataType="trait" displayName="Cache Status" defaultOn="false" description="The status of the cache component. May return null if the cache is not started."/>
+          <metric property="elapsed-time" dataType="measurement" displayName="Elapsed Time" units="seconds" defaultOn="false" description="Time (in secs) since cache started. May return null if the cache is not started."/>
+          <metric property="hit-ratio" dataType="measurement" displayName="Hit Ratio" defaultOn="false" description="The hit/miss ratio for the cache (hits/hits+misses). May return null if the cache is not started."/>
+          <metric property="hits" dataType="measurement" measurementType="trendsup" displayName="Hits" defaultOn="false" description="The number of cache attribute hits. May return null if the cache is not started."/>
+          <metric property="invalidations" dataType="measurement" measurementType="trendsup" displayName="Invalidations" defaultOn="false" description="The number of cache invalidations. May return null if the cache is not started."/>
+          <metric property="misses" dataType="measurement" measurementType="trendsup" displayName="Misses" defaultOn="false" description="The number of cache attribute misses. May return null if the cache is not started."/>
+          <metric property="number-of-entries" dataType="measurement" displayName="Number Of Entries" defaultOn="false" description="The current number of entries in the cache. May return null if the cache is not started."/>
+          <metric property="passivations" dataType="measurement" measurementType="trendsup" displayName="Passivations" defaultOn="false" description="The number of cache node passivations (passivating a node from memory to a cache store). May return null if the cache is not started."/>
+          <metric property="read-write-ratio" dataType="measurement" displayName="Read Write Ratio" defaultOn="false" description="The read/write ratio of the cache ((hits+misses)/stores). May return null if the cache is not started."/>
+          <metric property="remove-hits" dataType="measurement" measurementType="trendsup" displayName="Remove Hits" defaultOn="false" description="The number of cache attribute remove hits. May return null if the cache is not started."/>
+          <metric property="remove-misses" dataType="measurement" measurementType="trendsup" displayName="Remove Misses" defaultOn="false" description="The number of cache attribute remove misses. May return null if the cache is not started."/>
+          <metric property="stores" dataType="measurement" measurementType="trendsup" displayName="Stores" defaultOn="false" description="The number of cache attribute put operations. May return null if the cache is not started."/>
+          <metric property="time-since-reset" dataType="measurement" displayName="Time Since Reset" units="seconds" defaultOn="false" description="Time (in secs) since cache statistics were reset. May return null if the cache is not started."/>
+
           <resource-configuration>
-            <c:simple-property name="start" required="false" type="string" readOnly="true" default="LAZY" description="The cache start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
-              <c:property-options>
-                <c:option value="LAZY"/>
-                <c:option value="EAGER"/>
-              </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="batching" required="false" type="boolean" readOnly="true" default="false" description="If enabled, the invocation batching API will be made available for this cache."/>
-            <c:simple-property name="indexing" required="false" type="string" readOnly="true" default="NONE" description="If enabled, entries will be indexed when they are added to the cache. Indexes will be updated as entries change or are removed.">
-              <c:property-options>
-                <c:option value="NONE"/>
-                <c:option value="LOCAL"/>
-                <c:option value="ALL"/>
-              </c:property-options>
-            </c:simple-property>
             <c:simple-property name="jndi-name" required="false" type="string" readOnly="true" description="The jndi-name to which to bind this cache instance."/>
-            <c:simple-property name="mode" required="false" type="string" readOnly="true" default="SYNC" description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
+            <c:simple-property name="mode" required="false" type="string" readOnly="true" description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
               <c:property-options>
                 <c:option value="SYNC"/>
                 <c:option value="ASYNC"/>
               </c:property-options>
             </c:simple-property>
-            <c:simple-property name="queue-size" required="false" type="integer" readOnly="true" default="0" description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
-            <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="true" default="10" description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
-            <c:simple-property name="remote-timeout" required="false" type="long" readOnly="true" default="17500" description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
-            <c:simple-property name="async-marshalling" required="false" type="boolean" readOnly="true" defaultValue="false" description="If enabled, this will cause marshalling of entries to be performed asynchronously. The default value is false."/>
             <c:simple-property name="module" required="false" type="string" readOnly="true" description="The module whose class loader should be used when building this cache&apos;s configuration."/>
-
-            <c:simple-property name="__type" displayName="Type of cache" required="true" readOnly="true" default="invalidation-cache" description="Type of cache">
-              <c:property-options>
-                <c:option value="invalidation-cache"/>
-                <c:option value="replicated-cache"/>
-              </c:property-options>
-            </c:simple-property>
-            <c:template name="Invalidation Cache" description="Invalidation Cache">
-              <c:simple-property name="__type" readOnly="true" default="invalidation-cache"/>
-            </c:template>
-            <c:template name="Replicated Cache" description="Replicated Cache">
-              <c:simple-property name="__type" readOnly="true" default="replicated-cache"/>
-            </c:template>
+            <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="true" description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
+            <c:simple-property name="queue-size" required="false" type="integer" readOnly="true" description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
+            <c:simple-property name="remote-timeout" required="false" type="long" readOnly="true" description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
+            <c:simple-property name="__type" displayName="Type of cache" required="false" readOnly="true" description="Type of cache"/>
           </resource-configuration>
         </service>
 
@@ -2513,36 +2500,32 @@
             <c:simple-property name="path" readOnly="true" default="distributed-cache"/>
           </plugin-configuration>
 
+          <metric property="activations" dataType="measurement" measurementType="trendsup" displayName="Activations" defaultOn="false" description="The number of cache node activations (bringing a node into memory from a cache store). May return null if the cache is not started."/>
+          <metric property="average-read-time" dataType="measurement" displayName="Average Read Time" units="milliseconds" defaultOn="false" description="Average time (in ms) for cache reads. Includes hits and misses. May return null if the cache is not started."/>
+          <metric property="average-write-time" dataType="measurement" displayName="Average Write Time" units="milliseconds" defaultOn="false" description="Average time (in ms) for cache writes. May return null if the cache is not started."/>
+          <metric property="cache-status" dataType="trait" displayName="Cache Status" defaultOn="false" description="The status of the cache component. May return null if the cache is not started."/>
+          <metric property="elapsed-time" dataType="measurement" displayName="Elapsed Time" units="seconds" defaultOn="false" description="Time (in secs) since cache started. May return null if the cache is not started."/>
+          <metric property="hit-ratio" dataType="measurement" displayName="Hit Ratio" defaultOn="false" description="The hit/miss ratio for the cache (hits/hits+misses). May return null if the cache is not started."/>
+          <metric property="hits" dataType="measurement" measurementType="trendsup" displayName="Hits" defaultOn="false" description="The number of cache attribute hits. May return null if the cache is not started."/>
+          <metric property="invalidations" dataType="measurement" measurementType="trendsup" displayName="Invalidations" defaultOn="false" description="The number of cache invalidations. May return null if the cache is not started."/>
+          <metric property="misses" dataType="measurement" measurementType="trendsup" displayName="Misses" defaultOn="false" description="The number of cache attribute misses. May return null if the cache is not started."/>
+          <metric property="number-of-entries" dataType="measurement" displayName="Number Of Entries" defaultOn="false" description="The current number of entries in the cache. May return null if the cache is not started."/>
+          <metric property="passivations" dataType="measurement" measurementType="trendsup" displayName="Passivations" defaultOn="false" description="The number of cache node passivations (passivating a node from memory to a cache store). May return null if the cache is not started."/>
+          <metric property="read-write-ratio" dataType="measurement" displayName="Read Write Ratio" defaultOn="false" description="The read/write ratio of the cache ((hits+misses)/stores). May return null if the cache is not started."/>
+          <metric property="remove-hits" dataType="measurement" measurementType="trendsup" displayName="Remove Hits" defaultOn="false" description="The number of cache attribute remove hits. May return null if the cache is not started."/>
+          <metric property="remove-misses" dataType="measurement" measurementType="trendsup" displayName="Remove Misses" defaultOn="false" description="The number of cache attribute remove misses. May return null if the cache is not started."/>
+          <metric property="stores" dataType="measurement" measurementType="trendsup" displayName="Stores" defaultOn="false" description="The number of cache attribute put operations. May return null if the cache is not started."/>
+          <metric property="time-since-reset" dataType="measurement" displayName="Time Since Reset" units="seconds" defaultOn="false" description="Time (in secs) since cache statistics were reset. May return null if the cache is not started."/>
+
           <resource-configuration>
-            <c:simple-property name="start" required="false" type="string" readOnly="true" default="LAZY" description="The cache start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
-              <c:property-options>
-                <c:option value="LAZY"/>
-                <c:option value="EAGER"/>
-              </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="batching" required="false" type="boolean" readOnly="true" default="false" description="If enabled, the invocation batching API will be made available for this cache."/>
-            <c:simple-property name="indexing" required="false" type="string" readOnly="true" default="NONE" description="If enabled, entries will be indexed when they are added to the cache. Indexes will be updated as entries change or are removed.">
-              <c:property-options>
-                <c:option value="NONE"/>
-                <c:option value="LOCAL"/>
-                <c:option value="ALL"/>
-              </c:property-options>
-            </c:simple-property>
             <c:simple-property name="jndi-name" required="false" type="string" readOnly="true" description="The jndi-name to which to bind this cache instance."/>
-            <c:simple-property name="mode" required="false" type="string" readOnly="true" default="SYNC" description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
-              <c:property-options>
-                <c:option value="SYNC"/>
-                <c:option value="ASYNC"/>
-              </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="queue-size" required="false" type="integer" readOnly="true" default="0" description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
-            <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="true" default="10" description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
-            <c:simple-property name="remote-timeout" required="false" type="long" readOnly="true" default="17500" description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
-            <c:simple-property name="async-marshalling" required="false" type="boolean" readOnly="true" defaultValue="false" description="If enabled, this will cause marshalling of entries to be performed asynchronously. The default value is false."/>
-            <c:simple-property name="l1-lifespan" required="false" type="long" readOnly="true" defaultValue="600000" description="Maximum lifespan of an entry placed in the L1 cache. This element configures the L1 cache behavior in &apos;distributed&apos; caches instances. In any other cache modes, this element is ignored. The default value is 600000."/>
+            <c:simple-property name="l1-lifespan" required="false" type="long" readOnly="true" description="Maximum lifespan of an entry placed in the L1 cache. This element configures the L1 cache behavior in &apos;distributed&apos; caches instances. In any other cache modes, this element is ignored. The default value is 600000."/>
+            <c:simple-property name="mode" required="false" type="string" readOnly="true" description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation."/>
             <c:simple-property name="module" required="false" type="string" readOnly="true" description="The module whose class loader should be used when building this cache&apos;s configuration."/>
-            <c:simple-property name="owners" required="false" type="integer" readOnly="true" defaultValue="2" description="Number of cluster&#45;wide replicas for each cache entry. The default value is 2."/>
-            <c:simple-property name="virtual-nodes" required="false" type="integer" readOnly="true" defaultValue="1" description="Controls the number of virtual nodes per &apos;real&apos; node. If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash must be used if you wish to take advantage of virtual nodes. A default of 1 is used. The default value is 1."/>
+            <c:simple-property name="owners" required="false" type="integer" readOnly="true" description="Number of cluster&#45;wide replicas for each cache entry. The default value is 2."/>
+            <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="true" description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
+            <c:simple-property name="queue-size" required="false" type="integer" readOnly="true" description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
+            <c:simple-property name="remote-timeout" required="false" type="long" readOnly="true" description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
           </resource-configuration>
         </service>
 
@@ -2556,21 +2539,24 @@
             <c:simple-property name="path" readOnly="true" default="local-cache"/>
           </plugin-configuration>
 
+          <metric property="activations" dataType="measurement" measurementType="trendsup" displayName="Activations" defaultOn="false" description="The number of cache node activations (bringing a node into memory from a cache store). May return null if the cache is not started."/>
+          <metric property="average-read-time" dataType="measurement" displayName="Average Read Time" units="milliseconds" defaultOn="false" description="Average time (in ms) for cache reads. Includes hits and misses. May return null if the cache is not started."/>
+          <metric property="average-write-time" dataType="measurement" displayName="Average Write Time" units="milliseconds" defaultOn="false" description="Average time (in ms) for cache writes. May return null if the cache is not started."/>
+          <metric property="cache-status" dataType="trait" displayName="Cache Status" defaultOn="false" description="The status of the cache component. May return null if the cache is not started."/>
+          <metric property="elapsed-time" dataType="measurement" displayName="Elapsed Time" units="seconds" defaultOn="false" description="Time (in secs) since cache started. May return null if the cache is not started."/>
+          <metric property="hit-ratio" dataType="measurement" displayName="Hit Ratio" defaultOn="false" description="The hit/miss ratio for the cache (hits/hits+misses). May return null if the cache is not started."/>
+          <metric property="hits" dataType="measurement" measurementType="trendsup" displayName="Hits" defaultOn="false" description="The number of cache attribute hits. May return null if the cache is not started."/>
+          <metric property="invalidations" dataType="measurement" measurementType="trendsup" displayName="Invalidations" defaultOn="false" description="The number of cache invalidations. May return null if the cache is not started."/>
+          <metric property="misses" dataType="measurement" measurementType="trendsup" displayName="Misses" defaultOn="false" description="The number of cache attribute misses. May return null if the cache is not started."/>
+          <metric property="number-of-entries" dataType="measurement" displayName="Number Of Entries" defaultOn="false" description="The current number of entries in the cache. May return null if the cache is not started."/>
+          <metric property="passivations" dataType="measurement" measurementType="trendsup" displayName="Passivations" defaultOn="false" description="The number of cache node passivations (passivating a node from memory to a cache store). May return null if the cache is not started."/>
+          <metric property="read-write-ratio" dataType="measurement" displayName="Read Write Ratio" defaultOn="false" description="The read/write ratio of the cache ((hits+misses)/stores). May return null if the cache is not started."/>
+          <metric property="remove-hits" dataType="measurement" measurementType="trendsup" displayName="Remove Hits" defaultOn="false" description="The number of cache attribute remove hits. May return null if the cache is not started."/>
+          <metric property="remove-misses" dataType="measurement" measurementType="trendsup" displayName="Remove Misses" defaultOn="false" description="The number of cache attribute remove misses. May return null if the cache is not started."/>
+          <metric property="stores" dataType="measurement" measurementType="trendsup" displayName="Stores" defaultOn="false" description="The number of cache attribute put operations. May return null if the cache is not started."/>
+          <metric property="time-since-reset" dataType="measurement" displayName="Time Since Reset" units="seconds" defaultOn="false" description="Time (in secs) since cache statistics were reset. May return null if the cache is not started."/>
+
           <resource-configuration>
-            <c:simple-property name="start" required="false" type="string" readOnly="true" default="LAZY" description="The cache start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
-              <c:property-options>
-                <c:option value="LAZY"/>
-                <c:option value="EAGER"/>
-              </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="batching" required="false" type="boolean" readOnly="true" default="false" description="If enabled, the invocation batching API will be made available for this cache."/>
-            <c:simple-property name="indexing" required="false" type="string" readOnly="true" default="NONE" description="If enabled, entries will be indexed when they are added to the cache. Indexes will be updated as entries change or are removed.">
-              <c:property-options>
-                <c:option value="NONE"/>
-                <c:option value="LOCAL"/>
-                <c:option value="ALL"/>
-              </c:property-options>
-            </c:simple-property>
             <c:simple-property name="jndi-name" required="false" type="string" readOnly="true" description="The jndi-name to which to bind this cache instance."/>
             <c:simple-property name="module" required="false" type="string" readOnly="true" description="The module whose class loader should be used when building this cache&apos;s configuration."/>
           </resource-configuration>
@@ -2583,14 +2569,12 @@
                  description="The description of the transport used by this cache container">
 
           <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="transport=TRANSPORT"/>
+            <c:simple-property name="path" readOnly="true" default="transport=jgroups"/>
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="cluster" required="false" type="string" readOnly="true" description="The name of the group communication cluster"/>
-            <c:simple-property name="executor" required="false" type="string" readOnly="true" description="The executor to use for the transport"/>
-            <c:simple-property name="lock-timeout" required="false" type="long" readOnly="true" defaultValue="240000" description="The timeout for locks for the transport. The default value is 240000."/>
-            <c:simple-property name="stack" required="false" type="string" readOnly="true" description="The jgroups stack to use for the transport"/>
+            <c:simple-property name="channel" required="false" type="string" readOnly="true" description="The channel of this cache container's transport."/>
+            <c:simple-property name="lock-timeout" required="false" type="long" readOnly="true" description="The timeout for locks for the transport."/>
           </resource-configuration>
         </service>
       </service>
@@ -13425,23 +13409,20 @@
         <c:simple-property name="path" readOnly="true" default="cache-container"/>
       </plugin-configuration>
 
+      <metric property="cache-manager-status" dataType="trait" displayName="Cache Manager Status" defaultOn="false" description="The status of the cache manager component. May return null if the cache manager is not started."/>
+      <metric property="cluster-name" dataType="trait" displayName="Cluster Name" defaultOn="false" description="The name of the cluster this node belongs to. May return null if the cache manager is not started."/>
+      <metric property="coordinator-address" dataType="trait" displayName="Coordinator Address" defaultOn="false" description="The logical address of the cluster's coordinator. May return null if the cache manager is not started."/>
+      <metric property="is-coordinator" dataType="trait" displayName="Is Coordinator" defaultOn="false" description="True if this node is the cluster's coordinator. May return null if the cache manager is not started."/>
+      <metric property="local-address" dataType="trait" displayName="Local Address" defaultOn="false" description="The local address of the node. May return null if the cache manager is not started."/>
+
       <resource-configuration>
-        <c:simple-property name="default-cache" required="false" type="string" readOnly="false" description="The default infinispan cache"/>
-        <!-- TODO select from child cache services -->
-        <c:list-property name="aliases" required="false" description="The list of aliases for this cache container">
-          <c:simple-property name="alias"/>
+        <c:list-property name="aliases" required="false" readOnly="false" description="The list of aliases for this cache container">
+          <c:simple-property name="alias" readOnly="false"/>
         </c:list-property>
+        <c:simple-property name="default-cache" required="false" type="string" readOnly="false" description="The default infinispan cache"/>
         <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="The jndi name to which to bind this cache container"/>
-        <c:simple-property name="start" required="false" type="string" readOnly="false" defaultValue="LAZY" description="The cache container start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
-          <c:property-options>
-            <c:option value="LAZY"/>
-            <c:option value="EAGER"/>
-          </c:property-options>
-        </c:simple-property>
-        <c:simple-property name="listener-executor" required="false" type="string" readOnly="false" description="The executor used for the replication queue"/>
-        <c:simple-property name="eviction-executor" required="false" type="string" readOnly="false" description="The scheduled executor used for eviction"/>
         <c:simple-property name="module" required="false" type="string" readOnly="false" defaultValue="org.jboss.as.clustering.infinispan" description="The module whose class loader should be used when building this cache container&apos;s configuration. The default value is org.jboss.as.clustering.infinispan."/>
-        <c:simple-property name="replication-queue-executor" required="false" type="string" readOnly="false" description="The executor used for asynchronous cache operations"/>
+        <c:simple-property name="statistics-enabled" required="false" type="boolean" readOnly="false" defaultValue="false" description="If enabled, statistics will be collected for this cache container."/>
       </resource-configuration>
 
       <service name="Cache"
@@ -13454,21 +13435,24 @@
           <c:simple-property name="path" readOnly="true" default="invalidation-cache|replicated-cache"/>
         </plugin-configuration>
 
+        <metric property="activations" dataType="measurement" measurementType="trendsup" displayName="Activations" defaultOn="false" description="The number of cache node activations (bringing a node into memory from a cache store). May return null if the cache is not started."/>
+        <metric property="average-read-time" dataType="measurement" displayName="Average Read Time" units="milliseconds" defaultOn="false" description="Average time (in ms) for cache reads. Includes hits and misses. May return null if the cache is not started."/>
+        <metric property="average-write-time" dataType="measurement" displayName="Average Write Time" units="milliseconds" defaultOn="false" description="Average time (in ms) for cache writes. May return null if the cache is not started."/>
+        <metric property="cache-status" dataType="trait" displayName="Cache Status" defaultOn="false" description="The status of the cache component. May return null if the cache is not started."/>
+        <metric property="elapsed-time" dataType="measurement" displayName="Elapsed Time" units="seconds" defaultOn="false" description="Time (in secs) since cache started. May return null if the cache is not started."/>
+        <metric property="hit-ratio" dataType="measurement" displayName="Hit Ratio" defaultOn="false" description="The hit/miss ratio for the cache (hits/hits+misses). May return null if the cache is not started."/>
+        <metric property="hits" dataType="measurement" measurementType="trendsup" displayName="Hits" defaultOn="false" description="The number of cache attribute hits. May return null if the cache is not started."/>
+        <metric property="invalidations" dataType="measurement" measurementType="trendsup" displayName="Invalidations" defaultOn="false" description="The number of cache invalidations. May return null if the cache is not started."/>
+        <metric property="misses" dataType="measurement" measurementType="trendsup" displayName="Misses" defaultOn="false" description="The number of cache attribute misses. May return null if the cache is not started."/>
+        <metric property="number-of-entries" dataType="measurement" displayName="Number Of Entries" defaultOn="false" description="The current number of entries in the cache. May return null if the cache is not started."/>
+        <metric property="passivations" dataType="measurement" measurementType="trendsup" displayName="Passivations" defaultOn="false" description="The number of cache node passivations (passivating a node from memory to a cache store). May return null if the cache is not started."/>
+        <metric property="read-write-ratio" dataType="measurement" displayName="Read Write Ratio" defaultOn="false" description="The read/write ratio of the cache ((hits+misses)/stores). May return null if the cache is not started."/>
+        <metric property="remove-hits" dataType="measurement" measurementType="trendsup" displayName="Remove Hits" defaultOn="false" description="The number of cache attribute remove hits. May return null if the cache is not started."/>
+        <metric property="remove-misses" dataType="measurement" measurementType="trendsup" displayName="Remove Misses" defaultOn="false" description="The number of cache attribute remove misses. May return null if the cache is not started."/>
+        <metric property="stores" dataType="measurement" measurementType="trendsup" displayName="Stores" defaultOn="false" description="The number of cache attribute put operations. May return null if the cache is not started."/>
+        <metric property="time-since-reset" dataType="measurement" displayName="Time Since Reset" units="seconds" defaultOn="false" description="Time (in secs) since cache statistics were reset. May return null if the cache is not started."/>
+
         <resource-configuration>
-          <c:simple-property name="start" required="false" type="string" readOnly="false" default="LAZY" description="The cache start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
-            <c:property-options>
-              <c:option value="LAZY"/>
-              <c:option value="EAGER"/>
-            </c:property-options>
-          </c:simple-property>
-          <c:simple-property name="batching" required="false" type="boolean" readOnly="false" default="false" description="If enabled, the invocation batching API will be made available for this cache."/>
-          <c:simple-property name="indexing" required="false" type="string" readOnly="false" default="NONE" description="If enabled, entries will be indexed when they are added to the cache. Indexes will be updated as entries change or are removed.">
-            <c:property-options>
-              <c:option value="NONE"/>
-              <c:option value="LOCAL"/>
-              <c:option value="ALL"/>
-            </c:property-options>
-          </c:simple-property>
           <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="The jndi-name to which to bind this cache instance."/>
           <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" defaultValue="SYNC" description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
             <c:property-options>
@@ -13476,12 +13460,10 @@
               <c:option value="ASYNC"/>
             </c:property-options>
           </c:simple-property>
-          <c:simple-property name="queue-size" required="false" type="integer" readOnly="false" default="0" description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
-          <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="false" default="10" description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
-          <c:simple-property name="remote-timeout" required="false" type="long" readOnly="false" default="17500" description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
-          <c:simple-property name="async-marshalling" required="false" type="boolean" readOnly="false" defaultValue="false" description="If enabled, this will cause marshalling of entries to be performed asynchronously. The default value is false."/>
           <c:simple-property name="module" required="false" type="string" readOnly="false" description="The module whose class loader should be used when building this cache&apos;s configuration."/>
-
+          <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="false" default="10" description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
+          <c:simple-property name="queue-size" required="false" type="integer" readOnly="false" default="0" description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
+          <c:simple-property name="remote-timeout" required="false" type="long" readOnly="false" default="17500" description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
           <c:simple-property name="__type" displayName="Type of cache" required="true" readOnly="true" default="invalidation-cache" description="Type of cache">
             <c:property-options>
               <c:option value="invalidation-cache"/>
@@ -13507,36 +13489,37 @@
           <c:simple-property name="path" readOnly="true" default="distributed-cache"/>
         </plugin-configuration>
 
+        <metric property="activations" dataType="measurement" measurementType="trendsup" displayName="Activations" defaultOn="false" description="The number of cache node activations (bringing a node into memory from a cache store). May return null if the cache is not started."/>
+        <metric property="average-read-time" dataType="measurement" displayName="Average Read Time" units="milliseconds" defaultOn="false" description="Average time (in ms) for cache reads. Includes hits and misses. May return null if the cache is not started."/>
+        <metric property="average-write-time" dataType="measurement" displayName="Average Write Time" units="milliseconds" defaultOn="false" description="Average time (in ms) for cache writes. May return null if the cache is not started."/>
+        <metric property="cache-status" dataType="trait" displayName="Cache Status" defaultOn="false" description="The status of the cache component. May return null if the cache is not started."/>
+        <metric property="elapsed-time" dataType="measurement" displayName="Elapsed Time" units="seconds" defaultOn="false" description="Time (in secs) since cache started. May return null if the cache is not started."/>
+        <metric property="hit-ratio" dataType="measurement" displayName="Hit Ratio" defaultOn="false" description="The hit/miss ratio for the cache (hits/hits+misses). May return null if the cache is not started."/>
+        <metric property="hits" dataType="measurement" measurementType="trendsup" displayName="Hits" defaultOn="false" description="The number of cache attribute hits. May return null if the cache is not started."/>
+        <metric property="invalidations" dataType="measurement" measurementType="trendsup" displayName="Invalidations" defaultOn="false" description="The number of cache invalidations. May return null if the cache is not started."/>
+        <metric property="misses" dataType="measurement" measurementType="trendsup" displayName="Misses" defaultOn="false" description="The number of cache attribute misses. May return null if the cache is not started."/>
+        <metric property="number-of-entries" dataType="measurement" displayName="Number Of Entries" defaultOn="false" description="The current number of entries in the cache. May return null if the cache is not started."/>
+        <metric property="passivations" dataType="measurement" measurementType="trendsup" displayName="Passivations" defaultOn="false" description="The number of cache node passivations (passivating a node from memory to a cache store). May return null if the cache is not started."/>
+        <metric property="read-write-ratio" dataType="measurement" displayName="Read Write Ratio" defaultOn="false" description="The read/write ratio of the cache ((hits+misses)/stores). May return null if the cache is not started."/>
+        <metric property="remove-hits" dataType="measurement" measurementType="trendsup" displayName="Remove Hits" defaultOn="false" description="The number of cache attribute remove hits. May return null if the cache is not started."/>
+        <metric property="remove-misses" dataType="measurement" measurementType="trendsup" displayName="Remove Misses" defaultOn="false" description="The number of cache attribute remove misses. May return null if the cache is not started."/>
+        <metric property="stores" dataType="measurement" measurementType="trendsup" displayName="Stores" defaultOn="false" description="The number of cache attribute put operations. May return null if the cache is not started."/>
+        <metric property="time-since-reset" dataType="measurement" displayName="Time Since Reset" units="seconds" defaultOn="false" description="Time (in secs) since cache statistics were reset. May return null if the cache is not started."/>
+
         <resource-configuration>
-          <c:simple-property name="start" required="false" type="string" readOnly="false" default="LAZY" description="The cache start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
-            <c:property-options>
-              <c:option value="LAZY"/>
-              <c:option value="EAGER"/>
-            </c:property-options>
-          </c:simple-property>
-          <c:simple-property name="batching" required="false" type="boolean" readOnly="false" default="false" description="If enabled, the invocation batching API will be made available for this cache."/>
-          <c:simple-property name="indexing" required="false" type="string" readOnly="false" default="NONE" description="If enabled, entries will be indexed when they are added to the cache. Indexes will be updated as entries change or are removed.">
-            <c:property-options>
-              <c:option value="NONE"/>
-              <c:option value="LOCAL"/>
-              <c:option value="ALL"/>
-            </c:property-options>
-          </c:simple-property>
           <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="The jndi-name to which to bind this cache instance."/>
+          <c:simple-property name="l1-lifespan" required="false" type="long" readOnly="false" defaultValue="600000" description="Maximum lifespan of an entry placed in the L1 cache. This element configures the L1 cache behavior in &apos;distributed&apos; caches instances. In any other cache modes, this element is ignored. The default value is 600000."/>
           <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" defaultValue="SYNC" description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
             <c:property-options>
               <c:option value="SYNC"/>
               <c:option value="ASYNC"/>
             </c:property-options>
           </c:simple-property>
-          <c:simple-property name="queue-size" required="false" type="integer" readOnly="false" default="0" description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
-          <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="false" default="10" description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
-          <c:simple-property name="remote-timeout" required="false" type="long" readOnly="false" default="17500" description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
-          <c:simple-property name="async-marshalling" required="false" type="boolean" readOnly="false" defaultValue="false" description="If enabled, this will cause marshalling of entries to be performed asynchronously. The default value is false."/>
-          <c:simple-property name="l1-lifespan" required="false" type="long" readOnly="false" defaultValue="600000" description="Maximum lifespan of an entry placed in the L1 cache. This element configures the L1 cache behavior in &apos;distributed&apos; caches instances. In any other cache modes, this element is ignored. The default value is 600000."/>
           <c:simple-property name="module" required="false" type="string" readOnly="false" description="The module whose class loader should be used when building this cache&apos;s configuration."/>
           <c:simple-property name="owners" required="false" type="integer" readOnly="false" defaultValue="2" description="Number of cluster&#45;wide replicas for each cache entry. The default value is 2."/>
-          <c:simple-property name="virtual-nodes" required="false" type="integer" readOnly="false" defaultValue="1" description="Controls the number of virtual nodes per &apos;real&apos; node. If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash must be used if you wish to take advantage of virtual nodes. A default of 1 is used. The default value is 1."/>
+          <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="false" default="10" description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
+          <c:simple-property name="queue-size" required="false" type="integer" readOnly="false" default="0" description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
+          <c:simple-property name="remote-timeout" required="false" type="long" readOnly="false" default="17500" description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
         </resource-configuration>
       </service>
 
@@ -13550,21 +13533,24 @@
           <c:simple-property name="path" readOnly="true" default="local-cache"/>
         </plugin-configuration>
 
+        <metric property="activations" dataType="measurement" measurementType="trendsup" displayName="Activations" defaultOn="false" description="The number of cache node activations (bringing a node into memory from a cache store). May return null if the cache is not started."/>
+        <metric property="average-read-time" dataType="measurement" displayName="Average Read Time" units="milliseconds" defaultOn="false" description="Average time (in ms) for cache reads. Includes hits and misses. May return null if the cache is not started."/>
+        <metric property="average-write-time" dataType="measurement" displayName="Average Write Time" units="milliseconds" defaultOn="false" description="Average time (in ms) for cache writes. May return null if the cache is not started."/>
+        <metric property="cache-status" dataType="trait" displayName="Cache Status" defaultOn="false" description="The status of the cache component. May return null if the cache is not started."/>
+        <metric property="elapsed-time" dataType="measurement" displayName="Elapsed Time" units="seconds" defaultOn="false" description="Time (in secs) since cache started. May return null if the cache is not started."/>
+        <metric property="hit-ratio" dataType="measurement" displayName="Hit Ratio" defaultOn="false" description="The hit/miss ratio for the cache (hits/hits+misses). May return null if the cache is not started."/>
+        <metric property="hits" dataType="measurement" measurementType="trendsup" displayName="Hits" defaultOn="false" description="The number of cache attribute hits. May return null if the cache is not started."/>
+        <metric property="invalidations" dataType="measurement" measurementType="trendsup" displayName="Invalidations" defaultOn="false" description="The number of cache invalidations. May return null if the cache is not started."/>
+        <metric property="misses" dataType="measurement" measurementType="trendsup" displayName="Misses" defaultOn="false" description="The number of cache attribute misses. May return null if the cache is not started."/>
+        <metric property="number-of-entries" dataType="measurement" displayName="Number Of Entries" defaultOn="false" description="The current number of entries in the cache. May return null if the cache is not started."/>
+        <metric property="passivations" dataType="measurement" measurementType="trendsup" displayName="Passivations" defaultOn="false" description="The number of cache node passivations (passivating a node from memory to a cache store). May return null if the cache is not started."/>
+        <metric property="read-write-ratio" dataType="measurement" displayName="Read Write Ratio" defaultOn="false" description="The read/write ratio of the cache ((hits+misses)/stores). May return null if the cache is not started."/>
+        <metric property="remove-hits" dataType="measurement" measurementType="trendsup" displayName="Remove Hits" defaultOn="false" description="The number of cache attribute remove hits. May return null if the cache is not started."/>
+        <metric property="remove-misses" dataType="measurement" measurementType="trendsup" displayName="Remove Misses" defaultOn="false" description="The number of cache attribute remove misses. May return null if the cache is not started."/>
+        <metric property="stores" dataType="measurement" measurementType="trendsup" displayName="Stores" defaultOn="false" description="The number of cache attribute put operations. May return null if the cache is not started."/>
+        <metric property="time-since-reset" dataType="measurement" displayName="Time Since Reset" units="seconds" defaultOn="false" description="Time (in secs) since cache statistics were reset. May return null if the cache is not started."/>
+
         <resource-configuration>
-          <c:simple-property name="start" required="false" type="string" readOnly="false" default="LAZY" description="The cache start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
-            <c:property-options>
-              <c:option value="LAZY"/>
-              <c:option value="EAGER"/>
-            </c:property-options>
-          </c:simple-property>
-          <c:simple-property name="batching" required="false" type="boolean" readOnly="false" default="false" description="If enabled, the invocation batching API will be made available for this cache."/>
-          <c:simple-property name="indexing" required="false" type="string" readOnly="false" default="NONE" description="If enabled, entries will be indexed when they are added to the cache. Indexes will be updated as entries change or are removed.">
-            <c:property-options>
-              <c:option value="NONE"/>
-              <c:option value="LOCAL"/>
-              <c:option value="ALL"/>
-            </c:property-options>
-          </c:simple-property>
           <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="The jndi-name to which to bind this cache instance."/>
           <c:simple-property name="module" required="false" type="string" readOnly="false" description="The module whose class loader should be used when building this cache&apos;s configuration."/>
         </resource-configuration>
@@ -13577,14 +13563,12 @@
                description="The description of the transport used by this cache container">
 
         <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="transport=TRANSPORT"/>
+          <c:simple-property name="path" readOnly="true" default="transport=jgroups"/>
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="cluster" required="false" type="string" readOnly="false" description="The name of the group communication cluster"/>
-          <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The executor to use for the transport"/>
+          <c:simple-property name="channel" required="false" type="string" readOnly="false" description="The channel of this cache container's transport."/>
           <c:simple-property name="lock-timeout" required="false" type="long" readOnly="false" defaultValue="240000" description="The timeout for locks for the transport. The default value is 240000."/>
-          <c:simple-property name="stack" required="false" type="string" readOnly="false" description="The jgroups stack to use for the transport"/>
         </resource-configuration>
       </service>
     </service>

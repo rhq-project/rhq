@@ -477,7 +477,7 @@
 '>
 
     <!ENTITY datasourceEnableDisableOperations '
-      <operation name="enable" description="Enables the data-source">
+      <operation name="enable" description="Enables the data-source. Note this operation will not be supported runtime in next versions.">
         <parameters>
           <c:simple-property name="persistent" type="boolean" required="false" default="true"
             description="Indicates if the datasource should be enabled again after a server restart. Defaults to true."/>
@@ -486,7 +486,7 @@
           <c:simple-property name="operationResult"/>
         </results>
       </operation>
-      <operation name="disable" description="Disables the data-source">
+      <operation name="disable" description="Disables the data-source. Note this operation will not be supported runtime in next versions.">
         <parameters>
           <c:simple-property name="allow-resource-service-restart" type="boolean" required="false" default="false"
             displayName="Allow service restart"
@@ -553,7 +553,7 @@
         <c:simple-property name="url-delimiter" type="string" readOnly="false" description="Specifies the delimiter for URLs in connection-url for HA datasources" required="false"/>
         <c:simple-property name="url-selector-strategy-class-name" type="string" readOnly="false" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy" required="false"/>
         <c:simple-property name="use-java-context" type="boolean" readOnly="false" required="false" default="true" description="Setting this to false will bind the DataSource into global JNDI;"/>
-        <c:simple-property name="enabled" type="boolean" readOnly="true" default="true" required="false" description="Specifies if the datasource should be enabled"/>
+        <c:simple-property name="enabled" type="boolean" readOnly="true" default="true" required="false" description="Specifies if the datasource should be enabled. Note this attribute will not be supported runtime in next versions."/>
         <c:simple-property name="jta" type="boolean" readOnly="false" required="false" default="true" description="Enable JTA integration"/>
         <c:simple-property name="max-pool-size" displayName="Max Pool Size" type="string" readOnly="false" required="false" defaultValue="20" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool. Existing value cannot be unset."/>
         <c:simple-property name="min-pool-size" displayName="Min Pool Size" type="string" readOnly="false" required="false" defaultValue="0" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection. Existing value cannot be unset."/>
@@ -637,7 +637,7 @@
         <c:simple-property name="url-delimiter" type="string" readOnly="true" description="Specifies the delimiter for URLs in connection-url for HA datasources" required="false"/>
         <c:simple-property name="url-selector-strategy-class-name" type="string" readOnly="true" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy" required="false"/>
         <c:simple-property name="use-java-context" type="boolean" readOnly="true" required="false" description="Setting this to false will bind the DataSource into global JNDI;"/>
-        <c:simple-property name="enabled" type="boolean" readOnly="true" required="false" description="Specifies if the datasource should be enabled"/>
+        <c:simple-property name="enabled" type="boolean" readOnly="true" required="false" description="Specifies if the datasource should be enabled. Note this attribute will not be supported runtime in next versions."/>
         <c:simple-property name="max-pool-size" type="integer" readOnly="true" required="false" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
         <c:simple-property name="min-pool-size" type="integer" readOnly="true" required="false" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
         <c:simple-property name="pool-prefill" type="boolean" readOnly="true" required="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
@@ -712,7 +712,7 @@
         <c:simple-property name="url-delimiter" required="false" type="string" readOnly="true" description="Specifies the delimiter for URLs in connection-url for HA datasources"/>
         <c:simple-property name="url-selector-strategy-class-name" required="false" type="string" readOnly="true" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy"/>
         <c:simple-property name="use-java-context" required="false" type="boolean" readOnly="true" description="Setting this to false will bind the DataSource into global JNDI;"/>
-        <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" default="true" description="Specifies if the datasource should be enabled"/>
+        <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" default="true" description="Specifies if the datasource should be enabled. Note this attribute will not be supported runtime in next versions."/>
         <c:simple-property name="max-pool-size" required="false" type="integer" readOnly="false" defaultValue="20" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool. Existing value cannot be unset."/>
         <c:simple-property name="min-pool-size" required="false" type="integer" readOnly="false" defaultValue="0" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection. Existing value cannot be unset."/>
         <c:simple-property name="pool-prefill" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart. Existing value cannot be unset."/>
@@ -822,7 +822,7 @@
         <c:simple-property name="url-delimiter" required="false" type="string" readOnly="true" description="Specifies the delimiter for URLs in connection-url for HA datasources"/>
         <c:simple-property name="url-selector-strategy-class-name" required="false" type="string" readOnly="true" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy"/>
         <c:simple-property name="use-java-context" required="false" type="boolean" readOnly="true" description="Setting this to false will bind the DataSource into global JNDI;"/>
-        <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" description="Specifies if the datasource should be enabled"/>
+        <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" description="Specifies if the datasource should be enabled. Note this attribute will not be supported runtime in next versions."/>
         <c:simple-property name="max-pool-size" required="false" type="integer" readOnly="true" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
         <c:simple-property name="min-pool-size" required="false" type="integer" readOnly="true" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
         <c:simple-property name="pool-prefill" required="false" type="boolean" readOnly="true" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>

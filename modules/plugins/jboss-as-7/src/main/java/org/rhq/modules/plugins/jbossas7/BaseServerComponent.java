@@ -280,32 +280,34 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         }
 
         // Validate the product type (e.g. AS or EAP).
-        String expectedRuntimeProductName = pluginConfiguration.getSimpleValue("expectedRuntimeProductName");
-        String runtimeProductName;
-        try {
-            runtimeProductName = readAttribute(getHostAddress(), "product-name");
-        } catch (Exception e) {
-            throw new InvalidPluginConfigurationException("Failed to validate product type for "
-                + getResourceDescription(), e);
-        }
-        if (runtimeProductName == null || runtimeProductName.trim().isEmpty()) {
-            String releaseVersionNumber;
+        if(serverPluginConfig.getProductType() != JBossProductType.AS) {
+            String expectedRuntimeProductName = pluginConfiguration.getSimpleValue("expectedRuntimeProductName");
+            String runtimeProductName;
             try {
-                releaseVersionNumber = readAttribute(getHostAddress(), "release-version");
+                runtimeProductName = readAttribute(getHostAddress(), "product-name");
             } catch (Exception e) {
                 throw new InvalidPluginConfigurationException("Failed to validate product type for "
-                    + getResourceDescription(), e);
+                        + getResourceDescription(), e);
             }
-            if (releaseVersionNumber.startsWith("8.")) {
-                runtimeProductName = WILDFLY8.PRODUCT_NAME;
-            } else {
-                runtimeProductName = AS.PRODUCT_NAME;
+            if (runtimeProductName == null || runtimeProductName.trim().isEmpty()) {
+                String releaseVersionNumber;
+                try {
+                    releaseVersionNumber = readAttribute(getHostAddress(), "release-version");
+                } catch (Exception e) {
+                    throw new InvalidPluginConfigurationException("Failed to validate product type for "
+                            + getResourceDescription(), e);
+                }
+                if (releaseVersionNumber.startsWith("8.")) {
+                    runtimeProductName = WILDFLY8.PRODUCT_NAME;
+                } else {
+                    runtimeProductName = AS.PRODUCT_NAME;
+                }
             }
-        }
-        if (!runtimeProductName.equals(expectedRuntimeProductName)) {
-            throw new InvalidPluginConfigurationException("The original product type discovered for this server was "
-                + expectedRuntimeProductName + ", but the server is now reporting its product type is ["
-                + runtimeProductName + "]");
+            if (!runtimeProductName.equals(expectedRuntimeProductName)) {
+                throw new InvalidPluginConfigurationException("The original product type discovered for this server was "
+                        + expectedRuntimeProductName + ", but the server is now reporting its product type is ["
+                        + runtimeProductName + "]");
+            }
         }
     }
 

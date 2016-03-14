@@ -30,11 +30,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
-import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 
 /**
  * Discover subsystems. We need to distinguish two cases denoted by the path
@@ -57,7 +54,7 @@ import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
  *
  * @author Jay Shaughnessy
  */
-public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscovery implements ResourceUpgradeFacet {
+public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscovery {
     private static final Log LOG = LogFactory.getLog(VersionedRuntimeDiscovery.class);
 
     private static final Pattern FORWARD_SLASH_PATTERN = Pattern.compile("/");
@@ -162,90 +159,5 @@ public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscove
 
         details.addAll(updatedDetails);
         return details;
-    }
-
-    // The Matching logic here is the same as above, but instead of setting the discovery details we
-    // set new values in the upgrade report for name, version and key.
-    @Override
-    public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
-        ResourceUpgradeReport result = null;
-
-        if (DISABLED) {
-            return result;
-        }
-
-        // Note that in addition to the comma-separated segments of the DMR address, certain runtime
-        // resources (e.g. "Hibernate Persistence Unit") have a forwardSlash-separated segments of
-        // their own.
-
-        StringBuilder sb = new StringBuilder();
-        String slash = "";
-        boolean upgradeName = false;
-        for (String segment : FORWARD_SLASH_PATTERN.split(inventoriedResource.getName())) {
-            MATCHER.reset(segment);
-            if (MATCHER.matches()) {
-                upgradeName = true;
-                sb.append(slash);
-                sb.append(MATCHER.group(1)).append(MATCHER.group(3));
-            } else {
-                sb.append(slash);
-                sb.append(segment);
-            }
-            slash = "/";
-        }
-
-        if (upgradeName) {
-            if (null == result) {
-                result = new ResourceUpgradeReport();
-            }
-            result.setForceGenericPropertyUpgrade(true); // It is critical the name get upgraded
-            result.setNewName(sb.toString());
-        }
-
-        // Note that the version string is always set to the parent's version for these
-        // resources which are logically part of the umbrella deployment.
-        String parentVersion = inventoriedResource.getParentResourceContext().getVersion();
-        String currentVersion = inventoriedResource.getVersion();
-        //noinspection StringEquality
-        if ((currentVersion != parentVersion)
-            && ((null == currentVersion && null != parentVersion) || !currentVersion.equals(parentVersion))) {
-            if (null == result) {
-                result = new ResourceUpgradeReport();
-            }
-            result.setForceGenericPropertyUpgrade(true); // It is critical the version get upgraded
-            result.setNewVersion(parentVersion);
-        }
-
-        sb = new StringBuilder();
-        String comma = "";
-        boolean upgradeKey = false;
-        for (String outerSegment : COMMA_PATTERN.split(inventoriedResource.getResourceKey())) {
-            sb.append(comma);
-            comma = ",";
-            slash = "";
-            for (String segment : FORWARD_SLASH_PATTERN.split(outerSegment)) {
-                sb.append(slash);
-                slash = "/";
-                MATCHER.reset(segment);
-                if (MATCHER.matches()) {
-                    upgradeKey = true;
-                    sb.append(MATCHER.group(1)).append(MATCHER.group(3));
-                } else {
-                    sb.append(segment);
-                }
-            }
-        }
-        if (upgradeKey) {
-            if (null == result) {
-                result = new ResourceUpgradeReport();
-            }
-            result.setNewResourceKey(sb.toString());
-        }
-
-        if (null != result && LOG.isDebugEnabled()) {
-            LOG.debug("Requesting upgrade: " + result);
-        }
-
-        return result;
     }
 }

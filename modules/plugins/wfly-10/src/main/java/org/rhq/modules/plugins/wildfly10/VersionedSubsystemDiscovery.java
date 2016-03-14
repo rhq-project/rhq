@@ -29,11 +29,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
-import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 
 /**
  * Discover subsystems. We need to distinguish two cases denoted by the path
@@ -68,7 +65,7 @@ import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
  *
  * @author Jay Shaughnessy
  */
-public class VersionedSubsystemDiscovery extends AbstractVersionedSubsystemDiscovery implements ResourceUpgradeFacet {
+public class VersionedSubsystemDiscovery extends AbstractVersionedSubsystemDiscovery {
     private static final Log LOG = LogFactory.getLog(VersionedSubsystemDiscovery.class);
 
     private static final Pattern COMMA_PATTERN = Pattern.compile(",");
@@ -152,65 +149,5 @@ public class VersionedSubsystemDiscovery extends AbstractVersionedSubsystemDisco
 
         details.addAll(updatedDetails);
         return details;
-    }
-
-    // The Matching logic here is the same as above, but instead of setting the discovery details we
-    // set new values in the upgrade report for name, version and key.  Note that if multiple resources
-    // upgrade to the same resource key it will be caught and fail downstream.
-    @Override
-    public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
-        ResourceUpgradeReport result = null;
-
-        if (DISABLED) {
-            return result;
-        }
-
-        MATCHER.reset(inventoriedResource.getName());
-        if (MATCHER.matches()) {
-            result = new ResourceUpgradeReport();
-            result.setForceGenericPropertyUpgrade(true); // It is critical the name and version get upgraded
-
-            // reset the resource name with the stripped value
-            result.setNewName(MATCHER.group(1) + MATCHER.group(3));
-
-            // The version string for a subdeployment must incorporate the parent deployment's version
-            // so that we detect an overall version change if the parent is re-deployed.  Without this
-            // the Subdeployment will not be properly updated if its version remains unchanged in the
-            // updated Deployment.
-            if (SUBDEPLOYMENT_TYPE.equals(inventoriedResource.getResourceType().getName())) {
-                String parentResourceVersion = inventoriedResource.getParentResourceContext().getVersion();
-                parentResourceVersion = (null == parentResourceVersion) ? "" : (parentResourceVersion + "/");
-                result.setNewVersion(parentResourceVersion + MATCHER.group(2));
-            } else {
-                result.setNewVersion(MATCHER.group(2));
-            }
-        }
-
-        StringBuilder sb = new StringBuilder();
-        String comma = "";
-        boolean upgradeKey = false;
-        for (String segment : COMMA_PATTERN.split(inventoriedResource.getResourceKey())) {
-            sb.append(comma);
-            comma = ",";
-            MATCHER.reset(segment);
-            if (MATCHER.matches()) {
-                upgradeKey = true;
-                sb.append(MATCHER.group(1)).append(MATCHER.group(3));
-            } else {
-                sb.append(segment);
-            }
-        }
-        if (upgradeKey) {
-            if (null == result) {
-                result = new ResourceUpgradeReport();
-            }
-            result.setNewResourceKey(sb.toString());
-        }
-
-        if (null != result && LOG.isDebugEnabled()) {
-            LOG.debug("Requesting upgrade: " + result);
-        }
-
-        return result;
     }
 }

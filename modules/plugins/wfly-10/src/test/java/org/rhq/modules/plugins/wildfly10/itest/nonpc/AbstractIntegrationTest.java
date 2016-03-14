@@ -48,13 +48,13 @@ import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.modules.plugins.wildfly10.test.util.Constants;
 import org.rhq.modules.plugins.wildfly10.ASConnectionParams;
 import org.rhq.modules.plugins.wildfly10.ASConnectionParamsBuilder;
 import org.rhq.modules.plugins.wildfly10.ASUploadConnection;
 import org.rhq.modules.plugins.wildfly10.json.Address;
 import org.rhq.modules.plugins.wildfly10.json.Operation;
 import org.rhq.modules.plugins.wildfly10.json.PROPERTY_VALUE;
+import org.rhq.modules.plugins.wildfly10.test.util.Constants;
 
 /**
  * Abstract base class for integration tests that do not run against an RHQ plugin container.

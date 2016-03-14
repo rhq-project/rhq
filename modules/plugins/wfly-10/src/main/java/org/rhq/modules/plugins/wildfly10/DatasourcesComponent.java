@@ -20,8 +20,16 @@
 package org.rhq.modules.plugins.wildfly10;
 
 import static java.lang.Boolean.TRUE;
-import static org.rhq.core.domain.resource.CreateResourceStatus.*;
-import static org.rhq.modules.plugins.wildfly10.DatasourceComponent.*;
+import static org.rhq.core.domain.resource.CreateResourceStatus.FAILURE;
+import static org.rhq.core.domain.resource.CreateResourceStatus.INVALID_ARTIFACT;
+import static org.rhq.core.domain.resource.CreateResourceStatus.SUCCESS;
+import static org.rhq.modules.plugins.wildfly10.DatasourceComponent.CONNECTION_PROPERTIES_ATTRIBUTE;
+import static org.rhq.modules.plugins.wildfly10.DatasourceComponent.DISABLE_OPERATION;
+import static org.rhq.modules.plugins.wildfly10.DatasourceComponent.ENABLED_ATTRIBUTE;
+import static org.rhq.modules.plugins.wildfly10.DatasourceComponent.ENABLE_OPERATION;
+import static org.rhq.modules.plugins.wildfly10.DatasourceComponent.XA_DATASOURCE_PROPERTIES_ATTRIBUTE;
+import static org.rhq.modules.plugins.wildfly10.DatasourceComponent.getConnectionPropertiesAsMap;
+import static org.rhq.modules.plugins.wildfly10.DatasourceComponent.isXADatasourceResource;
 
 import java.util.List;
 import java.util.Map;
@@ -33,7 +41,11 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
-import org.rhq.modules.plugins.wildfly10.json.*;
+import org.rhq.modules.plugins.wildfly10.json.Address;
+import org.rhq.modules.plugins.wildfly10.json.CompositeOperation;
+import org.rhq.modules.plugins.wildfly10.json.Operation;
+import org.rhq.modules.plugins.wildfly10.json.ReadAttribute;
+import org.rhq.modules.plugins.wildfly10.json.Result;
 
 /**
  * A component for Datasources resources (parent type of Datasource and XA Datasource resources).

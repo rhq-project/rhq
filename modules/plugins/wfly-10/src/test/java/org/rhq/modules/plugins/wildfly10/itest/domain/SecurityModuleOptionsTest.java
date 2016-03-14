@@ -58,15 +58,15 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.inventory.InventoryManager;
-import org.rhq.modules.plugins.wildfly10.itest.AbstractJBossAS7PluginTest;
-import org.rhq.modules.plugins.wildfly10.test.util.ASConnectionFactory;
-import org.rhq.modules.plugins.wildfly10.test.util.Constants;
 import org.rhq.modules.plugins.wildfly10.ASConnection;
 import org.rhq.modules.plugins.wildfly10.ModuleOptionsComponent.ModuleOptionType;
 import org.rhq.modules.plugins.wildfly10.ModuleOptionsComponent.Value;
+import org.rhq.modules.plugins.wildfly10.itest.AbstractJBossAS7PluginTest;
 import org.rhq.modules.plugins.wildfly10.json.Address;
 import org.rhq.modules.plugins.wildfly10.json.Operation;
 import org.rhq.modules.plugins.wildfly10.json.Result;
+import org.rhq.modules.plugins.wildfly10.test.util.ASConnectionFactory;
+import org.rhq.modules.plugins.wildfly10.test.util.Constants;
 import org.rhq.test.arquillian.RunDiscovery;
 
 /**

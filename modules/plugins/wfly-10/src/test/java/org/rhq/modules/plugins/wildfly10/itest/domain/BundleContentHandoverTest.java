@@ -39,13 +39,13 @@ import org.rhq.core.pluginapi.bundle.BundleHandoverRequest;
 import org.rhq.core.pluginapi.bundle.BundleHandoverResponse;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.modules.plugins.wildfly10.itest.AbstractJBossAS7PluginTest;
-import org.rhq.modules.plugins.wildfly10.test.util.ASConnectionFactory;
-import org.rhq.modules.plugins.wildfly10.test.util.Constants;
 import org.rhq.modules.plugins.wildfly10.json.Address;
 import org.rhq.modules.plugins.wildfly10.json.Operation;
 import org.rhq.modules.plugins.wildfly10.json.ReadAttribute;
 import org.rhq.modules.plugins.wildfly10.json.ReadResource;
 import org.rhq.modules.plugins.wildfly10.json.Result;
+import org.rhq.modules.plugins.wildfly10.test.util.ASConnectionFactory;
+import org.rhq.modules.plugins.wildfly10.test.util.Constants;
 import org.rhq.test.arquillian.RunDiscovery;
 
 /**

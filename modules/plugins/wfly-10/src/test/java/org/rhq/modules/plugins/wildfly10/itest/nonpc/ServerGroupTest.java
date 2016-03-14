@@ -25,11 +25,11 @@ import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
-import org.rhq.modules.plugins.wildfly10.test.util.ASConnectionFactory;
-import org.rhq.modules.plugins.wildfly10.test.util.Constants;
 import org.rhq.modules.plugins.wildfly10.ASConnection;
 import org.rhq.modules.plugins.wildfly10.HostControllerComponent;
 import org.rhq.modules.plugins.wildfly10.json.Remove;
+import org.rhq.modules.plugins.wildfly10.test.util.ASConnectionFactory;
+import org.rhq.modules.plugins.wildfly10.test.util.Constants;
 
 /**
  * Tests around server groups

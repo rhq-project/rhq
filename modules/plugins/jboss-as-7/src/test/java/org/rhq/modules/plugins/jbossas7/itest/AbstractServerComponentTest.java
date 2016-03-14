@@ -107,8 +107,10 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
             + "start() method due to invalid baseDir.");
 
         // Change the expectedRuntimeProductName property
+        boolean exceptException = true;
         String originalExpectedRuntimeProductName = pluginConfig.getSimpleValue("expectedRuntimeProductName");
         if (originalExpectedRuntimeProductName.equals(JBossProductType.AS.PRODUCT_NAME)) {
+            exceptException = false;
             pluginConfig.setSimpleValue("expectedRuntimeProductName", JBossProductType.EAP.PRODUCT_NAME);
         } else {
             pluginConfig.setSimpleValue("expectedRuntimeProductName", JBossProductType.AS.PRODUCT_NAME);
@@ -128,8 +130,14 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         pluginConfig.setSimpleValue("expectedRuntimeProductName", originalExpectedRuntimeProductName);
         inventoryManager.activateResource(getServerResource(), serverContainer, true);
 
-        Assert.assertNotNull(ipce, "InvalidPluginConfigurationException was not thrown by server component's "
-            + "start() method due to invalid productType.");
+        if(exceptException) {
+            Assert.assertNotNull(ipce, "InvalidPluginConfigurationException was not thrown by server component's "
+                    + "start() method due to invalid productType.");
+        } else {
+            Assert.assertNull(ipce, "InvalidPluginConfigurationException should not have been thrown in case of "
+            + "detected AS (could be fallback)");
+        }
+
     }
 
     protected void validatePluginConfiguration(Configuration pluginConfig) {

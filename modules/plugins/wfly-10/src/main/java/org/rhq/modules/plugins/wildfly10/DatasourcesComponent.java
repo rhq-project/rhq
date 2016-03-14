@@ -78,14 +78,11 @@ public class DatasourcesComponent extends BaseComponent<BaseComponent<?>> {
         }
 
         CreateResourceDelegate delegate = new CreateResourceDelegate(configDef, getASConnection(), getAddress());
-        report = delegate.createResource(report);
+        Address datasourceAddress = delegate.getCreateAddress(report);
+        Operation baseOperation = delegate.getOperation(report, datasourceAddress);
 
-        // No success -> no point in continuing
-        if (report.getStatus() != SUCCESS) {
-            return report;
-        }
-
-        Address datasourceAddress = new Address(report.getResourceKey());
+        CompositeOperation cop = new CompositeOperation();
+        cop.addStep(baseOperation);
 
         // outer create resource did not cater for the connection or xa properties, so lets add them now
         String connPropAttributeNameOnServer, connPropPluginConfigPropertyName, keyName;
@@ -102,7 +99,6 @@ public class DatasourcesComponent extends BaseComponent<BaseComponent<?>> {
         Map<String, String> connectionPropertiesAsMap = getConnectionPropertiesAsMap(listPropertyWrapper, keyName);
         // if no conn or xa props supplied in the create resource request, skip and continue
         if (!connectionPropertiesAsMap.isEmpty()) {
-            CompositeOperation cop = new CompositeOperation();
             for (Map.Entry<String, String> connectionProperty : connectionPropertiesAsMap.entrySet()) {
                 Address propertyAddress = new Address(datasourceAddress);
                 propertyAddress.add(connPropAttributeNameOnServer, connectionProperty.getKey());
@@ -110,13 +106,13 @@ public class DatasourcesComponent extends BaseComponent<BaseComponent<?>> {
                 op.addAdditionalProperty("value", connectionProperty.getValue());
                 cop.addStep(op);
             }
-            Result res = getASConnection().execute(cop);
-            if (!res.isSuccess()) {
-                report.setErrorMessage("Datasource was added, but setting " + connPropAttributeNameOnServer
-                    + " failed: " + res.getFailureDescription());
-                report.setStatus(INVALID_ARTIFACT);
-                return report;
-            }
+        }
+
+        Result res = getASConnection().execute(cop);
+        if (!res.isSuccess()) {
+            report.setErrorMessage(res.getFailureDescription());
+            report.setStatus(FAILURE);
+            return report;
         }
 
         // Now enable/disable datasource as required
@@ -146,6 +142,10 @@ public class DatasourcesComponent extends BaseComponent<BaseComponent<?>> {
                     report.setErrorMessage("Datasource was added but not disabled: " + result.getFailureDescription());
                 }
             }
+        } else {
+            report.setStatus(SUCCESS);
+            report.setResourceKey(datasourceAddress.getPath());
+            report.setResourceName(report.getUserSpecifiedResourceName());
         }
 
         return report;

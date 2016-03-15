@@ -29,6 +29,7 @@ import org.jboss.as.server.deployment.*;
 import org.jboss.as.web.common.WarMetaData;
 import org.jboss.logging.Logger;
 import org.jboss.metadata.javaee.spec.ParamValueMetaData;
+import org.jboss.metadata.web.jboss.JBossWebMetaData;
 import org.jboss.metadata.web.spec.FilterMappingMetaData;
 import org.jboss.metadata.web.spec.FilterMetaData;
 import org.jboss.metadata.web.spec.FiltersMetaData;
@@ -63,7 +64,7 @@ public class RtFilterDeploymentUnitProcessor implements DeploymentUnitProcessor 
             log.debug("Configuring RHQ response-time servlet filter for WAR " + deploymentUnit.getName() + "...");
 
             final WarMetaData warMetaData = deploymentUnit.getAttachment(WarMetaData.ATTACHMENT_KEY);
-            WebMetaData webMetaData = warMetaData.getWebMetaData();
+            JBossWebMetaData webMetaData = warMetaData.getMergedJBossWebMetaData();
 
             FilterMetaData rtFilter = null;
             FiltersMetaData filters = webMetaData.getFilters();

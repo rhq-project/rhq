@@ -33,7 +33,6 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.CallTimeDataCriteria;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
-import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -136,10 +135,10 @@ public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, Cal
         double[] durations = new double[] { from.getMinimum(), from.getMaximum(), from.getAverage() };
         String[] durationStrings = MeasurementConverterClient.formatToSignificantPrecision(durations,
             MeasurementUnits.MILLISECONDS, true);
+
         // total is the sum of all calls so we format it differently as min, max because it is
         // much higher number
-        MeasurementNumericValueAndUnits total = MeasurementConverterClient.fit(from.getTotal(),
-            MeasurementUnits.MILLISECONDS);
+
         String totalString = MeasurementConverterClient.format(from.getTotal(), MeasurementUnits.MILLISECONDS, true);
 
         ListGridRecord record = new ListGridRecord();
@@ -148,7 +147,7 @@ public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, Cal
         record.setAttribute(FIELD_MIN, durations[0]);
         record.setAttribute(FIELD_MAX, durations[1]);
         record.setAttribute(FIELD_AVG, durations[2]);
-        record.setAttribute(FIELD_TOTAL, total.getValue());
+        record.setAttribute(FIELD_TOTAL, from.getTotal());
         record.setAttribute(FIELD_MIN_STRING, durationStrings[0]);
         record.setAttribute(FIELD_MAX_STRING, durationStrings[1]);
         record.setAttribute(FIELD_AVG_STRING, durationStrings[2]);

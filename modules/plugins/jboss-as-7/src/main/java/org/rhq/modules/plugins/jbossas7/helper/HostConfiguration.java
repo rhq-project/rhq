@@ -186,9 +186,9 @@ public class HostConfiguration {
         hp.isSecure = isSecure;
 
         if (!interfaceExpression.isEmpty()) {
-            hp.host = replaceDollarExpression(interfaceExpression, commandLine, "localhost");
+            hp.host = replaceDollarExpression(interfaceExpression, commandLine, "127.0.0.1");
         } else {
-            hp.host = "localhost"; // Fallback
+            hp.host = "127.0.0.1"; // Fallback
         }
 
         hp.port = 0;
@@ -302,9 +302,9 @@ public class HostConfiguration {
         HostPort hp = new HostPort();
 
         if (!interfaceExpression.isEmpty()) {
-            hp.host = replaceDollarExpression(interfaceExpression, commandLine, "localhost");
+            hp.host = replaceDollarExpression(interfaceExpression, commandLine, "127.0.0.1");
         } else {
-            hp.host = "localhost"; // Fallback
+            hp.host = "127.0.0.1"; // Fallback
         }
 
         hp.port = 0;

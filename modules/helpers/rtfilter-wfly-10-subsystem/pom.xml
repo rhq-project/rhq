@@ -29,10 +29,12 @@
   <parent>
     <groupId>org.rhq.helpers</groupId>
     <artifactId>rhq-helpers</artifactId>
-    <version>4.14.0-SNAPSHOT</version>
+    <version>4.12.0.JON330GA</version>
   </parent>
 
+  <groupId>org.rhq.helpers</groupId>
   <artifactId>rhq-rtfilter-wfly-10-subsystem</artifactId>
+  <version>4.12.0.JON330GA</version>
 
   <name>RHQ Response-Time Filter - Wildfly 10 Subsystem</name>
 
@@ -80,6 +82,28 @@
         </executions>
       </plugin>
 
+      <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>animal-sniffer-maven-plugin</artifactId>
+          <version>1.15</version>
+        <configuration>
+          <ignores>
+            <ignore>org.jboss.as.server.deployment.AttachmentKey</ignore>
+            <ignore>org.jboss.as.web.common.WarMetaData</ignore>
+            <ignore>org.jboss.metadata.web.spec.FiltersMetaData</ignore>
+            <ignore>org.jboss.metadata.web.spec.FilterMetaData</ignore>
+            <ignore>org.jboss.metadata.web.spec.*</ignore>
+            <ignore>org.jboss.metadata.javaee.spec.ParamValueMetaData</ignore>
+            <ignore>org.jboss.as.ee.*</ignore>
+          </ignores>
+          <excludeDependencies>
+            <excludeDependency>org.jboss.as:*</excludeDependency>
+            <excludeDependency>org.jboss.metadata:*</excludeDependency>
+            <excludeDependency>org.wildfly:*</excludeDependency>
+          </excludeDependencies>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 
@@ -99,7 +123,7 @@
     <dependency>
       <groupId>org.rhq.helpers</groupId>
       <artifactId>rhq-rtfilter</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-rtfilter.version}</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>

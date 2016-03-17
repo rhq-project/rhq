@@ -35,8 +35,6 @@ public class JBossCliConfigurationTest {
             .addSimple(Property.KEYSTORE, "/tmp/keystore")
             .addSimple(Property.KEYSTORE_PASSWORD, "keystorepass")
             .addSimple(Property.KEY_PASSWORD, "keypass")
-            .addSimple(Property.NATIVE_HOST, "1.1.1.1")
-            .addSimple(Property.NATIVE_PORT, 123456)
             .build();
         serverConfig = new ServerPluginConfiguration(pluginConfig);
         cliConfig = new JBossCliConfiguration(jbossCliXml, serverConfig);

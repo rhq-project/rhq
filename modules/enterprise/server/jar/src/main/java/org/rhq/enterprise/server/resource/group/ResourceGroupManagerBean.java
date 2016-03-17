@@ -1661,58 +1661,45 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
         // now "join" results together
         List<ResourceGroupComposite> results = new ArrayList<ResourceGroupComposite>(explicitResults.size());
-        if (explicitResults.size() == implicitResults.size()
-            && (permissionResults == null || permissionResults.size() == implicitResults.size())) {
-            // in case we selected same groups sets using all 2 (or 3) queries (99% of cases) just "join" them by index
-            for (int i = 0; i < explicitResults.size(); i++) {
-                ResourceGroupComposite imp = implicitResults.get(i);
-                ResourceGroupComposite exp = explicitResults.get(i);
-                ResourceGroupComposite perm = permissionResults != null ? permissionResults.get(i) : null;
-                ResourceGroupComposite composite = createComposite(imp, exp, perm);
+        // some groups could be being added/removed in the meantime
+        // we must join it using resourceGroup ID
+        // map ResourceGroupID and [implicitComposite, explicitComposite, permComposite]
+
+        Map<Integer, List<ResourceGroupComposite>> joinMap = new HashMap<Integer, List<ResourceGroupComposite>>();
+        for (ResourceGroupComposite c : implicitResults) {
+            if (!joinMap.containsKey(c.getResourceGroup().getId())) {
+                joinMap.put(c.getResourceGroup().getId(), new ArrayList<ResourceGroupComposite>(3));
+            }
+            joinMap.get(c.getResourceGroup().getId()).add(c);
+        }
+        for (ResourceGroupComposite c : explicitResults) {
+            // Discard them early
+            if (joinMap.containsKey(c.getResourceGroup().getId())) {
+                joinMap.get(c.getResourceGroup().getId()).add(c);
+            }
+        }
+        if (permissionResults != null) {
+            for (ResourceGroupComposite c : permissionResults) {
+                if (joinMap.containsKey(c.getResourceGroup().getId())) {
+                    joinMap.get(c.getResourceGroup().getId()).add(c);
+                }
+            }
+            // produce results (include permissionResults)
+            for (List<ResourceGroupComposite> list : joinMap.values()) {
+                if (list.size() < 3) {
+                    continue; // we did not fully select this composite with all 3 queries, ignore it
+                }
+                ResourceGroupComposite composite = createComposite(list.get(0), list.get(1), list.get(2));
                 results.add(composite);
             }
         } else {
-            // we did not get same results, this means some groups are being added/removed in the meantime
-            // we must join it using resourceGroup ID (this is a bit more expensive approach)
-            // map ResourceGroupID and [implicitComposite, explicitComposite, permComposite]
-
-            Map<Integer,List<ResourceGroupComposite>> joinMap = new HashMap<Integer, List<ResourceGroupComposite>>();
-            for (ResourceGroupComposite c : implicitResults) {
-                if (!joinMap.containsKey(c.getResourceGroup().getId())) {
-                    joinMap.put(c.getResourceGroup().getId(), new ArrayList<ResourceGroupComposite>(3));
+            // prouduce results, but exclude permissionResults
+            for (List<ResourceGroupComposite> list : joinMap.values()) {
+                if (list.size() < 2) {
+                    continue; // we did not fully select this composite with all 2 queries, ignore it
                 }
-                joinMap.get(c.getResourceGroup().getId()).add(c);
-            }
-            for (ResourceGroupComposite c : explicitResults) {
-                if (!joinMap.containsKey(c.getResourceGroup().getId())) {
-                    joinMap.put(c.getResourceGroup().getId(), new ArrayList<ResourceGroupComposite>(3));
-                }
-                joinMap.get(c.getResourceGroup().getId()).add(c);
-            }
-            if (permissionResults != null) {
-                for (ResourceGroupComposite c : permissionResults) {
-                    if (!joinMap.containsKey(c.getResourceGroup().getId())) {
-                        joinMap.put(c.getResourceGroup().getId(), new ArrayList<ResourceGroupComposite>(3));
-                    }
-                    joinMap.get(c.getResourceGroup().getId()).add(c);
-                }
-                // produce results (include permissionResults)
-                for (List<ResourceGroupComposite> list : joinMap.values()) {
-                    if (list.size() < 3) {
-                        continue; // we did not fully select this composite with all 3 queries, ignore it
-                    }
-                    ResourceGroupComposite composite = createComposite(list.get(0), list.get(1), list.get(2));
-                    results.add(composite);
-                }
-            } else {
-                // prouduce results, but exclude permissionResults
-                for (List<ResourceGroupComposite> list : joinMap.values()) {
-                    if (list.size() < 2) {
-                        continue; // we did not fully select this composite with all 2 queries, ignore it
-                    }
-                    ResourceGroupComposite composite = createComposite(list.get(0), list.get(1), null);
-                    results.add(composite);
-                }
+                ResourceGroupComposite composite = createComposite(list.get(0), list.get(1), null);
+                results.add(composite);
             }
         }
         // finally sort results by the same order we got in resoureGroups PageList

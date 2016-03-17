@@ -417,9 +417,14 @@ public class ASConnection {
         try {
             operationResult = mapper.readTree(responseBody);
         } catch (IOException ioe) {
-            String failureDescription = "Failed to deserialize response to " + operation
-                + " to JsonNode - response status was " + statusAsString(statusLine) + ", and body was ["
-                + responseBody + "]: " + ioe;
+            String failureDescription = "";
+            if (statusLine.getStatusCode() == 503) {
+                failureDescription = "Server not available [" + statusAsString(statusLine) + "]";
+            } else {
+                failureDescription = "Failed to deserialize response to " + operation
+                    + " to JsonNode - response status was " + statusAsString(statusLine) + ", and body was ["
+                    + responseBody + "]: " + ioe;
+            }
             LOG.error(failureDescription);
             operationResult = resultAsJsonNode(FAILURE, failureDescription, ioe,
                 responseBody.contains("rolled-back=true"));

@@ -186,130 +186,14 @@ public class HostConfiguration {
         hp.isSecure = isSecure;
 
         if (!interfaceExpression.isEmpty()) {
-            hp.host = replaceDollarExpression(interfaceExpression, commandLine, "localhost");
+            hp.host = replaceDollarExpression(interfaceExpression, commandLine, "127.0.0.1");
         } else {
-            hp.host = "localhost"; // Fallback
+            hp.host = "127.0.0.1"; // Fallback
         }
 
         hp.port = 0;
         if (portString != null && !portString.isEmpty()) {
             String tmp = replaceDollarExpression(portString, commandLine, String.valueOf(DEFAULT_MGMT_PORT));
-            hp.port = Integer.valueOf(tmp);
-        }
-
-        if (portOffsetRaw != null && !portOffsetRaw.isEmpty()) {
-            String portOffsetString = replaceDollarExpression(portOffsetRaw, commandLine, "0");
-            Integer portOffset = Integer.valueOf(portOffsetString);
-            hp.port += portOffset;
-            hp.withOffset = true;
-        } else if (mode == AS7Mode.STANDALONE) {
-            // On standalone servers, offset may also be set with a system property
-            String value = commandLine.getSystemProperties().get(SOCKET_BINDING_PORT_OFFSET_SYSPROP);
-            if (value != null) {
-                int offset = Integer.valueOf(value);
-                hp.port += offset;
-            }
-        }
-
-        return hp;
-    }
-
-    /**
-     * Try to obtain the management IP and port from the already parsed host.xml or standalone.xml
-     *
-     * @param commandLine Command line arguments of the process to
-     *
-     * @return an Object containing host and port
-     */
-    public HostPort getNativeHostPort(AS7CommandLine commandLine, AS7Mode mode) {
-        // There are three ways to configure the http(s) management endpoint
-        //
-        // 1. Standalone servers favored style (socket-binding style)
-        //     <management>
-        //         <management-interfaces>
-        //             <native-interface security-realm="ManagementRealm">
-        //                 <socket-binding native="management"/>
-        //             </native-interface>
-        //         </management-interfaces>
-        //     </management>
-        //
-        // 2. Host controllers style, unfavored standalone servers style (socket style)
-        //     <management>
-        //         <management-interfaces>
-        //             <native-interface security-realm="ManagementRealm">
-        //                 <socket interface="management" port="9999" />
-        //             </native-interface>
-        //         </management-interfaces>
-        //     </management>
-        //
-        //
-        // 3. Very old and deprecated style (early as7 style)
-        //     <management>
-        //         <management-interfaces>
-        //             <native-interface security-realm="ManagementRealm" interface="management" port="9999" />
-        //         </management-interfaces>
-        //     </management>
-
-        String portString;
-        String interfaceExpression;
-        String socketBindingName;
-        String portOffsetRaw = null;
-        boolean isSecure = false;
-        // detect http interface
-        if (findMatchingElements("//management/management-interfaces/native-interface/socket-binding").getLength() != 0) {
-            // This is case 1
-            socketBindingName = obtainXmlPropertyViaXPath("//management/management-interfaces/native-interface/socket-binding/@native");
-            portString = obtainXmlPropertyViaXPath("/server/socket-binding-group/socket-binding[@name='"
-                + socketBindingName + "']/@port");
-            String interfaceName = obtainXmlPropertyViaXPath("/server/socket-binding-group/socket-binding[@name='"
-                + socketBindingName + "']/@interface");
-            String xpathExpression = "/server/socket-binding-group/@port-offset";
-            portOffsetRaw = obtainXmlPropertyViaXPath(xpathExpression);
-
-            interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
-                + "']/inet-address/@value");
-            if (interfaceExpression.isEmpty()) {
-                interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
-                    + "']/loopback-address/@value");
-            }
-        } else if (findMatchingElements("//management/management-interfaces/native-interface/socket").getLength() != 0) {
-            // This is case 2
-            String socketInterface = obtainXmlPropertyViaXPath("//management/management-interfaces/native-interface/socket/@interface");
-            interfaceExpression = obtainXmlPropertyViaXPath("//interfaces/interface[@name='" + socketInterface
-                + "']/inet-address/@value");
-            if (interfaceExpression.isEmpty()) {
-                interfaceExpression = obtainXmlPropertyViaXPath("//interfaces/interface[@name='" + socketInterface
-                    + "']/loopback-address/@value");
-            }
-            portString = obtainXmlPropertyViaXPath("//management/management-interfaces/native-interface/socket/@port");
-        } else {
-            // This is case 3
-            portString = obtainXmlPropertyViaXPath("//management/management-interfaces/native-interface/@secure-port");
-            if (!portString.isEmpty()) {
-                isSecure = true;
-            } else {
-                portString = obtainXmlPropertyViaXPath("//management/management-interfaces/native-interface/@port");
-            }
-            String interfaceName = obtainXmlPropertyViaXPath("//management/management-interfaces/native-interface/@interface");
-            interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
-                + "']/inet-address/@value");
-            if (interfaceExpression.isEmpty()) {
-                interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
-                    + "']/loopback-address/@value");
-            }
-        }
-
-        HostPort hp = new HostPort();
-
-        if (!interfaceExpression.isEmpty()) {
-            hp.host = replaceDollarExpression(interfaceExpression, commandLine, "localhost");
-        } else {
-            hp.host = "localhost"; // Fallback
-        }
-
-        hp.port = 0;
-        if (portString != null && !portString.isEmpty()) {
-            String tmp = replaceDollarExpression(portString, commandLine, String.valueOf(DEFAULT_NATIVE_PORT));
             hp.port = Integer.valueOf(tmp);
         }
 

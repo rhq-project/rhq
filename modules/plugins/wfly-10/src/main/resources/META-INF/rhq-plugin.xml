@@ -62,9 +62,7 @@
             for example: -c standalone-ha-full.xml. There is currently a 2000 character limit for this value.
           </c:description>
         </c:simple-property>
-        <c:simple-property name="nativeHost" default="127.0.0.1" required="true" description="Native management API host"/>
-        <c:simple-property name="nativePort" type="integer" required="true" default="9999" description="Native management API port" />
-        <c:simple-property name="nativeLocalAuth" required="false" displayName="Native Local Authentication" type="boolean">
+        <c:simple-property name="nativeLocalAuth" required="false" displayName="CLI Local Authentication" type="boolean">
           <c:description>
             Specifies if the local authentication should be used to interact with the EAP CLI 
             (this includes bundle:handover feature, EAP patching and CLI operations).
@@ -1549,9 +1547,7 @@
             for these changes to take effect.
           </c:description>
         </c:simple-property>
-        <c:simple-property name="nativeHost" default="127.0.0.1" required="true" description="Native management API host"/>
-        <c:simple-property name="nativePort" type="integer" required="true" default="9999" description="Native management API port" />
-        <c:simple-property name="nativeLocalAuth" required="false" displayName="Native Local Authentication" type="boolean">
+        <c:simple-property name="nativeLocalAuth" required="false" displayName="CLI Local Authentication" type="boolean">
             <c:description>
             Specifies if the local authentication should be used to interact with the EAP CLI 
             (this includes bundle:handover feature, EAP patching and CLI operations).

@@ -42,7 +42,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -50,8 +49,6 @@ import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
-import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.JavaCommandLine;
@@ -69,7 +66,7 @@ import org.rhq.modules.plugins.wildfly10.json.Result;
  * Abstract base discovery component for the two server types - "JBossAS7 Host Controller" and
  * "JBossAS7 Standalone Server".
  */
-public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent, ManualAddFacet, ResourceUpgradeFacet {
+public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent, ManualAddFacet {
     private static final Log LOG = LogFactory.getLog(BaseProcessDiscovery.class);
 
     private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
@@ -197,12 +194,13 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);
 
         HostPort managementHostPort = hostConfig.getManagementHostPort(commandLine, getMode());
+        if ("0.0.0.0".equals(managementHostPort.host)) {
+            LOG.debug("Discovered management host set to 0.0.0.0, falling back to 127.0.0.1");
+            managementHostPort.host = "127.0.0.1";
+        }
         serverPluginConfig.setHostname(managementHostPort.host);
         serverPluginConfig.setPort(managementHostPort.port);
         serverPluginConfig.setSecure(managementHostPort.isSecure);
-        HostPort nativeHostPort = hostConfig.getNativeHostPort(commandLine, getMode());
-        serverPluginConfig.setNativeHost(nativeHostPort.host);
-        serverPluginConfig.setNativePort(nativeHostPort.port);
         serverPluginConfig.setNativeLocalAuth(hostConfig.isNativeLocalOnly());
         pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());
         String apiVersion = hostConfig.getDomainApiVersion();
@@ -486,139 +484,6 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             description, pluginConfig, null);
 
         return detail;
-    }
-
-    @Override
-    public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
-        ResourceUpgradeReport report = new ResourceUpgradeReport();
-        boolean upgraded = false;
-
-        String currentResourceKey = inventoriedResource.getResourceKey();
-        Configuration pluginConfiguration = inventoriedResource.getPluginConfiguration();
-        ServerPluginConfiguration serverPluginConfiguration = new ServerPluginConfiguration(pluginConfiguration);
-
-        HostConfiguration hostConfig = null;
-        // load hostConfiguration just once - we need it several times
-        File hostXmlFile = serverPluginConfiguration.getHostConfigFile();
-        if (hostXmlFile != null && hostXmlFile.exists()) {
-            try {
-                hostConfig = loadHostConfiguration(hostXmlFile);
-            } catch (Exception e) {
-                LOG.error("Unable to upgrade resource " + inventoriedResource, e);
-                return null;
-            }
-        } else {
-            LOG.warn("Unable to upgrade resource " + inventoriedResource
-                + "Server configuration file not found at the expected location (" + hostXmlFile + ").");
-            return null;
-        }
-
-        boolean hasLocalResourcePrefix = currentResourceKey.startsWith(LOCAL_RESOURCE_KEY_PREFIX);
-        boolean hasRemoteResourcePrefix = currentResourceKey.startsWith(REMOTE_RESOURCE_KEY_PREFIX);
-        if (!hasLocalResourcePrefix && !hasRemoteResourcePrefix) {
-            // Resource key in wrong format
-            upgraded = true;
-            if (new File(currentResourceKey).isDirectory()) {
-                // Old key format for a local resource (key is base dir)
-                report.setNewResourceKey(createKeyForLocalResource(serverPluginConfiguration));
-            } else if (currentResourceKey.contains(":")) {
-                // Old key format for a remote (manually added) resource (key is base dir)
-                report.setNewResourceKey(createKeyForRemoteResource(currentResourceKey));
-            } else {
-                upgraded = false;
-                LOG.warn("Unknown format, cannot upgrade resource key [" + currentResourceKey + "]");
-            }
-        } else if (hasLocalResourcePrefix) {
-            String configFilePath = currentResourceKey.substring(LOCAL_RESOURCE_KEY_PREFIX.length());
-            File configFile = new File(configFilePath);
-            try {
-                String configFileCanonicalPath = configFile.getCanonicalPath();
-                if (!configFileCanonicalPath.equals(configFilePath)) {
-                    upgraded = true;
-                    report.setNewResourceKey(LOCAL_RESOURCE_KEY_PREFIX + configFileCanonicalPath);
-                }
-            } catch (IOException e) {
-                LOG.warn("Unexpected IOException while converting host config file path to its canonical form", e);
-            }
-        }
-
-        if (pluginConfiguration.getSimpleValue("expectedRuntimeProductName") == null) {
-            upgraded = true;
-            pluginConfiguration.setSimpleValue("expectedRuntimeProductName",
-                serverPluginConfiguration.getProductType().PRODUCT_NAME);
-            report.setNewPluginConfiguration(pluginConfiguration);
-        }
-
-        String supportsPatching = pluginConfiguration.getSimpleValue("supportsPatching");
-        if (supportsPatching == null || supportsPatching.startsWith("__UNINITIALIZED_")) {
-            upgraded = true;
-
-            JBossProductType productType = serverPluginConfiguration.getProductType();
-            if (productType == null) {
-                if (inventoriedResource.getNativeProcess() != null) {
-                    // if resource seems to run, detect product type
-                    try {
-                        AS7CommandLine commandLine = new AS7CommandLine(inventoriedResource.getNativeProcess());
-                        File homeDir = getHomeDir(inventoriedResource.getNativeProcess(), commandLine);
-                        String apiVersion = hostConfig.getDomainApiVersion();
-                        productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
-                        serverPluginConfiguration.setProductType(productType);
-                        pluginConfiguration.setSimpleValue("supportsPatching", Boolean.toString(true)); // @TODO Remove
-                        report.setNewPluginConfiguration(pluginConfiguration);
-                    } catch (Exception e) {
-                        LOG.warn("Unable to detect productType", e);
-                    }
-
-                } else {
-                    // we have to skip upgrading at this point since it is not running and we're unable to detect productType
-                    LOG.warn("Unable to upgrade resource "
-                        + inventoriedResource
-                        + " : resource is missing productType pluginConfiguration property and needs to be running in order to discover it");
-                    upgraded = false;
-                }
-            } else {
-                pluginConfiguration
-                .setSimpleValue("supportsPatching", Boolean.toString(true)); // Remove
-                report.setNewPluginConfiguration(pluginConfiguration);
-            }
-
-
-        }
-
-        if (inventoriedResource.getNativeProcess() != null) {
-            String origHost = serverPluginConfiguration.getNativeHost();
-            Integer origPort = serverPluginConfiguration.getNativePort();
-            // detect if server is running and has default values
-            if ("127.0.0.1".equals(origHost) && Integer.valueOf(9999).equals(origPort)) {
-                try {
-                    AS7CommandLine commandLine = new AS7CommandLine(inventoriedResource.getNativeProcess());
-                    HostPort hp = hostConfig.getNativeHostPort(commandLine, getMode());
-
-                    // only update pluginConfig if we detected a difference
-                    if (!origHost.equals(hp.host) || origPort.intValue() != hp.port) {
-                        serverPluginConfiguration.setNativeHost(hp.host);
-                        serverPluginConfiguration.setNativePort(hp.port);
-                        report.setNewPluginConfiguration(serverPluginConfiguration.getPluginConfig());
-                        LOG.info("Detected native host/port " + hp + " for " + inventoriedResource.getResourceKey());
-                        upgraded = true;
-                    }
-
-                } catch (Exception e) {
-                    LOG.error("Unable to detect and upgrade native management host and port", e);
-                }
-            }
-        }
-
-        if (pluginConfiguration.getSimpleValue(ServerPluginConfiguration.Property.NATIVE_LOCAL_AUTH) == null) {
-            serverPluginConfiguration.setNativeLocalAuth(hostConfig.isNativeLocalOnly());
-            report.setNewPluginConfiguration(serverPluginConfiguration.getPluginConfig());
-            upgraded = true;
-        }
-
-        if (upgraded) {
-            return report;
-        }
-        return null;
     }
 
     private String createKeyForRemoteResource(String hostPort) {

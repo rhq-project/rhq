@@ -40,8 +40,6 @@ public class ServerPluginConfiguration {
         public static final String HOSTNAME = "hostname";
         public static final String PORT = "port";
         public static final String SECURE = "secure";
-        public static final String NATIVE_HOST = "nativeHost";
-        public static final String NATIVE_PORT = "nativePort";
         public static final String NATIVE_LOCAL_AUTH = "nativeLocalAuth";
         public static final String USER = "user";
         public static final String PASSWORD = "password";
@@ -52,8 +50,6 @@ public class ServerPluginConfiguration {
         public static final String LOG_DIR = "logDir";
         public static final String PRODUCT_TYPE = "productType";
         public static final String HOST_CONFIG_FILE = "hostConfigFile";
-        @Deprecated
-        public static final String AVAIL_CHECK_PERIOD_CONFIG_PROP = "availabilityCheckPeriod";
         public static final String TRUST_STRATEGY = "trustStrategy";
         public static final String HOSTNAME_VERIFICATION = "hostnameVerification";
         public static final String TRUSTSTORE_TYPE = "truststoreType";
@@ -124,20 +120,6 @@ public class ServerPluginConfiguration {
         this.pluginConfig.setSimpleValue(Property.SECURE, String.valueOf(secure));
     }
 
-    public Integer getNativePort() {
-        String stringValue = this.pluginConfig.getSimpleValue(Property.NATIVE_PORT);
-        return (stringValue != null) ? Integer.valueOf(stringValue) : null;
-    }
-
-    public void setNativeHost(String host) {
-        this.pluginConfig.setSimpleValue(Property.NATIVE_HOST, host);
-    }
-
-    public String getNativeHost() {
-        return this.pluginConfig.getSimpleValue(Property.NATIVE_HOST);
-
-    }
-
     public boolean isNativeLocalAuth() {
         String stringValue = this.pluginConfig.getSimpleValue(Property.NATIVE_LOCAL_AUTH);
         return stringValue != null && Boolean.parseBoolean(stringValue);
@@ -145,10 +127,6 @@ public class ServerPluginConfiguration {
 
     public void setNativeLocalAuth(boolean nativeLocalAuth) {
         this.pluginConfig.setSimpleValue(Property.NATIVE_LOCAL_AUTH, String.valueOf(nativeLocalAuth));
-    }
-
-    public void setNativePort(int port) {
-        this.pluginConfig.setSimpleValue(Property.NATIVE_PORT, String.valueOf(port));
     }
 
     public String getUser() {
@@ -224,15 +202,6 @@ public class ServerPluginConfiguration {
     public void setHostConfigFile(File hostConfigFile) {
         this.pluginConfig.setSimpleValue(Property.HOST_CONFIG_FILE,
             (hostConfigFile != null) ? hostConfigFile.toString() : null);
-    }
-
-    @Deprecated
-    public Integer getAvailabilityCheckPeriod() {
-        return 0;
-    }
-
-    @Deprecated
-    public void setAvailabilityCheckPeriod(Integer availabilityCheckPeriod) {
     }
 
     public TrustStrategy getTrustStrategy() {

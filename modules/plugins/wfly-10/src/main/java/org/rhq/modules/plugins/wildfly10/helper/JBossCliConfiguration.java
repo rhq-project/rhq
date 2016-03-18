@@ -212,8 +212,8 @@ public class JBossCliConfiguration {
     public String configureDefaultController() {
         Node ctrlNode = this.document.createElement("default-controller");
         ctrlNode.appendChild(createComment());
-        addChildElement(ctrlNode, "host", serverConfig.getNativeHost());
-        addChildElement(ctrlNode, "port", String.valueOf(serverConfig.getNativePort()));
+        addChildElement(ctrlNode, "host", serverConfig.getHostname());
+        addChildElement(ctrlNode, "port", String.valueOf(serverConfig.getPort()));
         Node existing = (Node) xpathExpression("/jboss-cli/default-controller", XPathConstants.NODE);
         if (existing != null) {
             this.document.getDocumentElement().replaceChild(ctrlNode, existing);

@@ -8954,7 +8954,7 @@
         <c:simple-property name="path" readOnly="true" default="configuration=handler"/>
       </plugin-configuration>
 
-      <service name="File handler" displayName="File"
+      <service name="File handler"
                discovery="SubsystemDiscovery"
                class="BaseComponent"
                createDeletePolicy="both">
@@ -8996,7 +8996,7 @@
          <c:simple-property name="session-cookie-names" required="false" type="string" readOnly="false" defaultValue="JSESSIONID" description="Comma separated list of session cookie names. Generally this will just be JSESSIONID. The default value is JSESSIONID."/>
         </resource-configuration>
 
-        <service name="Reverse proxy host" displayName="Host"
+        <service name="Reverse proxy host"
                discovery="SubsystemDiscovery"
                class="BaseComponent"
                createDeletePolicy="both">
@@ -9100,7 +9100,6 @@
       </service> <!-- End of ajp-listener service -->
 
       <service name="Undertow Host"
-               displayName="Host"
                discovery="SubsystemDiscovery"
                class="BaseComponent"
                createDeletePolicy="both">
@@ -9118,7 +9117,7 @@
           <c:simple-property name="disable-console-redirect" required="false" type="boolean" readOnly="false" defaultValue="false" description="if set to true, /console redirect wont be enabled for this host, default is false. The default value is false."/>
         </resource-configuration>
 
-        <service name="Host Filter Ref" displayName="Filter Ref"
+        <service name="Host Filter Ref"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent">
 
@@ -9133,7 +9132,7 @@
 
         </service><!-- End of filter-ref service -->
 
-        <service name="Undertow-Location" displayName="Location"
+        <service name="Undertow-Location"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent">
 
@@ -9145,7 +9144,7 @@
             <c:simple-property name="handler" required="true" type="string" readOnly="false" description="Default handler for this location"/>
           </resource-configuration>
 
-          <service name="Location Filter Ref" displayName="Undertow Filter Ref"
+          <service name="Location Filter Ref"
                    discovery="SubsystemDiscovery"
                    class="BaseComponent">
 

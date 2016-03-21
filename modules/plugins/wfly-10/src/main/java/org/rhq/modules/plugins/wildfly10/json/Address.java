@@ -86,7 +86,10 @@ public class Address {
             path = path.substring(1);
         }
         if (path.endsWith("/")) {
-            path = path.substring(0, path.length() - 1);
+            // We need to check that this "/" isn't the only value of the last key.
+            if (!path.endsWith("=/")) {
+                path = path.substring(0, path.length() - 1);
+            }
         }
         // Now split on comma boundaries
         String[] components = PATH_PATTERN.split(path);

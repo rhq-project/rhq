@@ -215,17 +215,19 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         HostPort managementHostPort = hostConfig.getManagementHostPort(commandLine, getMode());
         if ("0.0.0.0".equals(managementHostPort.host)) {
             LOG.debug("Discovered management host set to 0.0.0.0, falling back to 127.0.0.1");
-            managementHostPort.host = "127.0.0.1";
+            serverPluginConfig.setHostname("127.0.0.1");
+        } else {
+            serverPluginConfig.setHostname(managementHostPort.host);
         }
-        serverPluginConfig.setHostname(managementHostPort.host);
         serverPluginConfig.setPort(managementHostPort.port);
         serverPluginConfig.setSecure(managementHostPort.isSecure);
         HostPort nativeHostPort = hostConfig.getNativeHostPort(commandLine, getMode());
         if ("0.0.0.0".equals(nativeHostPort.host)) {
             LOG.debug("Discovered native management host set to 0.0.0.0, falling back to 127.0.0.1");
-            nativeHostPort.host = "127.0.0.1";
+            serverPluginConfig.setNativeHost("127.0.0.1");
+        } else {
+            serverPluginConfig.setNativeHost(nativeHostPort.host);
         }
-        serverPluginConfig.setNativeHost(nativeHostPort.host);
         serverPluginConfig.setNativePort(nativeHostPort.port);
         serverPluginConfig.setNativeLocalAuth(hostConfig.isNativeLocalOnly());
         pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());

@@ -610,18 +610,6 @@ public final class PatchHandlerComponent implements ResourceComponent<ResourceCo
     private Result<Void> sanityCheck(ServerControl serverControl, Configuration referencedConfiguration,
         BundleManagerProvider bmp, BundleResourceDeployment resourceDeployment, boolean uniqueDeploymentRequired) {
 
-        //check if patching is supported
-
-        PropertySimple supportsPatching = referencedConfiguration.getSimple("supportsPatching");
-
-        if (supportsPatching == null) {
-            return Result.error("Target resource doesn't contain the 'Supports Patching' property in its connection settings. Using an old version of the JBossAS7 plugin?");
-        }
-
-        if (supportsPatching.getBooleanValue() == null || !supportsPatching.getBooleanValue()) {
-            return Result.error("The target resource does not support patching.");
-        }
-
         ProcessExecutionResults results = serverControl.cli().disconnected(true).executeCliCommand("help --commands");
         switch (handleExecutionResults(results, bmp, resourceDeployment, false)) {
         case EXECUTION_ERROR:

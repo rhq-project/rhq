@@ -37,8 +37,8 @@ public final class PatchHandlerDiscoveryComponent implements ResourceDiscoveryCo
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ResourceComponent<?>> context) {
 
         Configuration pluginConfig = context.getDefaultPluginConfiguration();
-        DiscoveredResourceDetails details = new DiscoveredResourceDetails(context.getResourceType(), "WflyPatchHandler",
-            "Wildfly/JBoss EAP Patch Handler", null, null, pluginConfig, null);
+        DiscoveredResourceDetails details = new DiscoveredResourceDetails(context.getResourceType(), "Wildfly10PatchHandler",
+            "Wildfly 10/EAP 7 Patch Handler", null, null, pluginConfig, null);
 
         return Collections.singleton(details);
     }

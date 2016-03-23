@@ -1008,15 +1008,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                     val = getStringValue(props.get(realName));
                 }
 
-                if ("null".equals(val)) {
-                    if (realName.equals("product-name"))
-                        val = "JBoss AS";
-                    else if (realName.equals("product-version"))
-                        val = getStringValue(props.get("release-version"));
-                    else if (LOG.isDebugEnabled()) {
-                        LOG.debug("Value for " + realName + " was 'null' and no replacement found");
-                    }
-                }
                 MeasurementDataTrait data = new MeasurementDataTrait(request, val);
                 report.addData(data);
             }
@@ -1072,9 +1063,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     }
 
     protected String collectPatches() {
-
-        JBossProductType productType = serverPluginConfig.getProductType();
-
         String cliCommand = "patch info --json-output";
 
         ProcessExecutionResults results = ServerControl.onServer(context.getPluginConfiguration(), getMode(),

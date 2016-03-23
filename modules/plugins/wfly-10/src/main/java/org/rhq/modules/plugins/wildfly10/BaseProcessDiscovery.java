@@ -225,8 +225,6 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         String description = buildDefaultResourceDescription(hostPort, productType);
         String version = getVersion(homeDir, productType);
 
-        pluginConfig.setSimpleValue("supportsPatching", Boolean.toString(true));
-
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version, description,
             pluginConfig, process);
     }
@@ -482,7 +480,6 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
         pluginConfig.put(new PropertySimple("manuallyAdded", true));
         pluginConfig.put(new PropertySimple("productType", productType.name()));
-        pluginConfig.put(new PropertySimple("supportsPatching", true)); // @TODO Remove after cleaning elsewhere
         pluginConfig.setSimpleValue("expectedRuntimeProductName", productType.PRODUCT_NAME);
 
         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), key, name, version,

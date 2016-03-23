@@ -44,6 +44,7 @@ public final class Patch {
     private final String id;
     private final Type type;
     private final String identityName;
+    private final PatchProductType productType;
     private final String targetVersion;
     private final String description;
     private final String contents;
@@ -52,6 +53,7 @@ public final class Patch {
         this.id = id;
         this.type = type;
         this.identityName = identityName;
+        this.productType = PatchProductType.getValueByProductName(identityName);
         this.targetVersion = targetVersion;
         this.description = description;
         this.contents = contents;
@@ -79,6 +81,10 @@ public final class Patch {
 
     public String getContents() {
         return contents;
+    }
+
+    public PatchProductType getProductType() {
+        return productType;
     }
 
     @Override

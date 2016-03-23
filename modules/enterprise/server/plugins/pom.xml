@@ -72,6 +72,7 @@
     <module>validate-all-serverplugins</module>
     <module>packagetype-cli</module>
     <module>wfly-patch-bundle</module>
+    <module>wfly-10-patch-bundle</module>
   </modules>
 
 </project>

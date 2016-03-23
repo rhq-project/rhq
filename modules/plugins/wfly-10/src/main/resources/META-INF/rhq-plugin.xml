@@ -1120,14 +1120,6 @@
       <c:simple-property name="logDir" type="file" description="the directory where log files will be written for this host controller" displayName="Log Directory" readOnly="true" required="false"/>
       <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain (Deprecated, use 'name' trait)"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
-        <c:simple-property name="supportsPatching" type="boolean" readOnly="false" required="true"
-                           default="__UNINITIALIZED_VALUE__(should be replaced by agent automatically)">
-            <c:description>
-                Whether this EAP server supports patching. This should be automatically deduced by the agent. It is highly
-                recommended to leave this with the discovered value. However, you will need to manually update this value
-                if you manually upgrade your server from a version that does not support patching to a version that does.
-            </c:description>
-        </c:simple-property>
 
       &startScriptPluginConfigGroup;
       &logSources;
@@ -1504,14 +1496,6 @@
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
       <c:simple-property name="logDir" type="file" description="the directory where log files will be written for this server" displayName="Log Directory" readOnly="true" required="false"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
-      <c:simple-property name="supportsPatching" type="boolean" readOnly="false" required="true"
-                         default="__UNINITIALIZED_VALUE__(should be replaced by agent automatically)">
-        <c:description>
-          Whether this EAP server supports patching. This should be automatically deduced by the agent. It is highly
-          recommended to leave this with the discovered value. However, you will need to manually update this value
-          if you manually upgrade your server from a version that does not support patching to a version that does.
-        </c:description>
-      </c:simple-property>
 
       <c:group name="operations">
         <c:simple-property name="startScript" displayName="Start Script Path" type="file" required="false">
@@ -16167,7 +16151,7 @@
   </service>
 
 
-  <service name="Wildfly/JBoss EAP Patch Handler"
+  <service name="Wildfly 10/EAP 7 Patch Handler"
            discovery="org.rhq.modules.plugins.wildfly10.patching.PatchHandlerDiscoveryComponent"
            class="org.rhq.modules.plugins.wildfly10.patching.PatchHandlerComponent"
            singleton="true"

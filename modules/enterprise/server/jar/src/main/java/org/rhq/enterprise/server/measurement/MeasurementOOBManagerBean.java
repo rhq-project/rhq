@@ -394,7 +394,8 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
         pc.initDefaultOrderingField("o.oobFactor", PageOrdering.DESC);
 
-        boolean isAdmin = authMangager.isOverlord(subject) || authMangager.isSystemSuperuser(subject);
+        boolean isAdmin = authMangager.isOverlord(subject) || authMangager.isSystemSuperuser(subject)
+            || authMangager.isInventoryManager(subject);
 
         String queryName = isAdmin ? MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_ADMIN
             : MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE;

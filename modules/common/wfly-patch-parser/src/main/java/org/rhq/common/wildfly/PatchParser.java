@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -44,7 +46,8 @@ import javax.xml.stream.XMLStreamReader;
  */
 public final class PatchParser {
     private static final String PATCHES_NAMESPACE_URI = "urn:jboss:patch:bundle:1.0";
-    private static final String PATCH_NAMESPACE_URI = "urn:jboss:patch:1.0";
+    private static final String PATCH_NAMESPACE_URI_REGEXP = "urn:jboss:patch:1[.][012]";
+    private static final Pattern NAMESPACE_PATTERN = Pattern.compile(PATCH_NAMESPACE_URI_REGEXP);
 
     private PatchParser() {
 
@@ -190,16 +193,15 @@ public final class PatchParser {
                     continue;
                 }
 
+                QName name = rdr.getName();
                 if (!foundPatch) {
                     if (foundElements) {
                         throw new IllegalArgumentException("Not a Wildfly patch");
                     }
-                    String namespace = rdr.getName().getNamespaceURI();
-                    foundPatch = PATCH_NAMESPACE_URI.equals(namespace) && "patch".equals(rdr.getName().getLocalPart());
+                    foundPatch = NAMESPACE_PATTERN.matcher(name.getNamespaceURI()).matches() && "patch".equals(name.getLocalPart());
                     patchId = getAttributeValue(rdr, "", "id");
                 } else {
-                    QName name = rdr.getName();
-                    if (PATCH_NAMESPACE_URI.equals(name.getNamespaceURI())) {
+                    if (NAMESPACE_PATTERN.matcher(name.getNamespaceURI()).matches()) {
                         if ("upgrade".equals(name.getLocalPart())) {
                             patchType = Patch.Type.CUMULATIVE;
                             identityName = getAttributeValue(rdr, "", "name");

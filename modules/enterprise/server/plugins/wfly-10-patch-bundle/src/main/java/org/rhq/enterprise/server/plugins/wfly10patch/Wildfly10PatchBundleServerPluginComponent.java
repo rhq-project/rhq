@@ -17,18 +17,18 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.plugins.wflypatch;
+package org.rhq.enterprise.server.plugins.wfly10patch;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rhq.common.wildfly.PatchProductType;
 import org.rhq.common.wildfly.Patch;
 import org.rhq.common.wildfly.PatchBundle;
 import org.rhq.common.wildfly.PatchInfo;
 import org.rhq.common.wildfly.PatchParser;
-import org.rhq.common.wildfly.PatchProductType;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
@@ -43,14 +43,15 @@ import org.rhq.enterprise.server.plugin.pc.bundle.UnknownRecipeException;
 
 /**
  * @author Lukas Krejci
+ * @author Michael Burman
  * @since 4.13
  */
-public class WildflyPatchBundleServerPluginComponent implements ServerPluginComponent, BundleServerPluginFacet {
+public class Wildfly10PatchBundleServerPluginComponent implements ServerPluginComponent, BundleServerPluginFacet {
 
     @Override
     public RecipeParseResults parseRecipe(String recipe) throws UnknownRecipeException {
         throw new UnknownRecipeException(
-            "The Wildfly patches cannot be dealt with using only recipes - the whole distribution file is needed.");
+            "The Wildfly 10 patches cannot be dealt with using only recipes - the whole distribution file is needed.");
     }
 
     @Override
@@ -76,7 +77,7 @@ public class WildflyPatchBundleServerPluginComponent implements ServerPluginComp
             if (patchInfo.is(Patch.class)) {
                 Patch patch = patchInfo.as(Patch.class);
 
-                if(PatchProductType.EAP7.equals(patch.getProductType())) {
+                if(!PatchProductType.EAP7.equals(patch.getProductType())) {
                     throw new UnknownRecipeException();
                 }
 
@@ -119,7 +120,7 @@ public class WildflyPatchBundleServerPluginComponent implements ServerPluginComp
 
                 if (lastPatch == null) {
                     throw new UnknownRecipeException("Not a Wildfly patch");
-                } else if (PatchProductType.EAP7.equals(lastPatch.getProductType())) {
+                } else if (!PatchProductType.EAP7.equals(lastPatch.getProductType())) {
                     throw new UnknownRecipeException();
                 }
 

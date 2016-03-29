@@ -148,6 +148,18 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
     protected static File getPluginJarFile() {
         File targetDir = new File("target").getAbsoluteFile();
+        log.info("Target dir for plugin file [" + targetDir.getAbsolutePath() + "]");
+        File[] testFiles = targetDir.listFiles();
+        String list = "File list: [";
+        if (testFiles.length == 0) {
+            list += "]";
+        } else {
+            for (File aFile : testFiles) {
+                list += aFile.getName() + ",\n";
+            }
+            list += "]";
+        }
+        log.info("Plugin candidates [" + list + "]");
         File[] files = targetDir.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 boolean locatedPlugin = name.endsWith("-" + getRhqVersion() + ".jar");

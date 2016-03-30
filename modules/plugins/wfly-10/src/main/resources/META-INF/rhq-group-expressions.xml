@@ -2,7 +2,7 @@
 <expressions xmlns="urn:xmlns:rhq-canned-groups">
   <definition>
     <id>Managed EAP7 Servers in domain</id>
-    <name>Managed Servers in domain</name>
+    <name>Managed EAP7 Servers in domain</name>
     <createByDefault>true</createByDefault>
     <recalcInMinutes>10</recalcInMinutes>
     <recursive>false</recursive>
@@ -13,7 +13,7 @@
   </definition>
   <definition>
     <id>Managed EAP7 Servers in server-group</id>
-    <name>Managed Servers in server-group</name>
+    <name>Managed EAP7 Servers in server-group</name>
     <createByDefault>true</createByDefault>
     <recalcInMinutes>10</recalcInMinutes>
     <recursive>false</recursive>
@@ -25,7 +25,7 @@
   </definition>
   <definition>
     <id>Deployments in EAP7 server-group</id>
-    <name>Deployments in server-group</name>
+    <name>Deployments in EAP7 server-group</name>
     <createByDefault>false</createByDefault>
     <recalcInMinutes>10</recalcInMinutes>
     <recursive>false</recursive>

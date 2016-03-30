@@ -572,10 +572,18 @@ public class ModuleOptionsComponent extends BaseComponent implements Configurati
 
                 //locate specific node and populate the config
                 String loginModuleIdentifier = attribute + ":";
+
                 int index = path.indexOf(loginModuleIdentifier);
                 String loginModuleIndex = path.substring(index + loginModuleIdentifier.length());
                 String[] split = loginModuleIndex.split(",");
-                int lmi = Integer.valueOf(split[0]);//Ex 0,1,30
+
+                int lmi = -1;
+                try {
+                    lmi = Integer.valueOf(split[0]);//Ex 0,1,30
+                } catch (NumberFormatException e) {
+                    // We can't parse anything meaningful
+                    return;
+                }
                 Value valueObject = currentAttributeState.get(lmi);
 
                 //retrieve current config changes    

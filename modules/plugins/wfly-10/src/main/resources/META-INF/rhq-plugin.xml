@@ -8999,7 +8999,8 @@
 
     <service name="Buffer Cache"
              discovery="SubsystemDiscovery"
-             class="BaseComponent">
+             class="BaseComponent"
+             createDeletePolicy="both">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="buffer-cache"/>

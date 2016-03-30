@@ -384,6 +384,7 @@
     <rhq-rtfilter.version>${rhq.pom.version}-redhat-1</rhq-rtfilter.version>
     <rhq-rtfilter-subsystem.version>${rhq.pom.version}-redhat-1</rhq-rtfilter-subsystem.version>
     <rhq-rtfilter-wfly-10-subsystem.version>${rhq.pom.version}</rhq-rtfilter-wfly-10-subsystem.version>
+    <rhq-wfly-patch-parser.version>${rhq.pom.version}-redhat-1</rhq-wfly-patch-parser.version>
     <rhq-aliases-plugin.version>${rhq.pom.version}</rhq-aliases-plugin.version>
     <rhq-ant-bundle-plugin.version>${rhq.pom.version}-redhat-2</rhq-ant-bundle-plugin.version>
     <rhq-apache-plugin.version>${rhq.pom.version}</rhq-apache-plugin.version>

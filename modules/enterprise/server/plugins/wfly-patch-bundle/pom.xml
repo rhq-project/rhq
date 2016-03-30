@@ -18,7 +18,7 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-wfly-patch-parser</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-wfly-patch-parser.version}</version>
         </dependency>
     </dependencies>
 
@@ -50,7 +50,7 @@
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-wfly-patch-parser</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${rhq-wfly-patch-parser.version}</version>
                                 </artifactItem>
                             </artifactItems>
                             <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

@@ -2677,7 +2677,7 @@
 
     <service name="Undertow (Managed Server)"
              discovery="SubsystemDiscovery"
-             class="BaseComponent"
+             class="UndertowComponent"
              singleton="true"
              subCategory="Subsystems|Web">
 
@@ -2861,7 +2861,7 @@
             <c:simple-property name="directory-listing" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable directory listing&#63;. The default value is false."/>
             <c:simple-property name="follow-symlink" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable following symbolic links. The default value is false."/>
             <c:simple-property name="path" required="false" type="string" readOnly="true" description="Path on filesystem from where file handler will serve resources"/>
-            <c:list-property name="safe-symlink-paths" required="false" readonly="true" description="Paths that are safe to be targets of symbolic links" >
+            <c:list-property name="safe-symlink-paths" required="false" readOnly="true" description="Paths that are safe to be targets of symbolic links" >
               <c:simple-property name="safe-symlink-paths" />
             </c:list-property>
           </resource-configuration>
@@ -3027,7 +3027,7 @@
             </plugin-configuration>
 
             <resource-configuration>
-              <c:simple-property name="handler" required="true" type="string" readOnly="false" description="Default handler for this location"/>
+              <c:simple-property name="handler" required="true" type="string" readOnly="true" description="Default handler for this location"/>
             </resource-configuration>
 
             <service name="Location Filter Ref (Managed Server)"
@@ -6595,7 +6595,7 @@
 
     <service name="Undertow (Profile)"
              discovery="SubsystemDiscovery"
-             class="BaseComponent"
+             class="UndertowComponent"
              singleton="true"
              subCategory="Subsystems|Web">
 
@@ -9231,7 +9231,7 @@
 
   <service name="Undertow"
            discovery="SubsystemDiscovery"
-           class="BaseComponent"
+           class="UndertowComponent"
            singleton="true"
            subCategory="Subsystems|Web">
     <runs-inside>

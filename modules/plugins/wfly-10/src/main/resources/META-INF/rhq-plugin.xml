@@ -7702,7 +7702,7 @@
              subCategory="Subsystems">
 
       <plugin-configuration>
-        <c:simple-property name="path" readOnly="true" default="subsystem=messaging"/>
+        <c:simple-property name="path" readOnly="true" default="subsystem=messaging-activemq"/>
       </plugin-configuration>
 
       <service name="ActiveMQ Artemis (Profile)"

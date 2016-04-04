@@ -18,29 +18,68 @@
  */
 package org.rhq.modules.plugins.wildfly10;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.modules.plugins.wildfly10.json.CompositeOperation;
+import org.rhq.modules.plugins.wildfly10.json.Result;
+import org.rhq.modules.plugins.wildfly10.json.UndefineAttribute;
+import org.rhq.modules.plugins.wildfly10.json.WriteAttribute;
+
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.FAILURE;
 
 public class Ejb3Component extends BaseComponent<BaseComponent<?>> {
 
+    private static final String DERIVE_ATTRIBUTE = "derive-size";
+    private static final String MAX_POOL_SIZE = "max-pool-size";
+
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+        Configuration config = report.getConfiguration();
 
-        PropertySimple derive = report.getConfiguration().getSimple("derive-size");
-        PropertySimple maxPoolSize = report.getConfiguration().getSimple("max-pool-size:expr");
-        if(derive != null) {
-            if("none".equals(derive.getStringValue()) && (maxPoolSize != null && maxPoolSize.getStringValue() != null)) {
-                configDef.getPropertyDefinitions().remove(derive.getName());
-            } else if(derive.getStringValue() != null && maxPoolSize != null) { // Verify this
-                configDef.getPropertyDefinitions().remove(maxPoolSize.getName());
-            }
+        PropertySimple derive = config.getSimple("derive-size");
+        PropertySimple maxPoolSize = config.getSimple("max-pool-size");
+
+        CompositeOperation cop = new CompositeOperation();
+
+        if((derive == null || derive.getStringValue() == null) && maxPoolSize != null) {
+            cop.addStep(new UndefineAttribute(address, DERIVE_ATTRIBUTE));
+            cop.addStep(new WriteAttribute(address, MAX_POOL_SIZE, config.getSimpleValue(MAX_POOL_SIZE)));
+        } else if(derive != null && (maxPoolSize == null || maxPoolSize.getStringValue() == null)) {
+            cop.addStep(new UndefineAttribute(address, MAX_POOL_SIZE));
+            cop.addStep(new WriteAttribute(address, DERIVE_ATTRIBUTE, config.getSimpleValue(DERIVE_ATTRIBUTE)));
+        } else {
+            report.setStatus(FAILURE);
+            report.setErrorMessage("You have to select between derive-size and max-pool-size, both can't be set or unset at the same time");
+            return;
         }
 
-        ConfigurationReadWriteDelegate delegate = new ConfigurationReadWriteDelegate(configDef, getASConnection(),
+        Result result = getASConnection().execute(cop);
+        if (!result.isSuccess()) {
+            report.setStatus(FAILURE);
+            report.setErrorMessage(result.getFailureDescription());
+            return;
+        }
+
+        // Update resource configuration
+        ConfigurationDefinition configDefCopy = context.getResourceType().getResourceConfigurationDefinition().copy();
+        configDefCopy.getPropertyDefinitions().remove(MAX_POOL_SIZE);
+        configDefCopy.getPropertyDefinitions().remove(DERIVE_ATTRIBUTE);
+
+        ConfigurationReadWriteDelegate delegate = new ConfigurationReadWriteDelegate(configDefCopy, getASConnection(),
                 address);
         delegate.updateResourceConfiguration(report);
     }
 
+    @Override
+    public Configuration loadResourceConfiguration() throws Exception {
+        Configuration configuration = super.loadResourceConfiguration();
+
+        PropertySimple derive = configuration.getSimple(DERIVE_ATTRIBUTE);
+        if(derive != null && "none".equals(derive.getStringValue())) {
+            derive.setValue(null);
+        }
+        return configuration;
+    }
 }

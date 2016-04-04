@@ -3725,11 +3725,10 @@
             <c:property-options>
               <c:option value="from-cpu-count" name="from-cpu-count"/>
               <c:option value="from-worker-pools" name="from-worker-pools"/>
-              <c:option value="none" name="none"/>
             </c:property-options>
           </c:simple-property>
-          <c:simple-property name="max-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
-          <c:simple-property name="timeout:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
+          <c:simple-property name="max-pool-size" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
+          <c:simple-property name="timeout" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
           <c:simple-property name="timeout-unit" required="false" type="string" readOnly="false" defaultValue="MINUTES" description="The instance acquisition timeout unit. The default value is MINUTES.">
             <c:property-options>
               <c:option value="DAYS" name="DAYS"/>
@@ -7530,11 +7529,10 @@
             <c:property-options>
               <c:option value="from-cpu-count" name="from-cpu-count"/>
               <c:option value="from-worker-pools" name="from-worker-pools"/>
-              <c:option value="none" name="none"/>
             </c:property-options>
           </c:simple-property>
-          <c:simple-property name="max-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
-          <c:simple-property name="timeout:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
+          <c:simple-property name="max-pool-size" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
+          <c:simple-property name="timeout" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
           <c:simple-property name="timeout-unit" required="false" type="string" readOnly="false" defaultValue="MINUTES" description="The instance acquisition timeout unit. The default value is MINUTES.">
             <c:property-options>
               <c:option value="DAYS" name="DAYS"/>
@@ -13545,11 +13543,10 @@
           <c:property-options>
             <c:option value="from-cpu-count" name="from-cpu-count"/>
             <c:option value="from-worker-pools" name="from-worker-pools"/>
-            <c:option value="none" name="none"/>
           </c:property-options>
         </c:simple-property>
-        <c:simple-property name="max-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
-        <c:simple-property name="timeout:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
+        <c:simple-property name="max-pool-size" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
+        <c:simple-property name="timeout" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
         <c:simple-property name="timeout-unit" required="false" type="string" readOnly="false" defaultValue="MINUTES" description="The instance acquisition timeout unit. The default value is MINUTES.">
           <c:property-options>
             <c:option value="DAYS" name="DAYS"/>

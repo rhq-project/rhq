@@ -39,7 +39,7 @@ import org.rhq.modules.plugins.wildfly10.json.Operation;
 @SuppressWarnings("unchecked")
 public class Domain2Descriptor {
 
-    private static final String PLUGIN_NAME = "JBossAS7";
+    private static final String PLUGIN_NAME = "EAP7";
 
     //Need to hard code until JIRA addressed: https://issues.jboss.org/browse/AS7-4384 
     private String[] properties = { "cpu", "mem", "heap", "sessions", "requests", "send-traffic", "receive-traffic",
@@ -285,7 +285,7 @@ public class Domain2Descriptor {
             doIndent(childIndent + 2, element);
             element.append("<parent-resource-type name=\"Profile\" plugin=\"" + PLUGIN_NAME + "\"/>\n");
             doIndent(childIndent + 2, element);
-            element.append("<parent-resource-type name=\"JBossAS7 Standalone Server\" plugin=\"" + PLUGIN_NAME + "\"/>\n");
+            element.append("<parent-resource-type name=\"EAP7 Standalone Server\" plugin=\"" + PLUGIN_NAME + "\"/>\n");
             doIndent(childIndent, element);
             element.append("</runs-inside>\n");
         }

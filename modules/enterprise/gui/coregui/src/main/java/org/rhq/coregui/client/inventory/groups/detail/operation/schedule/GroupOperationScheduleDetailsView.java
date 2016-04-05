@@ -58,7 +58,6 @@ import org.rhq.coregui.client.inventory.common.detail.operation.schedule.Abstrac
 import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.coregui.client.util.async.Command;
-import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
@@ -80,6 +79,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     private EnhancedDynamicForm executionModeForm;
     private ReorderableList memberExecutionOrderer;
     private GroupOperationHistory operationExample;
+    private boolean shouldLoadMemberResourcesFromDataSource = false;
 
     public GroupOperationScheduleDetailsView(ResourceGroupComposite groupComposite, int scheduleId) {
         super(new GroupOperationScheduleDataSource(groupComposite),
@@ -105,29 +105,22 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     @Override
     protected void init(final boolean isReadOnly) {
         if (isNewRecord()) {
+            shouldLoadMemberResourcesFromDataSource = true;
+        }
+        if (isNewRecord() && getOperationExampleId() != null) {
+            GroupOperationHistoryCriteria historyCriteria = new GroupOperationHistoryCriteria();
+            historyCriteria.addFilterId(getOperationExampleId());
+            historyCriteria.fetchOperationDefinition(true);
+            historyCriteria.fetchParameters(true);
+            historyCriteria.setPageControl(PageControl.getSingleRowInstance());
+            GWTServiceLookup.getOperationService().findGroupOperationHistoriesByCriteria(historyCriteria,
+                new LoadExampleCallback(new Command() {
 
-            final CountDownLatch latch = CountDownLatch.create(getOperationExampleId() == null ? 1 : 2, new Command() {
-                @Override
-                public void execute() {
-                    GroupOperationScheduleDetailsView.super.init(isReadOnly);
-                }
-            });
-
-            GroupOperationScheduleResourceDatasource resourceDatasource = new GroupOperationScheduleResourceDatasource();
-            Criteria criteria = new Criteria(ResourceDatasource.FILTER_GROUP_ID, String.valueOf(this.groupComposite
-                .getResourceGroup().getId()));
-            resourceDatasource.fetchData(criteria, new LoadResourcesCallback(latch));
-
-            if (getOperationExampleId() != null) {
-                GroupOperationHistoryCriteria historyCriteria = new GroupOperationHistoryCriteria();
-                historyCriteria.addFilterId(getOperationExampleId());
-                historyCriteria.fetchOperationDefinition(true);
-                historyCriteria.fetchParameters(true);
-                historyCriteria.setPageControl(PageControl.getSingleRowInstance());
-                GWTServiceLookup.getOperationService().findGroupOperationHistoriesByCriteria(historyCriteria,
-                    new LoadExampleCallback(latch));
-            }
-
+                    @Override
+                    public void execute() {
+                        GroupOperationScheduleDetailsView.super.init(isReadOnly);
+                    }
+                }));
         } else {
             super.init(isReadOnly);
         }
@@ -175,8 +168,18 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
                 return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
             }
         };
-        this.memberExecutionOrderer = new ReorderableList(this.memberResourceRecords, null, memberIcon,
-            nameHoverCustomizer);
+
+        if (shouldLoadMemberResourcesFromDataSource) {
+            GroupOperationScheduleResourceDatasource resourceDatasource;
+            resourceDatasource = new GroupOperationScheduleResourceDatasource();
+            Criteria criteria = new Criteria(ResourceDatasource.FILTER_GROUP_ID,
+                String.valueOf(GroupOperationScheduleDetailsView.this.groupComposite.getResourceGroup().getId()));
+            this.memberExecutionOrderer = new ReorderableList(this.memberResourceRecords, null, memberIcon,
+                nameHoverCustomizer, resourceDatasource, criteria);
+        } else {
+            this.memberExecutionOrderer = new ReorderableList(this.memberResourceRecords, null, memberIcon,
+                nameHoverCustomizer);
+        }
         this.memberExecutionOrderer.setVisible(false);
         this.memberExecutionOrderer.setNameFieldTitle(MSG.view_group_operationScheduleDetails_memberResource());
         hLayout.addMember(this.memberExecutionOrderer);
@@ -273,40 +276,19 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         super.save(requestProperties);
     }
 
-    private class LoadResourcesCallback implements DSCallback {
-        private final CountDownLatch latch;
-
-        public LoadResourcesCallback(CountDownLatch latch) {
-            this.latch = latch;
-        }
-
-        public void execute(DSResponse response, Object rawData, DSRequest request) {
-            if (response.getStatus() != DSResponse.STATUS_SUCCESS) {
-                throw new RuntimeException(MSG.view_group_operationScheduleDetails_failedToLoadMembers());
-            }
-            Record[] data = response.getData();
-            memberResourceRecords = new ListGridRecord[data.length];
-            for (int i = 0, dataLength = data.length; i < dataLength; i++) {
-                Record record = data[i];
-                ListGridRecord listGridRecord = (ListGridRecord) record;
-                memberResourceRecords[i] = listGridRecord;
-            }
-            latch.countDown();
-        }
-    }
-
     private class LoadExampleCallback implements AsyncCallback<PageList<GroupOperationHistory>> {
-        private final CountDownLatch latch;
 
-        public LoadExampleCallback(CountDownLatch latch) {
-            this.latch = latch;
+        private Command command;
+
+        public LoadExampleCallback(Command command) {
+            this.command = command;
         }
 
         @Override
         public void onFailure(Throwable throwable) {
             CoreGUI.getMessageCenter().notify(
                 new Message(MSG.view_operationScheduleDetails_load_example_failure(), throwable, Severity.Warning));
-            latch.countDown();
+            command.execute();
         }
 
         @Override
@@ -320,7 +302,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
             } else {
                 operationExample = groupOperationHistories.get(0);
             }
-            latch.countDown();
+            command.execute();
         }
     }
 }

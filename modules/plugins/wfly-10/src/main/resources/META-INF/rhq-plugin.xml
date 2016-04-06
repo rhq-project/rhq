@@ -8161,6 +8161,84 @@
 
   </service>
 
+  <service name="IIOP-OpenJDK"
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           singleton="true"
+           subCategory="Subsystems">
+
+    <runs-inside>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="subsystem=iiop-openjdk"/>
+    </plugin-configuration>
+
+    <resource-configuration>
+      <c:simple-property name="add-component-via-interceptor" required="false" type="boolean" readOnly="false"
+                         defaultValue="true"
+                         description="Indicates whether SSL components should be added by an IOR interceptor (on) or not (off). The default value is true."/>
+      <c:simple-property name="auth-method" required="false" type="string" readOnly="false"
+                         defaultValue="username_password"
+                         description="The authentication method. Valid values are &apos;none&apos; and &apos;username_password&apos;. The default value is username_password."/>
+      <c:simple-property name="caller-propagation" required="false" type="string" readOnly="false" defaultValue="none"
+                         description="Indicates whether the caller identity should be propagated in the SAS context or not. Valid values are &apos;none&apos; and &apos;supported&apos;. The default value is none."/>
+      <c:simple-property name="client-requires" required="false" type="string" readOnly="false" defaultValue="None"
+                         description="Value that indicates the client SSL required parameters (None, ServerAuth, ClientAuth, MutualAuth). The default value is None."/>
+      <c:simple-property name="client-supports" required="false" type="string" readOnly="false" defaultValue="MutualAuth"
+                         description="Value that indicates the client SSL supported parameters (None, ServerAuth, ClientAuth, MutualAuth). The default value is MutualAuth."/>
+      <c:simple-property name="confidentiality" required="false" type="string" readOnly="false" defaultValue="none"
+                         description="Indicates whether the transport must require confidentiality protection or not. Valid values are &apos;none&apos;, &apos;supported&apos; and &apos;required&apos;. The default value is none."/>
+      <c:simple-property name="detect-misordering" required="false" type="string" readOnly="false" defaultValue="none"
+                         description="Indicates whether the transport must require misordering detection or not. Valid values are &apos;none&apos;, &apos;supported&apos; and &apos;required&apos;. The default value is none."/>
+      <c:simple-property name="detect-replay" required="false" type="string" readOnly="false" defaultValue="none"
+                         description="Indicates whether the transport must require replay detection or not. Valid values are &apos;none&apos;, &apos;supported&apos; and &apos;required&apos;. The default value is none."/>
+      <c:simple-property name="export-corbaloc" required="false" type="boolean" readOnly="false" defaultValue="true"
+                         description="Indicates whether the root context should be exported as corbaloc&#58;&#58;address&#58;port/NameService (on) or not (off). The default value is true."/>
+      <c:simple-property name="giop-version" required="false" type="string" readOnly="false" defaultValue="1.2"
+                         description="The GIOP version to be used. The default value is 1.2."/>
+      <c:simple-property name="high-water-mark:expr" required="false" type="string" readOnly="false"
+                         description="TCP connection cache parameter. Each time the number of connections exceeds this value ORB tries to reclaim connections. Number of reclaimed connections is specified by tcp&#45;number&#45;to&#45;reclaim property. If this property is not set then it is configured as OpenJDK ORB default."/>
+      <c:simple-property name="integrity" required="false" type="string" readOnly="false" defaultValue="none"
+                         description="Indicates whether the transport must require integrity protection or not. Valid values are &apos;none&apos;, &apos;supported&apos; and &apos;required&apos;. The default value is none."/>
+      <c:simple-property name="number-to-reclaim:expr" required="false" type="string" readOnly="false"
+                         description="TCP connection cache parameter. Each time number of connections exceeds tcp&#45;high&#45;water&#45;mark property then ORB tries to reclaim connections. Number of reclaimed connections is specified by this property. If it is not set then it is configured as OpenJDK ORB default."/>
+      <c:simple-property name="persistent-server-id" required="false" type="string" readOnly="false" defaultValue="1"
+                         description="Persistent id of the server. Persistent object references are valid across many activactions of the server and they identify it using this property. As a result of that&#58; many activations of the same server should have this property set to the same value, different server instances running on the same host should have different server ids. The default value is 1."/>
+      <c:simple-property name="properties" required="false" description="A list of generic key/value properties."/>
+      <c:simple-property name="realm" required="false" type="string" readOnly="false"
+                         description="The authentication service (AS) realm name."/>
+      <c:simple-property name="required" required="false" type="boolean" readOnly="false" defaultValue="false"
+                         description="Indicates if authentication is required (true) or not (false). The default value is false."/>
+      <c:simple-property name="root-context" required="false" type="string" readOnly="false"
+                         defaultValue="JBoss/Naming/root"
+                         description="The naming service root context. The default value is JBoss/Naming/root."/>
+      <c:simple-property name="security" required="false" type="string" readOnly="false" defaultValue="none"
+                         description="Indicates whether the security interceptors are to be installed (on) or not (off). The default value is none."/>
+      <c:simple-property name="security-domain" required="false" type="string" readOnly="false"
+                         description="The name of the security domain that holds the key and trust stores that will be used to establish SSL connections."/>
+      <c:simple-property name="server-requires" required="false" type="string" readOnly="false" defaultValue="None"
+                         description="Value that indicates the server SSL required parameters (None, ServerAuth, ClientAuth, MutualAuth). The default value is None."/>
+      <c:simple-property name="server-supports" required="false" type="string" readOnly="false" defaultValue="MutualAuth"
+                         description="Value that indicates the server SSL supported parameters (None, ServerAuth, ClientAuth, MutualAuth). The default value is MutualAuth."/>
+      <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" defaultValue="iiop"
+                         description="The name of the socket binding configuration that specifies the ORB port. The default value is iiop."/>
+      <c:simple-property name="ssl-socket-binding" required="false" type="string" readOnly="false"
+                         defaultValue="iiop&#45;ssl"
+                         description="The name of the socket binding configuration that specifies the ORB SSL port. The default value is iiop&#45;ssl."/>
+      <c:simple-property name="support-ssl" required="false" type="boolean" readOnly="false" defaultValue="false"
+                         description="Indicates whether SSL is to be supported (on) or not (off). The default value is false."/>
+      <c:simple-property name="transactions" required="false" type="string" readOnly="false" defaultValue="none"
+                         description="Indicates whether the transactions interceptors are to be installed (on or spec) or not (off). The value &apos;on&apos; enabled JTS while &apos;spec&apos; enables a spec compliant mode (non JTS) that rejects incoming transaction contexts. The default value is none."/>
+      <c:simple-property name="trust-in-client" required="false" type="string" readOnly="false" defaultValue="none"
+                         description="Indicates if the transport must require trust in client to be established. Valid values are &apos;none&apos;, &apos;supported&apos; and &apos;required&apos;. The default value is none."/>
+      <c:simple-property name="trust-in-target" required="false" type="string" readOnly="false" defaultValue="none"
+                         description="Indicates if the transport must require trust in target to be established. Valid values are &apos;none&apos; and &apos;supported&apos;. The default value is none."/>
+    </resource-configuration>
+  </service>
 
   <service name="JVM"
            discovery="JVMDiscoveryComponent"

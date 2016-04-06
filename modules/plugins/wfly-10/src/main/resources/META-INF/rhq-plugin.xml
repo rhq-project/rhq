@@ -2675,179 +2675,108 @@
       </service>
     </service>
 
-    <service name="JBossWeb (Managed Server)"
+    <service name="Undertow (Managed Server)"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
              singleton="true"
              subCategory="Subsystems|Web">
 
       <plugin-configuration>
-        <c:simple-property name="path" readOnly="true" default="subsystem=web"/>
+        <c:simple-property name="path" readOnly="true" default="subsystem=undertow"/>
         <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
       </plugin-configuration>
 
       <resource-configuration>
-        <c:simple-property name="default-virtual-server" required="true" type="string" readOnly="true" defaultValue="default-host" description="The web container's default virtual server. The default value is default-host.">
-          <c:option-source target="resource" expression="type=VHost plugin=&pluginName;"/>
-        </c:simple-property>
-        <c:simple-property name="instance-id" readOnly="true" required="false" type="string" description="The identifier for this server instance."/>
-        <c:simple-property name="native" required="false" type="boolean" readOnly="true" defaultValue="true" description="Add the native initialization listener to the web container. The default value is true."/>
-
-        <c:group name="child:configuration=static-resources" displayName="Static Resources">
-          <c:simple-property name="disabled:0" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable the default Servlet mapping. The default value is false."/>
-          <c:simple-property name="file-encoding" required="false" readOnly="true" description="Force a file encoding." type="string"/>
-          <c:simple-property name="listings" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable folder listings. The default value is false."/>
-          <c:simple-property name="max-depth" required="false" type="integer" readOnly="true" defaultValue="3" description="Maximum recursion for PROPFIND. The default value is 3."/>
-          <c:simple-property name="read-only" required="false" type="boolean" readOnly="true" defaultValue="true" description="Allow write HTTP methods (PUT, DELETE). The default value is true."/>
-          <c:simple-property name="sendfile" required="false" type="integer" readOnly="true" defaultValue="49152" description="Enable sendfile if possible, for files bigger than the specified byte size. The default value is 49152."/>
-          <c:simple-property name="secret" required="false" type="string" readOnly="true" description="Secret for WebDAV locking operations."/>
-          <c:simple-property name="webdav" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable WebDAV functionality. The default value is false."/>
-        </c:group>
-        <c:group name="child:configuration=jsp-configuration" displayName="JSP Configuration">
-          <c:simple-property name="check-interval" required="false" type="integer" readOnly="true" defaultValue="0" description="Check interval for JSP updates using a background thread. The default value is 0."/>
-          <c:simple-property name="development" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable the development mode, which gives more information when an error occurs. The default value is false."/>
-          <c:simple-property name="disabled:1" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable the JSP container. The default value is false."/>
-          <c:simple-property name="display-source-fragment" required="false" type="boolean" readOnly="true" defaultValue="true" description="When a runtime error occurs, attempts to display corresponding JSP source fragment. The default value is true."/>
-          <c:simple-property name="dump-smap" required="false" type="boolean" readOnly="true" defaultValue="false" description="Write SMAP data to a file. The default value is false."/>
-          <c:simple-property name="error-on-use-bean-invalid-class-attribute" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable errors when using a bad class in useBean. The default value is false."/>
-          <c:simple-property name="generate-strings-as-char-arrays" required="false" type="boolean" readOnly="true" defaultValue="false" description="Generate String constants as char arrays. The default value is false."/>
-          <c:simple-property name="java-encoding" required="false" type="string" readOnly="true" defaultValue="UTF8" description="Specify the encoding used for Java sources. The default value is UTF8."/>
-          <c:simple-property name="keep-generated" required="false" type="boolean" readOnly="true" defaultValue="true" description="Keep the generated Servlets. The default value is true."/>
-          <c:simple-property name="mapped-file" required="false" type="boolean" readOnly="true" defaultValue="true" description="Map to the JSP source. The default value is true."/>
-          <c:simple-property name="modification-test-interval" required="false" type="integer" readOnly="true" defaultValue="4" description="Minimum amount of time between two tests for updates, in seconds. The default value is 4."/>
-          <c:simple-property name="recompile-on-fail" required="false" type="boolean" readOnly="true" defaultValue="false" description="Retry failed JSP compilations on each request. The default value is false."/>
-          <c:simple-property name="scratch-dir" required="false" type="string" readOnly="true" description="Specify a different work directory."/>
-          <c:simple-property name="smap" required="false" type="boolean" readOnly="true" defaultValue="true" description="Enable SMAP. The default value is true."/>
-          <c:simple-property name="source-vm" required="false" type="string" readOnly="true" defaultValue="1.5" description="Source VM level for compilation. The default value is 1.5."/>
-          <c:simple-property name="tag-pooling" required="false" type="boolean" readOnly="true" defaultValue="true" description="Enable tag pooling. The default value is true."/>
-          <c:simple-property name="target-vm" required="false" type="string" readOnly="true" defaultValue="1.5" description="Target VM level for compilation. The default value is 1.5."/>
-          <c:simple-property name="trim-spaces" required="false" type="boolean" readOnly="true" defaultValue="false" description="Trim some spaces from the generated Servlet. The default value is false."/>
-          <c:simple-property name="x-powered-by" required="false" type="boolean" readOnly="true" defaultValue="true" description="Enable advertising the JSP engine in x-powered-by. The default value is true."/>
-        </c:group>
-        <c:group name="child:configuration=container" displayName="Container">
-          <!-- Commented out - see https://bugzilla.redhat.com/show_bug.cgi?id=815288
-                  <c:list-property name="mime-mapping" description="A mime-mapping definition." required="false">
-                    <c:map-property name="mime-mapping:collapsed">
-                      <c:simple-property name="name:0" displayName="Name" description="A MIME mapping name without the dot (e.g. 'txt')"/>
-                      <c:simple-property name="value:1" displayName="Value" description="A MIME mapping value (e.g. 'text/plain' )"/>
-                    </c:map-property>
-                  </c:list-property>
-          -->
-          <c:list-property name="welcome-file" required="false" readOnly="true" description="A welcome file declaration.">
-            <c:simple-property name="welcome-file" type="string" readOnly="true"/>
-          </c:list-property>
-        </c:group>
+        <c:simple-property name="default-security-domain" required="false" type="string" readOnly="true" defaultValue="other" description="The default security domain used by web deployments. The default value is other."/>
+        <c:simple-property name="default-server" required="false" type="string" readOnly="true" defaultValue="default&#45;server" description="The default server to use for deployments. The default value is default&#45;server."/>
+        <c:simple-property name="default-servlet-container" required="false" type="string" readOnly="true" defaultValue="default" description="The default servlet container to use for deployments. The default value is default."/>
+        <c:simple-property name="default-virtual-host" required="false" type="string" readOnly="true" defaultValue="default&#45;host" description="The default virtual host to use for deployments. The default value is default&#45;host."/>
+        <c:simple-property name="instance-id" required="false" type="string" readOnly="true" defaultValue="{EXPRESSION_VALUE=&#36;{jboss.node.name}}"         description="The cluster instance id. The default value is {EXPRESSION_VALUE=&#36;{jboss.node.name}}."/>
+        <c:simple-property name="statistics-enabled" required="false" type="boolean" readOnly="true" defaultValue="false" description="Configures if are statistics enabled. The default value is false."/>
       </resource-configuration>
 
-      <service name="Connector (Managed Server)"
+      <service name="Filter configurations (Managed Server)"
                discovery="SubsystemDiscovery"
                class="BaseComponent">
 
         <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="connector"/>
+          <c:simple-property name="path" readOnly="true" default="configuration=filter"/>
         </plugin-configuration>
 
-        <metric property="bytesSent" measurementType="trendsup" description="Number of byte sent by the connector."/>
-        <metric property="bytesReceived" measurementType="trendsup" description="Number of byte received by the connector (POST data)."/>
-        <metric property="processingTime" measurementType="trendsup" units="milliseconds" description="Processing time used by the connector. Im milli-seconds."/>
-        <metric property="errorCount" measurementType="trendsup" displayType="summary" description="Number of error that occurs when processing requests by the connector."/>
-        <metric property="maxTime" units="milliseconds" description="Max time spent to process a requests."/>
-        <metric property="requestCount" measurementType="trendsup" displayType="summary" description="Number of the request processed by the connector."/>
-        <metric property="_expr:max-connections" displayName="Max connections" description="Number of max connections this connector can handle (see configuration to set it)" defaultOn="true" defaultInterval="14400000"/>
-
-        <resource-configuration>
-          <c:simple-property name="scheme" required="true" type="string" readOnly="true" description="The web connector scheme.">
-            <c:property-options>
-              <c:option value="http"/>
-              <c:option value="https"/>
-              <c:option value="ajp"/>
-            </c:property-options>
-          </c:simple-property>
-          <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The web connector socket-binding reference, this connector should be bound to."/>
-          <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
-          <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
-          <c:simple-property name="executor" required="false" type="string" readOnly="true" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
-          <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="true" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
-          <c:simple-property name="max-post-size" required="false" type="integer" readOnly="true" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
-          <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="true" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
-          <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
-          <c:simple-property name="protocol" required="true" type="string" readOnly="true" default="HTTP/1.1" defaultValue="HTTP/1.1" description="The web connector protocol. (e.g. 'HTTP/1.1' or 'AJP' or a name of a class implementing ProtocolHandler and MBeanRegistration )">
-            <!-- TODO let the user could enter a custom value here when the UI supports this. -->
-            <c:property-options>
-              <c:option value="HTTP/1.1"/>
-              <c:option value="AJP/1.3"/>
-            </c:property-options>
-          </c:simple-property>
-          <c:simple-property name="proxy-name" required="false" type="string" readOnly="true" description="The host name that will be used when sending a redirect. The default value is null."/>
-          <c:simple-property name="proxy-port" required="false" type="integer" readOnly="true" description="The port that will be used when sending a redirect."/>
-          <c:simple-property name="redirect-port:expr" displayName="Redirect Port" required="false" type="string" readOnly="true" defaultValue="8433" description="The port for redirection to a secure connector. The default value is 8433."/>
-          <c:simple-property name="secure" required="false" type="boolean" readOnly="true" defaultValue="false" description="Indicates if content sent or received by the connector is secured from the user perspective. The default value is false."/>
-          <c:simple-property name="virtual-server" required="false" type="string" readOnly="true" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers."/>
-
-          <c:group name="child:ssl=configuration:enabled=secure=true" displayName="SSL Configuration">
-            <c:map-property name="*Configuration+" displayName="Configuration" readOnly="true" required="false">
-              <c:simple-property name="ca-certificate-file" required="false" type="string" readOnly="true" description="Certificate authority."/>
-              <c:simple-property name="ca-certificate-password" required="false" type="string" readOnly="true" description="Certificate password."/>
-              <c:simple-property name="ca-revocation-url" required="false" type="string" readOnly="true" description="Certificate authority revocation list."/>
-              <c:simple-property name="certificate-file" required="false" type="string" readOnly="true" description="Server certificate file. If the value is not given, ~/.keystore is the default"/>
-              <c:simple-property name="certificate-key-file" required="false" type="string" readOnly="true" description="Key file for the certificate."/>
-              <c:simple-property name="cipher-suite" required="false" type="string" readOnly="true" description="The allowed cipher suite."/>
-              <c:simple-property name="key-alias" required="false" type="string" readOnly="true" description="The key alias."/>
-              <c:simple-property name="keystore-type" required="false" type="string" readOnly="true" description="Type of the keystore, There are various types of keystores available, including &apos;PKCS12&apos; and Sun&apos;s &apos;JKS.&apos;"/>
-              <c:simple-property name="name" required="false" type="string" readOnly="true" description="The configuration name."/>
-              <c:simple-property name="password" required="false" type="string" readOnly="true" description="Password."/>
-              <c:simple-property name="protocol" required="false" type="string" readOnly="true" description="The SSL protocols that are enabled." default="ALL" defaultValue="ALL">
-                <c:property-options>
-                  <c:option value="SSLv2"/>
-                  <c:option value="SSLv3"/>
-                  <c:option value="TLSv1"/>
-                  <c:option value="SSLv2+SSLv3"/>
-                  <c:option value="ALL"/>
-                </c:property-options>
-              </c:simple-property>
-              <c:simple-property name="session-cache-size" required="false" type="integer" readOnly="true" description="SSL session cache."/>
-              <c:simple-property name="session-timeout" required="false" type="integer" readOnly="true" description="SSL session cache timeout."/>
-              <c:simple-property name="truststore-type" required="false" type="string" readOnly="true" description="Type of the truststore, There are various types of keystores available, including &apos;PKCS12&apos; and Sun&apos;s &apos;JKS.&apos;"/>
-              <c:simple-property name="verify-client" required="false" type="string" readOnly="true" description="Enable client certificate verification."/>
-              <c:simple-property name="verify-depth" required="false" type="integer" readOnly="true" description="Limit certificate nesting."/>
-            </c:map-property>
-          </c:group>
-        </resource-configuration>
-      </service>
-
-      <service name="VHost (Managed Server)"
-               discovery="SubsystemDiscovery"
-               class="VHostComponent">
-
-        <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="virtual-server"/>
-        </plugin-configuration>
-
-        <metric property="_aliases" dataType="trait" defaultOn="true" description="Aliases for this virtual host"/>
-
-        <resource-configuration>
-          <c:list-property name="alias" readOnly="true" description="The virtual server aliases" displayName="Virtual server aliases">
-            <c:simple-property name="alias" readOnly="true"/>
-          </c:list-property>
-          <c:simple-property name="default-web-module" type="string" defaultValue="ROOT.war" readOnly="true" description="The web module deployment name that will be mapped as the root webapp."/>
-          <c:simple-property name="enable-welcome-root" type="boolean" defaultValue="false" readOnly="true" description="Whether or not the bundled welcome directory is used as the root web context. The default value is false."/>
-          <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique virtual host name"/>
-
-          <c:group name="child:sso=configuration" displayName="The SSO configuration for this virtual server.">
-            <c:map-property name="*Configuration+" displayName="Configuration" readOnly="true" required="false">
-              <c:simple-property name="cache-container" required="false" type="string" readOnly="true" description="Enables clustered SSO using the specified clustered cache container.">
-                <c:option-source target="resource" expression="type='Cache Container' plugin=&pluginName;"/>
-              </c:simple-property>
-              <c:simple-property name="cache-name" required="false" type="string" readOnly="true" description="Name of the cache to use in the cache container."/>
-              <c:simple-property name="domain" required="false" type="string" readOnly="true" description="The cookie domain that will be used."/>
-              <c:simple-property name="reauthenticate" required="false" type="boolean" readOnly="true" description="Enables reauthentication with the realm when using SSO."/>
-            </c:map-property>
-          </c:group>
-        </resource-configuration>
-
-        <service name="Rewrite Rules (Managed Server)"
+        <service name="Error page (Managed Server)"
                  discovery="SubsystemDiscovery"
-                 description="A list of rewrite rules that will be processed in order on the URL or vhost specified in the request. Those follow the rules for mod_rewrite. Please consult the manual for help on settings"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="error-page"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="code:expr" required="true" type="string" readOnly="true" description="Error page code"/>
+            <c:simple-property name="path" required="false" type="string" readOnly="true" description="Error page path"/>
+          </resource-configuration>
+
+        </service><!-- End of Error page service -->
+
+        <service name="Expression filter (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="expression-filter"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="expression" required="true" type="string" readOnly="true" description="The expression that defines the filter"/>
+            <c:simple-property name="module" required="false" type="string" readOnly="true" description="Module to use to load the filter definitions"/>
+          </resource-configuration>
+
+        </service><!-- End of Expression filter service -->
+
+        <service name="GZIP (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="gzip"/>
+          </plugin-configuration>
+
+        </service><!-- End of GZIP service -->
+
+        <service name="Mod cluster (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="mod-cluster"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="advertise-frequency:expr" required="false" type="string" readOnly="true" defaultValue="10000" description="The frequency (in milliseconds) that mod&#45;cluster advertises itself on the network. The default value is 10000."/>
+            <c:simple-property name="advertise-path" required="false" type="string" readOnly="true" defaultValue="/" description="The path that mod&#45;cluster is registered under, defaults to /. The default value is /."/>
+            <c:simple-property name="advertise-protocol" required="false" type="string" readOnly="true" defaultValue="http" description="The protocol that is in use, defaults to HTTP. The default value is http."/>
+            <c:simple-property name="advertise-socket-binding" required="true" type="string" readOnly="true" description="The multicast group that is used to advertise"/>
+            <c:simple-property name="broken-node-timeout:expr" required="false" type="string" readOnly="true" defaultValue="60000" description="The amount of time that must elapse before a broken node is removed from the table. The default value is 60000."/>
+            <c:simple-property name="cached-connections-per-thread:expr" required="false" type="string" readOnly="true" defaultValue="40" description="The number of connections that will be kept alive indefinitely. The default value is 40."/>
+            <c:simple-property name="connection-idle-timeout:expr" required="false" type="string" readOnly="true" defaultValue="60" description="The amount of time a connection can be idle before it will be closed. Connections will not time out once the pool size is down to the configured minimum (as configured by cached&#45;connections&#45;per&#45;thread). The default value is 60."/>
+            <c:simple-property name="connections-per-thread:expr" required="false" type="string" readOnly="true" defaultValue="40" description="The number of connections that will be maintained to backend servers, per IO thread. Defaults to 10. The default value is 40."/>
+            <c:simple-property name="enable-http2" required="false" type="boolean" readOnly="true" defaultValue="false" description="If the load balancer should attempt to upgrade back end connections to HTTP2. If HTTP2 is not supported HTTP or HTTPS will be used as normal. The default value is false."/>
+            <c:simple-property name="health-check-interval:expr" required="false" type="string" readOnly="true" defaultValue="10000" description="The frequency of health check pings to backend nodes. The default value is 10000."/>
+            <c:simple-property name="management-access-predicate" required="false" type="string" readOnly="true" description="A predicate that is applied to incoming requests to determine if they can perform mod cluster management commands. Provides additional security on top of what is provided by limiting management to requests that originate from the management&#45;socket&#45;binding"/>
+            <c:simple-property name="management-socket-binding" required="true" type="string" readOnly="true" description="The socket binding of the mod_cluster management port. When using mod_cluster two HTTP listeners should be defined, a public one to handle requests, and one bound to the internal network to handle mod cluster commands. This socket binding should correspond to the internal listener, and should not be publicly accessible"/>
+            <c:simple-property name="max-ajp-packet-size" required="false" type="integer" readOnly="true" description="The maximum size for AJP packets. Increasing this will allow AJP to work for requests/responses that have a large amount of headers. This is an advanced option, and must be the same between load balancers and backend servers."/>
+            <c:simple-property name="max-request-time:expr" required="false" type="string" readOnly="true" defaultValue="&#45;1" description="The max amount of time that a request to a backend node can take before it is killed. The default value is &#45;1."/>
+            <c:simple-property name="request-queue-size:expr" required="false" type="string" readOnly="true" defaultValue="1000" description="The number of requests that can be queued if the connection pool is full before requests are rejected with a 503. The default value is 1000."/>
+            <c:simple-property name="security-key" required="false" type="string" readOnly="true" description="The security key that is used for the mod&#45;cluster group. All members must use the same security key."/>
+            <c:simple-property name="security-realm" required="false" type="string" readOnly="true" description="The security realm that provides the SSL configuration"/>
+            <c:simple-property name="use-alias" required="false" type="boolean" readOnly="true" defaultValue="false" description="If an alias check is performed. The default value is false."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="true" defaultValue="default" description="The XNIO worker that is used to send the advertise notifications. The default value is default."/>
+          </resource-configuration>
+
+        </service><!-- End of Mod cluster service -->
+
+        <service name="Rewrite (Managed Server)"
+                 discovery="SubsystemDiscovery"
                  class="BaseComponent">
 
           <plugin-configuration>
@@ -2855,48 +2784,458 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="flags" required="true" type="string" readOnly="true" description="Option flags for this rewrite rule. Consult the mod_rewrite docs."/>
-            <c:simple-property name="pattern" required="true" type="string" readOnly="true" description="The pattern that will be matched. Consult the mod_rewrite docs."/>
-            <c:simple-property name="substitution" required="true" type="string" readOnly="true" description="The string that will replace the original URL or vhost. Consult the mod_rewrite docs."/>
-            <!-- embedded condition children  - commented out for the moment -->
-            <c:group name="children:condition:name+" displayName="Rewrite conditions">
-              <c:list-property name="*1" displayName="Conditions" required="false" readOnly="true">
-                <c:map-property name="*:name" displayName="Name" readOnly="true">
-                  <c:simple-property name="name" required="true" readOnly="true" displayName="Condition-Name"/>
-                  <c:simple-property name="flags" required="true" type="string" readOnly="true" description="Option flags for this condition. Consult the mod_rewrite docs."/>
-                  <c:simple-property name="pattern" required="true" type="string" readOnly="true" description="The pattern to match. Consult the mod_rewrite docs."/>
-                  <c:simple-property name="test" required="true" type="string" readOnly="true" description="Test pattern for the condition. Consult the mod_rewrite docs."/>
-                </c:map-property>
-              </c:list-property>
-            </c:group>
+            <c:simple-property name="redirect" required="false" type="boolean" readOnly="true" defaultValue="false" description="If this is true then a redirect will be done instead of a rewrite. The default value is false."/>
+            <c:simple-property name="target" required="true" type="string" readOnly="true" description="The expression that defines the target. If you are redirecting to a constant target put single quotes around the value"/>
           </resource-configuration>
-        </service>
 
-        <service name="Access Log (Managed Server)"
+        </service><!-- End of Rewrite service -->
+
+        <service name="Response header (Managed Server)"
                  discovery="SubsystemDiscovery"
-                 description="The access log configuration for this virtual server."
-                 class="BaseComponent"
-                 singleton="true">
+                 class="BaseComponent">
 
           <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="access-log=configuration"/>
+            <c:simple-property name="path" readOnly="true" default="response-header"/>
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="extended" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable extended pattern, with more options. The default value is false."/>
-            <c:simple-property name="pattern" required="false" type="string" readOnly="true" defaultValue="common" description="The access log pattern. The default value is common."/>
-            <c:simple-property name="prefix" required="false" type="string" readOnly="true" defaultValue="false" description="Prefix for the log file name. The default value is false."/>
-            <c:simple-property name="resolve-hosts" required="false" type="boolean" readOnly="true" defaultValue="false" description="Host resolution. The default value is false."/>
-            <c:simple-property name="rotate" required="false" type="boolean" readOnly="true" defaultValue="true" description="Rotate the access log every day. The default value is true."/>
-
-            <c:group name="child:directory=configuration" displayName="The location for the access logging.">
-              <c:simple-property name="path" required="false" type="string" readOnly="true" description="The relative folder path."/>
-              <c:simple-property name="relative-to" required="false" type="string" readOnly="true" defaultValue="jboss.server.log.dir" description="The folder the path is relative to. The default value is jboss.server.log.dir."/>
-            </c:group>
+            <c:simple-property name="header-name" required="true" type="string" readOnly="true" description="Header name"/>
+            <c:simple-property name="header-value" required="true" type="string" readOnly="true" description="Value for header"/>
           </resource-configuration>
-        </service>
+
+        </service><!-- End of Response header service -->
+
+        <service name="Request limit (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="request-limit"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="max-concurrent-requests:expr" required="false" type="string" readOnly="true" description="Maximum number of concurrent requests"/>
+            <c:simple-property name="queue-size:expr" required="false" type="string" readOnly="true" description="Number of requests to queue before they start being rejected"/>
+          </resource-configuration>
+
+        </service><!-- End of Request limit service -->
+
+        <service name="Custom filter (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="custom-filter"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="class-name" required="true" type="string" readOnly="true" description="Class name of HttpHandler"/>
+            <c:simple-property name="module" required="true" type="string" readOnly="true" description="Module name where class can be loaded from"/>
+            <c:map-property name="parameters" required="false" readOnly="true" description="Filter parameters">
+            </c:map-property>
+          </resource-configuration>
+
+        </service><!-- End of Custom filter service -->
+      </service><!-- End of Filter configuration service -->
+
+      <service name="Handler configuration (Managed Server)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="configuration=handler"/>
+        </plugin-configuration>
+
+        <service name="File handler (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="file"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="cache-buffer-size:expr" required="false" type="string" readOnly="true" defaultValue="1024" description="Size of the buffers. The default value is 1024."/>
+            <c:simple-property name="cache-buffers:expr" required="false" type="string" readOnly="true" defaultValue="1024" description="Number of buffers. The default value is 1024."/>
+            <c:simple-property name="case-sensitive" required="false" type="boolean" readOnly="true" defaultValue="true" description="Use case sensitive file handling. The default value is true."/>
+            <c:simple-property name="directory-listing" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable directory listing&#63;. The default value is false."/>
+            <c:simple-property name="follow-symlink" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable following symbolic links. The default value is false."/>
+            <c:simple-property name="path" required="false" type="string" readOnly="true" description="Path on filesystem from where file handler will serve resources"/>
+            <c:list-property name="safe-symlink-paths" required="false" readonly="true" description="Paths that are safe to be targets of symbolic links" >
+              <c:simple-property name="safe-symlink-paths" />
+            </c:list-property>
+          </resource-configuration>
+
+        </service><!-- End of File handler service -->
+
+        <service name="Reverse proxy (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="reverse-proxy"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+           <c:simple-property name="cached-connections-per-thread:expr" required="false" type="string" readOnly="true" defaultValue="5" description="The number of connections that will be kept alive indefinitely. The default value is 5."/>
+           <c:simple-property name="connection-idle-timeout:expr" required="false" type="string" readOnly="true" defaultValue="60" description="The amount of time a connection can be idle before it will be closed. Connections will not time out once the pool size is down to the configured minimum (as configured by cached&#45;connections&#45;per&#45;thread). The default value is 60."/>
+           <c:simple-property name="connections-per-thread:expr" required="false" type="string" readOnly="true" defaultValue="10" description="The number of connections that will be maintained to backend servers, per IO thread. Defaults to 10. The default value is 10."/>
+           <c:simple-property name="max-request-time:expr" required="false" type="string" readOnly="true" defaultValue="&#45;1" description="The maximum time that a proxy request can be active for, before being killed. Defaults to unlimited. The default value is &#45;1."/>
+           <c:simple-property name="problem-server-retry:expr" required="false" type="string" readOnly="true" defaultValue="30" description="Time in seconds to wait before attempting to reconnect to a server that is down. The default value is 30."/>
+           <c:simple-property name="request-queue-size:expr" required="false" type="string" readOnly="true" defaultValue="10" description="The number of requests that can be queued if the connection pool is full before requests are rejected with a 503. The default value is 10."/>
+           <c:simple-property name="session-cookie-names" required="false" type="string" readOnly="true" defaultValue="JSESSIONID" description="Comma separated list of session cookie names. Generally this will just be JSESSIONID. The default value is JSESSIONID."/>
+          </resource-configuration>
+
+          <service name="Reverse proxy host (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+            <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="host"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+              <c:simple-property name="instance-id" required="false" type="string" readOnly="true" description="The instance id (aka JVM route) that will be used to enable sticky sessions"/>
+              <c:simple-property name="outbound-socket-binding" required="false" type="string" readOnly="true" description="Outbound socket binding for this host"/>
+              <c:simple-property name="path" required="false" type="string" readOnly="true" defaultValue="/" description="Optional path if host is using non root resource. The default value is /."/>
+              <c:simple-property name="scheme" required="false" type="string" readOnly="true" defaultValue="http" description="What kind of scheme is used. The default value is http."/>
+              <c:simple-property name="security-realm" required="false" type="string" readOnly="true" description="The security realm that provides the SSL configuration for the connection to the host"/>
+            </resource-configuration>
+          </service><!-- End of Reverse proxy host service -->
+        </service><!-- End of Handler configuration host service -->
+
       </service>
-    </service>
+
+      <service name="Buffer Cache (Managed Server)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="buffer-cache"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="buffer-size:expr" required="false" type="string" readOnly="true" defaultValue="1024" description="The size of an individual buffer. The default value is 1024."/>
+          <c:simple-property name="buffers-per-region:expr" required="false" type="string" readOnly="true" defaultValue="1024" description="The numbers of buffers in a region. The default value is 1024."/>
+          <c:simple-property name="max-regions:expr" required="false" type="string" readOnly="true" defaultValue="10" description="The maximum number of regions. The default value is 10."/>
+        </resource-configuration>
+
+      </service><!-- End of buffer-cache service -->
+
+      <service name="Server (Managed Server)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="server"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="default-host" required="false" type="string" readOnly="true" defaultValue="default&#45;host" description="The servers default virtual host. The default value is default&#45;host."/>
+          <c:simple-property name="servlet-container" required="false" type="string" readOnly="true" defaultValue="default" description="The servers default servlet container. The default value is default."/>
+        </resource-configuration>
+
+        <service name="Ajp Listener (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="ajp-listener"/>
+          </plugin-configuration>
+
+          <metric property="bytes-received" description="The number of bytes that have been received by this listener"/>
+          <metric property="bytes-sent" description="The number of bytes that have been sent out on this listener"/>
+          <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+          <metric property="max-processing-time" description="The maximum processing time taken by a request on this listener"/>
+          <metric property="processing-time" description="The total processing time of all requests handed by this listener"/>
+          <metric property="request-count" description="The number of requests this listener has served"/>
+
+          <resource-configuration>
+            <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="true" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
+            <c:simple-property name="allow-equals-in-cookie-value" required="false" type="boolean" readOnly="true" defaultValue="false" description="If this is true then Undertow will allow non&#45;escaped equals characters in unquoted cookie values. Unquoted cookie values may not contain equals characters. If present the value ends before the equals sign. The remainder of the cookie value will be dropped. The default value is false."/>
+            <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="true" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
+            <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="true" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
+            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="true" defaultValue="default" description="The AJP listeners buffer pool. The default value is default."/>
+            <c:simple-property name="decode-url" required="false" type="boolean" readOnly="true" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
+            <c:list-property name="disallowed-methods" required="false" readOnly="true" description="A comma separated list of HTTP methods that are not allowed" >
+              <c:simple-property name="disallowed-methods" />
+            </c:list-property>
+            <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" defaultValue="true" description="If the listener is enabled. The default value is true."/>
+            <c:simple-property name="max-buffered-request-size:expr" required="false" type="string" readOnly="true" defaultValue="16384" description="Maximum size of a buffered request, in bytesRequests are not usually buffered, the most common case is when performing SSL renegotiation for a POST request, and the post data must be fullybuffered in order to perform the renegotiation. The default value is 16384."/>
+            <c:simple-property name="max-connections:expr" required="false" type="string" readOnly="true" description="The maximum number of concurrent connections."/>
+            <c:simple-property name="max-cookies:expr" required="false" type="string" readOnly="true" defaultValue="200" description="The maximum number of cookies that will be parsed. This is used to protect against hash vulnerabilities. The default value is 200."/>
+            <c:simple-property name="max-header-size:expr" required="false" type="string" readOnly="true" defaultValue="1048576" description="The maximum size in bytes of a http request header. The default value is 1048576."/>
+            <c:simple-property name="max-headers:expr" required="false" type="string" readOnly="true" defaultValue="200" description="The maximum number of headers that will be parsed. This is used to protect against hash vulnerabilities. The default value is 200."/>
+            <c:simple-property name="max-parameters:expr" required="false" type="string" readOnly="true" defaultValue="1000" description="The maximum number of parameters that will be parsed. This is used to protect against hash vulnerabilities.This applies to both query parameters, and to POST data, but is not cumulative (i.e. you can potentially have max parameters * 2 total parameters). The default value is 1000."/>
+            <c:simple-property name="max-post-size:expr" required="false" type="string" readOnly="true" defaultValue="10485760" description="The maximum size of a post that will be accepted. The default value is 10485760."/>
+            <c:simple-property name="no-request-timeout:expr" required="false" type="string" readOnly="true" description="The length of time in milliseconds that the connection can be idle before it is closed by the container"/>
+            <c:simple-property name="read-timeout:expr" required="false" type="string" readOnly="true" description="Configure a read timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful read taking place, the socket&apos;s next read will throw a {@link ReadTimeoutException}."/>
+            <c:simple-property name="receive-buffer:expr" required="false" type="string" readOnly="true" description="The receive buffer size."/>
+            <c:simple-property name="record-request-start-time" required="false" type="boolean" readOnly="true" defaultValue="false" description="If this is true then Undertow will record the request start time, to allow for request time to be logged. This has a small but measurable performance impact. The default value is false."/>
+            <c:simple-property name="redirect-socket" required="false" type="string" readOnly="true" description="If this listener is supporting non&#45;SSL requests, and a request is received for which a matching &lt;security&#45;constraint&gt; requires SSL transport, undertow will automatically redirect the request to the socket binding port specified here."/>
+            <c:simple-property name="request-parse-timeout:expr" required="false" type="string" readOnly="true" description="The maximum amount of time (in milliseconds) that can be spent parsing the request"/>
+            <c:simple-property name="resolve-peer-address" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enables host dns lookup. The default value is false."/>
+            <c:simple-property name="scheme" required="false" type="string" readOnly="true" description="The listener scheme, can be HTTP or HTTPS. By default the scheme will be taken from the incoming AJP request."/>
+            <c:simple-property name="send-buffer:expr" required="false" type="string" readOnly="true" description="The send buffer size."/>
+            <c:simple-property name="socket-binding" required="true" type="string" readOnly="true" description="The AJP listener socket binder"/>
+            <c:simple-property name="tcp-backlog:expr" required="false" type="string" readOnly="true" description="Configure a server with the specified backlog."/>
+            <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="true" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
+            <c:simple-property name="url-charset" required="false" type="string" readOnly="true" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="true" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default."/>
+            <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="true" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
+          </resource-configuration>
+        </service> <!-- End of ajp-listener service -->
+
+        <service name="Undertow Host (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="host"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:list-property name="alias" required="false" readOnly="true" description="Aliases for the host" >
+              <c:simple-property name="alias" />
+            </c:list-property>
+            <c:simple-property name="default-response-code:expr" required="false" type="string" readOnly="true" defaultValue="404" description="If set, this will be response code sent back in case requested context does not exist on server. The default value is 404."/>
+            <c:simple-property name="default-web-module" required="false" type="string" readOnly="true" defaultValue="ROOT.war" description="Default web module. The default value is ROOT.war."/>
+            <c:simple-property name="disable-console-redirect" required="false" type="boolean" readOnly="true" defaultValue="false" description="if set to true, /console redirect wont be enabled for this host, default is false. The default value is false."/>
+          </resource-configuration>
+
+          <service name="Host Filter Ref (Managed Server)"
+                   discovery="SubsystemDiscovery"
+                   class="BaseComponent">
+
+            <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="filter-ref"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+              <c:simple-property name="predicate" required="false" type="string" readOnly="true" description="Predicates provide a simple way of making a true/false decision  based on an exchange. Many handlers have a requirement that they be applied conditionally, and predicates provide a general way to specify a condition."/>
+              <c:simple-property name="priority:expr" required="false" type="string" readOnly="true" defaultValue="1" description="Defines filter order, it should be set to 1 or more, higher number instructs server to be included earlier in handler chain than others under same context. The default value is 1."/>
+            </resource-configuration>
+
+          </service><!-- End of filter-ref service -->
+
+          <service name="Undertow-Location (Managed Server)"
+                   discovery="SubsystemDiscovery"
+                   class="BaseComponent">
+
+            <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="location"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+              <c:simple-property name="handler" required="true" type="string" readOnly="false" description="Default handler for this location"/>
+            </resource-configuration>
+
+            <service name="Location Filter Ref (Managed Server)"
+                     discovery="SubsystemDiscovery"
+                     class="BaseComponent">
+
+              <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="filter-ref"/>
+              </plugin-configuration>
+
+              <resource-configuration>
+                <c:simple-property name="predicate" required="false" type="string" readOnly="true" description="Predicates provide a simple way of making a true/false decision  based on an exchange. Many handlers have a requirement that they be applied conditionally, and predicates provide a general way to specify a condition."/>
+                <c:simple-property name="priority:expr" required="false" type="string" readOnly="true" defaultValue="1" description="Defines filter order, it should be set to 1 or more, higher number instructs server to be included earlier in handler chain than others under same context. The default value is 1."/>
+              </resource-configuration>
+
+            </service><!-- End of filter-ref service -->
+          </service><!-- End of location service -->
+        </service><!-- End of host service -->
+        <service name="Http Listener (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="http-listener"/>
+          </plugin-configuration>
+
+          <metric property="bytes-received" description="The number of bytes that have been received by this listener"/>
+          <metric property="bytes-sent" description="The number of bytes that have been sent out on this listener"/>
+          <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+          <metric property="max-processing-time" description="The maximum processing time taken by a request on this listener"/>
+          <metric property="processing-time" description="The total processing time of all requests handed by this listener"/>
+          <metric property="request-count" description="The number of requests this listener has served"/>
+
+          <resource-configuration>
+            <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="true" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
+            <c:simple-property name="allow-equals-in-cookie-value" required="false" type="boolean" readOnly="true" defaultValue="false" description="If this is true then Undertow will allow non&#45;escaped equals characters in unquoted cookie values. Unquoted cookie values may not contain equals characters. If present the value ends before the equals sign. The remainder of the cookie value will be dropped. The default value is false."/>
+            <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="true" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
+            <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="true" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
+            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="true" defaultValue="default" description="The AJP listeners buffer pool. The default value is default."/>
+            <c:simple-property name="certificate-forwarding" required="false" type="boolean" readOnly="true" defaultValue="false" description="If certificate forwarding should be enabled. If this is enabled then the listener will take the certificate from the SSL_CLIENT_CERT attribute. This should only be enabled if behind a proxy, and the proxy is configured to always set these headers. The default value is false."/>
+            <c:simple-property name="decode-url" required="false" type="boolean" readOnly="true" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
+            <c:list-property name="disallowed-methods" required="false" readOnly="true" description="A comma separated list of HTTP methods that are not allowed" >
+              <c:simple-property name="disallowed-methods" />
+            </c:list-property>
+            <c:simple-property name="enable-http2" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enables HTTP2 support for this listener. The default value is false."/>
+            <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" defaultValue="true" description="If the listener is enabled. The default value is true."/>
+            <c:simple-property name="max-buffered-request-size:expr" required="false" type="string" readOnly="true" defaultValue="16384" description="Maximum size of a buffered request, in bytesRequests are not usually buffered, the most common case is when performing SSL renegotiation for a POST request, and the post data must be fullybuffered in order to perform the renegotiation. The default value is 16384."/>
+            <c:simple-property name="max-connections:expr" required="false" type="string" readOnly="true" description="The maximum number of concurrent connections."/>
+            <c:simple-property name="max-cookies:expr" required="false" type="string" readOnly="true" defaultValue="200" description="The maximum number of cookies that will be parsed. This is used to protect against hash vulnerabilities. The default value is 200."/>
+            <c:simple-property name="max-header-size:expr" required="false" type="string" readOnly="true" defaultValue="1048576" description="The maximum size in bytes of a http request header. The default value is 1048576."/>
+            <c:simple-property name="max-headers:expr" required="false" type="string" readOnly="true" defaultValue="200" description="The maximum number of headers that will be parsed. This is used to protect against hash vulnerabilities. The default value is 200."/>
+            <c:simple-property name="max-parameters:expr" required="false" type="string" readOnly="true" defaultValue="1000" description="The maximum number of parameters that will be parsed. This is used to protect against hash vulnerabilities.This applies to both query parameters, and to POST data, but is not cumulative (i.e. you can potentially have max parameters * 2 total parameters). The default value is 1000."/>
+            <c:simple-property name="max-post-size:expr" required="false" type="string" readOnly="true" defaultValue="10485760" description="The maximum size of a post that will be accepted. The default value is 10485760."/>
+            <c:simple-property name="no-request-timeout:expr" required="false" type="string" readOnly="true" description="The length of time in milliseconds that the connection can be idle before it is closed by the container"/>
+            <c:simple-property name="proxy-address-forwarding" required="false" type="boolean" readOnly="true" defaultValue="false" description="enables x&#45;forwarded&#45;host and similar headers and set a remote ip address and hostname. The default value is false."/>
+            <c:simple-property name="read-timeout:expr" required="false" type="string" readOnly="true" description="Configure a read timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful read taking place, the socket&apos;s next read will throw a {@link ReadTimeoutException}."/>
+            <c:simple-property name="receive-buffer:expr" required="false" type="string" readOnly="true" description="The receive buffer size."/>
+            <c:simple-property name="record-request-start-time" required="false" type="boolean" readOnly="true" defaultValue="false" description="If this is true then Undertow will record the request start time, to allow for request time to be logged. This has a small but measurable performance impact. The default value is false."/>
+            <c:simple-property name="redirect-socket" required="false" type="string" readOnly="true" description="If this listener is supporting non&#45;SSL requests, and a request is received for which a matching &lt;security&#45;constraint&gt; requires SSL transport, undertow will automatically redirect the request to the socket binding port specified here."/>
+            <c:simple-property name="request-parse-timeout:expr" required="false" type="string" readOnly="true" description="The maximum amount of time (in milliseconds) that can be spent parsing the request"/>
+            <c:simple-property name="resolve-peer-address" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enables host dns lookup. The default value is false."/>
+            <c:simple-property name="send-buffer:expr" required="false" type="string" readOnly="true" description="The send buffer size."/>
+            <c:simple-property name="socket-binding" required="true" type="string" readOnly="true" description="The AJP listener socket binder"/>
+            <c:simple-property name="tcp-backlog:expr" required="false" type="string" readOnly="true" description="Configure a server with the specified backlog."/>
+            <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="true" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
+            <c:simple-property name="url-charset" required="false" type="string" readOnly="true" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="true" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default."/>
+            <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="true" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
+          </resource-configuration>
+
+        </service><!-- End of http-listener service -->
+        <service name="Https Listener (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="https-listener"/>
+          </plugin-configuration>
+
+          <metric property="bytes-received" description="The number of bytes that have been received by this listener"/>
+          <metric property="bytes-sent" description="The number of bytes that have been sent out on this listener"/>
+          <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+          <metric property="max-processing-time" description="The maximum processing time taken by a request on this listener"/>
+          <metric property="processing-time" description="The total processing time of all requests handed by this listener"/>
+          <metric property="request-count" description="The number of requests this listener has served"/>
+
+          <resource-configuration>
+            <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="true" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
+            <c:simple-property name="allow-equals-in-cookie-value" required="false" type="boolean" readOnly="true" defaultValue="false" description="If this is true then Undertow will allow non&#45;escaped equals characters in unquoted cookie values. Unquoted cookie values may not contain equals characters. If present the value ends before the equals sign. The remainder of the cookie value will be dropped. The default value is false."/>
+            <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="true" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
+            <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="true" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
+            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="true" defaultValue="default" description="The AJP listeners buffer pool. The default value is default."/>
+            <c:simple-property name="decode-url" required="false" type="boolean" readOnly="true" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
+            <c:list-property name="disallowed-methods" required="false" readOnly="true" description="A comma separated list of HTTP methods that are not allowed" >
+              <c:simple-property name="disallowed-methods" />
+            </c:list-property>
+            <c:simple-property name="enable-http2" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enables HTTP2 support for this listener. The default value is false."/>
+            <c:simple-property name="enable-spdy" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enables SPDY support for this listener. The default value is false."/>
+            <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" defaultValue="true" description="If the listener is enabled. The default value is true."/>
+            <c:simple-property name="enabled-cipher-suites" required="false" type="string" readOnly="true" description="Configures Enabled SSL cyphers"/>
+            <c:simple-property name="enabled-protocols" required="false" type="string" readOnly="true" description="Configures SSL protocols"/>
+            <c:simple-property name="max-buffered-request-size:expr" required="false" type="string" readOnly="true" defaultValue="16384" description="Maximum size of a buffered request, in bytesRequests are not usually buffered, the most common case is when performing SSL renegotiation for a POST request, and the post data must be fullybuffered in order to perform the renegotiation. The default value is 16384."/>
+            <c:simple-property name="max-connections:expr" required="false" type="string" readOnly="true" description="The maximum number of concurrent connections."/>
+            <c:simple-property name="max-cookies:expr" required="false" type="string" readOnly="true" defaultValue="200" description="The maximum number of cookies that will be parsed. This is used to protect against hash vulnerabilities. The default value is 200."/>
+            <c:simple-property name="max-header-size:expr" required="false" type="string" readOnly="true" defaultValue="1048576" description="The maximum size in bytes of a http request header. The default value is 1048576."/>
+            <c:simple-property name="max-headers:expr" required="false" type="string" readOnly="true" defaultValue="200" description="The maximum number of headers that will be parsed. This is used to protect against hash vulnerabilities. The default value is 200."/>
+            <c:simple-property name="max-parameters:expr" required="false" type="string" readOnly="true" defaultValue="1000" description="The maximum number of parameters that will be parsed. This is used to protect against hash vulnerabilities.This applies to both query parameters, and to POST data, but is not cumulative (i.e. you can potentially have max parameters * 2 total parameters). The default value is 1000."/>
+            <c:simple-property name="max-post-size:expr" required="false" type="string" readOnly="true" defaultValue="10485760" description="The maximum size of a post that will be accepted. The default value is 10485760."/>
+            <c:simple-property name="no-request-timeout:expr" required="false" type="string" readOnly="true" description="The length of time in milliseconds that the connection can be idle before it is closed by the container"/>
+            <c:simple-property name="read-timeout:expr" required="false" type="string" readOnly="true" description="Configure a read timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful read taking place, the socket&apos;s next read will throw a {@link ReadTimeoutException}."/>
+            <c:simple-property name="receive-buffer:expr" required="false" type="string" readOnly="true" description="The receive buffer size."/>
+            <c:simple-property name="record-request-start-time" required="false" type="boolean" readOnly="true" defaultValue="false" description="If this is true then Undertow will record the request start time, to allow for request time to be logged. This has a small but measurable performance impact. The default value is false."/>
+            <c:simple-property name="request-parse-timeout:expr" required="false" type="string" readOnly="true" description="The maximum amount of time (in milliseconds) that can be spent parsing the request"/>
+            <c:simple-property name="resolve-peer-address" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enables host dns lookup. The default value is false."/>
+            <c:simple-property name="security-realm" required="true" type="string" readOnly="true" description="The listeners security realm"/>
+            <c:simple-property name="send-buffer:expr" required="false" type="string" readOnly="true" description="The send buffer size."/>
+            <c:simple-property name="socket-binding" required="true" type="string" readOnly="true" description="The AJP listener socket binder"/>
+            <c:simple-property name="ssl-session-cache-size:expr" required="false" type="string" readOnly="true" description="The maximum number of active SSL sessions"/>
+            <c:simple-property name="ssl-session-timeout:expr" required="false" type="string" readOnly="true" description="The timeout for SSL sessions, in seconds"/>
+            <c:simple-property name="tcp-backlog:expr" required="false" type="string" readOnly="true" description="Configure a server with the specified backlog."/>
+            <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="true" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
+            <c:simple-property name="url-charset" required="false" type="string" readOnly="true" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
+            <c:simple-property name="verify-client" required="false" type="string" readOnly="true" defaultValue="NOT_REQUESTED" description="The desired SSL client authentication mode for SSL channels. The default value is NOT_REQUESTED."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="true" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default."/>
+            <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="true" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
+          </resource-configuration>
+
+        </service><!-- End of https-listener service -->
+      </service> <!-- End of Server service -->
+      <service name="Servlet Container (Managed Server)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="servlet-container"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="allow-non-standard-wrappers" required="false" type="boolean" readOnly="true" defaultValue="false" description="If true then request and response wrappers that do not extend the standard wrapper classes can be used. The default value is false."/>
+          <c:simple-property name="default-buffer-cache" required="false" type="string" readOnly="true" defaultValue="default" description="The buffer cache to use for caching static resources. The default value is default."/>
+          <c:simple-property name="default-encoding" required="false" type="string" readOnly="true" description="Default encoding to use for all deployed applications"/>
+          <c:simple-property name="default-session-timeout:expr" required="false" type="string" readOnly="true" defaultValue="30" description="The default session timeout (in minutes) for all applications deployed in the container. The default value is 30."/>
+          <c:simple-property name="directory-listing" required="false" type="boolean" readOnly="true" description="If directory listing should be enabled for default servlets."/>
+          <c:simple-property name="disable-caching-for-secured-pages" required="false" type="boolean" readOnly="true" defaultValue="true" description="If Undertow should set headers to disable caching for secured paged. Disabling this can cause security problems, as sensitive pages may be cached by an intermediary. The default value is true."/>
+          <c:simple-property name="eager-filter-initialization" required="false" type="boolean" readOnly="true" defaultValue="false" description="If true undertow calls filter init() on deployment start rather than when first requested. The default value is false."/>
+          <c:simple-property name="ignore-flush" required="false" type="boolean" readOnly="true" defaultValue="false" description="Ignore flushes on the servlet output stream. In most cases these just hurt performance for no good reason. The default value is false."/>
+          <c:simple-property name="max-sessions:expr" required="false" type="string" readOnly="true" description="The maximum number of sessions that can be active at one time"/>
+          <c:simple-property name="proactive-authentication" required="false" type="boolean" readOnly="true" defaultValue="true" description="If proactive authentication should be used. If this is true a user will always be authenticated if credentials are present. The default value is true."/>
+          <c:simple-property name="session-id-length:expr" required="false" type="string" readOnly="true" defaultValue="30" description="The length of the generated session ID. Longer session ID&apos;s are more secure. The default value is 30."/>
+          <c:simple-property name="stack-trace-on-error" required="false" type="string" readOnly="true" defaultValue="local&#45;only" description="If an error page with the stack trace should be generated on error. Values are all, none and local&#45;only. The default value is local&#45;only."/>
+          <c:simple-property name="use-listener-encoding" required="false" type="boolean" readOnly="true" defaultValue="false" description="Use encoding defined on listener. The default value is false."/>
+
+          <c:group name="child:setting=jsp" displayName="JSP">
+            <c:simple-property name="check-interval:expr" required="false" type="string" readOnly="true" defaultValue="0" description="Check interval for JSP updates using a background thread. The default value is 0."/>
+            <c:simple-property name="development" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable Development mode which enables reloading JSP on&#45;the&#45;fly. The default value is false."/>
+            <c:simple-property name="disabled" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable the JSP container. The default value is false."/>
+            <c:simple-property name="display-source-fragment" required="false" type="boolean" readOnly="true" defaultValue="true" description="When a runtime error occurs, attempts to display corresponding JSP source fragment. The default value is true."/>
+            <c:simple-property name="dump-smap" required="false" type="boolean" readOnly="true" defaultValue="false" description="Write SMAP data to a file. The default value is false."/>
+            <c:simple-property name="error-on-use-bean-invalid-class-attribute" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable errors when using a bad class in useBean. The default value is false."/>
+            <c:simple-property name="generate-strings-as-char-arrays" required="false" type="boolean" readOnly="true" defaultValue="false" description="Generate String constants as char arrays. The default value is false."/>
+            <c:simple-property name="java-encoding" required="false" type="string" readOnly="true" defaultValue="UTF8" description="Specify the encoding used for Java sources. The default value is UTF8."/>
+            <c:simple-property name="keep-generated" required="false" type="boolean" readOnly="true" defaultValue="true" description="Keep the generated Servlets. The default value is true."/>
+            <c:simple-property name="mapped-file" required="false" type="boolean" readOnly="true" defaultValue="true" description="Map to the JSP source. The default value is true."/>
+            <c:simple-property name="modification-test-interval:expr" required="false" type="string" readOnly="true" defaultValue="4" description="Minimum amount of time between two tests for updates, in seconds. The default value is 4."/>
+            <c:simple-property name="optimize-scriptlets" required="false" type="boolean" readOnly="true" defaultValue="false" description="If JSP scriptlets should be optimised to remove string concatenation. The default value is false."/>
+            <c:simple-property name="recompile-on-fail" required="false" type="boolean" readOnly="true" defaultValue="false" description="Retry failed JSP compilations on each request. The default value is false."/>
+            <c:simple-property name="scratch-dir" required="false" type="string" readOnly="true" description="Specify a different work directory."/>
+            <c:simple-property name="smap" required="false" type="boolean" readOnly="true" defaultValue="true" description="Enable SMAP. The default value is true."/>
+            <c:simple-property name="source-vm" required="false" type="string" readOnly="true" defaultValue="1.8" description="Source VM level for compilation. The default value is 1.8."/>
+            <c:simple-property name="tag-pooling" required="false" type="boolean" readOnly="true" defaultValue="true" description="Enable tag pooling. The default value is true."/>
+            <c:simple-property name="target-vm" required="false" type="string" readOnly="true" defaultValue="1.8" description="Target VM level for compilation. The default value is 1.8."/>
+            <c:simple-property name="trim-spaces" required="false" type="boolean" readOnly="true" defaultValue="false" description="Trim some spaces from the generated Servlet. The default value is false."/>
+            <c:simple-property name="x-powered-by" required="false" type="boolean" readOnly="true" defaultValue="true" description="Enable advertising the JSP engine in x&#45;powered&#45;by. The default value is true."/>
+          </c:group>
+
+          <c:group name="child:setting=websockets" displayName="Web socket">
+            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="true" defaultValue="default" description="The buffer pool to use for websocket deployments. The default value is default."/>
+            <c:simple-property name="dispatch-to-worker" required="false" type="boolean" readOnly="true" defaultValue="true" description="If callbacks should be dispatched to a worker thread. If this is false then they will be run in the IO thread, which is faster however care must be taken not to perform blocking operations. The default value is true."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="true" defaultValue="default" description="The worker to use for websocket deployments. The default value is default."/>
+          </c:group>
+
+        </resource-configuration>
+
+        <service name="Mime Mapping (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="mime-mapping"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="value" required="true" type="string" readOnly="true" description="The mime type for this mapping"/>
+          </resource-configuration>
+
+        </service><!-- End of mime-mapping service -->
+
+        <service name="Welcome File (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="welcome-file"/>
+          </plugin-configuration>
+
+        </service><!-- End of welcome-file service -->
+      </service><!-- End of servlet-container -->  
+    </service><!-- End of undertow service -->
 
     <service name="JCA (Managed Server)"
              class="BaseComponent"
@@ -6253,173 +6592,111 @@
       </service>
     </service>
 
-    <service name="JBossWeb (Profile)"
+    <service name="Undertow (Profile)"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
              singleton="true"
              subCategory="Subsystems|Web">
 
       <plugin-configuration>
-        <c:simple-property name="path" readOnly="true" default="subsystem=web"/>
+        <c:simple-property name="path" readOnly="true" default="subsystem=undertow"/>
       </plugin-configuration>
 
       <resource-configuration>
-        <c:simple-property name="default-virtual-server" required="true" type="string" readOnly="false" defaultValue="default-host" description="The web container's default virtual server. The default value is default-host.">
-          <c:option-source target="resource" expression="type=VHost plugin=&pluginName;"/>
-        </c:simple-property>
-        <c:simple-property name="instance-id" readOnly="true" required="false" type="string" description="The identifier for this server instance."/>
-        <c:simple-property name="native" required="false" type="boolean" readOnly="true" defaultValue="true" description="Add the native initialization listener to the web container. The default value is true."/>
-
-        <c:group name="child:configuration=static-resources" displayName="Static Resources">
-          <c:simple-property name="disabled:0" required="false" type="boolean" defaultValue="false" description="Enable the default Servlet mapping. The default value is false."/>
-          <c:simple-property name="file-encoding" required="false" description="Force a file encoding." type="string"/>
-          <c:simple-property name="listings" required="false" type="boolean" defaultValue="false" description="Enable folder listings. The default value is false."/>
-          <c:simple-property name="max-depth" required="false" type="integer" defaultValue="3" description="Maximum recursion for PROPFIND. The default value is 3."/>
-          <c:simple-property name="read-only" required="false" type="boolean" defaultValue="true" description="Allow write HTTP methods (PUT, DELETE). The default value is true."/>
-          <c:simple-property name="sendfile" required="false" type="integer" defaultValue="49152" description="Enable sendfile if possible, for files bigger than the specified byte size. The default value is 49152."/>
-          <c:simple-property name="secret" required="false" type="string" readOnly="true" description="Secret for WebDAV locking operations."/>
-          <c:simple-property name="webdav" required="false" type="boolean" defaultValue="false" description="Enable WebDAV functionality. The default value is false."/>
-        </c:group>
-        <c:group name="child:configuration=jsp-configuration" displayName="JSP Configuration">
-          <c:simple-property name="check-interval" required="false" type="integer" readOnly="false" defaultValue="0" description="Check interval for JSP updates using a background thread. The default value is 0."/>
-          <c:simple-property name="development" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable the development mode, which gives more information when an error occurs. The default value is false."/>
-          <c:simple-property name="disabled:1" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable the JSP container. The default value is false."/>
-          <c:simple-property name="display-source-fragment" required="false" type="boolean" readOnly="false" defaultValue="true" description="When a runtime error occurs, attempts to display corresponding JSP source fragment. The default value is true."/>
-          <c:simple-property name="dump-smap" required="false" type="boolean" readOnly="false" defaultValue="false" description="Write SMAP data to a file. The default value is false."/>
-          <c:simple-property name="error-on-use-bean-invalid-class-attribute" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable errors when using a bad class in useBean. The default value is false."/>
-          <c:simple-property name="generate-strings-as-char-arrays" required="false" type="boolean" readOnly="false" defaultValue="false" description="Generate String constants as char arrays. The default value is false."/>
-          <c:simple-property name="java-encoding" required="false" type="string" readOnly="false" defaultValue="UTF8" description="Specify the encoding used for Java sources. The default value is UTF8."/>
-          <c:simple-property name="keep-generated" required="false" type="boolean" readOnly="false" defaultValue="true" description="Keep the generated Servlets. The default value is true."/>
-          <c:simple-property name="mapped-file" required="false" type="boolean" readOnly="false" defaultValue="true" description="Map to the JSP source. The default value is true."/>
-          <c:simple-property name="modification-test-interval" required="false" type="integer" readOnly="false" defaultValue="4" description="Minimum amount of time between two tests for updates, in seconds. The default value is 4."/>
-          <c:simple-property name="recompile-on-fail" required="false" type="boolean" readOnly="false" defaultValue="false" description="Retry failed JSP compilations on each request. The default value is false."/>
-          <c:simple-property name="scratch-dir" required="false" type="string" readOnly="false" description="Specify a different work directory."/>
-          <c:simple-property name="smap" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable SMAP. The default value is true."/>
-          <c:simple-property name="source-vm" required="false" type="string" readOnly="false" defaultValue="1.5" description="Source VM level for compilation. The default value is 1.5."/>
-          <c:simple-property name="tag-pooling" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable tag pooling. The default value is true."/>
-          <c:simple-property name="target-vm" required="false" type="string" readOnly="false" defaultValue="1.5" description="Target VM level for compilation. The default value is 1.5."/>
-          <c:simple-property name="trim-spaces" required="false" type="boolean" readOnly="false" defaultValue="false" description="Trim some spaces from the generated Servlet. The default value is false."/>
-          <c:simple-property name="x-powered-by" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable advertising the JSP engine in x-powered-by. The default value is true."/>
-        </c:group>
-        <c:group name="child:configuration=container" displayName="Container">
-          <!-- Commented out - see https://bugzilla.redhat.com/show_bug.cgi?id=815288
-                  <c:list-property name="mime-mapping" description="A mime-mapping definition." required="false">
-                    <c:map-property name="mime-mapping:collapsed">
-                      <c:simple-property name="name:0" displayName="Name" description="A MIME mapping name without the dot (e.g. 'txt')"/>
-                      <c:simple-property name="value:1" displayName="Value" description="A MIME mapping value (e.g. 'text/plain' )"/>
-                    </c:map-property>
-                  </c:list-property>
-          -->
-          <c:list-property name="welcome-file" required="false" description="A welcome file declaration.">
-            <c:simple-property name="welcome-file" type="string"/>
-          </c:list-property>
-        </c:group>
+        <c:simple-property name="default-security-domain" required="false" type="string" readOnly="false" defaultValue="other" description="The default security domain used by web deployments. The default value is other."/>
+        <c:simple-property name="default-server" required="false" type="string" readOnly="false" defaultValue="default&#45;server" description="The default server to use for deployments. The default value is default&#45;server."/>
+        <c:simple-property name="default-servlet-container" required="false" type="string" readOnly="false" defaultValue="default" description="The default servlet container to use for deployments. The default value is default."/>
+        <c:simple-property name="default-virtual-host" required="false" type="string" readOnly="false" defaultValue="default&#45;host" description="The default virtual host to use for deployments. The default value is default&#45;host."/>
+        <c:simple-property name="instance-id" required="false" type="string" readOnly="false" defaultValue="{EXPRESSION_VALUE=&#36;{jboss.node.name}}"         description="The cluster instance id. The default value is {EXPRESSION_VALUE=&#36;{jboss.node.name}}."/>
+        <c:simple-property name="statistics-enabled" required="false" type="boolean" readOnly="false" defaultValue="false" description="Configures if are statistics enabled. The default value is false."/>
       </resource-configuration>
 
-      <service name="Connector (Profile)"
+      <service name="Filter configurations (Profile)"
                discovery="SubsystemDiscovery"
-               class="BaseComponent"
-               createDeletePolicy="both">
+               class="BaseComponent">
 
         <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="connector"/>
+          <c:simple-property name="path" readOnly="true" default="configuration=filter"/>
         </plugin-configuration>
 
-        <resource-configuration>
-          <c:simple-property name="scheme" required="true" type="string" readOnly="false" description="The web connector scheme.">
-            <c:property-options>
-              <c:option value="http"/>
-              <c:option value="https"/>
-              <c:option value="ajp"/>
-            </c:property-options>
-          </c:simple-property>
-          <c:simple-property name="socket-binding" required="true" type="string" description="The web connector socket-binding reference, this connector should be bound to.">
-            <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
-          </c:simple-property>
-          <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
-          <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
-          <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
-          <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
-          <c:simple-property name="max-post-size" required="false" type="integer" readOnly="false" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
-          <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="false" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
-          <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
-          <c:simple-property name="protocol" required="true" type="string" readOnly="false" default="HTTP/1.1" defaultValue="HTTP/1.1"
-                             description="The web connector protocol. (e.g. 'HTTP/1.1' or 'AJP' or a name of a class implementing ProtocolHandler and MBeanRegistration )">
-            <!-- TODO let the user could enter a custom value here when the UI supports this. -->
-            <c:property-options>
-              <c:option value="HTTP/1.1"/>
-              <c:option value="AJP/1.3"/>
-            </c:property-options>
-          </c:simple-property>
-          <c:simple-property name="proxy-name" required="false" type="string" readOnly="false" description="The host name that will be used when sending a redirect. The default value is null."/>
-          <c:simple-property name="proxy-port" required="false" type="integer" readOnly="false" description="The port that will be used when sending a redirect."/>
-          <c:simple-property name="redirect-port:expr" displayName="Redirect Port" required="false" type="string" readOnly="false" defaultValue="8433" description="The port for redirection to a secure connector. The default value is 8433."/>
-          <c:simple-property name="secure" required="false" type="boolean" readOnly="false" defaultValue="false" description="Indicates if content sent or received by the connector is secured from the user perspective. The default value is false."/>
-          <c:simple-property name="virtual-server" required="false" type="string" readOnly="false" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers."/>
-
-          <c:group name="child:ssl=configuration:enabled=secure=true" displayName="SSL Configuration">
-            <c:map-property name="*Configuration+" displayName="Configuration" readOnly="false" required="false">
-              <c:simple-property name="ca-certificate-file" required="false" type="string" readOnly="false" description="Certificate authority."/>
-              <c:simple-property name="ca-certificate-password" required="false" type="string" readOnly="false" description="Certificate password."/>
-              <c:simple-property name="ca-revocation-url" required="false" type="string" readOnly="false" description="Certificate authority revocation list."/>
-              <c:simple-property name="certificate-file" required="false" type="string" readOnly="false" description="Server certificate file. If the value is not given, ~/.keystore is the default"/>
-              <c:simple-property name="certificate-key-file" required="false" type="string" readOnly="false" description="Key file for the certificate."/>
-              <c:simple-property name="cipher-suite" required="false" type="string" readOnly="false" description="The allowed cipher suite."/>
-              <c:simple-property name="key-alias" required="false" type="string" readOnly="false" description="The key alias."/>
-              <c:simple-property name="keystore-type" required="false" type="string" readOnly="false" description="Type of the keystore, There are various types of keystores available, including &apos;PKCS12&apos; and Sun&apos;s &apos;JKS.&apos;"/>
-              <c:simple-property name="name" required="false" type="string" readOnly="false" description="The configuration name."/>
-              <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password."/>
-              <c:simple-property name="protocol" required="false" type="string" readOnly="false" description="The SSL protocols that are enabled." default="ALL" defaultValue="ALL">
-                <c:property-options>
-                  <c:option value="SSLv2"/>
-                  <c:option value="SSLv3"/>
-                  <c:option value="TLSv1"/>
-                  <c:option value="SSLv2+SSLv3"/>
-                  <c:option value="ALL"/>
-                </c:property-options>
-              </c:simple-property>
-              <c:simple-property name="session-cache-size" required="false" type="integer" readOnly="false" description="SSL session cache."/>
-              <c:simple-property name="session-timeout" required="false" type="integer" readOnly="false" description="SSL session cache timeout."/>
-              <c:simple-property name="truststore-type" required="false" type="string" readOnly="false" description="Type of the truststore, There are various types of keystores available, including &apos;PKCS12&apos; and Sun&apos;s &apos;JKS.&apos;"/>
-              <c:simple-property name="verify-client" required="false" type="string" readOnly="false" description="Enable client certificate verification."/>
-              <c:simple-property name="verify-depth" required="false" type="integer" readOnly="false" description="Limit certificate nesting."/>
-            </c:map-property>
-          </c:group>
-        </resource-configuration>
-      </service>
-
-      <service name="VHost (Profile)"
-               discovery="SubsystemDiscovery"
-               class="VHostComponent"
-               createDeletePolicy="both">
-
-        <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="virtual-server"/>
-        </plugin-configuration>
-
-        <resource-configuration>
-          <c:list-property name="alias" description="The virtual server aliases" displayName="Virtual server aliases">
-            <c:simple-property name="alias"/>
-          </c:list-property>
-          <c:simple-property name="default-web-module" type="string" defaultValue="ROOT.war" description="The web module deployment name that will be mapped as the root webapp."/>
-          <c:simple-property name="enable-welcome-root" type="boolean" defaultValue="false" description="Whether or not the bundled welcome directory is used as the root web context. The default value is false."/>
-          <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique virtual host name"/>
-
-          <c:group name="child:sso=configuration" displayName="The SSO configuration for this virtual server.">
-            <c:map-property name="*Configuration+" displayName="Configuration" readOnly="false" required="false">
-              <c:simple-property name="cache-container" required="false" type="string" readOnly="false" description="Enables clustered SSO using the specified clustered cache container.">
-                <c:option-source target="resource" expression="type='Cache Container' plugin=&pluginName;"/>
-              </c:simple-property>
-              <c:simple-property name="cache-name" required="false" type="string" readOnly="false" description="Name of the cache to use in the cache container."/>
-              <c:simple-property name="domain" required="false" type="string" readOnly="false" description="The cookie domain that will be used."/>
-              <c:simple-property name="reauthenticate" required="false" type="boolean" readOnly="false" description="Enables reauthentication with the realm when using SSO."/>
-            </c:map-property>
-          </c:group>
-        </resource-configuration>
-
-        <service name="Rewrite Rules (Profile)"
+        <service name="Error page (Profile)"
                  discovery="SubsystemDiscovery"
-                 description="A list of rewrite rules that will be processed in order on the URL or vhost specified in the request. Those follow the rules for mod_rewrite. Please consult the manual for help on settings"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="error-page"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="code:expr" required="true" type="string" readOnly="false" description="Error page code"/>
+            <c:simple-property name="path" required="false" type="string" readOnly="false" description="Error page path"/>
+          </resource-configuration>
+
+        </service><!-- End of Error page service -->
+
+        <service name="Expression filter (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="expression-filter"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="expression" required="true" type="string" readOnly="false" description="The expression that defines the filter"/>
+            <c:simple-property name="module" required="false" type="string" readOnly="false" description="Module to use to load the filter definitions"/>
+          </resource-configuration>
+
+        </service><!-- End of Expression filter service -->
+
+        <service name="GZIP (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="gzip"/>
+          </plugin-configuration>
+
+        </service><!-- End of GZIP service -->
+
+        <service name="Mod cluster (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="mod-cluster"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="advertise-frequency:expr" required="false" type="string" readOnly="false" defaultValue="10000" description="The frequency (in milliseconds) that mod&#45;cluster advertises itself on the network. The default value is 10000."/>
+            <c:simple-property name="advertise-path" required="false" type="string" readOnly="false" defaultValue="/" description="The path that mod&#45;cluster is registered under, defaults to /. The default value is /."/>
+            <c:simple-property name="advertise-protocol" required="false" type="string" readOnly="false" defaultValue="http" description="The protocol that is in use, defaults to HTTP. The default value is http."/>
+            <c:simple-property name="advertise-socket-binding" required="true" type="string" readOnly="false" description="The multicast group that is used to advertise"/>
+            <c:simple-property name="broken-node-timeout:expr" required="false" type="string" readOnly="false" defaultValue="60000" description="The amount of time that must elapse before a broken node is removed from the table. The default value is 60000."/>
+            <c:simple-property name="cached-connections-per-thread:expr" required="false" type="string" readOnly="false" defaultValue="40" description="The number of connections that will be kept alive indefinitely. The default value is 40."/>
+            <c:simple-property name="connection-idle-timeout:expr" required="false" type="string" readOnly="false" defaultValue="60" description="The amount of time a connection can be idle before it will be closed. Connections will not time out once the pool size is down to the configured minimum (as configured by cached&#45;connections&#45;per&#45;thread). The default value is 60."/>
+            <c:simple-property name="connections-per-thread:expr" required="false" type="string" readOnly="false" defaultValue="40" description="The number of connections that will be maintained to backend servers, per IO thread. Defaults to 10. The default value is 40."/>
+            <c:simple-property name="enable-http2" required="false" type="boolean" readOnly="false" defaultValue="false" description="If the load balancer should attempt to upgrade back end connections to HTTP2. If HTTP2 is not supported HTTP or HTTPS will be used as normal. The default value is false."/>
+            <c:simple-property name="health-check-interval:expr" required="false" type="string" readOnly="false" defaultValue="10000" description="The frequency of health check pings to backend nodes. The default value is 10000."/>
+            <c:simple-property name="management-access-predicate" required="false" type="string" readOnly="false" description="A predicate that is applied to incoming requests to determine if they can perform mod cluster management commands. Provides additional security on top of what is provided by limiting management to requests that originate from the management&#45;socket&#45;binding"/>
+            <c:simple-property name="management-socket-binding" required="true" type="string" readOnly="false" description="The socket binding of the mod_cluster management port. When using mod_cluster two HTTP listeners should be defined, a public one to handle requests, and one bound to the internal network to handle mod cluster commands. This socket binding should correspond to the internal listener, and should not be publicly accessible"/>
+            <c:simple-property name="max-ajp-packet-size" required="false" type="integer" readOnly="false" description="The maximum size for AJP packets. Increasing this will allow AJP to work for requests/responses that have a large amount of headers. This is an advanced option, and must be the same between load balancers and backend servers."/>
+            <c:simple-property name="max-request-time:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The max amount of time that a request to a backend node can take before it is killed. The default value is &#45;1."/>
+            <c:simple-property name="request-queue-size:expr" required="false" type="string" readOnly="false" defaultValue="1000" description="The number of requests that can be queued if the connection pool is full before requests are rejected with a 503. The default value is 1000."/>
+            <c:simple-property name="security-key" required="false" type="string" readOnly="false" description="The security key that is used for the mod&#45;cluster group. All members must use the same security key."/>
+            <c:simple-property name="security-realm" required="false" type="string" readOnly="false" description="The security realm that provides the SSL configuration"/>
+            <c:simple-property name="use-alias" required="false" type="boolean" readOnly="false" defaultValue="false" description="If an alias check is performed. The default value is false."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The XNIO worker that is used to send the advertise notifications. The default value is default."/>
+          </resource-configuration>
+
+        </service><!-- End of Mod cluster service -->
+
+        <service name="Rewrite (Profile)"
+                 discovery="SubsystemDiscovery"
                  class="BaseComponent"
                  createDeletePolicy="both">
 
@@ -6428,50 +6705,472 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="flags" required="true" type="string" readOnly="false" description="Option flags for this rewrite rule. Consult the mod_rewrite docs."/>
-            <c:simple-property name="pattern" required="true" type="string" readOnly="false" description="The pattern that will be matched. Consult the mod_rewrite docs."/>
-            <c:simple-property name="substitution" required="true" type="string" readOnly="false" description="The string that will replace the original URL or vhost. Consult the mod_rewrite docs."/>
-            <!-- embedded condition children  - commented out for the moment -->
-            <c:group name="children:condition:name+" displayName="Rewrite conditions">
-              <c:list-property name="*1" displayName="Conditions" required="false" readOnly="true">
-                <c:map-property name="*:name" displayName="Name" readOnly="true">
-                  <c:simple-property name="name" required="true" readOnly="true" displayName="Condition-Name"/>
-                  <c:simple-property name="flags" required="true" type="string" readOnly="true" description="Option flags for this condition. Consult the mod_rewrite docs."/>
-                  <c:simple-property name="pattern" required="true" type="string" readOnly="true" description="The pattern to match. Consult the mod_rewrite docs."/>
-                  <c:simple-property name="test" required="true" type="string" readOnly="true" description="Test pattern for the condition. Consult the mod_rewrite docs."/>
-                </c:map-property>
-              </c:list-property>
-            </c:group>
+            <c:simple-property name="redirect" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this is true then a redirect will be done instead of a rewrite. The default value is false."/>
+            <c:simple-property name="target" required="true" type="string" readOnly="false" description="The expression that defines the target. If you are redirecting to a constant target put single quotes around the value"/>
           </resource-configuration>
-        </service>
 
-        <service name="Access Log (Profile)"
+        </service><!-- End of Rewrite service -->
+
+        <service name="Response header (Profile)"
                  discovery="SubsystemDiscovery"
-                 description="The access log configuration for this virtual server."
                  class="BaseComponent"
-                 singleton="true"
                  createDeletePolicy="both">
-
+                 
           <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="access-log=configuration"/>
+            <c:simple-property name="path" readOnly="true" default="response-header"/>
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="extended" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable extended pattern, with more options. The default value is false."/>
-            <c:simple-property name="pattern" required="false" type="string" readOnly="false" defaultValue="common" description="The access log pattern. The default value is common."/>
-            <c:simple-property name="prefix" required="false" type="string" readOnly="false" defaultValue="false" description="Prefix for the log file name. The default value is false."/>
-            <c:simple-property name="resolve-hosts" required="false" type="boolean" readOnly="false" defaultValue="false" description="Host resolution. The default value is false."/>
-            <c:simple-property name="rotate" required="false" type="boolean" readOnly="false" defaultValue="true" description="Rotate the access log every day. The default value is true."/>
-
-            <c:group name="child:directory=configuration" displayName="The location for the access logging.">
-              <c:simple-property name="path" required="false" type="string" readOnly="false" description="The relative folder path."/>
-              <c:simple-property name="relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.log.dir" description="The folder the path is relative to. The default value is jboss.server.log.dir."/>
-            </c:group>
+            <c:simple-property name="header-name" required="true" type="string" readOnly="false" description="Header name"/>
+            <c:simple-property name="header-value" required="true" type="string" readOnly="false" description="Value for header"/>
           </resource-configuration>
-        </service>
-      </service>
-    </service>
 
+        </service><!-- End of Response header service -->
+
+        <service name="Request limit (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="request-limit"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="max-concurrent-requests:expr" required="false" type="string" readOnly="false" description="Maximum number of concurrent requests"/>
+            <c:simple-property name="queue-size:expr" required="false" type="string" readOnly="false" description="Number of requests to queue before they start being rejected"/>
+          </resource-configuration>
+
+        </service><!-- End of Request limit service -->
+
+        <service name="Custom filter (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="custom-filter"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="class-name" required="true" type="string" readOnly="false" description="Class name of HttpHandler"/>
+            <c:simple-property name="module" required="true" type="string" readOnly="false" description="Module name where class can be loaded from"/>
+            <c:map-property name="parameters" required="false" description="Filter parameters">
+            </c:map-property>
+          </resource-configuration>
+
+        </service><!-- End of Custom filter service -->
+      </service><!-- End of Filter configuration service -->
+
+      <service name="Handler configuration (Profile)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="configuration=handler"/>
+        </plugin-configuration>
+
+        <service name="File handler (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="file"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="cache-buffer-size:expr" required="false" type="string" readOnly="false" defaultValue="1024" description="Size of the buffers. The default value is 1024."/>
+            <c:simple-property name="cache-buffers:expr" required="false" type="string" readOnly="false" defaultValue="1024" description="Number of buffers. The default value is 1024."/>
+            <c:simple-property name="case-sensitive" required="false" type="boolean" readOnly="false" defaultValue="true" description="Use case sensitive file handling. The default value is true."/>
+            <c:simple-property name="directory-listing" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable directory listing&#63;. The default value is false."/>
+            <c:simple-property name="follow-symlink" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable following symbolic links. The default value is false."/>
+            <c:simple-property name="path" required="false" type="string" readOnly="false" description="Path on filesystem from where file handler will serve resources"/>
+            <c:list-property name="safe-symlink-paths" required="false" description="Paths that are safe to be targets of symbolic links" >
+              <c:simple-property name="safe-symlink-paths" />
+            </c:list-property>
+          </resource-configuration>
+
+        </service><!-- End of File handler service -->
+
+        <service name="Reverse proxy (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="reverse-proxy"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+           <c:simple-property name="cached-connections-per-thread:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The number of connections that will be kept alive indefinitely. The default value is 5."/>
+           <c:simple-property name="connection-idle-timeout:expr" required="false" type="string" readOnly="false" defaultValue="60" description="The amount of time a connection can be idle before it will be closed. Connections will not time out once the pool size is down to the configured minimum (as configured by cached&#45;connections&#45;per&#45;thread). The default value is 60."/>
+           <c:simple-property name="connections-per-thread:expr" required="false" type="string" readOnly="false" defaultValue="10" description="The number of connections that will be maintained to backend servers, per IO thread. Defaults to 10. The default value is 10."/>
+           <c:simple-property name="max-request-time:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The maximum time that a proxy request can be active for, before being killed. Defaults to unlimited. The default value is &#45;1."/>
+           <c:simple-property name="problem-server-retry:expr" required="false" type="string" readOnly="false" defaultValue="30" description="Time in seconds to wait before attempting to reconnect to a server that is down. The default value is 30."/>
+           <c:simple-property name="request-queue-size:expr" required="false" type="string" readOnly="false" defaultValue="10" description="The number of requests that can be queued if the connection pool is full before requests are rejected with a 503. The default value is 10."/>
+           <c:simple-property name="session-cookie-names" required="false" type="string" readOnly="false" defaultValue="JSESSIONID" description="Comma separated list of session cookie names. Generally this will just be JSESSIONID. The default value is JSESSIONID."/>
+          </resource-configuration>
+
+          <service name="Reverse proxy host (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+
+            <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="host"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+              <c:simple-property name="instance-id" required="false" type="string" readOnly="false" description="The instance id (aka JVM route) that will be used to enable sticky sessions"/>
+              <c:simple-property name="outbound-socket-binding" required="false" type="string" readOnly="false" description="Outbound socket binding for this host"/>
+              <c:simple-property name="path" required="false" type="string" readOnly="false" defaultValue="/" description="Optional path if host is using non root resource. The default value is /."/>
+              <c:simple-property name="scheme" required="false" type="string" readOnly="false" defaultValue="http" description="What kind of scheme is used. The default value is http."/>
+              <c:simple-property name="security-realm" required="false" type="string" readOnly="false" description="The security realm that provides the SSL configuration for the connection to the host"/>
+            </resource-configuration>
+          </service><!-- End of Reverse proxy host service -->
+        </service><!-- End of Handler configuration host service -->
+
+      </service>
+
+      <service name="Buffer Cache (Profile)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="buffer-cache"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="buffer-size:expr" required="false" type="string" readOnly="false" defaultValue="1024" description="The size of an individual buffer. The default value is 1024."/>
+          <c:simple-property name="buffers-per-region:expr" required="false" type="string" readOnly="false" defaultValue="1024" description="The numbers of buffers in a region. The default value is 1024."/>
+          <c:simple-property name="max-regions:expr" required="false" type="string" readOnly="false" defaultValue="10" description="The maximum number of regions. The default value is 10."/>
+        </resource-configuration>
+
+      </service><!-- End of buffer-cache service -->
+
+      <service name="Server (Profile)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="server"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="default-host" required="false" type="string" readOnly="false" defaultValue="default&#45;host" description="The servers default virtual host. The default value is default&#45;host."/>
+          <c:simple-property name="servlet-container" required="false" type="string" readOnly="false" defaultValue="default" description="The servers default servlet container. The default value is default."/>
+        </resource-configuration>
+
+        <service name="Ajp Listener (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="ajp-listener"/>
+          </plugin-configuration>
+
+          <metric property="bytes-received" description="The number of bytes that have been received by this listener"/>
+          <metric property="bytes-sent" description="The number of bytes that have been sent out on this listener"/>
+          <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+          <metric property="max-processing-time" description="The maximum processing time taken by a request on this listener"/>
+          <metric property="processing-time" description="The total processing time of all requests handed by this listener"/>
+          <metric property="request-count" description="The number of requests this listener has served"/>
+
+          <resource-configuration>
+            <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="false" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
+            <c:simple-property name="allow-equals-in-cookie-value" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this is true then Undertow will allow non&#45;escaped equals characters in unquoted cookie values. Unquoted cookie values may not contain equals characters. If present the value ends before the equals sign. The remainder of the cookie value will be dropped. The default value is false."/>
+            <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
+            <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="false" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
+            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default."/>
+            <c:simple-property name="decode-url" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
+            <c:list-property name="disallowed-methods" required="false" description="A comma separated list of HTTP methods that are not allowed" >
+              <c:simple-property name="disallowed-methods" />
+            </c:list-property>
+            <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="If the listener is enabled. The default value is true."/>
+            <c:simple-property name="max-buffered-request-size:expr" required="false" type="string" readOnly="false" defaultValue="16384" description="Maximum size of a buffered request, in bytesRequests are not usually buffered, the most common case is when performing SSL renegotiation for a POST request, and the post data must be fullybuffered in order to perform the renegotiation. The default value is 16384."/>
+            <c:simple-property name="max-connections:expr" required="false" type="string" readOnly="false" description="The maximum number of concurrent connections."/>
+            <c:simple-property name="max-cookies:expr" required="false" type="string" readOnly="false" defaultValue="200" description="The maximum number of cookies that will be parsed. This is used to protect against hash vulnerabilities. The default value is 200."/>
+            <c:simple-property name="max-header-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576" description="The maximum size in bytes of a http request header. The default value is 1048576."/>
+            <c:simple-property name="max-headers:expr" required="false" type="string" readOnly="false" defaultValue="200" description="The maximum number of headers that will be parsed. This is used to protect against hash vulnerabilities. The default value is 200."/>
+            <c:simple-property name="max-parameters:expr" required="false" type="string" readOnly="false" defaultValue="1000" description="The maximum number of parameters that will be parsed. This is used to protect against hash vulnerabilities.This applies to both query parameters, and to POST data, but is not cumulative (i.e. you can potentially have max parameters * 2 total parameters). The default value is 1000."/>
+            <c:simple-property name="max-post-size:expr" required="false" type="string" readOnly="false" defaultValue="10485760" description="The maximum size of a post that will be accepted. The default value is 10485760."/>
+            <c:simple-property name="no-request-timeout:expr" required="false" type="string" readOnly="false" description="The length of time in milliseconds that the connection can be idle before it is closed by the container"/>
+            <c:simple-property name="read-timeout:expr" required="false" type="string" readOnly="false" description="Configure a read timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful read taking place, the socket&apos;s next read will throw a {@link ReadTimeoutException}."/>
+            <c:simple-property name="receive-buffer:expr" required="false" type="string" readOnly="false" description="The receive buffer size."/>
+            <c:simple-property name="record-request-start-time" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this is true then Undertow will record the request start time, to allow for request time to be logged. This has a small but measurable performance impact. The default value is false."/>
+            <c:simple-property name="redirect-socket" required="false" type="string" readOnly="false" description="If this listener is supporting non&#45;SSL requests, and a request is received for which a matching &lt;security&#45;constraint&gt; requires SSL transport, undertow will automatically redirect the request to the socket binding port specified here."/>
+            <c:simple-property name="request-parse-timeout:expr" required="false" type="string" readOnly="false" description="The maximum amount of time (in milliseconds) that can be spent parsing the request"/>
+            <c:simple-property name="resolve-peer-address" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enables host dns lookup. The default value is false."/>
+            <c:simple-property name="scheme" required="false" type="string" readOnly="false" description="The listener scheme, can be HTTP or HTTPS. By default the scheme will be taken from the incoming AJP request."/>
+            <c:simple-property name="send-buffer:expr" required="false" type="string" readOnly="false" description="The send buffer size."/>
+            <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The AJP listener socket binder"/>
+            <c:simple-property name="tcp-backlog:expr" required="false" type="string" readOnly="false" description="Configure a server with the specified backlog."/>
+            <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="false" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
+            <c:simple-property name="url-charset" required="false" type="string" readOnly="false" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default."/>
+            <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="false" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
+          </resource-configuration>
+        </service> <!-- End of ajp-listener service -->
+
+        <service name="Undertow Host (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="host"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:list-property name="alias" required="false" description="Aliases for the host" >
+              <c:simple-property name="alias" />
+            </c:list-property>
+            <c:simple-property name="default-response-code:expr" required="false" type="string" readOnly="false" defaultValue="404" description="If set, this will be response code sent back in case requested context does not exist on server. The default value is 404."/>
+            <c:simple-property name="default-web-module" required="false" type="string" readOnly="false" defaultValue="ROOT.war" description="Default web module. The default value is ROOT.war."/>
+            <c:simple-property name="disable-console-redirect" required="false" type="boolean" readOnly="false" defaultValue="false" description="if set to true, /console redirect wont be enabled for this host, default is false. The default value is false."/>
+          </resource-configuration>
+
+          <service name="Host Filter Ref (Profile)"
+                   discovery="SubsystemDiscovery"
+                   class="BaseComponent">
+
+            <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="filter-ref"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+              <c:simple-property name="predicate" required="false" type="string" readOnly="false" description="Predicates provide a simple way of making a true/false decision  based on an exchange. Many handlers have a requirement that they be applied conditionally, and predicates provide a general way to specify a condition."/>
+              <c:simple-property name="priority:expr" required="false" type="string" readOnly="false" defaultValue="1" description="Defines filter order, it should be set to 1 or more, higher number instructs server to be included earlier in handler chain than others under same context. The default value is 1."/>
+            </resource-configuration>
+
+          </service><!-- End of filter-ref service -->
+
+          <service name="Undertow-Location (Profile)"
+                   discovery="SubsystemDiscovery"
+                   class="BaseComponent">
+
+            <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="location"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+              <c:simple-property name="handler" required="true" type="string" readOnly="false" description="Default handler for this location"/>
+            </resource-configuration>
+
+            <service name="Location Filter Ref (Profile)"
+                     discovery="SubsystemDiscovery"
+                     class="BaseComponent">
+
+              <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="filter-ref"/>
+              </plugin-configuration>
+
+              <resource-configuration>
+                <c:simple-property name="predicate" required="false" type="string" readOnly="false" description="Predicates provide a simple way of making a true/false decision  based on an exchange. Many handlers have a requirement that they be applied conditionally, and predicates provide a general way to specify a condition."/>
+                <c:simple-property name="priority:expr" required="false" type="string" readOnly="false" defaultValue="1" description="Defines filter order, it should be set to 1 or more, higher number instructs server to be included earlier in handler chain than others under same context. The default value is 1."/>
+              </resource-configuration>
+
+            </service><!-- End of filter-ref service -->
+          </service><!-- End of location service -->
+        </service><!-- End of host service -->
+        <service name="Http Listener (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="http-listener"/>
+          </plugin-configuration>
+
+          <metric property="bytes-received" description="The number of bytes that have been received by this listener"/>
+          <metric property="bytes-sent" description="The number of bytes that have been sent out on this listener"/>
+          <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+          <metric property="max-processing-time" description="The maximum processing time taken by a request on this listener"/>
+          <metric property="processing-time" description="The total processing time of all requests handed by this listener"/>
+          <metric property="request-count" description="The number of requests this listener has served"/>
+
+          <resource-configuration>
+            <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="false" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
+            <c:simple-property name="allow-equals-in-cookie-value" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this is true then Undertow will allow non&#45;escaped equals characters in unquoted cookie values. Unquoted cookie values may not contain equals characters. If present the value ends before the equals sign. The remainder of the cookie value will be dropped. The default value is false."/>
+            <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
+            <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="false" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
+            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default."/>
+            <c:simple-property name="certificate-forwarding" required="false" type="boolean" readOnly="false" defaultValue="false" description="If certificate forwarding should be enabled. If this is enabled then the listener will take the certificate from the SSL_CLIENT_CERT attribute. This should only be enabled if behind a proxy, and the proxy is configured to always set these headers. The default value is false."/>
+            <c:simple-property name="decode-url" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
+            <c:list-property name="disallowed-methods" required="false" description="A comma separated list of HTTP methods that are not allowed" >
+              <c:simple-property name="disallowed-methods" />
+            </c:list-property>
+            <c:simple-property name="enable-http2" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enables HTTP2 support for this listener. The default value is false."/>
+            <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="If the listener is enabled. The default value is true."/>
+            <c:simple-property name="max-buffered-request-size:expr" required="false" type="string" readOnly="false" defaultValue="16384" description="Maximum size of a buffered request, in bytesRequests are not usually buffered, the most common case is when performing SSL renegotiation for a POST request, and the post data must be fullybuffered in order to perform the renegotiation. The default value is 16384."/>
+            <c:simple-property name="max-connections:expr" required="false" type="string" readOnly="false" description="The maximum number of concurrent connections."/>
+            <c:simple-property name="max-cookies:expr" required="false" type="string" readOnly="false" defaultValue="200" description="The maximum number of cookies that will be parsed. This is used to protect against hash vulnerabilities. The default value is 200."/>
+            <c:simple-property name="max-header-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576" description="The maximum size in bytes of a http request header. The default value is 1048576."/>
+            <c:simple-property name="max-headers:expr" required="false" type="string" readOnly="false" defaultValue="200" description="The maximum number of headers that will be parsed. This is used to protect against hash vulnerabilities. The default value is 200."/>
+            <c:simple-property name="max-parameters:expr" required="false" type="string" readOnly="false" defaultValue="1000" description="The maximum number of parameters that will be parsed. This is used to protect against hash vulnerabilities.This applies to both query parameters, and to POST data, but is not cumulative (i.e. you can potentially have max parameters * 2 total parameters). The default value is 1000."/>
+            <c:simple-property name="max-post-size:expr" required="false" type="string" readOnly="false" defaultValue="10485760" description="The maximum size of a post that will be accepted. The default value is 10485760."/>
+            <c:simple-property name="no-request-timeout:expr" required="false" type="string" readOnly="false" description="The length of time in milliseconds that the connection can be idle before it is closed by the container"/>
+            <c:simple-property name="proxy-address-forwarding" required="false" type="boolean" readOnly="false" defaultValue="false" description="enables x&#45;forwarded&#45;host and similar headers and set a remote ip address and hostname. The default value is false."/>
+            <c:simple-property name="read-timeout:expr" required="false" type="string" readOnly="false" description="Configure a read timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful read taking place, the socket&apos;s next read will throw a {@link ReadTimeoutException}."/>
+            <c:simple-property name="receive-buffer:expr" required="false" type="string" readOnly="false" description="The receive buffer size."/>
+            <c:simple-property name="record-request-start-time" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this is true then Undertow will record the request start time, to allow for request time to be logged. This has a small but measurable performance impact. The default value is false."/>
+            <c:simple-property name="redirect-socket" required="false" type="string" readOnly="false" description="If this listener is supporting non&#45;SSL requests, and a request is received for which a matching &lt;security&#45;constraint&gt; requires SSL transport, undertow will automatically redirect the request to the socket binding port specified here."/>
+            <c:simple-property name="request-parse-timeout:expr" required="false" type="string" readOnly="false" description="The maximum amount of time (in milliseconds) that can be spent parsing the request"/>
+            <c:simple-property name="resolve-peer-address" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enables host dns lookup. The default value is false."/>
+            <c:simple-property name="send-buffer:expr" required="false" type="string" readOnly="false" description="The send buffer size."/>
+            <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The AJP listener socket binder"/>
+            <c:simple-property name="tcp-backlog:expr" required="false" type="string" readOnly="false" description="Configure a server with the specified backlog."/>
+            <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="false" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
+            <c:simple-property name="url-charset" required="false" type="string" readOnly="false" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default."/>
+            <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="false" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
+          </resource-configuration>
+
+        </service><!-- End of http-listener service -->
+        <service name="Https Listener (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="https-listener"/>
+          </plugin-configuration>
+
+          <metric property="bytes-received" description="The number of bytes that have been received by this listener"/>
+          <metric property="bytes-sent" description="The number of bytes that have been sent out on this listener"/>
+          <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+          <metric property="max-processing-time" description="The maximum processing time taken by a request on this listener"/>
+          <metric property="processing-time" description="The total processing time of all requests handed by this listener"/>
+          <metric property="request-count" description="The number of requests this listener has served"/>
+
+          <resource-configuration>
+            <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="false" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
+            <c:simple-property name="allow-equals-in-cookie-value" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this is true then Undertow will allow non&#45;escaped equals characters in unquoted cookie values. Unquoted cookie values may not contain equals characters. If present the value ends before the equals sign. The remainder of the cookie value will be dropped. The default value is false."/>
+            <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
+            <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="false" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
+            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default."/>
+            <c:simple-property name="decode-url" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
+            <c:list-property name="disallowed-methods" required="false" description="A comma separated list of HTTP methods that are not allowed" >
+              <c:simple-property name="disallowed-methods" />
+            </c:list-property>
+            <c:simple-property name="enable-http2" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enables HTTP2 support for this listener. The default value is false."/>
+            <c:simple-property name="enable-spdy" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enables SPDY support for this listener. The default value is false."/>
+            <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="If the listener is enabled. The default value is true."/>
+            <c:simple-property name="enabled-cipher-suites" required="false" type="string" readOnly="false" description="Configures Enabled SSL cyphers"/>
+            <c:simple-property name="enabled-protocols" required="false" type="string" readOnly="false" description="Configures SSL protocols"/>
+            <c:simple-property name="max-buffered-request-size:expr" required="false" type="string" readOnly="false" defaultValue="16384" description="Maximum size of a buffered request, in bytesRequests are not usually buffered, the most common case is when performing SSL renegotiation for a POST request, and the post data must be fullybuffered in order to perform the renegotiation. The default value is 16384."/>
+            <c:simple-property name="max-connections:expr" required="false" type="string" readOnly="false" description="The maximum number of concurrent connections."/>
+            <c:simple-property name="max-cookies:expr" required="false" type="string" readOnly="false" defaultValue="200" description="The maximum number of cookies that will be parsed. This is used to protect against hash vulnerabilities. The default value is 200."/>
+            <c:simple-property name="max-header-size:expr" required="false" type="string" readOnly="false" defaultValue="1048576" description="The maximum size in bytes of a http request header. The default value is 1048576."/>
+            <c:simple-property name="max-headers:expr" required="false" type="string" readOnly="false" defaultValue="200" description="The maximum number of headers that will be parsed. This is used to protect against hash vulnerabilities. The default value is 200."/>
+            <c:simple-property name="max-parameters:expr" required="false" type="string" readOnly="false" defaultValue="1000" description="The maximum number of parameters that will be parsed. This is used to protect against hash vulnerabilities.This applies to both query parameters, and to POST data, but is not cumulative (i.e. you can potentially have max parameters * 2 total parameters). The default value is 1000."/>
+            <c:simple-property name="max-post-size:expr" required="false" type="string" readOnly="false" defaultValue="10485760" description="The maximum size of a post that will be accepted. The default value is 10485760."/>
+            <c:simple-property name="no-request-timeout:expr" required="false" type="string" readOnly="false" description="The length of time in milliseconds that the connection can be idle before it is closed by the container"/>
+            <c:simple-property name="read-timeout:expr" required="false" type="string" readOnly="false" description="Configure a read timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful read taking place, the socket&apos;s next read will throw a {@link ReadTimeoutException}."/>
+            <c:simple-property name="receive-buffer:expr" required="false" type="string" readOnly="false" description="The receive buffer size."/>
+            <c:simple-property name="record-request-start-time" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this is true then Undertow will record the request start time, to allow for request time to be logged. This has a small but measurable performance impact. The default value is false."/>
+            <c:simple-property name="request-parse-timeout:expr" required="false" type="string" readOnly="false" description="The maximum amount of time (in milliseconds) that can be spent parsing the request"/>
+            <c:simple-property name="resolve-peer-address" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enables host dns lookup. The default value is false."/>
+            <c:simple-property name="security-realm" required="true" type="string" readOnly="false" description="The listeners security realm"/>
+            <c:simple-property name="send-buffer:expr" required="false" type="string" readOnly="false" description="The send buffer size."/>
+            <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The AJP listener socket binder"/>
+            <c:simple-property name="ssl-session-cache-size:expr" required="false" type="string" readOnly="false" description="The maximum number of active SSL sessions"/>
+            <c:simple-property name="ssl-session-timeout:expr" required="false" type="string" readOnly="false" description="The timeout for SSL sessions, in seconds"/>
+            <c:simple-property name="tcp-backlog:expr" required="false" type="string" readOnly="false" description="Configure a server with the specified backlog."/>
+            <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="false" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
+            <c:simple-property name="url-charset" required="false" type="string" readOnly="false" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
+            <c:simple-property name="verify-client" required="false" type="string" readOnly="false" defaultValue="NOT_REQUESTED" description="The desired SSL client authentication mode for SSL channels. The default value is NOT_REQUESTED."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default."/>
+            <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="false" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
+          </resource-configuration>
+
+        </service><!-- End of https-listener service -->
+      </service> <!-- End of Server service -->
+      <service name="Servlet Container (Profile)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+               
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="servlet-container"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="allow-non-standard-wrappers" required="false" type="boolean" readOnly="false" defaultValue="false" description="If true then request and response wrappers that do not extend the standard wrapper classes can be used. The default value is false."/>
+          <c:simple-property name="default-buffer-cache" required="false" type="string" readOnly="false" defaultValue="default" description="The buffer cache to use for caching static resources. The default value is default."/>
+          <c:simple-property name="default-encoding" required="false" type="string" readOnly="false" description="Default encoding to use for all deployed applications"/>
+          <c:simple-property name="default-session-timeout:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The default session timeout (in minutes) for all applications deployed in the container. The default value is 30."/>
+          <c:simple-property name="directory-listing" required="false" type="boolean" readOnly="false" description="If directory listing should be enabled for default servlets."/>
+          <c:simple-property name="disable-caching-for-secured-pages" required="false" type="boolean" readOnly="false" defaultValue="true" description="If Undertow should set headers to disable caching for secured paged. Disabling this can cause security problems, as sensitive pages may be cached by an intermediary. The default value is true."/>
+          <c:simple-property name="eager-filter-initialization" required="false" type="boolean" readOnly="false" defaultValue="false" description="If true undertow calls filter init() on deployment start rather than when first requested. The default value is false."/>
+          <c:simple-property name="ignore-flush" required="false" type="boolean" readOnly="false" defaultValue="false" description="Ignore flushes on the servlet output stream. In most cases these just hurt performance for no good reason. The default value is false."/>
+          <c:simple-property name="max-sessions:expr" required="false" type="string" readOnly="false" description="The maximum number of sessions that can be active at one time"/>
+          <c:simple-property name="proactive-authentication" required="false" type="boolean" readOnly="false" defaultValue="true" description="If proactive authentication should be used. If this is true a user will always be authenticated if credentials are present. The default value is true."/>
+          <c:simple-property name="session-id-length:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The length of the generated session ID. Longer session ID&apos;s are more secure. The default value is 30."/>
+          <c:simple-property name="stack-trace-on-error" required="false" type="string" readOnly="false" defaultValue="local&#45;only" description="If an error page with the stack trace should be generated on error. Values are all, none and local&#45;only. The default value is local&#45;only."/>
+          <c:simple-property name="use-listener-encoding" required="false" type="boolean" readOnly="false" defaultValue="false" description="Use encoding defined on listener. The default value is false."/>
+
+          <c:group name="child:setting=jsp" displayName="JSP">
+            <c:simple-property name="check-interval:expr" required="false" type="string" readOnly="false" defaultValue="0" description="Check interval for JSP updates using a background thread. The default value is 0."/>
+            <c:simple-property name="development" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable Development mode which enables reloading JSP on&#45;the&#45;fly. The default value is false."/>
+            <c:simple-property name="disabled" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable the JSP container. The default value is false."/>
+            <c:simple-property name="display-source-fragment" required="false" type="boolean" readOnly="false" defaultValue="true" description="When a runtime error occurs, attempts to display corresponding JSP source fragment. The default value is true."/>
+            <c:simple-property name="dump-smap" required="false" type="boolean" readOnly="false" defaultValue="false" description="Write SMAP data to a file. The default value is false."/>
+            <c:simple-property name="error-on-use-bean-invalid-class-attribute" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable errors when using a bad class in useBean. The default value is false."/>
+            <c:simple-property name="generate-strings-as-char-arrays" required="false" type="boolean" readOnly="false" defaultValue="false" description="Generate String constants as char arrays. The default value is false."/>
+            <c:simple-property name="java-encoding" required="false" type="string" readOnly="false" defaultValue="UTF8" description="Specify the encoding used for Java sources. The default value is UTF8."/>
+            <c:simple-property name="keep-generated" required="false" type="boolean" readOnly="false" defaultValue="true" description="Keep the generated Servlets. The default value is true."/>
+            <c:simple-property name="mapped-file" required="false" type="boolean" readOnly="false" defaultValue="true" description="Map to the JSP source. The default value is true."/>
+            <c:simple-property name="modification-test-interval:expr" required="false" type="string" readOnly="false" defaultValue="4" description="Minimum amount of time between two tests for updates, in seconds. The default value is 4."/>
+            <c:simple-property name="optimize-scriptlets" required="false" type="boolean" readOnly="false" defaultValue="false" description="If JSP scriptlets should be optimised to remove string concatenation. The default value is false."/>
+            <c:simple-property name="recompile-on-fail" required="false" type="boolean" readOnly="false" defaultValue="false" description="Retry failed JSP compilations on each request. The default value is false."/>
+            <c:simple-property name="scratch-dir" required="false" type="string" readOnly="false" description="Specify a different work directory."/>
+            <c:simple-property name="smap" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable SMAP. The default value is true."/>
+            <c:simple-property name="source-vm" required="false" type="string" readOnly="false" defaultValue="1.8" description="Source VM level for compilation. The default value is 1.8."/>
+            <c:simple-property name="tag-pooling" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable tag pooling. The default value is true."/>
+            <c:simple-property name="target-vm" required="false" type="string" readOnly="false" defaultValue="1.8" description="Target VM level for compilation. The default value is 1.8."/>
+            <c:simple-property name="trim-spaces" required="false" type="boolean" readOnly="false" defaultValue="false" description="Trim some spaces from the generated Servlet. The default value is false."/>
+            <c:simple-property name="x-powered-by" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable advertising the JSP engine in x&#45;powered&#45;by. The default value is true."/>
+          </c:group>
+
+          <c:group name="child:setting=websockets" displayName="Web socket">
+            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The buffer pool to use for websocket deployments. The default value is default."/>
+            <c:simple-property name="dispatch-to-worker" required="false" type="boolean" readOnly="false" defaultValue="true" description="If callbacks should be dispatched to a worker thread. If this is false then they will be run in the IO thread, which is faster however care must be taken not to perform blocking operations. The default value is true."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The worker to use for websocket deployments. The default value is default."/>
+          </c:group>
+
+        </resource-configuration>
+
+        <service name="Mime Mapping (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="mime-mapping"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="value" required="true" type="string" readOnly="false" description="The mime type for this mapping"/>
+          </resource-configuration>
+
+        </service><!-- End of mime-mapping service -->
+
+        <service name="Welcome File (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="welcome-file"/>
+          </plugin-configuration>
+
+        </service><!-- End of welcome-file service -->
+      </service><!-- End of servlet-container -->  
+    </service><!-- End of undertow service -->
+  
     <service name="JCA (Profile)"
              class="BaseComponent"
              discovery="SubsystemDiscovery"

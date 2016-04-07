@@ -2846,7 +2846,7 @@
           <c:simple-property name="path" readOnly="true" default="configuration=handler"/>
         </plugin-configuration>
 
-        <service name="File handler (Managed Server)"
+        <service name="File Handler - Undertow (Managed Server)"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent">
 
@@ -6770,7 +6770,7 @@
           <c:simple-property name="path" readOnly="true" default="configuration=handler"/>
         </plugin-configuration>
 
-        <service name="File handler (Profile)"
+        <service name="File Handler - Undertow (Profile)"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent"
                  createDeletePolicy="both">
@@ -9408,7 +9408,7 @@
         <c:simple-property name="path" readOnly="true" default="configuration=handler"/>
       </plugin-configuration>
 
-      <service name="File handler"
+      <service name="File Handler - Undertow"
                discovery="SubsystemDiscovery"
                class="BaseComponent"
                createDeletePolicy="both">

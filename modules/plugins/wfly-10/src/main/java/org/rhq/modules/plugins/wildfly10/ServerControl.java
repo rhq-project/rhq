@@ -293,7 +293,10 @@ public final class ServerControl {
             commands = commands.replace('\n', ',');
             String user = disconnected || local ? null : "--user=" + serverPluginConfig.getUser();
             String password = disconnected || local ? null : "--password=" + serverPluginConfig.getPassword();
-            String controller = disconnected ? null : "--controller=" + serverPluginConfig.getHostname() + ":"
+
+            String protocol = serverPluginConfig.isSecure() ? "https-remoting" : "http-remoting";
+
+            String controller = disconnected ? null : "--controller=" + protocol + "://" + serverPluginConfig.getHostname() + ":"
                 + serverPluginConfig.getPort();
 
             if (!disconnected && checkCertificate) {
@@ -341,8 +344,11 @@ public final class ServerControl {
             String file = "--file=" + script.getAbsolutePath();
             String user = disconnected || local ? null : "--user=" + serverPluginConfig.getUser();
             String password = disconnected || local ? null : "--password=" + serverPluginConfig.getPassword();
-            String controller = disconnected ? null : "--controller=" + serverPluginConfig.getHostname() + ":"
-                + serverPluginConfig.getPort();
+
+            String protocol = serverPluginConfig.isSecure() ? "https-remoting" : "http-remoting";
+
+            String controller = disconnected ? null : "--controller=" + protocol + "://" + serverPluginConfig.getHostname() + ":"
+                    + serverPluginConfig.getPort();
 
             if (!disconnected && checkCertificate) {
                 // check whether we're able to talk to server and CLI won't block because it needs user to accept SSL certificate

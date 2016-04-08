@@ -201,7 +201,7 @@
             <!-- The surefire plugin only does the unit tests in src/test
             -  integration test are handled below in the *** as7-itest ** profile
             -->
-            <exclude>org/rhq/modules/plugins/jbossas7/itest/**</exclude>
+            <exclude>org/rhq/modules/plugins/wildfly10/itest/**</exclude>
           </excludes>
           <!-- This is where the antrun below puts the sigar native libs -->
           <argLine>${jacoco.unit-test.args} -Djava.library.path=${project.build.directory}/test-libs</argLine>
@@ -679,7 +679,7 @@
                 <id>GenericJbossAS7PluginTest</id>              
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/GenericJBossAS7PluginTest.java</include>                
+                    <include>org/rhq/modules/plugins/wildfly10/itest/GenericJBossAS7PluginTest.java</include>                
                   </includes>
                 </configuration>
                 <goals>
@@ -692,7 +692,7 @@
                 <id>DomainServerComponentTests</id>              
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/domain/DomainServerComponentTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -704,7 +704,7 @@
                 <id>StandaloneServerComponentTests</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/StandaloneServerComponentTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/standalone/StandaloneServerComponentTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -716,7 +716,7 @@
                 <id>ManagedServerTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/ManagedServerTest.java</include>                
+                    <include>org/rhq/modules/plugins/wildfly10/itest/domain/ManagedServerTest.java</include>                
                   </includes>
                 </configuration>
                 <goals>
@@ -728,7 +728,7 @@
                 <id>DatasourceStandaloneTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DatasourceStandaloneTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/standalone/DatasourceStandaloneTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -740,7 +740,7 @@
                 <id>DatasourceDomainTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/DatasourceDomainTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/domain/DatasourceDomainTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -752,7 +752,7 @@
                 <id>DeploymentRuntimeResourcesTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentRuntimeResourcesTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/standalone/DeploymentRuntimeResourcesTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -764,7 +764,7 @@
                 <id>DeploymentTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/standalone/DeploymentTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -776,7 +776,7 @@
                 <id>SocketBindingTests</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/SocketBindingTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/standalone/SocketBindingTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -788,7 +788,7 @@
                 <id>NamingTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/NamingTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/standalone/NamingTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -800,7 +800,7 @@
                 <id>ResourcesStandaloneServerTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/ResourcesStandaloneServerTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/standalone/ResourcesStandaloneServerTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -812,7 +812,7 @@
                 <id>TemplatedResourcesTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/TemplatedResourcesTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/standalone/TemplatedResourcesTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -824,7 +824,7 @@
                 <id>WebConnectorComponentTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/WebConnectorComponentTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/standalone/WebConnectorComponentTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -836,7 +836,7 @@
                 <id>BundleContentHandoverStandaloneTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/BundleContentHandoverTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/standalone/BundleContentHandoverTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -848,7 +848,7 @@
                 <id>SecurityModuleOptionsTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/domain/SecurityModuleOptionsTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -860,7 +860,7 @@
                 <id>DomainSocketBindingTests</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainSocketBindingTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/domain/DomainSocketBindingTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -872,7 +872,7 @@
                 <id>ResourcesDomainServerTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/ResourcesDomainServerTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/domain/ResourcesDomainServerTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -884,7 +884,7 @@
                 <id>BundleContentHandoverDomainTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/BundleContentHandoverTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/domain/BundleContentHandoverTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -897,7 +897,7 @@
                 <id>nonpc</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/nonpc/**Test.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/nonpc/**Test.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -910,7 +910,7 @@
                 <id>AfterSuiteTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/AfterSuiteTest.java</include>
+                    <include>org/rhq/modules/plugins/wildfly10/itest/standalone/AfterSuiteTest.java</include>
                   </includes>
                 </configuration>
                 <goals>

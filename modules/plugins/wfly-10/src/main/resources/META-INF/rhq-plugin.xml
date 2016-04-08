@@ -5427,6 +5427,11 @@
             <c:simple-property name="redelivery-delay" required="false" type="long" readOnly="true" defaultValue="0" description="Defines how long to wait before attempting redelivery of a cancelled message. The default value is 0."/>
             <c:simple-property name="redistribution-delay" required="false" type="long" readOnly="true" defaultValue="&#45;1" description="Defines how long to wait when the last consumer is closed on a queue before redistributing any messages. The default value is &#45;1."/>
             <c:simple-property name="send-to-dla-on-no-route" required="false" type="boolean" readOnly="true" defaultValue="false" description="If this parameter is set to true for that address, if the message is not routed to any queues it will instead be sent to the dead letter address (DLA) for that address, if it exists. The default value is false."/>
+            <c:simple-property name="auto-create-jms-queues" required="false" type="boolean" readOnly="true" defaultValue="false" description="Determines whether ActiveMQ should automatically create a JMS queue corresponding to the address-settings match when a JMS producer or a consumer is tries to use such a queue." />
+            <c:simple-property name="auto-delete-jms-queues" required="false" type="boolean" readOnly="true" defaultValue="false" description="Determines Whether ActiveMQ should automatically delete auto-created JMS queues when they have no consumers and no messages." />
+            <c:simple-property name="expiry-delay" required="false" type="long" readOnly="true" defaultValue="&#45;1" description="Defines the expiration time that will be used for messages using the default expiration time." />
+            <c:simple-property name="max-redelivery-delay" required="false" type="long" readOnly="true" defaultValue="0" description="Maximum value for the redelivery-delay (in ms)." />
+            <c:simple-property name="redelivery-multiplier" required="false" type="double" readOnly="true" defaultValue="1.0" description="Multiplier to apply to the redelivery-delay parameter." />
           </resource-configuration>
         </service>
 
@@ -8498,6 +8503,11 @@
             <c:simple-property name="redelivery-delay" required="false" type="long" readOnly="false" defaultValue="0" description="Defines how long to wait before attempting redelivery of a cancelled message. The default value is 0."/>
             <c:simple-property name="redistribution-delay" required="false" type="long" readOnly="false" defaultValue="&#45;1" description="Defines how long to wait when the last consumer is closed on a queue before redistributing any messages. The default value is &#45;1."/>
             <c:simple-property name="send-to-dla-on-no-route" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this parameter is set to true for that address, if the message is not routed to any queues it will instead be sent to the dead letter address (DLA) for that address, if it exists. The default value is false."/>
+            <c:simple-property name="auto-create-jms-queues" required="false" type="boolean" readOnly="false" defaultValue="false" description="Determines whether ActiveMQ should automatically create a JMS queue corresponding to the address-settings match when a JMS producer or a consumer is tries to use such a queue." />
+            <c:simple-property name="auto-delete-jms-queues" required="false" type="boolean" readOnly="false" defaultValue="false" description="Determines Whether ActiveMQ should automatically delete auto-created JMS queues when they have no consumers and no messages." />
+            <c:simple-property name="expiry-delay" required="false" type="long" readOnly="false" defaultValue="&#45;1" description="Defines the expiration time that will be used for messages using the default expiration time." />
+            <c:simple-property name="max-redelivery-delay" required="false" type="long" readOnly="false" defaultValue="0" description="Maximum value for the redelivery-delay (in ms)." />
+            <c:simple-property name="redelivery-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="Multiplier to apply to the redelivery-delay parameter." />
           </resource-configuration>
         </service>
 
@@ -15071,6 +15081,11 @@
           <c:simple-property name="redelivery-delay" required="false" type="long" readOnly="false" defaultValue="0" description="Defines how long to wait before attempting redelivery of a cancelled message. The default value is 0."/>
           <c:simple-property name="redistribution-delay" required="false" type="long" readOnly="false" defaultValue="&#45;1" description="Defines how long to wait when the last consumer is closed on a queue before redistributing any messages. The default value is &#45;1."/>
           <c:simple-property name="send-to-dla-on-no-route" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this parameter is set to true for that address, if the message is not routed to any queues it will instead be sent to the dead letter address (DLA) for that address, if it exists. The default value is false."/>
+          <c:simple-property name="auto-create-jms-queues" required="false" type="boolean" readOnly="false" defaultValue="false" description="Determines whether ActiveMQ should automatically create a JMS queue corresponding to the address-settings match when a JMS producer or a consumer is tries to use such a queue." />
+          <c:simple-property name="auto-delete-jms-queues" required="false" type="boolean" readOnly="false" defaultValue="false" description="Determines Whether ActiveMQ should automatically delete auto-created JMS queues when they have no consumers and no messages." />
+          <c:simple-property name="expiry-delay" required="false" type="long" readOnly="false" defaultValue="&#45;1" description="Defines the expiration time that will be used for messages using the default expiration time." />
+          <c:simple-property name="max-redelivery-delay" required="false" type="long" readOnly="false" defaultValue="0" description="Maximum value for the redelivery-delay (in ms)." />
+          <c:simple-property name="redelivery-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="Multiplier to apply to the redelivery-delay parameter." />
         </resource-configuration>
       </service>
 

@@ -43,10 +43,13 @@ public class Ejb3Component extends BaseComponent<BaseComponent<?>> {
 
         CompositeOperation cop = new CompositeOperation();
 
-        if((derive == null || derive.getStringValue() == null) && maxPoolSize != null) {
+        boolean deriveIsNull = (derive == null || derive.getStringValue() == null);
+        boolean maxPoolSizeIsNull = (maxPoolSize == null || maxPoolSize.getIntegerValue() == null);
+
+        if (deriveIsNull && !maxPoolSizeIsNull) {
             cop.addStep(new UndefineAttribute(address, DERIVE_ATTRIBUTE));
             cop.addStep(new WriteAttribute(address, MAX_POOL_SIZE, config.getSimpleValue(MAX_POOL_SIZE)));
-        } else if(derive != null && (maxPoolSize == null || maxPoolSize.getStringValue() == null)) {
+        } else if (!deriveIsNull && maxPoolSizeIsNull) {
             cop.addStep(new UndefineAttribute(address, MAX_POOL_SIZE));
             cop.addStep(new WriteAttribute(address, DERIVE_ATTRIBUTE, config.getSimpleValue(DERIVE_ATTRIBUTE)));
         } else {
@@ -80,6 +83,11 @@ public class Ejb3Component extends BaseComponent<BaseComponent<?>> {
         if(derive != null && "none".equals(derive.getStringValue())) {
             derive.setValue(null);
         }
+
+        if (derive != null && derive.getStringValue() != null) {
+            configuration.remove(MAX_POOL_SIZE);
+        }
+
         return configuration;
     }
 }

@@ -392,6 +392,7 @@
     <rest-docs-generator.version>${rhq.pom.version}</rest-docs-generator.version>
     <rhq-rtfilter-subsystem.version>${rhq.pom.version}</rhq-rtfilter-subsystem.version>
     <rhq-rtfilter-wfly-10-subsystem.version>${rhq.pom.version}</rhq-rtfilter-wfly-10-subsystem.version>
+    <rhq-rtfilter-wfly-10-dist.version>${rhq.pom.version}</rhq-rtfilter-wfly-10-dist.version>
     <rhq-aliases-plugin.version>${rhq.pom.version}</rhq-aliases-plugin.version>
     <rhq-ant-bundle-plugin.version>${rhq.pom.version}</rhq-ant-bundle-plugin.version>
     <rhq-apache-plugin.version>${rhq.pom.version}</rhq-apache-plugin.version>

@@ -568,8 +568,8 @@ checkIfRunning(16);]]>
               tofile="${rhq.ear.dir}/rhq-downloads/connectors/rhq-rtfilter-subsystem-module.zip" />
 
         <copy
-              file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-wfly-10-subsystem/${rhq-rtfilter-wfly-10-subsystem.version}/rhq-rtfilter-wfly-10-subsystem-${rhq-rtfilter-wfly-10-subsystem.version}.zip"
-              tofile="${rhq.ear.dir}/rhq-downloads/connectors/rhq-rtfilter-wfly-10-subsystem-module.zip"/>
+              file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-wfly-10-dist/${rhq-rtfilter-wfly-10-dist.version}/rhq-rtfilter-wfly-10-dist-${rhq-rtfilter-wfly-10-dist.version}.zip"
+              tofile="${rhq.ear.dir}/rhq-downloads/connectors/rhq-rtfilter-wfly-10-dist.zip"/>
     </target>
 
     <target name="prepare-bin-dir">

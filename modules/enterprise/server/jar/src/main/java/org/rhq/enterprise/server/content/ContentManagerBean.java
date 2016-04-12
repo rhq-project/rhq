@@ -96,6 +96,7 @@ import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InvalidPackageTypeException;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
@@ -483,10 +484,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 }
                 supportedTypes.deleteCharAt(supportedTypes.length() - 1);
                 supportedTypes.append("]");
-                throw new RuntimeException("Package of PackageType[name=" + key.getPackageTypeName()
-                    + "] cannot be deployed to resource of " + type
-                    + " allowed packageTypes are "
-                    + supportedTypes.toString());
+                throw new InvalidPackageTypeException(key.getPackageTypeName(), type, supportedTypes.toString());
             }
             PackageVersion packageVersion = packageVersions.get(0);
 

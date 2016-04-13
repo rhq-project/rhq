@@ -31,6 +31,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
+import org.rhq.core.domain.resource.InvalidPackageTypeException;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -95,6 +96,9 @@ public class DeployPackagesUIBean extends PagedDataTableUIBean {
         try {
             ContentManagerLocal contentManager = LookupUtil.getContentManager();
             contentManager.deployPackagesWithNote(subject, new int[] { resource.getId() }, packagesVersionsIdsToDeploy, notes);
+        } catch (InvalidPackageTypeException e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, e.getMessage());
+            return null;
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Could not send deploy request to agent", e);
             return null;

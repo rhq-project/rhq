@@ -6283,7 +6283,6 @@
 
         <resource-configuration>
           &logFilterReadOnly;
-          <c:simple-property name="formatter" required="false" type="string" readOnly="true" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n" description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
           &logLevelReadOnly;
           <c:simple-property name="overflow-action" required="true" type="string" readOnly="true" defaultValue="BLOCK" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;. The default value is BLOCK.">
             <c:property-options>
@@ -10120,8 +10119,6 @@
 
       <resource-configuration>
         &logFilter;
-        <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
-                           description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
         &logLevel;
         <c:simple-property name="overflow-action" required="true" type="string" readOnly="false" defaultValue="BLOCK" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;. The default value is BLOCK.">
           <c:property-options>

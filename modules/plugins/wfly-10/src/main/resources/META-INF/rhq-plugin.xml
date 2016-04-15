@@ -7241,7 +7241,8 @@
 
         <service name="Mime Mapping (Profile)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent">
+                 class="BaseComponent"
+                 createDeletePolicy="both">
 
           <plugin-configuration>
             <c:simple-property name="path" readOnly="true" default="mime-mapping"/>
@@ -9900,7 +9901,8 @@
 
       <service name="Mime Mapping"
                discovery="SubsystemDiscovery"
-               class="BaseComponent">
+               class="BaseComponent"
+               createDeletePolicy="both">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="mime-mapping"/>

@@ -7165,7 +7165,8 @@
 
         <service name="Welcome File (Profile)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent">
+                 class="BaseComponent"
+                 createDeletePolicy="both">
 
           <plugin-configuration>
             <c:simple-property name="path" readOnly="true" default="welcome-file"/>
@@ -9808,7 +9809,8 @@
 
       <service name="Welcome File"
                discovery="SubsystemDiscovery"
-               class="BaseComponent">
+               class="BaseComponent"
+               createDeletePolicy="both">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="welcome-file"/>

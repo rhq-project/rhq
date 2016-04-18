@@ -420,12 +420,13 @@ public class ASConnection {
             String failureDescription = "";
             if (statusLine.getStatusCode() == 503) {
                 failureDescription = "Server not available [" + statusAsString(statusLine) + "]";
+                LOG.warn(failureDescription);
             } else {
                 failureDescription = "Failed to deserialize response to " + operation
                     + " to JsonNode - response status was " + statusAsString(statusLine) + ", and body was ["
                     + responseBody + "]: " + ioe;
+                LOG.error(failureDescription);
             }
-            LOG.error(failureDescription);
             operationResult = resultAsJsonNode(FAILURE, failureDescription, ioe,
                 responseBody.contains("rolled-back=true"));
         }

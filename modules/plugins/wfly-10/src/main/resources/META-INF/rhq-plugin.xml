@@ -3711,6 +3711,22 @@
         </resource-configuration>
       </service>
 
+      <service name="MDB Delivery Group (Managed Server)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               description="Delivery group to manage delivery for mdbs"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="mdb-delivery-group"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="active" required="false" type="boolean" readOnly="false" defaultValue="true" description="Indicates if delivery for all MDBs belonging to this group is active. The default value is true."/>
+        </resource-configuration>
+
+      </service><!-- End of mdb-delivery-group service -->
+
       <service name="Strict Max Bean Instance Pool (Managed Server)"
                discovery="SubsystemDiscovery"
                class="Ejb3Component"
@@ -7518,6 +7534,22 @@
           <c:simple-property name="subdirectory-count:expr" displayName="Subdirectory Count" required="false" type="string" readOnly="false" defaultValue="100"/>
         </resource-configuration>
       </service>
+
+      <service name="MDB Delivery Group (Profile)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               description="Delivery group to manage delivery for mdbs"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="mdb-delivery-group"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="active" required="false" type="boolean" readOnly="false" defaultValue="true" description="Indicates if delivery for all MDBs belonging to this group is active. The default value is true."/>
+        </resource-configuration>
+
+      </service><!-- End of mdb-delivery-group service -->
 
       <service name="Strict Max Bean Instance Pool (Profile)"
                discovery="SubsystemDiscovery"
@@ -13111,6 +13143,23 @@
         <c:simple-property name="subdirectory-count:expr" displayName="Subdirectory count" required="false" type="string" readOnly="false" defaultValue="100"/>
       </resource-configuration>
     </service>
+
+    <service name="MDB Delivery Group"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             description="Delivery group to manage delivery for mdbs"
+             createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="mdb-delivery-group"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="active" required="false" type="boolean" readOnly="false" defaultValue="true" description="Indicates if delivery for all MDBs belonging to this group is active. The default value is true."/>
+      </resource-configuration>
+
+    </service><!-- End of mdb-delivery-group service -->
+
 
     <service name="Strict Max Bean Instance Pool"
              discovery="SubsystemDiscovery"

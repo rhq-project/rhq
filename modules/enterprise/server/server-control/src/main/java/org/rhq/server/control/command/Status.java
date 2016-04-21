@@ -26,6 +26,8 @@
 package org.rhq.server.control.command;
 
 import java.io.File;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -138,12 +140,20 @@ public class Status extends ControlCommand {
             final String ANSI_RED = "\u001B[31m";
             final String ANSI_GREEN = "\u001B[32m";
             final String ANSI_RESET = "\u001B[0m";
+
+            PrintStream out = null;
+            try {
+                out = new PrintStream(System.out, true, "UTF-8");
+            } catch (UnsupportedEncodingException exception) {
+                out = System.out;
+            }
+
             if (isStorageRunning()) {
-                System.out.println(String.format("%-30s", "RHQ Storage Node") + " (pid "
+                out.println(String.format("%-30s", "RHQ Storage Node") + " (pid "
                     + String.format("%-7s", getStoragePid()) + ") is " + (isColorSupported ? ANSI_GREEN : "")
                     + "\u2714running" + (isColorSupported ? ANSI_RESET : ""));
             } else {
-                System.out.println(String.format("%-30s", "RHQ Storage Node") + " (no pid file) is "
+                out.println(String.format("%-30s", "RHQ Storage Node") + " (no pid file) is "
                     + (isColorSupported ? ANSI_RED : "") + "\u2718down" + (isColorSupported ? ANSI_RESET : ""));
                 rValue = RHQControl.EXIT_CODE_STATUS_NOT_RUNNING;
             }

@@ -1,6 +1,7 @@
 package org.rhq.server.metrics.aggregation;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.rhq.server.metrics.AbortedException;
@@ -108,6 +109,40 @@ class TaskTracker {
             lock.readLock().unlock();
         }
         allTasksFinished.await();
+        try {
+            lock.readLock().lock();
+            if (aborted) {
+                throw new AbortedException(errorMessage);
+            }
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Should be invoked by the producer <strong>only</strong> after it has invoked {@link #finishedSchedulingTasks()}.
+     * If this method gets invoked first, the producer will block indefinitely. This method will block until all tasks
+     * have completed or the specified waiting time elapses.. If all tasks have already completed, this method returns immediately.
+     *
+     * @param timeout the maximum time to wait
+     * @param unit the time unit of the {@code timeout} argument
+     * @throws InterruptedException If the producer thread is interrupted while waiting
+     * @throws AbortedException If task processing has been abort which is accomplished by calling
+     * {@link #abort(String)}
+     */
+    public void waitForTasksToFinish(long timeout, TimeUnit unit) throws InterruptedException, AbortedException {
+        try {
+            lock.readLock().lock();
+            if (aborted) {
+                throw new AbortedException(errorMessage);
+            }
+            if (remainingTasks == 0) {
+                return;
+            }
+        } finally {
+            lock.readLock().unlock();
+        }
+        allTasksFinished.await(timeout, unit);
         try {
             lock.readLock().lock();
             if (aborted) {

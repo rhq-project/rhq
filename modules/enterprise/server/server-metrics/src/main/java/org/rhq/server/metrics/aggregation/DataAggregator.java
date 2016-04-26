@@ -173,7 +173,7 @@ class DataAggregator<T extends NumericMetric> {
             }
             iterator = null;
             taskTracker.finishedSchedulingTasks();
-            taskTracker.waitForTasksToFinish();
+            taskTracker.waitForTasksToFinish(1, TimeUnit.DAYS);
         } catch (InterruptedException e) {
             log.warn("There was an interrupt while scheduling aggregation tasks.", e);
             taskTracker.abort("There was an interrupt while scheduling aggregation tasks.");
@@ -209,6 +209,7 @@ class DataAggregator<T extends NumericMetric> {
                         fetchData(batch, Bucket.SIX_HOUR);
                         processBatch(batch, Bucket.TWENTY_FOUR_HOUR);
                 }
+
             }
         });
         taskTracker.addTask();
@@ -353,6 +354,7 @@ class DataAggregator<T extends NumericMetric> {
             try {
                 run(batch);
             } catch (Exception e) {
+                permits.release();
                 log.error("Aggregation will be aborted due to an unexpected error", e);
                 taskTracker.abort("Aborting aggregation due to an unexpected error: " + e.getMessage());
             }

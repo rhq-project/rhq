@@ -196,19 +196,26 @@ class DataAggregator<T extends NumericMetric> {
         aggregationTasks.submit(new AggregationTask(batch) {
             @Override
             void run(Batch batch) {
-                switch (bucket) {
+                Bucket processBatchBucket;
+                try {
+                    switch (bucket) {
                     case RAW:
                         fetchRawData(batch);
-                        processBatch(batch, Bucket.ONE_HOUR);
+                        processBatchBucket = Bucket.ONE_HOUR;
                         break;
                     case ONE_HOUR:
                         fetchData(batch, Bucket.ONE_HOUR);
-                        processBatch(batch, Bucket.SIX_HOUR);
+                        processBatchBucket = Bucket.SIX_HOUR;
                         break;
                     default:
                         fetchData(batch, Bucket.SIX_HOUR);
-                        processBatch(batch, Bucket.TWENTY_FOUR_HOUR);
+                        processBatchBucket = Bucket.TWENTY_FOUR_HOUR;
+                    }
+                } catch (RuntimeException exception) {
+                    permits.release();
+                    throw exception;
                 }
+                processBatch(batch, processBatchBucket);
 
             }
         });
@@ -234,18 +241,24 @@ class DataAggregator<T extends NumericMetric> {
     }
 
     protected void processBatch(Batch batch, Bucket bucket) {
-        ListenableFuture<Iterable<List<T>>> iterableFuture = Futures.transform(batch.getQueriesFuture(),
-            toIterable(), aggregationTasks);
+        ListenableFuture<List<AggregateNumericMetric>> metricsFuture;
+        ListenableFuture<List<ResultSet>> deleteIndexEntriesFuture;
+        try {
+            ListenableFuture<Iterable<List<T>>> iterableFuture = Futures.transform(batch.getQueriesFuture(),
+                toIterable(), aggregationTasks);
 
-        ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
-            computeAggregates(batch.getStartTime().getMillis(), bucket), aggregationTasks);
+            metricsFuture = Futures.transform(iterableFuture,
+                computeAggregates(batch.getStartTime().getMillis(), bucket), aggregationTasks);
 
-        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(metricsFuture, persistMetrics,
-            aggregationTasks);
+            ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(metricsFuture, persistMetrics,
+                aggregationTasks);
 
-        ListenableFuture<List<ResultSet>> deleteIndexEntriesFuture = Futures.transform(insertsFuture,
-            deleteIndexEntries(batch), aggregationTasks);
-
+            deleteIndexEntriesFuture = Futures.transform(insertsFuture,
+                deleteIndexEntries(batch), aggregationTasks);
+        } catch (RuntimeException exception) {
+            permits.release();
+            throw exception;
+        }
         aggregationTaskFinished(metricsFuture, deleteIndexEntriesFuture);
     }
 
@@ -354,7 +367,6 @@ class DataAggregator<T extends NumericMetric> {
             try {
                 run(batch);
             } catch (Exception e) {
-                permits.release();
                 log.error("Aggregation will be aborted due to an unexpected error", e);
                 taskTracker.abort("Aborting aggregation due to an unexpected error: " + e.getMessage());
             }

@@ -57,6 +57,9 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
  */
 @Entity
 @NamedQueries({
+    @NamedQuery(name = PackageVersion.QUERY_FIND_ID_PACKAGES_BY_RESOURCE_ID, query = "" //
+        + "SELECT DISTINCT pv.generalPackage.id FROM PackageVersion pv WHERE pv.id IN "
+        + "(SELECT ip.packageVersion.id FROM InstalledPackage ip WHERE ip.resource.id = :resourceId )"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VERSION, query = "" //
         + "SELECT pv FROM PackageVersion AS pv " //
         + " WHERE pv.generalPackage.id = :packageId " //
@@ -139,7 +142,13 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
         + "   AND pv.repoPackageVersions IS EMPTY " //
         + "   AND pv.installedPackages IS EMPTY " //
         + "   AND pv.installedPackageHistory IS EMPTY "),
-
+    @NamedQuery(name = PackageVersion.DELETE_BY_PKG_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "DELETE PackageVersion pv "
+        + " WHERE pv.id NOT IN (SELECT pvcs.packageVersion.id " //
+        + "                       FROM PackageVersionContentSource pvcs) " //
+        + "   AND pv.repoPackageVersions IS EMPTY " //
+        + "   AND pv.installedPackages IS EMPTY " //
+        + "   AND pv.installedPackageHistory IS EMPTY " //
+        + "   AND pv.generalPackage.id = :packageId"),
     @NamedQuery(name = PackageVersion.DELETE_SINGLE_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "DELETE PackageVersion pv "
         + " WHERE pv.id = :packageVersionId" //
         + "   AND pv.repoPackageVersions IS EMPTY " //
@@ -250,7 +259,7 @@ public class PackageVersion implements Serializable {
     // Constants  --------------------------------------------
 
     private static final long serialVersionUID = 1L;
-
+    public static final String QUERY_FIND_ID_PACKAGES_BY_RESOURCE_ID = "PackageVersion.findIdPackagesByResouceId";
     public static final String QUERY_FIND_BY_PACKAGE_VERSION = "PackageVersion.findByPackageVersion";
     public static final String QUERY_FIND_BY_PACKAGE_VER_ARCH = "PackageVersion.findByPackageVerArch";
 
@@ -268,6 +277,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_METADATA_BY_RESOURCE_ID = "PackageVersion.findMetadataByResourceId";
     public static final String QUERY_GET_PKG_BITS_LENGTH_BY_PKG_DETAILS_AND_RES_ID = "PackageVersion.getPkgBitsLengthByPkgDetailsAndResId";
     public static final String DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteIfNoContentSourcesOrRepos";
+    public static final String DELETE_BY_PKG_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteByPkgIfNoContentSourcesOrRepos";
     public static final String DELETE_SINGLE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteSingleIfNoContentSourcesOrRepos";
     public static final String DELETE_MULTIPLE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteMultipleIfNoContentSourcesOrRepos";
     public static final String DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deletePVPVIfNoContentSourcesOrRepos";

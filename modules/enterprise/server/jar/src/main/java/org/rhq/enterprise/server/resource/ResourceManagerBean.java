@@ -38,6 +38,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -58,6 +59,8 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.alert.Alert;
@@ -76,7 +79,9 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.InstalledPackageHistory;
+import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageInstallationStep;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
@@ -595,6 +600,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(value = 20, unit = TimeUnit.MINUTES)
     public void uninventoryResourceAsyncWork(Subject user, int resourceId) {
         if (!authorizationManager.isOverlord(user)) {
             throw new IllegalArgumentException("Only the overlord can execute out-of-band async resource delete method");
@@ -761,6 +767,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         boolean hasErrors = false;
         boolean debugEnabled = LOG.isDebugEnabled();
+
+        // Get all packages installed in this resource
+        // We want to remove the backing Packages for this resource's InstalledPackages, as long as
+        // those Packages are only used by this resource, and not referenced in other ways.
+        // We need to determine now which Packages can be removed before we delete the InstalledPackages.
+        List<Integer> installedPackageIds = getInstalledPackagesIds(resourceId);
+
         for (String namedQueryToExecute : namedQueriesToExecute) {
             // execute all in new transactions, continuing on error, but recording whether errors occurred
 
@@ -779,6 +792,81 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             hasErrors |= resourceManager.bulkNamedQueryDeleteInNewTransaction(overlord, namedQueryToExecute,
                 resourceIds);
         }
+
+        // If this resource had packages installed, remove their version and bits
+        if (installedPackageIds.size() > 0) {
+            hasErrors |= cleanOrphanedPackageVersions(overlord, installedPackageIds);
+        }
+
+        return hasErrors;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Integer> getInstalledPackagesIds(Integer resourceId) {
+
+        List<Integer> installedPackageIds = new ArrayList<Integer>();
+
+        try {
+            installedPackageIds = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_ID_PACKAGES_BY_RESOURCE_ID)
+                .setParameter("resourceId", resourceId)
+                .getResultList();
+        } catch (Exception e) {
+            LOG.warn("May not have been able get installed packages for" + resourceId
+                + ". This is unlikely to be a problem.", e);
+            return installedPackageIds;
+        }
+
+        return installedPackageIds;
+    }
+
+    public boolean cleanPackageBits() {
+        boolean hasErrors = false;
+        try {
+            Query query = entityManager.createNamedQuery(PackageBits.DELETE_IF_NO_PACKAGE_VERSION);
+            query.executeUpdate();
+        } catch (Throwable t) {
+            if (LOG.isDebugEnabled()) {
+                LOG.error("Bulk named query delete error for '" + PackageBits.DELETE_IF_NO_PACKAGE_VERSION, t);
+            } else {
+                LOG.error("Bulk named query delete error for '" + PackageBits.DELETE_IF_NO_PACKAGE_VERSION + ": "
+                    + t.getMessage());
+            }
+            hasErrors = true;
+        }
+        return hasErrors;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public boolean cleanPackageVersions(List<Integer> packageIds) {
+        boolean hasErrors = false;
+        String queryName = PackageVersion.DELETE_BY_PKG_IF_NO_CONTENT_SOURCES_OR_REPOS;
+        Query deleteVersionQuery = entityManager.createNamedQuery(queryName);
+        try {
+            for (Integer pkgId : packageIds) {
+                deleteVersionQuery.setParameter("packageId", pkgId);
+                deleteVersionQuery.executeUpdate();
+            }
+        } catch (Throwable t) {
+            if (LOG.isDebugEnabled()) {
+                LOG.error("Bulk named query delete error for '" + queryName, t);
+            } else {
+                LOG.error("Bulk named query delete error for '" + queryName + ": " + t.getMessage());
+            }
+            hasErrors = true;
+        }
+        return hasErrors;
+    }
+
+    private boolean cleanOrphanedPackageVersions(Subject subject, List<Integer> packageIds) {
+
+        boolean hasErrors = false;
+
+        if (!authorizationManager.isOverlord(subject)) {
+            throw new IllegalArgumentException("Only the overlord can execute arbitrary named query strings");
+        }
+
+        hasErrors |= resourceManager.cleanPackageVersions(packageIds);
+        hasErrors |= resourceManager.cleanPackageBits();
 
         return hasErrors;
     }

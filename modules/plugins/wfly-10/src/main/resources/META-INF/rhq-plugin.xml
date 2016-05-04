@@ -609,6 +609,7 @@
         <c:simple-property name="validate-on-match" type="boolean" readOnly="false" required="false" default="false" description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
         <c:simple-property name="spy" type="boolean" readOnly="false" required="false" defaultValue="false" description="whatever spy or not the jdbc connection"/>
         <c:simple-property name="use-ccm" type="boolean" readOnly="false" required="false" description="Enable the use of a cached connection manager"/>
+        <c:simple-property name="statistics-enabled" required="false" type="boolean" readOnly="false" defaultValue="false" description="Define if runtime statistics is enabled or not."/>
         <c:group name="children:connection-properties:pname+-" displayName="Connection Properties">
           <c:list-property name="*1" displayName="Connection Property" readOnly="false" required="false">
             <c:map-property name="*:pname" displayName="Name" readOnly="false">
@@ -685,6 +686,7 @@
         <c:simple-property name="validate-on-match" type="boolean" readOnly="true" required="false" description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
         <c:simple-property name="spy" type="boolean" readOnly="true" required="false" description="whatever spy or not the jdbc connection"/>
         <c:simple-property name="use-ccm" type="boolean" readOnly="true" required="false" description="Enable the use of a cached connection manager"/>
+        <c:simple-property name="statistics-enabled" required="false" type="boolean" readOnly="true" defaultValue="false" description="Define if runtime statistics is enabled or not."/>
         <c:group name="children:connection-properties:pname+-" displayName="Connection Properties">
           <c:list-property name="*1" displayName="Connection Property" readOnly="true" required="false">
             <c:map-property name="*:pname" displayName="Name" readOnly="true">
@@ -795,6 +797,7 @@
                         </c:map-property>
         -->
         <c:simple-property name="no-recovery" required="false" type="boolean" readOnly="true" description="if true no recovery are tried for this connection pool"/>
+        <c:simple-property name="statistics-enabled" required="false" type="boolean" readOnly="false" defaultValue="false" description="Define if runtime statistics is enabled or not."/>
 
         <c:group name="children:xa-datasource-properties:key+-" displayName="XA Datasource Properties">
           <c:list-property name="*2" displayName="Properties" required="true" readOnly="false" min="1">
@@ -905,6 +908,7 @@
                         </c:map-property>
         -->
         <c:simple-property name="no-recovery" required="false" type="boolean" readOnly="true" description="if true no recovery are tried for this connection pool"/>
+        <c:simple-property name="statistics-enabled" required="false" type="boolean" readOnly="true" defaultValue="false" description="Define if runtime statistics is enabled or not."/>
 
         <c:group name="children:xa-datasource-properties:key+-" displayName="XA Datasource Properties">
           <c:list-property name="*2" displayName="Properties" required="false" readOnly="true">
@@ -2199,6 +2203,7 @@
         <c:simple-property name="wsdl-host" required="false" type="string" readOnly="true" description="The WSDL, that is a required deployment artifact for an endpoint, has a &lt;soap:address&gt; element which points to the location of the endpoint. JBoss supports rewriting of that SOAP address. If the content of &lt;soap:address&gt; is a valid URL, JBossWS will not rewrite it unless 'modify-wsdl-address' is true. If the content of &lt;soap:address&gt; is not a valid URL, JBossWS will rewrite it using the attribute values given below. If 'wsdl-host' is set to 'jbossws.undefined.host', JBossWS uses requesters host when rewriting the &lt;soap:address&gt;"/>
         <c:simple-property name="wsdl-port" required="false" type="integer" readOnly="true" description="The non-secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
         <c:simple-property name="wsdl-secure-port" required="false" type="integer" readOnly="true" description="The secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
+        <c:simple-property name="statistics-enabled" required="false" type="boolean" readOnly="true" defaultValue="false" description="Whether statistics are to be gathered for endpoints, default value is 'false'."/>
       </resource-configuration>
 
       <service name="Endpoint (Managed Server)"
@@ -10573,6 +10578,7 @@
       <c:simple-property name="wsdl-host" required="false" type="string" readOnly="false" description="The WSDL, that is a required deployment artifact for an endpoint, has a &lt;soap:address&gt; element which points to the location of the endpoint. JBoss supports rewriting of that SOAP address. If the content of &lt;soap:address&gt; is a valid URL, JBossWS will not rewrite it unless 'modify-wsdl-address' is true. If the content of &lt;soap:address&gt; is not a valid URL, JBossWS will rewrite it using the attribute values given below. If 'wsdl-host' is set to 'jbossws.undefined.host', JBossWS uses requesters host when rewriting the &lt;soap:address&gt;"/>
       <c:simple-property name="wsdl-port" required="false" type="integer" readOnly="false" description="The non-secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
       <c:simple-property name="wsdl-secure-port" required="false" type="integer" readOnly="false" description="The secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
+      <c:simple-property name="statistics-enabled" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether statistics are to be gathered for endpoints, default value is 'false'."/>
     </resource-configuration>
 
     <service name="Endpoint"

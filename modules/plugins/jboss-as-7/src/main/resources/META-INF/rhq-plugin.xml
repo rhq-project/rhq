@@ -7135,11 +7135,11 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="durable" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
+            <c:simple-property name="durable" required="false" type="boolean" readOnly="true" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
             <c:list-property name="entries" required="true" description="The jndi names the queue will be bound to." >
                 <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
             </c:list-property>
-            <c:simple-property name="selector" required="false" type="string" readOnly="false" description="The queue selector."/>
+            <c:simple-property name="selector" required="false" type="string" readOnly="true" description="The queue selector."/>
           </resource-configuration>
         </service>
 
@@ -13006,11 +13006,11 @@
         <metric property="queue-address" dataType="trait" description="The queue address defines what address is used for routing messages."/>
 
         <resource-configuration>
-          <c:simple-property name="durable" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
+          <c:simple-property name="durable" required="false" type="boolean" readOnly="true" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
           <c:list-property name="entries" required="true" description="The jndi names the queue will be bound to.">
             <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
-          <c:simple-property name="selector" required="false" type="string" readOnly="false" description="The queue selector."/>
+          <c:simple-property name="selector" required="false" type="string" readOnly="true" description="The queue selector."/>
         </resource-configuration>
       </service>
 

@@ -60,6 +60,7 @@ public class ConnectorDiscoveryGroupValidatorComponent extends BaseComponent<Res
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         ResourceType resourceType = context.getResourceType();
         String resourceTypeName = resourceType.getName();
+        resourceTypeName = BaseComponent.resourceTypeNameByRemovingProfileSuffix(resourceTypeName);
 
         ConfigurationUpdateHelper configurationUpdateHelper;
         if (resourceTypeName.equals("Connection Factory") || resourceTypeName.equals("Pooled Connection Factory")) {

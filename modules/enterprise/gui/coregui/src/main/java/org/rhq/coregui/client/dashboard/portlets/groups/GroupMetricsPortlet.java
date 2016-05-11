@@ -20,6 +20,7 @@ package org.rhq.coregui.client.dashboard.portlets.groups;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -218,6 +219,22 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
         return customSettings;
     }
 
+    /** Update the range of dates in each refresh cycle of the Portlet, according to the user time range
+     *  preference, if the user sets a custom date range, this function doesn't update the dates.
+     */
+    private void updateTimeRangeToNow() {
+        CustomDateRangeState customDateRS = CustomDateRangeState.getInstance();
+
+        if (!customDateRS.isCustomDateRangeActive()) {
+            Date now = new Date();
+            long timeRange = CustomDateRangeState.getInstance().getTimeRange();
+            Date newStartDate = new Date(now.getTime() - timeRange);
+            // Update the date range without refreshing the CoreGui
+            customDateRS.saveDateRange(newStartDate.getTime(), now.getTime(), false);
+
+        }
+    }
+
     /** Fetches recent metric information and updates the DynamicForm instance with i)sparkline information,
      * ii) link to recent metric graph for more details and iii) last metric value formatted to show significant
      * digits.
@@ -256,7 +273,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 for (String definitionToDisplay : displayOrder) {
                     definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay).getId();
                 }
-
+                updateTimeRangeToNow();
                 fetchEnabledMetrics(enabledSchedules, definitionArrayIds, displayOrder, measurementDefMap, column);
             }
         });
@@ -453,57 +470,60 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                         lastValue = d.getValue();
                     }
                 }
-                DynamicForm row = new DynamicForm();
-                row.setNumCols(3);
-                row.setColWidths(65, "*", 100);
-                row.setWidth100();
-                row.setAutoHeight();
-                row.setOverflow(Overflow.VISIBLE);
-                HTMLFlow graph = new HTMLFlow();
-                String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0' " + "values='"
-                        + commaDelimitedList.substring(0,commaDelimitedList.lastIndexOf(",")) + "'>...</span>";
-                graph.setContents(contents);
-                graph.setContentsType(ContentsType.PAGE);
-                //disable scrollbars on span
-                graph.setScrollbarSize(0);
+                if (commaDelimitedList.lastIndexOf(",") >= 0) {
+                    DynamicForm row = new DynamicForm();
+                    row.setNumCols(3);
+                    row.setColWidths(65, "*", 100);
+                    row.setWidth100();
+                    row.setAutoHeight();
+                    row.setOverflow(Overflow.VISIBLE);
+                    HTMLFlow graph = new HTMLFlow();
+                    String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0' "
+                        + "values='" + commaDelimitedList.substring(0, commaDelimitedList.lastIndexOf(","))
+                        + "'>...</span>";
+                    graph.setContents(contents);
+                    graph.setContentsType(ContentsType.PAGE);
+                    //disable scrollbars on span
+                    graph.setScrollbarSize(0);
 
-                CanvasItem graphContainer = new CanvasItem();
-                graphContainer.setShowTitle(false);
-                graphContainer.setHeight(16);
-                graphContainer.setWidth(60);
-                graphContainer.setCanvas(graph);
+                    CanvasItem graphContainer = new CanvasItem();
+                    graphContainer.setShowTitle(false);
+                    graphContainer.setHeight(16);
+                    graphContainer.setWidth(60);
+                    graphContainer.setCanvas(graph);
 
-                final String title = md.getDisplayName();
-                LinkItem link = new LinkItem();
-                link.setLinkTitle(title);
-                link.setShowTitle(false);
-                link.setClipValue(false);
-                link.setWrap(true);
-                if (!BrowserUtility.isBrowserPreIE9()) {
+                    final String title = md.getDisplayName();
+                    LinkItem link = new LinkItem();
+                    link.setLinkTitle(title);
+                    link.setShowTitle(false);
+                    link.setClipValue(false);
+                    link.setWrap(true);
+                    if (!BrowserUtility.isBrowserPreIE9()) {
 
-                    link.addClickHandler(new ClickHandler() {
-                        @Override
-                        public void onClick(ClickEvent event) {
-                            showPopupWithChart(title, md);
-                        }
-                    });
-                } else {
-                    link.disable();
-                }
+                        link.addClickHandler(new ClickHandler() {
+                            @Override
+                            public void onClick(ClickEvent event) {
+                                showPopupWithChart(title, md);
+                            }
+                        });
+                    } else {
+                        link.disable();
+                    }
 
-                //Value
-                String convertedValue = AbstractActivityView.convertLastValueForDisplay(lastValue, md);
-                StaticTextItem value = AbstractActivityView.newTextItem(convertedValue);
-                value.setVAlign(VerticalAlignment.TOP);
-                value.setAlign(Alignment.RIGHT);
-                value.setWidth("100%");
+                    //Value
+                    String convertedValue = AbstractActivityView.convertLastValueForDisplay(lastValue, md);
+                    StaticTextItem value = AbstractActivityView.newTextItem(convertedValue);
+                    value.setVAlign(VerticalAlignment.TOP);
+                    value.setAlign(Alignment.RIGHT);
+                    value.setWidth("100%");
 
-                row.setItems(graphContainer, link, value);
+                    row.setItems(graphContainer, link, value);
 
-                //if graph content returned
-                if ((!md.getName().trim().contains("Trait.")) && (lastValue != -1)) {
-                    layout.addMember(row);
-                    someChartedData = true;
+                    //if graph content returned
+                    if ((!md.getName().trim().contains("Trait.")) && (lastValue != -1)) {
+                        layout.addMember(row);
+                        someChartedData = true;
+                    }
                 }
             }
             if (!someChartedData) {// when there are results but no chartable entries.

@@ -62,11 +62,16 @@ public class BundleGroupsStep extends AbstractWizardStep {
     // a liberal timeout here...
     private static final int BUNDLE_CREATE_INITIAL_VERSION_TIMEOUT = 10 * 60 * 1000;
 
+    private enum ProcessingStatus {
+        IDLE, TOKEN
+    };
+
     private EnhancedVLayout canvas;
     private DynamicForm radioForm;
     private AbstractBundleCreateWizard wizard = null;
     private boolean isInitialVersion;
     private BundleGroupSelector selector;
+    private ProcessingStatus currentProcess = ProcessingStatus.IDLE;
 
     public BundleGroupsStep(AbstractBundleCreateWizard wizard) {
         this.wizard = wizard;
@@ -309,7 +314,11 @@ public class BundleGroupsStep extends AbstractWizardStep {
     }
 
     private void processToken() {
-
+        if (this.currentProcess == ProcessingStatus.TOKEN) {
+            wizard.getView().showMessage(MSG.view_bundle_createWizard_assigningBundleGroupInProgress());
+            return;
+        }
+        this.currentProcess = ProcessingStatus.TOKEN;
         GWTServiceLookup.getBundleService(BUNDLE_CREATE_INITIAL_VERSION_TIMEOUT).createInitialBundleVersionViaToken(
             getInitialBundleIds(), this.wizard.getCreateInitialBundleVersionToken(),
             new AsyncCallback<BundleVersion>() {
@@ -321,6 +330,7 @@ public class BundleGroupsStep extends AbstractWizardStep {
                             Message.Severity.Info));
                     wizard.setBundleVersion(result);
                     wizard.getView().incrementStep(); // go to the next step
+                    currentProcess = ProcessingStatus.IDLE;
                 }
 
                 @Override
@@ -329,6 +339,7 @@ public class BundleGroupsStep extends AbstractWizardStep {
                     CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
                     wizard.setBundleVersion(null);
                     wizard.setCreateInitialBundleVersionToken(null);
+                    currentProcess = ProcessingStatus.IDLE;
                 }
             });
     }

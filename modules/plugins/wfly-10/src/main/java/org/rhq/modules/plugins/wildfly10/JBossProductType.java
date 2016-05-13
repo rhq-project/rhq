@@ -31,6 +31,7 @@ import java.util.Properties;
 public enum JBossProductType {
 
     EAP7("EAP", "EAP 7", "JBoss Enterprise Application Platform 7", "JBoss EAP"),
+    JDG("JDG", "JBoss JDG 7", "JBoss Data Grid 7", "Data Grid"),
     WILDFLY10("WildFly", "WildFly 10", "WildFly Application Server 10", "WildFly Full");
 
     public final String SHORT_NAME;

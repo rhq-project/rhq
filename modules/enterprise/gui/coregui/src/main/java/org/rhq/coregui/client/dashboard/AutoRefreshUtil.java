@@ -64,6 +64,7 @@ public class AutoRefreshUtil {
                         && !autoRefreshCanvas.isDisabled() && !LoginView.isLoginShowing()) {
 
                         autoRefresh.refresh();
+                        UserSessionManager.refresh();
                     }
                 }
             };

@@ -25,13 +25,12 @@ import java.util.Properties;
 
 /**
  * Metadata describing a product based on Wildfly 10
- *
- * @author Ian Springer
  */
-public enum JBossProductType {
+ public enum JBossProductType {
 
-    EAP7("EAP", "EAP 7", "JBoss Enterprise Application Platform 7", "JBoss EAP"),
-    WILDFLY10("WildFly", "WildFly 10", "WildFly Application Server 10", "WildFly Full");
+    EAP("EAP", "EAP 7", "JBoss Enterprise Application Platform 7", "JBoss EAP"),
+    JDG("JDG", "JBoss JDG 7", "JBoss Data Grid 7", "Data Grid"),
+    WILDFLY("WildFly", "WildFly 10", "WildFly Application Server 10", "WildFly Full");
 
     public final String SHORT_NAME;
     public final String NAME;
@@ -55,10 +54,23 @@ public enum JBossProductType {
         throw new IllegalArgumentException("No product type with product-name '" + productName + "' is known.");
     }
 
+    public static JBossProductType getValueByShortName(String productName) {
+        if(productName.equalsIgnoreCase("wildfly-full")) {
+            return WILDFLY;
+        }
+
+        for (JBossProductType productType : JBossProductType.values()) {
+            if (productType.SHORT_NAME.equalsIgnoreCase(productName)) {
+                return productType;
+            }
+        }
+        throw new IllegalArgumentException("No product type with product-name '" + productName + "' is known.");
+    }
+
     /**
      * Determines the product type of a JBoss product installation.
      *
-     * @param homeDir the JBoss product installation directory (e.g. /opt/jboss-as-7.1.1.Final)
+     * @param homeDir the JBoss product installation directory (e.g. /opt/wildfly-10.0.0.Final)
      *
      * @param apiVersion Api version of the domain api.
      * @return the product type
@@ -81,12 +93,7 @@ public enum JBossProductType {
                 throw new Exception("'slot' property not found in " + productConfFile + ".");
             }
             if(apiVersion.startsWith("4")) {
-                if(slot.equals("eap")) {
-                    productType = EAP7;
-                } else {
-                    // Fallback
-                    productType = WILDFLY10;
-                }
+                productType = getValueByShortName(slot);
             }
         }
 

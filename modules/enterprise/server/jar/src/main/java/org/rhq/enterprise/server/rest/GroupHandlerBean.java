@@ -26,6 +26,8 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.interceptor.Interceptors;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -44,18 +46,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import com.wordnik.swagger.annotations.Api;
-import com.wordnik.swagger.annotations.ApiError;
-import com.wordnik.swagger.annotations.ApiErrors;
-import com.wordnik.swagger.annotations.ApiOperation;
-import com.wordnik.swagger.annotations.ApiParam;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.cache.Cache;
-
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.measurement.DataType;
@@ -83,6 +77,12 @@ import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiError;
+import com.wordnik.swagger.annotations.ApiErrors;
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
+
 /**
  * Deal with group related things.
  * @author Heiko W. Rupp
@@ -109,12 +109,14 @@ public class GroupHandlerBean extends AbstractRestBean  {
     @GET
     @Path("/")
     @ApiOperation(value = "List all groups", multiValueResponse = true, responseClass = "GroupRest")
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public Response getGroups(@ApiParam("String to search in the group name") @QueryParam("q") String q,
                               @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
                               @ApiParam("Page number for paging, 0-based") @QueryParam("page") Integer page,
                               @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.fetchGroupDefinition(true);
         criteria.addSortId(PageOrdering.ASC);
 
         if (q!=null) {

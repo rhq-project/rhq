@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2016 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@ import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.EXECUTION;
 import static org.rhq.core.pluginapi.bundle.BundleHandoverResponse.FailureType.INVALID_PARAMETER;
 import static org.rhq.modules.plugins.jbossas7.JBossProductType.AS;
+import static org.rhq.modules.plugins.jbossas7.JBossProductType.WILDFLY8;
 import static org.rhq.modules.plugins.jbossas7.util.ProcessExecutionLogger.logExecutionResults;
 
 import java.io.File;
@@ -296,7 +297,11 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                     throw new InvalidPluginConfigurationException("Failed to validate product type for "
                             + getResourceDescription(), e);
                 }
-                runtimeProductName = AS.PRODUCT_NAME;
+                if (releaseVersionNumber.startsWith("8.")) {
+                    runtimeProductName = WILDFLY8.PRODUCT_NAME;
+                } else {
+                    runtimeProductName = AS.PRODUCT_NAME;
+                }
             }
             if (!runtimeProductName.equals(expectedRuntimeProductName)) {
                 throw new InvalidPluginConfigurationException("The original product type discovered for this server was "

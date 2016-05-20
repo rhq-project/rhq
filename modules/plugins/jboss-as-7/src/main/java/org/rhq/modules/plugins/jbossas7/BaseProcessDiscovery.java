@@ -239,8 +239,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             LOG.warn(
                 "Managed product type for [" + homeDir + "] could not be determined or is unsupported: " + e.getMessage(), e); //$NON-NLS-1$ //$NON-NLS-2$
         }
-        if(productType == JBossProductType.UNSUPPORTED) {
-            // Ignore here, could be EAP7 based product
+        if(productType == JBossProductType.EAP7) {
+            // Ignore here, use EAP7 / Wildfly 10 plugin to do the detection
             return null;
         }
         serverPluginConfig.setProductType(productType);
@@ -502,8 +502,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 + "] as user [" + user + "]. Did you provide the correct credentials?");
         }
 
-        if (productType == JBossProductType.UNSUPPORTED) {
-            throw new InvalidPluginConfigurationException("EAP7 / Wildfly based products are not supported by this plugin.");
+        if (productType == JBossProductType.EAP7) {
+            throw new InvalidPluginConfigurationException("EAP7 / Wildfly 10 are not supported by this plugin.");
         }
 
         HostPort hostPort = new HostPort(false);
@@ -763,7 +763,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         // Products should have a version.txt file at root dir
         File versionFile = new File(homeDir, "version.txt");
         String version = getProductVersionInFile(versionFile, " - Version ", productType);
-        if (version == null && productType != JBossProductType.AS) {
+        if (version == null && productType != JBossProductType.AS && productType != JBossProductType.WILDFLY8) {
             // No version.txt file. Try modules/system/layers/base/org/jboss/as/product/slot/dir/META-INF/MANIFEST.MF
             String layeredProductManifestFilePath = arrayToString(
                 new String[] { "modules", "system", "layers", "base", "org", "jboss", "as", "product",
@@ -846,6 +846,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             return false;
         case EAP:
             return OSGI_VERSION_6_2_0.compareTo(osgiVersion) <= 0;
+        case WILDFLY8:
+            return true;
         case JPP:
             return false; //as of now
         case SOA:
@@ -899,6 +901,9 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                     Integer apiVersion = getServerAttribute(connection, "management-major-version");
                     if (apiVersion == 1) {
                         productType = JBossProductType.AS;
+                    } else {
+                        // In the future also check for other versions of WildFly via the release-version
+                        productType = JBossProductType.WILDFLY8;
                     }
                 }
                 releaseVersion = getServerAttribute(connection, "release-version");

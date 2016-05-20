@@ -21,6 +21,7 @@ package org.rhq.modules.plugins.jbossas7.jmx;
 
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
+import static org.rhq.modules.plugins.jbossas7.JBossProductType.WILDFLY8;
 import static org.rhq.modules.plugins.jbossas7.jmx.ApplicationMBeansDiscoveryComponent.PluginConfigProps.BEANS_QUERY_STRING;
 import static org.rhq.modules.plugins.jbossas7.jmx.ApplicationMBeansDiscoveryComponent.PluginConfigProps.NEW_RESOURCE_DESCRIPTION;
 import static org.rhq.modules.plugins.jbossas7.jmx.ApplicationMBeansDiscoveryComponent.PluginConfigProps.NEW_RESOURCE_NAME;
@@ -249,14 +250,20 @@ public class ApplicationMBeansDiscoveryComponent implements ResourceDiscoveryCom
                 LOG.warn("Could not find Managed Server socket binding offset, skipping discovery");
                 return Collections.emptySet();
             }
-            port = DOMAIN_REMOTING_PORT_DEFAULT;
+            if (productType != WILDFLY8) {
+                port = DOMAIN_REMOTING_PORT_DEFAULT;
+            } else {
+                port = HTTP_PORT_DEFAULT;
+            }
             port +=  offsetProp.getIntegerValue();
             String[] credentials = getCredentialsForManagedAS();
             username = credentials[0];
             password = credentials[1];
         } else if (parentComponent instanceof StandaloneASComponent) {
             port = serverPluginConfiguration.getPort();
-            port += STANDALONE_REMOTING_PORT_OFFSET;
+            if (productType != WILDFLY8) {
+                port += STANDALONE_REMOTING_PORT_OFFSET;
+            }
             username = serverPluginConfiguration.getUser();
             password = serverPluginConfiguration.getPassword();
         } else {
@@ -276,7 +283,7 @@ public class ApplicationMBeansDiscoveryComponent implements ResourceDiscoveryCom
         pluginConfig.setSimpleValue(USERNAME, username);
         pluginConfig.setSimpleValue(PASSWORD, password);
         pluginConfig.setSimpleValue(CLIENT_JAR_LOCATION, clientJarFile.getAbsolutePath());
-        pluginConfig.setSimpleValue(PROTOCOL, "remoting-jmx");
+        pluginConfig.setSimpleValue(PROTOCOL, productType == WILDFLY8 ? "http-remoting-jmx" : "remoting-jmx");
 
         EmsConnection emsConnection = null;
         try {

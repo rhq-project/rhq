@@ -22,7 +22,7 @@ package org.rhq.modules.plugins.wildfly10.itest.nonpc;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.Mockito.when;
 import static org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP;
-import static org.rhq.modules.plugins.wildfly10.JBossProductType.WILDFLY;
+import static org.rhq.modules.plugins.wildfly10.JBossProductType.WILDFLY10;
 import static org.rhq.modules.plugins.wildfly10.helper.HostnameVerification.SKIP;
 import static org.rhq.modules.plugins.wildfly10.helper.ServerPluginConfiguration.Property.HOSTNAME;
 import static org.rhq.modules.plugins.wildfly10.helper.ServerPluginConfiguration.Property.HOSTNAME_VERIFICATION;
@@ -143,7 +143,7 @@ public class InterruptibleOperationsTest {
         pluginConfig.getMap().put(LOG_EVENT_SOURCES_CONFIG_PROP, new PropertyList());
         pluginConfig.setSimpleValue(TRUST_STRATEGY, TRUST_ANY.name);
         pluginConfig.setSimpleValue(HOSTNAME_VERIFICATION, SKIP.name);
-        pluginConfig.setSimpleValue("expectedRuntimeProductName", WILDFLY.PRODUCT_NAME);
+        pluginConfig.setSimpleValue("expectedRuntimeProductName", WILDFLY10.PRODUCT_NAME);
         return pluginConfig;
     }
 

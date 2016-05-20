@@ -291,7 +291,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 + getResourceDescription(), e);
         }
         if (!runtimeProductName.equals(expectedRuntimeProductName)) {
-            if(serverPluginConfig.getProductType() != JBossProductType.WILDFLY) {
+            if(serverPluginConfig.getProductType() != JBossProductType.WILDFLY10) {
                 throw new InvalidPluginConfigurationException("The original product type discovered for this server was "
                         + expectedRuntimeProductName + ", but the server is now reporting its product type is ["
                         + runtimeProductName + "]");

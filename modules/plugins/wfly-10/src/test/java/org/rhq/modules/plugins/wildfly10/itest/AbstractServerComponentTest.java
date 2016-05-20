@@ -108,10 +108,10 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
 
         // Change the expectedRuntimeProductName property
         String originalExpectedRuntimeProductName = pluginConfig.getSimpleValue("expectedRuntimeProductName");
-        if (originalExpectedRuntimeProductName.equals(JBossProductType.WILDFLY.PRODUCT_NAME)) {
-            pluginConfig.setSimpleValue("expectedRuntimeProductName", JBossProductType.EAP.PRODUCT_NAME);
+        if (originalExpectedRuntimeProductName.equals(JBossProductType.WILDFLY10.PRODUCT_NAME)) {
+            pluginConfig.setSimpleValue("expectedRuntimeProductName", JBossProductType.EAP7.PRODUCT_NAME);
         } else {
-            pluginConfig.setSimpleValue("expectedRuntimeProductName", JBossProductType.WILDFLY.PRODUCT_NAME);
+            pluginConfig.setSimpleValue("expectedRuntimeProductName", JBossProductType.WILDFLY10.PRODUCT_NAME);
         }
 
         // Restart the server ResourceComponent so it picks up the changes we just made to the plugin config.

@@ -24,4 +24,10 @@
     <method>java.lang.String getConfigDirAttributeName()</method>
     <justification>See [BZ 1141839], we need to validate server config dir.</justification>
   </difference>
+  <difference>
+    <className>org/rhq/modules/plugins/jbossas7/JBossProductType</className>
+    <differenceType>6001</differenceType>
+    <field>WILDFLY8</field>
+    <justification>Remove support for WILDFLY8</justification>
+  </difference>
 </differences>

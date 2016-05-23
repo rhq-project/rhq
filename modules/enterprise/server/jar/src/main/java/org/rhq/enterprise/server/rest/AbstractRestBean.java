@@ -45,17 +45,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import freemarker.cache.ClassTemplateLoader;
-import freemarker.cache.MultiTemplateLoader;
-import freemarker.cache.TemplateLoader;
-import freemarker.template.Template;
-import freemarker.template.TemplateException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -73,6 +66,12 @@ import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.PagingCollection;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
+
+import freemarker.cache.ClassTemplateLoader;
+import freemarker.cache.MultiTemplateLoader;
+import freemarker.cache.TemplateLoader;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
 
 /**
  * Abstract base class for EJB classes that implement REST methods.
@@ -573,8 +572,14 @@ public class AbstractRestBean {
         if (group.getGroupDefinition()!=null) {
             gr.setDynaGroupDefinitionId(group.getGroupDefinition().getId());
         }
-        gr.setExplicitCount(group.getExplicitResources().size());
-        gr.setImplicitCount(group.getImplicitResources().size());
+        int expCount = resourceGroupManager.getExplicitGroupMemberCount(group.getId());
+        int impCount = expCount;
+        if (group.isRecursive() && expCount > 0) {
+            impCount = resourceGroupManager.getImplicitGroupMemberCount(group.getId());
+        }
+        gr.setExplicitCount(expCount);
+        gr.setImplicitCount(impCount);
+
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/group/{id}");
         URI uri = uriBuilder.build(group.getId());

@@ -24,6 +24,7 @@ package org.rhq.core.clientapi.server.core;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Properties;
 
 import org.rhq.core.domain.cloud.composite.FailoverListComposite;
 import org.rhq.core.domain.plugin.Plugin;
@@ -113,4 +114,13 @@ public interface CoreServerService {
      * @return Any response data for the requested data or actions.
      */
     PingRequest ping(PingRequest request);
+
+    /**
+     * Returns public agent update endpoint address.
+     *
+     * @return public agent update endpoint address.
+     */
+    String getPublicAgentUpdateEndpointAddress();
+
+
 }

@@ -818,4 +818,10 @@ public interface AgentConfigurationConstants {
      */
     @Restricted
     String COMMUNICATIONS_CONNECTOR_SECURITY_TRUSTSTORE_PASSWORD = "rhq.communications.connector.security.truststore.password";
+
+    /**
+     *
+     */
+    String PUBLIC_AGENT_UPDATE_ENDPOINT_ADDRESS = "rhq.autoinstall.public-agent-update-endpoint-address";
+
 }

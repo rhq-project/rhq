@@ -391,10 +391,7 @@ public class AgentConfiguration {
         String str = m_preferences.get(AgentConfigurationConstants.AGENT_UPDATE_VERSION_URL, null);
 
         if (str == null) {
-            String transport = SecurityUtil.isTransportSecure(getServerTransport()) ? "https" : "http";
-            String address = getServerBindAddress();
-            int port = getServerBindPort();
-            str = transport + "://" + address + ":" + port + "/agentupdate/version";
+            str = getAgentUpdateBaseURL() + "/agentupdate/version";
         }
 
         return str;
@@ -429,10 +426,7 @@ public class AgentConfiguration {
         String str = m_preferences.get(AgentConfigurationConstants.AGENT_UPDATE_DOWNLOAD_URL, null);
 
         if (str == null) {
-            String transport = SecurityUtil.isTransportSecure(getServerTransport()) ? "https" : "http";
-            String address = getServerBindAddress();
-            int port = getServerBindPort();
-            str = transport + "://" + address + ":" + port + "/agentupdate/download";
+            str = getAgentUpdateBaseURL() + "/agentupdate/download";
         }
 
         return str;
@@ -1416,6 +1410,15 @@ public class AgentConfiguration {
         return flag;
     }
 
+    public String getPublicAgentUpdateEndpointAddress() {
+        return m_preferences.get(AgentConfigurationConstants.PUBLIC_AGENT_UPDATE_ENDPOINT_ADDRESS, null);
+    }
+
+    public void setPublicAgentUpdateEndpointAddress(String publicAgentUpdateEndpointAddress) {
+        m_preferences.put(AgentConfigurationConstants.PUBLIC_AGENT_UPDATE_ENDPOINT_ADDRESS, publicAgentUpdateEndpointAddress);
+        flush(AgentConfigurationConstants.PUBLIC_AGENT_UPDATE_ENDPOINT_ADDRESS);
+    }
+
     /**
      * @see java.lang.Object#toString()
      */
@@ -1446,6 +1449,18 @@ public class AgentConfiguration {
         buf.append(']');
 
         return buf.toString();
+    }
+
+    private String getAgentUpdateBaseURL() {
+        String transport = getServerTransport();
+        if (transport.contains("socket") && getPublicAgentUpdateEndpointAddress() != null) {
+            return getPublicAgentUpdateEndpointAddress();
+        } else {
+            transport = SecurityUtil.isTransportSecure(transport) ? "https" : "http";
+            String address = getServerBindAddress();
+            int port = getServerBindPort();
+            return transport + "://" + address + ":" + port;
+        }
     }
 
     /**

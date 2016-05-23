@@ -1551,6 +1551,24 @@ public class AgentMain {
 
                                 FailoverListComposite failover_list = null;
                                 try {
+                                    // Verifies if the transport method is a (ssl)socket
+                                    // If so, requests the public agent update endpoint (in case we need to update to register)
+                                    try {
+                                        if (m_configuration.getServerTransport().contains("socket")) {
+                                            String newPublicAgentUpdateEndpoint = remote_pojo.getPublicAgentUpdateEndpointAddress();
+                                            String oldPublicAgentUpdateEndpoint = m_configuration.getPublicAgentUpdateEndpointAddress();
+                                            if (oldPublicAgentUpdateEndpoint == null || !oldPublicAgentUpdateEndpoint.equals(newPublicAgentUpdateEndpoint)) {
+                                                m_configuration.setPublicAgentUpdateEndpointAddress(newPublicAgentUpdateEndpoint);
+                                            }
+                                        }
+                                    } catch (Exception exception) {
+                                        if (LOG.isDebugEnabled()) {
+                                            LOG.debug(exception, "Unable to get the PublicAgentUpdateEndpointAddress from server.");
+                                        } else {
+                                            LOG.warn("Unable to get the PublicAgentUpdateEndpointAddress from server.");
+                                        }
+                                    }
+
                                     AgentRegistrationResults results = remote_pojo.registerAgent(request);
                                     failover_list = results.getFailoverList();
                                     token = results.getAgentToken(); // make sure our finally block gets this - BZ 963982

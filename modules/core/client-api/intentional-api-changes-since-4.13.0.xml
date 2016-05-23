@@ -29,4 +29,13 @@
         reference to deleted Resource in DeleteResourceHistory
     </justification>
   </difference>
+  <difference>
+    <className>org/rhq/core/clientapi/server/core/CoreServerService</className>
+    <differenceType>7012</differenceType>
+    <!-- new method -->
+    <method>java.lang.String getPublicAgentUpdateEndpointAddress()</method>
+    <justification>
+        BZ 1302800 - New service to send the public agent update endpoint address.
+    </justification>
+  </difference>
 </differences>

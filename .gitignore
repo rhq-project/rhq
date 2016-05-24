@@ -9,6 +9,9 @@
 #eclipse specific
 /modules/enterprise/gui/coregui/.externalToolBuilders/
 /modules/enterprise/gui/content_http-war/build/classes/
+/**/.project
+/**/.classpath
+/**/org.eclipse.*.prefs
 #created by rhq-enterprise-server's unit tests
 /modules/enterprise/server/jar/transaction.log
 

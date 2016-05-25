@@ -555,7 +555,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
     public void removeManagedResource_helper(Subject overlord, int groupDefinitionId, Integer doomedGroupId)
         throws GroupDefinitionDeleteException, GroupDefinitionNotFoundException {
         GroupDefinition groupDefinition = getById(groupDefinitionId);
-        ResourceGroup doomedGroup = entityManager.getReference(ResourceGroup.class, doomedGroupId);
+        ResourceGroup doomedGroup = entityManager.find(ResourceGroup.class, doomedGroupId);
         groupDefinition.removeResourceGroup(doomedGroup);
 
         try {

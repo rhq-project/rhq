@@ -39,9 +39,7 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.jboss.ejb3.annotation.TransactionTimeout;
-
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -469,6 +467,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     boolean noDirChanges = (0 == dirComp.compare(existingDef, newDef));
 
                     if ((noAttachedDefs && notPinned) || noDirChanges) {
+                        entityManager.remove(existingTemplate.getConfiguration()); // don't orphan the config
                         existingTemplate.setTemplateDefinition(newDef);
 
                     } else {

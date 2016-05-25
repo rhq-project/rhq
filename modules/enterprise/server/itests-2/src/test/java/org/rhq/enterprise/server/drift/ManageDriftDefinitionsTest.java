@@ -20,6 +20,7 @@
 package org.rhq.enterprise.server.drift;
 
 import static java.util.Arrays.asList;
+
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
@@ -34,8 +35,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.persistence.EntityManager;
-
-import org.testng.annotations.Test;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
@@ -60,6 +59,7 @@ import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility.SerializationType;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.test.AssertUtils;
+import org.testng.annotations.Test;
 
 @Test
 public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
@@ -88,8 +88,8 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
     protected void purgeDB() {
         super.purgeDB();
 
-        deleteEntity(Resource.class, DRIFT_NOT_SUPPORTED_RESOURCE);
-        deleteEntity(ResourceType.class, DRIFT_NOT_SUPPORTED_TYPE);
+        removeEntity(Resource.class, DRIFT_NOT_SUPPORTED_RESOURCE);
+        removeEntity(ResourceType.class, DRIFT_NOT_SUPPORTED_TYPE);
     }
 
     public void createDefinitionFromUnpinnedTemplate() throws Exception {

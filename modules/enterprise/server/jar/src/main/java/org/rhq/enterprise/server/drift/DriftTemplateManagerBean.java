@@ -20,6 +20,7 @@
 package org.rhq.enterprise.server.drift;
 
 import static javax.ejb.TransactionAttributeType.NEVER;
+
 import static org.rhq.core.domain.common.EntityContext.forResource;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
@@ -218,6 +219,7 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
             throw new IllegalArgumentException("The template's base directory and filters cannot be modified");
         }
 
+        entityMgr.remove(template.getTemplateDefinition());
         template.setTemplateDefinition(updatedTemplate.getTemplateDefinition());
         template = entityMgr.merge(template);
         DriftDefinition templateDef = template.getTemplateDefinition();

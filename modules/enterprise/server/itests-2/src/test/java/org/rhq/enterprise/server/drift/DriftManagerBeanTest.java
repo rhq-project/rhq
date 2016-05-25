@@ -64,7 +64,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Test for {@link DriftManagerBean} SLSB.
- * 
+ *
  * !!! Actually, this is really testing only the JPA impl, it does not actually go through the
  * !!! configured drift server plugin.  To enhance this to do that then you may need to model this
  * !!! mode like BundleManagerBeanTest
@@ -97,6 +97,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         DriftServerPluginService driftServerPluginService = new DriftServerPluginService(getTempDir());
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
+        driftServerPluginService.startMasterPluginContainer();
 
         deleteDriftFiles();
 

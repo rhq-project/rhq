@@ -445,7 +445,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     public void deleteContentSourceSyncResults(Subject subject, int[] ids) {
         if (ids != null) {
             for (int id : ids) {
-                ContentSourceSyncResults doomed = entityManager.getReference(ContentSourceSyncResults.class, id);
+                ContentSourceSyncResults doomed = entityManager.find(ContentSourceSyncResults.class, id);
                 entityManager.remove(doomed);
             }
         }
@@ -479,7 +479,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         }
 
         obfuscatePasswords(contentSource);
-        
+
         entityManager.persist(contentSource);
         // these aren't cascaded during persist, but I want to set them to null anyway, just to be sure
         contentSource.setSyncResults(null);
@@ -487,15 +487,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         log.debug("User [" + subject + "] created content source [" + contentSource + "]");
         return contentSource; // now has the ID set
     }
-    
+
     @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource)
         throws ContentSourceException {
         validateContentSource(contentSource);
         contentSource.setSyncResults(new ArrayList<ContentSourceSyncResults>());
-        
+
         obfuscatePasswords(contentSource);
-        
+
         entityManager.persist(contentSource);
         return contentSource;
     }
@@ -509,7 +509,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         ContentSource loaded = entityManager.find(ContentSource.class, contentSource.getId());
 
         obfuscatePasswords(contentSource);
-                
+
         if (contentSource.getConfiguration() == null) {
             // this is a one-to-one and hibernate can't auto delete this orphan (HHH-2608), we manually do it here
             if (loaded.getConfiguration() != null) {
@@ -981,7 +981,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
      * on a Lob unless the entity class is instrumented. We can't usethat approach because it introduces
      * hibernate imports into the domain class, and that violates our restriction of exposing hibernate
      * classes to the Agent and Remote clients.
-     * 
+     *
      * @return
      */
     private PackageBits createPackageBits(boolean initialize) {
@@ -1075,7 +1075,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return null;
     }
 
-    // TODO: Just noticing that this method seems pretty redundant with 
+    // TODO: Just noticing that this method seems pretty redundant with
     //       downloadPackageBits(Subject subject, PackageVersionContentSource pvcs) and should probably be
     //       refactored.  Also *** the transactional decls below are not being honored because the method
     //       is not being called through the Local, so not establishing a new transactional context.
@@ -1619,7 +1619,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     }
                 } else {
                     rt = knownResourceTypes.get(rt);
-                }                
+                }
             }
 
             // find the new package's type (package types should already exist, agent plugin descriptors define them)
@@ -1632,7 +1632,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 } else {
                     q = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_NAME_AND_NULL_RESOURCE_TYPE);
                 }
-                
+
                 q.setParameter("name", pt.getName());
 
                 try {
@@ -1746,7 +1746,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // the check for null resource type shouldn't be necessary here because
             // the package shouldn't declare any resource versions if it doesn't declare a resource type.
             // Nevertheless, let's make that check just to prevent disasters caused by "malicious" content
-            // providers.                        
+            // providers.
             if (resourceVersions != null && rt != null) {
                 Map<String, ProductVersion> cachedProductVersions = knownProductVersions.get(rt); // we are guaranteed that this returns non-null
                 for (String version : resourceVersions) {
@@ -2510,7 +2510,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             ContentSourceType attachedContentSourceType = getContentSourceType(contentSource.getContentSourceType().getName());
             configurationDefinition = attachedContentSourceType.getContentSourceConfigurationDefinition();
         }
-        
+
         PasswordObfuscationUtility.obfuscatePasswords(configurationDefinition, contentSource.getConfiguration());
     }
 }

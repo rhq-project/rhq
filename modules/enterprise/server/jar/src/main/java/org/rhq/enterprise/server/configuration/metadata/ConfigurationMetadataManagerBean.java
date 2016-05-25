@@ -359,7 +359,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 for (String doomedKey : doomedKeys) {
                     PropertyDefinition doomed = existingPropDefs.get(doomedKey);
                     existingPropDefs.remove(doomedKey);
-                    entityManager.remove(entityManager.getReference(PropertyDefinition.class, doomed.getId()));
+                    entityManager.remove(entityManager.find(PropertyDefinition.class, doomed.getId()));
                 }
 
                 int order = 0;

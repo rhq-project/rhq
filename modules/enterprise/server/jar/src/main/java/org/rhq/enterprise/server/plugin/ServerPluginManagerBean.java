@@ -239,7 +239,7 @@ public class ServerPluginManagerBean implements ServerPluginManagerLocal, Server
         for (Integer pluginId : pluginIds) {
             ServerPlugin plugin = null;
             try {
-                plugin = entityManager.getReference(ServerPlugin.class, pluginId);
+                plugin = entityManager.find(ServerPlugin.class, pluginId);
             } catch (Exception e) {
                 log.debug("Cannot enable plugin [" + pluginId + "]. Cause: " + ThrowableUtil.getAllMessages(e));
             }
@@ -264,7 +264,7 @@ public class ServerPluginManagerBean implements ServerPluginManagerLocal, Server
     }
 
     /**
-     * checks if plugin configuration has set all required properties 
+     * checks if plugin configuration has set all required properties
      * @param plugin
      * @throws PluginConfigurationRequiredException if plugin is missing required configuration
      * @throws Exception in case of any other error
@@ -326,7 +326,7 @@ public class ServerPluginManagerBean implements ServerPluginManagerLocal, Server
 
             ServerPlugin plugin = null;
             try {
-                plugin = entityManager.getReference(ServerPlugin.class, pluginId);
+                plugin = entityManager.find(ServerPlugin.class, pluginId);
             } catch (Exception e) {
                 log.debug("Cannot disable plugin [" + pluginId + "]. Cause: " + ThrowableUtil.getAllMessages(e));
             }
@@ -381,7 +381,7 @@ public class ServerPluginManagerBean implements ServerPluginManagerLocal, Server
 
             ServerPlugin plugin = null;
             try {
-                plugin = entityManager.getReference(ServerPlugin.class, pluginId);
+                plugin = entityManager.find(ServerPlugin.class, pluginId);
             } catch (Exception e) {
                 log.debug("Cannot undeploy plugin [" + pluginId + "]. Cause: " + ThrowableUtil.getAllMessages(e));
             }

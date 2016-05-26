@@ -18,6 +18,7 @@
  */
 package org.rhq.coregui.client.dashboard;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,6 +30,7 @@ import java.util.Set;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
@@ -57,6 +59,7 @@ import org.rhq.coregui.client.dashboard.portlets.resource.ResourceOobsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.preferences.UserPreferenceNames.UiSubsystem;
@@ -212,7 +215,27 @@ public class DashboardView extends EnhancedVLayout {
         this.setBackgroundColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND,
             "transparent"));
 
-        portalLayout = new PortalLayout(this, storedDashboard.getColumns(), storedDashboard.getColumnWidths());
+        try {
+            portalLayout = new PortalLayout(this, storedDashboard.getColumns(), storedDashboard.getColumnWidths());
+        } catch (IllegalArgumentException iae) {
+            String[] columnWidths = storedDashboard.getColumnWidths();
+            int numColumns = storedDashboard.getColumns();
+            if ((null != columnWidths && columnWidths.length > numColumns)) {
+                String[] columnWidthsFixed = new String[numColumns];
+                System.arraycopy(columnWidths, 0, columnWidthsFixed, 0, numColumns - 1);
+                columnWidthsFixed[numColumns-1] = "*";
+                Configuration cleanConfiguration = new Configuration();
+                cleanConfiguration.setProperties(storedDashboard.getConfiguration().getProperties());
+                storedDashboard.setConfiguration(cleanConfiguration);
+                storedDashboard.setColumnWidths(columnWidthsFixed);
+                portalLayout = new PortalLayout(this, storedDashboard.getColumns(), storedDashboard.getColumnWidths());
+                Log.error("Invalid column widths (more widths than columns) "
+                        + Arrays.toString(columnWidths));
+                save();
+            } else {
+                throw iae;
+            }
+        }
 
         portalLayout.setOverflow(Overflow.AUTO);
         portalLayout.setWidth100();

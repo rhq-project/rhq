@@ -471,6 +471,12 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
     @Override
     protected void postSaveAction() {
+        Subject sessionSubject = UserSessionManager.getSessionSubject();
+        boolean userBeingEditedIsLoggedInUser = (getRecordId() == sessionSubject.getId());
+
+        if (!userBeingEditedIsLoggedInUser) {
+            return;
+        }
         List<Integer> currentState = getIntegerList();
         if (!initialState.equals(currentState)) {
             prefs.setShowUiSubsystems(currentState, new AsyncCallback<Subject>() {

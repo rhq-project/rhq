@@ -96,6 +96,10 @@ public class DashboardManagerBean implements DashboardManagerLocal, DashboardMan
                 && d.getOwner().getId() != subject.getId()) {
                 throw new PermissionException("You may only alter dashboards you own.");
             }
+            // Remove orphaned configuration
+            if (d.getConfiguration().getId() != dashboard.getConfiguration().getId()) {
+                entityManager.remove(d.getConfiguration());
+            }
             return entityManager.merge(dashboard);
         }
     }

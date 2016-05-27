@@ -37,15 +37,26 @@ public class FileSystemInfo {
     private final String mountPoint;
     private FileSystem fs;
     private FileSystemUsage fsUsage;
+    private boolean fetchedInfo;
 
     public FileSystemInfo(String mountPoint) {
         this.mountPoint = mountPoint;
+        this.fetchedInfo = false;
         refresh();
     }
 
-    public void refresh() {
-        SigarProxy sigar = SigarAccess.getSigar();
+    public FileSystemInfo(String mountPoint, boolean deferedFetchInfo) {
+        this.mountPoint = mountPoint;
+        this.fetchedInfo = false;
+        if (!deferedFetchInfo) {
+            refresh();
+        } else {
+            SigarProxy sigar = SigarAccess.getSigar();
+            createFileSystemObject(sigar);
+        }
+    }
 
+    private void createFileSystemObject(SigarProxy sigar) {
         try {
             // this only needs to be loaded once - it will never change during the lifetime of the file system
             if (this.fs == null) {
@@ -55,13 +66,21 @@ public class FileSystemInfo {
             throw new SystemInfoException("Cannot refresh file system mounted at [" + this.mountPoint + "]", e);
         }
 
+    }
+
+    public void refresh() {
+        SigarProxy sigar = SigarAccess.getSigar();
+        createFileSystemObject(sigar);
         try {
             // this is the usage data and therefore should be refreshed
             this.fsUsage = sigar.getMountedFileSystemUsage(this.mountPoint);
+            this.fetchedInfo = true;
         } catch (SigarException e) {
             // this happens when the file system is not available (e.g. if it's a CD-ROM without a CD loaded in it) or
             // if we don't have permission to access the filesystem. we can ignore it and set the usage data to null.
             this.fsUsage = null;
+            this.fetchedInfo = true;
+
             if (LOG.isTraceEnabled()) {
                 LOG.trace("Cannot refresh the usage data for file system mounted at [" + this.mountPoint + "].", e);
             } else if (LOG.isDebugEnabled()) {
@@ -69,6 +88,8 @@ public class FileSystemInfo {
             }
         } catch (RuntimeException e) {
             this.fsUsage = null;
+            this.fetchedInfo = true;
+
             LOG.error("An error occurred while refreshing the usage data for file system mounted at [" + this.mountPoint
                     + "].", e);
         }
@@ -95,6 +116,9 @@ public class FileSystemInfo {
      * @return file system usage data
      */
     public FileSystemUsage getFileSystemUsage() {
+        if(!this.fetchedInfo){
+            refresh();
+        }
         return this.fsUsage;
     }
 

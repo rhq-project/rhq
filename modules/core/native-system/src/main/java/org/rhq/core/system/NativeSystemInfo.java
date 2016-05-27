@@ -310,7 +310,7 @@ public class NativeSystemInfo implements SystemInfo {
         return new CpuInformation(cpuIndex, sigar);
     }
 
-    public List<FileSystemInfo> getFileSystems() {
+    private List<FileSystemInfo> getFileSystems(boolean deferredUsageInfo) {
         List<String> mountPoints = new ArrayList<String>();
 
         try {
@@ -322,10 +322,18 @@ public class NativeSystemInfo implements SystemInfo {
 
         List<FileSystemInfo> infos = new ArrayList<FileSystemInfo>();
         for (String mountPoint : mountPoints) {
-            infos.add(new FileSystemInfo(mountPoint));
+            infos.add(new FileSystemInfo(mountPoint, deferredUsageInfo));
         }
 
         return infos;
+    }
+
+    public List<FileSystemInfo> getFileSystems() {
+        return getFileSystems(false);
+    }
+
+    public List<FileSystemInfo> getFileSystemsDeferredUsageInfo() {
+        return getFileSystems(true);
     }
 
     public FileSystemInfo getFileSystem(String path) {

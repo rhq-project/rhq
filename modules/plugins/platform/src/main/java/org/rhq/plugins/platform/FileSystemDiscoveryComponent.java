@@ -62,7 +62,7 @@ public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<
             return results;
         }
 
-        for (FileSystemInfo fsInfo : sysInfo.getFileSystems()) {
+        for (FileSystemInfo fsInfo : sysInfo.getFileSystemsDeferredUsageInfo()) {
             FileSystem fs = fsInfo.getFileSystem();
             int fsType = fs.getType();
             // We only support local, network (nfs), lofs, or tmpfs filesystems - skip any other types.

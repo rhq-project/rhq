@@ -291,6 +291,16 @@ public class JavaSystemInfo implements SystemInfo {
     /**
      * Throws {@link UnsupportedOperationException} since the Java API cannot obtain information about file systems.
      *
+     * @see SystemInfo#getFileSystemsDeferredUsageInfo()
+     */
+    public List<FileSystemInfo> getFileSystemsDeferredUsageInfo() {
+        throw getUnsupportedException("Cannot get file systems information");
+
+    }
+
+    /**
+     * Throws {@link UnsupportedOperationException} since the Java API cannot obtain information about file systems.
+     *
      * @see SystemInfo#getFileSystem(String)
      */
     public FileSystemInfo getFileSystem(String directory) {

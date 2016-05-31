@@ -203,6 +203,16 @@ public interface SystemInfo {
     List<FileSystemInfo> getFileSystems();
 
     /**
+     * Returns information on all mounted file systems,
+     *
+     * The usage information will be obtained when the method {@link FileSystemInfo#getFileSystemUsage()} is called.
+     *
+     * @return list of all file systems on the platform
+     */
+
+    List<FileSystemInfo> getFileSystemsDeferredUsageInfo();
+
+    /**
      * Returns information on the mounted file system that hosts the given file or directory.
      *
      * @param  path the file or directory whose mounted file system should be returned

@@ -29,8 +29,6 @@ import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 
 import org.apache.commons.io.FileUtils;
-import org.testng.annotations.Test;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftDefinition;
@@ -44,6 +42,7 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
+import org.testng.annotations.Test;
 
 @Test(groups = "drift", singleThreaded = true)
 public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
@@ -150,18 +149,18 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
 
                 em.createQuery("delete from JPADriftFile df where df.hashId like" + name).executeUpdate();
 
-                em.createQuery("delete from DriftDefinition dd where dd.name like" + name).executeUpdate();
+                removeEntities(DriftDefinition.class, name);
 
-                em.createQuery("delete from DriftDefinitionTemplate ddt where ddt.name like" + name).executeUpdate();
+                removeEntities(DriftDefinitionTemplate.class, name);
 
-                deleteEntity(Resource.class, RESOURCE_NAME);
-                deleteEntity(Agent.class, AGENT_NAME);
-                deleteEntity(ResourceType.class, RESOURCE_TYPE_NAME);
+                removeEntity(Resource.class, RESOURCE_NAME);
+                removeEntity(Agent.class, AGENT_NAME);
+                removeEntity(ResourceType.class, RESOURCE_TYPE_NAME);
             }
         });
     }
 
-    protected void deleteEntity(Class<?> clazz, String name) {
+    protected void removeEntity(Class<?> clazz, String name) {
         try {
             Object entity = em
                 .createQuery("select entity from " + clazz.getSimpleName() + " entity where entity.name = :name")
@@ -179,6 +178,29 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
             // the database may not be in a consistent state
             fail("Purging " + name + " failed. Expected to find one instance of " + clazz.getSimpleName()
                 + " but found more than one. The database may not be in a consistent state.");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    protected void removeEntities(Class<?> clazz, String name) {
+        try {
+            String query = "select entity from " + clazz.getSimpleName() + " entity where entity.name like :name";
+            List<Object> entities = em.createQuery(query).setParameter("name", name).getResultList();
+            for (Object entity : entities) {
+                if (clazz.equals(Resource.class)) {
+                    ResourceTreeHelper.deleteResource(em, (Resource) entity);
+                } else {
+                    em.remove(entity);
+                }
+            }
+        } catch (NoResultException e) {
+            // we can ignore no results because this code will run when the db
+            // is empty and we expect no results in that case
+        } catch (NonUniqueResultException e) {
+            // we will fail here to let the person running the test know that
+            // the database may not be in a consistent state
+            fail("Purging " + name + " failed. Expected to find one instance of " + clazz.getSimpleName()
+                    + " but found more than one. The database may not be in a consistent state.");
         }
     }
 

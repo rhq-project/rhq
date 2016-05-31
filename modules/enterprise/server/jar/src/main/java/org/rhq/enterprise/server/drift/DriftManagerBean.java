@@ -19,8 +19,10 @@
 package org.rhq.enterprise.server.drift;
 
 import static java.util.Arrays.asList;
+
 import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftComplianceStatus.IN_COMPLIANCE;
 import static org.rhq.core.domain.drift.DriftComplianceStatus.OUT_OF_COMPLIANCE_DRIFT;
@@ -44,15 +46,10 @@ import javax.jms.Session;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import difflib.DiffUtils;
-import difflib.Patch;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Hibernate;
-
 import org.jboss.remoting.CannotConnectException;
-
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -107,15 +104,18 @@ import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+import difflib.DiffUtils;
+import difflib.Patch;
+
 /**
- * The SLSB supporting Drift management to clients.  
- * 
+ * The SLSB supporting Drift management to clients.
+ *
  * Wrappers are provided for the methods defined in DriftServerPluginFacet and the work is deferred to the plugin
  * No assumption is made about the  any back end implementation of a drift server plugin and therefore does not
- * declare any transactioning (the NOT_SUPPORTED transaction attribute is used for all wrappers). 
- * 
- * For methods not deferred to the server plugin, the implementations are done here.   
- * 
+ * declare any transactioning (the NOT_SUPPORTED transaction attribute is used for all wrappers).
+ *
+ * For methods not deferred to the server plugin, the implementations are done here.
+ *
  * @author John Sanda
  * @author John Mazzitelli
  * @author Jay Shaughnessy
@@ -155,11 +155,11 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
-    
+
     @EJB
     private AuthorizationManagerLocal authorizationManager;
 
-    // use a new transaction when putting things on the JMS queue. see 
+    // use a new transaction when putting things on the JMS queue. see
     // http://management-platform.blogspot.com/2008/11/transaction-recovery-in-jbossas.html
     @Override
     @TransactionAttribute(REQUIRES_NEW)
@@ -173,7 +173,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         connection.close();
     }
 
-    // use a new transaction when putting things on the JMS queue. see 
+    // use a new transaction when putting things on the JMS queue. see
     // http://management-platform.blogspot.com/2008/11/transaction-recovery-in-jbossas.html
     @Override
     @TransactionAttribute(REQUIRES_NEW)
@@ -300,7 +300,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         DriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addFilterCategory(COVERAGE);
         criteria.addFilterVersion("0");
-        // One of the next two filters will be null 
+        // One of the next two filters will be null
         criteria.addFilterDriftDefinitionId(request.getDriftDefinitionId());
         criteria.addFilterId(request.getTemplateChangeSetId());
         criteria.fetchDrifts(true);
@@ -406,7 +406,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @Override
     public void deleteResourceDriftDefinition(Subject subject, int resourceId, int driftDefId) {
         authorizeOrFail(subject, resourceId, "Can not delete drifts");
-        DriftDefinition doomed = entityManager.getReference(DriftDefinition.class, driftDefId);
+        DriftDefinition doomed = entityManager.find(DriftDefinition.class, driftDefId);
         doomed.getResource().setAgentSynchronizationNeeded();
         entityManager.remove(doomed);
         return;
@@ -556,10 +556,10 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     /**
      * This purges the persisted data related to drift definition, but it does NOT talk to the agent to tell the agent
      * about this nor does it actually delete the drift def itself.
-     * 
+     *
      * If you want to delete a drift definition and all that that entails, you must use
      * {@link #deleteDriftDefinition(Subject, EntityContext, String)} instead.
-     * 
+     *
      * This method is really for internal use only.
      */
     @Override
@@ -745,87 +745,89 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @Override
     public void updateDriftDefinition(Subject subject, EntityContext entityContext, DriftDefinition driftDef) {
         authorizeOrFail(subject, entityContext.getResourceId(), "Can not update drifts");
-        
+
         // before we do anything, validate certain field values to prevent downstream errors
         validateDriftDefinition(driftDef);
 
         switch (entityContext.getType()) {
-        case Resource:
-            int resourceId = entityContext.getResourceId();
-            Resource resource = entityManager.find(Resource.class, resourceId);
-            if (null == resource) {
-                throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
-            }
+            case Resource: {
+                int resourceId = entityContext.getResourceId();
+                Resource resource = entityManager.find(Resource.class, resourceId);
+                if (null == resource) {
+                    throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
+                }
 
-            if (!isDriftMgmtSupported(resource)) {
-                throw new IllegalArgumentException("Cannot create drift definition. The resource type " +
-                        resource.getResourceType() + " does not support drift management");
-            }
+                if (!isDriftMgmtSupported(resource)) {
+                    throw new IllegalArgumentException("Cannot create drift definition. The resource type " +
+                            resource.getResourceType() + " does not support drift management");
+                }
 
-            // Update or add the driftDef as necessary
-            DriftDefinitionComparator comparator = new DriftDefinitionComparator(
-                CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
-            boolean isUpdated = false;
-            for (DriftDefinition dc : resource.getDriftDefinitions()) {
-                if (dc.getName().equals(driftDef.getName())) {
-                    // compare the directory specs (basedir/includes-excludes filters only - if they are different, abort.
-                    // you cannot update drift def that changes basedir/includes/excludes from the original.
-                    // the user must delete the drift def and create a new one, as opposed to trying to update the existing one.
-                    if (comparator.compare(driftDef, dc) == 0) {
-                        if (dc.isPinned() && !driftDef.isPinned()) {
-                            dc.setComplianceStatus(DriftComplianceStatus.IN_COMPLIANCE);
+                // Update or add the driftDef as necessary
+                DriftDefinitionComparator comparator = new DriftDefinitionComparator(
+                        CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
+                boolean isUpdated = false;
+                for (DriftDefinition dc : resource.getDriftDefinitions()) {
+                    if (dc.getName().equals(driftDef.getName())) {
+                        // compare the directory specs (basedir/includes-excludes filters only - if they are different, abort.
+                        // you cannot update drift def that changes basedir/includes/excludes from the original.
+                        // the user must delete the drift def and create a new one, as opposed to trying to update the existing one.
+                        if (comparator.compare(driftDef, dc) == 0) {
+                            if (dc.isPinned() && !driftDef.isPinned()) {
+                                dc.setComplianceStatus(DriftComplianceStatus.IN_COMPLIANCE);
+                            }
+                            entityManager.remove(dc.getConfiguration()); // don't orphan the config
+                            dc.setConfiguration(driftDef.getConfiguration().deepCopyWithoutProxies());
+                            isUpdated = true;
+                            break;
+                        } else {
+                            throw new IllegalArgumentException(
+                                    "A new definition must have a unique name. An existing definition cannot update it's base directory or includes/excludes filters.");
                         }
-                        dc.setConfiguration(driftDef.getConfiguration().deepCopyWithoutProxies());
-                        isUpdated = true;
-                        break;
-                    } else {
-                        throw new IllegalArgumentException(
-                            "A new definition must have a unique name. An existing definition cannot update it's base directory or includes/excludes filters.");
                     }
                 }
-            }
 
-            if (!isUpdated) {
-                validateTemplateForNewDef(driftDef, resource);
-                resource.addDriftDefinition(driftDef);
-                // We call persist here because if this definition is created
-                // from a pinned template, then we need to generate the initial
-                // change set. And we need the definition id to pass to the
-                // drift server plugin.
-                entityManager.persist(driftDef);
-                DriftDefinitionTemplate template = driftDef.getTemplate();
-                if (template != null && template.isPinned()) {
-                    DriftServerPluginFacet driftServerPlugin = getServerPlugin();
-                    driftServerPlugin.copyChangeSet(subject, template.getChangeSetId(), driftDef.getId(), resourceId);
+                if (!isUpdated) {
+                    validateTemplateForNewDef(driftDef, resource);
+                    resource.addDriftDefinition(driftDef);
+                    // We call persist here because if this definition is created
+                    // from a pinned template, then we need to generate the initial
+                    // change set. And we need the definition id to pass to the
+                    // drift server plugin.
+                    entityManager.persist(driftDef);
+                    DriftDefinitionTemplate template = driftDef.getTemplate();
+                    if (template != null && template.isPinned()) {
+                        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+                        driftServerPlugin.copyChangeSet(subject, template.getChangeSetId(), driftDef.getId(),
+                                resourceId);
+                    }
                 }
-            }
-            resource.setAgentSynchronizationNeeded();
+                resource.setAgentSynchronizationNeeded();
 
-            AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
-            DriftAgentService service = agentClient.getDriftAgentService();
-            try {
-                DriftSnapshot snapshot = null;
-                if (driftDef.getTemplate() != null && driftDef.getTemplate().isPinned()) {
-                    snapshot = getSnapshot(subject, new DriftSnapshotRequest(driftDef.getId()));
+                AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+                DriftAgentService service = agentClient.getDriftAgentService();
+                try {
+                    DriftSnapshot snapshot = null;
+                    if (driftDef.getTemplate() != null && driftDef.getTemplate().isPinned()) {
+                        snapshot = getSnapshot(subject, new DriftSnapshotRequest(driftDef.getId()));
+                    }
+                    // Do not pass attached entities to the following Agent call, which is outside Hibernate's control. Flush
+                    // and clear the entities to ensure the work above is captured and we pass out a detached object.
+                    entityManager.flush();
+                    entityManager.clear();
+
+                    if (snapshot != null) {
+                        service.updateDriftDetection(resourceId, driftDef, snapshot);
+                    } else {
+                        service.updateDriftDetection(resourceId, driftDef);
+                    }
+                } catch (Exception e) {
+                    log.warn(" Unable to inform agent of unscheduled drift detection  [" + driftDef + "]", e);
                 }
-                // Do not pass attached entities to the following Agent call, which is outside Hibernate's control. Flush
-                // and clear the entities to ensure the work above is captured and we pass out a detached object.
-                entityManager.flush();
-                entityManager.clear();
 
-                if (snapshot != null) {
-                    service.updateDriftDetection(resourceId, driftDef, snapshot);
-                } else {
-                    service.updateDriftDetection(resourceId, driftDef);
-                }
-            } catch (Exception e) {
-                log.warn(" Unable to inform agent of unscheduled drift detection  [" + driftDef + "]", e);
+                break;
             }
-
-            break;
-
-        default:
-            throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
+            default:
+                throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
         }
     }
 
@@ -982,14 +984,14 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         return pluginMgr.getDriftServerPluginComponent();
     }
-    
+
     private void authorizeOrFail(Subject subject, int resourceId, String message) {
         if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_DRIFT, resourceId)) {
             throw new PermissionException(message + " - " + subject + " lacks "
                 + Permission.MANAGE_DRIFT + " for resource[id=" + resourceId + "]");
         }
     }
-    
+
     private void authorizeOrFail(Subject subject, EntityContext context, String message) {
         authorizeOrFail(subject, context.getResourceId(), message);
     }

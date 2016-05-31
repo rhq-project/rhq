@@ -410,7 +410,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             LOG.debug("Getting current Resource configuration for Resource [" + resourceId + "]...");
         }
 
-        Resource resource = entityManager.getReference(Resource.class, resourceId);
+        Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {
             throw new NoResultException("Cannot get latest resource configuration for unknown Resource [" + resourceId
                 + "].");
@@ -553,7 +553,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             LOG.debug("Getting current plugin configuration for resource [" + resourceId + "]...");
         }
 
-        Resource resource = entityManager.getReference(Resource.class, resourceId);
+        Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {
             throw new NoResultException("Cannot get latest plugin configuration for unknown Resource [" + resourceId
                 + "].");

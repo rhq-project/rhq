@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.measurement;
 
+import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -55,6 +56,7 @@ import com.google.common.util.concurrent.FutureCallback;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.util.NoSuchMethodException;
 import org.jetbrains.annotations.Nullable;
 
 import org.jboss.remoting.CannotConnectException;
@@ -909,8 +911,10 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         } catch (RuntimeException e) {
             if (e instanceof CannotConnectException //
                 || (null != e.getCause() && (e.getCause() instanceof TimeoutException))) {
-
                 // ignore timeouts and connect issue,  just return an empty result and keep the logs clean
+            } else if (e instanceof UndeclaredThrowableException
+                || (e.getCause() != null && e.getCause() instanceof NoSuchMethodException)) {
+                // also ignore NoSuchMethodException
             } else {
                 throw e;
             }

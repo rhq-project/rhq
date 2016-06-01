@@ -267,8 +267,10 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
                 // There's a limitation of 4000 database characters in Oracle, try to overcome the issue
                 // The character set in Oracle could vary, using UTF-8 for "worst-case"
-                while(aData.getValue().getBytes("UTF-8").length > TRAIT_VALUE_SIZE_IN_DB) {
-                    aData.setValue(aData.getValue().substring(0, aData.getValue().length() - 1));
+                if (aData.getValue() != null) {
+                    while (aData.getValue().getBytes("UTF-8").length > TRAIT_VALUE_SIZE_IN_DB) {
+                        aData.setValue(aData.getValue().substring(0, aData.getValue().length() - 1));
+                    }
                 }
 
                 ps.setLong(1, aData.getTimestamp());

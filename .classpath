@@ -48,6 +48,7 @@
 	<classpathentry kind="src" path="modules/core/client-api/src/test/java"/>
 	<classpathentry kind="src" path="modules/core/client-api/target/generated-sources/xjc"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/wfly-patch-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/helpers/rtfilter-wfly-10-subsystem/src/main/java"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-install/2.1.4.1/byteman-install-2.1.4.1-sources.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-submit/2.1.4.1/byteman-submit-2.1.4.1-sources.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-2.1.4.1-sources.jar"/>

@@ -94,6 +94,7 @@
             <ignore>org.jboss.metadata.web.spec.FilterMetaData</ignore>
             <ignore>org.jboss.metadata.web.spec.*</ignore>
             <ignore>org.jboss.metadata.javaee.spec.ParamValueMetaData</ignore>
+            <ignore>org.jboss.metadata.web.jboss.*</ignore>
             <ignore>org.jboss.as.ee.*</ignore>
           </ignores>
           <excludeDependencies>

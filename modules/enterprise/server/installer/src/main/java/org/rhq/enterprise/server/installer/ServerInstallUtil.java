@@ -75,6 +75,7 @@ import org.rhq.core.db.setup.DBSetup;
 import org.rhq.core.db.upgrade.ServerVersionColumnUpgrader;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
@@ -1048,6 +1049,93 @@ public class ServerInstallUtil {
                 db.closeResultSet(resultSet);
                 db.closeStatement(queryStatement);
                 db.closeStatement(insertStatement);
+                db.closeConnection(connection);
+            }
+        }
+    }
+
+    /**
+     * Mark as uninventoried the obsolete column families for RHQ storage node resources.
+     *
+     * @param serverProperties the server properties
+     * @param dbpassword clear text password to connect to the database
+     * @throws Exception
+     */
+    public static void removeObsoleteStorageColumnFamilies(HashMap<String, String> serverProperties, String password)
+        throws Exception {
+
+        DatabaseType db = null;
+        Connection connection = null;
+        Statement queryTypeStatement = null;
+        ResultSet resultSet = null;
+
+        PreparedStatement uninventoriedStatement = null;
+        String[] columnKeys = { "one_hour_metrics", "six_hour_metrics", "twenty_four_hour_metrics", "metrics_index" };
+
+        try {
+
+            LOG.info("Uninventory obsolete column families... ");
+
+            String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+            String userName = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+            connection = getDatabaseConnection(dbUrl, userName, password);
+            db = DatabaseTypeFactory.getDatabaseType(connection);
+
+            if (!(db instanceof PostgresqlDatabaseType || db instanceof OracleDatabaseType)) {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
+            }
+
+            queryTypeStatement = connection.createStatement();
+
+            // Get  resource type id for ColumnFamily and RHQStorage plugin so we can make sure that
+            // we are going to uninventory only those resource types.
+
+            resultSet = queryTypeStatement
+                .executeQuery("SELECT id FROM rhq_resource_type  WHERE name='ColumnFamily' AND plugin='RHQStorage'");
+
+            if (!resultSet.next()) {
+                return;
+            }
+
+            int resource_type_id = resultSet.getInt(1);
+
+            if (resource_type_id != 0) {
+
+                connection.setAutoCommit(false);
+
+                // Mark obsolete column family resources as uninventoried
+                try {
+
+                    uninventoriedStatement = connection.prepareStatement(
+                        "UPDATE rhq_resource SET inventory_status= ?, agent_id= ?, parent_resource_id = ?, resource_key = ? "
+                            + " WHERE resource_type_id = ? AND resource_key= ?");
+
+                    String uninventoryStatus = InventoryStatus.UNINVENTORIED.name();
+
+                    uninventoriedStatement.setString(1, uninventoryStatus);
+                    uninventoriedStatement.setNull(2, java.sql.Types.INTEGER);
+                    uninventoriedStatement.setNull(3, java.sql.Types.INTEGER);
+                    uninventoriedStatement.setString(4, "deleted");
+                    uninventoriedStatement.setInt(5, resource_type_id);
+
+                    for (String key : columnKeys) {
+                        uninventoriedStatement.setString(6, key);
+                        uninventoriedStatement.executeUpdate();
+                    }
+
+                    connection.commit();
+
+                } catch (SQLException e) {
+                    connection.rollback();
+                    LOG.error("Failed uninventoried obsolete column families. Transaction will be rolled back.", e);
+                    throw e;
+                }
+            }
+        } finally {
+            if (db != null) {
+                db.closeResultSet(resultSet);
+                db.closeStatement(queryTypeStatement);
+                db.closeStatement(uninventoriedStatement);
                 db.closeConnection(connection);
             }
         }

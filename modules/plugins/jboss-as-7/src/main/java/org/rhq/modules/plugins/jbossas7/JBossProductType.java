@@ -32,15 +32,14 @@ public enum JBossProductType {
 
     AS("AS", "JBoss AS 7", "JBoss Application Server 7", "AS"),
     EAP("EAP", "JBoss EAP 6", "JBoss Enterprise Application Platform 6", "EAP"),
-    EAP7("EAP", "JBoss EAP 7", "JBoss Enterprise Application Platform 7", "EAP"),
     ISPN("ISPN", "Infinispan Server", "Infinispan Server", "Infinispan Server"),
     JDG("JDG", "JBoss JDG 6", "JBoss Data Grid 6", "Data Grid"),
     JPP("JPP", "JBoss JPP 6", "JBoss Portal Platform 6", "Portal Platform"),
     SOA("SOA-P", "JBoss SOA-P 6", "Red Hat JBoss Fuse Service Works", "Red Hat JBoss Fuse Service Works"),
-    WILDFLY8("WildFly", "WildFly 8", "WildFly Application Server 8", "WildFly"),
     BRMS("BRMS", "JBoss BRMS", "Red Hat JBoss BRMS", "BRMS"),
     BPMS("BPM Suite", "JBoss BPM Suite", "Red Hat JBoss BPM Suite", "BPM Suite"),
-    JDV("JDV", "Data Virt", "Red Hat JBoss Data Virtualization", "Red Hat JBoss Data Virtualization");
+    JDV("JDV", "Data Virt", "Red Hat JBoss Data Virtualization", "Red Hat JBoss Data Virtualization"),
+    UNSUPPORTED("", "", "", "");
 
     public final String SHORT_NAME;
     public final String NAME;
@@ -85,9 +84,6 @@ public enum JBossProductType {
                 // like 2.0 in "urn:jboss:domain:2.0" from <server xmlns="..." > element in standalone.xml
                 if (apiVersion.startsWith("1")) {
                     jBossProductType = JBossProductType.AS;
-                } else {
-                    // We should later check for newer WildFly versions to differentiate them
-                    jBossProductType = JBossProductType.WILDFLY8;
                 }
             }
             return jBossProductType;
@@ -107,7 +103,7 @@ public enum JBossProductType {
     }
 
     private static JBossProductType determineJBossProductTypeViaProductConfFile(File homeDir, String apiVersion) throws Exception {
-        JBossProductType productType;
+        JBossProductType productType = null;
         File productConfFile = new File(homeDir, "bin/product.conf");
         if (productConfFile.exists()) {
             // It's some product (i.e. not community AS).
@@ -124,31 +120,20 @@ public enum JBossProductType {
             if (slot.isEmpty()) {
                 throw new Exception("'slot' property not found in " + productConfFile + ".");
             }
-            if (slot.equals("eap")) {
-                if(apiVersion.startsWith("1")) {
-                    productType = JBossProductType.EAP;
-                } else {
-                    productType = JBossProductType.EAP7;
+
+            if(apiVersion.startsWith("1")) {
+                try {
+                    String searchQuery = slot.toUpperCase();
+                    if(searchQuery.equals("DV")) {
+                        searchQuery = "JDV";
+                    }
+                    productType = valueOf(searchQuery);
+                } catch(IllegalArgumentException e) {
+                    productType = AS;
                 }
-            } else if (slot.equals("ispn")) {
-                productType = JBossProductType.ISPN;
-            } else if (slot.equals("jdg")) {
-                productType = JBossProductType.JDG;
-            } else if (slot.equals("jpp")) {
-                productType = JBossProductType.JPP;
-            } else if (slot.equals("soa")) {
-                productType = JBossProductType.SOA;
-            } else if (slot.equals("brms")) {
-                productType = JBossProductType.BRMS;
-            } else if (slot.equals("bpms")) {
-                productType = JBossProductType.BPMS;
-            } else if (slot.equals("dv")) {
-                productType = JBossProductType.JDV;
             } else {
-                throw new RuntimeException("Unknown product type: " + slot);
+                productType = UNSUPPORTED;
             }
-        } else {
-            productType = null;
         }
 
         return productType;
@@ -159,8 +144,6 @@ public enum JBossProductType {
         String homeDirName = homeDir.getName();
         if (homeDirName.contains("-as-")) {
             productType = JBossProductType.AS;
-        } else if (homeDirName.contains("wildfly")) {
-            productType = JBossProductType.WILDFLY8;
         } else if (homeDirName.contains("-eap-")) {
             productType = JBossProductType.EAP;
         } else if (homeDirName.contains("infinispan-server")) {

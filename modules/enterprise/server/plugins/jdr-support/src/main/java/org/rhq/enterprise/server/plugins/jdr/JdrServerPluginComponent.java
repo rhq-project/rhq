@@ -86,17 +86,13 @@ public class JdrServerPluginComponent implements ServerPluginComponent {
             PrintWriter pw = new PrintWriter(file);
             pw.println(accessToken);
             pw.close();
+            // Clear permissions
+            file.setReadable(false, false);
+            file.setWritable(false, false);
+            file.setExecutable(false, false);
+            // Only set permissions to user
             file.setWritable(true, true);
             file.setReadable(true, true);
-            file.setExecutable(false, false);
-            boolean isWindows = (File.separatorChar == '\\');
-            if (!isWindows) {
-                try {
-                    Runtime.getRuntime().exec("chmod 600 "+file.getAbsolutePath());
-                } catch (IOException e) {
-                    log.error("Unable to set file permissions", e);
-                }
-            }
         } catch (FileNotFoundException fnfe) {
             log.error("Failed to write acces token, jboss.server.data.dir="+file.getParent()+" does not exist or not writable");
         }

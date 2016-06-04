@@ -2066,7 +2066,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         } catch (Exception e) {
             LOG.error("An error occurred while updating Blob with stream for PackageBits[" + bits.getId() + "], "
                 + e.getMessage());
-            e.printStackTrace();
+            if (e instanceof  RuntimeException && e.getCause() != null && e.getCause().getMessage().startsWith("ORA-")) {
+                throw (RuntimeException) e;
+            } else {
+                e.printStackTrace();
+            }
         } finally {
             if (ps != null) {
                 try {

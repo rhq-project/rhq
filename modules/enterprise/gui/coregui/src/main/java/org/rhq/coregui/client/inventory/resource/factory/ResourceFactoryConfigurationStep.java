@@ -80,7 +80,7 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep impleme
 
         // if this is a newCanvas, or if the starting config has changed, create a new config editor. The starting
         // config (i.e. template) may have changed if the user, via the previous button, backed up and changed the
-        // selected template. 
+        // selected template.
         if (newCanvas || this.startingConfig != wizard.getNewResourceStartingConfiguration()) {
 
             final ConfigurationDefinition def = wizard.getNewResourceConfigurationDefinition();

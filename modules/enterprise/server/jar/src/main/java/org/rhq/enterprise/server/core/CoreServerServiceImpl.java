@@ -51,7 +51,9 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.Base64;
 import org.rhq.core.util.exception.WrappedRemotingException;
+import org.rhq.enterprise.communications.ServiceContainerConfiguration;
 import org.rhq.enterprise.communications.command.client.RemoteInputStream;
+import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.FailoverListManagerLocal;
@@ -67,6 +69,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author John Mazzitelli
  */
 public class CoreServerServiceImpl implements CoreServerService {
+    private final static String PROP_WEB_HTTP_PORT = "rhq.server.socket.binding.port.http";
+    private final static String PROP_WEB_HTTPS_PORT = "rhq.server.socket.binding.port.https";
+
     private final Log log = LogFactory.getLog(CoreServerServiceImpl.class);
 
     private AgentManagerLocal agentManager;
@@ -584,6 +589,24 @@ public class CoreServerServiceImpl implements CoreServerService {
         byte[] tokenBytes = new byte[50];
         random.nextBytes(tokenBytes);
         return Base64.encode(tokenBytes);
+    }
+
+    /**
+     * @see CoreServerService#getPublicAgentUpdateEndpointAddress()
+     */
+    @Override
+    public String getPublicAgentUpdateEndpointAddress() {
+        ServiceContainerConfiguration scp = ServerCommunicationsServiceUtil.getService().getConfiguration().getServiceContainerPreferences();
+        String transport = scp.getConnectorTransport();
+        String port;
+        if (SecurityUtil.isTransportSecure(transport)) {
+            port = System.getProperty(PROP_WEB_HTTPS_PORT);
+            transport = "https";
+        } else {
+            port = System.getProperty(PROP_WEB_HTTP_PORT);
+            transport = "http";
+        }
+        return transport + "://" + scp.getConnectorBindAddress() + ":" + port;
     }
 
 }

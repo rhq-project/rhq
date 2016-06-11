@@ -82,8 +82,9 @@ public class SecurityTokenCommandAuthenticator implements CommandAuthenticator {
 
         // if no security token is in the command, reject it unless this command is asking for a token.
         // if registering - allow it to be considered authenticated since its asking to be registered for the first time
+        // if asking for additional properties - allow it, it might need this info for updating
         if (security_token == null) {
-            return isRegisterCommand(command);
+            return isRegisterCommand(command) || isGetPublicAgentUpdateEndpointAddressCommand(command);
         }
 
         // check the validity of the security token
@@ -141,6 +142,22 @@ public class SecurityTokenCommandAuthenticator implements CommandAuthenticator {
             }
         }
 
+        return false;
+    }
+
+    private boolean isGetPublicAgentUpdateEndpointAddressCommand(Command command) {
+        if (REGISTER_COMMAND_TYPE_NAME.equals(command.getCommandType().getName())) {
+            RemotePojoInvocationCommand remote_cmd = (RemotePojoInvocationCommand) command;
+            String iface_name = remote_cmd.getTargetInterfaceName();
+
+            if (REGISTER_SERVICE_INTERFACE.equals(iface_name)) {
+                String method_name = remote_cmd.getNameBasedInvocation().getMethodName();
+
+                if ("getPublicAgentUpdateEndpointAddress".equals(method_name)) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 

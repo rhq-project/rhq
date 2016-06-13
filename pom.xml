@@ -357,6 +357,7 @@
     <alert-roles.version>${rhq.pom.version}-redhat-1</alert-roles.version>
     <alert-snmp.version>${rhq.pom.version}</alert-snmp.version>
     <alert-subject.version>${rhq.pom.version}</alert-subject.version>
+    <rhq-wfly-patch-parser.version>{rhq.pom.version}</rhq-wfly-patch-parser.version>
     <serverplugin-alertdef-rhq.version>${rhq.pom.version}</serverplugin-alertdef-rhq.version>
     <rhq-serverplugin-ant-bundle.version>${rhq.pom.version}-redhat-2</rhq-serverplugin-ant-bundle.version>
     <rhq-serverplugin-cobbler.version>${rhq.pom.version}</rhq-serverplugin-cobbler.version>
@@ -369,6 +370,8 @@
     <rhq-serverplugin-url.version>${rhq.pom.version}</rhq-serverplugin-url.version>
     <validate-all-serverplugins.version>${rhq.pom.version}</validate-all-serverplugins.version>
     <rhq-serverplugin-yum.version>${rhq.pom.version}</rhq-serverplugin-yum.version>
+    <rhq-serverplugin-wfly-10-patch-bundle.version>{rhq.pom.version}</rhq-serverplugin-wfly-10-patch-bundle.version>
+    <rhq-serverplugin-wfly-patch-bundle.version>{rhq.pom.version}</rhq-serverplugin-wfly-patch-bundle.version>
     <rhq-enterprise-server-parent.version>${rhq.pom.version}</rhq-enterprise-server-parent.version>
     <safe-invoker.version>${rhq.pom.version}</safe-invoker.version>
     <rhq-server-control.version>${rhq.pom.version}-redhat-4</rhq-server-control.version>
@@ -386,6 +389,7 @@
     <rhq-rtfilter-wfly-10-subsystem.version>${rhq.pom.version}</rhq-rtfilter-wfly-10-subsystem.version>
     <rhq-wfly-patch-parser.version>${rhq.pom.version}-redhat-1</rhq-wfly-patch-parser.version>
     <rhq-rtfilter-wfly-10-dist.version>${rhq.pom.version}</rhq-rtfilter-wfly-10-dist.version>
+    <rhq-wfly-10-plugin.version>${rhq.pom.version}</rhq-wfly-10-plugin.version>
     <rhq-aliases-plugin.version>${rhq.pom.version}</rhq-aliases-plugin.version>
     <rhq-ant-bundle-plugin.version>${rhq.pom.version}-redhat-2</rhq-ant-bundle-plugin.version>
     <rhq-apache-plugin.version>${rhq.pom.version}</rhq-apache-plugin.version>
@@ -405,7 +409,6 @@
     <rhq-irc-plugin.version>${rhq.pom.version}</rhq-irc-plugin.version>
     <jopr-jboss-as-5-plugin.version>${rhq.pom.version}</jopr-jboss-as-5-plugin.version>
     <rhq-jboss-as-7-plugin.version>${rhq.pom.version}</rhq-jboss-as-7-plugin.version>
-    <rhq-wfly-10-plugin.version>${rhq.pom.version}</rhq-wfly-10-plugin.version>
     <jopr-jboss-as-plugin.version>${rhq.pom.version}</jopr-jboss-as-plugin.version>
     <jopr-jboss-cache-v3-plugin.version>${rhq.pom.version}</jopr-jboss-cache-v3-plugin.version>
     <jopr-jboss-cache-plugin.version>${rhq.pom.version}</jopr-jboss-cache-plugin.version>

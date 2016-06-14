@@ -460,25 +460,27 @@ public class JavascriptCompletor implements CodeCompletion {
     private Map<String, List<Object>> getContextMatches(PrintWriter output, Object baseObject, String start) {
         Map<String, List<Object>> found = new HashMap<String, List<Object>>();
 
-        Class<?> baseObjectClass = null;
-        if (baseObject instanceof Class) {
-            baseObjectClass = (Class<?>) baseObject;
-        } else {
-            baseObjectClass = baseObject.getClass();
-        }
-
-        try {
-            if (baseObjectClass.equals(Void.TYPE)) {
-                return found;
-            } else if (ScriptableObject.class.isAssignableFrom(baseObjectClass)) {
-                return findJavascriptContextMatches((ScriptableObject) baseObject, start);
+        if (baseObject != null) {
+            Class<?> baseObjectClass = null;
+            if (baseObject instanceof Class) {
+                baseObjectClass = (Class<?>) baseObject;
             } else {
-                return findJavaBeanContextMatches(baseObject, baseObjectClass, start);
+                baseObjectClass = baseObject.getClass();
             }
 
-        } catch (Exception e) {
-            LOG.info("Failure during code completion", e);
-            e.printStackTrace(output);
+            try {
+                if (baseObjectClass.equals(Void.TYPE)) {
+                    return found;
+                } else if (ScriptableObject.class.isAssignableFrom(baseObjectClass)) {
+                    return findJavascriptContextMatches((ScriptableObject) baseObject, start);
+                } else {
+                    return findJavaBeanContextMatches(baseObject, baseObjectClass, start);
+                }
+
+            } catch (Exception e) {
+                LOG.info("Failure during code completion", e);
+                e.printStackTrace(output);
+            }
         }
 
         return found;

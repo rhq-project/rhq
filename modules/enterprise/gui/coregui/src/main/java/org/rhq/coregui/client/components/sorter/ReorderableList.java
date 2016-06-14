@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
@@ -58,17 +60,30 @@ public class ReorderableList extends EnhancedVLayout {
 
     private HoverCustomizer nameHoverCustomizer;
 
+    private DataSource dataSource;
+    private Criteria criteria;
+
     public ReorderableList(ListGridRecord[] records, String itemTitle, String itemIcon) {
-        this(false, records, itemTitle, itemIcon, null);
+        this(false, records, itemTitle, itemIcon, null, null, null);
     }
 
     public ReorderableList(ListGridRecord[] records, String itemTitle, String itemIcon,
         HoverCustomizer nameHoverCustomizer) {
-        this(false, records, itemTitle, itemIcon, nameHoverCustomizer);
+        this(false, records, itemTitle, itemIcon, nameHoverCustomizer, null, null);
+    }
+
+    public ReorderableList(ListGridRecord[] records, String itemTitle, String itemIcon,
+        HoverCustomizer nameHoverCustomizer, DataSource dataSource, Criteria criteria) {
+        this(false, records, itemTitle, itemIcon, nameHoverCustomizer, dataSource, criteria);
     }
 
     public ReorderableList(boolean isReadOnly, ListGridRecord[] records, String itemTitle, String itemIcon,
         HoverCustomizer nameHoverCustomizer) {
+        this(isReadOnly, records, itemTitle, itemIcon, nameHoverCustomizer, null, null);
+    }
+
+    public ReorderableList(boolean isReadOnly, ListGridRecord[] records, String itemTitle, String itemIcon,
+        HoverCustomizer nameHoverCustomizer, DataSource dataSource, Criteria criteria) {
         super();
 
         this.isReadOnly = isReadOnly;
@@ -89,6 +104,9 @@ public class ReorderableList extends EnhancedVLayout {
         this.itemIcon = itemIcon;
 
         this.nameHoverCustomizer = nameHoverCustomizer;
+
+        this.dataSource = dataSource;
+        this.criteria = criteria;
     }
 
     /**
@@ -140,7 +158,17 @@ public class ReorderableList extends EnhancedVLayout {
             nameField.setHoverCustomizer(this.nameHoverCustomizer);
         }
         fields.add(nameField);
-        this.listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
+
+        if (dataSource != null) {
+            this.listGrid.setDataSource(dataSource, fields.toArray(new ListGridField[fields.size()]));
+            this.listGrid.setAutoFetchData(true);
+        } else {
+            this.listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
+        }
+
+        if (criteria != null) {
+            this.listGrid.setInitialCriteria(criteria);
+        }
 
         if (getItemTitle() != null) {
             SectionStack itemsStack = buildItemsSectionStack();

@@ -711,6 +711,8 @@ public class InstallerServiceImpl implements InstallerService {
             ExistingSchemaOption.KEEP);
         ServerInstallUtil.persistStorageNodesIfNecessary(serverProperties, clearTextDbPassword,
             parseNodeInformation(serverProperties, storageNodeAddresses));
+
+        ServerInstallUtil.removeObsoleteStorageColumnFamilies(serverProperties, clearTextDbPassword);
     }
 
     private Set<String> prepareStorageSchema(HashMap<String, String> serverProperties, String clearTextDbPassword,

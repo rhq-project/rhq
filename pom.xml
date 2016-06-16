@@ -369,8 +369,8 @@
     <rhq-serverplugin-url.version>${rhq.pom.version}</rhq-serverplugin-url.version>
     <validate-all-serverplugins.version>${rhq.pom.version}</validate-all-serverplugins.version>
     <rhq-serverplugin-yum.version>${rhq.pom.version}</rhq-serverplugin-yum.version>
-    <rhq-serverplugin-wfly-10-patch-bundle.version>{rhq.pom.version}</rhq-serverplugin-wfly-10-patch-bundle.version>
-    <rhq-serverplugin-wfly-patch-bundle.version>{rhq.pom.version}</rhq-serverplugin-wfly-patch-bundle.version>
+    <rhq-serverplugin-wfly-10-patch-bundle.version>${rhq.pom.version}</rhq-serverplugin-wfly-10-patch-bundle.version>
+    <rhq-serverplugin-wfly-patch-bundle.version>${rhq.pom.version}</rhq-serverplugin-wfly-patch-bundle.version>
     <rhq-enterprise-server-parent.version>${rhq.pom.version}</rhq-enterprise-server-parent.version>
     <safe-invoker.version>${rhq.pom.version}</safe-invoker.version>
     <rhq-server-control.version>${rhq.pom.version}-redhat-5</rhq-server-control.version>

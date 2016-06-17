@@ -164,6 +164,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
     private Configuration originalConfiguration;
 
     private ValuesManager topLevelPropertiesValuesManager = new ValuesManager();
+    private ValuesManager mapLevelPropertiesValuesManager = new ValuesManager();
 
     private Label loadingLabel = new Label(MSG.common_msg_loading());
 
@@ -182,6 +183,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
     private CheckboxItem blurUnsetItem;
 
     private HashMap<PropertyDefinitionList, ListGrid> listOfMapsGrids = new HashMap<PropertyDefinitionList, ListGrid>();
+
+    private HashMap<String, PropertyDefinitionMap> formPropertyDefinitionMapMap = new HashMap<String, PropertyDefinitionMap>();
 
     public static enum ConfigType {
         plugin, resource
@@ -219,6 +222,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
         this.configuration = configuration;
         this.configurationDefinition = configurationDefinition;
     }
+
 
     public void setLoadHandler(LoadHandler handler) {
         this.loadHandler = handler;
@@ -273,7 +277,9 @@ public class ConfigurationEditor extends EnhancedVLayout {
     }
 
     public boolean validate() {
-        return this.topLevelPropertiesValuesManager.validate() && listOfMapsGridsAreValid();
+        return this.topLevelPropertiesValuesManager.validate() && this.mapLevelPropertiesValuesManager.validate()
+                && listOfMapsGridsAreValid();
+
     }
 
     private boolean listOfMapsGridsAreValid() {
@@ -298,7 +304,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
     }
 
     public boolean isValid() {
-        return !this.topLevelPropertiesValuesManager.hasErrors() && listOfMapsGridsAreValid();
+        return !this.topLevelPropertiesValuesManager.hasErrors() && !this.mapLevelPropertiesValuesManager.hasErrors()
+            && listOfMapsGridsAreValid();
     }
 
     public void addPropertyValueChangeListener(PropertyValueChangeListener propertyValueChangeListener) {
@@ -508,6 +515,20 @@ public class ConfigurationEditor extends EnhancedVLayout {
                     propertyDefinitionList.getDisplayName());
             }
         }
+
+        Map<?, ?> mapValidationErrors = this.mapLevelPropertiesValuesManager.getErrors();
+        if (mapValidationErrors != null) {
+            for (Object key : mapValidationErrors.keySet()) {
+                String propertyName = (String) key;
+                Canvas form = this.mapLevelPropertiesValuesManager.getMemberForField(propertyName);
+                PropertyDefinitionMap mapDefinition = this.formPropertyDefinitionMapMap.get(form.getID());
+                PropertyDefinition topProperty = getTopLevelPropertyDefinition(mapDefinition);
+                this.invalidPropertyNameToDisplayNameMap.put(topProperty.getName(), topProperty.getDisplayName());
+            }
+
+        }
+
+
         if (!this.invalidPropertyNameToDisplayNameMap.isEmpty()) {
             PropertyValueChangeEvent event = new PropertyValueChangeEvent(null, null, true,
                 this.invalidPropertyNameToDisplayNameMap);
@@ -821,6 +842,11 @@ public class ConfigurationEditor extends EnhancedVLayout {
         DynamicForm valuesCanvas = buildPropertiesForm(propertyDefinitionMapFinal.getOrderedPropertyDefinitions(),
             propertyMap);
         layout.addMember(valuesCanvas);
+        if (propertyDefinitionMap.isRequired()) {
+            this.mapLevelPropertiesValuesManager.addMember(valuesCanvas);
+            this.formPropertyDefinitionMapMap.put(valuesCanvas.getID(), propertyDefinitionMap);
+            valuesCanvas.validate();
+        }
 
         if (isDynamic && !isReadOnly(propertyDefinitionMap, propertyMap)) {
             // Map is not read-only - add footer with New and Delete buttons to allow user to add or remove members.

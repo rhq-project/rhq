@@ -77,7 +77,6 @@ import org.rhq.coregui.client.report.tag.TaggedView;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.MessageBar;
 import org.rhq.coregui.client.util.message.MessageCenterView;
-import org.rhq.coregui.client.util.preferences.UserPreferenceNames.UiSubsystem;
 
 /**
  * @author Greg Hinkle

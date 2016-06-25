@@ -120,10 +120,6 @@ public class TabularWriter {
         this.hideRowCount = hideRowCount;
     }
 
-    public void printObject(Object object) {
-        print(object);
-    }
-
     public void print(Object object) {
 
         if (object instanceof Map) {
@@ -297,16 +293,7 @@ public class TabularWriter {
         return "..." + string.substring(string.length() - (maxWidth - 3));
     }
 
-    /**
-     * @deprecated use {@link #printMap(Map)}
-     * @param map
-     */
-    @Deprecated
     public void print(Map map) {
-        print((Object) map);
-    }
-
-    public void printMap(Map map) {
 
         String[][] data = new String[map.size()][];
         int i = 0;
@@ -321,16 +308,7 @@ public class TabularWriter {
         print(data);
     }
 
-    /**
-     * @deprecated use {@link #printCollection(Collection)}
-     * @param map
-     */
-    @Deprecated
     public void print(Collection list) {
-        print((Object) list);
-    }
-
-    public void printCollection(Collection list) {
         // List of arbitrary objects
         if (list == null || list.size() == 0) {
             if (!hideRowCount) {
@@ -503,16 +481,7 @@ public class TabularWriter {
 
     }
 
-    /**
-     * @deprecated use {@link #printConfiguration(Configuration)}
-     * @param map
-     */
-    @Deprecated
     public void print(Configuration config) {
-        print((Object) config);
-    }
-
-    public void printConfiguration(Configuration config) {
         out.println("Configuration [" + config.getId() + "] - " + config.getNotes());
         for (PropertySimple p : config.getSimpleProperties().values()) {
             print(p, 1);
@@ -587,16 +556,7 @@ public class TabularWriter {
         return true;
     }
 
-    /**
-     * @deprecated use {@link #printArray(Object[])}
-     * @param map
-     */
-    @Deprecated
     public void print(Object[] data) {
-        print((Object) data);
-    }
-
-    public void printArray(Object[] data) {
         if (data == null || data.length == 0) {
             if (!hideRowCount) {
                 out.println("0 rows");
@@ -639,16 +599,7 @@ public class TabularWriter {
         }
     }
 
-    /**
-     * @deprecated use {@link #printMultidimensionalStringArray(String[][])}
-     * @param data
-     */
-    @Deprecated
     public void print(String[][] data) {
-        print((Object) data);
-    }
-
-    public void printMultidimensionalStringArray(String[][] data) {
 
         if (data == null || data.length == 0) {
             if (!hideRowCount) {

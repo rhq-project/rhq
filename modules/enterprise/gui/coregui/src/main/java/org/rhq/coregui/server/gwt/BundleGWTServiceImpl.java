@@ -29,6 +29,7 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleGroup;
+import org.rhq.core.domain.bundle.BundleNotFoundException;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
@@ -74,6 +75,10 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             BundleVersion results = bundleManager.createOrStoreBundleVersionViaURL(getSessionSubject(), url, username,
                 password);
             return SerialUtility.prepare(results, "createOrStoreBundleVersionViaURL");
+        } catch (BundleNotFoundException bnfe) {
+            // don't log this exception, just throw it as is required for the 'special token handling worflow.
+            // See BZ-1268329 for more info.
+            throw bnfe;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

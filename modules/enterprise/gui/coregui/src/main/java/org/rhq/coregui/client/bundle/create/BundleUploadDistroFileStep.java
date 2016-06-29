@@ -302,18 +302,10 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     }
 
     private BundleNotFoundException unpackBundleNotFoundException(Throwable caught) {
-        if (caught instanceof RuntimeException) {
+        if (caught instanceof BundleNotFoundException) {
             String message = caught.getMessage();
-            int patternStart = message.indexOf(BUNDLE_NOT_FOUND_EXCEPTION_PATTERN_START);
-            if (patternStart > -1) {
-                int patternEnd = message.indexOf(BUNDLE_NOT_FOUND_EXCEPTION_PATTERN_END,
-                        patternStart + BUNDLE_NOT_FOUND_EXCEPTION_PATTERN_START.length());
-                if (patternEnd > -1) {
-                    return new BundleNotFoundException(
-                        message.substring(
-                            patternStart + BUNDLE_NOT_FOUND_EXCEPTION_PATTERN_START.length(),
-                            patternEnd));
-                }
+            if (message.startsWith("[") && message.endsWith("]")) {
+                return new BundleNotFoundException(message.substring(1, message.length()-1));
             }
         }
         return null;

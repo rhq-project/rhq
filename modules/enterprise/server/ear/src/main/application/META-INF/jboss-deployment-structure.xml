@@ -59,34 +59,6 @@
 
   <!-- RHA war needs bellow exclusions because it uses resteasy 3.0.8 and there's older conflicting version provided by EAP -->
   <!-- This declaration must not go to RHQ, because rh-access.war is not built by default -->
-  <sub-deployment name="rhq-rh-access.war">
-    <exclude-subsystems>
-      <subsystem name="jaxrs" />
-      <subsystem name="webservices" />
-      <subsystem name="resteasy" />
-    </exclude-subsystems>
-    <exclusions>
-      <module name="javaee.api" />
-      <module name="org.jboss.resteasy.resteasy-jaxrs" />
-      <module name="org.jboss.resteasy.resteasy-multipart-provider" />
-      <module name="org.jboss.resteasy.resteasy-jsxb-provider" />
-      <module name="org.apache.httpcomponents" />
-      <module name="org.apache.commons.io" />
-      <module name="org.apache.commons.codec" />
-      <module name="org.apache.commons.logging" />
-      <module name="org.apache.httpcomponents"/>
-      <module name="org.apache.commons.net"/>
-      <module name="org.slf4j"/>
-      <module name="javax.activation.api"/>
-      <module name="org.apache.james.mime4j" />
-      <module name="javax.xml.bind.api"/>
-      <module name="javax.xml.ws.api"/>
-      <module name="com.sun.xml.bind"/>
-      <module name="net.jcip"/>
-      <module name="javax.mail.api"/>
-      <module name="javax.ws.rs.api"/>
-      <module name="org.jboss.resteasy.resteasy-jackson2-provider"/>
-    </exclusions>
-  </sub-deployment>
+  <!-- BZ-1341348 rhq-rh-access application has been removed. -->
 
 </jboss-deployment-structure>

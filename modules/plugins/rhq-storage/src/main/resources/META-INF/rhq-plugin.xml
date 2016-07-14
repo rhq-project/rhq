@@ -319,7 +319,144 @@
 
     <service name="MessagingService" sourcePlugin="Cassandra" sourceType="MessagingService" singleton="true"/>
 
-    <service name="Keyspace" sourcePlugin="Cassandra" sourceType="Keyspace"/>
+    <service name="Keyspace"
+             discovery="org.rhq.plugins.cassandra.KeyspaceDiscoveryComponent"
+             class="org.rhq.plugins.cassandra.KeyspaceComponent">
+
+      <operation name="repair" displayName="Repair Keyspace"
+                 description="Cassandra compares data on this node with the versions on other replicas to update any
+                  out of sync copies of the data. This should be run infrequently as it is a disk IO and CPU intensive
+                  operation. All data for each column that is being repaired is read. Unless you are not performing any
+                  deletes, it is important to run regularly scheduled repairs to ensure that deleted data gets purged.
+                  The frequency that this should be run should be less than the gc_grace_period for each column family.
+                  This runs a repair on all column families in this keyspace." />
+      <operation name="repairPrimaryRange" description="Runs repair over all column families but only for the node's
+                primary range."/>
+      <operation name="cleanup" displayName="Clean Keyspace"
+                 description="Goes through each SSTable file on disk fore each column family and removes keys
+                 (i.e., rows) that the node does not own. This should be performed as a routine maintenance task on
+                 existing nodes when new nodes are added to the cluster."/>
+      <operation name="compact" displayName="Compact Keyspace"
+                 description="Forces major compaction of the keyspace. Though major compaction can free disk space
+                  used during runtime it temporarily doubles disk space usage and is I/O and CPU intensive. Once you
+                  run a major compaction, automatic minor compactions are no longer triggered frequently forcing you to
+                  manually run major compactions on a routine basis. So while read performance will be good immediately
+                  following a major compaction, it will continually degrade until the next major compaction is manually invoked."/>
+      <operation name="takeSnapshot"
+                 description="Takes a snapshot of this keyspaces. A snapshot first flushes all in-memory writes to disk and then creates a hard
+                  link of each SSTable file for the keyspace. Note that a column family can have multiple
+                  SSTables on disk. By default snapshots are stored in the &lt;cassandra_data_dir&gt;/&lt;keyspace_name&gt;/&lt;column_family_name&gt;/snapshots
+                  directory. On Linux/UNIX systems cassandra_data_dir defaults to /var/lib/cassandra/data">
+        <parameters>
+          <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name"
+                             description="Snapshot name. If left empty current system time in milliseconds will be used as the snapshot name."/>
+        </parameters>
+      </operation>
+
+      <resource-configuration>
+        <c:simple-property name="name" type="string" description="The keyspace name" readOnly="true"/>
+        <c:list-property name="keyspaceFileLocations" readOnly="true" description="List of data file locations">
+          <c:simple-property name="directory" type="string" readOnly="true"/>
+        </c:list-property>
+      </resource-configuration>
+
+      <service name="ColumnFamily"
+               discovery="org.rhq.plugins.cassandra.ColumnFamilyDiscoveryComponent"
+               class="org.rhq.plugins.storage.RhqColumnFamilyComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.db:type=ColumnFamilies,*"/>
+          <c:simple-property name="name" type="string" description="The column family name"/>
+        </plugin-configuration>
+
+        <operation name="repair" displayName="Repair Column Family"
+                   description="Cassandra compares data on this node with the versions on other replicas to update any
+                    out of sync copies of the data. This should be run infrequently as it is a disk IO and CPU intensive
+                    operation. All data for each column that is being repaired is read. Unless you are not performing any
+                    deletes, it is important to run regularly scheduled repairs to ensure that deleted data gets purged.
+                    The frequency that this should be run should be less than the gc_grace_period for the column family." />
+        <operation name="compact" displayName="Force Major Column Family Compaction"
+                   description="Forces major compaction of this column family. Though major compaction can free disk space
+                    used during runtime it temporarily doubles disk space usage and is I/O and CPU intensive. Once you
+                    run a major compaction, automatic minor compactions are no longer triggered frequently forcing you to
+                    manually run major compactions on a routine basis. So while read performance will be good immediately
+                    following a major compaction, it will continually degrade until the next major compaction is manually invoked."/>
+        <operation name="takeSnapshot"
+                   description="Takes a snapshot of this keyspaces. A snapshot first flushes all in-memory writes to disk and then creates a hard
+                    link of each SSTable file for the keyspace. Note that a column family can have multiple
+                    SSTables on disk. By default snapshots are stored in the &lt;cassandra_data_dir&gt;/&lt;keyspace_name&gt;/&lt;column_family_name&gt;/snapshots
+                    directory. On Linux/UNIX systems cassandra_data_dir defaults to /var/lib/cassandra/data">
+          <parameters>
+            <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name"
+                               description="Snapshot name. If left empty current system time in milliseconds will be used as the snapshot name."/>
+          </parameters>
+        </operation>
+        <operation name="disableAutoCompaction"
+                   description="Disable automatic compaction. Once you disable compaction, automatic minor compactions are no longer triggered frequently forcing you to
+                    manually run major compactions on a routine basis."/>
+        <operation name="estimateKeys" description="Estimate keys">
+          <results>
+            <c:simple-property name="operationResult" description="Estimated Keys"/>
+          </results>
+        </operation>
+        <operation name="getSSTablesForKey" displayName="Get SSTables For Key" description="Returns a list of filenames that contain the given key on this node.">
+          <parameters>
+            <c:simple-property name="p1" displayName="Key" required="true" type="string" description="Key"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Filenames that contain the given key on this node."/>
+          </results>
+        </operation>
+        <operation name="restoreSnapshot" description="Restore the column family from a previously taken snapshot.">
+          <parameters>
+            <c:simple-property name="snapshotName" required="true" type="string" description="Snapshot Name">
+              <c:option-source target="configuration" expression="snapshots/snapshot=name:self"/>
+            </c:simple-property>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Filenames that contain the given key on this node."/>
+          </results>
+        </operation>
+
+        <metric property="BloomFilterDiskSpaceUsed" measurementType="dynamic" displayType="summary" description="Bloom Filter Disk Space Used"/>
+        <metric property="BloomFilterFalsePositives" measurementType="dynamic" displayType="summary" description="Bloom Filter False Positives"/>
+        <metric property="BloomFilterFalseRatio" measurementType="dynamic" displayType="summary" description="Bloom Filter False Ratio"/>
+        <metric property="CompressionRatio" measurementType="dynamic" displayType="summary" description="Compression Ratio"/>
+        <metric property="DroppableTombstoneRatio" measurementType="dynamic" displayType="summary" description="Compression Ratio"/>
+        <metric property="LiveDiskSpaceUsed" displayName="Live Disk Space Used" measurementType="dynamic" displayType="summary" description="Disk space used by SSTables belonging to this CF"/>
+        <metric property="LiveSSTableCount" displayName="Live SS Table Count" measurementType="dynamic" displayType="summary" description="Number of SSTables on disk for this CF"/>
+        <metric property="MaxRowSize" measurementType="dynamic" displayType="summary" description="Size of the largest compacted row"/>
+        <metric property="MeanRowSize" measurementType="dynamic" displayType="summary" description="Means size of the compacted rows"/>
+        <metric property="MemtableColumnsCount" displayName="Memtable Columns Count" measurementType="dynamic" displayType="summary" description="Total number of columns present in the memtable."/>
+        <metric property="MemtableDataSize" displayName="Memtable Data Size" measurementType="dynamic" displayType="detail" description="Total amount of data stored in the memtable, including column related overhead."/>
+        <metric property="MemtableSwitchCount" displayName="Memtable Switch Count" measurementType="dynamic" displayType="summary" description="Number of times that a flush has resulted in the memtable being switched out."/>
+        <metric property="MinRowSize" measurementType="dynamic" displayType="summary" description="Size of the smallest compacted row"/>
+        <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Estimated number of tasks pending for this column family"/>
+        <metric property="ReadCount" displayName="Read Count"  measurementType="trendsup" displayType="summary" description="Number of read operations since execution start"/>
+        <metric property="RecentBloomFilterFalsePositives" measurementType="dynamic" displayType="summary" description="Recent Bloom Filter False Positives"/>
+        <metric property="RecentBloomFilterFalseRatio" measurementType="dynamic" displayType="summary" description="Recent Bloom Filter False Ratio"/>
+        <metric property="RecentReadLatencyMicros" displayName="Recent Read Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of read operations since this metric was last sampled"/>
+        <metric property="RecentWriteLatencyMicros" displayName="Recent Write Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of write operations since this metric was last sampled"/>
+        <metric property="TotalDiskSpaceUsed" measurementType="dynamic" displayType="detail" description="Total disk space used by SSTables belonging to this CF, including obsolete ones waiting to be GC'd"/>
+        <metric property="TotalReadLatencyMicros" displayName="Total Read Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of read operations since execution start"/>
+        <metric property="TotalWriteLatencyMicros" displayName="Total Write Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of write operations since execution start"/>
+        <metric property="UnleveledSSTables" measurementType="dynamic" displayType="summary" description="Number of SSTables in L0. Always return 0 if Leveled compaction is not enabled."/>
+        <metric property="WriteCount" displayName="Write Count" measurementType="trendsup" displayType="summary" description="Number of write operations since execution start"/>
+
+        <resource-configuration>
+          <c:simple-property name="CompactionStrategyClass" type="string" required="true" description="Compaction strategy class name."/>
+          <c:simple-property name="CompressionParameters" type="string" readOnly="true" description="Compression parameters"/>
+          <c:simple-property name="MinimumCompactionThreshold" type="integer" required="true" description="Minimum number of sstables in queue before compaction kicks off."/>
+          <c:simple-property name="MaximumCompactionThreshold" type="integer" required="true" description="Maximum number of sstables in queue before compaction kicks off."/>
+          <c:list-property name="snapshots" readOnly="true" required="false">
+            <c:map-property name="snapshot" readOnly="true">
+              <c:simple-property name="name" readOnly="true"/>
+              <c:simple-property name="folder" readOnly="true" description="Snapshot Folder"/>
+            </c:map-property>
+          </c:list-property>
+        </resource-configuration>
+      </service>
+    </service>
   </server>
 </plugin>
 

@@ -63,6 +63,7 @@ public class Upgrade extends AbstractInstall {
     private static final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
     private static final String LIST_VERSIONS_OPTION = "list-versions";
     private static final String STORAGE_SCHEMA_OPTION = "storage-schema";
+    private static final String APPLY_FIXES = "apply-fixes";
 
     private Options options;
 
@@ -97,6 +98,12 @@ public class Upgrade extends AbstractInstall {
                 "This option is valid only when upgrading from older systems that did not have storage nodes. Use this option to specify a non-default base "
                     + "directory for the data directories created by the storage node. For example, if the default directory is "
                     + "not writable for the current user (/var/lib on Linux) or if you simply prefer a different location. ")
+            .addOption(
+                    null,
+                    APPLY_FIXES,
+                    false,
+                    "This option applies manual fixes to the storage or RHQ server. Ran automatically by the utilities if needed."
+            )
             .addOption(
                 null,
                 STORAGE_SCHEMA_OPTION,
@@ -137,6 +144,10 @@ public class Upgrade extends AbstractInstall {
 
         if (commandLine.hasOption(STORAGE_SCHEMA_OPTION)) {
             return updateStorageSchema(commandLine);
+        }
+
+        if (commandLine.hasOption(APPLY_FIXES)) {
+            return applyFixes(commandLine);
         }
 
         int rValue = RHQControl.EXIT_CODE_OK;
@@ -815,6 +826,25 @@ public class Upgrade extends AbstractInstall {
 
         } catch (Exception e) {
             log.error("Updating the RHQ Storage Cluster schema failed: " + e.getMessage());
+            rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
+        }
+
+        return rValue;
+    }
+
+    private int applyFixes(CommandLine commandLine) {
+        if (!isServerInstalled()) {
+            log.info("This command can only be performed from an installed Server node. This is either a standalone Storage Node, or the Server has yet to be installed.");
+            return RHQControl.EXIT_CODE_OPERATION_FAILED;
+        }
+
+        int rValue = RHQControl.EXIT_CODE_OK;
+        try {
+            Future<Integer> integerFuture = runRHQServerInstaller(ServerInstallerAction.CLEARCOLUMNFAMILIES);
+            rValue = Math.max(rValue, integerFuture.get());
+
+        } catch (Exception e) {
+            log.error("Fixing the RHQ Storage Cluster or Server failed: " + e.getMessage());
             rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
         }
 

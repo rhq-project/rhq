@@ -481,7 +481,7 @@ public abstract class AbstractInstall extends ControlCommand {
 
     protected enum ServerInstallerAction {
         INSTALL("Installing"), UPGRADE("Upgrading"), UPDATESTORAGESCHEMA("Updating RHQ Storage Cluster schema"), LISTVERSIONS(
-            "Topology Versions");
+            "Topology Versions"), CLEARCOLUMNFAMILIES("Clear inventory of obsolete column families");
 
         public String display;
 
@@ -522,6 +522,13 @@ public abstract class AbstractInstall extends ControlCommand {
             log.info("The RHQ Server installer is running");
             break;
         }
+            case CLEARCOLUMNFAMILIES: {
+                log.info(serverInstallerAction.display);
+                org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer", "--clearcolumnfamilies");
+                integerFuture = ExecutorAssist.executeAsync(getBinDir(), commandLine, null);
+                log.info("The RHQ Server column family cleaning is running");
+                break;
+            }
         case UPDATESTORAGESCHEMA: {
             log.info(serverInstallerAction.display);
 

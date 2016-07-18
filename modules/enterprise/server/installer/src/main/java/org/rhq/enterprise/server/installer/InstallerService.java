@@ -148,6 +148,8 @@ public interface InstallerService {
      */
     void updateStorageSchema(HashMap<String, String> serverProperties) throws Exception;
 
+    void clearColumnFamilies(HashMap<String, String> serverProperties) throws Exception;
+
     /**
      * Returns a list of all registered servers in the database.
      *

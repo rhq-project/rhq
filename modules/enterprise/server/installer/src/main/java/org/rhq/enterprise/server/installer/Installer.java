@@ -50,7 +50,7 @@ public class Installer {
     private InstallerConfiguration installerConfig;
 
     private enum WhatToDo {
-        DISPLAY_USAGE, DO_NOTHING, TEST, SETUPDB, LIST_SERVERS, INSTALL, UPDATESTORAGESCHEMA, LIST_VERSIONS, UPGRADE
+        DISPLAY_USAGE, DO_NOTHING, TEST, SETUPDB, LIST_SERVERS, INSTALL, UPDATESTORAGESCHEMA, CLEARCOLUMNFAMILIES, LIST_VERSIONS, UPGRADE
     }
 
     public static void main(String[] args) {
@@ -115,12 +115,24 @@ public class Installer {
                 }
                 continue;
             }
+            case CLEARCOLUMNFAMILIES: {
+                try {
+                    final InstallerService installerService = new InstallerServiceImpl(installerConfig);
+                    final HashMap<String, String> serverProperties = installerService.getServerProperties();
+                    installerService.clearColumnFamilies(serverProperties);
+                    LOG.info("Clearing unused column families from storage inventory is complete.");
+                } catch (Exception e) {
+                    LOG.error(ThrowableUtil.getAllMessages(e));
+                    System.exit(EXIT_CODE_INSTALLATION_ERROR);
+                }
+                continue;
+            }
             case UPDATESTORAGESCHEMA: {
                 try {
                     final InstallerService installerService = new InstallerServiceImpl(installerConfig);
                     final HashMap<String, String> serverProperties = installerService.getServerProperties();
                     installerService.updateStorageSchema(serverProperties);
-                    LOG.info("Database setup is complete.");
+                    LOG.info("Storage schema update is complete.");
                 } catch (Exception e) {
                     LOG.error(ThrowableUtil.getAllMessages(e));
                     System.exit(EXIT_CODE_INSTALLATION_ERROR);
@@ -183,6 +195,7 @@ public class Installer {
             new LongOpt("encodevalue", LongOpt.NO_ARGUMENT, null, 'e'),
             new LongOpt("setupdb", LongOpt.NO_ARGUMENT, null, 'b'),
             new LongOpt("updatestorageschema", LongOpt.NO_ARGUMENT, null, 'u'),
+            new LongOpt("clearcolumnfamilies", LongOpt.NO_ARGUMENT, null, 'c'),
             new LongOpt("upgrade", LongOpt.NO_ARGUMENT, null, 'g'),
             new LongOpt("listservers", LongOpt.NO_ARGUMENT, null, 'l'),
             new LongOpt("listversions", LongOpt.NO_ARGUMENT, null, 'v'),
@@ -193,6 +206,7 @@ public class Installer {
         boolean listversions = false;
         boolean setupdb = false;
         boolean upgrade = false;
+        boolean clearcolumnfamilies = false;
         boolean updatestorage = false;
         String valueToEncode = null;
         String associatedProperty = null;
@@ -300,6 +314,11 @@ public class Installer {
                 break; // don't return, in case we need to allow more args
             }
 
+            case 'c': {
+                clearcolumnfamilies = true;
+                break;
+            }
+
             case 'f': {
                 this.installerConfig.setForceInstall(true);
                 break; // don't return, in case we need to allow more args
@@ -375,7 +394,7 @@ public class Installer {
             return new WhatToDo[] { WhatToDo.DO_NOTHING };
         }
 
-        if (test || setupdb || updatestorage || listservers || listversions) {
+        if (test || setupdb || updatestorage || listservers || listversions || clearcolumnfamilies) {
             ArrayList<WhatToDo> whatToDo = new ArrayList<WhatToDo>();
             if (test) {
                 whatToDo.add(WhatToDo.TEST);
@@ -385,6 +404,9 @@ public class Installer {
             }
             if (updatestorage) {
                 whatToDo.add(WhatToDo.UPDATESTORAGESCHEMA);
+            }
+            if(clearcolumnfamilies) {
+                whatToDo.add(WhatToDo.CLEARCOLUMNFAMILIES);
             }
             if (listservers) {
                 whatToDo.add(WhatToDo.LIST_SERVERS);

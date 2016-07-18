@@ -403,5 +403,6 @@
 	<classpathentry kind="var" path="M2_REPO/com/datastax/cassandra/cassandra-driver-core/1.0.8-jboss-1/cassandra-driver-core-1.0.8-jboss-1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/jolbox/bonecp/0.8.0.RELEASE/bonecp-0.8.0.RELEASE.jar"/>
 	<classpathentry kind="var" path="M2_REPO/io/undertow/undertow-core/1.0.15.Final/undertow-core-1.0.15.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/yammer/metrics/metrics-core/2.2.0/metrics-core-2.2.0.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

@@ -711,7 +711,15 @@ public class InstallerServiceImpl implements InstallerService {
             ExistingSchemaOption.KEEP);
         ServerInstallUtil.persistStorageNodesIfNecessary(serverProperties, clearTextDbPassword,
             parseNodeInformation(serverProperties, storageNodeAddresses));
+        clearColumnFamilies(serverProperties);
+    }
 
+    @Override
+    public void clearColumnFamilies(HashMap<String, String> serverProperties) throws Exception {
+        String clearTextDbPassword;
+        String obfuscatedDbPassword;
+        obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
+        clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
         ServerInstallUtil.removeObsoleteStorageColumnFamilies(serverProperties, clearTextDbPassword);
     }
 

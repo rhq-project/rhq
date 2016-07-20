@@ -64,6 +64,9 @@ public class Upgrade extends AbstractInstall {
     private static final String LIST_VERSIONS_OPTION = "list-versions";
     private static final String STORAGE_SCHEMA_OPTION = "storage-schema";
     private static final String APPLY_FIXES = "apply-fixes";
+    private static final String SECURE_SOCKET_PROTOCOL = "rhq.server.tomcat.security.secure-socket-protocol";
+    private static final String TLS = "TLS";
+    private static final String TLS_RANGE = TLS + "v1,TLSv1.1,TLSv1.2";
 
     private Options options;
 
@@ -507,6 +510,12 @@ public class Upgrade extends AbstractInstall {
             if (algValue.equals("SunX509") || algValue.equals("IbmX509")) {
                 oldServerProps.remove(algPropName); // let the default take effect at runtime - which will depend on the JVM
             }
+        }
+
+        //##BZ 1277389,1355778. Update default protocol if it's still set to old/bad value
+        String protocolValue = oldServerProps.getProperty(SECURE_SOCKET_PROTOCOL);
+        if ((protocolValue != null) && (protocolValue.trim().equalsIgnoreCase(TLS))) {//replace with safer value
+            oldServerProps.setProperty(SECURE_SOCKET_PROTOCOL, TLS_RANGE);
         }
 
         // the older servers stored the HTTP and HTTPS ports under different names - make sure we reuse those ports with the new properties

@@ -159,9 +159,9 @@ public interface ServiceContainerConfigurationConstants {
     String CONNECTOR_SECURITY_SOCKET_PROTOCOL = PROPERTY_NAME_PREFIX + "connector.security.secure-socket-protocol";
 
     /**
-     * The default protocol when securing the communications. See BZ 1277389,1355778 for more details.
+     * The default protocol when securing the communications.
      */
-    String DEFAULT_CONNECTOR_SECURITY_SOCKET_PROTOCOL = "TLSv1,TLSv1.1,TLSv1.2";
+    String DEFAULT_CONNECTOR_SECURITY_SOCKET_PROTOCOL = "TLS";
 
     /**
      * The client authentication mode which indicates if the client does not need to be authenticated, the client

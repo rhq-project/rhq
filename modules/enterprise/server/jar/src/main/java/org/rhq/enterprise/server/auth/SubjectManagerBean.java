@@ -199,6 +199,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         return entityManager.merge(subjectToModify);
     }
 
+    @RequiredPermission(Permission.MANAGE_SECURITY)
     public Subject createSubject(Subject whoami, Subject subjectToCreate, String password) throws SubjectException,
         EntityExistsException {
         if (getSubjectByName(subjectToCreate.getName()) != null) {

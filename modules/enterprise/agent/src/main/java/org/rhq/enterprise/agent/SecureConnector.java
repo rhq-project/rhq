@@ -19,7 +19,6 @@
 
 package org.rhq.enterprise.agent;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.net.URL;
 import java.security.KeyStore;
@@ -27,6 +26,8 @@ import java.security.cert.X509Certificate;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
@@ -55,10 +56,8 @@ import javax.net.ssl.X509TrustManager;
  */
 public class SecureConnector {
     private final String secureSocketProtocol;
-    private final File truststoreFile;
-    private final String truststorePassword;
-    private final String truststoreType;
-    private final String truststoreAlgorithm;
+    private final AgentTrustStore agentTrustStore;
+    private final AgentKeystore agentKeystore;
 
     /**
      * The {@link #openSecureConnection(URL) secure connections} built by this object will
@@ -68,59 +67,56 @@ public class SecureConnector {
      * @param secureSocketProtocol the secure socket protocol to use (e.g. "TLS")
      */
     public SecureConnector(String secureSocketProtocol) {
-        this(secureSocketProtocol, null, null, null, null);
+        this(secureSocketProtocol, null, null);
     }
 
     /**
      * The {@link #openSecureConnection(URL) secure connections} built by this object will
-     * authenticate the server endpoint using the given truststore file and its related parameters.
+     * authenticate the server endpoint using the given truststore and keystore.
      * The connection will use the given secure socket protocol to encrypt the connection traffic.
      *
-     * Note that if the given <code>truststoreFile</code> is <code>null</code>, the other
-     * truststore parameters are ignored and the secure connections built by this object will
-     * not authenticate the server endpoint.
-     *
      * @param secureSocketProtocol the secure socket protocol to use (e.g. "TLS")
-     * @param truststoreFile the truststore file containing authorized certificates
-     * @param truststorePassword the password to the truststore file (if a file is given, this must not be <code>null</code>)
-     * @param truststoreType the type of the truststore file (e.g. "JKS"); if <code>null</code>, then the JVM's
-     *                       default type is used (see <code>java.security.KeyStore.getDefaultType()</code>)
-     * @param truststoreAlgorithm the standard name of the trust management algorithm (e.g. "SunX509");
-     *                            if <code>null</code>, then the JVM's default algorithm is used (see
-     *                            <code>javax.net.ssl.TrustManagerFactory.getDefaultAlgorithm()</code>)
+     * @param agentTrustStore the truststore containing authorized certificates
+     * @param agentKeystore the keystore containing authorized keys
      */
-    public SecureConnector(String secureSocketProtocol, File truststoreFile, String truststorePassword,
-        String truststoreType, String truststoreAlgorithm) {
+    public SecureConnector(String secureSocketProtocol, AgentTrustStore agentTrustStore, AgentKeystore agentKeystore) {
 
         if (secureSocketProtocol == null) {
             throw new IllegalArgumentException("secure socket protocol cannot be null");
         }
         this.secureSocketProtocol = secureSocketProtocol;
 
-        if (truststoreFile == null) {
-            // no truststore file was provided, we don't need to know any truststore parameters
-            this.truststoreFile = null;
-            this.truststorePassword = null;
-            this.truststoreType = null;
-            this.truststoreAlgorithm = null;
-        } else {
-            // the truststore file is provided, make sure we have non-null truststore parameters, using defaults if need be
-            this.truststoreFile = truststoreFile;
-
-            if (truststorePassword == null) {
-                throw new IllegalArgumentException("truststorePassword cannot be null");
+        this.agentTrustStore = agentTrustStore;
+        if (agentTrustStore != null) {
+            if (agentTrustStore.getPassword() == null) {
+                throw new IllegalArgumentException("truststore password cannot be null");
             }
-            this.truststorePassword = truststorePassword;
 
-            if (truststoreType == null) {
-                truststoreType = KeyStore.getDefaultType();
+            if (agentTrustStore.getType() == null) {
+                agentTrustStore.setType(KeyStore.getDefaultType());
             }
-            this.truststoreType = truststoreType;
 
-            if (truststoreAlgorithm == null) {
-                truststoreAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
+            if (agentTrustStore.getAlgorithm() == null) {
+                agentTrustStore.setAlgorithm(TrustManagerFactory.getDefaultAlgorithm());
             }
-            this.truststoreAlgorithm = truststoreAlgorithm;
+        }
+
+        this.agentKeystore = agentKeystore;
+        if (agentKeystore != null) {
+            if (agentKeystore.getPassword() == null) {
+                throw new IllegalArgumentException("keystore password cannot be null");
+            }
+            if (agentKeystore.getKeyPassword() == null) {
+                throw new IllegalArgumentException("keystore key-password cannot be null");
+            }
+
+            if (agentKeystore.getType() == null) {
+                agentKeystore.setType(KeyStore.getDefaultType());
+            }
+
+            if (agentKeystore.getAlgorithm() == null) {
+                agentKeystore.setAlgorithm(TrustManagerFactory.getDefaultAlgorithm());
+            }
         }
 
         return;
@@ -132,23 +128,32 @@ public class SecureConnector {
 
         TrustManager[] trustManagers;
         SSLContext sslContext = SSLContext.getInstance(getSecureSocketProtocol());
-
-        if (getTruststoreFile() == null) {
+        KeyManager[] keyManagers = null;
+        if (getAgentTrustStore() == null) {
             // we are configured to not care about authenticating the server, just encrypt but don't worry about certificates
             trustManagers = new TrustManager[] { NO_OP_TRUST_MANAGER };
             connection.setHostnameVerifier(NO_OP_HOSTNAME_VERIFIER);
         } else {
             // We need to configure our SSL connection with the agent's truststore so we can authenticate the server.
             // First, create a KeyStore, but load it with our truststore entries.
-            KeyStore keyStore = KeyStore.getInstance(getTruststoreType());
-            keyStore.load(new FileInputStream(getTruststoreFile()), getTruststorePassword().toCharArray());
+            KeyStore keyStore = KeyStore.getInstance(getAgentTrustStore().getType());
+            keyStore.load(new FileInputStream(getAgentTrustStore().getFile()), getAgentTrustStore().getPassword().toCharArray());
             // now create a truststore manager instance and initialize it with our KeyStore we created with all our truststore entries
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(getTruststoreAlgorithm());
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(getAgentTrustStore().getAlgorithm());
             tmf.init(keyStore);
             trustManagers = tmf.getTrustManagers();
         }
 
-        sslContext.init(null, trustManagers, null);
+        if (getAgentKeystore() != null) {
+            KeyStore keyStore = KeyStore.getInstance(getAgentKeystore().getType());
+            keyStore.load(new FileInputStream(getAgentKeystore().getFile()), getAgentKeystore().getPassword().toCharArray());
+
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(getAgentKeystore().getAlgorithm());
+            keyManagerFactory.init(keyStore, getAgentKeystore().getKeyPassword().toCharArray());
+            keyManagers = keyManagerFactory.getKeyManagers();
+        }
+
+        sslContext.init(keyManagers, trustManagers, null);
         connection.setSSLSocketFactory(sslContext.getSocketFactory());
 
         return connection;
@@ -158,20 +163,12 @@ public class SecureConnector {
         return this.secureSocketProtocol;
     }
 
-    public File getTruststoreFile() {
-        return this.truststoreFile;
+    public AgentTrustStore getAgentTrustStore() {
+        return agentTrustStore;
     }
 
-    public String getTruststorePassword() {
-        return this.truststorePassword;
-    }
-
-    public String getTruststoreType() {
-        return this.truststoreType;
-    }
-
-    public String getTruststoreAlgorithm() {
-        return this.truststoreAlgorithm;
+    public AgentKeystore getAgentKeystore() {
+        return agentKeystore;
     }
 
     private static TrustManager NO_OP_TRUST_MANAGER = new X509TrustManager() {
@@ -209,4 +206,5 @@ public class SecureConnector {
         out.flush();
         System.out.println(out.toString());
     }
+
 }

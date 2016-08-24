@@ -288,21 +288,9 @@ public class AgentUpdateDownload {
 
     private HttpsURLConnection openSecureConnection(URL url) throws Exception {
         AgentConfiguration config = this.agent.getConfiguration();
-        String secureSocketProtocol = config.getClientSenderSecuritySocketProtocol();
-        SecureConnector secureConnector;
-        if (config.isClientSenderSecurityServerAuthMode()) {
-            File file = new File(config.getClientSenderSecurityTruststoreFile());
-            if (!file.isAbsolute()) {
-                file = new File(this.agent.getAgentHomeDirectory(), file.getPath());
-            }
-            String password = config.getClientSenderSecurityTruststorePassword();
-            String type = config.getClientSenderSecurityTruststoreType();
-            String algorithm = config.getClientSenderSecurityTruststoreAlgorithm();
-            secureConnector = new SecureConnector(secureSocketProtocol, file, password, type, algorithm);
-        } else {
-            secureConnector = new SecureConnector(secureSocketProtocol);
-        }
-
+        SecureConnectorFactory secureConnectorFactory = new SecureConnectorFactory();
+        SecureConnector secureConnector = secureConnectorFactory.getInstanceWithAgentConfiguration(
+                config, this.agent.getAgentHomeDirectory());
         return secureConnector.openSecureConnection(url);
     }
 }

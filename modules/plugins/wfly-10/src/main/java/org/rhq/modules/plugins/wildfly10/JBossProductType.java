@@ -92,7 +92,8 @@ import java.util.Properties;
             if (slot.isEmpty()) {
                 throw new Exception("'slot' property not found in " + productConfFile + ".");
             }
-            if(apiVersion.startsWith("4")) {
+            //  EAP 7.1 use domain api 5.0 in "urn:jboss:domain:5.0" from <server xmlns="..." >
+            if(apiVersion.startsWith("4") || apiVersion.startsWith("5")) {
                 try {
                     productType = getValueByShortName(slot);
                 } catch(IllegalArgumentException e) {

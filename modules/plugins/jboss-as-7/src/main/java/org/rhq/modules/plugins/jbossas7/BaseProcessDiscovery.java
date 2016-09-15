@@ -160,9 +160,13 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                     discoveredResources.add(details);
                 }
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Discovered new " + discoveryContext.getResourceType().getName() + " Resource (key=["
-                        + details.getResourceKey() + "], name=[" + details.getResourceName() + "], version=["
-                        + details.getResourceVersion() + "]).");
+                    if (details != null) {
+                        LOG.debug("Discovered new " + discoveryContext.getResourceType().getName() + " Resource (key=["
+                            + details.getResourceKey() + "], name=[" + details.getResourceName() + "], version=["
+                            + details.getResourceVersion() + "]).");
+                    } else {
+                        LOG.debug("Cannot fetch resource details for " + discoveryContext.getResourceType().getName());
+                    }
                 }
             } catch (RuntimeException e) {
                 // Only barf a stack trace for runtime exceptions.

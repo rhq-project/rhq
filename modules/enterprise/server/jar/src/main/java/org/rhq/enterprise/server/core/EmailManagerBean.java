@@ -1,23 +1,29 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 package org.rhq.enterprise.server.core;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -87,6 +93,7 @@ public class EmailManagerBean implements EmailManagerLocal {
      * The token string found in the email template file that will be replaced with a URL to a specific alert.
      */
     private static final String TEMPLATE_TOKEN_ALERT_URL = "@@@ALERT_URL@@@";
+    private static final String DEFAULT_ALERT_EMAIL_TEMPLATE_TXT = "alert-email-template.txt";
 
     private static final String TEMPLATE_TOKEN_PRODUCT_NAME = "@@@PRODUCT_NAME@@@";
 
@@ -152,9 +159,29 @@ public class EmailManagerBean implements EmailManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public Map<String, String> getAlertEmailMessage(String resourceHierarchy, String resourceName, String alertName,
-        String priority, String timestamp, String conditionLogs, String alertUrl) {
-        InputStream templateStream = this.getClass().getClassLoader().getResourceAsStream("alert-email-template.txt");
-        String template = new String(StreamUtil.slurp(templateStream));
+                                                    String priority, String timestamp, String conditionLogs,
+                                                    String alertUrl, String templatePath) {
+
+        String template = null;
+        InputStream templateStream = null;
+
+        if (templatePath!=null) {
+            try {
+                templateStream =new FileInputStream(templatePath);
+                template = new String(StreamUtil.slurp(templateStream));
+            } catch (FileNotFoundException e) {
+                LOG.warn("No alert template at " + templatePath + " found, falling back to default");
+            } finally {
+                StreamUtil.safeClose(templateStream);
+            }
+        }
+
+        // No other template found: fall back to the default one.
+        if (templateStream==null) {
+            templateStream = this.getClass().getClassLoader().getResourceAsStream(
+                DEFAULT_ALERT_EMAIL_TEMPLATE_TXT);
+            template = new String(StreamUtil.slurp(templateStream));
+        }
 
         String productName = LookupUtil.getSystemManager().getProductInfo(LookupUtil.getSubjectManager().getOverlord())
             .getFullName();

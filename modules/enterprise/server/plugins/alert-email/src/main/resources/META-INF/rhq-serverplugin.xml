@@ -31,6 +31,7 @@
                 <c:regex-constraint expression="((([a-zA-Z0-9_.\-+])+@([a-zA-Z0-9\-])+(\.([a-zA-Z0-9\-])+)*),?)*"/>
             </c:constraint>
         </c:simple-property>
+      <c:simple-property name="template" required="false" type="string" description="Name of a template to use"/>
     </alert-configuration>
 
 </alert-plugin>

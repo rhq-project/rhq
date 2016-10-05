@@ -81,7 +81,15 @@ public interface AlertManagerLocal {
      */
     boolean willDefinitionBeDisabled(Alert alert);
 
-    Collection<String> sendAlertNotificationEmails(Alert alert, Collection<String> emailAddresses);
+    /**
+     * Does the actual email sending
+     * @param alert The alert to be sent
+     * @param emailAddresses A list of email addresses to send to
+     * @param pathToTemplate Path to a template. Can be null in which case the default template is used.
+     * @return
+     */
+    Collection<String> sendAlertNotificationEmails(Alert alert, Collection<String> emailAddresses,
+                                                   String pathToTemplate);
 
     String prettyPrintAlertURL(Alert alert);
 

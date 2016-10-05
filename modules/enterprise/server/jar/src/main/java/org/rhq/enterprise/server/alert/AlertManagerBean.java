@@ -445,12 +445,14 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         for (int round = 0; round < rounds; round++) {
             int fromIndex = round * BATCH_SIZE;
             int toIndex = fromIndex + BATCH_SIZE;
-            if (toIndex > numSched) // don't run over the end of the list
+            if (toIndex > numSched) { // don't run over the end of the list
                 toIndex = numSched;
+            }
             List<Integer> scheds = scheduleIds.subList(fromIndex, toIndex);
 
-            if (fromIndex == toIndex)
+            if (fromIndex == toIndex) {
                 continue;
+            }
 
             Query q = entityManager.createNamedQuery(Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES);
             q.setParameter("startDate", begin);
@@ -656,7 +658,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     }
 
     @Override
-    public Collection<String> sendAlertNotificationEmails(Alert alert, Collection<String> emailAddresses) {
+    public Collection<String> sendAlertNotificationEmails(Alert alert, Collection<String> emailAddresses,
+                                                          String pathToTemplate) {
         if (log.isDebugEnabled()) {
             log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
         }
@@ -675,7 +678,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             alertDefinition.getPriority().toString(), //
             new Date(alert.getCtime()).toString(), //
             prettyPrintAlertConditions(alert.getConditionLogs(), false), //
-            prettyPrintAlertURL(alert));
+            prettyPrintAlertURL(alert), pathToTemplate);
 
         String messageSubject = alertMessage.keySet().iterator().next();
         String messageBody = alertMessage.values().iterator().next();
@@ -726,15 +729,17 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             builder.append(NEW_LINE);
 
             String format;
-            if (shortVersion)
+            if (shortVersion) {
                 format = AlertI18NResourceKeys.ALERT_EMAIL_CONDITION_LOG_FORMAT_SHORT;
-            else
+            } else {
                 format = AlertI18NResourceKeys.ALERT_EMAIL_CONDITION_LOG_FORMAT;
+            }
             SimpleDateFormat dateFormat;
-            if (shortVersion)
+            if (shortVersion) {
                 dateFormat = new SimpleDateFormat("yy/MM/dd HH:mm:ss z");
-            else
+            } else {
                 dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss z");
+            }
             builder.append(AlertI18NFactory.getMessage(format, conditionCounter,
                 prettyPrintAlertCondition(aLog.getCondition(), shortVersion),
                 dateFormat.format(new Date(aLog.getCtime())), formattedValue));
@@ -1274,8 +1279,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             AlertDefinition toBeRecoveredDefinition = alertDefinitionManager.getAlertDefinitionById(overlord,
                 recoveryDefinitionId);
             boolean wasEnabled = toBeRecoveredDefinition.getEnabled();
-            if (!wasEnabled)
+            if (!wasEnabled) {
                 return false;
+            }
         } else if (firedDefinition.getWillRecover()) {
             return true;
         }

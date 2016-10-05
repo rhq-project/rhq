@@ -21,44 +21,49 @@
       <jsp:include page="/admin/include/adminTestLinks.html" flush="true" />
 
       <h1>Testing RHQ Email Configuration</h1>
-   
+
       <p>
       The page allows you to confirm that the RHQ Email configuration
       is correct and can send emails successfully.
       </p>
-      
-      <%   
+
+      <%
          String  toAddresses      = request.getParameter("to");
          String  messageSubject   = request.getParameter("subject");
          String  messageBody      = request.getParameter("body");
          boolean useAlertTemplate = Boolean.parseBoolean(request.getParameter("alert"));
-               
+
          boolean skip  = false;
-         
+
          if ( toAddresses == null || toAddresses.trim().length() == 0)
          {
             skip = true;
             toAddresses = "";
          }
-         
-         if (messageSubject == null) messageSubject = "test subject";
-         if (messageBody    == null) messageBody    = "test body";
+
+         if (messageSubject == null) {
+             messageSubject = "test subject";
+         }
+         if (messageBody    == null) {
+             messageBody = "test body";
+         }
 
          String error = "(Press Submit To Test)";
-         
+
          if ( !skip )
          {
             try {
                EmailManagerLocal email = LookupUtil.getEmailManagerBean();
-               
+
                if (useAlertTemplate)
                {
-                  Map<String, String> alertMessage = 
-                     email.getAlertEmailMessage("Test Resource Hierarchy", "Test Resource Name", "Test Alert Name", "!!! - High", "Jan 1, 1970", "Test Conditions", "http://localhost:7080");
+                  Map<String, String> alertMessage =
+                     email.getAlertEmailMessage("Test Resource Hierarchy", "Test Resource Name", "Test Alert Name", "!!! - High", "Jan 1, 1970", "Test Conditions", "http://localhost:7080",
+                             null); // last param null -> default template
                   messageSubject=alertMessage.keySet().iterator().next();
                   messageBody=alertMessage.values().iterator().next();
                }
-               
+
                email.sendEmail(Arrays.asList(toAddresses.split(",")), messageSubject, messageBody);
                error = "None";
             }
@@ -67,7 +72,7 @@
             }
          }
       %>
-      
+
       <form action="email.jsp" method="get">
          <table border="1">
             <tr><td>Recipient Addresses: </td><td><input name="to" type="text" size="100" value="<%= toAddresses %>" /></td></tr>
@@ -79,6 +84,6 @@
       </form>
 
       <h3>Error: <%= error %></h3>
-      
+
    </body>
 </html>

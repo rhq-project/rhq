@@ -5351,7 +5351,7 @@
             <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy"
                                description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
             <c:simple-property name="connection-ttl:expr" required="false" type="string" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
-            <c:list-property name="connectors" required="false" description="Defines the connectors. These are stored in a map by connector name (with an undefined value). It is possible to pass a list of connector names when writing this attribute." >
+            <c:list-property name="connectors" required="false" description="Defines the connectors." >
               <c:simple-property name="connectors" />
             </c:list-property>
             <c:simple-property name="consumer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
@@ -5425,7 +5425,7 @@
             <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy"
                                description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
             <c:simple-property name="connection-ttl:expr" required="false" type="string" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
-            <c:list-property name="connectors" required="false" description="Defines the connectors. These are stored in a map by connector name (with an undefined value). It is possible to pass a list of connector names when writing this attribute." >
+            <c:list-property name="connectors" required="false" description="Defines the connectors." >
               <c:simple-property name="connectors" />
             </c:list-property>
             <c:simple-property name="consumer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
@@ -8390,11 +8390,11 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="durable" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
+            <c:simple-property name="durable" required="false" type="boolean" readOnly="true" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
             <c:list-property name="entries" required="true" description="The jndi names the queue will be bound to." >
                 <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
             </c:list-property>
-            <c:simple-property name="selector" required="false" type="string" readOnly="false" description="The queue selector."/>
+            <c:simple-property name="selector" required="false" type="string" readOnly="true" description="The queue selector."/>
           </resource-configuration>
         </service>
 
@@ -8444,7 +8444,7 @@
             <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy"
                                description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
             <c:simple-property name="connection-ttl:expr" required="false" type="string" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
-            <c:list-property name="connectors" required="false" description="Defines the connectors. These are stored in a map by connector name (with an undefined value). It is possible to pass a list of connector names when writing this attribute." >
+            <c:list-property name="connectors" required="false" description="Defines the connectors." >
               <c:simple-property name="connectors" />
             </c:list-property>
             <c:simple-property name="consumer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
@@ -8518,7 +8518,7 @@
             <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy"
                                description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
             <c:simple-property name="connection-ttl:expr" required="false" type="string" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
-            <c:list-property name="connectors" required="false" description="Defines the connectors. These are stored in a map by connector name (with an undefined value). It is possible to pass a list of connector names when writing this attribute." >
+            <c:list-property name="connectors" required="false" description="Defines the connectors." >
               <c:simple-property name="connectors" />
             </c:list-property>
             <c:simple-property name="consumer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
@@ -11772,7 +11772,7 @@
                              defaultValue="60000"
                              description="The connection ttl. The default value is 60000."/>
           <c:list-property name="connectors" required="false"
-                           description="Defines the connectors. These are stored in a map by connector name (with an undefined value). It is possible to pass a list of connector names when writing this attribute.">
+                           description="Defines the connectors.">
             <c:simple-property name="connectors"/>
           </c:list-property>
           <c:simple-property name="consumer-max-rate:expr" required="false" type="string" readOnly="true"
@@ -14160,34 +14160,10 @@
           <c:simple-property name="operationResult" description="Import an XML file to the journal"/>
         </results>
       </operation>
-
-      <operation name="subsystem:list-add" displayName="List add" description="Add entry to list attribute">
-        <parameters>
-          <c:simple-property name="name" required="true" type="string" readOnly="false"
-                             description="Name of list attribute to add entry to"/>
-          <c:simple-property name="value" required="false" type="string" readOnly="false"
-                             description="Value to add to list"/>
-          <c:simple-property name="index" required="false" type="integer" readOnly="false"
-                             description="Optional 0 based index where to insert value to"/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" description="Add entry to list attribute"/>
-        </results>
-      </operation>
-
+      
       <operation name="subsystem:list-all-consumers-as-json" displayName="List all consumers as JSON" description="Lists all the consumers.">
         <results>
           <c:simple-property name="operationResult" description="Lists all the consumers."/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-clear" displayName="List clear" description="Clear all entries from list attribute">
-        <parameters>
-          <c:simple-property name="name" required="true" type="string" readOnly="false"
-                             description="Name of list attribute"/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" description="Clear all entries from list attribute"/>
         </results>
       </operation>
 
@@ -14214,18 +14190,6 @@
         <results>
           <c:simple-property name="operationResult"
                              description="Lists all the consumers which belongs to the JMS Connection specified by the connection id."/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:list-get" displayName="List get" description="Get entry from list attribute">
-        <parameters>
-          <c:simple-property name="name" required="true" type="string" readOnly="false"
-                             description="Name of list attribute"/>
-          <c:simple-property name="index" required="false" type="integer" readOnly="false"
-                             description="Index entry to get"/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" description="Get entry from list attribute"/>
         </results>
       </operation>
 
@@ -14305,20 +14269,6 @@
         </results>
       </operation>
 
-      <operation name="subsystem:list-remove" displayName="List remove" description="Remove entry from list attribute">
-        <parameters>
-          <c:simple-property name="name" required="true" type="string" readOnly="false"
-                             description="Name of list attribute to remove entry from"/>
-          <c:simple-property name="value" required="false" type="string" readOnly="false"
-                             description="Value remove from list"/>
-          <c:simple-property name="index" required="false" type="integer" readOnly="false"
-                             description="Optional 0 based index to tell what element to remove"/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" description="Remove entry from list attribute"/>
-        </results>
-      </operation>
-
       <operation name="subsystem:list-sessions" displayName="List sessions" description="Lists all the sessions IDs for the specified connection ID.">
         <parameters>
           <c:simple-property name="connection-id" required="true" type="string" readOnly="false"
@@ -14350,58 +14300,6 @@
         <results>
           <c:simple-property name="operationResult" required="false" type="string" readOnly="false"
                              description="A JSON string containing an array of address names."/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:map-clear" displayName="Map clear" description="Clear all entries from map attribute">
-        <parameters>
-          <c:simple-property name="name" required="true" type="string" readOnly="false"
-                             description="Name of list attribute"/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" description="Clear all entries from map attribute"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:map-get" displayName="Map get" description="Get entry from map attribute">
-        <parameters>
-          <c:simple-property name="name" required="true" type="string" readOnly="false"
-                             description="Name of map attribute"/>
-
-          <c:simple-property name="key" required="true" type="string" readOnly="false"
-                             description="Key of entry to return"/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" description="Get entry from map attribute"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:map-put" displayName="Map put" description="Add entry to map attribute">
-        <parameters>
-          <c:simple-property name="name" required="true" type="string" readOnly="false"
-                             description="Name of map attribute to add entry to"/>
-
-          <c:simple-property name="key" required="true" type="string" readOnly="false"
-                             description="Key under which value will be added"/>
-
-          <c:simple-property name="value" required="false" type="string" readOnly="false"
-                             description="Value to be added"/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" description="Add entry to map attribute"/>
-        </results>
-      </operation>
-
-      <operation name="subsystem:map-remove" displayName="Map remove" description="Remove entry from map attribute">
-        <parameters>
-          <c:simple-property name="name" required="true" type="string" readOnly="false"
-                             description="Name of map attribute"/>
-
-          <c:simple-property name="key" required="true" type="string" readOnly="false"
-                             description="Key of entry to remove"/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" description="Remove entry from map attribute"/>
         </results>
       </operation>
 
@@ -14665,26 +14563,6 @@
           </results>
         </operation>
 
-        <operation name="list-add" description="Add entry to list attribute">
-          <parameters>
-            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of list attribute to add entry to"/>
-            <c:simple-property name="value" required="false" type="string" readOnly="false" description="Value to add to list"/>
-            <c:simple-property name="index" required="false" type="integer" readOnly="false" description="Optional 0 based index where to insert value to"/>
-          </parameters>
-          <results>
-            <c:simple-property name="operationResult" description="Add entry to list attribute" />
-          </results>
-        </operation>
-
-        <operation name="list-clear" description="Clear all entries from list attribute">
-          <parameters>
-            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of list attribute"/>
-          </parameters>
-          <results>
-            <c:simple-property name="operationResult" description="Clear all entries from list attribute" />
-          </results>
-        </operation>
-
         <operation name="subsystem:list-consumers-as-json" displayName="List Consumers as JSON" description="A string in JSON format.">
           <results>
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
@@ -14700,16 +14578,6 @@
         <operation name="list-delivering-messages-as-json" description="List the messages are currently being delivered as a string in JSON format">
           <results>
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false" description="A string in JSON format representing a list where each element is a map of message properties to their value."/>
-          </results>
-        </operation>
-
-        <operation name="list-get" description="Get entry from list attribute">
-          <parameters>
-            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of list attribute"/>
-            <c:simple-property name="index" required="false" type="integer" readOnly="false" description="Index entry to get"/>
-          </parameters>
-          <results>
-            <c:simple-property name="operationResult" description="Get entry from list attribute" />
           </results>
         </operation>
 
@@ -14752,46 +14620,6 @@
           </parameters>
           <results>
             <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
-          </results>
-        </operation>
-
-        <operation name="map-clear" description="Clear all entries from map attribute">
-          <parameters>
-            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of list attribute"/>
-          </parameters>
-          <results>
-            <c:simple-property name="operationResult" description="Clear all entries from map attribute" />
-          </results>
-        </operation>
-
-        <operation name="map-get" description="Get entry from map attribute">
-          <parameters>
-            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of map attribute"/>
-            <c:simple-property name="key" required="true" type="string" readOnly="false" description="Key of entry to return"/>
-          </parameters>
-          <results>
-            <c:simple-property name="operationResult" description="Get entry from map attribute" />
-          </results>
-        </operation>
-
-        <operation name="map-put" description="Add entry to map attribute">
-          <parameters>
-            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of map attribute to add entry to"/>
-            <c:simple-property name="key" required="true" type="string" readOnly="false" description="Key under which value will be added"/>
-            <c:simple-property name="value" required="false" type="string" readOnly="false" description="Value to be added"/>
-          </parameters>
-          <results>
-            <c:simple-property name="operationResult" description="Add entry to map attribute" />
-          </results>
-        </operation>
-
-        <operation name="map-remove" description="Remove entry from map attribute">
-          <parameters>
-            <c:simple-property name="name" required="true" type="string" readOnly="false" description="Name of map attribute"/>
-            <c:simple-property name="key" required="true" type="string" readOnly="false" description="Key of entry to remove"/>
-          </parameters>
-          <results>
-            <c:simple-property name="operationResult" description="Remove entry from map attribute" />
           </results>
         </operation>
 
@@ -14883,11 +14711,11 @@
         <metric property="queue-address" dataType="trait" description="The queue address defines what address is used for routing messages."/>
 
         <resource-configuration>
-          <c:simple-property name="durable" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
+          <c:simple-property name="durable" required="false" type="boolean" readOnly="true" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
           <c:list-property name="entries" required="true" description="The jndi names the queue will be bound to.">
             <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
-          <c:simple-property name="selector" required="false" type="string" readOnly="false" description="The queue selector."/>
+          <c:simple-property name="selector" required="false" type="string" readOnly="true" description="The queue selector."/>
         </resource-configuration>
       </service>
 
@@ -15039,7 +14867,7 @@
           <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy"
                              description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
           <c:simple-property name="connection-ttl:expr" required="false" type="string" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
-          <c:list-property name="connectors" required="false" description="Defines the connectors. These are stored in a map by connector name (with an undefined value). It is possible to pass a list of connector names when writing this attribute." >
+          <c:list-property name="connectors" required="false" description="Defines the connectors." >
             <c:simple-property name="connectors" />
           </c:list-property>
           <c:simple-property name="consumer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
@@ -15113,7 +14941,7 @@
           <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy"
                              description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.apache.activemq.artemis.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
           <c:simple-property name="connection-ttl:expr" required="false" type="string" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
-          <c:list-property name="connectors" required="false" description="Defines the connectors. These are stored in a map by connector name (with an undefined value). It is possible to pass a list of connector names when writing this attribute." >
+          <c:list-property name="connectors" required="false" description="Defines the connectors." >
             <c:simple-property name="connectors" />
           </c:list-property>
           <c:simple-property name="consumer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>

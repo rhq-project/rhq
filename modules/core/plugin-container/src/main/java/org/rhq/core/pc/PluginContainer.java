@@ -309,6 +309,8 @@ public class PluginContainer {
             driftManager = new DriftManager(configuration, agentServiceStreamRemoter, inventoryManager);
             pingManager = new PingManager(agentServiceStreamRemoter);
 
+            inventoryManager.refreshResourceContainers();
+
             for (AgentServiceLifecycleListener ll : agentServiceListeners) {
                 for (AgentService service : services()) {
                     ll.started(service);

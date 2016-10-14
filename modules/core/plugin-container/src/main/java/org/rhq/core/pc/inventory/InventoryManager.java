@@ -330,6 +330,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
         log.info("Inventory Manager initialized.");
     }
 
+    public void refreshResourceContainers() {
+        inventoryLock.writeLock().lock();
+
+        try {
+            activateAndUpgradeResourceRecursively(getPlatform(), false, true);
+        } finally {
+            inventoryLock.writeLock().unlock();
+        }
+    }
+
     /**
      * @see ContainerService#shutdown()
      */
@@ -3682,7 +3692,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             log.info("Starting to activate (and upgrade) resources.");
 
-            activateAndUpgradeResourceRecursively(getPlatform(), syncResult);
+            activateAndUpgradeResourceRecursively(getPlatform(), syncResult, false);
 
             log.info("Inventory activated and upgrade requests gathered in " + (System.currentTimeMillis() - start)
                 + "ms.");
@@ -3697,13 +3707,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 t);
 
             //make sure to at least activate the resources
-            activateAndUpgradeResourceRecursively(getPlatform(), false);
+            activateAndUpgradeResourceRecursively(getPlatform(), false, false);
         } finally {
             resourceUpgradeDelegate.disable();
         }
     }
 
-    private void activateAndUpgradeResourceRecursively(Resource resource, boolean doUpgrade) {
+    private void activateAndUpgradeResourceRecursively(Resource resource, boolean doUpgrade,
+        boolean forceReinitialization) {
         ResourceContainer container = initResourceContainer(resource);
 
         boolean activate = true;
@@ -3711,7 +3722,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         //only do upgrade inside the agent. it does not make sense in embedded mode.
         if (doUpgrade && configuration.isInsideAgent()) {
             try {
-                activate = prepareResourceForActivation(resource, container, false);
+                activate = prepareResourceForActivation(resource, container, forceReinitialization);
                 activate = activate && resourceUpgradeDelegate.processAndQueue(container);
             } catch (Throwable t) {
                 log.error("Exception thrown while upgrading [" + resource + "].", t);
@@ -3721,9 +3732,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         if (activate) {
             try {
-                activateResource(resource, container, false);
+                activateResource(resource, container, forceReinitialization);
                 for (Resource child : getContainerChildren(resource, container)) {
-                    activateAndUpgradeResourceRecursively(child, doUpgrade);
+                    activateAndUpgradeResourceRecursively(child, doUpgrade, forceReinitialization);
                 }
             } catch (InvalidPluginConfigurationException e) {
                 log.debug("Failed to activate resource [" + resource + "] due to invalid plugin configuration.", e);

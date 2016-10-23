@@ -61,6 +61,7 @@ import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.ResourceTypeNotEnabledException;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
+import org.rhq.core.clientapi.descriptor.configuration.SimpleProperty;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
@@ -69,7 +70,9 @@ import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults.ResourceTypeFlyweight;
@@ -1932,24 +1935,24 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         // If there is no update necessary just return the current plugin config of the existing resource
         Configuration result = resource.getPluginConfiguration();
-
         ConfigurationDefinition configDef = resource.getResourceType().getPluginConfigurationDefinition();
         if (null == configDef) {
             return result;
         }
-
+        Map<String, PropertyDefinition> propDefs = configDef.getPropertyDefinitions();
         Configuration existingPluginConfig = resource.getPluginConfiguration().deepCopy(false);
-        Configuration defaultPluginConfig = ConfigurationUtility.createDefaultConfiguration(configDef);
+
         boolean configChanged = false;
 
         // for each property, update the existing plugin config if discovery has set a non-default value
         for (String propertyName : pluginConfig.getAllProperties().keySet()) {
             Property discoveredProp = pluginConfig.get(propertyName);
-            Property defaultProp = defaultPluginConfig.get(propertyName);
-            if (!discoveredProp.equals(defaultProp)) {
+            // Only overrides the property if it is a read-only property
+            // See BZ: 1379834
+            if (propDefs.get(propertyName).isReadOnly()) {
                 if (log.isDebugEnabled()) {
                     log.debug("Discovery reported a new version of " + resource + ". Updating value of config property"
-                        + " from [" + existingPluginConfig.get(propertyName) + "] to [" + discoveredProp + "].");
+                            + " from [" + existingPluginConfig.get(propertyName) + "] to [" + discoveredProp + "].");
                 }
                 existingPluginConfig.put(discoveredProp);
                 configChanged = true;

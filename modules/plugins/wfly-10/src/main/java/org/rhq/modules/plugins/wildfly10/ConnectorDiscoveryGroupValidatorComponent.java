@@ -20,17 +20,14 @@
 package org.rhq.modules.plugins.wildfly10;
 
 import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.FAILURE;
-import static org.rhq.core.util.StringUtil.EMPTY_STRING;
 import static org.rhq.core.util.StringUtil.isNotBlank;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
@@ -54,12 +51,13 @@ import org.rhq.modules.plugins.wildfly10.json.WriteAttribute;
  * @author Stefan Negrea
  */
 public class ConnectorDiscoveryGroupValidatorComponent extends BaseComponent<ResourceComponent<?>> {
-    private static final String DISCOVERY_GROUP_NAME = "discovery-group-name";
+    private static final String DISCOVERY_GROUP_NAME = "discovery-group";
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         ResourceType resourceType = context.getResourceType();
         String resourceTypeName = resourceType.getName();
+        resourceTypeName = BaseComponent.resourceTypeNameByRemovingProfileSuffix(resourceTypeName);
 
         ConfigurationUpdateHelper configurationUpdateHelper;
         if (resourceTypeName.equals("Connection Factory") || resourceTypeName.equals("Pooled Connection Factory")) {
@@ -134,8 +132,8 @@ public class ConnectorDiscoveryGroupValidatorComponent extends BaseComponent<Res
     }
 
     private static class ConnectionFactoriesConfigurationUpdateHelper extends ConfigurationUpdateHelper {
-        static final String CONNECTOR_ATTRIBUTE = "connector";
-        static final String CONNECTOR_PROPERTY = CONNECTOR_ATTRIBUTE + ":collapsed";
+        static final String CONNECTOR_ATTRIBUTE = "connectors";
+        static final String CONNECTOR_PROPERTY = CONNECTOR_ATTRIBUTE;
 
         Address address;
 
@@ -151,9 +149,13 @@ public class ConnectorDiscoveryGroupValidatorComponent extends BaseComponent<Res
 
         @Override
         boolean isConnectorPropertyDefined() {
-            PropertyMap connector = configuration.getMap(CONNECTOR_PROPERTY);
-            if (connector != null) {
-                return isNotBlank(connector.getSimpleValue("name:0", EMPTY_STRING));
+            PropertyList connector = configuration.getList(CONNECTOR_PROPERTY);
+            if (connector != null && connector.getList().size() > 0) {
+                Property property = connector.getList().get(0);
+                if (property instanceof PropertySimple) {
+                    PropertySimple propertySimple = (PropertySimple) property;
+                    return isNotBlank(propertySimple.getStringValue());
+                }
             }
             return false;
         }
@@ -172,8 +174,17 @@ public class ConnectorDiscoveryGroupValidatorComponent extends BaseComponent<Res
                     .getSimpleValue(DISCOVERY_GROUP_NAME)));
             } else {
                 compositeOperation.addStep(new UndefineAttribute(address, DISCOVERY_GROUP_NAME));
-                compositeOperation.addStep(new WriteAttribute(address, CONNECTOR_ATTRIBUTE, Collections.singletonMap(
-                    configuration.getMap(CONNECTOR_PROPERTY).getSimpleValue("name:0", EMPTY_STRING), null)));
+                List<Property> propertyList = configuration.getList(CONNECTOR_PROPERTY).getList();
+                List<String> connectors = new ArrayList<String>(propertyList.size());
+                for (Property property : propertyList) {
+                    if (property instanceof PropertySimple) {
+                        PropertySimple propertySimple = (PropertySimple) property;
+                        connectors.add(propertySimple.getStringValue());
+                    } else {
+                        throw new IllegalArgumentException(property.getName() + " property has unexpected type: " + property.getClass());
+                    }
+                }
+                compositeOperation.addStep(new WriteAttribute(address, CONNECTOR_PROPERTY, connectors));
             }
             return compositeOperation;
         }

@@ -95,6 +95,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
     public static final String MANAGED_SERVER = "Managed Server";
 
+    private static final String PROFILE_SUFFIX = " (Profile)";
+
     /**
      * @deprecated as of 4.10. Use your own logger or {@link #getLog()} method.
      */
@@ -952,4 +954,12 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     public static Log getLog() {
         return LOG;
     }
+
+    public static String resourceTypeNameByRemovingProfileSuffix(String resourceTypeName) {
+        if (resourceTypeName.endsWith(PROFILE_SUFFIX)) {
+            resourceTypeName = resourceTypeName.substring(0, resourceTypeName.length() - PROFILE_SUFFIX.length());
+        }
+        return resourceTypeName;
+    }
+
 }

@@ -5377,7 +5377,10 @@
             <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
             <c:simple-property name="producer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
             <c:simple-property name="producer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
+            <!--
+            Currently not working on EAP7, see: https://issues.jboss.org/browse/JBEAP-4506
             <c:simple-property name="protocol-manager-factory" required="false" type="string" readOnly="false" description="The protocol manager factory used by this connection factory."/>
+            -->
             <c:simple-property name="reconnect-attempts:expr" required="false" type="string" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
             <c:simple-property name="retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
             <c:simple-property name="retry-interval-multiplier:expr" required="false" type="string" readOnly="false" defaultValue="1.0"
@@ -5431,16 +5434,6 @@
             <c:list-property name="entries" required="true" description="The jndi names the connection factory should be bound to." >
               <c:simple-property name="entries" />
             </c:list-property>
-            <c:simple-property name="factory-type" required="false" type="string" readOnly="false" defaultValue="GENERIC" description="The type of connection factory. The default value is GENERIC.">
-              <c:property-options>
-                <c:option value="GENERIC" name="GENERIC"/>
-                <c:option value="QUEUE" name="QUEUE"/>
-                <c:option value="TOPIC" name="TOPIC"/>
-                <c:option value="XA_GENERIC" name="XA_GENERIC"/>
-                <c:option value="XA_QUEUE" name="XA_QUEUE"/>
-                <c:option value="XA_TOPIC" name="XA_TOPIC"/>
-              </c:property-options>
-            </c:simple-property>
             <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false"
                                description="True to fail over on initial connection. The default value is false."/>
             <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
@@ -8385,11 +8378,11 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="durable" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
+            <c:simple-property name="durable" required="false" type="boolean" readOnly="true" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
             <c:list-property name="entries" required="true" description="The jndi names the queue will be bound to." >
                 <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
             </c:list-property>
-            <c:simple-property name="selector" required="false" type="string" readOnly="false" description="The queue selector."/>
+            <c:simple-property name="selector" required="false" type="string" readOnly="true" description="The queue selector."/>
           </resource-configuration>
         </service>
 
@@ -8470,7 +8463,9 @@
             <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
             <c:simple-property name="producer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
             <c:simple-property name="producer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
+            <!-- Currently not working on EAP7, see: https://issues.jboss.org/browse/JBEAP-4506
             <c:simple-property name="protocol-manager-factory" required="false" type="string" readOnly="false" description="The protocol manager factory used by this connection factory."/>
+            -->
             <c:simple-property name="reconnect-attempts:expr" required="false" type="string" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
             <c:simple-property name="retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
             <c:simple-property name="retry-interval-multiplier:expr" required="false" type="string" readOnly="false" defaultValue="1.0"
@@ -8524,16 +8519,6 @@
             <c:list-property name="entries" required="true" description="The jndi names the connection factory should be bound to." >
               <c:simple-property name="entries" />
             </c:list-property>
-            <c:simple-property name="factory-type" required="false" type="string" readOnly="false" defaultValue="GENERIC" description="The type of connection factory. The default value is GENERIC.">
-              <c:property-options>
-                <c:option value="GENERIC" name="GENERIC"/>
-                <c:option value="QUEUE" name="QUEUE"/>
-                <c:option value="TOPIC" name="TOPIC"/>
-                <c:option value="XA_GENERIC" name="XA_GENERIC"/>
-                <c:option value="XA_QUEUE" name="XA_QUEUE"/>
-                <c:option value="XA_TOPIC" name="XA_TOPIC"/>
-              </c:property-options>
-            </c:simple-property>
             <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false"
                                description="True to fail over on initial connection. The default value is false."/>
             <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
@@ -14877,11 +14862,11 @@
         <metric property="queue-address" dataType="trait" description="The queue address defines what address is used for routing messages."/>
 
         <resource-configuration>
-          <c:simple-property name="durable" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
+          <c:simple-property name="durable" required="false" type="boolean" readOnly="true" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
           <c:list-property name="entries" required="true" description="The jndi names the queue will be bound to.">
             <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
-          <c:simple-property name="selector" required="false" type="string" readOnly="false" description="The queue selector."/>
+          <c:simple-property name="selector" required="false" type="string" readOnly="true" description="The queue selector."/>
         </resource-configuration>
       </service>
 
@@ -15064,7 +15049,10 @@
           <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
           <c:simple-property name="producer-max-rate:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
           <c:simple-property name="producer-window-size:expr" required="false" type="string" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
+          <!--
+          Currently not supported on EAP7, see: https://issues.jboss.org/browse/JBEAP-4506
           <c:simple-property name="protocol-manager-factory" required="false" type="string" readOnly="false" description="The protocol manager factory used by this connection factory."/>
+          -->
           <c:simple-property name="reconnect-attempts:expr" required="false" type="string" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
           <c:simple-property name="retry-interval:expr" required="false" type="string" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
           <c:simple-property name="retry-interval-multiplier:expr" required="false" type="string" readOnly="false" defaultValue="1.0"
@@ -15118,16 +15106,6 @@
           <c:list-property name="entries" required="true" description="The jndi names the connection factory should be bound to." >
             <c:simple-property name="entries" />
           </c:list-property>
-          <c:simple-property name="factory-type" required="false" type="string" readOnly="false" defaultValue="GENERIC" description="The type of connection factory. The default value is GENERIC.">
-            <c:property-options>
-              <c:option value="GENERIC" name="GENERIC"/>
-              <c:option value="QUEUE" name="QUEUE"/>
-              <c:option value="TOPIC" name="TOPIC"/>
-              <c:option value="XA_GENERIC" name="XA_GENERIC"/>
-              <c:option value="XA_QUEUE" name="XA_QUEUE"/>
-              <c:option value="XA_TOPIC" name="XA_TOPIC"/>
-            </c:property-options>
-          </c:simple-property>
           <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false"
                              description="True to fail over on initial connection. The default value is false."/>
           <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>

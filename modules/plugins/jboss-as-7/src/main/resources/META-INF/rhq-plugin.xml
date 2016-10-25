@@ -114,7 +114,7 @@
 
     <!ENTITY managementInterfaceSecureConnectionSettings '
     <c:group name="secureConnectionSettings">
-      <c:simple-property name="trustStrategy" default="standard">
+      <c:simple-property name="trustStrategy" default="standard" defaultValue="standard">
         <c:description>
           Defines the trust strategy to use when reading the server certificate:
           &lt;ul&gt;
@@ -129,7 +129,7 @@
           <c:option value="trustAny" name="Trust Any"/>
         </c:property-options>
       </c:simple-property>
-      <c:simple-property name="hostnameVerification" default="strict">
+      <c:simple-property name="hostnameVerification" default="strict" defaultValue="strict">
         <c:description>
           Defines the hostname verification logic:
           &lt;ul&gt;
@@ -147,12 +147,12 @@
           <c:option value="skip" name="Skip"/>
         </c:property-options>
       </c:simple-property>
-      <c:simple-property name="truststore" required="false">
+      <c:simple-property name="truststore" required="false" defaultValue=" " default=" ">
         <c:description>
           Path to a truststore file. If undefined, the JVM default truststore is used.
         </c:description>
       </c:simple-property>
-      <c:simple-property name="truststoreType" required="false" default="jks">
+      <c:simple-property name="truststoreType" required="false" default="jks" defaultValue="jks">
         <c:description>
           Truststore file format (required when the &lt;em&gt;Truststore&lt;/em&gt; property is set).
           All certified JVMs support &lt;em&gt;jks&lt;/em&gt; (Java KeyStore) or &lt;em&gt;pkcs12&lt;/em&gt; formats.
@@ -162,18 +162,18 @@
           <c:option value="pkcs12"/>
         </c:property-options>
       </c:simple-property>
-      <c:simple-property name="truststorePassword" required="false" type="password">
+      <c:simple-property name="truststorePassword" required="false" type="password" defaultValue=" " default=" ">
         <c:description>
           Password protecting the truststore file.
         </c:description>
       </c:simple-property>
-      <c:simple-property name="clientcertAuthentication" default="false" type="boolean" displayName="Client Certificate Authentication"/>
-      <c:simple-property name="keystore" required="false">
+      <c:simple-property name="clientcertAuthentication" default="false" defaultValue="false" type="boolean" displayName="Client Certificate Authentication"/>
+      <c:simple-property name="keystore" required="false" defaultValue=" " default=" ">
         <c:description>
           Path to a keystore file. Required when &lt;em&gt;Client Certificate Authentication&lt;/em&gt; is on.
         </c:description>
       </c:simple-property>
-      <c:simple-property name="keystoreType" required="false" default="jks">
+      <c:simple-property name="keystoreType" required="false" default="jks" defaultValue="jks" >
         <c:description>
           Keystore file format (required when the &lt;em&gt;Keystore&lt;/em&gt; property is set).
           All certified JVMs support &lt;em&gt;jks&lt;/em&gt; (Java KeyStore) or &lt;em&gt;pkcs12&lt;/em&gt; formats.
@@ -183,12 +183,12 @@
           <c:option value="pkcs12"/>
         </c:property-options>
       </c:simple-property>
-      <c:simple-property name="keystorePassword" required="false" type="password">
+      <c:simple-property name="keystorePassword" required="false" type="password" defaultValue=" " default=" ">
         <c:description>
           Password protecting the keystore file.
         </c:description>
       </c:simple-property>
-      <c:simple-property name="keyPassword" required="false" type="password">
+      <c:simple-property name="keyPassword" required="false" type="password" defaultValue=" " default=" ">
         <c:description>
           Password protecting the secret key in the keystore file.
         </c:description>
@@ -1108,12 +1108,18 @@
           description="Domain controller (delegate) for this host">
 
     <plugin-configuration>
-      <c:simple-property name="hostname" default="localhost" required="true" description="Host name of the domain API"/>
-      <c:simple-property name="port" default="9990" type="integer" required="true" description="Port of the domain API"/>
-      <c:simple-property name="secure" default="false" type="boolean" description="Encrypted transport indicator"/>
-      <c:simple-property name="user" type="string" description="Management user for a secured Host controller" required="false"/>
-      <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
-      <c:simple-property name="managementConnectionTimeout" type="long" description="Maximum time in milliseconds to keep alive an idle management connection. Zero and negative values will disable connection persistence. Defaults to 5000 ms." required="false" default="5000"/>
+      <c:simple-property name="hostname" default="localhost" defaultValue="localhost" required="true"
+                         description="Host name of the domain API"/>
+      <c:simple-property name="port" default="9990" defaultValue="9990" type="integer" required="true"
+                         description="Port of the domain API"/>
+      <c:simple-property name="secure" defaultValue="false" default="false" type="boolean"
+                         description="Encrypted transport indicator"/>
+      <c:simple-property name="user" defaultValue=" " default=" " type="string"
+                         description="Management user for a secured Host controller" required="false"/>
+      <c:simple-property name="password" defaultValue=" " default=" " type="password"
+                         description="Password for the management user" required="false"/>
+      <c:simple-property name="managementConnectionTimeout" type="long"
+                         description="Maximum time in milliseconds to keep alive an idle management connection. Zero and negative values will disable connection persistence. Defaults to 5000 ms." required="false" default="5000" defaultValue="5000"/>
       <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="false"/>
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
@@ -1493,12 +1499,16 @@
           supportsManualAdd="true">
 
     <plugin-configuration>
-      <c:simple-property name="hostname" default="localhost" required="true"/>
-      <c:simple-property name="port" default="9990" type="integer" required="true"/>
-      <c:simple-property name="secure" default="false" type="boolean" description="Encrypted transport indicator"/>
-      <c:simple-property name="user" type="string" description="Management user for a secured AS" required="false"/>
-      <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
-      <c:simple-property name="managementConnectionTimeout" type="long" description="Maximum time in milliseconds to keep alive an idle management connection. Zero and negative values will disable connection persistence. Defaults to 5000 ms." required="false" default="5000"/>
+      <c:simple-property name="hostname" default="localhost" defaultValue="localhost" required="true"/>
+      <c:simple-property name="port" defaultValue="9990" default="9990" type="integer" required="true"/>
+      <c:simple-property name="secure" defaultValue="false" default="false" type="boolean"
+                         description="Encrypted transport indicator"/>
+      <c:simple-property name="user" type="string" defaultValue="rhqadmin"
+                         description="Management user for a secured AS" required="false"/>
+      <c:simple-property name="password" type="password" defaultValue="rhqadmin" default="rhqadmin"
+                         description="Password for the management user" required="false"/>
+      <c:simple-property name="managementConnectionTimeout" defaultValue="5000" type="long"
+                         description="Maximum time in milliseconds to keep alive an idle management connection. Zero and negative values will disable connection persistence. Defaults to 5000 ms." required="false" default="5000"/>
       <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="false"/>
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
@@ -1565,8 +1575,8 @@
             for these changes to take effect.
           </c:description>
         </c:simple-property>
-        <c:simple-property name="nativeHost" default="127.0.0.1" required="true" description="Native management API host"/>
-        <c:simple-property name="nativePort" type="integer" required="true" default="9999" description="Native management API port" />
+        <c:simple-property name="nativeHost" defaultValue="127.0.0.1" default="127.0.0.1" required="true" description="Native management API host"/>
+        <c:simple-property name="nativePort" type="integer" required="true" default="9999" defaultValue="9999" description="Native management API port" />
         <c:simple-property name="nativeLocalAuth" required="false" displayName="Native Local Authentication" type="boolean">
             <c:description>
             Specifies if the local authentication should be used to interact with the EAP CLI 

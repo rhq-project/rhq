@@ -21,6 +21,8 @@ package org.rhq.modules.plugins.wildfly10;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 
 /**
@@ -42,6 +44,16 @@ public class JmsComponent extends ConnectorDiscoveryGroupValidatorComponent {
 
         //defer the rest of the validation for connector and discovery group name to
         //the base class
-        super.updateResourceConfiguration(report);
+        // Except for JMS Queue and JMS Topic, those don't have connector or discovery group name.
+        ResourceType resourceType = context.getResourceType();
+        String resourceTypeName = resourceType.getName();
+        resourceTypeName = BaseComponent.resourceTypeNameByRemovingProfileSuffix(resourceTypeName);
+        if (!resourceTypeName.equals("JMS Queue") && !resourceTypeName.equals("JMS Topic")) {
+            super.updateResourceConfiguration(report);
+        } else {
+            ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+            ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, getASConnection(), address);
+            delegate.updateResourceConfiguration(report);
+        }
     }
 }

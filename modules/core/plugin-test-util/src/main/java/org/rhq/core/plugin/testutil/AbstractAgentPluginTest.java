@@ -108,7 +108,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
     private FakeServerInventory serverInventory;
 
-    private static String PLATFORM_PLUGIN_VERSION = "4.12.0.JON330GA"; //hard code for now.
+    private static String PLATFORM_PLUGIN_VERSION = "4.12.0.JON330GA-redhat-1"; //hard code for now.
 
     @Deployment(name = "platform", order = 1)
     protected static RhqAgentPluginArchive getPlatformPlugin() throws Exception {

@@ -619,4 +619,9 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         return metaData.getDatabaseMajorVersion() >= 9 && metaData.getDatabaseMinorVersion() >= 2;
     }
 
+    boolean isVersionGreaterThanOrEqualTo90(Connection connection) throws SQLException {
+        DatabaseMetaData metaData = connection.getMetaData();
+        return metaData.getDatabaseMajorVersion() >= 9;
+    }
+
 }

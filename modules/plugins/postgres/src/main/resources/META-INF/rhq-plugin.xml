@@ -485,6 +485,12 @@
               </results>
           </operation>
 
+        <operation name="vacuumlo" displayName="Remove orphan large objects" description="Removes orphaned large objects from pg_largeobject">
+          <results>
+            <c:simple-property name="result"/>
+          </results>
+        </operation>
+
          <metric displayName="Backends" property="numbackends"
                  description="Number of active server processes for database"/>
          <metric displayName="Transactions Committed" property="xact_commit" measurementType="trendsup" displayType="summary"

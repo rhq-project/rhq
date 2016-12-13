@@ -1237,7 +1237,9 @@ public class ServiceContainer {
         if (SecurityUtil.isTransportSecure(transport)) {
             LOG.debug(CommI18NResourceKeys.SERVICE_CONTAINER_NEEDS_SECURITY_SERVICES, transport);
 
-            initializeSecurityServices();
+            if (transport.equals("sslsocket")) {
+                initializeSecurityServices();
+            }
 
             connector_config.put(ServerInvoker.SERVER_SOCKET_FACTORY, OBJECTNAME_SSL_SERVERSOCKET_FACTORY.toString());
 

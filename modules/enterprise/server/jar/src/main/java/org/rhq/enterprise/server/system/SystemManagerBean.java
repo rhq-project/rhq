@@ -23,6 +23,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.DateFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -910,9 +911,13 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     private void fillCache(Collection<SystemConfiguration> configs) {
         SystemSettings settings = new SystemSettings();
 
+        String[] obsoleteValues = {"PARTITION_EVENT_PURGE", "RESOURCE_CONFIG_HISTORY_PURGE"};
+
         for (SystemConfiguration config : configs) {
-            SystemSetting prop = SystemSetting.getByInternalName(config.getPropertyKey());
-            if (prop == null) {
+            String configKey = config.getPropertyKey();
+
+            SystemSetting prop = SystemSetting.getByInternalName(configKey);
+            if (prop == null && !Arrays.asList(obsoleteValues).contains(configKey) ) {
                 LOG.warn("The database contains unknown system configuration setting [" + config.getPropertyKey()
                     + "].");
                 continue;

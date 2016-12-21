@@ -1295,6 +1295,9 @@ public class ConditionEditor extends EnhancedVLayout {
         MeasurementDefinition defaultMeasDef = getMeasurementDefinition((String) metricDropDownMenu
             .getAttributeAsMap("valueMap").keySet().iterator().next());
         MeasurementUnits units = defaultMeasDef.getUnits();
+        if (editMode) {
+            units = existingCondition.getMeasurementDefinition().getUnits();
+        }
         baseUnitsItem.setValue(units == MeasurementUnits.NONE ? MSG.common_val_none() : units.toString());
         List<MeasurementUnits> availableUnits = units.getFamilyUnits();
         baseUnitsItem.setTooltip(MSG.view_alert_definition_condition_editor_common_baseUnits_availableUnits()

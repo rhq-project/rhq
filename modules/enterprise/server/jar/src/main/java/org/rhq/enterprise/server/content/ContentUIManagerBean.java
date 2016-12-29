@@ -299,6 +299,12 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
             }
         });
 
+        // Trim modifiedResults to match pc.
+        modifiedResults = modifiedResults.subList(
+                Math.min(pc.getStartRow(), modifiedResults.size()),
+                Math.min(pc.getStartRow() + pc.getPageSize(), modifiedResults.size())
+        );
+
         return new PageList<PackageVersionComposite>(modifiedResults, (int) count, pc);
     }
 
@@ -384,6 +390,12 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
                 return p1.getPackageName().compareToIgnoreCase(p2.getPackageName());
             }
         });
+
+        // Trim finalResults to match pc.
+        finalResults = finalResults.subList(
+                Math.min(pc.getStartRow(), finalResults.size()),
+                Math.min(pc.getStartRow() + pc.getPageSize(), finalResults.size())
+        );
 
         return new PageList<PackageVersionComposite>(finalResults, (int) count, pc);
     }

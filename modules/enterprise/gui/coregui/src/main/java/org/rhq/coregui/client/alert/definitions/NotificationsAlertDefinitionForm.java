@@ -216,11 +216,18 @@ public class NotificationsAlertDefinitionForm extends EnhancedVLayout implements
             return null;
         }
 
+        AlertNotification[] prepareNotificationsForPreview(){
+            for(AlertNotification n: notifications){
+                n.getAlertDefinition().getResource().getAlertDefinitions().clear();
+            }
+            return notifications.toArray(new AlertNotification[notifications.size()]);
+        }
+
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
             final Record[] records = buildRecords(notifications); // partially builds the records, but we need to do another remote call to get the config preview
 
-            AlertNotification[] notifs = notifications.toArray(new AlertNotification[notifications.size()]);
+            AlertNotification[] notifs = prepareNotificationsForPreview();
             GWTServiceLookup.getAlertDefinitionService().getAlertNotificationConfigurationPreview(notifs,
                 new AsyncCallback<String[]>() {
                     @Override

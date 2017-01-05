@@ -30,6 +30,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -59,6 +60,8 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
     private BundleVersion latestVersion;
     private BundleVersion liveVersion;
 
+    private boolean fetchingConfiguration = false;
+
     public SelectBundleVersionStep(BundleDeployWizard wizard) {
         this.wizard = wizard;
     }
@@ -68,6 +71,7 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
     }
 
     public Canvas getCanvas() {
+        fetchingConfiguration = false;
         if (form == null) {
             form = new DynamicForm();
             form.setWidth100();
@@ -116,7 +120,7 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
     private void setItemValues() {
         BundleVersionCriteria criteria = new BundleVersionCriteria();
         criteria.addFilterBundleId(wizard.getBundleId());
-        criteria.fetchConfigurationDefinition(true);
+        criteria.fetchConfigurationDefinition(false);
         GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(criteria, //
             new AsyncCallback<PageList<BundleVersion>>() {
 
@@ -187,6 +191,38 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
     }
 
     public boolean nextPage() {
-        return form.validate() && (null != this.wizard.getBundleVersion());
+        if (form.validate() && (null != this.wizard.getBundleVersion())) {
+            if (this.wizard.getBundleVersion().getConfigurationDefinition().getName() != null) {
+                return true;
+            } else if(fetchingConfiguration == false) {
+                fetchingConfiguration = true;
+                BundleVersionCriteria criteria = new BundleVersionCriteria();
+                criteria.addFilterBundleId(wizard.getBundleId());
+                criteria.fetchConfigurationDefinition(true);
+                criteria.addFilterVersion(wizard.getBundleVersion().getVersion());
+                GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(caught.getMessage(), caught);
+                        fetchingConfiguration = false;
+                    }
+
+                    @Override
+                    public void onSuccess(PageList<BundleVersion> result) {
+                        if (result.size() == 0) {
+                            CoreGUI.getErrorHandler().handleError("Couldn't find requested Bundle version.");
+                        } else {
+                            ConfigurationDefinition configDef = result.get(0).getConfigurationDefinition();
+                            wizard.getBundleVersion().setConfigurationDefinition(configDef);
+                            wizard.getView().incrementStep();
+                        }
+                        fetchingConfiguration = false;
+                    }
+                });
+            } else {
+                this.wizard.getView().showMessage("Please wait while loading the Bundle configuration.");
+            }
+        }
+        return false;
     }
 }

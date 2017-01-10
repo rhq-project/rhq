@@ -1246,6 +1246,15 @@ public class ServiceContainer {
             if (transport.equals("https")) {
                 connector_config.put("SSLImplementation", RemotingSSLImplementation.class.getName());
             }
+
+            if (transport.equals("sslservlet") || transport.equals("https")) {
+                String tomcatAuthMode = "rhq.server.tomcat.security.client-auth-mode";
+                String tomcatAuthModeValue = System.getProperty("rhq.server.tomcat.security.client-auth-mode");
+                if (!tomcatAuthModeValue.equals("true") && !tomcatAuthModeValue.equals("false")) {
+                    LOG.warn(CommI18NResourceKeys.SERVICE_CONTAINER_CONFIGURATION_INVALID_TOMCAT_CLIENT_AUTH,
+                            tomcatAuthMode, tomcatAuthModeValue, "true", "false");
+                }
+            }
         }
 
         // we can now instantiate our connector with the locator URI and other configuration

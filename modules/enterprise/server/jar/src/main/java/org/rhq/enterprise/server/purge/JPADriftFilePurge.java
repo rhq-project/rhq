@@ -19,23 +19,31 @@
 
 package org.rhq.enterprise.server.purge;
 
-import static org.rhq.core.db.DatabaseTypeFactory.isOracle;
-import static org.rhq.core.db.DatabaseTypeFactory.isPostgres;
-
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
 
 import javax.sql.DataSource;
 import javax.transaction.UserTransaction;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.db.DatabaseType;
+import org.rhq.core.util.jdbc.JDBCUtil;
+
+import static org.rhq.core.db.DatabaseTypeFactory.isOracle;
+import static org.rhq.core.db.DatabaseTypeFactory.isPostgres;
 
 /**
  * @author Thomas Segismont
  */
 public class JPADriftFilePurge extends PurgeTemplate<String> {
     private static final String ENTITY_NAME = "JPADriftFile";
+    private static final Log LOG = LogFactory.getLog(JPADriftFilePurge.class);
 
     // Don't use NOT IN as NOT IN(NULL) will always return false
     // See http://stackoverflow.com/questions/17150208/sql-query-with-not-in-returning-no-rows
@@ -98,5 +106,36 @@ public class JPADriftFilePurge extends PurgeTemplate<String> {
     @Override
     protected void setDeleteRowByKeyQueryParams(PreparedStatement preparedStatement, String key) throws SQLException {
         preparedStatement.setString(1, key);
+    }
+
+    @Override
+    protected int deleteRows(List<String> selectedKeys) throws Exception {
+        if(isPostgres(databaseType)) {
+            // Unlink each object first
+            Connection connection = null;
+            PreparedStatement preparedStatement = null;
+            try {
+                Statement unlinkStatement = connection.createStatement();
+                String unlinkSQLProto = "SELECT lo_unlink(%s)";
+
+                PreparedStatement oidPs = connection.prepareStatement("SELECT data FROM public" +
+                        ".rhq_drift_file WHERE hash_id = ?");
+
+                for (String key : selectedKeys) {
+                    oidPs.setString(1, key);
+                    ResultSet rs = oidPs.executeQuery();
+                    while(rs.next()) {
+                        int oid = rs.getInt(1);
+                        String sqlUnlink = String.format(unlinkSQLProto, oid);
+                        unlinkStatement.execute(sqlUnlink);
+                    }
+                    rs.close();
+                }
+            } finally {
+                JDBCUtil.safeClose(connection, preparedStatement, null);
+                rollbackIfTransactionActive();
+            }
+        }
+        return super.deleteRows(selectedKeys);
     }
 }

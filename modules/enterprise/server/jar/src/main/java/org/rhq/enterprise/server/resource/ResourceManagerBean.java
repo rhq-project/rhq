@@ -845,7 +845,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
                 ResultSet rs = ps.executeQuery();
                 while(rs.next()) {
-                    int oid = rs.getInt(0);
+                    int oid = rs.getInt(1);
                     String sqlUnlink = String.format(unlinkSQLProto, oid);
                     unlinkStatement.execute(sqlUnlink);
                 }

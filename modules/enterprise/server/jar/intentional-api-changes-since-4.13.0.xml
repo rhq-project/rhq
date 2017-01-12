@@ -79,4 +79,11 @@
     <method>void reconfigureSystem(*)</method>
     <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1306231</justification>
   </difference>
+  <difference>
+    <className>org/rhq/enterprise/server/content/ContentManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- number of args changed -->
+    <method>void removeHistoryDeploymentsBits(org.rhq.core.domain.auth.Subject)</method>
+    <justification> Ability for remove bits of old deployment versions
+      https://bugzilla.redhat.com/show_bug.cgi?id=1386913</justification>
+  </difference>
 </differences>

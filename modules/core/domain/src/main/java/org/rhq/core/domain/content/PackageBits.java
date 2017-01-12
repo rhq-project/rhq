@@ -64,7 +64,6 @@ public class PackageBits implements Serializable {
 
     public static final String QUERY_PACKAGE_BITS_LOADED_STATUS_PACKAGE_VERSION_ID = "PackageBits.isLoaded";
     public static final String DELETE_IF_NO_PACKAGE_VERSION = "PackageBits.deleteIfNoPackageVersion";
-
     /**
      *  Can be used as initial contents for a PackageVersion's PackageBits whenever a predictable non-null
      *  value is required. Use as an initial value for the PackageBits.blob.bits. The value will

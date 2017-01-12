@@ -32,6 +32,7 @@ import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -2037,6 +2038,15 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             ResultSet rs = ps.executeQuery();
             try {
                 while (rs.next()) {
+
+                    if(DatabaseTypeFactory.isPostgres(DatabaseTypeFactory.getDefaultDatabaseType())) {
+                        // Unlink the current blob
+                        int unlinkedBlob = rs.getInt(1);
+                        Statement unlinkStatement = conn.createStatement();
+                        String unlinkSQLProto = "SELECT lo_unlink(%s)";
+                        String sqlUnlink = String.format(unlinkSQLProto, unlinkedBlob);
+                        unlinkStatement.execute(sqlUnlink);
+                    }
 
                     //We can not create a blob directly because BlobImpl from Hibernate is not acceptable
                     //for oracle and Connection.createBlob is not working on postgres.

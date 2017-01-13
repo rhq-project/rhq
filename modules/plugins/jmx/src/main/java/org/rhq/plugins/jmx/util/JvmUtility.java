@@ -35,10 +35,12 @@ import com.sun.tools.attach.VirtualMachineDescriptor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.ProcCred;
-import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
+import org.hyperic.sigar.SigarProxy;
 
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.system.SigarAccess;
+import org.rhq.core.system.SystemInfoException;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
@@ -142,14 +144,14 @@ public class JvmUtility {
     }
 
     private static long getAgentProcessUid() {
-        Sigar sigar = new Sigar();
         try {
+            SigarProxy sigar = SigarAccess.getSigar();
             ProcCred procCred = sigar.getProcCred(sigar.getPid());
             return procCred.getEuid();
+        } catch (SystemInfoException e) {
+            return 0;
         } catch (SigarException e) {
             return 0;
-        } finally {
-            sigar.close();
         }
     }
 

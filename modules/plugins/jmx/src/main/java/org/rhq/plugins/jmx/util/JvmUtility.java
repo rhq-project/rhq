@@ -31,8 +31,13 @@ import javax.management.remote.JMXServiceURL;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.ProcCred;
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
+
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
@@ -104,9 +109,24 @@ public class JvmUtility {
         List<VirtualMachineDescriptor> vmDescriptors = VirtualMachine.list();
         for (VirtualMachineDescriptor vmDescriptor : vmDescriptors) {
             if (Long.valueOf(vmDescriptor.id()) == process.getPid()) {
+
+                boolean attachPossible = false;
+
                 String vmUserName = process.getCredentialsName().getUser();
                 String agentUserName = System.getProperty("user.name");
-                if (vmUserName.equals(agentUserName)) {
+
+                if(vmUserName == null || agentUserName == null) {
+                    // By default this would make more sense, but lets not break any existing behavior
+                    long targetEuid = process.freshSnapshot().getCredentials().getEuid();
+                    long agentEuid = getAgentProcessUid();
+                    if(agentEuid > 0 && targetEuid == agentEuid) {
+                        attachPossible = true;
+                    }
+                } else {
+                    attachPossible = agentUserName.equals(vmUserName);
+                }
+
+                if (attachPossible) {
                     LOG.debug("Attaching to JVM for java process with PID [" + process.getPid() + "]...");
                     vm = VirtualMachine.attach(vmDescriptor);
                     LOG.debug("Attached to JVM [" + vm + "].");
@@ -119,6 +139,18 @@ public class JvmUtility {
             }
         }
         return vm;
+    }
+
+    private static long getAgentProcessUid() {
+        Sigar sigar = new Sigar();
+        try {
+            ProcCred procCred = sigar.getProcCred(sigar.getPid());
+            return procCred.getEuid();
+        } catch (SigarException e) {
+            return 0;
+        } finally {
+            sigar.close();
+        }
     }
 
     private static String getJmxConnectorAddress(VirtualMachine vm) throws IOException {

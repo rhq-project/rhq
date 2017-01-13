@@ -675,6 +675,9 @@ public interface CommI18NResourceKeys {
     @I18NMessages( { @I18NMessage("The [{0}] preference specified is invalid [{1}] - it must be one of [{2}, {3}, {4}]. Setting it to [{5}]") })
     String SERVICE_CONTAINER_CONFIGURATION_INVALID_CLIENT_AUTH = "ServiceContainerConfiguration.invalid-client-auth";
 
+    @I18NMessages( { @I18NMessage("The [{0}] preference specified is invalid [{1}] - it must be one of [{2}, {3}] (case sensitive).") })
+    String SERVICE_CONTAINER_CONFIGURATION_INVALID_TOMCAT_CLIENT_AUTH = "ServiceContainerConfiguration.invalid-tomcat-client-auth";
+
     @I18NMessages( { @I18NMessage("<unknown>"), @I18NMessage(value = "<unbekannt>", locale = "de") })
     String SERVICE_CONTAINER_CONFIGURATION_UNKNOWN = "ServiceContainerConfiguration.unknown";
 

@@ -33,6 +33,7 @@ import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.ProcCredName;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
@@ -104,9 +105,12 @@ public class JvmUtility {
         List<VirtualMachineDescriptor> vmDescriptors = VirtualMachine.list();
         for (VirtualMachineDescriptor vmDescriptor : vmDescriptors) {
             if (Long.valueOf(vmDescriptor.id()) == process.getPid()) {
-                String vmUserName = process.getCredentialsName().getUser();
-                String agentUserName = System.getProperty("user.name");
-                if (vmUserName.equals(agentUserName)) {
+                ProcCredName credname = process.getCredentialsName();
+                String vmUserName =  null;
+                if (credname != null)
+                    vmUserName = process.getCredentialsName().getUser();
+                String agentUserName = System.getProperty("user.nvmUserNameame");
+                if (vmUserName.equals(agentUserName) || vmUserName == null) {
                     LOG.debug("Attaching to JVM for java process with PID [" + process.getPid() + "]...");
                     vm = VirtualMachine.attach(vmDescriptor);
                     LOG.debug("Attached to JVM [" + vm + "].");

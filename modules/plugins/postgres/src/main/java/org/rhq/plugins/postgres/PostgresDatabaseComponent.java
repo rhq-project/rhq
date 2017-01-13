@@ -19,18 +19,14 @@
 
 package org.rhq.plugins.postgres;
 
-import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
-import static org.rhq.core.domain.measurement.AvailabilityType.UP;
-import static org.rhq.core.domain.resource.CreateResourceStatus.FAILURE;
-import static org.rhq.core.domain.resource.CreateResourceStatus.SUCCESS;
-import static org.rhq.plugins.postgres.PostgresDiscoveryComponent.buildConnection;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -55,6 +51,12 @@ import org.rhq.plugins.database.ConnectionPoolingSupport;
 import org.rhq.plugins.database.DatabaseComponent;
 import org.rhq.plugins.database.DatabasePluginUtil;
 import org.rhq.plugins.database.PooledConnectionProvider;
+
+import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.rhq.core.domain.resource.CreateResourceStatus.FAILURE;
+import static org.rhq.core.domain.resource.CreateResourceStatus.SUCCESS;
+import static org.rhq.plugins.postgres.PostgresDiscoveryComponent.buildConnection;
 
 public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServerComponent<?>>,
     ConnectionPoolingSupport, MeasurementFacet, CreateChildResourceFacet, OperationFacet {
@@ -262,6 +264,8 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
             return resetStatistics();
         } else if ("invokeSql".equals(name)) {
             return invokeSql(parameters);
+        } else if ("vacuumlo".equals(name)) {
+            return vacuumLo();
         } else {
             throw new UnsupportedOperationException("Operation [" + name + "] is not supported yet.");
         }
@@ -339,6 +343,93 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
             return result;
         } finally {
             DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
+        }
+    }
+
+    /**
+     * This functionality is a port of vacuumlo tool in the Postgres distribution
+     *
+     * @return OperationResult
+     */
+    private OperationResult vacuumLo() {
+        Connection c = null;
+        Statement clearVacuumL = null;
+        Statement unlinkStatement = null;
+        ResultSet rs = null;
+        try {
+            c = getPooledConnectionProvider().getPooledConnection();
+            StringBuilder b = new StringBuilder();
+            b.append("CREATE TEMP TABLE vacuum_l AS (");
+
+            if(postgresServerComponent.isVersionGreaterThanOrEqualTo90(c)) {
+                b.append("SELECT oid AS lo FROM pg_largeobject_metadata");
+            } else {
+                b.append("SELECT DISTINCT loid AS lo FROM pg_largeobject");
+            }
+
+            b.append(")");
+            PreparedStatement tempTable = c.prepareStatement(b.toString());
+            tempTable.execute();
+
+            PreparedStatement tablesPs = c.prepareStatement("SELECT s.nspname, c.relname, a.attname\n" +
+                    "FROM pg_class c, pg_attribute a, pg_namespace s, pg_type t\n" +
+                    "WHERE a.attnum > 0 AND NOT a.attisdropped\n" +
+                    "      AND a.attrelid = c.oid\n" +
+                    "      AND a.atttypid = t.oid\n" +
+                    "      AND c.relnamespace = s.oid\n" +
+                    "      AND t.typname in ('oid', 'lo')\n" +
+                    "      AND c.relkind in ('r', 'm')\n" +
+                    "      AND s.nspname !~ '^pg_'");
+            rs = tablesPs.executeQuery();
+
+            // Postgres JDBC driver can't handle this as PreparedStatement
+            clearVacuumL = c.createStatement();
+
+            while (rs.next()) {
+                String schemaName = rs.getString(1);
+                String tableName = rs.getString(2);
+                String columnName = rs.getString(3);
+
+                String sql = String.format("DELETE FROM vacuum_l WHERE lo IN (SELECT %s FROM %s.%s)", columnName,
+                        schemaName, tableName);
+
+                clearVacuumL.execute(sql);
+            }
+            rs.close();
+
+            int cleanCount = 0;
+
+            // We can't delete everything at once or Postgres might run out of shared memory for locks
+            PreparedStatement deletedOids = c.prepareStatement("SELECT lo FROM vacuum_l");
+            rs = deletedOids.executeQuery();
+
+            List<Integer> oidsToDelete = new ArrayList<Integer>();
+
+            while (rs.next()) {
+                oidsToDelete.add(rs.getInt(1));
+            }
+            rs.close();
+
+            // PostgreSQL can't handle this as PreparedStatement either
+            unlinkStatement = c.createStatement();
+            String unlinkSQLProto = "SELECT lo_unlink(%s)";
+
+            for (int i = 0; i < oidsToDelete.size(); i++) {
+                String sqlUnlink = String.format(unlinkSQLProto, oidsToDelete.get(i));
+                unlinkStatement.execute(sqlUnlink);
+                cleanCount++;
+            }
+
+            OperationResult result = new OperationResult();
+            result.getComplexResults().put(new PropertySimple("result", "Query removed " + cleanCount + " orphan large objects"));
+            return result;
+        } catch (SQLException e) {
+            OperationResult result = new OperationResult("Failed to delete orphaned objects");
+            result.setErrorMessage(e.getMessage());
+            return result;
+        } finally {
+            DatabasePluginUtil.safeClose(unlinkStatement);
+            DatabasePluginUtil.safeClose(c, clearVacuumL, rs);
         }
     }
 

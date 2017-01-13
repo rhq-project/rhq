@@ -64,9 +64,9 @@ abstract class PurgeTemplate<KEY extends Serializable> {
         LOG.info(BATCH_SIZE_SYSTEM_PROPERTY + " = " + BATCH_SIZE);
     }
 
-    private final DataSource dataSource;
-    private final UserTransaction userTransaction;
-    private final DatabaseType databaseType;
+    protected final DataSource dataSource;
+    protected final UserTransaction userTransaction;
+    protected final DatabaseType databaseType;
 
     /**
      * @param dataSource the source of JDBC connections to the database
@@ -188,7 +188,7 @@ abstract class PurgeTemplate<KEY extends Serializable> {
      */
     protected abstract KEY getKeyFromResultSet(ResultSet resultSet) throws SQLException;
 
-    private int deleteRows(List<KEY> selectedKeys) throws Exception {
+    protected int deleteRows(List<KEY> selectedKeys) throws Exception {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         try {
@@ -233,7 +233,7 @@ abstract class PurgeTemplate<KEY extends Serializable> {
     protected abstract void setDeleteRowByKeyQueryParams(PreparedStatement preparedStatement, KEY key)
         throws SQLException;
 
-    private void rollbackIfTransactionActive() {
+    protected void rollbackIfTransactionActive() {
         try {
             if (userTransaction.getStatus() == Status.STATUS_ACTIVE) {
                 userTransaction.rollback();
@@ -242,7 +242,7 @@ abstract class PurgeTemplate<KEY extends Serializable> {
         }
     }
 
-    private int evalDeletedRows(int[] results) {
+    protected int evalDeletedRows(int[] results) {
         int total = 0, failed = 0;
         for (int result : results) {
             if (result == Statement.EXECUTE_FAILED) {

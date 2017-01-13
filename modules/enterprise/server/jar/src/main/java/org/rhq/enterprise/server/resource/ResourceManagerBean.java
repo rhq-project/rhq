@@ -19,10 +19,11 @@
 
 package org.rhq.enterprise.server.resource;
 
-import static org.rhq.core.domain.criteria.Criteria.Restriction.COLLECTION_ONLY;
-import static org.rhq.core.domain.criteria.Criteria.Restriction.COUNT_ONLY;
-import static org.rhq.enterprise.server.util.CriteriaQueryGenerator.getPageControl;
-
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -48,6 +49,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -152,6 +154,10 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.QueryUtility;
 
+import static org.rhq.core.domain.criteria.Criteria.Restriction.COLLECTION_ONLY;
+import static org.rhq.core.domain.criteria.Criteria.Restriction.COUNT_ONLY;
+import static org.rhq.enterprise.server.util.CriteriaQueryGenerator.getPageControl;
+
 /**
  * A manager that provides methods for creating, updating, deleting, and querying {@link Resource}s.
  *
@@ -188,6 +194,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     private MeasurementScheduleManagerLocal measurementScheduleManager;
     @EJB
     private AvailabilityManagerLocal availabilityManager;
+
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
+    private DataSource dataSource;
 
     @Override
     public void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException {
@@ -824,6 +833,33 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     public boolean cleanPackageBits() {
         boolean hasErrors = false;
+
+        if(DatabaseTypeFactory.isPostgres(DatabaseTypeFactory.getDefaultDatabaseType())) {
+            try {
+                Connection c = dataSource.getConnection();
+
+                Statement unlinkStatement = c.createStatement();
+                String unlinkSQLProto = "SELECT lo_unlink(%s)";
+
+                PreparedStatement ps = c.prepareStatement("SELECT bits FROM public.rhq_package_bits AS pb\n" +
+                        "WHERE pb.id NOT IN ( SELECT pv.package_bits_id FROM public.rhq_package_version pv WHERE pv" +
+                        ".package_bits_id IS NOT NULL )");
+
+                ResultSet rs = ps.executeQuery();
+                while(rs.next()) {
+                    int oid = rs.getInt(1);
+                    String sqlUnlink = String.format(unlinkSQLProto, oid);
+                    unlinkStatement.execute(sqlUnlink);
+                }
+
+                rs.close();
+                ps.close();
+                c.close();
+            } catch (SQLException e) {
+                LOG.error("Could not clean orphaned LOBs from the Postgres", e);
+            }
+        }
+
         try {
             Query query = entityManager.createNamedQuery(PackageBits.DELETE_IF_NO_PACKAGE_VERSION);
             query.executeUpdate();

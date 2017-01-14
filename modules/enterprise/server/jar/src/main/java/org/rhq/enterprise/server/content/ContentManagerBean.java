@@ -2039,34 +2039,26 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             try {
                 while (rs.next()) {
 
-                    if(DatabaseTypeFactory.isPostgres(DatabaseTypeFactory.getDefaultDatabaseType())) {
-                        // Unlink the current blob
-                        int unlinkedBlob = rs.getInt(1);
-                        Statement unlinkStatement = conn.createStatement();
-                        String unlinkSQLProto = "SELECT lo_unlink(%s)";
-                        String sqlUnlink = String.format(unlinkSQLProto, unlinkedBlob);
-                        unlinkStatement.execute(sqlUnlink);
-                    }
-
                     //We can not create a blob directly because BlobImpl from Hibernate is not acceptable
                     //for oracle and Connection.createBlob is not working on postgres.
                     //This blob will be not empty because we saved there PackageBits.EMPTY_BLOB
                     Blob blb = rs.getBlob(1);
 
                     //copy the stream to the Blob
-                    long transferred = copyAndDigest(stream, blb.setBinaryStream(1), false, contentDetails);
+                    copyAndDigest(stream, blb.setBinaryStream(1), false, contentDetails);
                     stream.close();
 
-                    //populate the prepared statement for update
-                    ps2 = conn.prepareStatement("UPDATE " + PackageBits.TABLE_NAME + " SET bits = ? where id = ?");
-                    ps2.setBlob(1, blb);
-                    ps2.setInt(2, bits.getId());
-
-                    //initiate the update.
-                    if (ps2.execute()) {
-                        throw new Exception("Unable to upload the package bits to the DB:");
+                    if(!DatabaseTypeFactory.isPostgres(DatabaseTypeFactory.getDefaultDatabaseType())) {
+                        //populate the prepared statement for update
+                        ps2 = conn.prepareStatement("UPDATE " + PackageBits.TABLE_NAME + " SET bits = ? where id = ?");
+                        ps2.setBlob(1, blb);
+                        ps2.setInt(2, bits.getId());
+                        //initiate the update.
+                        if (ps2.execute()) {
+                            throw new Exception("Unable to upload the package bits to the DB:");
+                        }
+                        ps2.close();
                     }
-                    ps2.close();
                 }
             } finally {
                 rs.close();

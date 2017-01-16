@@ -25,6 +25,7 @@ import javax.faces.model.SelectItem;
  */
 public class PageControlSettingsUIBean {
     private SelectItem[] pageSizes;
+    private int minimumPageSize = 15;
     private static String MAX_ITEMS_PER_PAGE = "rhq.server.gui.max-items-per-page";
 
     public PageControlSettingsUIBean() {
@@ -33,7 +34,8 @@ public class PageControlSettingsUIBean {
             int maxItemsPerPageInt;
             if (maxItemsPerPage != null && (maxItemsPerPageInt = Integer.parseInt(maxItemsPerPage)) >= 45) {
                 // Scale default page sizes
-                String tier0 = String.valueOf(Math.max(15, (int) (maxItemsPerPageInt * 0.25)));
+                minimumPageSize = Math.max(15, (int) (maxItemsPerPageInt * 0.25));
+                String tier0 = String.valueOf(minimumPageSize);
                 String tier1 = String.valueOf(Math.max(30, (int) (maxItemsPerPageInt * 0.50)));
                 String tier2 = String.valueOf(Math.max(45, (int) (maxItemsPerPageInt * 0.75)));
                 pageSizes = new SelectItem[] { new SelectItem(tier0, tier0), new SelectItem(tier1, tier1),
@@ -54,6 +56,6 @@ public class PageControlSettingsUIBean {
     }
 
     public int getMinimumPageSize() {
-        return 15;
+        return minimumPageSize;
     }
 }

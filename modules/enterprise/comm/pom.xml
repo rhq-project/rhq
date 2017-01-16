@@ -11,7 +11,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-enterprise-comm</artifactId>
-  <version>4.12.0.JON330GA-redhat-3</version>
+  <version>4.12.0.JON330GA-redhat-4</version>
   <packaging>jar</packaging>
 
   <name>RHQ Enterprise Agent-Server Communications Layer</name>

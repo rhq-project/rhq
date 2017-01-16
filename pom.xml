@@ -312,7 +312,7 @@
     <rhq-core-gui.version>${rhq.pom.version}</rhq-core-gui.version>
     <rhq-core-native-system.version>${rhq.pom.version}-redhat-2</rhq-core-native-system.version>
     <rhq-core-plugin-api.version>${rhq.pom.version}</rhq-core-plugin-api.version>
-    <rhq-core-plugin-container.version>${rhq.pom.version}-redhat-2</rhq-core-plugin-container.version>
+    <rhq-core-plugin-container.version>${rhq.pom.version}-redhat-3</rhq-core-plugin-container.version>
     <rhq-plugin-validator.version>${rhq.pom.version}</rhq-plugin-validator.version>
     <rhq-core-plugindoc.version>${rhq.pom.version}</rhq-core-plugindoc.version>
     <rhq-core-parent.version>${rhq.pom.version}</rhq-core-parent.version>
@@ -320,7 +320,7 @@
     <rhq-enterprise-agent.version>${rhq.pom.version}</rhq-enterprise-agent.version>
     <rhq-enterprise-agentupdate.version>${rhq.pom.version}</rhq-enterprise-agentupdate.version>
     <rhq-script-bindings.version>${rhq.pom.version}-redhat-4</rhq-script-bindings.version>
-    <rhq-enterprise-comm.version>${rhq.pom.version}-redhat-3</rhq-enterprise-comm.version>
+    <rhq-enterprise-comm.version>${rhq.pom.version}-redhat-4</rhq-enterprise-comm.version>
     <rhq-agentupdate-war.version>${rhq.pom.version}</rhq-agentupdate-war.version>
     <rhq-content_http.version>${rhq.pom.version}</rhq-content_http.version>
     <rhq-coregui.version>${rhq.pom.version}</rhq-coregui.version>
@@ -346,7 +346,7 @@
     <rhq-enterprise-server-ear.version>${rhq.pom.version}</rhq-enterprise-server-ear.version>
     <rhq-installer-util.version>${rhq.pom.version}-redhat-4</rhq-installer-util.version>
     <rhq-server-itests-2.version>${rhq.pom.version}</rhq-server-itests-2.version>
-    <rhq-enterprise-server.version>${rhq.pom.version}-redhat-7</rhq-enterprise-server.version>
+    <rhq-enterprise-server.version>${rhq.pom.version}-redhat-8</rhq-enterprise-server.version>
     <alert-cli.version>${rhq.pom.version}</alert-cli.version>
     <alert-email.version>${rhq.pom.version}</alert-email.version>
     <alert-irc.version>${rhq.pom.version}</alert-irc.version>
@@ -411,7 +411,7 @@
     <jopr-jboss-as-plugin.version>${rhq.pom.version}</jopr-jboss-as-plugin.version>
     <jopr-jboss-cache-v3-plugin.version>${rhq.pom.version}</jopr-jboss-cache-v3-plugin.version>
     <jopr-jboss-cache-plugin.version>${rhq.pom.version}</jopr-jboss-cache-plugin.version>
-    <rhq-jmx-plugin.version>${rhq.pom.version}</rhq-jmx-plugin.version>
+    <rhq-jmx-plugin.version>${rhq.pom.version}-redhat-1</rhq-jmx-plugin.version>
     <rhq-kickstart-plugin.version>${rhq.pom.version}</rhq-kickstart-plugin.version>
     <modcluster-plugin.version>${rhq.pom.version}</modcluster-plugin.version>
     <rhq-mysql-plugin.version>${rhq.pom.version}</rhq-mysql-plugin.version>
@@ -423,7 +423,7 @@
     <rhq-platform-plugin.version>${rhq.pom.version}-redhat-1</rhq-platform-plugin.version>
     <rhq-plugins-parent.version>${rhq.pom.version}</rhq-plugins-parent.version>
     <rhq-postfix-plugin.version>${rhq.pom.version}</rhq-postfix-plugin.version>
-    <rhq-postgres-plugin.version>${rhq.pom.version}</rhq-postgres-plugin.version>
+    <rhq-postgres-plugin.version>${rhq.pom.version}-redhat-1</rhq-postgres-plugin.version>
     <rhq-agent-plugin.version>${rhq.pom.version}</rhq-agent-plugin.version>
     <rhq-rhqserver-plugin.version>${rhq.pom.version}</rhq-rhqserver-plugin.version>
     <rhq-rhqstorage-plugin.version>${rhq.pom.version}-redhat-1</rhq-rhqstorage-plugin.version>

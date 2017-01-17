@@ -22,6 +22,7 @@ import javax.faces.event.ActionEvent;
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
 
+import org.rhq.enterprise.gui.common.paging.PageControlSettingsUIBean;
 import org.richfaces.component.UIDataTable;
 import org.richfaces.component.UIDatascroller;
 
@@ -35,8 +36,7 @@ public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean 
     protected DataModel dataModel;
     private UIDataTable dataTable;
     private UIDatascroller datascroller;
-    private SelectItem[] pageSizes = new SelectItem[] { new SelectItem("15", "15"), new SelectItem("30", "30"),
-        new SelectItem("45", "45") };
+    private PageControlSettingsUIBean pageControlSettings = new PageControlSettingsUIBean();
 
     public PageControl getPageControl(WebUser user, PageControlView view) {
         if (pageControl == null) {
@@ -109,11 +109,11 @@ public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean 
     }
 
     public SelectItem[] getPageSizes() {
-        return pageSizes;
+        return pageControlSettings.getPageSizes();
     }
 
     public int getMinimumPageSize() {
-        return 15;
+        return pageControlSettings.getMinimumPageSize();
     }
 
     public void clearDataModel(ActionEvent event) {

@@ -414,10 +414,12 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
                     adjustedMeasurementUnits);
                 sb.append(" \"y\":" + dataValue.getValue() + "},");
             }else {
-                sb.append(" \"y\": 0},");
+                sb.append(" \"y\": 0, \"nodata\": true},");
             }
         }
-        sb.setLength(sb.length() - 1); // delete the last ','
+        if (sb.length() > 1) {
+            sb.setLength(sb.length() - 1); // delete the last ','
+        }
         sb.append("]");
         return sb.toString();
     }

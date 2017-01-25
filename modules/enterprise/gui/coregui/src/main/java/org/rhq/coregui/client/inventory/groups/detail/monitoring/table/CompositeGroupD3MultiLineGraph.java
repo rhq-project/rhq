@@ -293,6 +293,26 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                         .attr("stroke-opacity", ".9")
                         .attr("d", function(d) { return graphLine(d.value);});
 
+                for (var i=0;i<chartContext.data.length;++i) {
+                    svg.selectAll("dot")
+                        .data(chartContext.data[i].value)
+                        .enter()
+                        .append("circle")
+                        .filter(function(d) {
+                            return ('nodata' in d)? !d.nodata : true;
+                        })
+                        .attr("stroke", "black")
+                        .attr("stroke-width", "2")
+                        .attr("stroke-opacity", ".9")
+                        .attr("fill", "none")
+                        .attr("r", 3.5)
+                        .attr("cx", function(d) {
+                            return timeScale(d.x);
+                        })
+                        .attr("cy", function(d) {
+                            return yScale(d.y);
+                        });
+                }
             }
 
 

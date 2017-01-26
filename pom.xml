@@ -308,7 +308,7 @@
     <rhq-core-client-api.version>${rhq.pom.version}-redhat-2</rhq-core-client-api.version>
     <rhq-core-comm-api.version>${rhq.pom.version}</rhq-core-comm-api.version>
     <rhq-core-dbutils.version>${rhq.pom.version}</rhq-core-dbutils.version>
-    <rhq-core-domain.version>${rhq.pom.version}-redhat-4</rhq-core-domain.version>
+    <rhq-core-domain.version>${rhq.pom.version}-redhat-5</rhq-core-domain.version>
     <rhq-core-gui.version>${rhq.pom.version}</rhq-core-gui.version>
     <rhq-core-native-system.version>${rhq.pom.version}-redhat-2</rhq-core-native-system.version>
     <rhq-core-plugin-api.version>${rhq.pom.version}</rhq-core-plugin-api.version>

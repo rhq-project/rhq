@@ -636,7 +636,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         switch (operationHistory.getStatus()) {
         case INPROGRESS:
             // nothing to do here
-            break;
+            return;
         case CANCELED:
             repairCanceled(storageNode, operationHistory);
             break;
@@ -645,16 +645,17 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             break;
         default: // SUCCESS
             log.info("Finished running repair on " + storageNode);
-            storageNode.setMaintenancePending(false);
-            storageNodeOperationsHandler.setMode(storageNode, StorageNode.OperationMode.NORMAL);
-            StorageNode nextNode = takeFromMaintenanceQueue();
+            break;
+        }
+        storageNode.setMaintenancePending(false);
+        storageNodeOperationsHandler.setMode(storageNode, StorageNode.OperationMode.NORMAL);
+        StorageNode nextNode = takeFromMaintenanceQueue();
 
-            if (nextNode == null) {
-                log.info("Finished running repair on storage cluster");
-            } else {
-                nextNode = storageNodeOperationsHandler.setMode(nextNode, StorageNode.OperationMode.MAINTENANCE);
-                runRepair(getSubject(operationHistory), nextNode);
-            }
+        if (nextNode == null) {
+            log.info("Finished running repair on storage cluster");
+        } else {
+            nextNode = storageNodeOperationsHandler.setMode(nextNode, StorageNode.OperationMode.MAINTENANCE);
+            runRepair(getSubject(operationHistory), nextNode);
         }
     }
 

@@ -343,10 +343,25 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             storageNodeManager.resetInNewTransaction();
             storageNodeOperationsHandler.uninstall(subject, storageNode);
             break;
+            case MAINTENANCE:
+                storageNodeManager.resetInNewTransaction();
+                if(isMaintenanceCompleted(storageNode)) {
+                    storageNodeOperationsHandler.decommissionStorageNode(subject, storageNode);
+                }
+                break;
         default:
             // TODO what do we do with/about maintenance mode
             throw new RuntimeException("Cannot undeploy " + storageNode);
         }
+    }
+
+    private boolean isMaintenanceCompleted(StorageNode storageNode) {
+        for (StorageNode node : getClusterNodes()) {
+            if(!node.equals(storageNode) && (node.isMaintenancePending() || node.getOperationMode() == OperationMode.MAINTENANCE)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

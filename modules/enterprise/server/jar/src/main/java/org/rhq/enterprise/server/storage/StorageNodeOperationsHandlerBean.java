@@ -19,6 +19,7 @@ import org.joda.time.Days;
 
 import org.rhq.cassandra.schema.Table;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.common.JobTrigger;
@@ -36,6 +37,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -959,4 +961,10 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         return list;
     }
 
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public StorageNode removeMaintenanceMode(Subject subject, StorageNode storageNode) {
+        storageNode.setMaintenancePending(false);
+        return setMode(storageNode, StorageNode.OperationMode.NORMAL);
+    }
 }

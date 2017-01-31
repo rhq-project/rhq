@@ -12,7 +12,7 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 /**
  * @author John Sanda
  */
-public interface StorageNodeOperationsHandlerLocal {
+public interface StorageNodeOperationsHandlerLocal extends StorageNodeOperationsHandlerRemote {
 
     @Asynchronous
     void handleOperationUpdateIfNecessary(OperationHistory operationHistory);

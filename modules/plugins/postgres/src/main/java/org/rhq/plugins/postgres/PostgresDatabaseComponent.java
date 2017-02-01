@@ -420,8 +420,15 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
                 cleanCount++;
             }
 
+            PreparedStatement tempTableDrop = c.prepareStatement("DROP TEMPORARY TABLE vacuum_l");
+            tempTableDrop.execute();
+
             OperationResult result = new OperationResult();
             result.getComplexResults().put(new PropertySimple("result", "Query removed " + cleanCount + " orphan large objects"));
+
+            tempTable.close();
+            tempTableDrop.close();
+
             return result;
         } catch (SQLException e) {
             OperationResult result = new OperationResult("Failed to delete orphaned objects");

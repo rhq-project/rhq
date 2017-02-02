@@ -80,6 +80,7 @@ import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageBitsBlob;
 import org.rhq.core.domain.content.PackageCategory;
+import org.rhq.core.domain.content.PackageDetails;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
@@ -175,6 +176,17 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     private SubjectManagerLocal subjectManager;
 
     // ContentManagerLocal Implementation  --------------------------------------------
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void mergePackage(int resourceId, ResourcePackageDetails details) {
+        ContentDiscoveryReport report = new ContentDiscoveryReport();
+        Set<ResourcePackageDetails> installedPackagesSet = new HashSet<ResourcePackageDetails>();
+        installedPackagesSet.add(details);
+
+        report.addAllDeployedPackages(installedPackagesSet);
+        report.setResourceId(resourceId);
+        contentManager.mergeDiscoveredPackages(report);
+    }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NEVER)
@@ -223,6 +235,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             LOG.debug("Finished merging [" + report.getDeployedPackages().size() + "] packages in "
                 + (System.currentTimeMillis() - start) + "ms");
         }
+        contentManager.deleteOrphanedBits();
     }
 
     @Override
@@ -307,7 +320,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             packageVersion.setSHA256(discoveredPackage.getSHA256());
             packageVersion.setShortDescription(discoveredPackage.getShortDescription());
             packageVersion.setExtraProperties(discoveredPackage.getExtraProperties());
-
+            
             packageVersion = persistOrMergePackageVersionSafely(packageVersion);
 
         } else {
@@ -317,6 +330,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 InstalledPackage ip = i.next();
                 PackageVersion pv = ip.getPackageVersion();
                 if (pv.getId() == packageVersion.getId()) {
+                    removeOldVersionsBits(generalPackage.getId(), packageVersion.getId());
                     i.remove();
                     return;
                 }
@@ -342,8 +356,23 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         history.setResource(resource);
         history.setStatus(InstalledPackageHistoryStatus.DISCOVERED);
         history.setTimestamp(timestamp);
-
         entityManager.persist(history);
+        removeOldVersionsBits(generalPackage.getId(), packageVersion.getId());
+    }
+
+    private void removeOldVersionsBits(int packageId, int installedVersion){
+        Query nonInstalledQuery = entityManager.createNamedQuery(PackageVersion
+                .QUERY_FIND_VERSIONS_OF_PACKAGE_EXCEPT);
+        nonInstalledQuery.setParameter("packageId", packageId);
+        nonInstalledQuery.setParameter("installedVersion", installedVersion);
+        List<PackageVersion> nonInstalledPackages = nonInstalledQuery.getResultList();
+        purgePackageBits(nonInstalledPackages);
+    }
+
+    @Override
+    public void deleteOrphanedBits(){
+        Query deleteBitsQuery = entityManager.createNamedQuery(PackageBits.DELETE_IF_NO_PACKAGE_VERSION);
+        deleteBitsQuery.executeUpdate();
     }
 
     @Override
@@ -630,23 +659,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             entityManager.persist(history);
             persistedRequest.addInstalledPackageHistory(history);
         }
-
-        // Clean old version bits for packages..
-
-        for (DeployIndividualPackageResponse singleResponse : response.getPackageResponses()) {
-            PackageDetailsKey key = singleResponse.getKey();
-            Query packageVersionQuery = entityManager
-                    .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
-            packageVersionQuery.setParameter("packageName", key.getName());
-            packageVersionQuery.setParameter("packageTypeName", key.getPackageTypeName());
-            packageVersionQuery.setParameter("architectureName", key.getArchitectureName());
-            packageVersionQuery.setParameter("version", key.getVersion());
-            packageVersionQuery.setParameter("resourceTypeId", resourceTypeId);
-            PackageVersion packageVersion = (PackageVersion) packageVersionQuery.getSingleResult();
-            purgePackageBits(packageVersion.getGeneralPackage().getId());
-        }
-
-        deleteOrphanedBlobs();
     }
 
     public void removeHistoryDeploymentsBits(Subject user){
@@ -669,49 +681,36 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         List <Package> packages = query.getResultList();
         for(Package pkg: packages){
-            purgePackageBits(pkg.getId());
+            Query packageVersionQuery = entityManager
+                    .createNamedQuery(PackageVersion.QUERY_FIND_PACKAGE_HISTORICAL_VERSIONS);
+            packageVersionQuery.setParameter("packageId",pkg.getId());
+            List<PackageVersion> versions = packageVersionQuery.getResultList();
+            purgePackageBits(versions);
         }
-        deleteOrphanedBlobs();
+        contentManager.deleteOrphanedBits();
     }
 
-    private void deleteOrphanedBlobs(){
-        // Delete orphanate bits
-        if(DatabaseTypeFactory.isPostgres(DatabaseTypeFactory.getDefaultDatabaseType())) {
-            try {
-                Connection conn = dataSource.getConnection();
-                PreparedStatement ps =
-                        conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID NOT IN ( " +
-                                "SELECT PACKAGE_BITS_ID FROM RHQ_PACKAGE_VERSION WHERE PACKAGE_BITS_ID IS NOT NULL )");
-                ResultSet rs = ps.executeQuery();
-
-                while (rs.next()) {
-                    int unlinkedBlob = rs.getInt(1);
-                    Statement unlinkStatement = conn.createStatement();
-                    String unlinkSQLProto = "SELECT lo_unlink(%s)";
-                    String sqlUnlink = String.format(unlinkSQLProto, unlinkedBlob);
-                    unlinkStatement.execute(sqlUnlink);
+    private void purgePackageBits(List<PackageVersion> versions){
+        // Cleaning package bits
+        for (PackageVersion pv:versions) {
+            if (pv.getPackageBits()!=null){
+                int bitsId = pv.getPackageBits().getId();
+                pv.setPackageBits(null);
+                entityManager.merge(pv);
+                if(DatabaseTypeFactory.isPostgres(DatabaseTypeFactory.getDefaultDatabaseType())) {
+                    try {
+                        Connection conn = dataSource.getConnection();
+                        Statement unlinkStatement = conn.createStatement();
+                        String unlinkSQLProto = "SELECT lo_unlink(bits) FROM " + PackageBits.TABLE_NAME + " WHERE " +
+                                "id=%s";
+                        String sqlUnlink = String.format(unlinkSQLProto, bitsId);
+                        unlinkStatement.execute(sqlUnlink);
+                    } catch (SQLException e) {
+                        LOG.warn("Failed to clean package bits for package version " + Integer.toString(pv.getId()));
+                    }
                 }
-            } catch (SQLException e) {
-                LOG.warn("Failed to clean package bits");
             }
         }
-        Query deleteBitsQuery = entityManager.createNamedQuery(PackageBits.DELETE_IF_NO_PACKAGE_VERSION);
-        deleteBitsQuery.executeUpdate();
-
-    }
-
-    private void purgePackageBits(int packageId){
-        // Cleaning package bits
-        Query packageVersionQuery = entityManager
-                .createNamedQuery(PackageVersion.QUERY_FIND_PACKAGE_HISTORICAL_VERSIONS);
-        packageVersionQuery.setParameter("packageId",packageId);
-        List<PackageVersion> versions = packageVersionQuery.getResultList();
-
-        for (PackageVersion pv:versions) {
-            pv.setPackageBits(null);
-            entityManager.merge(pv);
-        }
-
     }
 
     @Override
@@ -1838,6 +1837,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         PackageVersion packageVersion = null;
 
+
         //default version to 1.0 if is null, not provided for any reason.
         if ((version == null) || (version.trim().length() == 0)) {
             version = "1.0";
@@ -1851,7 +1851,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         if (packageType.getResourceType() != null) {
             packageVersionQuery = entityManager
-                .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
+                    .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
             packageVersionQuery.setParameter("resourceTypeId", packageType.getResourceType().getId());
 
         } else {
@@ -1881,7 +1881,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 String packageTypeName = packageType.getName();
                 String archName = architecture.getName();
                 ValidatablePackageDetailsKey key = new ValidatablePackageDetailsKey(packageName, version,
-                    packageTypeName, archName);
+                        packageTypeName, archName);
                 behavior.validateDetails(key, subject);
 
                 //update the details from the validation results
@@ -1923,15 +1923,27 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             entityManager.persist(packageVersion);
         }
 
+        // We are going to replace the package bits a bit later
+        // before it happen lets purge the BLOB to avoid leaks
+        if (packageVersion.getPackageBits() != null) {
+            this.purgePackageBits(Arrays.asList(packageVersion));
+        }
+
         //get the data
         Map<String, String> contentDetails = new HashMap<String, String>();
         PackageBits bits = loadPackageBits(packageBitStream, packageVersion.getId(), packageName, version, null,
-            contentDetails);
-
+                contentDetails);
+        String shaVersion;
+        if (contentDetails.get(UPLOAD_SHA256) == null ) {
+            shaVersion = version;
+        }else{
+            shaVersion = "[sha256=" + contentDetails.get(UPLOAD_SHA256) + "]";
+            packageVersion.setDisplayVersion(version);
+        }
         packageVersion.setPackageBits(bits);
-
         packageVersion.setFileSize(Long.valueOf(contentDetails.get(UPLOAD_FILE_SIZE)).longValue());
         packageVersion.setSHA256(contentDetails.get(UPLOAD_SHA256));
+        packageVersion.setVersion(shaVersion);
 
         //populate extra details, persist
         if (packageUploadDetails != null) {

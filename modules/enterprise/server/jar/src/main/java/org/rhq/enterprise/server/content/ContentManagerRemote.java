@@ -30,6 +30,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
 import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -299,4 +300,8 @@ public interface ContentManagerRemote {
      * @since 4.14
      */
     void removeHistoryDeploymentsBits(Subject user);
+
+    //To force to discovery certain package
+    void mergePackage(int resourceId, ResourcePackageDetails details);
+
 }

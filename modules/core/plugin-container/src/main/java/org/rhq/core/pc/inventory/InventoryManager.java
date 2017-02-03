@@ -1945,7 +1945,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             Property discoveredProp = pluginConfig.get(propertyName);
             // Only overrides the property if it is a read-only property
             // See BZ: 1379834
-            if (propDefs.get(propertyName).isReadOnly()) {
+            PropertyDefinition propDefinition = propDefs.get(propertyName);
+            if (propDefinition != null && propDefinition.isReadOnly()) {
                 if (log.isDebugEnabled()) {
                     log.debug("Discovery reported a new version of " + resource + ". Updating value of config property"
                             + " from [" + existingPluginConfig.get(propertyName) + "] to [" + discoveredProp + "].");

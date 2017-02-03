@@ -369,4 +369,7 @@ public interface ContentManagerLocal extends ContentManagerRemote {
 
     // used solely for Tx demarcation
     void removeInstalledPackages(Resource resource, Set<InstalledPackage> doomedPackages, long timestamp);
+
+    // used solely for Tx demarcation
+    void deleteOrphanedBits();
 }

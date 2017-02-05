@@ -123,6 +123,7 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageTypeBehavior;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -630,32 +631,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             entityManager.persist(history);
             persistedRequest.addInstalledPackageHistory(history);
         }
-
-        // Clean old version bits for packages..
-
-        for (DeployIndividualPackageResponse singleResponse : response.getPackageResponses()) {
-            PackageDetailsKey key = singleResponse.getKey();
-            Query packageVersionQuery = entityManager
-                    .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
-            packageVersionQuery.setParameter("packageName", key.getName());
-            packageVersionQuery.setParameter("packageTypeName", key.getPackageTypeName());
-            packageVersionQuery.setParameter("architectureName", key.getArchitectureName());
-            packageVersionQuery.setParameter("version", key.getVersion());
-            packageVersionQuery.setParameter("resourceTypeId", resourceTypeId);
-            PackageVersion packageVersion = (PackageVersion) packageVersionQuery.getSingleResult();
-            purgePackageBits(packageVersion.getGeneralPackage().getId());
-        }
-
-        deleteOrphanedBlobs();
     }
 
-    public void removeHistoryDeploymentsBits(Subject user){
-
-        if (!authorizationManager.isSystemSuperuser(user)) {
-            throw new PermissionException("User [" + user.getName()
-                    + "] does not have permission to purge history deployments bits");
-        }
-
+    @Override
+    public void removeHistoryDeploymentsBits(){
         List<String> resourceTypes = Arrays.asList("Deployment", "DomainDeployment");
         List<String> plugins = Arrays.asList("JBossAS7", "EAP7");
         Query query = entityManager.createQuery("SELECT pk FROM Package pk WHERE pk.packageType   IN ( SELECT pt.id " +
@@ -671,47 +650,48 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         for(Package pkg: packages){
             purgePackageBits(pkg.getId());
         }
-        deleteOrphanedBlobs();
-    }
-
-    private void deleteOrphanedBlobs(){
-        // Delete orphanate bits
-        if(DatabaseTypeFactory.isPostgres(DatabaseTypeFactory.getDefaultDatabaseType())) {
-            try {
-                Connection conn = dataSource.getConnection();
-                PreparedStatement ps =
-                        conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID NOT IN ( " +
-                                "SELECT PACKAGE_BITS_ID FROM RHQ_PACKAGE_VERSION WHERE PACKAGE_BITS_ID IS NOT NULL )");
-                ResultSet rs = ps.executeQuery();
-
-                while (rs.next()) {
-                    int unlinkedBlob = rs.getInt(1);
-                    Statement unlinkStatement = conn.createStatement();
-                    String unlinkSQLProto = "SELECT lo_unlink(%s)";
-                    String sqlUnlink = String.format(unlinkSQLProto, unlinkedBlob);
-                    unlinkStatement.execute(sqlUnlink);
-                }
-            } catch (SQLException e) {
-                LOG.warn("Failed to clean package bits");
-            }
-        }
         Query deleteBitsQuery = entityManager.createNamedQuery(PackageBits.DELETE_IF_NO_PACKAGE_VERSION);
         deleteBitsQuery.executeUpdate();
+    }
 
+    private void unlinkBlob(PackageBits bits) {
+        try{
+            Connection conn = dataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = " +
+                    bits.getId());
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()){
+                int blobId = rs.getInt(1);
+                Statement unlinkStatement = conn.createStatement();
+                String unlinkSQLProto = "SELECT lo_unlink(%s)";
+                String sqlUnlink = String.format(unlinkSQLProto, blobId);
+                unlinkStatement.execute(sqlUnlink);
+            }
+        }catch (SQLException e) {
+            LOG.warn("Failed to clean package bits with ID " + bits.getId());
+        }
     }
 
     private void purgePackageBits(int packageId){
         // Cleaning package bits
+        final int MAX_HISTORICAL_VERSIONS_PER_PACKAGE = 1;
         Query packageVersionQuery = entityManager
                 .createNamedQuery(PackageVersion.QUERY_FIND_PACKAGE_HISTORICAL_VERSIONS);
         packageVersionQuery.setParameter("packageId",packageId);
         List<PackageVersion> versions = packageVersionQuery.getResultList();
+        if(versions.size()>MAX_HISTORICAL_VERSIONS_PER_PACKAGE) {
+            /* Remove recent packages from the list*/
+            for (int i = 0; i < MAX_HISTORICAL_VERSIONS_PER_PACKAGE; ++i){
+                versions.remove(0);
+            }
 
-        for (PackageVersion pv:versions) {
-            pv.setPackageBits(null);
-            entityManager.merge(pv);
+            /* Set to null all other versions */
+            for (PackageVersion pv:versions) {
+                unlinkBlob(pv.getPackageBits());
+                pv.setPackageBits(null);
+                entityManager.merge(pv);
+            }
         }
-
     }
 
     @Override
@@ -1921,6 +1901,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             packageVersion = new PackageVersion(existingPackage, version, architecture);
             packageVersion.setDisplayName(existingPackage.getName());
             entityManager.persist(packageVersion);
+        }
+
+        // We are going to replace the package bits a bit later
+        // before it happen lets purge the BLOB to avoid leaks
+        if (packageVersion.getPackageBits() != null &&
+                DatabaseTypeFactory.isPostgres(DatabaseTypeFactory.getDefaultDatabaseType())) {
+            unlinkBlob(packageVersion.getPackageBits());
         }
 
         //get the data

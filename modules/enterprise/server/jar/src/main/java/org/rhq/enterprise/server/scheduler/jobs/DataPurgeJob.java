@@ -33,6 +33,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.purge.PurgeManagerLocal;
@@ -52,6 +53,12 @@ public class DataPurgeJob extends AbstractStatefulJob {
     private static final Log LOG = LogFactory.getLog(DataPurgeJob.class);
 
     private static final long HOUR = 60 * 60 * 1000L;
+
+    private final ContentManagerLocal contentManager;
+
+    public DataPurgeJob() {
+        contentManager = LookupUtil.getContentManager();
+    }
 
     /**
      * Schedules a purge job to trigger right now. This will not block - it schedules the job to trigger but immediately
@@ -104,6 +111,15 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeOrphanedDriftFiles(LookupUtil.getDriftManager(), systemConfig);
         purgeOperationHistoryData(LookupUtil.getOperationManager(), systemConfig);
         purgeOrphanedBundleResourceDeploymentHistory(purgeManager);
+        purgeOldPackageBits();
+    }
+
+    private void purgeOldPackageBits(){
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Package bits purge starting at " + new Date(timeStart));
+        contentManager.removeHistoryDeploymentsBits();
+        long duration = System.currentTimeMillis() - timeStart;
+        LOG.info("Purged old package bits completed in [" + duration + "]ms");
     }
 
     private void purgeMeasurementTraitData(PurgeManagerLocal purgeManager, Properties systemConfig) {

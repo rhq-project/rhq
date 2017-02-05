@@ -252,11 +252,13 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
         + " WHERE (pv.id, 1) IN"
         + "   (SELECT pv2.id, (SELECT COUNT(rpv) FROM RepoPackageVersion rpv WHERE rpv.packageVersion.id = pv2.id)"
         + "    FROM PackageVersion pv2" + "    WHERE pv2.id IN ( :packageVersionIds )"
-        + "      AND pv2.id IN (SELECT rpv.packageVersion.id FROM RepoPackageVersion rpv WHERE rpv.repo.id = :repoId))") })
+        + "      AND pv2.id IN (SELECT rpv.packageVersion.id FROM RepoPackageVersion rpv WHERE rpv.repo.id = :repoId)" +
+            ")"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_PACKAGE_HISTORICAL_VERSIONS, query = "SELECT pv FROM PackageVersion pv " +
             "WHERE pv.generalPackage.id = :packageId AND pv.id NOT IN ( SELECT ip.packageVersion FROM InstalledPackage ip) AND " +
-            "pv.packageBits IS NOT NULL AND pv.id NOT IN (SELECT pvcs.packageVersion.id FROM PackageVersionContentSource pvcs)")
-
+            "pv.packageBits IS NOT NULL AND pv.id NOT IN (SELECT pvcs.packageVersion.id FROM " +
+            "PackageVersionContentSource pvcs) ORDER BY pv.id DESC ") //
+})
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_PACKAGE_VERSION_ID_SEQ", sequenceName = "RHQ_PACKAGE_VERSION_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_VERSION")
 public class PackageVersion implements Serializable {

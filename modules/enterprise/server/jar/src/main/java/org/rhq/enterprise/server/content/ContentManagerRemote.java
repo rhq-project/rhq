@@ -291,12 +291,4 @@ public interface ContentManagerRemote {
      */
     PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName, int packageTypeId,
         String version, String displayVersion, Integer architectureId, String temporaryContentHandle);
-
-    /**
-     * Removes bits for the previous versions of a deployment.
-     *
-     * @param user
-     * @since 4.14
-     */
-    void removeHistoryDeploymentsBits(Subject user);
 }

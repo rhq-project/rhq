@@ -48,6 +48,7 @@ import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.purge.PurgeManagerLocal;
@@ -78,6 +79,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
     private final AlertNotificationManagerLocal alertNotificationManager;
     private final DriftManagerLocal driftManager;
     private final ResourceManagerLocal resourceManager;
+    private final ContentManagerLocal contentManager;
 
     public DataPurgeJob() {
         subjectManager = LookupUtil.getSubjectManager();
@@ -89,6 +91,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         alertNotificationManager = LookupUtil.getAlertNotificationManager();
         driftManager = LookupUtil.getDriftManager();
         resourceManager = LookupUtil.getResourceManager();
+        contentManager = LookupUtil.getContentManager();
     }
 
     /**
@@ -145,6 +148,15 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeResourceConfigHistory(systemSettings);
         removeResourceErrorDuplicates();
         removeStaleAvailabilityResourceErrors();
+        purgeOldPackageBits();
+    }
+
+    private void purgeOldPackageBits(){
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Package bits purge starting at " + new Date(timeStart));
+        contentManager.removeHistoryDeploymentsBits();
+        long duration = System.currentTimeMillis() - timeStart;
+        LOG.info("Purged old package bits completed in [" + duration + "]ms");
     }
 
     private void purgeMeasurementTraitData(SystemSettings systemSettings) {

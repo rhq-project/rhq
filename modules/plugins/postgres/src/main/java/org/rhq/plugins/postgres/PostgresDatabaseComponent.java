@@ -420,7 +420,7 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
                 cleanCount++;
             }
 
-            PreparedStatement tempTableDrop = c.prepareStatement("DROP TEMPORARY TABLE vacuum_l");
+            PreparedStatement tempTableDrop = c.prepareStatement("DISCARD TEMP");
             tempTableDrop.execute();
 
             OperationResult result = new OperationResult();

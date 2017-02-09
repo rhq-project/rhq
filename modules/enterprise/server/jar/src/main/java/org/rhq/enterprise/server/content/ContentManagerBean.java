@@ -634,6 +634,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void removeHistoryDeploymentsBits(){
         List<String> resourceTypes = Arrays.asList("Deployment", "DomainDeployment");
         List<String> plugins = Arrays.asList("JBossAS7", "EAP7");
@@ -647,18 +648,30 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         query.setParameter("plugins", plugins);
 
         List <Package> packages = query.getResultList();
-        for(Package pkg: packages){
-            purgePackageBits(pkg.getId());
+        for(Package pkg: packages) {
+            List<Integer> needUnlink = contentManager.purgePackageBits(pkg.getId());
+            if (DatabaseTypeFactory.isPostgres(DatabaseTypeFactory.getDefaultDatabaseType())) {
+                for(Integer bitId: needUnlink){
+                    contentManager.unlinkBlob(bitId);
+                }
+            }
         }
+        contentManager.removeOrphanedPackageBits();
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void removeOrphanedPackageBits(){
         Query deleteBitsQuery = entityManager.createNamedQuery(PackageBits.DELETE_IF_NO_PACKAGE_VERSION);
         deleteBitsQuery.executeUpdate();
     }
 
-    private void unlinkBlob(PackageBits bits) {
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void unlinkBlob(Integer bitsId) {
         try{
             Connection conn = dataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = " +
-                    bits.getId());
+                    bitsId);
             ResultSet rs = ps.executeQuery();
             while(rs.next()){
                 int blobId = rs.getInt(1);
@@ -668,15 +681,17 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 unlinkStatement.execute(sqlUnlink);
             }
         }catch (SQLException e) {
-            LOG.warn("Failed to clean package bits with ID " + bits.getId());
+            LOG.warn("Failed to clean package bits with ID " + bitsId);
         }
     }
 
-    private void purgePackageBits(int packageId){
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public List<Integer> purgePackageBits(int packageId){
         // Cleaning package bits
         final int MAX_HISTORICAL_VERSIONS_PER_PACKAGE = 1;
         Query packageVersionQuery = entityManager
                 .createNamedQuery(PackageVersion.QUERY_FIND_PACKAGE_HISTORICAL_VERSIONS);
+        ArrayList<Integer> needUnlinking = new ArrayList<Integer>();
         packageVersionQuery.setParameter("packageId",packageId);
         List<PackageVersion> versions = packageVersionQuery.getResultList();
         if(versions.size()>MAX_HISTORICAL_VERSIONS_PER_PACKAGE) {
@@ -687,11 +702,12 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
             /* Set to null all other versions */
             for (PackageVersion pv:versions) {
-                unlinkBlob(pv.getPackageBits());
+                needUnlinking.add(pv.getPackageBits().getId());
                 pv.setPackageBits(null);
                 entityManager.merge(pv);
             }
         }
+        return needUnlinking;
     }
 
     @Override
@@ -1907,7 +1923,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // before it happen lets purge the BLOB to avoid leaks
         if (packageVersion.getPackageBits() != null &&
                 DatabaseTypeFactory.isPostgres(DatabaseTypeFactory.getDefaultDatabaseType())) {
-            unlinkBlob(packageVersion.getPackageBits());
+            contentManager.unlinkBlob(packageVersion.getPackageBits().getId());
         }
 
         //get the data

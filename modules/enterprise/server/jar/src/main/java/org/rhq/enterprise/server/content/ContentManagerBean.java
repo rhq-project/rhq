@@ -66,6 +66,7 @@ import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
 import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
 import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.DbUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
@@ -668,20 +669,25 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void unlinkBlob(Integer bitsId) {
-        try{
-            Connection conn = dataSource.getConnection();
-            PreparedStatement ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = " +
-                    bitsId);
-            ResultSet rs = ps.executeQuery();
-            while(rs.next()){
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            conn = dataSource.getConnection();
+            ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = " + bitsId);
+            rs = ps.executeQuery();
+            while (rs.next()) {
                 int blobId = rs.getInt(1);
                 Statement unlinkStatement = conn.createStatement();
                 String unlinkSQLProto = "SELECT lo_unlink(%s)";
                 String sqlUnlink = String.format(unlinkSQLProto, blobId);
                 unlinkStatement.execute(sqlUnlink);
+                JDBCUtil.safeClose(unlinkStatement);
             }
-        }catch (SQLException e) {
+        } catch (SQLException e) {
             LOG.warn("Failed to clean package bits with ID " + bitsId);
+        } finally {
+            JDBCUtil.safeClose(conn, ps, rs);
         }
     }
 

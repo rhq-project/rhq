@@ -3128,12 +3128,12 @@
             <c:simple-property name="path" readOnly="true" default="http-listener"/>
           </plugin-configuration>
 
-          <metric property="bytes-received" description="The number of bytes that have been received by this listener"/>
-          <metric property="bytes-sent" description="The number of bytes that have been sent out on this listener"/>
-          <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+          <metric property="bytes-received" measurementType="trendsup" description="The number of bytes that have been received by this listener"/>
+          <metric property="bytes-sent" measurementType="trendsup" description="The number of bytes that have been sent out on this listener"/>
+          <metric property="error-count" measurementType="trendsup" description="The number of 500 responses that have been sent by this listener"/>
           <metric property="max-processing-time" description="The maximum processing time taken by a request on this listener"/>
-          <metric property="processing-time" description="The total processing time of all requests handed by this listener"/>
-          <metric property="request-count" description="The number of requests this listener has served"/>
+          <metric property="processing-time" measurementType="trendsup" description="The total processing time of all requests handed by this listener"/>
+          <metric property="request-count" measurementType="trendsup" description="The number of requests this listener has served"/>
 
           <resource-configuration>
             <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="true" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
@@ -7073,12 +7073,12 @@
             <c:simple-property name="path" readOnly="true" default="http-listener"/>
           </plugin-configuration>
 
-          <metric property="bytes-received" description="The number of bytes that have been received by this listener"/>
-          <metric property="bytes-sent" description="The number of bytes that have been sent out on this listener"/>
-          <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+          <metric property="bytes-received" measurementType="trendsup" description="The number of bytes that have been received by this listener"/>
+          <metric property="bytes-sent" measurementType="trendsup" description="The number of bytes that have been sent out on this listener"/>
+          <metric property="error-count" measurementType="trendsup" description="The number of 500 responses that have been sent by this listener"/>
           <metric property="max-processing-time" description="The maximum processing time taken by a request on this listener"/>
-          <metric property="processing-time" description="The total processing time of all requests handed by this listener"/>
-          <metric property="request-count" description="The number of requests this listener has served"/>
+          <metric property="processing-time" measurementType="trendsup" description="The total processing time of all requests handed by this listener"/>
+          <metric property="request-count" measurementType="trendsup" description="The number of requests this listener has served"/>
 
           <resource-configuration>
             <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="false" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
@@ -9725,12 +9725,12 @@
           <c:simple-property name="path" readOnly="true" default="http-listener"/>
         </plugin-configuration>
 
-        <metric property="bytes-received" description="The number of bytes that have been received by this listener"/>
-        <metric property="bytes-sent" description="The number of bytes that have been sent out on this listener"/>
-        <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+        <metric property="bytes-received"  measurementType="trendsup"  description="The number of bytes that have been received by this listener"/>
+        <metric property="bytes-sent"  measurementType="trendsup"  description="The number of bytes that have been sent out on this listener"/>
+        <metric property="error-count"  measurementType="trendsup"  description="The number of 500 responses that have been sent by this listener"/>
         <metric property="max-processing-time" description="The maximum processing time taken by a request on this listener"/>
-        <metric property="processing-time" description="The total processing time of all requests handed by this listener"/>
-        <metric property="request-count" description="The number of requests this listener has served"/>
+        <metric property="processing-time"  measurementType="trendsup" description="The total processing time of all requests handed by this listener"/>
+        <metric property="request-count"  measurementType="trendsup" description="The number of requests this listener has served"/>
 
         <resource-configuration>
           <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="false" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
@@ -9779,12 +9779,12 @@
           <c:simple-property name="path" readOnly="true" default="https-listener"/>
         </plugin-configuration>
 
-        <metric property="bytes-received" description="The number of bytes that have been received by this listener"/>
-        <metric property="bytes-sent" description="The number of bytes that have been sent out on this listener"/>
-        <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+        <metric property="bytes-received" measurementType="trendsup" description="The number of bytes that have been received by this listener"/>
+        <metric property="bytes-sent" measurementType="trendsup" description="The number of bytes that have been sent out on this listener"/>
+        <metric property="error-count" measurementType="trendsup" description="The number of 500 responses that have been sent by this listener"/>
         <metric property="max-processing-time" description="The maximum processing time taken by a request on this listener"/>
-        <metric property="processing-time" description="The total processing time of all requests handed by this listener"/>
-        <metric property="request-count" description="The number of requests this listener has served"/>
+        <metric property="processing-time" measurementType="trendsup" description="The total processing time of all requests handed by this listener"/>
+        <metric property="request-count" measurementType="trendsup" description="The number of requests this listener has served"/>
 
         <resource-configuration>
           <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="false" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>

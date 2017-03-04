@@ -291,7 +291,11 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                         .attr("stroke", function(d,i){ return colorScale(i);})
                         .attr("stroke-width", "2")
                         .attr("stroke-opacity", ".9")
-                        .attr("d", function(d) { return graphLine(d.value);});
+                        .attr("d", function(d) { return graphLine(
+                            d.value.filter(function(d) {
+                                return ('nodata' in d)? !d.nodata : true;
+                            })
+                        );});
 
                 for (var i=0;i<chartContext.data.length;++i) {
                     svg.selectAll("dot")
@@ -301,11 +305,11 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                         .filter(function(d) {
                             return ('nodata' in d)? !d.nodata : true;
                         })
-                        .attr("stroke", "black")
-                        .attr("stroke-width", "2")
+                        .attr("stroke", function(){ return colorScale(i);})
+                        .attr("stroke-width", "1")
                         .attr("stroke-opacity", ".9")
-                        .attr("fill", "none")
-                        .attr("r", 3.5)
+                        .attr("fill", function(){ return colorScale(i);})
+                        .attr("r", 2)
                         .attr("cx", function(d) {
                             return timeScale(d.x);
                         })

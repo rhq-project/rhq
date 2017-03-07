@@ -1129,8 +1129,7 @@
 
     </plugin-configuration>
 
-    <process-scan name="HostController" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
-
+    <process-scan name="HostController" query="arg|org.jboss.as.host-controller|match=.*"/>
 
     <operation name="start" description="Start this Host/Domain Controller with all its enabled managed servers" displayName="Start this host controller">
       <results>
@@ -1566,7 +1565,7 @@
 
     </plugin-configuration>
 
-    <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>
+    <process-scan name="StandaloneAS" query="arg|org.jboss.as.standalone|match=.*"/>
 
     <operation name="reload" description="Make the server re-load the (changed) configuration. To load a different startup config use 'restart'" displayName="Reload">
       <results>

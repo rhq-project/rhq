@@ -60,6 +60,7 @@ public class ServerPluginConfiguration {
         public static final String KEYSTORE = "keystore";
         public static final String KEYSTORE_PASSWORD = "keystorePassword";
         public static final String KEY_PASSWORD = "keyPassword";
+        public static final String API_VERSION = "apiVersion";
     }
 
     private final Configuration pluginConfig;
@@ -304,4 +305,13 @@ public class ServerPluginConfiguration {
             }
         }
     }
+
+    public String getApiVersion() {
+        return this.pluginConfig.getSimpleValue(Property.API_VERSION);
+    }
+
+    public void setApiVersion(String version) {
+        this.pluginConfig.setSimpleValue(Property.API_VERSION, version);
+    }
+
 }

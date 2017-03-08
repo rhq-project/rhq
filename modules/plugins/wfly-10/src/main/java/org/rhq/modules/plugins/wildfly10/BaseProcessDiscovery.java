@@ -210,6 +210,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             // Allows skipping AS7/EAP6 based products
             return null;
         }
+        serverPluginConfig.setApiVersion(apiVersion);
         serverPluginConfig.setProductType(productType);
         pluginConfig.setSimpleValue("expectedRuntimeProductName", productType.PRODUCT_NAME);
         pluginConfig.setSimpleValue("hostXmlFileName", getHostXmlFileName(commandLine));

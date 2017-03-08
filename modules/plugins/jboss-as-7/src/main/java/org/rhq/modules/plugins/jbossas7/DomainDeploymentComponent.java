@@ -287,6 +287,7 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
         // also put new assignment to map, to detect possible duplicates
         Map<String, PropertyMap> assignedNew = new HashMap<String, PropertyMap>();
         // detect changes (enable/disable changes and new assignments)
+        int processTimeout = 120;
         for (Property prop : report.getConfiguration().getList("*1").getList()) {
             PropertyMap mapNew = (PropertyMap) prop;
             PropertyMap duplicate = assignedNew.put(mapNew.getSimpleValue("server-group", null), mapNew);
@@ -315,6 +316,7 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
                     operation.addStep(createServerGroupAssignmentStep(action, key, null, false));
                 }
             }
+            processTimeout = mapNew.getSimple("process-timeout").getIntegerValue();
         }
         // detect removals, items left in map (exist in old config, but were not sent in the new one) should be removed
         for (PropertyMap map : assignedCurrent.values()) {
@@ -325,7 +327,7 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
             report.setStatus(ConfigurationUpdateStatus.NOCHANGE);
             return;
         }
-        Result res = getASConnection().execute(operation, 120); // wait up to 2 minutes
+        Result res = getASConnection().execute(operation, processTimeout);
         if (res.isSuccess()) {
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
         } else {

@@ -1471,6 +1471,8 @@
             </c:simple-property>
             <c:simple-property name="runtime-name" type="string" required="false" description="The context name under which the deployment should be known in the runtime (managed servers on the selected server group). Defaults to the deployment name. This value applies to new assignment only, it cannot be changed on existing one, so it's change will be ignored." />
             <c:simple-property name="enabled" required="true" default="true" description="Should the deployment be enabled on the server group?" type="boolean"/>
+            <c:simple-property name="process-timeout" required="false"
+                               description="Timeout for the assignment to complete in seconds, default is 120 seconds" type="integer" />
           </c:map-property>
         </c:list-property>
       </resource-configuration>

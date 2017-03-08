@@ -316,7 +316,10 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
                     operation.addStep(createServerGroupAssignmentStep(action, key, null, false));
                 }
             }
-            processTimeout = mapNew.getSimple("process-timeout").getIntegerValue();
+            Integer configuredProcessTimeout = mapNew.getSimple("process-timeout").getIntegerValue();
+            if(configuredProcessTimeout != null) {
+                processTimeout = configuredProcessTimeout.intValue();
+            }
         }
         // detect removals, items left in map (exist in old config, but were not sent in the new one) should be removed
         for (PropertyMap map : assignedCurrent.values()) {

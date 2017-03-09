@@ -137,6 +137,10 @@
                                     <key>rhq.ds.password</key>
                                     <value>${rhq.ds.password}</value>
                                 </systemProperty>
+                                <systemProperty>
+                                    <key>oracle.jdbc.timezoneAsRegion</key>
+                                    <value>false</value>
+                                </systemProperty>
                             </systemProperties>
                         </configuration>
                     </execution>

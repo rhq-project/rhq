@@ -336,7 +336,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
             baseline.setScheduleId(schedule.getId());
             baseline.setSchedule(schedule); // this sets the reverse, owning relationship as well
 
-            if(baseline.getMax() == Double.NaN || baseline.getMin() == Double.NaN || baseline.getMean() == Double.NaN) {
+            if(baseline.getMax().isNaN() || baseline.getMin().isNaN() || baseline.getMean().isNaN()) {
                 continue;
             }
 

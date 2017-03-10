@@ -42,7 +42,8 @@ public class SecurityUtil {
      */
     public static KeyStore loadKeystore(String keystoreType, String keystore, String keystorePassword) throws Exception {
         KeyStore ks = KeyStore.getInstance(keystoreType);
-        char[] password = keystorePassword == null ? null : keystorePassword.toCharArray();
+        char[] password = (keystorePassword == null || keystorePassword.trim().isEmpty())? null : keystorePassword
+                .toCharArray();
         FileInputStream fileInputStream = null;
         try {
             fileInputStream = new FileInputStream(keystore);

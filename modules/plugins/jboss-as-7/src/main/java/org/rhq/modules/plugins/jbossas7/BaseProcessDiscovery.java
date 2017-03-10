@@ -247,8 +247,9 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
         ProcessInfo agentProcess = discoveryContext.getSystemInformation().getThisProcess();
         setStartScriptPluginConfigProps(process, commandLine, pluginConfig, agentProcess);
-        setUserAndPasswordPluginConfigProps(serverPluginConfig, hostConfig);
-
+        // Fixed username and password due BZ:1379834
+        serverPluginConfig.setUser(RHQADMIN);
+        serverPluginConfig.setPassword(RHQADMIN);
         String key = createKeyForLocalResource(serverPluginConfig);
         HostPort hostPort = hostConfig.getDomainControllerHostPort(commandLine);
         String name = buildDefaultResourceName(hostPort, managementHostPort, productType, hostConfig.getHostName());

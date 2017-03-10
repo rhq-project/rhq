@@ -59,7 +59,8 @@ class SchemeRegistryBuilder {
             SSLSocketFactory sslSocketFactory;
             try {
                 KeyStore truststore = null;
-                if (asConnectionParams.getTruststore() != null) {
+                if (asConnectionParams.getTruststore() != null && !asConnectionParams.getTruststore().trim().isEmpty
+                        ()) {
                     truststore = loadKeystore( //
                         asConnectionParams.getTruststoreType(), //
                         asConnectionParams.getTruststore(), //
@@ -69,7 +70,7 @@ class SchemeRegistryBuilder {
                 KeyStore keystore = null;
                 String keyPassword = null;
                 if (asConnectionParams.isClientcertAuthentication()) {
-                    if (asConnectionParams.getKeystore() == null) {
+                    if (asConnectionParams.getKeystore() == null || asConnectionParams.getKeystore().trim().isEmpty()) {
                         keystore = loadKeystore( //
                             System.getProperty("javax.net.ssl.keyStoreType", KeyStore.getDefaultType()), //
                             System.getProperty("javax.net.ssl.keyStore"), //
@@ -82,6 +83,7 @@ class SchemeRegistryBuilder {
                             asConnectionParams.getKeystorePassword() //
                         );
                         keyPassword = asConnectionParams.getKeyPassword();
+                        keyPassword = (keyPassword == null || keyPassword.trim().isEmpty()) ? null : keyPassword;
                     }
                 }
                 sslSocketFactory = new SSLSocketFactory(null, keystore, keyPassword, truststore, null,

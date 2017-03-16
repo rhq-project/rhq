@@ -2478,7 +2478,7 @@
 
     <service name="Infinispan (Managed Server)"
              discovery="SubsystemDiscovery"
-             class="BaseComponent"
+             class="InfinispanComponent"
              singleton="true"
              subCategory="Subsystems">
 
@@ -13564,7 +13564,7 @@
 
   <service name="Infinispan"
            discovery="SubsystemDiscovery"
-           class="BaseComponent"
+           class="InfinispanComponent"
            singleton="true"
            subCategory="Subsystems">
 

@@ -317,7 +317,7 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
                 }
             }
             PropertySimple configuredProcessTimeout = mapNew.getSimple("process-timeout");
-            if(configuredProcessTimeout != null) {
+            if(configuredProcessTimeout != null && configuredProcessTimeout.getIntegerValue() != null) {
                 processTimeout = configuredProcessTimeout.getIntegerValue();
             }
         }

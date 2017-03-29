@@ -2223,7 +2223,6 @@
         <c:simple-property name="wsdl-host" required="false" type="string" readOnly="true" description="The WSDL, that is a required deployment artifact for an endpoint, has a &lt;soap:address&gt; element which points to the location of the endpoint. JBoss supports rewriting of that SOAP address. If the content of &lt;soap:address&gt; is a valid URL, JBossWS will not rewrite it unless 'modify-wsdl-address' is true. If the content of &lt;soap:address&gt; is not a valid URL, JBossWS will rewrite it using the attribute values given below. If 'wsdl-host' is set to 'jbossws.undefined.host', JBossWS uses requesters host when rewriting the &lt;soap:address&gt;"/>
         <c:simple-property name="wsdl-port" required="false" type="integer" readOnly="true" description="The non-secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
         <c:simple-property name="wsdl-secure-port" required="false" type="integer" readOnly="true" description="The secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
-        <c:simple-property name="statistics-enabled" required="false" type="boolean" readOnly="true" defaultValue="false" description="Whether statistics are to be gathered for endpoints, default value is 'false'."/>
       </resource-configuration>
 
       <service name="Endpoint (Managed Server)"
@@ -8878,7 +8877,6 @@
       <c:simple-property name="wsdl-host" required="false" type="string" readOnly="false" description="The WSDL, that is a required deployment artifact for an endpoint, has a &lt;soap:address&gt; element which points to the location of the endpoint. JBoss supports rewriting of that SOAP address. If the content of &lt;soap:address&gt; is a valid URL, JBossWS will not rewrite it unless 'modify-wsdl-address' is true. If the content of &lt;soap:address&gt; is not a valid URL, JBossWS will rewrite it using the attribute values given below. If 'wsdl-host' is set to 'jbossws.undefined.host', JBossWS uses requesters host when rewriting the &lt;soap:address&gt;"/>
       <c:simple-property name="wsdl-port" required="false" type="integer" readOnly="false" description="The non-secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
       <c:simple-property name="wsdl-secure-port" required="false" type="integer" readOnly="false" description="The secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
-      <c:simple-property name="statistics-enabled" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether statistics are to be gathered for endpoints, default value is 'false'."/>
     </resource-configuration>
 
     <service name="Endpoint"

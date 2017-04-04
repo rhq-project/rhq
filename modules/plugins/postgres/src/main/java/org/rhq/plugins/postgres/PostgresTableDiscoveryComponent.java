@@ -49,7 +49,7 @@ public class PostgresTableDiscoveryComponent implements ResourceDiscoveryCompone
 
     private static final Log LOG = LogFactory.getLog(PostgresTableDiscoveryComponent.class);
 
-    private static final String DISCOVERY_QUERY = "select schemaname, relname from pg_stat_user_tables";
+    private static final String DISCOVERY_QUERY = "select schemaname, relname from pg_stat_user_tables where schemaname NOT LIKE 'pg_temp%'";
     private static final String UPGRADE_QUERY = "select schemaname from pg_stat_user_tables where relname = ?";
 
     static final String SCHEMA_SEPARATOR = ".";

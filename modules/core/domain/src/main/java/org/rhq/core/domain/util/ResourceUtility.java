@@ -91,6 +91,58 @@ public class ResourceUtility {
         return current;
     }
 
+    /**
+     * Returns first ancestor whose type is parentType.
+     *
+     * @param resource
+     * @param parentType Type of the ancestor needed.
+     * @return The ancestor of resource whose type is parentType.
+     * @throws IllegalArgumentException if <code>resource</code> or <code>parentType</code> is null
+     */
+    public static Resource getAncestorResourceOfType(Resource resource, String parentType) {
+        if (resource == null) {
+            throw new IllegalArgumentException("resource is null");
+        }
+        if (parentType == null) {
+            throw new IllegalArgumentException("parentType is null");
+        }
+        while (true) {
+            if (resource.getResourceType().getName().equals(parentType)) {
+                return resource;
+            }
+            resource = resource.getParentResource();
+            if (resource == null) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Returns true if <code>possibleAncestor</code> is an ancestor of <code>resource</code> or itself.
+     * false in other case.
+     *
+     * @param resource
+     * @param possibleAncestor possible ancestor of <code>resource</code>.
+     * @return true if <code>possibleAncestor</code> is an ancestor of <code>resource</code> or itself, false in other case.
+     */
+    public static boolean isAncestor(Resource resource, Resource possibleAncestor) {
+        if (resource == null) {
+            throw new IllegalArgumentException("resource is null");
+        }
+        if (possibleAncestor == null) {
+            throw new IllegalArgumentException("possibleAncestor is null");
+        }
+        while(true) {
+            if (resource.equals(possibleAncestor)) {
+                return true;
+            }
+            resource = resource.getParentResource();
+            if (resource == null) {
+                return false;
+            }
+        }
+    }
+
     private ResourceUtility() {
         // Defensive
     }

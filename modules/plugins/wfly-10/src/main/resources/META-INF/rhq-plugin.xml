@@ -3317,6 +3317,48 @@
       </service><!-- End of servlet-container -->  
     </service><!-- End of undertow service -->
 
+    <service name="IO (Managed Server)"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             singleton="true"
+             subCategory="Subsystems|Web">
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=io"/>
+            <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+        </plugin-configuration>
+
+        <service name="Worker (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="neither">
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="worker"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="io-threads" required="false" type="integer" readOnly="true" description="Specify the number of I/O threads to create for the worker.  If not specified, a default will be chosen, which is calculated by cpuCount * 2"/>
+                <c:simple-property name="stack-size" required="false" type="long" readOnly="true" defaultValue="0" description="The stack size (in bytes) to attempt to use for worker threads. The default value is 0."/>
+                <c:simple-property name="task-keepalive" required="false" type="integer" readOnly="true" defaultValue="60" description="Specify the number of milliseconds to keep non&#45;core task threads alive. The default value is 60."/>
+                <c:simple-property name="task-max-threads" required="false" type="integer" readOnly="true" description="Specify the maximum number of threads for the worker task thread pool.If not set, default value used which is calculated by formula cpuCount * 16"/>
+            </resource-configuration>
+        </service>
+
+        <service name="Buffer Pool (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="neither">
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="buffer-pool"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="buffer-size:expr" required="false" type="string" readOnly="true" description="The size of each buffer slice in bytes, if not set optimal value is calculated based on available RAM resources in your system."/>
+                <c:simple-property name="buffers-per-slice:expr" required="false" type="string" readOnly="true" description="How many buffers per slice, if not set optimal value is calculated based on available RAM resources in your system."/>
+                <c:simple-property name="direct-buffers" required="false" type="boolean" readOnly="true" description="Does the buffer pool use direct buffers, some platforms don&apos;t support direct buffers"/>
+            </resource-configuration>
+        </service>
+    </service>
     <service name="JCA (Managed Server)"
              class="BaseComponent"
              discovery="SubsystemDiscovery"
@@ -6783,7 +6825,9 @@
             <c:simple-property name="security-key" required="false" type="string" readOnly="false" description="The security key that is used for the mod&#45;cluster group. All members must use the same security key."/>
             <c:simple-property name="security-realm" required="false" type="string" readOnly="false" description="The security realm that provides the SSL configuration"/>
             <c:simple-property name="use-alias" required="false" type="boolean" readOnly="false" defaultValue="false" description="If an alias check is performed. The default value is false."/>
-            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The XNIO worker that is used to send the advertise notifications. The default value is default."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The XNIO worker that is used to send the advertise notifications. The default value is default.">
+                <c:option-source target="resource" expressionScope="baseResource" expression="type=Worker plugin=&pluginName;"/>
+            </c:simple-property>
           </resource-configuration>
 
         </service><!-- End of Mod cluster service -->
@@ -6978,7 +7022,9 @@
             <c:simple-property name="allow-equals-in-cookie-value" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this is true then Undertow will allow non&#45;escaped equals characters in unquoted cookie values. Unquoted cookie values may not contain equals characters. If present the value ends before the equals sign. The remainder of the cookie value will be dropped. The default value is false."/>
             <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
             <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="false" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
-            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default."/>
+            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default.">
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool (Profile)$' plugin=&pluginName;"/>
+            </c:simple-property>
             <c:simple-property name="decode-url" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
             <c:list-property name="disallowed-methods" required="false" description="A comma separated list of HTTP methods that are not allowed" >
               <c:simple-property name="disallowed-methods" />
@@ -7004,7 +7050,9 @@
             <c:simple-property name="tcp-backlog:expr" required="false" type="string" readOnly="false" description="Configure a server with the specified backlog."/>
             <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="false" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
             <c:simple-property name="url-charset" required="false" type="string" readOnly="false" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
-            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default.">
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Worker (Profile)$' plugin=&pluginName;"/>
+            </c:simple-property>
             <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="false" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
           </resource-configuration>
         </service> <!-- End of ajp-listener service -->
@@ -7091,7 +7139,9 @@
             <c:simple-property name="allow-equals-in-cookie-value" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this is true then Undertow will allow non&#45;escaped equals characters in unquoted cookie values. Unquoted cookie values may not contain equals characters. If present the value ends before the equals sign. The remainder of the cookie value will be dropped. The default value is false."/>
             <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
             <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="false" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
-            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default."/>
+            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default.">
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool (Profile)$' plugin=&pluginName;"/>
+            </c:simple-property>
             <c:simple-property name="certificate-forwarding" required="false" type="boolean" readOnly="false" defaultValue="false" description="If certificate forwarding should be enabled. If this is enabled then the listener will take the certificate from the SSL_CLIENT_CERT attribute. This should only be enabled if behind a proxy, and the proxy is configured to always set these headers. The default value is false."/>
             <c:simple-property name="decode-url" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
             <c:list-property name="disallowed-methods" required="false" description="A comma separated list of HTTP methods that are not allowed" >
@@ -7119,7 +7169,9 @@
             <c:simple-property name="tcp-backlog:expr" required="false" type="string" readOnly="false" description="Configure a server with the specified backlog."/>
             <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="false" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
             <c:simple-property name="url-charset" required="false" type="string" readOnly="false" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
-            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default.">
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Worker (Profile)$' plugin=&pluginName;"/>
+            </c:simple-property>
             <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="false" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
           </resource-configuration>
 
@@ -7145,7 +7197,9 @@
             <c:simple-property name="allow-equals-in-cookie-value" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this is true then Undertow will allow non&#45;escaped equals characters in unquoted cookie values. Unquoted cookie values may not contain equals characters. If present the value ends before the equals sign. The remainder of the cookie value will be dropped. The default value is false."/>
             <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
             <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="false" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
-            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default."/>
+            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default.">
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool (Profile)$' plugin=&pluginName;"/>
+            </c:simple-property>
             <c:simple-property name="decode-url" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
             <c:list-property name="disallowed-methods" required="false" description="A comma separated list of HTTP methods that are not allowed" >
               <c:simple-property name="disallowed-methods" />
@@ -7177,7 +7231,9 @@
             <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="false" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
             <c:simple-property name="url-charset" required="false" type="string" readOnly="false" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
             <c:simple-property name="verify-client" required="false" type="string" readOnly="false" defaultValue="NOT_REQUESTED" description="The desired SSL client authentication mode for SSL channels. The default value is NOT_REQUESTED."/>
-            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default.">
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Worker (Profile)$' plugin=&pluginName;"/>
+            </c:simple-property>
             <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="false" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
           </resource-configuration>
 
@@ -7231,9 +7287,13 @@
           </c:group>
 
           <c:group name="child:setting=websockets" displayName="Web socket">
-            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The buffer pool to use for websocket deployments. The default value is default."/>
+            <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The buffer pool to use for websocket deployments. The default value is default.">
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool (Profile)$' plugin=&pluginName;"/>
+            </c:simple-property>
             <c:simple-property name="dispatch-to-worker" required="false" type="boolean" readOnly="false" defaultValue="true" description="If callbacks should be dispatched to a worker thread. If this is false then they will be run in the IO thread, which is faster however care must be taken not to perform blocking operations. The default value is true."/>
-            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The worker to use for websocket deployments. The default value is default."/>
+            <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The worker to use for websocket deployments. The default value is default.">
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Worker (Profile)$' plugin=&pluginName;"/>
+            </c:simple-property>
           </c:group>
 
         </resource-configuration>
@@ -7265,7 +7325,50 @@
         </service><!-- End of welcome-file service -->
       </service><!-- End of servlet-container -->  
     </service><!-- End of undertow service -->
-  
+
+    <service name="IO (Profile)"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             singleton="true"
+             subCategory="Subsystems|Web">
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=io"/>
+        </plugin-configuration>
+
+        <service name="Worker (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="worker"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="io-threads" required="false" type="integer" readOnly="false" description="Specify the number of I/O threads to create for the worker.  If not specified, a default will be chosen, which is calculated by cpuCount * 2"/>
+                <c:simple-property name="stack-size" required="false" type="long" readOnly="false" defaultValue="0" description="The stack size (in bytes) to attempt to use for worker threads. The default value is 0."/>
+                <c:simple-property name="task-keepalive" required="false" type="integer" readOnly="false" defaultValue="60" description="Specify the number of milliseconds to keep non&#45;core task threads alive. The default value is 60."/>
+                <c:simple-property name="task-max-threads" required="false" type="integer" readOnly="false" description="Specify the maximum number of threads for the worker task thread pool.If not set, default value used which is calculated by formula cpuCount * 16"/>
+            </resource-configuration>
+        </service>
+
+        <service name="Buffer Pool (Profile)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="buffer-pool"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="buffer-size:expr" required="false" type="string" readOnly="false" description="The size of each buffer slice in bytes, if not set optimal value is calculated based on available RAM resources in your system."/>
+                <c:simple-property name="buffers-per-slice:expr" required="false" type="string" readOnly="false" description="How many buffers per slice, if not set optimal value is calculated based on available RAM resources in your system."/>
+                <c:simple-property name="direct-buffers" required="false" type="boolean" readOnly="false" description="Does the buffer pool use direct buffers, some platforms don&apos;t support direct buffers"/>
+            </resource-configuration>
+        </service>
+
+    </service>
+
     <service name="JCA (Profile)"
              class="BaseComponent"
              discovery="SubsystemDiscovery"
@@ -9435,7 +9538,9 @@
           <c:simple-property name="security-key" required="false" type="string" readOnly="false" description="The security key that is used for the mod&#45;cluster group. All members must use the same security key."/>
           <c:simple-property name="security-realm" required="false" type="string" readOnly="false" description="The security realm that provides the SSL configuration"/>
           <c:simple-property name="use-alias" required="false" type="boolean" readOnly="false" defaultValue="false" description="If an alias check is performed. The default value is false."/>
-          <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The XNIO worker that is used to send the advertise notifications. The default value is default."/>
+          <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The XNIO worker that is used to send the advertise notifications. The default value is default.">
+              <c:option-source target="resource" expressionScope="baseResource" expression="type=Worker plugin=&pluginName;"/>
+          </c:simple-property>
         </resource-configuration>
 
       </service><!-- End of Mod cluster service -->
@@ -9630,7 +9735,9 @@
           <c:simple-property name="allow-equals-in-cookie-value" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this is true then Undertow will allow non&#45;escaped equals characters in unquoted cookie values. Unquoted cookie values may not contain equals characters. If present the value ends before the equals sign. The remainder of the cookie value will be dropped. The default value is false."/>
           <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
           <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="false" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
-          <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default."/>
+          <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default.">
+              <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool$' plugin=&pluginName;"/>
+          </c:simple-property>
           <c:simple-property name="decode-url" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
           <c:list-property name="disallowed-methods" required="false" description="A comma separated list of HTTP methods that are not allowed" >
             <c:simple-property name="disallowed-methods" />
@@ -9656,7 +9763,9 @@
           <c:simple-property name="tcp-backlog:expr" required="false" type="string" readOnly="false" description="Configure a server with the specified backlog."/>
           <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="false" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
           <c:simple-property name="url-charset" required="false" type="string" readOnly="false" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
-          <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default."/>
+          <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default.">
+              <c:option-source target="resource" expressionScope="baseResource" expression="type=Worker plugin=&pluginName;"/>
+          </c:simple-property>
           <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="false" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
         </resource-configuration>
       </service> <!-- End of ajp-listener service -->
@@ -9743,7 +9852,9 @@
           <c:simple-property name="allow-equals-in-cookie-value" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this is true then Undertow will allow non&#45;escaped equals characters in unquoted cookie values. Unquoted cookie values may not contain equals characters. If present the value ends before the equals sign. The remainder of the cookie value will be dropped. The default value is false."/>
           <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
           <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="false" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
-          <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default."/>
+          <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default.">
+              <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool$' plugin=&pluginName;"/>
+          </c:simple-property>
           <c:simple-property name="certificate-forwarding" required="false" type="boolean" readOnly="false" defaultValue="false" description="If certificate forwarding should be enabled. If this is enabled then the listener will take the certificate from the SSL_CLIENT_CERT attribute. This should only be enabled if behind a proxy, and the proxy is configured to always set these headers. The default value is false."/>
           <c:simple-property name="decode-url" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
           <c:list-property name="disallowed-methods" required="false" description="A comma separated list of HTTP methods that are not allowed" >
@@ -9771,7 +9882,9 @@
           <c:simple-property name="tcp-backlog:expr" required="false" type="string" readOnly="false" description="Configure a server with the specified backlog."/>
           <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="false" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
           <c:simple-property name="url-charset" required="false" type="string" readOnly="false" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
-          <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default."/>
+          <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default.">
+              <c:option-source target="resource" expressionScope="baseResource" expression="type=Worker plugin=&pluginName;"/>
+          </c:simple-property>
           <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="false" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
         </resource-configuration>
 
@@ -9797,7 +9910,9 @@
           <c:simple-property name="allow-equals-in-cookie-value" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this is true then Undertow will allow non&#45;escaped equals characters in unquoted cookie values. Unquoted cookie values may not contain equals characters. If present the value ends before the equals sign. The remainder of the cookie value will be dropped. The default value is false."/>
           <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
           <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="false" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
-          <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default."/>
+          <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default.">
+              <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool$' plugin=&pluginName;"/>
+          </c:simple-property>
           <c:simple-property name="decode-url" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
           <c:list-property name="disallowed-methods" required="false" description="A comma separated list of HTTP methods that are not allowed" >
             <c:simple-property name="disallowed-methods" />
@@ -9829,7 +9944,9 @@
           <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="false" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
           <c:simple-property name="url-charset" required="false" type="string" readOnly="false" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
           <c:simple-property name="verify-client" required="false" type="string" readOnly="false" defaultValue="NOT_REQUESTED" description="The desired SSL client authentication mode for SSL channels. The default value is NOT_REQUESTED."/>
-          <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default."/>
+          <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default.">
+              <c:option-source target="resource" expressionScope="baseResource" expression="type=Worker plugin=&pluginName;"/>
+          </c:simple-property>
           <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="false" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
         </resource-configuration>
 
@@ -9883,9 +10000,13 @@
         </c:group>
 
         <c:group name="child:setting=websockets" displayName="Web socket">
-          <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The buffer pool to use for websocket deployments. The default value is default."/>
+          <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The buffer pool to use for websocket deployments. The default value is default.">
+              <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool$' plugin=&pluginName;"/>
+          </c:simple-property>
           <c:simple-property name="dispatch-to-worker" required="false" type="boolean" readOnly="false" defaultValue="true" description="If callbacks should be dispatched to a worker thread. If this is false then they will be run in the IO thread, which is faster however care must be taken not to perform blocking operations. The default value is true."/>
-          <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The worker to use for websocket deployments. The default value is default."/>
+          <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The worker to use for websocket deployments. The default value is default.">
+              <c:option-source target="resource" expressionScope="baseResource" expression="type=Worker plugin=&pluginName;"/>
+          </c:simple-property>
         </c:group>
 
       </resource-configuration>
@@ -9918,7 +10039,52 @@
     </service><!-- End of servlet-container -->  
   </service><!-- End of undertow service -->
 
-  
+  <service name="IO"
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           singleton="true"
+           subCategory="Subsystems|Web">
+      <runs-inside>
+          <parent-resource-type name="EAP7 Standalone Server" plugin="&pluginName;"/>
+      </runs-inside>
+
+      <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="subsystem=io"/>
+      </plugin-configuration>
+
+      <service name="Worker"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+          <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="worker"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+              <c:simple-property name="io-threads" required="false" type="integer" readOnly="false" description="Specify the number of I/O threads to create for the worker.  If not specified, a default will be chosen, which is calculated by cpuCount * 2"/>
+              <c:simple-property name="stack-size" required="false" type="long" readOnly="false" defaultValue="0" description="The stack size (in bytes) to attempt to use for worker threads. The default value is 0."/>
+              <c:simple-property name="task-keepalive" required="false" type="integer" readOnly="false" defaultValue="60" description="Specify the number of milliseconds to keep non&#45;core task threads alive. The default value is 60."/>
+              <c:simple-property name="task-max-threads" required="false" type="integer" readOnly="false" description="Specify the maximum number of threads for the worker task thread pool.If not set, default value used which is calculated by formula cpuCount * 16"/>
+          </resource-configuration>
+      </service>
+
+      <service name="Buffer Pool"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+          <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="buffer-pool"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+              <c:simple-property name="buffer-size:expr" required="false" type="string" readOnly="false" description="The size of each buffer slice in bytes, if not set optimal value is calculated based on available RAM resources in your system."/>
+              <c:simple-property name="buffers-per-slice:expr" required="false" type="string" readOnly="false" description="How many buffers per slice, if not set optimal value is calculated based on available RAM resources in your system."/>
+              <c:simple-property name="direct-buffers" required="false" type="boolean" readOnly="false" description="Does the buffer pool use direct buffers, some platforms don&apos;t support direct buffers"/>
+          </resource-configuration>
+      </service>
+
+  </service>
+
   <service name="General JCA connectors"
            discovery="SubsystemDiscovery"
            class="BaseComponent"

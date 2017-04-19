@@ -37,6 +37,7 @@ import java.util.regex.Matcher;
 import org.codehaus.jackson.JsonNode;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
@@ -187,8 +188,24 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
         ResourcePackageDetails detail = packages.iterator().next();
 
-        ASUploadConnection uploadConnection = new ASUploadConnection(getServerComponent().getASConnection(), detail
-            .getKey().getName());
+        ASUploadConnection uploadConnection = null;
+
+        Configuration deploymentTimeConfiguration = detail.getDeploymentTimeConfiguration();
+        if(deploymentTimeConfiguration != null) {
+            PropertySimple userProvidedTimeoutMillis =
+                    deploymentTimeConfiguration.getSimple("userProvidedTimeoutMillis");
+            if (userProvidedTimeoutMillis != null && userProvidedTimeoutMillis.getIntegerValue() != null) {
+                Integer timeout = userProvidedTimeoutMillis.getIntegerValue();
+                uploadConnection = new ASUploadConnection(getServerComponent().getASConnection(), detail
+                        .getKey().getName(), timeout);
+            }
+        }
+
+        if(uploadConnection == null) {
+            uploadConnection = new ASUploadConnection(getServerComponent().getASConnection(), detail
+                    .getKey().getName());
+        }
+
         OutputStream out = uploadConnection.getOutputStream();
         if (out == null) {
             response.setOverallRequestResult(ContentResponseResult.FAILURE);

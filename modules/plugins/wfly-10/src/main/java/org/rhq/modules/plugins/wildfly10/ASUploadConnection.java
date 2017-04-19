@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2017 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -75,7 +75,7 @@ public class ASUploadConnection {
     private static final Log LOG = LogFactory.getLog(ASUploadConnection.class);
 
     private static final int SOCKET_CONNECTION_TIMEOUT = 30 * 1000; // 30sec
-    private static final int SOCKET_READ_TIMEOUT = 60 * 1000; // 60sec
+    private static final int SOCKET_READ_TIMEOUT = 10 * 60 * 1000; // 10 minutes
     private static final String TRIGGER_AUTH_URI = ASConnection.MANAGEMENT_URI;
     private static final String UPLOAD_URI = ASConnection.MANAGEMENT_URI + "/add-content";
     private static final int FILE_POST_MAX_LOGGABLE_RESPONSE_LENGTH = 1024 * 2; // 2k max
@@ -141,6 +141,15 @@ public class ASUploadConnection {
     }
 
     /**
+     * @param asConnection the object which will provide the {@link ASConnectionParams}
+     * @param fileName
+     * @see #ASUploadConnection(ASConnectionParams, String)
+     */
+    public ASUploadConnection(ASConnection asConnection, String fileName, Integer timeoutMilliseconds) {
+        this(asConnection.getAsConnectionParams(), fileName, timeoutMilliseconds);
+    }
+
+    /**
      * Creates a new {@link ASUploadConnection} for a remote http management interface.
      *
      * It's the responsibility of the caller to make sure either {@link #finishUpload()} or {@link #cancelUpload()}
@@ -149,6 +158,18 @@ public class ASUploadConnection {
      * @param params
      */
     public ASUploadConnection(ASConnectionParams params, String filename) {
+        this(params, filename, null);
+    }
+
+    /**
+     * Creates a new {@link ASUploadConnection} for a remote http management interface.
+     *
+     * It's the responsibility of the caller to make sure either {@link #finishUpload()} or {@link #cancelUpload()}
+     * will be called to free resources this class helds.
+     *
+     * @param params
+     */
+    public ASUploadConnection(ASConnectionParams params, String filename, Integer timeoutMilliseconds) {
         asConnectionParams = params;
         if (asConnectionParams.getHost() == null) {
             throw new IllegalArgumentException("Management host cannot be null.");
@@ -157,12 +178,16 @@ public class ASUploadConnection {
             throw new IllegalArgumentException("Invalid port: " + asConnectionParams.getPort());
         }
         this.filename = filename;
-        timeout = SOCKET_READ_TIMEOUT;
+        if(timeoutMilliseconds != null && timeoutMilliseconds.intValue() > 0) {
+            timeout = timeoutMilliseconds;
+        } else {
+            timeout = SOCKET_READ_TIMEOUT;
+        }
         triggerAuthUri = buildTriggerAuthUri();
         uploadUri = buildUploadUri();
         if (asConnectionParams.getUsername() != null && asConnectionParams.getPassword() != null) {
             credentials = new UsernamePasswordCredentials(asConnectionParams.getUsername(),
-                asConnectionParams.getPassword());
+                    asConnectionParams.getPassword());
         } else {
             credentials = null;
         }
@@ -294,8 +319,6 @@ public class ASUploadConnection {
             }
         }
 
-        String uploadURL = (asConnectionParams.isSecure() ? ASConnection.HTTPS_SCHEME : ASConnection.HTTP_SCHEME) + "://"
-            + asConnectionParams.getHost() + ":" + asConnectionParams.getPort() + UPLOAD_URI;
         HttpPost uploadRequest = new HttpPost(uploadUri);
         try {
 

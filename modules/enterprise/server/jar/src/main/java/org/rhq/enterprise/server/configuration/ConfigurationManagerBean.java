@@ -2655,17 +2655,24 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
             Predicate<Resource> baseResourcePredicate = null;
             if (expressionScope == PropertyOptionsSource.ExpressionScope.BASE_RESOURCE) {
-                int halfCommaIndex = expression.indexOf(";");
-                if (halfCommaIndex > -1) {
+                String[] expressionTokens = expression.split("\\s+");
+                String ancestorType = null;
+                final Pattern ancestorTypePattern = Pattern.compile("(.*);baseResource\\.plugin");
+
+                for (String token : expressionTokens) {
+                    Matcher ancestorTypeMatcher = ancestorTypePattern.matcher(token);
+                    if (ancestorTypeMatcher.lookingAt()) {
+                        ancestorType = ancestorTypeMatcher.group(1);
+                        break;
+                    }
+                }
+                if (ancestorType != null) {
                     if (resource == null && parentResource == null) {
                         LOG.warn("Different base resource type requested but resource id and parent_resource_id are not valid."
                                 + "Option source expression:" + expression);
                         return;
                     }
                     Resource nonNullResource = (resource == null? parentResource : resource);
-                    String ancestorType = expression.substring(
-                            halfCommaIndex + 1, expression.length());
-                    expression = expression.substring(0, halfCommaIndex);
                     Resource foundBaseResource =  ResourceUtility.getAncestorResourceOfType(
                             nonNullResource, ancestorType);
                     if (foundBaseResource != null) {

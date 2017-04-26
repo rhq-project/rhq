@@ -61,6 +61,7 @@ import org.rhq.core.util.ByteUtil;
 import org.rhq.core.util.file.ContentFileInfo;
 import org.rhq.core.util.file.JarContentFileInfo;
 import org.rhq.modules.plugins.wildfly10.helper.Deployer;
+import org.rhq.modules.plugins.wildfly10.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.wildfly10.json.Address;
 import org.rhq.modules.plugins.wildfly10.json.Operation;
 import org.rhq.modules.plugins.wildfly10.json.ReadAttribute;
@@ -190,14 +191,12 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
         ASUploadConnection uploadConnection = null;
 
-        Configuration deploymentTimeConfiguration = detail.getDeploymentTimeConfiguration();
-        if(deploymentTimeConfiguration != null) {
-            PropertySimple userProvidedTimeoutMillis =
-                    deploymentTimeConfiguration.getSimple("userProvidedTimeoutMillis");
-            if (userProvidedTimeoutMillis != null && userProvidedTimeoutMillis.getIntegerValue() != null) {
-                Integer timeout = userProvidedTimeoutMillis.getIntegerValue();
+        ServerPluginConfiguration serverPluginConfiguration = getServerComponent().getServerPluginConfiguration();
+        if(serverPluginConfiguration != null && serverPluginConfiguration.getDeploymentConnectionTimeout() != null) {
+            Long timeout = serverPluginConfiguration.getDeploymentConnectionTimeout();
+            if(timeout != null) {
                 uploadConnection = new ASUploadConnection(getServerComponent().getASConnection(), detail
-                        .getKey().getName(), timeout);
+                        .getKey().getName(), timeout.intValue());
             }
         }
 

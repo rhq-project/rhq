@@ -47,6 +47,7 @@ public class ServerPluginConfiguration {
         public static final String USER = "user";
         public static final String PASSWORD = "password";
         public static final String MANAGEMENT_CONNECTION_TIMEOUT = "managementConnectionTimeout";
+        public static final String DEPLOYMENT_CONNECTION_TIMEOUT = "deploymentConnectionTimeout";
         public static final String HOME_DIR = "homeDir";
         public static final String BASE_DIR = "baseDir";
         public static final String CONFIG_DIR = "configDir";
@@ -166,6 +167,13 @@ public class ServerPluginConfiguration {
 
     public void setPassword(String password) {
         this.pluginConfig.setSimpleValue(Property.PASSWORD, password);
+    }
+
+    public Long getDeploymentConnectionTimeout() {
+        if(pluginConfig.getSimple(Property.DEPLOYMENT_CONNECTION_TIMEOUT) != null) {
+            return pluginConfig.getSimple(Property.DEPLOYMENT_CONNECTION_TIMEOUT).getLongValue();
+        }
+        return null;
     }
 
     public Long getManagementConnectionTimeout() {

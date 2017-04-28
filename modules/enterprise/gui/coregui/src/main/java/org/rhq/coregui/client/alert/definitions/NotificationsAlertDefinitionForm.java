@@ -45,6 +45,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.Table;
@@ -217,8 +218,11 @@ public class NotificationsAlertDefinitionForm extends EnhancedVLayout implements
         }
 
         AlertNotification[] prepareNotificationsForPreview(){
-            for(AlertNotification n: notifications){
-                n.getAlertDefinition().getResource().getAlertDefinitions().clear();
+            for(AlertNotification n: notifications) {
+                Resource resource = n.getAlertDefinition().getResource();
+                if(resource != null) {
+                    resource.getAlertDefinitions().clear();
+                }
             }
             return notifications.toArray(new AlertNotification[notifications.size()]);
         }

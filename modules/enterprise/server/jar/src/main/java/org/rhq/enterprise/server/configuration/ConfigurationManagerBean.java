@@ -2657,7 +2657,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             if (expressionScope == PropertyOptionsSource.ExpressionScope.BASE_RESOURCE) {
                 String[] expressionTokens = expression.split("\\s+");
                 String ancestorType = null;
-                final Pattern ancestorTypePattern = Pattern.compile("(.*);baseResource\\.plugin");
+                final Pattern ancestorTypePattern = Pattern.compile("(.*)BaseResource\\.plugin");
 
                 for (String token : expressionTokens) {
                     Matcher ancestorTypeMatcher = ancestorTypePattern.matcher(token);

@@ -5938,7 +5938,7 @@
 
       <resource-configuration>
         <c:simple-property name="default-virtual-server" required="true" type="string" readOnly="false" defaultValue="default-host" description="The web container's default virtual server. The default value is default-host.">
-          <c:option-source target="resource" expression="type=VHost Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+          <c:option-source target="resource" expression="type=VHost ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
         </c:simple-property>
         <c:simple-property name="instance-id" readOnly="true" required="false" type="string" description="The identifier for this server instance."/>
         <c:simple-property name="native" required="false" type="boolean" readOnly="true" defaultValue="true" description="Add the native initialization listener to the web container. The default value is true."/>
@@ -6007,7 +6007,7 @@
             </c:property-options>
           </c:simple-property>
           <c:simple-property name="socket-binding" required="true" type="string" description="The web connector socket-binding reference, this connector should be bound to.">
-            <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup Profile;baseResource.plugin=&pluginName;"/>
+            <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;"/>
           </c:simple-property>
           <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
           <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
@@ -6081,7 +6081,7 @@
           <c:group name="child:sso=configuration" displayName="The SSO configuration for this virtual server.">
             <c:map-property name="*Configuration+" displayName="Configuration" readOnly="false" required="false">
               <c:simple-property name="cache-container" required="false" type="string" readOnly="false" description="Enables clustered SSO using the specified clustered cache container.">
-                <c:option-source target="resource" expression="type='Cache Container' Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+                <c:option-source target="resource" expression="type='Cache Container' ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
               </c:simple-property>
               <c:simple-property name="cache-name" required="false" type="string" readOnly="false" description="Name of the cache to use in the cache container."/>
               <c:simple-property name="domain" required="false" type="string" readOnly="false" description="The cookie domain that will be used."/>
@@ -6185,7 +6185,7 @@
         <resource-configuration>
           <c:simple-property name="name" required="false" type="string" readOnly="false" description="The name of the BootstrapContext"/>
           <c:simple-property name="workmanager" required="false" type="string" readOnly="false" description="The WorkManager instance for the BootstrapContext">
-            <c:option-source target="resource" expression="type=Workmanager Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+            <c:option-source target="resource" expression="type=Workmanager ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
           </c:simple-property>
         </resource-configuration>
       </service>
@@ -7373,7 +7373,7 @@
           <resource-configuration>
             <c:simple-property name="factory-class" required="true" type="string" readOnly="false" description="The factory class."/>
             <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
           </resource-configuration>
         </service>
@@ -7390,7 +7390,7 @@
           <resource-configuration>
             <c:simple-property name="factory-class" required="true" type="string" readOnly="false" description="The factory class."/>
             <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
           </resource-configuration>
         </service>
@@ -7434,7 +7434,7 @@
 
           <resource-configuration>
             <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
           </resource-configuration>
         </service>
@@ -7450,7 +7450,7 @@
 
           <resource-configuration>
             <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
           </resource-configuration>
         </service>
@@ -7593,7 +7593,7 @@
               <c:simple-property name="connectors" />
             </c:list-property>
             <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The broadcast group socket binding.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
           </resource-configuration>
         </service>
@@ -7681,7 +7681,7 @@
             <c:simple-property name="initial-wait-timeout" required="false" type="long" readOnly="false" defaultValue="10000" description="Period, in ms, to wait for an initial broadcast to give us at least one node in the cluster. The default value is 10000."/>
             <c:simple-property name="refresh-timeout" required="false" type="long" readOnly="false" defaultValue="10000" description="Period the discovery group waits after receiving the last broadcast from a particular server before removing that server&apos;s connector pair entry from its list. The default value is 10000."/>
             <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The discovery group socket binding.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
           </resource-configuration>
         </service>

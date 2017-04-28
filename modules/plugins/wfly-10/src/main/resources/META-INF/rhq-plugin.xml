@@ -6828,7 +6828,7 @@
             <c:simple-property name="security-realm" required="false" type="string" readOnly="false" description="The security realm that provides the SSL configuration"/>
             <c:simple-property name="use-alias" required="false" type="boolean" readOnly="false" defaultValue="false" description="If an alias check is performed. The default value is false."/>
             <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The XNIO worker that is used to send the advertise notifications. The default value is default.">
-                <c:option-source target="resource" expressionScope="baseResource" expression="type=Worker Profile;baseResource.plugin=&pluginName;"/>
+                <c:option-source target="resource" expressionScope="baseResource" expression="type=Worker ProfileBaseResource.plugin=&pluginName;"/>
             </c:simple-property>
           </resource-configuration>
 
@@ -7025,7 +7025,7 @@
             <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
             <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="false" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
             <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default.">
-                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool (Profile)$' Profile;baseResource.plugin=&pluginName;"/>
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool (Profile)$' ProfileBaseResource.plugin=&pluginName;"/>
             </c:simple-property>
             <c:simple-property name="decode-url" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
             <c:list-property name="disallowed-methods" required="false" description="A comma separated list of HTTP methods that are not allowed" >
@@ -7053,7 +7053,7 @@
             <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="false" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
             <c:simple-property name="url-charset" required="false" type="string" readOnly="false" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
             <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default.">
-                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Worker (Profile)$' Profile;baseResource.plugin=&pluginName;"/>
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Worker (Profile)$' ProfileBaseResource.plugin=&pluginName;"/>
             </c:simple-property>
             <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="false" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
           </resource-configuration>
@@ -7142,7 +7142,7 @@
             <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
             <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="false" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
             <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default.">
-                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool (Profile)$' Profile;baseResource.plugin=&pluginName;"/>
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool (Profile)$' ProfileBaseResource.plugin=&pluginName;"/>
             </c:simple-property>
             <c:simple-property name="certificate-forwarding" required="false" type="boolean" readOnly="false" defaultValue="false" description="If certificate forwarding should be enabled. If this is enabled then the listener will take the certificate from the SSL_CLIENT_CERT attribute. This should only be enabled if behind a proxy, and the proxy is configured to always set these headers. The default value is false."/>
             <c:simple-property name="decode-url" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
@@ -7172,7 +7172,7 @@
             <c:simple-property name="tcp-keep-alive" required="false" type="boolean" readOnly="false" description="Configure a channel to send TCP keep&#45;alive messages in an implementation&#45;dependent manner."/>
             <c:simple-property name="url-charset" required="false" type="string" readOnly="false" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
             <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default.">
-                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Worker (Profile)$' Profile;baseResource.plugin=&pluginName;"/>
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Worker (Profile)$' ProfileBaseResource.plugin=&pluginName;"/>
             </c:simple-property>
             <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="false" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
           </resource-configuration>
@@ -7200,7 +7200,7 @@
             <c:simple-property name="always-set-keep-alive" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then a Connection&#58; keep&#45;alive header will be added to responses, even when it is not strictly required by the specification. The default value is true."/>
             <c:simple-property name="buffer-pipelined-data" required="false" type="boolean" readOnly="false" defaultValue="true" description="If we should buffer pipelined requests. The default value is true."/>
             <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners buffer pool. The default value is default.">
-                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool (Profile)$' Profile;baseResource.plugin=&pluginName;"/>
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool (Profile)$' ProfileBaseResource.plugin=&pluginName;"/>
             </c:simple-property>
             <c:simple-property name="decode-url" required="false" type="boolean" readOnly="false" defaultValue="true" description="If this is true then the parser will decode the URL and query parameters using the selected character encoding (UTF&#45;8 by default). If this is false they will not be decoded. This will allow a later handler to decode them into whatever charset is desired. The default value is true."/>
             <c:list-property name="disallowed-methods" required="false" description="A comma separated list of HTTP methods that are not allowed" >
@@ -7234,7 +7234,7 @@
             <c:simple-property name="url-charset" required="false" type="string" readOnly="false" defaultValue="UTF&#45;8" description="URL charset. The default value is UTF&#45;8."/>
             <c:simple-property name="verify-client" required="false" type="string" readOnly="false" defaultValue="NOT_REQUESTED" description="The desired SSL client authentication mode for SSL channels. The default value is NOT_REQUESTED."/>
             <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The AJP listeners XNIO worker. The default value is default.">
-                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Worker (Profile)$' Profile;baseResource.plugin=&pluginName;"/>
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Worker (Profile)$' ProfileBaseResource.plugin=&pluginName;"/>
             </c:simple-property>
             <c:simple-property name="write-timeout:expr" required="false" type="string" readOnly="false" description="Configure a write timeout for a socket, in milliseconds.  If the given amount of time elapses without a successful write taking place, the socket&apos;s next write will throw a {@link WriteTimeoutException}."/>
           </resource-configuration>
@@ -7290,11 +7290,11 @@
 
           <c:group name="child:setting=websockets" displayName="Web socket">
             <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The buffer pool to use for websocket deployments. The default value is default.">
-                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool (Profile)$' Profile;baseResource.plugin=&pluginName;"/>
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool (Profile)$' ProfileBaseResource.plugin=&pluginName;"/>
             </c:simple-property>
             <c:simple-property name="dispatch-to-worker" required="false" type="boolean" readOnly="false" defaultValue="true" description="If callbacks should be dispatched to a worker thread. If this is false then they will be run in the IO thread, which is faster however care must be taken not to perform blocking operations. The default value is true."/>
             <c:simple-property name="worker" required="false" type="string" readOnly="false" defaultValue="default" description="The worker to use for websocket deployments. The default value is default.">
-                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Worker (Profile)$' Profile;baseResource.plugin=&pluginName;"/>
+                <c:option-source target="resource" expressionScope="baseResource" expression="type='^Worker (Profile)$' ProfileBaseResource.plugin=&pluginName;"/>
             </c:simple-property>
           </c:group>
 
@@ -7411,7 +7411,7 @@
         <resource-configuration>
           <c:simple-property name="name" required="false" type="string" readOnly="false" description="The name of the BootstrapContext"/>
           <c:simple-property name="workmanager" required="false" type="string" readOnly="false" description="The WorkManager instance for the BootstrapContext">
-            <c:option-source target="resource" expression="type=Workmanager Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+            <c:option-source target="resource" expression="type=Workmanager ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
           </c:simple-property>
         </resource-configuration>
       </service>
@@ -8742,7 +8742,7 @@
           <resource-configuration>
             <c:simple-property name="factory-class" required="true" type="string" readOnly="false" description="The factory class."/>
             <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
           </resource-configuration>
         </service>
@@ -8759,7 +8759,7 @@
           <resource-configuration>
             <c:simple-property name="factory-class" required="true" type="string" readOnly="false" description="The factory class."/>
             <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
           </resource-configuration>
         </service>
@@ -8803,7 +8803,7 @@
 
           <resource-configuration>
             <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
           </resource-configuration>
         </service>
@@ -8819,7 +8819,7 @@
 
           <resource-configuration>
             <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
           </resource-configuration>
         </service>
@@ -8962,7 +8962,7 @@
               <c:simple-property name="connectors" />
             </c:list-property>
             <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The broadcast group socket binding.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
           </resource-configuration>
         </service>
@@ -9050,7 +9050,7 @@
             <c:simple-property name="initial-wait-timeout" required="false" type="long" readOnly="false" defaultValue="10000" description="Period, in ms, to wait for an initial broadcast to give us at least one node in the cluster. The default value is 10000."/>
             <c:simple-property name="refresh-timeout" required="false" type="long" readOnly="false" defaultValue="10000" description="Period the discovery group waits after receiving the last broadcast from a particular server before removing that server&apos;s connector pair entry from its list. The default value is 10000."/>
             <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The discovery group socket binding.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup Profile;baseResource.plugin=&pluginName;" expressionScope="baseResource"/>
+              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
           </resource-configuration>
         </service>

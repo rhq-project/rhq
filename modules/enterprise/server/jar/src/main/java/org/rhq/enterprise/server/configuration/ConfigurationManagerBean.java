@@ -2570,12 +2570,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, int resourceId,
         int parentResourceId, ConfigurationDefinition def) {
 
-        Resource resource = null, baseResource = null;
+        Resource resource = null, baseResource = null, parentResource = null;
         if (resourceId >= 0) {
             resource = resourceManager.getResource(subject, resourceId);
         }
         if (parentResourceId >= 0) {
-            Resource parentResource = resourceManager.getResource(subject, parentResourceId);
+            parentResource = resourceManager.getResource(subject, parentResourceId);
             baseResource = ResourceUtility.getBaseServerOrService(parentResource);
         } else if (resource != null) {
             baseResource = ResourceUtility.getBaseServerOrService(resource);
@@ -2586,19 +2586,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
             if (pd instanceof PropertyDefinitionSimple) {
                 PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
-                handlePDS(subject, resource, baseResource, pds);
+                handlePDS(subject, resource, parentResource, baseResource, pds);
 
             } else if (pd instanceof PropertyDefinitionList) {
                 PropertyDefinitionList pdl = (PropertyDefinitionList) pd;
                 PropertyDefinition memberDef = pdl.getMemberDefinition();
                 if (memberDef instanceof PropertyDefinitionSimple) {
                     PropertyDefinitionSimple pds = (PropertyDefinitionSimple) memberDef;
-                    handlePDS(subject, resource, baseResource, pds);
+                    handlePDS(subject, resource, parentResource, baseResource, pds);
                 } else if (memberDef instanceof PropertyDefinitionMap) {
                     PropertyDefinitionMap pdm = (PropertyDefinitionMap) memberDef;
                     for (PropertyDefinition inner : pdm.getOrderedPropertyDefinitions()) {
                         if (inner instanceof PropertyDefinitionSimple) {
-                            handlePDS(subject, resource, baseResource, (PropertyDefinitionSimple) inner);
+                            handlePDS(subject, resource, parentResource, baseResource, (PropertyDefinitionSimple) inner);
                         }
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("3 ____[ " + inner.toString() + " in " + pdl.toString()
@@ -2616,7 +2616,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 PropertyDefinitionMap pdm = (PropertyDefinitionMap) pd;
                 for (PropertyDefinition inner : pdm.getOrderedPropertyDefinitions()) {
                     if (inner instanceof PropertyDefinitionSimple) {
-                        handlePDS(subject, resource, baseResource, (PropertyDefinitionSimple) inner);
+                        handlePDS(subject, resource, parentResource, baseResource, (PropertyDefinitionSimple) inner);
                     } else {
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("4 ____[ " + inner.toString() + " in " + pdm.toString()
@@ -2639,7 +2639,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      * @param subject Subject of the caller - may limit search results
      * @param pds the PropertyDefinitionSimple to work on
      */
-    private void handlePDS(final Subject subject, Resource resource, Resource baseResource, PropertyDefinitionSimple pds) {
+    private void handlePDS(final Subject subject, Resource resource, Resource parentResource,
+                           Resource baseResource, PropertyDefinitionSimple pds) {
 
         if (pds.getOptionsSource() != null) {
             // evaluate the source parameters
@@ -2651,6 +2652,42 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Pattern filterPattern = null;
             if (filter != null)
                 filterPattern = Pattern.compile(filter);
+
+            Predicate<Resource> baseResourcePredicate = null;
+            if (expressionScope == PropertyOptionsSource.ExpressionScope.BASE_RESOURCE) {
+                String[] expressionTokens = expression.split("\\s+");
+                String ancestorType = null;
+                final Pattern ancestorTypePattern = Pattern.compile("(.*)BaseResource\\.plugin");
+
+                for (String token : expressionTokens) {
+                    Matcher ancestorTypeMatcher = ancestorTypePattern.matcher(token);
+                    if (ancestorTypeMatcher.lookingAt()) {
+                        ancestorType = ancestorTypeMatcher.group(1);
+                        break;
+                    }
+                }
+                if (ancestorType != null) {
+                    if (resource == null && parentResource == null) {
+                        LOG.warn("Different base resource type requested but resource id and parent_resource_id are not valid."
+                                + "Option source expression:" + expression);
+                        return;
+                    }
+                    Resource nonNullResource = (resource == null? parentResource : resource);
+                    Resource foundBaseResource =  ResourceUtility.getAncestorResourceOfType(
+                            nonNullResource, ancestorType);
+                    if (foundBaseResource != null) {
+                        baseResourcePredicate = new isAncestorResourcePredicate(foundBaseResource);
+                    } else {
+                        LOG.warn("Couldn't find base resource of type ["
+                                + ancestorType + "] for resource [" + nonNullResource.getName() + "]");
+                        return;
+                    }
+                }
+                if (baseResourcePredicate == null && baseResource != null) {
+                    baseResourcePredicate = new IsInBaseResourcePredicate(baseResource);
+                }
+            }
+
 
             if (tt == PropertyOptionsSource.TargetType.RESOURCE || tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                 ResourceCriteria criteria = new ResourceCriteria();
@@ -2672,13 +2709,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                         expr = expr.substring(expr.indexOf(':') + 1);
 
                         if (!"self".equals(expr)) {
-                            criteria.setSearchExpression(expr);
-                            foundResources = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
-                            if (expressionScope == PropertyOptionsSource.ExpressionScope.BASE_RESOURCE
-                                && baseResource != null) {
-                                foundResources = Iterables.filter(foundResources, new IsInBaseResourcePredicate(
-                                    baseResource));
-                            }
+                            foundResources = processSearchExpression(
+                                    expression, criteria, queryExecutor, expressionScope, baseResourcePredicate);
                         } else if (resource != null) {
                             ArrayList<Resource> resourceList = new ArrayList<Resource>();
                             resourceList.add(resource);
@@ -2694,11 +2726,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                         return;
                     }
                 } else {
-                    criteria.setSearchExpression(expression);
-                    foundResources = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
-                    if (expressionScope == PropertyOptionsSource.ExpressionScope.BASE_RESOURCE && baseResource != null) {
-                        foundResources = Iterables.filter(foundResources, new IsInBaseResourcePredicate(baseResource));
-                    }
+                    foundResources = processSearchExpression(
+                            expression, criteria, queryExecutor, expressionScope, baseResourcePredicate);
                 }
 
                 for (Resource foundResource : foundResources) {
@@ -2716,6 +2745,18 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             // TODO plugin and resourceType
         }
 
+    }
+
+    private Iterable<Resource> processSearchExpression(String expression, ResourceCriteria criteria,
+                                                       CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor,
+                                                       PropertyOptionsSource.ExpressionScope expressionScope,
+                                                       Predicate<Resource> baseResourcePredicate) {
+        criteria.setSearchExpression(expression);
+        Iterable<Resource> foundResources = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
+        if (expressionScope == PropertyOptionsSource.ExpressionScope.BASE_RESOURCE && baseResourcePredicate != null) {
+            foundResources = Iterables.filter(foundResources, baseResourcePredicate);
+        }
+        return foundResources;
     }
 
     private void processPropertyOptionsSource(Resource resource, Resource baseResource, PropertyDefinitionSimple pds,
@@ -2852,6 +2893,20 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         public boolean apply(Resource resource) {
             Resource baseServerOrService = ResourceUtility.getBaseServerOrService(resource);
             return baseResource.equals(baseServerOrService);
+        }
+    }
+
+    private static final class isAncestorResourcePredicate implements Predicate<Resource> {
+
+        private Resource ancestor;
+
+        private isAncestorResourcePredicate(Resource ancestor) {
+            this.ancestor = ancestor;
+        }
+
+        @Override
+        public boolean apply(Resource resource) {
+            return ResourceUtility.isAncestor(resource, this.ancestor);
         }
     }
 }

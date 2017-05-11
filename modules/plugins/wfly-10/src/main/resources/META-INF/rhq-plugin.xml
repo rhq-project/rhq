@@ -3353,8 +3353,8 @@
             </plugin-configuration>
 
             <resource-configuration>
-                <c:simple-property name="buffer-size:expr" required="false" type="string" readOnly="true" description="The size of each buffer slice in bytes, if not set optimal value is calculated based on available RAM resources in your system."/>
-                <c:simple-property name="buffers-per-slice:expr" required="false" type="string" readOnly="true" description="How many buffers per slice, if not set optimal value is calculated based on available RAM resources in your system."/>
+                <c:simple-property name="buffer-size" required="false" type="string" readOnly="true" description="The size of each buffer slice in bytes, if not set optimal value is calculated based on available RAM resources in your system."/>
+                <c:simple-property name="buffers-per-slice" required="false" type="string" readOnly="true" description="How many buffers per slice, if not set optimal value is calculated based on available RAM resources in your system."/>
                 <c:simple-property name="direct-buffers" required="false" type="boolean" readOnly="true" description="Does the buffer pool use direct buffers, some platforms don&apos;t support direct buffers"/>
             </resource-configuration>
         </service>
@@ -7361,8 +7361,8 @@
             </plugin-configuration>
 
             <resource-configuration>
-                <c:simple-property name="buffer-size:expr" required="false" type="string" readOnly="false" description="The size of each buffer slice in bytes, if not set optimal value is calculated based on available RAM resources in your system."/>
-                <c:simple-property name="buffers-per-slice:expr" required="false" type="string" readOnly="false" description="How many buffers per slice, if not set optimal value is calculated based on available RAM resources in your system."/>
+                <c:simple-property name="buffer-size" required="false" type="string" readOnly="false" description="The size of each buffer slice in bytes, if not set optimal value is calculated based on available RAM resources in your system."/>
+                <c:simple-property name="buffers-per-slice" required="false" type="string" readOnly="false" description="How many buffers per slice, if not set optimal value is calculated based on available RAM resources in your system."/>
                 <c:simple-property name="direct-buffers" required="false" type="boolean" readOnly="false" description="Does the buffer pool use direct buffers, some platforms don&apos;t support direct buffers"/>
             </resource-configuration>
         </service>
@@ -10077,8 +10077,8 @@
           </plugin-configuration>
 
           <resource-configuration>
-              <c:simple-property name="buffer-size:expr" required="false" type="string" readOnly="false" description="The size of each buffer slice in bytes, if not set optimal value is calculated based on available RAM resources in your system."/>
-              <c:simple-property name="buffers-per-slice:expr" required="false" type="string" readOnly="false" description="How many buffers per slice, if not set optimal value is calculated based on available RAM resources in your system."/>
+              <c:simple-property name="buffer-size" required="false" type="string" readOnly="false" description="The size of each buffer slice in bytes, if not set optimal value is calculated based on available RAM resources in your system."/>
+              <c:simple-property name="buffers-per-slice" required="false" type="string" readOnly="false" description="How many buffers per slice, if not set optimal value is calculated based on available RAM resources in your system."/>
               <c:simple-property name="direct-buffers" required="false" type="boolean" readOnly="false" description="Does the buffer pool use direct buffers, some platforms don&apos;t support direct buffers"/>
           </resource-configuration>
       </service>

@@ -7265,7 +7265,7 @@
           <c:simple-property name="stack-trace-on-error" required="false" type="string" readOnly="false" defaultValue="local&#45;only" description="If an error page with the stack trace should be generated on error. Values are all, none and local&#45;only. The default value is local&#45;only."/>
           <c:simple-property name="use-listener-encoding" required="false" type="boolean" readOnly="false" defaultValue="false" description="Use encoding defined on listener. The default value is false."/>
 
-          <c:group name="child:setting=jsp" displayName="JSP (Not used by load-balancer)">
+          <c:group name="child:setting=jsp" displayName="JSP">
             <c:simple-property name="check-interval:expr" required="false" type="string" readOnly="false" defaultValue="0" description="Check interval for JSP updates using a background thread. The default value is 0."/>
             <c:simple-property name="development" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable Development mode which enables reloading JSP on&#45;the&#45;fly. The default value is false."/>
             <c:simple-property name="disabled" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable the JSP container. The default value is false."/>
@@ -7288,7 +7288,7 @@
             <c:simple-property name="x-powered-by" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable advertising the JSP engine in x&#45;powered&#45;by. The default value is true."/>
           </c:group>
 
-          <c:group name="child:setting=websockets" displayName="Web socket (Not used by load-balancer)">
+          <c:group name="child:setting=websockets" displayName="Web socket">
             <c:simple-property name="buffer-pool" required="false" type="string" readOnly="false" defaultValue="default" description="The buffer pool to use for websocket deployments. The default value is default.">
                 <c:option-source target="resource" expressionScope="baseResource" expression="type='^Buffer Pool (Profile)$' plugin=&pluginName;"/>
             </c:simple-property>

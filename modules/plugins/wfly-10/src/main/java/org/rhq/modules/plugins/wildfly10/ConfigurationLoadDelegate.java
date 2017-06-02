@@ -183,11 +183,12 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
         Result operationResult = connection.execute(op);
         if (!operationResult.isSuccess()) {
             // check if the definition is needed -- required==true or not. Only complain for required ones
-            if (definitions.size()==1 && definitions.get(0).isRequired()==false) {
-                return;
+            for (PropertyDefinition propDef : definitions) {
+                if (propDef.isRequired() == true) {
+                    throw new IOException("Operation " + op + " failed: " + operationResult.getFailureDescription());
+                }
             }
-
-            throw new IOException("Operation " + op + " failed: " + operationResult.getFailureDescription());
+            return;
         }
 
         if (operationResult.getResult() instanceof List) {

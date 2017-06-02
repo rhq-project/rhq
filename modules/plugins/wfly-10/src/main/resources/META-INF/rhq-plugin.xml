@@ -7243,7 +7243,7 @@
       </service> <!-- End of Server service -->
       <service name="Servlet Container (Profile)"
                discovery="SubsystemDiscovery"
-               class="BaseComponent"
+               class="ServletContainerProfileComponent"
                createDeletePolicy="both">
                
         <plugin-configuration>

@@ -3142,6 +3142,7 @@
           <metric property="max-processing-time" units="nanoseconds" description="The maximum processing time taken by a request on this listener"/>
           <metric property="processing-time" units="nanoseconds" measurementType="trendsup" description="The total processing time of all requests handed by this listener"/>
           <metric property="request-count" measurementType="trendsup" description="The number of requests this listener has served"/>
+          <metric property="_expr:max-connections" displayName="Max connections" description="Number of max connections this connector can handle (see configuration to set it)" defaultOn="true" defaultInterval="14400000"/>
 
           <resource-configuration>
             <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="true" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
@@ -7135,6 +7136,7 @@
           <metric property="max-processing-time" units="nanoseconds" description="The maximum processing time taken by a request on this listener"/>
           <metric property="processing-time" units="nanoseconds" measurementType="trendsup" description="The total processing time of all requests handed by this listener"/>
           <metric property="request-count" measurementType="trendsup" description="The number of requests this listener has served"/>
+          <metric property="_expr:max-connections" displayName="Max connections" description="Number of max connections this connector can handle (see configuration to set it)" defaultOn="true" defaultInterval="14400000"/>
 
           <resource-configuration>
             <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="false" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
@@ -9848,6 +9850,7 @@
         <metric property="max-processing-time" units="nanoseconds" description="The maximum processing time taken by a request on this listener"/>
         <metric property="processing-time" units="nanoseconds"  measurementType="trendsup" description="The total processing time of all requests handed by this listener"/>
         <metric property="request-count"  measurementType="trendsup" description="The number of requests this listener has served"/>
+        <metric property="_expr:max-connections" displayName="Max connections" description="Number of max connections this connector can handle (see configuration to set it)" defaultOn="true" defaultInterval="14400000"/>
 
         <resource-configuration>
           <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="false" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>

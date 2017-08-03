@@ -917,9 +917,11 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             String configKey = config.getPropertyKey();
 
             SystemSetting prop = SystemSetting.getByInternalName(configKey);
-            if (prop == null && !Arrays.asList(obsoleteValues).contains(configKey) ) {
-                LOG.warn("The database contains unknown system configuration setting [" + config.getPropertyKey()
-                    + "].");
+            if (prop == null) {
+                if(!Arrays.asList(obsoleteValues).contains(configKey)) {
+                    LOG.warn("The database contains unknown system configuration setting [" + config.getPropertyKey()
+                            + "].");
+                }
                 continue;
             }
 

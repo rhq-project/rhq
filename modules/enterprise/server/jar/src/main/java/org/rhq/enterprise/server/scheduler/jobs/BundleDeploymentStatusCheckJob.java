@@ -19,6 +19,8 @@
 
 package org.rhq.enterprise.server.scheduler.jobs;
 
+import java.util.UUID;
+
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
@@ -91,7 +93,7 @@ public class BundleDeploymentStatusCheckJob implements Job {
                 try {
                     Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000L);
                     // just need a trigger name unique for this job
-                    trigger.setName(String.valueOf(System.currentTimeMillis()));
+                    trigger.setName(UUID.randomUUID().toString());
                     scheduler.scheduleJob(trigger);
                 } catch (SchedulerException e) {
                     throw new JobExecutionException(

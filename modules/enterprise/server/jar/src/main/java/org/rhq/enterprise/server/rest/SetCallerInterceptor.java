@@ -82,11 +82,10 @@ public class SetCallerInterceptor {
         Subject caller=null;
         java.security.Principal p = ejbContext.getCallerPrincipal();
         if (!startupBean.isInitialized()) {
-            String notInitMessage = "Tried to call REST endpoint but the server has not finished to startup";
-            log.warn(notInitMessage);
-            Response.ResponseBuilder builder;
-            builder = Response.status(Response.Status.SERVICE_UNAVAILABLE).entity(notInitMessage);
-            return builder.build();
+            String notInitMessage = "Tried to call REST endpoint but the server is not ready - still booting up";
+            log.debug(notInitMessage);
+            return Response.status(Response.Status.SERVICE_UNAVAILABLE)
+                    .header("Retry-After", "30").entity(notInitMessage).build();
         }
 
         if (p!=null) {

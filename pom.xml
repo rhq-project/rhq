@@ -355,7 +355,7 @@
     <alert-mobicents.version>${rhq.pom.version}</alert-mobicents.version>
     <alert-operations.version>${rhq.pom.version}</alert-operations.version>
     <alert-roles.version>${rhq.pom.version}-redhat-1</alert-roles.version>
-    <alert-snmp.version>${rhq.pom.version}</alert-snmp.version>
+    <alert-snmp.version>${rhq.pom.version}-redhat-1</alert-snmp.version>
     <alert-subject.version>${rhq.pom.version}</alert-subject.version>
     <serverplugin-alertdef-rhq.version>${rhq.pom.version}</serverplugin-alertdef-rhq.version>
     <rhq-serverplugin-ant-bundle.version>${rhq.pom.version}-redhat-2</rhq-serverplugin-ant-bundle.version>

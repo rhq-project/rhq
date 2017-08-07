@@ -476,7 +476,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>alert-snmp</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${alert-snmp.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>

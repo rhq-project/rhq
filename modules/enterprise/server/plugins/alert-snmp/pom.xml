@@ -9,7 +9,7 @@
 
     <groupId>org.rhq</groupId>
     <artifactId>alert-snmp</artifactId>
-    <version>4.12.0.JON330GA</version>
+    <version>4.12.0.JON330GA-redhat-1</version>
 
     <name>RHQ Enterprise Server SNMP Alert Plugin</name>
 

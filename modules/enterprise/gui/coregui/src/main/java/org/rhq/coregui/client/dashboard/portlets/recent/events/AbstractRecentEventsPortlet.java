@@ -457,7 +457,7 @@ public abstract class AbstractRecentEventsPortlet extends EventCompositeHistoryV
                 // no default
                 break;
             }
-            criteria.fetchSource(true);
+            criteria.fetchSource(false);
 
             return criteria;
         }

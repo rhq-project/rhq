@@ -137,9 +137,11 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
 
             // collapse the data into comma delimited list for consumption by third party javascript library (jquery.sparkline)
             StringBuilder commaDelimitedList = new StringBuilder();
-            for (MeasurementDataNumericHighLowComposite d : data) {
-                if ((!Double.isNaN(d.getValue())) && (!String.valueOf(d.getValue()).contains("NaN"))) {
-                    commaDelimitedList.append(d.getValue()).append(",");
+            if (data != null) {
+                for (MeasurementDataNumericHighLowComposite d : data) {
+                    if ((!Double.isNaN(d.getValue())) && (!String.valueOf(d.getValue()).contains("NaN"))) {
+                        commaDelimitedList.append(d.getValue()).append(",");
+                    }
                 }
             }
             if (commaDelimitedList.length() > 0) {

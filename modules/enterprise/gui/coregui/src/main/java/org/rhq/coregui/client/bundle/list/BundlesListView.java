@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.gwt.core.client.Duration;
+import com.google.gwt.http.client.RequestTimeoutException;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
@@ -203,10 +204,18 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
                     Timer timer = new Timer() {
                         @Override
                         public void run() {
-                            String conciseMessage = MSG.view_bundle_list_deletesFailure();
-                            String detailedMessage = doomedNames.toString() + "<br/>\n"
-                                + ErrorHandler.getAllMessages(caught);
-                            getMessageCenter().notify(new Message(conciseMessage, detailedMessage, Severity.Error));
+                            // Deleting bundles with lots of parameters and versions can take long time
+                            // Bug 1416097
+                            if (caught instanceof RequestTimeoutException) {
+                                String conciseMessage = MSG.view_bundle_list_deleteTakesLong();
+                                String detailedMessage = MSG.view_bundle_list_deleteTakesLongDetail();
+                                getMessageCenter().notify(new Message(conciseMessage, detailedMessage, Severity.Info));
+                            } else {
+                                String conciseMessage = MSG.view_bundle_list_deletesFailure();
+                                String detailedMessage = doomedNames.toString() + "<br/>\n"
+                                        + ErrorHandler.getAllMessages(caught);
+                                getMessageCenter().notify(new Message(conciseMessage, detailedMessage, Severity.Error));
+                            }
                         }
                     };
                     // Delay the showing of the result to give the user some time to see the deleteSubmitted notif

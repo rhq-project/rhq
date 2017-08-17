@@ -177,6 +177,25 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     private SubjectManagerLocal subjectManager;
 
     // ContentManagerLocal Implementation  --------------------------------------------
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void mergePackage(Subject subject, int resourceId, ResourcePackageDetails details) {
+
+        // Check permissions first
+        if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_CONTENT, resourceId)) {
+            throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to merge package details from resource ID [" + resourceId + "]");
+        }
+
+
+        ContentDiscoveryReport report = new ContentDiscoveryReport();
+        Set<ResourcePackageDetails> installedPackagesSet = new HashSet<ResourcePackageDetails>();
+        installedPackagesSet.add(details);
+
+        report.addAllDeployedPackages(installedPackagesSet);
+        report.setResourceId(resourceId);
+        contentManager.mergeDiscoveredPackages(report);
+    }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NEVER)

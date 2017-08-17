@@ -46,8 +46,10 @@ import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.InstalledPackage;
+import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
@@ -616,6 +618,13 @@ public class ResourceClientProxy {
 
             contentManager.deployPackagesWithNote(remoteClient.getSubject(), new int[] { resourceClientProxy.getId() },
                 new int[] { pv.getId() }, "CLI deployment request");
+            PackageDetailsKey keys = new PackageDetailsKey(
+                    oldPackage.getPackageVersion().getGeneralPackage().getName(),
+                    packageVersion,
+                    oldPackage.getPackageVersion().getGeneralPackage().getPackageType().getName(),
+                    oldPackage.getPackageVersion().getArchitecture().getName());
+            ResourcePackageDetails details = new ResourcePackageDetails(keys);
+            contentManager.mergePackage(remoteClient.getSubject(), resourceClientProxy.getId(), details);
         }
 
         public void retrieveBackingContent(String fileName) throws IOException {

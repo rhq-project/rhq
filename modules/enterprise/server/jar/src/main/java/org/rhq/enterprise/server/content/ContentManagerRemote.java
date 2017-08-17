@@ -30,6 +30,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
 import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -293,4 +294,7 @@ public interface ContentManagerRemote {
      */
     PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName, int packageTypeId,
         String version, String displayVersion, Integer architectureId, String temporaryContentHandle);
+
+    //To force to discovery certain package
+    void mergePackage(Subject subject, int resourceId, ResourcePackageDetails details);
 }

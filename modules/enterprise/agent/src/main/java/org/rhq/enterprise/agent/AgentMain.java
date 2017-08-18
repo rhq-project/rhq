@@ -718,6 +718,7 @@ public class AgentMain {
                     boolean mustRegister = prepareStartupWorkRequiringServer();
                     boolean keepWaitingForServer;
                     int serverUpWaitCounter;
+                    long serverUpSleepMillis = 10000L;
                     try {
                         // we really should not need to have to customize this, but make a backdoor setting, just in case
                         serverUpWaitCounter = Integer.parseInt(System.getProperty(
@@ -747,6 +748,13 @@ public class AgentMain {
                             } else {
                                 keepWaitingForServer = true;
                                 LOG.warn(AgentI18NResourceKeys.STARTUP_REGISTRATION_FAILED_RETRY, serverUpWaitCounter);
+                                // If server is starting we might see it as UP but we aren't certain that server is
+                                // accepting requests to register just yet.
+                                // Even if server is accepting requests, Agent registration thread might be sleeping
+                                // Thread.sleep(retry_interval)
+                                // Wait to give server and Agent registration thread some time to do its job.
+                                Thread.currentThread().sleep(serverUpSleepMillis);
+                                serverUpSleepMillis = Math.min(serverUpSleepMillis * 2, 60000L);
                             }
                         } else {
                             keepWaitingForServer = false;

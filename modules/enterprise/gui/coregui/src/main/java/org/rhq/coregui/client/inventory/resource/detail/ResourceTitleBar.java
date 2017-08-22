@@ -18,6 +18,7 @@
  */
 package org.rhq.coregui.client.inventory.resource.detail;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -220,7 +221,19 @@ public class ResourceTitleBar extends EnhancedVLayout {
                         availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(currentAvail));
                         badge.setStyleName("resource-detail-" + currentAvail.getName());
                         if (!UserSessionManager.isLoggedOut()) {
-                            CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resource_loadFailed(String.valueOf(resource.getId())), caught);
+                            if (caught instanceof com.google.gwt.http.client.RequestTimeoutException) {
+                                // platforms are never unknown, just up or down, so we need to default the availability to a different value
+                                // depending on the resource's category
+                                ResourceAvailability result = new ResourceAvailability(resource,
+                                        resource.getResourceType().getCategory() == ResourceCategory.PLATFORM ? AvailabilityType.DOWN
+                                                : AvailabilityType.UNKNOWN);
+                                handleResourceAvailability(result);
+                                Message message = new Message(MSG.view_inventory_resource_liveAvailabilityTimeout(),
+                                        EnumSet.of(Message.Option.Transient));
+                                CoreGUI.getMessageCenter().notify(message);
+                            } else {
+                                CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resource_loadFailed(String.valueOf(resource.getId())), caught);
+                            }
                         }
 
                         if (latch != null) {
@@ -232,17 +245,20 @@ public class ResourceTitleBar extends EnhancedVLayout {
 
                     @Override
                     public void onSuccess(ResourceAvailability result) {
-                        availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(currentAvail));
-                        resource.setCurrentAvailability(result);
-                        badge.setStyleName("resource-detail-" + currentAvail.getName());
-
-                        availabilityImage.markForRedraw();
+                        handleResourceAvailability(result);
                         if (latch != null) {
                             latch.countDown();
                         } else {
                             markForRedraw();
                         }
 
+                    }
+
+                    private void handleResourceAvailability(ResourceAvailability result) {
+                        availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(result.getAvailabilityType()));
+                        resource.setCurrentAvailability(result);
+                        badge.setStyleName("resource-detail-" + result.getAvailabilityType().getName());
+                        availabilityImage.markForRedraw();
                         if (currentAvail != result.getAvailabilityType()) {
                             platformTree.refreshResource(resource);
                         }

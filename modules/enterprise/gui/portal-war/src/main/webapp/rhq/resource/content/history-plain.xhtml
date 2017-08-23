@@ -98,18 +98,6 @@
 
         <rich:column>
             <f:facet name="header">
-                <h:outputText styleClass="headerText" value="Details"/>
-            </f:facet>
-
-           <h:commandLink style="margin-top: 10px;" value="VIEW"
-                          action="showContentServiceRequestDetails">
-               <f:param name="selectedRequestId" value="#{item.id}"/>
-           </h:commandLink>
-
-        </rich:column>
-
-        <rich:column>
-            <f:facet name="header">
                 <onc:sortableColumnHeader sort="csr.subjectName">
                     <h:outputText styleClass="headerText" value="User"/>
                 </onc:sortableColumnHeader>
@@ -120,7 +108,7 @@
 
         <f:facet name="footer">
             <rich:columnGroup>
-                <rich:column colspan="6" width="100%">
+                <rich:column colspan="5" width="100%">
                     <ui:param name="paginationDataTableName" value="contentInProgressRequestsDataTable"/>
                     <ui:param name="paginationDataModel" value="#{ListInProgressContentRequestsUIBean.dataModel}"/>
                     <ui:param name="paginationPageControl" value="#{PageControl.ContentInProgressRequestsList}"/>
@@ -209,18 +197,6 @@
 
         <rich:column>
             <f:facet name="header">
-                <h:outputText styleClass="headerText" value="Details"/>
-            </f:facet>
-
-            <h:commandLink style="margin-top: 10px;" value="VIEW"
-                           action="showContentServiceRequestDetails">
-                <f:param name="selectedRequestId" value="#{item.id}"/>
-            </h:commandLink>
-
-        </rich:column>
-
-        <rich:column>
-            <f:facet name="header">
                 <onc:sortableColumnHeader sort="csr.subjectName">
                     <h:outputText styleClass="headerText" value="User"/>
                 </onc:sortableColumnHeader>
@@ -231,7 +207,7 @@
 
         <f:facet name="footer">
             <rich:columnGroup>
-                <rich:column colspan="6" width="100%">
+                <rich:column colspan="5" width="100%">
                     <ui:param name="paginationDataTableName" value="contentCompletedRequestsDataTable"/>
                     <ui:param name="paginationDataModel" value="#{ListCompletedContentRequestsUIBean.dataModel}"/>
                     <ui:param name="paginationPageControl" value="#{PageControl.ContentCompletedRequestsList}"/>
@@ -325,21 +301,9 @@
            </h:outputText>
         </rich:column>
 
-        <rich:column>
-           <f:facet name="header">
-              <h:outputText styleClass="headerText" value="Details" />
-           </f:facet>
-
-           <h:commandLink style="margin-top: 10px;" value="VIEW"
-                          action="showHistoryItem">
-               <f:param name="selectedHistoryId" value="#{item.id}"/>
-           </h:commandLink>
-
-        </rich:column>
-
         <f:facet name="footer">
             <rich:columnGroup>
-                <rich:column colspan="6" width="100%">
+                <rich:column colspan="5" width="100%">
                     <ui:param name="paginationDataTableName" value="auditTrailDataTable"/>
                     <ui:param name="paginationDataModel" value="#{AuditTrailUIBean.dataModel}"/>
                     <ui:param name="paginationPageControl" value="#{PageControl.AuditTrailList}"/>
@@ -354,7 +318,7 @@
 
 </h:form>
 <script>
-setFormActions({contentaRequestsForm: 'history-plain.xhtml'});
+document.getElementById('contentaRequestsForm').action='history-plain.xhtml';
 </script>
 
 </body>

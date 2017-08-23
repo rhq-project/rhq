@@ -76,12 +76,19 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
 
                     CsvWriter<AlertDefinition> csvWriter = new CsvWriter<AlertDefinition>();
                     csvWriter.setColumns("name", "description", "enabled", "priority", "parent", "ancestry",
-                        "detailsURL");
+                            "detailsURL", "resource");
 
                     csvWriter.setPropertyConverter("parent", new PropertyConverter<AlertDefinition>() {
                         @Override
                         public Object convert(AlertDefinition alertDef, String propertyName) {
                             return  getParentURL(alertDef);
+                        }
+                    });
+
+                    csvWriter.setPropertyConverter("resource", new PropertyConverter<AlertDefinition>() {
+                        @Override
+                        public Object convert(AlertDefinition alertDef, String propertyName) {
+                            return alertDef.getResource().getName();
                         }
                     });
 
@@ -122,7 +129,7 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
 
 
                 private String getHeader(){
-                   return "Name,Description,Enabled,Priority,Parent,Ancestry,Details URL";
+                   return "Name,Description,Enabled,Priority,Parent,Ancestry,Details URL,Resource";
                 }
 
                 private String getDetailsURL(AlertDefinition alertDef) {

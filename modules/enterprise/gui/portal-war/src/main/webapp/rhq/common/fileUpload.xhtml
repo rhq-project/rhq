@@ -23,6 +23,16 @@
                 <h:form id="fileUploadForm" enctype="multipart/form-data">
                 <script>
                   document.getElementById('fileUploadForm').setAttribute('action', window.location.href);
+
+                function afterComplete(entry) {
+                        if(entry.state == FileUploadEntry.UPLOAD_SIZE_ERROR) {
+                            alert('File was too large, maximum size is 250MB');
+                        } else if(entry.state == FileUploadEntry.UPLOAD_SUCCESS) {
+                            window.opener.location.reload();
+                            window.close();
+                        }
+                }
+
                 </script>
 
                     <rich:fileUpload
@@ -31,7 +41,7 @@
                             maxFilesQuantity="1"
                             immediateUpload="false"
                             autoclear="false"
-                            onuploadcomplete="javascript:window.opener.location.reload();window.close()"
+                            onuploadcomplete="afterComplete(this.component.entries[0])"
                             allowFlash="false"
                             id="fileUploadComponent">
                     </rich:fileUpload>

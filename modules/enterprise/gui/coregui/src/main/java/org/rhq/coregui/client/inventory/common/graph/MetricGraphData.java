@@ -365,21 +365,9 @@ public class MetricGraphData implements JsonMetricProducer {
 
             calculateOOB();
 
-            // find the lowest value and use it's UOM to translated everything else into
-            MeasurementDataNumericHighLowComposite lowestValue = null;
-            for (MeasurementDataNumericHighLowComposite measurement : metricData) {
-                if (!Double.isNaN(measurement.getValue())) {
-                    if (null == lowestValue) {
-                        lowestValue = measurement;
-                    }
-                    if (measurement.getLowValue() < lowestValue.getLowValue()) {
-                        lowestValue = measurement;
-                    }
-                }
-            }
-            if (null != lowestValue) {
+            if (0.0 != average) {
                 MeasurementNumericValueAndUnits adjustedMeasurementUnitsAndValue = MeasurementConverterClient.fit(
-                lowestValue.getLowValue(), definition.getUnits());
+                        average, definition.getUnits());
                 adjustedMeasurementUnits = adjustedMeasurementUnitsAndValue.getUnits();
             } else {
                 adjustedMeasurementUnits = definition.getUnits();

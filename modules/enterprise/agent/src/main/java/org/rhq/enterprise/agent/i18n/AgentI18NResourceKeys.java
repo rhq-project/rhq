@@ -191,6 +191,9 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("This agent has auto-update enabled and the build identifier of [{0}] does not match the latest build identifier [{1}] - this agent will be considered unsupported and an agent update will now be applied")
     String AGENT_BUILD_DOES_NOT_MATCH_AUTO_UPDATE_NOW = "AgentMain.agent-build-no-match-update-now";
 
+    @I18NMessage("Unable to use temporal directory [{0}] found on environment [{1}]. This might lead to unexpected results when deploying bundles on this Platform that use the variable %{1}%.")
+    String AGENT_UNABLE_TO_USE_TEMP_DIR_FROM_ENV = "AgentMain.agent-unable-to-use-temp-dir-from-env";
+
     @I18NMessage("The agent is not talking to its primary server [{0}:{1,number,#}] - it is talking to [{2}:{3,number,#}]")
     String NOT_TALKING_TO_PRIMARY_SERVER = "PrimaryServerSwitchoverThread.not-talking-to-primary";
 

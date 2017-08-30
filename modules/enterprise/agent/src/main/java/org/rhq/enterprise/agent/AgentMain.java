@@ -78,6 +78,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
+import org.rhq.core.system.OperatingSystemType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -500,30 +501,34 @@ public class AgentMain {
         }
     }
 
-    private void checkTempDir() {
-        File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+    private void checkTempDir(File tmpDir, String tmpDirKey) {
         if (!tmpDir.exists()) {
-            LOG.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] does not exist.");
+            LOG.warn("Invalid " + tmpDirKey + ": [" + tmpDir.getAbsolutePath() + "] does not exist.");
             try {
-                LOG.info("Creating java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "]");
+                LOG.info("Creating " + tmpDirKey + ": [" + tmpDir.getAbsolutePath() + "]");
                 tmpDir.mkdir();
             } catch (Throwable t) {
-                throw new RuntimeException("Startup failed: Could not create missing java.io.tmpdir ["
-                    + tmpDir.getAbsolutePath() + "]", t);
+                throw new RuntimeException("Startup failed: Could not create missing " + tmpDirKey + " ["
+                        + tmpDir.getAbsolutePath() + "]", t);
             }
         }
         if (!tmpDir.isDirectory()) {
-            throw new RuntimeException("Startup failed: java.io.tmpdir [" + tmpDir.getAbsolutePath()
-                + "] is not a directory");
+            throw new RuntimeException("Startup failed: " + tmpDirKey + " [" + tmpDir.getAbsolutePath()
+                    + "] is not a directory");
         }
         if (!tmpDir.canRead() || !tmpDir.canExecute()) {
-            throw new RuntimeException("Startup failed: java.io.tmpdir [" + tmpDir.getAbsolutePath()
-                + "] is not readable");
+            throw new RuntimeException("Startup failed: " + tmpDirKey + " [" + tmpDir.getAbsolutePath()
+                    + "] is not readable");
         }
         if (!tmpDir.canWrite()) {
-            throw new RuntimeException("Startup failed: java.io.tmpdir [" + tmpDir.getAbsolutePath()
-                + "] is not writable");
+            throw new RuntimeException("Startup failed: " + tmpDirKey + " [" + tmpDir.getAbsolutePath()
+                    + "] is not writable");
         }
+    }
+
+    private void checkTempDir() {
+        final String javaIoTmpDir = "java.io.tmpdir";
+        checkTempDir(new File(System.getProperty(javaIoTmpDir)), javaIoTmpDir);
     }
 
     /**
@@ -578,6 +583,27 @@ public class AgentMain {
         prepareNativeSystem();
 
         checkTempDir();
+
+        if (SystemInfoFactory.createSystemInfo().getOperatingSystemType().equals(OperatingSystemType.WINDOWS)) {
+            // Windows LocalSystemAccount temp folder (defined by %TEMP%) doesn't exist.
+            // This user is default when using the wrapper.
+            // Perform the same checks for the values of these environments
+            // Log an error if something goes wrong, this won't cause problem to all the users, unless they bundle
+            // deployment scripts make use of %tmp% or %temp%
+            final String[] TMP_ENVIRONMENT_NAMES = { "TMP", "TEMP" };
+            for (String tmpEnvironment : TMP_ENVIRONMENT_NAMES) {
+                String tmpDirPath = null;
+                try {
+                    tmpDirPath = System.getenv(tmpEnvironment);
+                    if (tmpDirPath != null) {
+                        checkTempDir(new File(tmpDirPath), tmpEnvironment);
+                    }
+                } catch (RuntimeException ex) {
+                    LOG.error(ex, AgentI18NResourceKeys.AGENT_UNABLE_TO_USE_TEMP_DIR_FROM_ENV,
+                            tmpDirPath, tmpEnvironment);
+                }
+            }
+        }
 
         return;
     }

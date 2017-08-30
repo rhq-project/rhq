@@ -142,12 +142,19 @@ public class NativeSystemInfo implements SystemInfo {
             String[] interfaceNames = sigar.getNetInterfaceList();
 
             if (interfaceNames != null) {
+                NetworkAdapterInfo.DisplayName displayName = NetworkAdapterInfo.DisplayName.FROM_NAME;
+                // If Sigar can't get the adapter name it just starts naming the network adapters as eth0, eth1, etc.
+                // This can be confusing on Windows, so we switch to their description
+                // All references should be the same, as we are are only changing the displayName
+                if (this.getOperatingSystemType() == OperatingSystemType.WINDOWS) {
+                    displayName = NetworkAdapterInfo.DisplayName.FROM_DESCRIPTION;
+                }
                 for (String interfaceName : interfaceNames) {
                     if (interfaceName.indexOf(':') != -1) {
                         continue; //filter out virtual IPs
                     }
 
-                    adapters.add(new NetworkAdapterInfo(sigar.getNetInterfaceConfig(interfaceName)));
+                    adapters.add(new NetworkAdapterInfo(sigar.getNetInterfaceConfig(interfaceName), displayName));
                 }
             }
         } catch (Exception e) {

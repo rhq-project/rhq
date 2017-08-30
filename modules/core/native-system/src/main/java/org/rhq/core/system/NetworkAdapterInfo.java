@@ -56,6 +56,11 @@ public class NetworkAdapterInfo {
         UP, DOWN, TESTING, UNKNOWN, DORMANT, NOTPRESENT, LOWERLAYERDOWN
     }
 
+    public enum DisplayName {
+        FROM_NAME,
+        FROM_DESCRIPTION
+    }
+
     public NetworkAdapterInfo(String name, String displayName, String description, String macAddress, String type,
         String operationalStatus, Boolean dhcpEnabled, List<InetAddress> dnsServers,
         List<InetAddress> unicastAddresses, List<InetAddress> multicastAddresses) {
@@ -72,6 +77,10 @@ public class NetworkAdapterInfo {
     }
 
     public NetworkAdapterInfo(NetInterfaceConfig a) {
+        this(a, DisplayName.FROM_NAME);
+    }
+
+    public NetworkAdapterInfo(NetInterfaceConfig a, DisplayName displayName) {
         long flags = a.getFlags();
         NetworkAdapterInfo.OperationState state = NetworkAdapterInfo.OperationState.UP;
         if ((flags & NetFlags.IFF_UP) <= 0) {
@@ -79,7 +88,15 @@ public class NetworkAdapterInfo {
         }
 
         this.name = a.getName();
-        this.displayName = a.getName();
+        switch(displayName) {
+            case FROM_DESCRIPTION:
+                this.displayName = a.getDescription();
+                break;
+            case FROM_NAME:
+            default:
+                this.displayName = a.getName();
+                break;
+        }
         this.description = a.getDescription();
         this.macAddress = a.getHwaddr();
         this.type = a.getType();

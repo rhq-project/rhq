@@ -32,11 +32,15 @@ import javax.ejb.EJBContext;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.InvocationContext;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.core.StartupLocal;
 
 /**
  * Interceptor to set the 'caller' variable of the AbstractRestBean from the princpial
@@ -51,11 +55,16 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
  */
 public class SetCallerInterceptor {
 
+    protected Log log = LogFactory.getLog(getClass().getName());
+
     @Resource
     private EJBContext ejbContext;
 
     @EJB
     private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private StartupLocal startupBean;
 
     private SessionManager sessionManager = SessionManager.getInstance();
 
@@ -72,6 +81,13 @@ public class SetCallerInterceptor {
 
         Subject caller=null;
         java.security.Principal p = ejbContext.getCallerPrincipal();
+        if (!startupBean.isInitialized()) {
+            String notInitMessage = "Tried to call REST endpoint but the server is not ready - still booting up";
+            log.debug(notInitMessage);
+            return Response.status(Response.Status.SERVICE_UNAVAILABLE)
+                    .header("Retry-After", "30").entity(notInitMessage).build();
+        }
+
         if (p!=null) {
             caller = subjectManager.getSubjectByName(p.getName());
         }

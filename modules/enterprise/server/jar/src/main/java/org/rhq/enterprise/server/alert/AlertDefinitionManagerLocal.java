@@ -164,4 +164,18 @@ public interface AlertDefinitionManagerLocal extends AlertDefinitionManagerRemot
      */
     int removeResourceAlertDefinitions(Subject subject, int[] resourceAlertDefinitionIds);
 
+    /**
+     * Remove the specified alert definitions belongs to certain group. Currently deleted alert definitions are ignored,
+     * as are definitions for which the proper permission is not held.
+     * <p/>
+     * Requires MANAGE_ALERTS permission for the group or resource on which the alert definition is defined. REQUIRES
+     * MANAGE_SETTINGS for Templates.
+     *
+     * @param subject
+     * @param groupId
+     * @param alertDefinitionIds
+     * @return number of removed definitions
+     */
+    int removeAlertDefinitions(Subject subject,Integer groupId, int[] alertDefinitionIds);
+
 }

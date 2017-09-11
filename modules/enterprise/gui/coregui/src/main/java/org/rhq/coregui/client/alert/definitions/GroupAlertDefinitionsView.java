@@ -186,7 +186,8 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
             int id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
             alertDefIds[i++] = id;
         }
-        GWTServiceLookup.getAlertDefinitionService().removeAlertDefinitions(alertDefIds, new AsyncCallback<Integer>() {
+        GWTServiceLookup.getAlertDefinitionService().removeAlertDefinitions(group.getId(), alertDefIds, new
+                AsyncCallback<Integer>() {
             @Override
             public void onSuccess(Integer result) {
                 CoreGUI.getMessageCenter().notify(

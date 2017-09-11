@@ -335,6 +335,11 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     @Override
     public int removeAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
+        return removeAlertDefinitions(subject, null, alertDefinitionIds);
+    }
+
+    @Override
+    public int removeAlertDefinitions(Subject subject, Integer groupId, int[] alertDefinitionIds) {
         if (null == alertDefinitionIds || alertDefinitionIds.length == 0) {
             return 0;
         }
@@ -343,6 +348,10 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         criteria.addFilterIds(ArrayUtils.wrapInArray(alertDefinitionIds));
         criteria.addFilterDeleted(false);
         criteria.clearPaging();
+
+        if ( groupId != null ){
+            criteria.addFilterResourceGroupIds(groupId);
+        }
         List<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(subject, criteria);
 
         if (defs.isEmpty()) {

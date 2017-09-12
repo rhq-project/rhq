@@ -33,10 +33,16 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
+import org.rhq.core.domain.alert.builder.AlertDefinitionTemplate;
+import org.rhq.core.domain.alert.builder.condition.AbsoluteValueCondition;
+import org.rhq.core.domain.alert.builder.condition.AvailabilityCondition;
+import org.rhq.core.domain.alert.builder.condition.DriftCondition;
+import org.rhq.core.domain.alert.builder.condition.ResourceConfigurationCondition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -362,6 +368,89 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
             testData.getSubject(), alertDefinition, null, true);
         testData.getAlertDefinitionIds().add(newAlertDefinition.getId());
         return newAlertDefinition.getId();
+    }
+
+    private AlertDefinitionTemplate createAlertTemplate() {
+        AlertDefinitionTemplate template = new AlertDefinitionTemplate(1)
+                .enabled(true)
+                .description("description")
+                .name("name")
+                .priority(AlertPriority.MEDIUM)
+                .alertProtocol(BooleanExpression.ANY);
+
+        // Set recovery rules
+        template.recovery()
+                .disableWhenFired(false);
+
+        // Set dampening rules
+        template.dampening()
+                .category(AlertDampening.Category.CONSECUTIVE_COUNT)
+                .occurences(2);
+
+        // Create and add conditions
+        AvailabilityCondition availabilityCondition = new AvailabilityCondition()
+                .availability(AlertConditionOperator.AVAIL_GOES_DOWN);
+
+        DriftCondition driftCondition = new DriftCondition()
+                .expression(".*")
+                .name(".*");
+
+        ResourceConfigurationCondition resourceConfigurationCondition = new ResourceConfigurationCondition();
+
+        AbsoluteValueCondition absoluteValueCondition = new AbsoluteValueCondition()
+                .metric(testData.getMeasurementDef().getId())
+                .value(0.5)
+                .comparator(AlertConditionOperator.LESS_THAN);
+
+        template.addCondition(availabilityCondition)
+                .addCondition(driftCondition)
+                .addCondition(resourceConfigurationCondition)
+                .addCondition(absoluteValueCondition);
+
+        return template;
+    }
+
+    @Test
+    public void testTemplateToDefinition() {
+        AlertDefinitionTemplate alertTemplate = createAlertTemplate();
+        AlertDefinition alertDefinition = alertTemplate.getAlertDefinition();
+        assertNotNull(alertDefinition.getEnabled());
+    }
+
+    @Test
+    public void testAlertTemplate() {
+
+        AlertDefinitionTemplate template = createAlertTemplate();
+
+        // Store
+        AlertDefinition alertDefinitionFromTemplate = alertDefinitionManager.createAlertDefinitionFromTemplate(testData.getSubject(), template);
+
+        assertNotNull(alertDefinitionFromTemplate.getId());
+
+        // Check conditions are stored correctly
+        assertEquals(4, alertDefinitionFromTemplate.getConditions().size());
+
+        for (AlertCondition alertCondition : alertDefinitionFromTemplate.getConditions()) {
+            switch (alertCondition.getCategory()) {
+                case DRIFT:
+                    assertEquals(".*", alertCondition.getName());
+                    assertEquals(".*", alertCondition.getOption());
+                    break;
+                case THRESHOLD:
+                    assertEquals("<", alertCondition.getComparator());
+                    assertEquals(0.5, alertCondition.getThreshold());
+                    assertEquals(testData.getMeasurementDef().getId(), alertCondition.getMeasurementDefinition().getId());
+                    break;
+                case AVAILABILITY:
+                    assertEquals("AVAIL_GOES_DOWN", alertCondition.getOption());
+                    break;
+                case RESOURCE_CONFIG:
+                    assertEquals("", alertCondition.getOption());
+                    break;
+                default:
+                    fail("We did not store anything else than those defined earlier");
+            }
+        }
     }
 
     private static final class TestData {

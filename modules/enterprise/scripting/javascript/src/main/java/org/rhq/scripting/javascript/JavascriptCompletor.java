@@ -214,7 +214,7 @@ public class JavascriptCompletor implements CodeCompletion {
                 return -1;
             }
         } else {
-            String[] call = s.split("\\(", 2);
+                String[] call = s.split("\\(", 2);
 
             Map<String, List<Object>> matches = getContextMatches(output, baseObject, call[0]);
 
@@ -445,11 +445,16 @@ public class JavascriptCompletor implements CodeCompletion {
             }
 
             if (typeFilter.isEnum()) {
+                Class<?> declaringClass = typeFilter.getDeclaringClass();
                 for (Object ec : typeFilter.getEnumConstants()) {
                     Enum<?> e = (Enum<?>) ec;
                     String code = typeFilter.getSimpleName() + "." + e.name();
                     if (code.startsWith(start)) {
-                        found.put(typeFilter.getSimpleName() + "." + e.name(), e);
+                        if(declaringClass != null) {
+                            found.put(declaringClass.getSimpleName() + "." + code, e);
+                        } else {
+                            found.put(code, e);
+                        }
                     }
                 }
             }

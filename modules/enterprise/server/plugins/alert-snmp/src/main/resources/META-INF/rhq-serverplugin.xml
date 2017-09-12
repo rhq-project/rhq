@@ -14,6 +14,7 @@
         Used to send notifications to SNMP trap receivers.
     </serverplugin:help>
 
+    <serverplugin:plugin-component class="SNMPComponent"/>
 
     <!-- Global preferences for all snmp alerts -->
     <serverplugin:plugin-configuration>

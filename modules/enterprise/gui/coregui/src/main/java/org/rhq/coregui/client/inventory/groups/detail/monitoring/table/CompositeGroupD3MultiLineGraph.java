@@ -84,6 +84,8 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                         global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTimeFormatHours()(),
                         global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTimeFormatHoursMinutes()()
                 );
+        // IE9 chart area returns cropped without explicitly setting the height
+        $wnd.jQuery('#' + chartContext.chartHandle).height('100%');
 
 
         // Define the Stacked Bar Graph function using the module pattern

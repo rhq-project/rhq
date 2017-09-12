@@ -81,8 +81,6 @@ import org.rhq.core.util.StringUtil;
 @SuppressWarnings("unused")
 public class SnmpTrapSender implements PDUFactory {
     public static final int DEFAULT = 0;
-    private static final String UDP_TRANSPORT = "udp";
-    private static final String TCP_TRANSPORT = "tcp";
     private static final String DEFAULT_RHQ_BINDING = "1.3.6.1.4.1.18016.2.1";
 
     private Log log = LogFactory.getLog(SnmpTrapSender.class);
@@ -368,13 +366,13 @@ public class SnmpTrapSender implements PDUFactory {
             port = 162; // just to make sure
         }
 
-        String transport = systemConfig.getSimpleValue("transport","UDP");
+        String transport = systemConfig.getSimpleValue(SNMPComponent.PROP_TRANSPORT, SNMPComponent.DEFAULT_TRANSPORT);
 
 
         String address = host + "/" + port;
-        if (transport.equalsIgnoreCase(UDP_TRANSPORT)) {
+        if (transport.equalsIgnoreCase(SNMPComponent.TRANSPORT_UDP)) {
             return new UdpAddress(address);
-        } else if (transport.equalsIgnoreCase(TCP_TRANSPORT)) {
+        } else if (transport.equalsIgnoreCase(SNMPComponent.TRANSPORT_TCP)) {
             return new TcpAddress(address);
         }
 

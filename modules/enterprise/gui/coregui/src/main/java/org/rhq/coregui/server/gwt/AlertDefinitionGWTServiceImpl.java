@@ -121,6 +121,16 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
     }
 
     @Override
+    public int removeAlertDefinitions(Integer groupId, int[] alertDefinitionIds) throws RuntimeException {
+        try {
+            int results = alertDefManager.removeAlertDefinitions(getSessionSubject(), groupId, alertDefinitionIds);
+            return results;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
     public String[] getAlertNotificationConfigurationPreview(AlertNotification[] notifs) throws RuntimeException {
         try {
             String[] results = alertDefManager.getAlertNotificationConfigurationPreview(getSessionSubject(), notifs);

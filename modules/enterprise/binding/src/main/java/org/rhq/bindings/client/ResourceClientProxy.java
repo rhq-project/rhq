@@ -637,9 +637,26 @@ public class ResourceClientProxy {
                 }
 
                 File file = new File(fileName);
+                long start = System.currentTimeMillis();
 
-                byte[] data = remoteClient.getProxy(ContentManagerRemote.class).getPackageBytes(
-                    remoteClient.getSubject(), resourceClientProxy.resourceId, installedPackage.getId());
+                byte[] data = null;
+
+                while(System.currentTimeMillis() - start < 120000) {
+                    try {
+                        data = remoteClient.getProxy(ContentManagerRemote.class).getPackageBytes(
+                                remoteClient.getSubject(), resourceClientProxy.resourceId, installedPackage.getId());
+                        break;
+                    } catch (RuntimeException e){
+                        // The installed package Id could be changed by the purge job or the deploy process.
+                        // So we get it again and try to get the bits with the  new id (if it changes)
+                        installedPackage = getBackingContent();
+                        continue;
+                    }
+                }
+
+                if (data == null) {
+                    throw new RuntimeException("Unable to retrieve package bits package " + installedPackage.getId() );
+                }
 
                 FileOutputStream fos = new FileOutputStream(file);
                 try {

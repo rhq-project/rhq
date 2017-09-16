@@ -252,7 +252,7 @@
         <!-- set browser(s) to compile the GWT stuff for
           ~~ See https://docs.jboss.org/author/display/RHQ/Advanced+Build+Notes#AdvancedBuildNotes-GWTCompilationForDifferentBrowsers
           ~~ for details and browser versions
-          ~~ Possible values are: ie6,ie8,ie9,gecko,gecko1_8,safari,opera
+          ~~ Possible values are: ie6,ie8,ie9,gecko1_8,safari,opera
         -->
         <gwt.userAgent>SET_ME</gwt.userAgent>
         <!-- Only gwt-compile JavaScript for FF2 and later. -->

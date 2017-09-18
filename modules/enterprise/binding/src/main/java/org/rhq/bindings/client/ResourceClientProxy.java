@@ -46,8 +46,10 @@ import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.InstalledPackage;
+import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
@@ -616,6 +618,13 @@ public class ResourceClientProxy {
 
             contentManager.deployPackagesWithNote(remoteClient.getSubject(), new int[] { resourceClientProxy.getId() },
                 new int[] { pv.getId() }, "CLI deployment request");
+            PackageDetailsKey keys = new PackageDetailsKey(
+                    oldPackage.getPackageVersion().getGeneralPackage().getName(),
+                    packageVersion,
+                    oldPackage.getPackageVersion().getGeneralPackage().getPackageType().getName(),
+                    oldPackage.getPackageVersion().getArchitecture().getName());
+            ResourcePackageDetails details = new ResourcePackageDetails(keys);
+            contentManager.mergePackage(remoteClient.getSubject(), resourceClientProxy.getId(), details);
         }
 
         public void retrieveBackingContent(String fileName) throws IOException {
@@ -628,9 +637,26 @@ public class ResourceClientProxy {
                 }
 
                 File file = new File(fileName);
+                long start = System.currentTimeMillis();
 
-                byte[] data = remoteClient.getProxy(ContentManagerRemote.class).getPackageBytes(
-                    remoteClient.getSubject(), resourceClientProxy.resourceId, installedPackage.getId());
+                byte[] data = null;
+
+                while(System.currentTimeMillis() - start < 120000) {
+                    try {
+                        data = remoteClient.getProxy(ContentManagerRemote.class).getPackageBytes(
+                                remoteClient.getSubject(), resourceClientProxy.resourceId, installedPackage.getId());
+                        break;
+                    } catch (RuntimeException e){
+                        // The installed package Id could be changed by the purge job or the deploy process.
+                        // So we get it again and try to get the bits with the  new id (if it changes)
+                        installedPackage = getBackingContent();
+                        continue;
+                    }
+                }
+
+                if (data == null) {
+                    throw new RuntimeException("Unable to retrieve package bits package " + installedPackage.getId() );
+                }
 
                 FileOutputStream fos = new FileOutputStream(file);
                 try {

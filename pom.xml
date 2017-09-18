@@ -310,7 +310,7 @@
     <rhq-core-dbutils.version>${rhq.pom.version}</rhq-core-dbutils.version>
     <rhq-core-domain.version>${rhq.pom.version}-redhat-6</rhq-core-domain.version>
     <rhq-core-gui.version>${rhq.pom.version}</rhq-core-gui.version>
-    <rhq-core-native-system.version>${rhq.pom.version}-redhat-2</rhq-core-native-system.version>
+    <rhq-core-native-system.version>${rhq.pom.version}-redhat-3</rhq-core-native-system.version>
     <rhq-core-plugin-api.version>${rhq.pom.version}</rhq-core-plugin-api.version>
     <rhq-core-plugin-container.version>${rhq.pom.version}-redhat-3</rhq-core-plugin-container.version>
     <rhq-plugin-validator.version>${rhq.pom.version}</rhq-plugin-validator.version>
@@ -319,7 +319,7 @@
     <rhq-core-util.version>${rhq.pom.version}-redhat-1</rhq-core-util.version>
     <rhq-enterprise-agent.version>${rhq.pom.version}</rhq-enterprise-agent.version>
     <rhq-enterprise-agentupdate.version>${rhq.pom.version}</rhq-enterprise-agentupdate.version>
-    <rhq-script-bindings.version>${rhq.pom.version}-redhat-4</rhq-script-bindings.version>
+    <rhq-script-bindings.version>${rhq.pom.version}-redhat-5</rhq-script-bindings.version>
     <rhq-enterprise-comm.version>${rhq.pom.version}-redhat-4</rhq-enterprise-comm.version>
     <rhq-agentupdate-war.version>${rhq.pom.version}</rhq-agentupdate-war.version>
     <rhq-content_http.version>${rhq.pom.version}</rhq-content_http.version>

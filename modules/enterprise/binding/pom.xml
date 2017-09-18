@@ -6,7 +6,7 @@
         <version>4.12.0.JON330GA</version>
     </parent>
     <artifactId>rhq-script-bindings</artifactId>
-    <version>4.12.0.JON330GA-redhat-4</version>
+    <version>4.12.0.JON330GA-redhat-5</version>
     <name>RHQ Script Bindings</name>
     <description>Abstraction of different facilities and default configurations for script bindings</description>
 

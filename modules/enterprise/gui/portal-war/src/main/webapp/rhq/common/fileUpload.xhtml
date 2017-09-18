@@ -33,6 +33,14 @@
                         }
                 }
 
+                function _onErrorHandler(entry) {
+                        if(entry.state == FileUploadEntry.UPLOAD_SIZE_ERROR) {
+                            alert('File was too large, maximum size is 250MB');
+                        } else {
+                            alert('File upload failed, ask the server administrator for more information.');
+                        }
+                }
+
                 </script>
 
                     <rich:fileUpload
@@ -42,6 +50,7 @@
                             immediateUpload="false"
                             autoclear="false"
                             onuploadcomplete="afterComplete(this.component.entries[0])"
+                            onerror="_onErrorHandler(this.component.entries[0])"
                             allowFlash="false"
                             id="fileUploadComponent">
                     </rich:fileUpload>

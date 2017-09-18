@@ -91,7 +91,7 @@ public class FileUploadUIBean {
 
             onSuccess();
         } catch (Throwable t) {
-            onFailure(t);
+            onFailure(t, event.getUploadItem().getFileSize());
         }
 
         return;
@@ -121,8 +121,12 @@ public class FileUploadUIBean {
      * 
      * @param t the error that occurred
      */
-    protected void onFailure(Throwable t) {
-        String msg = "Failed to process uploaded file. Cause: " + ThrowableUtil.getAllMessages(t);
+    protected void onFailure(Throwable t, int fileSize) {
+        String msgPattern = "Failed to process uploaded file. Cause: %s";
+        if(fileSize > 250000000) {
+            msgPattern = "Failed to process uploaded file. The file size was larger than the allowed maximum of 250MB. Cause: %s";
+        }
+        String msg = String.format(msgPattern, ThrowableUtil.getAllMessages(t));
         log.error(msg);
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, msg, t);
     }

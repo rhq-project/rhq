@@ -79,4 +79,10 @@
     <method>void reconfigureSystem(*)</method>
     <justification>Exposed to remote API https://bugzilla.redhat.com/show_bug.cgi?id=1306231</justification>
   </difference>
+  <difference>
+    <className>org/rhq/enterprise/server/content/ContentManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added -->
+    <method>void mergePackage(org.rhq.core.domain.auth.Subject, int, org.rhq.core.domain.content.transfer.ResourcePackageDetails)</method>
+    <justification>Exposed to fix https://bugzilla.redhat.com/show_bug.cgi?id=1420717</justification>
+  </difference>
 </differences>

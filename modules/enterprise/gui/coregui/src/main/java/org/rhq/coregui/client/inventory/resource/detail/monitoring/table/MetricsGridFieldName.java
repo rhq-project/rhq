@@ -38,7 +38,8 @@ public enum MetricsGridFieldName {
         .common_title_monitor_maximum()), MIN_VALUE(MIN_KEY, CoreGUI.getMessages().common_title_monitor_minimum()), AVG_VALUE(
         AVERAGE_KEY, CoreGUI.getMessages().common_title_monitor_average()), METRIC_DEF_ID("defId"), METRIC_SCHEDULE_ID(
         "schedId"), METRIC_UNITS("units"), METRIC_NAME("name"), RESOURCE_GROUP_ID("resourceGroupId"),
-    RESOURCE_ID("resourceId"), LIVE_VALUE("live", CoreGUI.getMessages().view_resource_monitor_table_live());
+    RESOURCE_ID("resourceId"), LIVE_VALUE("live", CoreGUI.getMessages().view_resource_monitor_table_live()),
+    DISPLAY_UNITS_NAME("displayUnitsName"), DISPLAY_UNITS_FAMILY("displayUnitsFamily");
 
     private final String value;
     private final String label;

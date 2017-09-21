@@ -21,6 +21,9 @@ package org.rhq.coregui.client.inventory.resource.detail.monitoring.table;
 
 import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.METRIC_DEF_ID;
 import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.RESOURCE_ID;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.DISPLAY_UNITS_NAME;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName
+        .DISPLAY_UNITS_FAMILY;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -76,6 +79,7 @@ import org.rhq.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph
 import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.message.Message;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 
 /**
  * Views a resource's metrics in a tabular view with sparkline graph and optional detailed d3 graph.
@@ -361,6 +365,19 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         protected Canvas getExpansionComponent(final ListGridRecord record) {
             final Integer definitionId = record.getAttributeAsInt(METRIC_DEF_ID.getValue());
             final Integer resourceId = record.getAttributeAsInt(RESOURCE_ID.getValue());
+
+            final MeasurementUnits recordUnits;
+            if (record.getAttributeAsString(DISPLAY_UNITS_NAME.getValue())!=null && record.getAttributeAsString
+                    (DISPLAY_UNITS_FAMILY.getValue())!=null) {
+
+                recordUnits = MeasurementUnits.getUsingDisplayUnits(
+                        record.getAttributeAsString(DISPLAY_UNITS_NAME.getValue()),
+                        MeasurementUnits.Family.valueOf(record.getAttributeAsString(DISPLAY_UNITS_FAMILY.getValue())));
+            } else {
+                recordUnits = null;
+            }
+
+
             VLayout vLayout = new VLayout();
             vLayout.setPadding(5);
 
@@ -398,7 +415,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                             MetricGraphData metricGraphData = MetricGraphData.createForResource(resourceId,
                                 resource.getName(), measurementDefinition, measurementList, null);
                             metricGraphData.setHideLegend(true);
-
+                            metricGraphData.setAdjustedMeasurementUnits(recordUnits);
                             StackedBarMetricGraphImpl graph = GWT.create(StackedBarMetricGraphImpl.class);
                             graph.setMetricGraphData(metricGraphData);
                             final MetricD3Graph graphView = new MetricD3Graph(graph, abstractD3GraphListView);

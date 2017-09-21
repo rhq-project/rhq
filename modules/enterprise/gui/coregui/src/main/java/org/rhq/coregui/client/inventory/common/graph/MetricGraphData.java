@@ -336,6 +336,10 @@ public class MetricGraphData implements JsonMetricProducer {
         }
     }
 
+    public void setAdjustedMeasurementUnits(MeasurementUnits units){
+        adjustedMeasurementUnits = units;
+    }
+
     public String getXAxisTitle() {
         return MSG.view_charts_time_axis_label();
     }
@@ -365,12 +369,14 @@ public class MetricGraphData implements JsonMetricProducer {
 
             calculateOOB();
 
-            if (0.0 != average) {
-                MeasurementNumericValueAndUnits adjustedMeasurementUnitsAndValue = MeasurementConverterClient.fit(
-                        average, definition.getUnits());
-                adjustedMeasurementUnits = adjustedMeasurementUnitsAndValue.getUnits();
-            } else {
-                adjustedMeasurementUnits = definition.getUnits();
+            if (adjustedMeasurementUnits==null) {
+                if (0.0 != average) {
+                    MeasurementNumericValueAndUnits adjustedMeasurementUnitsAndValue = MeasurementConverterClient.fit(
+                            average, definition.getUnits());
+                    adjustedMeasurementUnits = adjustedMeasurementUnitsAndValue.getUnits();
+                } else {
+                    adjustedMeasurementUnits = definition.getUnits();
+                }
             }
 
             for (MeasurementDataNumericHighLowComposite measurement : metricData) {

@@ -33,6 +33,9 @@ import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.
 import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.MIN_VALUE;
 import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.RESOURCE_ID;
 import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.SPARKLINE;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.DISPLAY_UNITS_NAME;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName
+        .DISPLAY_UNITS_FAMILY;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -165,7 +168,8 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     @Override
     public ListGridRecord copyValues(MetricDisplaySummary from) {
         MeasurementUtility.formatSimpleMetrics(from);
-
+        MeasurementUnits displayUnits = MeasurementUtility.getSumaryDisplayUnits(from);
+        
         ListGridRecord record = new ListGridRecord();
         record.setAttribute(SPARKLINE.getValue(), getCsvMetricsForSparkline(from.getDefinitionId()));
         record.setAttribute(METRIC_LABEL.getValue(), from.getLabel());
@@ -179,6 +183,11 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         record.setAttribute(METRIC_UNITS.getValue(), from.getUnits());
         record.setAttribute(METRIC_NAME.getValue(), from.getMetricName());
         record.setAttribute(RESOURCE_ID.getValue(), resource.getId());
+
+        if (displayUnits != null ) {
+            record.setAttribute(DISPLAY_UNITS_NAME.getValue(), displayUnits.getName());
+            record.setAttribute(DISPLAY_UNITS_FAMILY.getValue(), displayUnits.getFamily().name());
+        }
         return record;
     }
 

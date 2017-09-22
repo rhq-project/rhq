@@ -34,7 +34,8 @@ public class SNMPComponent implements ServerPluginComponent {
                 if (transportValue == null || !VALID_TRANSPORTS.contains(transportValue)) {
                     ServerPluginManagerLocal spm = LookupUtil.getServerPluginManager();
                     ServerPlugin serverPlugin  = spm.getServerPlugin(context.getPluginEnvironment().getPluginKey());
-                    serverPlugin.getPluginConfiguration().setSimpleValue(PROP_TRANSPORT, DEFAULT_TRANSPORT);
+                    configuration.setSimpleValue(PROP_TRANSPORT, DEFAULT_TRANSPORT);
+                    serverPlugin.setPluginConfiguration(configuration);
                     LookupUtil.getServerPluginManager().updateServerPluginExceptContent(
                             LookupUtil.getSubjectManager().getOverlord(),
                             serverPlugin

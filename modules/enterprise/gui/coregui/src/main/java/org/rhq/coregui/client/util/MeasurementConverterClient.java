@@ -141,6 +141,21 @@ public class MeasurementConverterClient {
         }
     }
 
+    public static MeasurementUnits bestFitUnits(double[] values,  MeasurementUnits originalUnits) {
+        // find bestFit units by taking the average
+        Double average = 0.0;
+        for (int i = 0; i < values.length; i++) {
+                /*
+                 * adding fractional amount iterative leads to greater
+                 * error, but prevents overflow on large data sets
+                 */
+            average += (values[i] / values.length);
+        }
+
+        MeasurementNumericValueAndUnits fittedAverage = fit(average, originalUnits);
+        return fittedAverage.getUnits();
+    }
+
     /**
      * Formats the given array of double values: determines the necessary precision such that when formatted, they are
      * distinct and reasonable to look at. For example, for values { 1.45 1.46 1.47 1.48 1.49 } the desired precision is
@@ -168,19 +183,7 @@ public class MeasurementConverterClient {
          */
         if (bestFit) {
             // find bestFit units by taking the average
-            Double average = 0.0;
-
-            for (int i = 0, sz = values.length; i < sz; i++) {
-                /* 
-                 * adding fractional amount iterative leads to greater 
-                 * error, but prevents overflow on large data sets
-                 */
-                average += (values[i] / sz);
-            }
-
-            MeasurementNumericValueAndUnits fittedAverage = fit(average, targetUnits);
-            //noinspection UnnecessaryLocalVariable
-            MeasurementUnits fittedUnits = fittedAverage.getUnits();
+            MeasurementUnits fittedUnits = bestFitUnits(values, targetUnits);
 
             /*
              * and change the local reference to targetUnits, so that the same logic

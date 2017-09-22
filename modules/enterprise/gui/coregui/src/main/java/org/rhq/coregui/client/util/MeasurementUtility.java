@@ -135,5 +135,12 @@ public class MeasurementUtility {
         }
     }
 
+    public static MeasurementUnits getSumaryDisplayUnits(MetricDisplaySummary summary) {
+        if (!Double.isNaN(summary.getAvgMetric().getValue())) {
+            return MeasurementConverterClient.bestFitUnits(summary.getMetricValueDoubles(),
+                    MeasurementUnits.valueOf(summary.getUnits()));
+        }
+        return MeasurementUnits.valueOf(summary.getUnits());
+    }
 
 }

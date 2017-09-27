@@ -505,7 +505,7 @@ public class AgentMain {
             LOG.warn("Invalid " + tmpDirKey + ": [" + tmpDir.getAbsolutePath() + "] does not exist.");
             try {
                 LOG.info("Creating " + tmpDirKey + ": [" + tmpDir.getAbsolutePath() + "]");
-                tmpDir.mkdir();
+                tmpDir.mkdirs();
             } catch (Throwable t) {
                 throw new RuntimeException("Startup failed: Could not create missing " + tmpDirKey + " ["
                         + tmpDir.getAbsolutePath() + "]", t);

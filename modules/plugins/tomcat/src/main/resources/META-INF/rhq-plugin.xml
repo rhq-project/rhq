@@ -654,7 +654,8 @@
                      <c:simple-property
                         name="maxActive"
                         type="integer"
-                        description="The maximum number of active connections that can be allocated from this pool at the same time, or negative for no limit. Default is 8." />
+                        description="The maximum number of active connections that can be allocated from this pool at the same time, or negative for no limit. Default is 8."
+                        required="false" />
                      <c:simple-property
                         name="maxIdle"
                         type="integer"
@@ -666,7 +667,18 @@
                      <c:simple-property
                         name="maxWait"
                         type="integer"
-                        description="The maximum number of milliseconds that the pool will wait (when there are no available connections) for a connection to be returned before throwing an exception, or -1 to wait indefinitely. Default is indefinitely." />
+                        description="The maximum number of milliseconds that the pool will wait (when there are no available connections) for a connection to be returned before throwing an exception, or -1 to wait indefinitely. Default is indefinitely."
+                        required="false" />
+                     <c:simple-property
+                        name="maxWaitMillis"
+                        type="integer"
+                        description="Introspected attribute maxWaitMillis"
+                        required="false" />
+                     <c:simple-property
+                        name="maxTotal"
+                        type="integer"
+                        description="Introspected attribute maxTotal"
+                        required="false" />
                      <c:simple-property
                         name="poolPreparedStatements"
                         type="boolean"
@@ -678,7 +690,8 @@
                      <c:simple-property
                         name="removeAbandoned"
                         type="boolean"
-                        description="Flag to remove abandoned connections if they exceed the removeAbandonedTimout. If set to true a connection is considered abandoned and eligible for removal if it has been idle longer than the removeAbandonedTimeout. Setting this to true can recover db connections from poorly written applications which fail to close a connection. Default is false." />
+                        description="Flag to remove abandoned connections if they exceed the removeAbandonedTimout. If set to true a connection is considered abandoned and eligible for removal if it has been idle longer than the removeAbandonedTimeout. Setting this to true can recover db connections from poorly written applications which fail to close a connection. Default is false."
+                        required="false" />
                      <c:simple-property
                         name="removeAbandonedTimeout"
                         type="integer"

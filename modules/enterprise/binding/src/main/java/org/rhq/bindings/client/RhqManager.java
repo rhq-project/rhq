@@ -29,6 +29,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.core.AgentManagerRemote;
+import org.rhq.enterprise.server.dashboard.DashboardManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.drift.DriftManagerRemote;
 import org.rhq.enterprise.server.drift.DriftTemplateManagerRemote;
@@ -39,6 +40,7 @@ import org.rhq.enterprise.server.measurement.CallTimeDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
+import org.rhq.enterprise.server.measurement.MeasurementProblemManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.plugin.ServerPluginManagerRemote;
@@ -72,9 +74,11 @@ public enum RhqManager {
     AvailabilityManager(AvailabilityManagerRemote.class, "${AvailabilityManager}"), //
     BundleManager(BundleManagerRemote.class, "${BundleManager}"), //
     CallTimeDataManager(CallTimeDataManagerRemote.class, "${CallTimeDataManager}"), //
+//    ClusterManager(ClusterManagerRemote.class, "${ClusterManager}"), //
     RepoManager(RepoManagerRemote.class, "${RepoManager}"), //
     ConfigurationManager(ConfigurationManagerRemote.class, "${ConfigurationManager}"), //
     ContentManager(ContentManagerRemote.class, "${ContentManager}"), //
+    DashboardManager(DashboardManagerRemote.class, "${DashboardManager}"), //
     DataAccessManager(DataAccessManagerRemote.class, "${DataAccessManager}"), //
     DriftManager(DriftManagerRemote.class, "${DriftManager}"), //
     DriftTemplateManager(DriftTemplateManagerRemote.class, "${DriftTemplateManager}"), //
@@ -85,6 +89,7 @@ public enum RhqManager {
     MeasurementDataManager(MeasurementDataManagerRemote.class, "${MeasurementDataManager}"), //
     MeasurementDefinitionManager(MeasurementDefinitionManagerRemote.class, "${MeasurementDefinitionManager}"), //
     MeasurementScheduleManager(MeasurementScheduleManagerRemote.class, "${MeasurementScheduleManager}"), //
+    MeasurementProblemManager(MeasurementProblemManagerRemote.class, "${MeasurementProblemManager}"), //
     OperationManager(OperationManagerRemote.class, "${OperationManager}"), //
     /**
      * @since 4.11

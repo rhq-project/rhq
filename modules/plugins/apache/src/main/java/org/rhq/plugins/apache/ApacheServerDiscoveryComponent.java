@@ -370,6 +370,10 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             /* try mod_bmx VirtualHost and Location */
             String bmxURL = findBMXURL(serverConfig);
             if (bmxURL != null) {
+                String[] split_url = bmxURL.split(":");
+                if(split_url[1].equals("//*"))
+                    bmxURL = "http://localhost:" + split_url[2];
+
                 pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_BMX_URL, bmxURL));
             }
         }

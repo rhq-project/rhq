@@ -215,22 +215,15 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
                                     if (confirmed) {
                                         selectAllPlatformChildren(selectedNode);
                                     }
-                                    updateButtonEnablement(selectAllButton, deselectAllButton, importButton,
-                                        ignoreButton, unignoreButton);
-                                    selectionChangedHandlerDisabled = false;
                                 }
+                                updateButtonEnablement(selectAllButton, deselectAllButton, importButton,
+                                        ignoreButton, unignoreButton);
+                                selectionChangedHandlerDisabled = false;
                             }
                         });
                     } else {
                         selectedNode.setAttribute("autoSelectChildren", "false");
                         treeGrid.deselectRecords(treeGrid.getTree().getChildren(selectedNode));
-
-                        // the immediate redraw below should not be necessary, but without it the deselected
-                        // platform checkbox remained checked.
-                        // treeGrid.redraw();
-                        updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
-                            unignoreButton);
-                        selectionChangedHandlerDisabled = false;
                     }
                 } else {
                     if (isCheckboxMarked) {
@@ -238,10 +231,10 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
                             treeGrid.selectRecord(parentNode);
                         }
                     }
-                    updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
-                        unignoreButton);
-                    selectionChangedHandlerDisabled = false;
                 }
+                updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
+                        unignoreButton);
+                selectionChangedHandlerDisabled = false;
             }
 
         });

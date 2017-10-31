@@ -2184,7 +2184,7 @@
       </operation>
 
       <service name="Binding (Managed Server)"
-               class="BaseComponent"
+               class="NamingBindingComponent"
                discovery="SubsystemDiscovery"
                description="JNDI bindings for primitive types">
 
@@ -2205,6 +2205,13 @@
           <c:simple-property name="module" required="false" type="string" readOnly="true" description="The module to load the object factory from for object factory bindings"/>
           <c:simple-property name="type" required="false" type="string" readOnly="true" description="The type of the value to bind for simple bindings, this must be a primitive type"/>
           <c:simple-property name="value" required="false" type="string" readOnly="true" description="The value to bind for simple bindings"/>
+          <c:simple-property name="cache" required="false" type="boolean" readOnly="true" defaultValue="false" description="If the external context should be cached"/>
+          <c:list-property name="environment" readOnly="true" description="A list of The environment to use on object factory instance retrieval." required="false">
+            <c:map-property name="environment" readOnly="true" displayName="Environment">
+              <c:simple-property name="name" type="string" displayName="Name" required="true"/>
+              <c:simple-property name="value" type="string" displayName="Value" required="true"/>
+            </c:map-property>
+          </c:list-property>
         </resource-configuration>
       </service>
     </service>
@@ -5900,7 +5907,7 @@
       </plugin-configuration>
 
       <service name="Binding (Profile)"
-               class="BaseComponent"
+               class="NamingBindingComponent"
                discovery="SubsystemDiscovery"
                description="JNDI bindings for primitive types"
                createDeletePolicy="both">
@@ -5922,6 +5929,13 @@
           <c:simple-property name="module" required="false" type="string" readOnly="false" description="The module to load the object factory from for object factory bindings"/>
           <c:simple-property name="type" required="false" type="string" readOnly="false" description="The type of the value to bind for simple bindings, this must be a primitive type"/>
           <c:simple-property name="value" required="false" type="string" readOnly="false" description="The value to bind for simple bindings"/>
+          <c:simple-property name="cache" required="false" type="boolean" readOnly="false" defaultValue="false" description="If the external context should be cached"/>
+          <c:list-property name="environment" description="A list of The environment to use on object factory instance retrieval." required="false">
+            <c:map-property name="environment" displayName="Environment">
+              <c:simple-property name="name" type="string" displayName="Name" required="true"/>
+              <c:simple-property name="value" type="string" displayName="Value" required="true"/>
+            </c:map-property>
+          </c:list-property>
         </resource-configuration>
       </service>
     </service>
@@ -8984,7 +8998,7 @@
     </operation>
 
     <service name="Binding"
-             class="BaseComponent"
+             class="NamingBindingComponent"
              discovery="SubsystemDiscovery"
              description="JNDI bindings for primitive types"
              createDeletePolicy="both">
@@ -9006,6 +9020,13 @@
         <c:simple-property name="module" required="false" type="string" readOnly="false" description="The module to load the object factory from for object factory bindings"/>
         <c:simple-property name="type" required="false" type="string" readOnly="false" description="The type of the value to bind for simple bindings, this must be a primitive type"/>
         <c:simple-property name="value" required="false" type="string" readOnly="false" description="The value to bind for simple bindings"/>
+        <c:simple-property name="cache" required="false" type="boolean" readOnly="false" defaultValue="false" description="If the external context should be cached"/>
+        <c:list-property name="environment" description="A list of The environment to use on object factory instance retrieval." required="false">
+          <c:map-property name="environment" displayName="Environment">
+            <c:simple-property name="name" type="string" displayName="Name" required="true"/>
+            <c:simple-property name="value" type="string" displayName="Value" required="true"/>
+          </c:map-property>
+        </c:list-property>
       </resource-configuration>
     </service>
 

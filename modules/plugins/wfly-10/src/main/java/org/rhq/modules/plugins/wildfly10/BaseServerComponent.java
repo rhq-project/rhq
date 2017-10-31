@@ -472,6 +472,10 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                     message += " (using vault)";
                     m = config.configureSecurityUsingVault(getHostConfig());
                 }
+                if (m != null) {
+                    result.setErrorMessage(m);
+                    return result;
+                }
                 madeChanges |= m == null;
                 response.append(m == null ? message : "Security skipped: " + m);
                 response.append("\n");

@@ -22,9 +22,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.FileSystemUsage;
+import org.hyperic.sigar.NfsFileSystem;
+import org.hyperic.sigar.NfsUnreachableException;
+import org.hyperic.sigar.RPC;
 import org.hyperic.sigar.SigarException;
 import org.hyperic.sigar.SigarProxy;
-
 /**
  * Information about a mounted file system.
  *
@@ -33,6 +35,7 @@ import org.hyperic.sigar.SigarProxy;
  */
 public class FileSystemInfo {
     private static final Log LOG = LogFactory.getLog(FileSystemInfo.class);
+    private static final int NFS_PROGRAM = 100003;
 
     private final String mountPoint;
     private FileSystem fs;
@@ -68,12 +71,41 @@ public class FileSystemInfo {
 
     }
 
+    private boolean nfsPing(String hostname) {
+        return  (RPC.ping(hostname, RPC.TCP, NFS_PROGRAM, 3) == 0) ||
+                (RPC.ping(hostname, RPC.UDP, NFS_PROGRAM, 3) == 0) ||
+                (RPC.ping(hostname, RPC.TCP, NFS_PROGRAM, 2) == 0) ||
+                (RPC.ping(hostname, RPC.UDP, NFS_PROGRAM, 2) == 0) ||
+                (RPC.ping(hostname, RPC.TCP, NFS_PROGRAM, 4) == 0) ||
+                (RPC.ping(hostname, RPC.UDP, NFS_PROGRAM, 4) == 0);
+    }
+
+
+    private FileSystemUsage getMountedFileSystemUsage(SigarProxy sigar, String name)
+                throws SigarException, NfsUnreachableException {
+
+            FileSystem fs = sigar.getFileSystemMap().getFileSystem(name);
+
+            if (fs == null) {
+                throw new SigarException(name + " is not a mounted filesystem");
+            }
+
+            if (fs instanceof NfsFileSystem) {
+                NfsFileSystem nfs = (NfsFileSystem)fs;
+                if (!nfsPing(nfs.getHostname())) {
+                    throw nfs.getUnreachableException();
+                }
+            }
+
+            return sigar.getFileSystemUsage(name);
+    }
+
     public void refresh() {
         SigarProxy sigar = SigarAccess.getSigar();
         createFileSystemObject(sigar);
         try {
             // this is the usage data and therefore should be refreshed
-            this.fsUsage = sigar.getMountedFileSystemUsage(this.mountPoint);
+            this.fsUsage = getMountedFileSystemUsage(sigar, this.mountPoint);
             this.fetchedInfo = true;
         } catch (SigarException e) {
             // this happens when the file system is not available (e.g. if it's a CD-ROM without a CD loaded in it) or

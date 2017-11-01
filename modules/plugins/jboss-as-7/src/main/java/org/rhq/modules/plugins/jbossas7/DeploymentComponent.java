@@ -303,7 +303,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
                 // if none of undeploy/deploy conditions were met 
                 if (result == null) {
-                    Redeployer redeployer = new Redeployer(detail.getKey().getName(), hash, getASConnection());
+                    Redeployer redeployer = new Redeployer(detail.getKey().getName(), null, hash, getASConnection());
                     result = redeployer.redeployOnServer();
                 }
 

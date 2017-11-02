@@ -355,7 +355,7 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
         String runtimeName = contentUploader.getRuntimeName();
         String hash = contentUploader.getHash();
 
-        Redeployer redeployer = new Redeployer(runtimeName, hash, getASConnection());
+        Redeployer redeployer = new Redeployer(filename, runtimeName, hash, getASConnection());
         if (redeployer.deploymentExists()) {
             Result result = redeployer.redeployOnServer();
             if (result.isRolledBack()) {

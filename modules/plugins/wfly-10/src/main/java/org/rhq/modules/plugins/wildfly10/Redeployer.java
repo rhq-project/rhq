@@ -35,11 +35,13 @@ import org.rhq.modules.plugins.wildfly10.json.Result;
  */
 class Redeployer {
 
+    private final String name;
     private final String runtimeName;
     private final String hash;
     private final ASConnection connection;
 
-    Redeployer(String runtimeName, String hash, ASConnection connection) {
+    Redeployer(String name, String runtimeName, String hash, ASConnection connection) {
+        this.name = name;
         this.runtimeName = runtimeName;
         this.hash = hash;
         this.connection = connection;
@@ -50,7 +52,7 @@ class Redeployer {
         for (Map.Entry<?, ?> deploymentResource : ((Map<?, ?>) deploymentResources.getResult()).entrySet()) {
             @SuppressWarnings("unchecked")
             Map<String, Object> deploymentResourceDetails = (Map<String, Object>) deploymentResource.getValue();
-            if (runtimeName.equals(deploymentResourceDetails.get("runtime-name"))) {
+            if (name.equals(deploymentResourceDetails.get("name"))) {
                 return true;
             }
         }
@@ -59,7 +61,10 @@ class Redeployer {
 
     Result redeployOnServer() {
         Operation op = new Operation("full-replace-deployment", new Address());
-        op.addAdditionalProperty("name", runtimeName);
+        op.addAdditionalProperty("name", name);
+        if (runtimeName != null) {
+            op.addAdditionalProperty("runtime-name", runtimeName);
+        }
         List<Object> content = new ArrayList<Object>(1);
         Map<String, Object> contentValues = new HashMap<String, Object>();
         contentValues.put("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));

@@ -131,7 +131,7 @@ public class BundleGroupsDataSource extends RPCDataSource<BundleGroup, BundleGro
             public void onFailure(Throwable caught) {
                 // TODO: Throw more specific SLSB exceptions so we can set the right validation errors.
                 String message = caught.getMessage();
-                if (message != null && message.contains("javax.persistence.EntityExistsException")) {
+                if (message != null && message.contains("javax.ejb.EJBException") && message.contains("IllegalArgumentException"))  {
                     Map<String, String> errorMessages = new HashMap<String, String>();
                     errorMessages.put(Field.NAME, MSG.view_bundle_fail_existingName(newBundleGroup.getName()));
                     sendValidationErrorResponse(request, response, errorMessages);

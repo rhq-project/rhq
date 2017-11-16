@@ -19,6 +19,7 @@
 
 package org.rhq.coregui.server.gwt;
 
+import javax.net.ssl.SSLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -79,6 +80,10 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             // don't log this exception, just throw it as is required for the 'special token handling worflow.
             // See BZ-1268329 for more info.
             throw bnfe;
+        } catch(SSLException sslException) {
+            String message = "Failed to download the file from the URL [" + url + "].";
+            getLog().warn(message, sslException);
+            throw getExceptionToThrowToClient(new SSLException(message));
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

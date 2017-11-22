@@ -233,29 +233,38 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         List<AlertDefinition> alertDefs = alertDefManager.findAlertDefinitionsByCriteria(subjectManager.getOverlord(),
             adc);
 
+        boolean collectionIntervalsOnly = false;
+
         if (!alertDefs.isEmpty()) {
             assert 1 == alertDefs.size() : "Found more than 1 existing alert def!";
 
             if (!replaceIfExists) {
-                return result;
+                collectionIntervalsOnly = true;
+            } else {
+                int[] alertDefIdArray = new int[1];
+                alertDefIdArray[0] = alertDefs.get(0).getId();
+                alertDefManager.removeAlertDefinitions(subjectManager.getOverlord(), alertDefIdArray);
             }
-
-            int[] alertDefIdArray = new int[1];
-            alertDefIdArray[0] = alertDefs.get(0).getId();
-            alertDefManager.removeAlertDefinitions(subjectManager.getOverlord(), alertDefIdArray);
         }
 
         int newAlertDefId = 0;
 
         if (storageNodeHighHeapTemplate.equals(injectedAlertDef)) {
-            newAlertDefId = injectStorageNodeHighHeapTemplate(resourceType);
+            newAlertDefId = injectStorageNodeHighHeapTemplate(resourceType, collectionIntervalsOnly);
         } else if (storageNodeHighDiskUsageTemplate.equals(injectedAlertDef)) {
-            newAlertDefId = injectStorageNodeHighDiskUsageTemplate(resourceType);
-        } else if (storageNodeSnapshotFailureTemplate.equals(injectedAlertDef)) {
+            newAlertDefId = injectStorageNodeHighDiskUsageTemplate(resourceType, collectionIntervalsOnly);
+        }
+
+        if(collectionIntervalsOnly) {
+            return result;
+        }
+
+        if (storageNodeSnapshotFailureTemplate.equals(injectedAlertDef)) {
             newAlertDefId = injectStorageNodeSnapshotFailureTemplate(resourceType);
         } else if (storageNodeMaintenanceOperationsFailureTemplate.equals(injectedAlertDef)) {
             newAlertDefId = injectStorageNodeMaintenanceOperationsFailureTemplate(resourceType);
         }
+
 
         adc.addFilterId(newAlertDefId);
         alertDefs = alertDefManager.findAlertDefinitionsByCriteria(subjectManager.getOverlord(), adc);
@@ -265,7 +274,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         return result;
     }
 
-    private int injectStorageNodeHighHeapTemplate(ResourceType resourceType) {
+    private int injectStorageNodeHighHeapTemplate(ResourceType resourceType, boolean collectionIntervalsOnly) {
         AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
@@ -303,8 +312,11 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         dampener.setValue(10);
         newTemplate.setAlertDampening(dampener);
 
-        int newTemplateId = alertTemplateManager.createAlertTemplate(subjectManager.getOverlord(), newTemplate,
-            resourceType.getId());
+        int newTemplateId = 0;
+        if(!collectionIntervalsOnly) {
+            newTemplateId = alertTemplateManager.createAlertTemplate(subjectManager.getOverlord(), newTemplate,
+                    resourceType.getId());
+        }
 
         // additionally, we want to ensure that the metric is enabled and collecting at a more frequent interval than
         // is set by default.
@@ -316,7 +328,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         return newTemplateId;
     }
 
-    private int injectStorageNodeHighDiskUsageTemplate(ResourceType resourceType) {
+    private int injectStorageNodeHighDiskUsageTemplate(ResourceType resourceType, boolean collectionIntervalsOnly) {
         AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
@@ -372,8 +384,11 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         dampener.setValue(10);
         newTemplate.setAlertDampening(dampener);
 
-        int newTemplateId = alertTemplateManager.createAlertTemplate(subjectManager.getOverlord(), newTemplate,
-            resourceType.getId());
+        int newTemplateId = 0;
+        if(!collectionIntervalsOnly) {
+            newTemplateId = alertTemplateManager.createAlertTemplate(subjectManager.getOverlord(), newTemplate,
+                    resourceType.getId());
+        }
 
         // additionally, we want to ensure that the metric is enabled and collecting at a more frequent interval than
         // is set by default.

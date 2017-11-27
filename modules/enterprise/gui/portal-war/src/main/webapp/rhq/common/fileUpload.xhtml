@@ -23,6 +23,17 @@
                 <h:form id="fileUploadForm" enctype="multipart/form-data">
                 <script>
                   document.getElementById('fileUploadForm').setAttribute('action', window.location.href);
+                  var input = document.getElementById('fileUploadForm');
+
+                  input.onchange = function(e) {
+                    if(e.target.files) {
+                          if(e.target.files[0].size > 249995000) {
+                            alert('Selected file was too large, maximum size is 250MB');
+                            window.opener.location.reload();
+                            window.close();
+                        }
+                    }
+                  }
 
                 function afterComplete(entry) {
                         if(entry.state == FileUploadEntry.UPLOAD_SIZE_ERROR) {

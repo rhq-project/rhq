@@ -34,7 +34,6 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.MessageConstants;
 import org.rhq.coregui.client.components.AboutModalWindow;
-import org.rhq.coregui.client.components.FullHTMLPane;
 import org.rhq.coregui.client.components.TitleBar;
 import org.rhq.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.coregui.client.components.view.NavigationItem;
@@ -128,7 +127,8 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
                 final String itemName = "Section" + i + "Item" + j;
                 NavigationItem item = new NavigationItem(new ViewName(itemName, title), icon, new ViewFactory() {
                     public Canvas createView() {
-                        return new FullHTMLPane(url);
+                        com.google.gwt.user.client.Window.open(url, "_blank", "");
+                        return null;
                     }
                 });
                 items[j - 1] = item;

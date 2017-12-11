@@ -53,6 +53,7 @@ import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManage
 import org.rhq.enterprise.server.resource.metadata.PluginManagerRemote;
 import org.rhq.enterprise.server.search.SavedSearchManagerRemote;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerRemote;
+import org.rhq.enterprise.server.storage.StorageNodeOperationsHandlerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
 import org.rhq.enterprise.server.sync.SynchronizationManagerRemote;
 import org.rhq.enterprise.server.system.SystemManagerRemote;
@@ -106,13 +107,13 @@ public enum RhqManager {
      */
     ServerPluginManager(ServerPluginManagerRemote.class, "${ServerPluginManager}"), //
     StorageNodeManager(StorageNodeManagerRemote.class, "${StorageNodeManager}"), //
+    StorageNodeOperationsHandler(StorageNodeOperationsHandlerRemote.class, "${StorageNodeOperationsHandler}"),
     SubjectManager(SubjectManagerRemote.class, "${SubjectManager}"), //
     SupportManager(SupportManagerRemote.class, "${SupportManager}"), //
     SystemManager(SystemManagerRemote.class, "${SystemManager}"), //
     RemoteInstallManager(RemoteInstallManagerRemote.class, "${RemoteInstallManager}"), //
     TagManager(TagManagerRemote.class, "${TagManager}"), //
     SynchronizationManager(SynchronizationManagerRemote.class, "${SynchronizationManager}"),
-
     StorageClusterSettingsManager(StorageClusterSettingsManagerRemote.class, "${StorageClusterSettingsManager}");
 
     private Class<?> remote;

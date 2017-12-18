@@ -500,7 +500,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>serverplugin-alertdef-rhq</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${serverplugin-alertdef-rhq.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>

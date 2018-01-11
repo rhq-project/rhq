@@ -87,6 +87,8 @@ import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
+import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
+import org.rhq.enterprise.server.alert.GroupAlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
@@ -130,6 +132,12 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @EJB
     private OperationManagerLocal operationMgr;
+
+    @EJB
+    private GroupAlertDefinitionManagerLocal groupAlertDefinitionManager;
+
+    @EJB
+    private AlertTemplateManagerLocal alertTemplateManager;
 
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -310,8 +318,19 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
                 throw new StuffNotFoundException("Recovery alert with id " + adr.getRecoveryId());
         }
 
-        AlertDefinition updatedDefinition = alertDefinitionManager.createAlertDefinitionInNewTransaction(caller,
-            alertDefinition, resourceId, false);
+        AlertDefinition updatedDefinition;
+        if (groupId != null) {
+            int alertDefinitionId = groupAlertDefinitionManager.createGroupAlertDefinitions(
+                    caller, alertDefinition, groupId);
+            updatedDefinition = alertDefinitionManager.getAlertDefinition(caller, alertDefinitionId);
+        } else if (resourceTypeId != null) {
+            int alertDefinitionId = alertTemplateManager.createAlertTemplate(caller, alertDefinition, resourceTypeId);
+            updatedDefinition = alertDefinitionManager.getAlertDefinition(caller, alertDefinitionId);
+        } else {
+            updatedDefinition = alertDefinitionManager.createAlertDefinitionInNewTransaction(caller,
+                    alertDefinition, resourceId, false);
+        }
+
         int definitionId = updatedDefinition.getId();
         AlertDefinitionRest uadr = definitionToDomain(updatedDefinition,true, uriInfo) ; // TODO param 'full' ?
 

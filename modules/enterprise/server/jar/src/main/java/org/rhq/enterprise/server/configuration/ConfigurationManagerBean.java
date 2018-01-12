@@ -345,9 +345,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         resource.addPluginConfigurationUpdates(update);
         entityManager.remove(resource.getPluginConfiguration());
         resource.setPluginConfiguration(update.getConfiguration().deepCopyWithoutProxies());
-
-        entityManager.merge(update);
-
         return update;
     }
 
@@ -378,7 +375,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
         entityManager.remove(resource.getResourceConfiguration());
         resource.setResourceConfiguration(configuration);
-        entityManager.merge(resource);
     }
 
     // Use new transaction because this only works if the resource in question has not

@@ -226,7 +226,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // link to the newer, persisted configuration object -- regardless of errors
         resource.setAgentSynchronizationNeeded();
-        resource.setPluginConfiguration(update.getConfiguration());
+        entityManager.remove(resource.getPluginConfiguration());
+        resource.setPluginConfiguration(update.getConfiguration().deepCopyWithoutProxies());
 
         if (response.getStatus() == ConfigurationUpdateStatus.SUCCESS) {
             update.setStatus(ConfigurationUpdateStatus.SUCCESS);
@@ -342,10 +343,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         entityManager.persist(update);
 
         resource.addPluginConfigurationUpdates(update);
-        resource.setPluginConfiguration(update.getConfiguration());
-
-        entityManager.merge(update);
-
+        entityManager.remove(resource.getPluginConfiguration());
+        resource.setPluginConfiguration(update.getConfiguration().deepCopyWithoutProxies());
         return update;
     }
 
@@ -374,8 +373,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         if (resource == null) {
             throw new ResourceNotFoundException("Resource [" + resourceId + "] does not exist.");
         }
+        entityManager.remove(resource.getResourceConfiguration());
         resource.setResourceConfiguration(configuration);
-        entityManager.merge(resource);
     }
 
     // Use new transaction because this only works if the resource in question has not
@@ -1568,6 +1567,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         } else if (response.getStatus() == ConfigurationUpdateStatus.SUCCESS) {
             // link to the newer, persisted configuration object
             Resource resource = update.getResource();
+            entityManager.remove(resource.getResourceConfiguration());
             resource.setResourceConfiguration(update.getConfiguration().deepCopyWithoutProxies());
             notifyAlertConditionCacheManager("completeResourceConfigurationUpdate", update);
         }

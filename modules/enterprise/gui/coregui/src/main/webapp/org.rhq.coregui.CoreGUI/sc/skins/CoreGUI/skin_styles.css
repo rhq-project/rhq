@@ -1875,16 +1875,14 @@ div[eventproxy^="isc_DateChooser"] {
 }
 
 
-/* bz 1144052, sets the z-index to auto to all related parents to reset the 'stacking context' */
-body > div.normal[eventproxy*="HTMLFlow"],
-body > div > div[eventproxy*="isc_HTMLFlow_0"],
-body > div.normal,
-body > div[eventproxy*="CoreGUI_RootCanvas"].normal,
-body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"],
-body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"],
-body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"] > div.overflowVisible[eventproxy*="MenuBarView_LinkBar"],
-body > div[eventproxy*="CoreGUI_RootCanvas"].normal > div[eventproxy*="CoreGUI_RootCanvas"] > div.overflowVisible[eventproxy*="MenuBarView"] > div[eventproxy*="MenuBarView"] > div.overflowVisible[eventproxy*="MenuBarView_LinkBar"] > div[eventproxy*="MenuBarView_LinkBar"] {
-    z-index: auto !important;
+/*
+bz 1144052, sets the z-index to auto to all related parents to reset the 'stacking context'
+bz 1532749 and bz 1532743 Revert back that, (smart)gwt makes use of them and IE9/11 doesn't like to have them in auto.
+Instead increase the message parent div z-index to max integer size to ensure is always on top of dialogs overlay
+This also works solving previous 1144052 issue
+*/
+body > div.normal[eventproxy*="HTMLFlow"] {
+    z-index: 2147483647 !important; /* 32bits max signed int */
 }
 
 .switch-light span span {

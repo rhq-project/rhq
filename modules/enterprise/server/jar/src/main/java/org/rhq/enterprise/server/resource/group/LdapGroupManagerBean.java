@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -290,8 +291,28 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     public void assignRolesToLdapSubject(int subjectId, List<String> ldapGroupNames) {
         Subject sub = entityManager.find(Subject.class, subjectId);
         List<Role> roles = findRolesByLdapGroupNames(ldapGroupNames);
-        sub.getRoles().clear();
-        sub.getLdapRoles().clear();
+        if (roles.size() > 0) {//enforce LDAP only managed role membership
+            sub.getRoles().clear();
+            sub.getLdapRoles().clear();
+        } else { //former member of ldap group clean out
+            ArrayList<Role> originalRoleList = new ArrayList<Role>();
+            for (Iterator<Role> iterator = sub.getRoles().iterator(); iterator.hasNext();) {
+                Role role = iterator.next();
+                originalRoleList.add(role);
+            }
+            // clear all roles
+            sub.getRoles().clear();
+            sub.getLdapRoles().clear();
+
+            // re-add non-ldap group authz back
+            for (Iterator<Role> iterator = originalRoleList.iterator(); iterator.hasNext();) {
+                Role role = iterator.next();
+                if (role.getLdapGroups().size() == 0) {
+                    sub.getRoles().add(role);
+                    sub.addLdapRole(role);
+                } // else: do nothing as LDAP roles already cleared out
+            }
+        }
         for (Role role : roles) {
             sub.addRole(role);
             sub.addLdapRole(role);

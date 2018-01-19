@@ -357,11 +357,11 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     public Subject login(String username, String password) throws LoginException {
         return _login(username, password, true, true);
     }
-    
+
     public Subject loginLocal(String username, String password) throws LoginException {
         return _login(username, password, true, false);
     }
-    
+
     private Subject _login(String username, String password, boolean checkRoles, boolean remote) throws LoginException {
         if (password == null) {
             throw new LoginException("No password was given");
@@ -374,12 +374,33 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         Subject subject = getSubjectByName(username);
 
-        if (subject != null) {//regular JDBC user
+        if (subject != null) {//authenticated user
             if (!subject.getFactive()) {
                 throw new LoginException("User account has been disabled.");
             }
 
             if (checkRoles) {
+
+                //insert ldap authz check
+                boolean isLdapUser = !isUserWithPrincipal(username);
+                if (isLdapUser) {
+                    //we can proceed with LDAP checking
+                    //BZ-580127: only do group authz check if one or both of group filter fields is set
+                    if (isLdapAuthenticationEnabled() & isLdapAuthorizationEnabled()) {
+                        List<String> groupNames = new ArrayList<String>(
+                            ldapManager.findAvailableGroupsFor(subject.getName()));
+                        if (log.isDebugEnabled()) {
+                            log.debug("Updating LDAP authorization data for user [" + subject.getName()
+                                + "] with LDAP groups " + groupNames + "...");
+                        }
+                        ldapManager.assignRolesToLdapSubject(subject.getId(), groupNames);
+                        if (!systemManager.isLoginWithoutRolesEnabled() && subject.getRoles().isEmpty()) {
+                            throw new LoginException("Subject [" + subject.getName()
+                                + "] is authenticated for LDAP, but there are no preconfigured roles for them.");
+                        }
+                    }
+                }
+
                 // fetch the roles
                 int rolesNumber = subject.getRoles().size();
                 if (rolesNumber == 0) {

@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.core.jaas;
 import java.io.IOException;
 import java.security.Principal;
 import java.security.acl.Group;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +41,13 @@ import org.jboss.security.SimpleGroup;
 import org.jboss.security.SimplePrincipal;
 import org.jboss.security.auth.spi.UsernamePasswordLoginModule;
 
+import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.util.StringUtil;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * A login module that just delegates all work to a different security domain.<p/>
@@ -68,6 +75,7 @@ import org.rhq.core.util.StringUtil;
  *</pre>
  *
  * @author Heiko W. Rupp
+ * @author Simeon Pinder
  */
 @SuppressWarnings("unused")
 public class DelegatingLoginModule extends UsernamePasswordLoginModule {
@@ -79,6 +87,9 @@ public class DelegatingLoginModule extends UsernamePasswordLoginModule {
     private Principal identity;
     private List<String> rolesList;
     private boolean debugEnabled;
+    private SubjectManagerLocal subjectMgrLocal;
+    private LdapGroupManagerLocal ldapMgrLocal;
+    private SystemManagerLocal sysMgrLocal;
 
     @Override
     public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState,
@@ -129,6 +140,34 @@ public class DelegatingLoginModule extends UsernamePasswordLoginModule {
             // Try to log in via the delegate
             loginContext.login();
 
+            String username = usernamePassword[0];
+
+            subjectMgrLocal = LookupUtil.getSubjectManager();
+            ldapMgrLocal = LookupUtil.getLdapGroupManager();
+            sysMgrLocal = LookupUtil.getSystemManager();
+            if ((subjectMgrLocal != null) && (ldapMgrLocal != null) && (sysMgrLocal != null)) {
+                org.rhq.core.domain.auth.Subject rSubject = subjectMgrLocal.getSubjectByName(username);
+
+                //insert ldap authz check
+                boolean isLdapUser = !subjectMgrLocal.isUserWithPrincipal(username);
+                if (isLdapUser) {
+                    //we can proceed with LDAP checking
+                    //BZ-580127: only do group authz check if one or both of group filter fields is set
+                    if (ldapAuthDetected() & ldapAuthzDetected()) {
+                        List<String> groupNames = new ArrayList<String>(ldapMgrLocal.findAvailableGroupsFor(username));
+                        if (log.isDebugEnabled()) {
+                            log.debug("Updating LDAP authorization data for user [" + username + "] with LDAP groups "
+                                + groupNames + "...");
+                        }
+                        ldapMgrLocal.assignRolesToLdapSubject(rSubject.getId(), groupNames);
+                        if (!sysMgrLocal.isLoginWithoutRolesEnabled() && rSubject.getRoles().isEmpty()) {
+                            throw new LoginException("Subject [" + username
+                                + "] is authenticated for LDAP, but there are no preconfigured roles for them.");
+                        }
+                    }
+                }
+            }
+
             // Nix out the password
             usernamePassword[1] = null;
 
@@ -178,6 +217,20 @@ public class DelegatingLoginModule extends UsernamePasswordLoginModule {
         }
         Group[] roleSets = { roles };
         return roleSets;
+    }
+
+    private boolean ldapAuthDetected() {
+        SystemSettings systemSettings = sysMgrLocal.getUnmaskedSystemSettings(true);
+        String value = systemSettings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER);
+        return (value != null) ? Boolean.valueOf(value) : false;
+    }
+
+    private boolean ldapAuthzDetected() {
+        SystemSettings systemSettings = sysMgrLocal.getUnmaskedSystemSettings(true);
+        String groupFilter = systemSettings.get(SystemSetting.LDAP_GROUP_FILTER);
+        String groupMember = systemSettings.get(SystemSetting.LDAP_GROUP_MEMBER);
+        return ((groupFilter != null) && (groupFilter.trim().length() > 0))
+            || ((groupMember != null) && (groupMember.trim().length() > 0));
     }
 
 

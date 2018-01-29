@@ -192,7 +192,7 @@
 
     <shrinkwrap-resolver.version>2.0.0-alpha-7</shrinkwrap-resolver.version>
     <servlet-api.version>2.4</servlet-api.version>
-    <sigar.version>1.6.5.132-8</sigar.version>
+    <sigar.version>1.6.5.132-9</sigar.version>
     <sigar.zip.version>1.6.5</sigar.zip.version>
     <swagger-annotations.version>1.2.3</swagger-annotations.version>
 

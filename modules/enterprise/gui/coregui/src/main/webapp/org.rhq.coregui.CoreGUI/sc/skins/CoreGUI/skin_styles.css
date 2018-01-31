@@ -20,11 +20,6 @@ hr {
     height: 1px;
 }
 
-body > div > div[eventproxy="isc_HTMLFlow_0"],
-body > div.normal {
-    z-index: auto !important;
-}
-
 /*bz1116784, bz1126923*/
 input[name="fileUploadItem"],
 input[name="textFile"] {

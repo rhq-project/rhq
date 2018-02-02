@@ -3,6 +3,7 @@ package org.rhq.enterprise.server.storage;
 import java.util.List;
 
 import javax.ejb.Asynchronous;
+import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
@@ -12,6 +13,7 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 /**
  * @author John Sanda
  */
+@Local
 public interface StorageNodeOperationsHandlerLocal extends StorageNodeOperationsHandlerRemote {
 
     @Asynchronous

@@ -48,7 +48,7 @@ import org.rhq.server.metrics.StorageSession;
  * @author John Sanda
  */
 @Stateless
-public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHandlerLocal {
+public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHandlerLocal, StorageNodeOperationsHandlerRemote {
 
     private final Log log = LogFactory.getLog(StorageNodeOperationsHandlerBean.class);
 

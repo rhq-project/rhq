@@ -18,12 +18,15 @@
  */
 package org.rhq.enterprise.server.storage;
 
+import javax.ejb.Remote;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
 
 /**
  * @author miburman
  */
+@Remote
 public interface StorageNodeOperationsHandlerRemote {
     StorageNode removeMaintenanceMode(Subject subject, StorageNode storageNode);
 }

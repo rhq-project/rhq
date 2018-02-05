@@ -1279,7 +1279,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         // If the resource was marked as deleted, reactivate it again.
         if (existingResource.getInventoryStatus() == InventoryStatus.DELETED) {
             existingResource.setInventoryStatus(InventoryStatus.COMMITTED);
-            entityManager.remove(updatedResource.getPluginConfiguration());
             existingResource.setPluginConfiguration(updatedResource.getPluginConfiguration());
             existingResource.setAgentSynchronizationNeeded();
         }

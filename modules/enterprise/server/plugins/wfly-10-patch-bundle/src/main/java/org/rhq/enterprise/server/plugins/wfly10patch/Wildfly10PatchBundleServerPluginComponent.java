@@ -143,7 +143,7 @@ public class Wildfly10PatchBundleServerPluginComponent implements ServerPluginCo
                 addCommonProperties(config);
 
                 parseResults = new RecipeParseResults(props, config, null);
-                fileName = allPatchIds.toString();
+                fileName = lastPatch.getIdentityName();
                 recipe = patchBundle.getContents();
             }
         } finally {

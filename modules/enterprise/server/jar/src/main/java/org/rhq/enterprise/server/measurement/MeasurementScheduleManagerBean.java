@@ -970,7 +970,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         Set<ResourceMeasurementScheduleRequest> resourceMeasurementScheduleRequest) {
         try {
             AgentClient agentClient = LookupUtil.getAgentManager().getAgentClient(agent);
-            if (!agentClient.pingService(2000)) {
+            if (agentClient == null || !agentClient.pingService(2000)) {
                 if (log.isDebugEnabled()) {
                     log.debug("Won't send MeasurementSchedules to offline Agent[id=" + agent.getId() + "]");
                 }

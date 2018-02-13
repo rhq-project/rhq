@@ -45,6 +45,7 @@ public class ServerPluginConfiguration {
         public static final String PASSWORD = "password";
         public static final String MANAGEMENT_CONNECTION_TIMEOUT = "managementConnectionTimeout";
         public static final String DEPLOYMENT_CONNECTION_TIMEOUT = "deploymentConnectionTimeout";
+        public static final String LOCAL = "local";
         public static final String HOME_DIR = "homeDir";
         public static final String BASE_DIR = "baseDir";
         public static final String CONFIG_DIR = "configDir";
@@ -156,6 +157,14 @@ public class ServerPluginConfiguration {
 
     public Long getManagementConnectionTimeout() {
         return this.pluginConfig.getSimple(Property.MANAGEMENT_CONNECTION_TIMEOUT).getLongValue();
+    }
+
+    public Boolean isLocal() {
+        return this.pluginConfig.getSimple(Property.LOCAL).getBooleanValue();
+    }
+
+    public void setLocal(boolean isLocal) {
+        this.pluginConfig.setSimpleValue(Property.LOCAL, String.valueOf(isLocal));
     }
 
     public File getHomeDir() {

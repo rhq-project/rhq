@@ -331,9 +331,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     protected OperationResult restartServer(Configuration parameters) throws Exception {
 
         OperationResult operationResult = new OperationResult();
-        if (isManuallyAddedServer(operationResult, "Restarting")) {
-            return operationResult;
-        }
 
         List<String> errors = validateStartScriptPluginConfigProps();
         if (!errors.isEmpty()) {
@@ -413,9 +410,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
      */
     protected OperationResult startServer() throws InterruptedException {
         OperationResult operationResult = new OperationResult();
-        if (isManuallyAddedServer(operationResult, "Starting")) {
-            return operationResult;
-        }
 
         List<String> errors = validateStartScriptPluginConfigProps();
         if (!errors.isEmpty()) {
@@ -504,8 +498,22 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     protected OperationResult runCliCommand(Configuration parameters) throws InterruptedException {
         OperationResult result = new OperationResult();
 
-        if (isManuallyAddedServer(result, "Executing jboss-cli")) {
-            return result;
+        if (isManuallyAddedServer()) {
+            if (!getServerPluginConfiguration().isLocal()) {
+                result.setErrorMessage("Operation not enabled on manually configured non local servers");
+                return result;
+            }
+            File homeDir = serverPluginConfig.getHomeDir();
+            if (!homeDir.exists()) {
+                result.setErrorMessage("Operation not enabled on servers without a valid Home Directory");
+                return result;
+            }
+            File jbossCli = new File(new File(homeDir, "bin"), getMode().getCliScriptFileName());
+            if (!jbossCli.exists() || !jbossCli.canExecute()) {
+                result.setErrorMessage(getMode().getCliScriptFileName() +
+                        " not found on Home Directory or is not executable");
+                return result;
+            }
         }
 
         long waitTime = Integer.parseInt(parameters.getSimpleValue("waitTime", "3600"));
@@ -559,14 +567,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
     public boolean isManuallyAddedServer() {
         return pluginConfiguration.get("manuallyAdded") != null;
-    }
-
-    private boolean isManuallyAddedServer(OperationResult operationResult, String operation) {
-        if (isManuallyAddedServer()) {
-            operationResult.setErrorMessage(operation + " is not enabled for manually added servers");
-            return true;
-        }
-        return false;
     }
 
     private void setErrorMessage(OperationResult operationResult, List<String> errors) {
@@ -698,10 +698,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         OperationResult result = new OperationResult();
 
-        PropertySimple remoteProp = pluginConfig.getSimple("manuallyAdded");
-        if (remoteProp != null && remoteProp.getBooleanValue() != null && remoteProp.getBooleanValue()) {
-            result
-                .setErrorMessage("This is a manually added server. This operation can not be used to install a management user. Use the server's 'bin/add-user.sh'");
+        if (isManuallyAddedServer() && !getServerPluginConfiguration().isLocal()) {
+            result.setErrorMessage(
+                    "This is a manually and not local added server. This operation can not be used to install a management user. Use the server's 'bin/add-user.sh'");
             return result;
         }
 

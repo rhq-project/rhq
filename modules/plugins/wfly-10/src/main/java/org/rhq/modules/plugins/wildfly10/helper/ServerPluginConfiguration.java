@@ -76,7 +76,7 @@ public class ServerPluginConfiguration {
     }
 
     /**
-     * returns detected path based on given path name 
+     * returns detected path based on given path name
      * @see <a href="https://docs.jboss.org/author/display/AS7/Admin+Guide#AdminGuide-Paths">https://docs.jboss.org/author/display/AS7/Admin+Guide#AdminGuide-Paths</a>
      * @param pathName - is path name defined in AS7 config xml file
      * @return File representing absolute path, return null if given pathName is not known

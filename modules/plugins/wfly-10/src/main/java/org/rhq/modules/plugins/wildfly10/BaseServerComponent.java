@@ -499,19 +499,15 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         OperationResult result = new OperationResult();
 
         if (isManuallyAddedServer()) {
-            if (!getServerPluginConfiguration().isLocal()) {
-                result.setErrorMessage("Operation not enabled on manually configured non local servers");
-                return result;
-            }
             File homeDir = serverPluginConfig.getHomeDir();
             if (!homeDir.exists()) {
-                result.setErrorMessage("Operation not enabled on servers without a valid Home Directory");
+                result.setErrorMessage("Operation not enabled on servers without a valid Home Directory: [" + homeDir + "]");
                 return result;
             }
             File jbossCli = new File(new File(homeDir, "bin"), getMode().getCliScriptFileName());
             if (!jbossCli.exists() || !jbossCli.canExecute()) {
                 result.setErrorMessage(getMode().getCliScriptFileName() +
-                        " not found on Home Directory or is not executable");
+                        " not found on Home Directory(" + homeDir + ") or is not executable");
                 return result;
             }
         }
@@ -697,12 +693,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         String password = parameters.getSimpleValue("password", "");
 
         OperationResult result = new OperationResult();
-
-        if (isManuallyAddedServer() && !getServerPluginConfiguration().isLocal()) {
-            result.setErrorMessage(
-                    "This is a manually and not local added server. This operation can not be used to install a management user. Use the server's 'bin/add-user.sh'");
-            return result;
-        }
 
         if (user.isEmpty() || password.isEmpty()) {
             result.setErrorMessage("User and Password must not be empty");

@@ -216,8 +216,6 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         pluginConfig.setSimpleValue("expectedRuntimeProductName", productType.PRODUCT_NAME);
         pluginConfig.setSimpleValue("hostXmlFileName", getHostXmlFileName(commandLine));
 
-        serverPluginConfig.setLocal(Boolean.TRUE);
-
         ProcessInfo agentProcess = discoveryContext.getSystemInformation().getThisProcess();
         setStartScriptPluginConfigProps(process, commandLine, pluginConfig, agentProcess);
         setUserAndPasswordPluginConfigProps(serverPluginConfig, hostConfig);
@@ -471,57 +469,53 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 + "] as user [" + user + "]. Did you provide the correct credentials?");
         }
 
-        boolean isLocal = serverPluginConfig.isLocal();
-
-        HostPort hostPort = new HostPort(isLocal);
-        HostPort managementHostPort = new HostPort(isLocal);
+        HostPort hostPort = new HostPort(true);
+        HostPort managementHostPort = new HostPort(true);
         managementHostPort.host = hostname;
         managementHostPort.port = port;
         hostPort.port = HostConfiguration.DEFAULT_NATIVE_PORT;
         String key, name, version;
-        if (isLocal) {
-            // Assume the server is local and follow a similar flow as if it was auto-discovered
-            ASConnection connection = new ASConnection(ASConnectionParams.createFrom(serverPluginConfig));
-            File homeDir = serverPluginConfig.getHomeDir();
-            if (homeDir == null) {
-                homeDir = getHomeDirFromConnection(connection);
-                serverPluginConfig.setHomeDir(homeDir);
-            }
-            if (serverPluginConfig.getBaseDir() == null) {
-                serverPluginConfig.setBaseDir(getBaseDirFromConnection(connection));
-            }
-            if (serverPluginConfig.getConfigDir() == null) {
-                serverPluginConfig.setConfigDir(getConfigDirFromConnection(connection));
-            }
+        // Assume the server is local and follow a similar flow as if it was auto-discovered
+        ASConnection connection = new ASConnection(ASConnectionParams.createFrom(serverPluginConfig));
+        File homeDir = serverPluginConfig.getHomeDir();
+        if (homeDir == null) {
+            homeDir = getHomeDirFromConnection(connection);
+            serverPluginConfig.setHomeDir(homeDir);
+        }
+        if (serverPluginConfig.getBaseDir() == null) {
+            serverPluginConfig.setBaseDir(getBaseDirFromConnection(connection));
+        }
+        if (serverPluginConfig.getConfigDir() == null) {
+            serverPluginConfig.setConfigDir(getConfigDirFromConnection(connection));
+        }
 
-            File hostXmlFile = serverPluginConfig.getHostConfigFile();
-            if (hostXmlFile == null) {
-                hostXmlFile = getHostXmlFileFromConnection(connection);
-                serverPluginConfig.setHostConfigFile(hostXmlFile);
-            }
-            File logDir = serverPluginConfig.getLogDir();
-            if (logDir == null) {
-                logDir = getLogDirFromConnection(connection);
-                serverPluginConfig.setLogDir(logDir);
-            }
-            File logFile = getLogFile(logDir);
-            initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);
+        File hostXmlFile = serverPluginConfig.getHostConfigFile();
+        if (hostXmlFile == null) {
+            hostXmlFile = getHostXmlFileFromConnection(connection);
+            serverPluginConfig.setHostConfigFile(hostXmlFile);
+        }
+        File logDir = serverPluginConfig.getLogDir();
+        if (logDir == null) {
+            logDir = getLogDirFromConnection(connection);
+            serverPluginConfig.setLogDir(logDir);
+        }
+        File logFile = getLogFile(logDir);
+        initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);
 
-            HostConfiguration hostConfig;
-            try {
-                hostConfig = loadHostConfiguration(hostXmlFile);
-            } catch (Exception exception){
-                throw new InvalidPluginConfigurationException(
-                        "Unable to load configuration file:" + hostXmlFile.getPath(),
-                        exception);
-            }
+        HostConfiguration hostConfig;
+        try {
+            hostConfig = loadHostConfiguration(hostXmlFile);
             serverPluginConfig.setApiVersion(hostConfig.getDomainApiVersion());
             pluginConfig.setSimpleValue("hostXmlFileName", hostXmlFile.getName());
-
             key = createKeyForLocalResource(serverPluginConfig);
             name = buildDefaultResourceName(hostPort, managementHostPort, productType, hostConfig.getHostName());
             version = getVersion(homeDir, productType);
-        } else {
+            serverPluginConfig.setLocal(true);
+        } catch (Exception exception){
+            LOG.info("Manually imported server marked as [REMOTE]. Unable to load configuration file: [" + hostXmlFile.getPath() + "]", exception);
+            hostPort.isLocal = false;
+            managementHostPort.isLocal = false;
+            serverPluginConfig.setLocal(false);
             key = createKeyForRemoteResource(hostname + ":" + port);
             name = buildDefaultResourceName(hostPort, managementHostPort, productType, null);
             //FIXME this is inconsistent with how the version looks like when autodiscovered

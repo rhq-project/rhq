@@ -1496,7 +1496,6 @@
       <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
       <c:simple-property name="managementConnectionTimeout" type="long" description="Maximum time in milliseconds to keep alive an idle management connection. Zero and negative values will disable connection persistence. Defaults to 5000 ms." required="false" default="5000"/>
       <c:simple-property name="deploymentConnectionTimeout" type="long" description="Maximum time in milliseconds to deploy new content. Defaults to 600000 ms." required="false" default="600000"/>
-      <c:simple-property name="local" displayName="Local server" type="boolean" description="Specifies if the server is know to be running local to the agent" required="false" default="false"/>
       <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="false"/>
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>

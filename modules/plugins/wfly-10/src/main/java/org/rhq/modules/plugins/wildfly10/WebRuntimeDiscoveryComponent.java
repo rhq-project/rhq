@@ -74,7 +74,7 @@ public class WebRuntimeDiscoveryComponent extends VersionedRuntimeDiscovery {
 
     private void discoverResponseTimeLogFile(BaseServerComponent serverComponent, Configuration pluginConfig,
         String nodePath, String contextRoot) {
-        if (serverComponent.isManuallyAddedServer()) {
+        if (serverComponent.isManuallyAddedServer() && !serverComponent.getServerPluginConfiguration().isLocal()) {
             return;
         }
         String rtFilePath = null;

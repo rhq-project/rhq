@@ -505,14 +505,18 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         HostConfiguration hostConfig;
         try {
             hostConfig = loadHostConfiguration(hostXmlFile);
+        } catch (Exception exception) {
+            LOG.info("Manually imported server marked as [REMOTE]. Unable to load configuration file: [" + hostXmlFile.getPath() + "]", exception);
+            hostConfig = null;
+        }
+        if (hostConfig != null) {
             serverPluginConfig.setApiVersion(hostConfig.getDomainApiVersion());
             pluginConfig.setSimpleValue("hostXmlFileName", hostXmlFile.getName());
             key = createKeyForLocalResource(serverPluginConfig);
             name = buildDefaultResourceName(hostPort, managementHostPort, productType, hostConfig.getHostName());
             version = getVersion(homeDir, productType);
             serverPluginConfig.setLocal(true);
-        } catch (Exception exception){
-            LOG.info("Manually imported server marked as [REMOTE]. Unable to load configuration file: [" + hostXmlFile.getPath() + "]", exception);
+        } else {
             hostPort.isLocal = false;
             managementHostPort.isLocal = false;
             serverPluginConfig.setLocal(false);

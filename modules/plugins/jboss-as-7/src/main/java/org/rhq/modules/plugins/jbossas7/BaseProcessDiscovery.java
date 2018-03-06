@@ -68,6 +68,7 @@ import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -510,14 +511,62 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             throw new InvalidPluginConfigurationException("EAP7 / Wildfly based products are not supported by this plugin.");
         }
 
-        HostPort hostPort = new HostPort(false);
-        HostPort managementHostPort = new HostPort(false);
+        HostPort hostPort = new HostPort(true);
+        HostPort managementHostPort = new HostPort(true);
         managementHostPort.host = hostname;
         managementHostPort.port = port;
-        String key = createKeyForRemoteResource(hostname + ":" + port);
-        String name = buildDefaultResourceName(hostPort, managementHostPort, productType, null);
-        //FIXME this is inconsistent with how the version looks like when autodiscovered
-        String version = productInfo.getProductVersion();
+        hostPort.port = HostConfiguration.DEFAULT_NATIVE_PORT;
+        String key, name, version;
+        // Assume the server is local and follow a similar flow as if it was auto-discovered
+        ASConnection connection = new ASConnection(ASConnectionParams.createFrom(serverPluginConfig));
+        File homeDir = serverPluginConfig.getHomeDir();
+        if (homeDir == null) {
+            homeDir = getHomeDirFromConnection(connection);
+            serverPluginConfig.setHomeDir(homeDir);
+        }
+        if (serverPluginConfig.getBaseDir() == null) {
+            serverPluginConfig.setBaseDir(getBaseDirFromConnection(connection));
+        }
+        if (serverPluginConfig.getConfigDir() == null) {
+            serverPluginConfig.setConfigDir(getConfigDirFromConnection(connection));
+        }
+
+        File hostXmlFile = serverPluginConfig.getHostConfigFile();
+        if (hostXmlFile == null) {
+            hostXmlFile = getHostXmlFileFromConnection(connection);
+            serverPluginConfig.setHostConfigFile(hostXmlFile);
+        }
+        File logDir = serverPluginConfig.getLogDir();
+        if (logDir == null) {
+            logDir = getLogDirFromConnection(connection);
+            serverPluginConfig.setLogDir(logDir);
+        }
+        File logFile = getLogFile(logDir);
+        initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);
+
+        HostConfiguration hostConfig;
+        try {
+            hostConfig = loadHostConfiguration(hostXmlFile);
+        } catch (Exception exception) {
+            LOG.info("Manually imported server marked as [REMOTE]. Unable to load configuration file: [" + hostXmlFile.getPath() + "]", exception);
+            hostConfig = null;
+        }
+        if (hostConfig != null) {
+            pluginConfig.setSimpleValue("hostXmlFileName", hostXmlFile.getName());
+            key = createKeyForLocalResource(serverPluginConfig);
+            name = buildDefaultResourceName(hostPort, managementHostPort, productType, hostConfig.getHostName());
+            version = getVersion(homeDir, productType);
+            serverPluginConfig.setLocal(true);
+        } else {
+            hostPort.isLocal = false;
+            managementHostPort.isLocal = false;
+            serverPluginConfig.setLocal(false);
+            key = createKeyForRemoteResource(hostname + ":" + port);
+            name = buildDefaultResourceName(hostPort, managementHostPort, productType, null);
+            //FIXME this is inconsistent with how the version looks like when autodiscovered
+            version = productInfo.getProductVersion();
+        }
+
         String description = buildDefaultResourceDescription(hostPort, productType);
 
         pluginConfig.put(new PropertySimple("manuallyAdded", true));
@@ -639,6 +688,31 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         return null;
     }
 
+    private File getFileFromServerEnvironment(ASConnection connection, String environment) {
+        String file = getServerEnvironment(connection, environment);
+        return new File(FileUtils.getCanonicalPath(file));
+    }
+
+    private File getHomeDirFromConnection(ASConnection connection) {
+        return getFileFromServerEnvironment(connection, "home-dir");
+    }
+
+    private File getBaseDirFromConnection(ASConnection connection) {
+        return getFileFromServerEnvironment(connection, "base-dir");
+    }
+
+    private File getConfigDirFromConnection(ASConnection connection) {
+        return getFileFromServerEnvironment(connection, "config-dir");
+    }
+
+    private File getHostXmlFileFromConnection(ASConnection connection) {
+        return getFileFromServerEnvironment(connection, "config-file");
+    }
+
+    private File getLogDirFromConnection(ASConnection connection) {
+        return getFileFromServerEnvironment(connection, "log-dir");
+    }
+
     private String createKeyForRemoteResource(String hostPort) {
         return REMOTE_RESOURCE_KEY_PREFIX + hostPort;
     }
@@ -661,6 +735,18 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         if (!res.isSuccess()) {
             throw new InvalidPluginConfigurationException("Could not connect to remote server ["
                 + res.getFailureDescription() + "]. Did you enable management?");
+        }
+        @SuppressWarnings("unchecked")
+        T result = (T) res.getResult();
+        return result;
+    }
+
+    private <T> T getServerEnvironment(ASConnection connection, String environment) {
+        Operation op = new ReadAttribute(new Address("core-service", "server-environment"), environment);
+        Result res = connection.execute(op);
+        if (!res.isSuccess()) {
+            throw new InvalidPluginConfigurationException("Could not connect to remote server ["
+                    + res.getFailureDescription() + "]. Did you enable management?");
         }
         @SuppressWarnings("unchecked")
         T result = (T) res.getResult();

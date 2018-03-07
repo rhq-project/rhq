@@ -160,7 +160,8 @@ public class ServerPluginConfiguration {
     }
 
     public Boolean isLocal() {
-        return this.pluginConfig.getSimple(Property.LOCAL).getBooleanValue();
+        return Boolean.valueOf(this.pluginConfig.getSimpleValue(Property.LOCAL, "false"));
+
     }
 
     public void setLocal(boolean isLocal) {

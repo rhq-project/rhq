@@ -150,10 +150,12 @@ public class WebRuntimeDiscoveryComponentTest {
     }
 
     @Test
-    public void shouldNotFindResponseTimeFilterLogInManuallyAddedStandaloneServer() throws Exception {
+    public void shouldNotFindResponseTimeFilterLogInManuallyAddedNotLocalStandaloneServer() throws Exception {
         when(parentResourceComponent.getPath()).thenReturn(PARENT_COMPONENT_PATH_IN_STANDALONE_SERVER);
         when(parentResourceComponent.getServerComponent()).thenReturn(standaloneASComponent);
         when(standaloneASComponent.isManuallyAddedServer()).thenReturn(Boolean.TRUE);
+        ServerPluginConfiguration standaloneServerPluginConfig = createStandaloneServerPluginConfig();
+        when(standaloneASComponent.getServerPluginConfiguration()).thenReturn(standaloneServerPluginConfig);
 
         Set<DiscoveredResourceDetails> details = discoveryComponent.discoverResources(discoveryContext);
         assertNotNull(details);
@@ -200,10 +202,12 @@ public class WebRuntimeDiscoveryComponentTest {
     }
 
     @Test
-    public void shouldNotFindResponseTimeFilterLogInManuallyAddedManagedServer() throws Exception {
+    public void shouldNotFindResponseTimeFilterLogInManuallyAddedNotLocalManagedServer() throws Exception {
         when(parentResourceComponent.getPath()).thenReturn(PARENT_COMPONENT_PATH_IN_MANAGED_SERVER);
         when(parentResourceComponent.getServerComponent()).thenReturn(hostControllerComponent);
         when(hostControllerComponent.isManuallyAddedServer()).thenReturn(Boolean.TRUE);
+        ServerPluginConfiguration hostControllerServerPluginConfig = createHostControllerServerPluginConfig();
+        when(hostControllerComponent.getServerPluginConfiguration()).thenReturn(hostControllerServerPluginConfig);
 
         Set<DiscoveredResourceDetails> details = discoveryComponent.discoverResources(discoveryContext);
         assertNotNull(details);

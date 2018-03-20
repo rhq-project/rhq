@@ -119,7 +119,8 @@ add_colors () {
     # find out if terminal support colors
     _COLORS_NUM=`tput colors 2> /dev/null`
     if [ $? = 0 ] && [ $_COLORS_NUM -gt 2 ]; then
-        (sh --version | grep bash) 1> /dev/null 2>&1
+        TYPE_P_HACK=$(export PATH=/dev/null/$$
+          type -p 2>/dev/null)
         _IS_BASH=$?
         _UP_SYMBOL=`[ $_IS_BASH = 0 ] && echo ✔`
         _DOWN_SYMBOL=`[ $_IS_BASH = 0 ] && echo ✘`

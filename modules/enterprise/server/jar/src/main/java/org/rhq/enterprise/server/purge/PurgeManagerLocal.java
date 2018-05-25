@@ -61,6 +61,14 @@ public interface PurgeManagerLocal {
     int deleteAlerts(long beginTime, long endTime);
 
     /**
+     * Deletes orphaned definitions (replaces AlertDefinitionManager#purgeUnusedAlertDefinitions)
+     * Since 4.14
+     *
+     * @return number of deleted orphaned definitions
+     */
+    int purgeOrphanedAlertDefinitions();
+
+    /**
      * Remove OOBs for schedules that had their baselines calculated after
      * a certain cutoff point. This is used to get rid of outdated OOB data for
      * baselines that got recalculated, as the new baselines will be 'big' enough for

@@ -143,6 +143,20 @@ public class PurgeManagerBean implements PurgeManagerLocal {
     }
 
     @Override
+    public int purgeOrphanedAlertDefinitions() {
+        long totalTime = 0;
+        AlertDefinitionPurge alertDefPurge = new AlertDefinitionPurge(dataSource, userTransaction);
+        long start = System.currentTimeMillis();
+        int deletedAlertDefs = alertDefPurge.execute();
+        long end = System.currentTimeMillis();
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Deleted [" + deletedAlertDefs + "] alert definitions in [" + (end - start) + "]ms");
+        }
+
+        return deletedAlertDefs;
+    }
+
+    @Override
     public void removeOutdatedOOBs(long cutoffTime) {
         MeasurementOOBPurge measurementOOBPurge = new MeasurementOOBPurge(dataSource, userTransaction, cutoffTime);
         int count = measurementOOBPurge.execute();

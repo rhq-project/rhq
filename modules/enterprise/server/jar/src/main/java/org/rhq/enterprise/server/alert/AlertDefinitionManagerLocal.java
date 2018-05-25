@@ -129,6 +129,7 @@ public interface AlertDefinitionManagerLocal extends AlertDefinitionManagerRemot
         AlertDefinition alertDefinition, boolean resetMatching) throws InvalidAlertDefinitionException,
         AlertDefinitionUpdateException;
 
+    @Deprecated // Use PurgeManager#purgeOrphanedAlertDefinitions
     int purgeUnusedAlertDefinitions();
 
     void purgeInternals(int alertDefinitionId);

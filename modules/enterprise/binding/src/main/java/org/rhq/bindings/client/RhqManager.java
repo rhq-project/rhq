@@ -95,7 +95,7 @@ public enum RhqManager {
     /**
      * @since 4.11
      */
-    PluginManager(PluginManagerRemote.class, "${PluginManagerRemote}"), //
+    PluginManager(PluginManagerRemote.class, "${PluginManager}"), //
     ResourceManager(ResourceManagerRemote.class, "${ResourceManager}"), //
     ResourceFactoryManager(ResourceFactoryManagerRemote.class, "${ResourceFactoryManager}"), //
     ResourceGroupManager(ResourceGroupManagerRemote.class, "${ResourceGroupManager}"), //

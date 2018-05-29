@@ -115,9 +115,9 @@ public class EmailManagerBean implements EmailManagerLocal {
             }
 
             mimeMessage.setSubject(messageSubject);
-            mimeMessage.setContent(messageBody, "text/plain");
+            mimeMessage.setContent(messageBody, "text/plain; charset=UTF-8");
         } catch (MessagingException e) {
-            e.printStackTrace(); // TODO: Customise this generated block
+            LOG.error("Error while creating MimeMessage, ", e);
             return toAddresses;
         }
 

@@ -333,13 +333,13 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
             subjectManager.getOverlord(), criteria);
         for (MeasurementSchedule schedule : schedules) {
             MeasurementBaseline baseline = baselines.get(schedule.getId());
-            baseline.setScheduleId(schedule.getId());
-            baseline.setSchedule(schedule); // this sets the reverse, owning relationship as well
 
             if(baseline.getMax().isNaN() || baseline.getMin().isNaN() || baseline.getMean().isNaN()) {
                 continue;
             }
 
+            baseline.setScheduleId(schedule.getId());
+            baseline.setSchedule(schedule); // this sets the reverse, owning relationship as well
             entityManager.persist(baseline);
         }
     }

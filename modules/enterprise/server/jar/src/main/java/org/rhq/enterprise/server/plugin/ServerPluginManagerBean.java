@@ -271,14 +271,16 @@ public class ServerPluginManagerBean implements ServerPluginManagerLocal, Server
      */
     private void checkForRequiredConfiguration(ServerPlugin plugin) throws Exception {
         ConfigurationDefinition configDef = getServerPluginConfigurationDefinition(new PluginKey(plugin));
-        Configuration configuration = plugin.getPluginConfiguration();
-        for (PropertyDefinition propDef : configDef.getPropertyDefinitions().values()) {
-            if (propDef.isRequired() && propDef instanceof PropertyDefinitionSimple) {
-                Property prop = configuration.get(propDef.getName());
-                PropertySimple simple = (PropertySimple) prop;
-                if (simple == null || simple.getStringValue() == null || "".equals(simple.getStringValue())) {
-                    throw new PluginConfigurationRequiredException("Plugin [" + plugin.getDisplayName()
-                        + "] could not be enabled, because some required configuration fields are not set.");
+        if(configDef != null) {
+            Configuration configuration = plugin.getPluginConfiguration();
+            for (PropertyDefinition propDef : configDef.getPropertyDefinitions().values()) {
+                if (propDef.isRequired() && propDef instanceof PropertyDefinitionSimple) {
+                    Property prop = configuration.get(propDef.getName());
+                    PropertySimple simple = (PropertySimple) prop;
+                    if (simple == null || simple.getStringValue() == null || "".equals(simple.getStringValue())) {
+                        throw new PluginConfigurationRequiredException("Plugin [" + plugin.getDisplayName()
+                                + "] could not be enabled, because some required configuration fields are not set.");
+                    }
                 }
             }
         }

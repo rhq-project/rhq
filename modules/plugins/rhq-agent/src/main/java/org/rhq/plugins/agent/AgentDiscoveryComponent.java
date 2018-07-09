@@ -65,9 +65,12 @@ public class AgentDiscoveryComponent implements ResourceDiscoveryComponent, Reso
      * @see ResourceDiscoveryComponent#discoverResources(ResourceDiscoveryContext)
      */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
-        log.debug("Discovering RHQ Agent...");
-
         HashSet<DiscoveredResourceDetails> set = new HashSet<DiscoveredResourceDetails>();
+        if(context.getParentResourceContext() == null) {
+            log.debug("This RHQ Agent does not want to be discovered...");
+            return set;
+        }
+        log.debug("Discovering RHQ Agent...");
 
         try {
             AgentManagementMBean mbean = getAgentManagementMBean();

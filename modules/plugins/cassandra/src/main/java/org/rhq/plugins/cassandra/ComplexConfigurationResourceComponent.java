@@ -135,15 +135,38 @@ public class ComplexConfigurationResourceComponent extends MBeanResourceComponen
         EmsAttribute attribute = getEmsBean().getAttribute(metricName);
         Object valueObject = attribute.refresh();
         if (valueObject instanceof Map<?, ?>) {
-            @SuppressWarnings("unchecked")
-            Map<InetAddress, Float> hostMetric = (Map<InetAddress, Float>) valueObject;
-            Float value = hostMetric.get(host);
-            if (value == null) {
-                // the inet address wasn't probably resolved, scan the map
-                for (Map.Entry<InetAddress, Float> entry : hostMetric.entrySet()) {
-                    if (entry.getKey().getHostAddress().equals(host.getHostAddress())) {
-                        value = entry.getValue();
-                        break;
+
+            Float value = null;
+            // Could be hostname also
+            Iterator iter = ((Map) valueObject).keySet().iterator();
+            if(iter.hasNext()) {
+                Object firstKey = iter.next();
+                if(firstKey instanceof String) {
+                    // Hostname parsing
+                    @SuppressWarnings("unchecked")
+                    Map<String, Float> hostnameMetric = (Map<String, Float>) valueObject;
+                    value = hostnameMetric.get(host.getHostAddress());
+                    if (value == null) {
+                        // the inet address wasn't probably resolved, scan the map
+                        for (Map.Entry<String, Float> entry : hostnameMetric.entrySet()) {
+                            if (entry.getKey().equals(host.getHostAddress())) {
+                                value = entry.getValue();
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    @SuppressWarnings("unchecked")
+                    Map<InetAddress, Float> hostMetric = (Map<InetAddress, Float>) valueObject;
+                    value = hostMetric.get(host);
+                    if (value == null) {
+                        // the inet address wasn't probably resolved, scan the map
+                        for (Map.Entry<InetAddress, Float> entry : hostMetric.entrySet()) {
+                            if (entry.getKey().getHostAddress().equals(host.getHostAddress())) {
+                                value = entry.getValue();
+                                break;
+                            }
+                        }
                     }
                 }
             }

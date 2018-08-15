@@ -49,4 +49,21 @@ public class TransactionsJBossASClient extends JBossASClient {
         }
         return;
     }
+
+    /**
+     * Sets the HA node identifier for transactions
+     *
+     * @param nodeId NodeId conforming to JTM specs
+     * @throws Exception
+     */
+    public void setTransactionNodeId(String nodeId) throws Exception {
+        final Address address = Address.root().add(SUBSYSTEM, TRANSACTIONS);
+        final ModelNode req = createWriteAttributeRequest("node-identifier", nodeId, address);
+        final ModelNode response = execute(req);
+
+        if (!isSuccess(response)) {
+            throw new FailureException(response);
+        }
+        return;
+    }
 }

@@ -135,6 +135,8 @@ public class ServerProperties {
     public static final String PROP_STORAGE_CQL_PORT = "rhq.storage.cql-port";
     public static final String PROP_STORAGE_GOSSIP_PORT = "rhq.storage.gossip-port";
 
+    public static final String PROP_JBOSS_HA_NODE_ID = "jboss.tx.node.id";
+
     // this list contains all the properties that are to have boolean values (true | false)
     private static final Set<String> BOOLEAN_PROPERTIES;
     static {
@@ -189,6 +191,7 @@ public class ServerProperties {
         STRING_PROPERTIES.add(PROP_QUARTZ_DRIVER_DELEGATE_CLASS);
         STRING_PROPERTIES.add(PROP_QUARTZ_LOCK_HANDLER_CLASS);
         STRING_PROPERTIES.add(PROP_QUARTZ_SELECT_WITH_LOCK_SQL);
+        STRING_PROPERTIES.add(PROP_JBOSS_HA_NODE_ID); // Unset or required value
     }
 
     // this list contains all the STRING properties that are to have obfuscated/encoded values
@@ -200,11 +203,12 @@ public class ServerProperties {
         OBFUSCATED_PROPERTIES.add(PROP_STORAGE_PASSWORD);
     }
 
-    // this list contains all the non-STRING properties that can be unset when verified
+    // this list contains all the properties that can be unset when verified
     private static final Set<String> OPTIONAL_PROPERTIES;
     static {
         OPTIONAL_PROPERTIES = new HashSet<String>();
         OPTIONAL_PROPERTIES.add(PROP_CONNECTOR_BIND_PORT);
+        OPTIONAL_PROPERTIES.add(PROP_JBOSS_HA_NODE_ID);
     }
 
     // this list contains all the properties that can be unset for Oracle

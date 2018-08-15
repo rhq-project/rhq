@@ -449,7 +449,7 @@ public class InstallerServiceImpl implements InstallerService {
             ServerInstallUtil.configureDeploymentScanner(mcc);
 
             // Set up the transaction manager.
-            ServerInstallUtil.configureTransactionManager(mcc);
+            ServerInstallUtil.configureTransactionManager(mcc, serverProperties);
 
             // Set up the logging subsystem
             ServerInstallUtil.configureLogging(mcc, serverProperties);

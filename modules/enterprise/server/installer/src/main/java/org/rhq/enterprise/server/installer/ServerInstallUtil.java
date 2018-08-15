@@ -234,12 +234,18 @@ public class ServerInstallUtil {
      * @param mcc JBossAS management client
      * @throws Exception
      */
-    public static void configureTransactionManager(ModelControllerClient mcc) throws Exception {
+    public static void configureTransactionManager(ModelControllerClient mcc, HashMap<String, String> serverProperties) throws Exception {
         TransactionsJBossASClient client = new TransactionsJBossASClient(mcc);
 
         // we want to bump up the transaction timeout
         client.setDefaultTransactionTimeout(600);
         LOG.info("Default transaction timeout set to 600 seconds.");
+
+        if(serverProperties.containsKey(ServerProperties.PROP_JBOSS_HA_NODE_ID)) {
+            String nodeId = buildExpression(ServerProperties.PROP_JBOSS_HA_NODE_ID, serverProperties, true, false, false);
+            client.setTransactionNodeId(nodeId);
+            LOG.info("Set high availability nodeId to " + nodeId);
+        }
     }
 
     /**

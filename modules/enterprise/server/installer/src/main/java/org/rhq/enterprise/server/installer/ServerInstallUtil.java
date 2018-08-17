@@ -406,7 +406,11 @@ public class ServerInstallUtil {
             DELEGATING_LOGIN_MODULE_NAME, AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, options);
 
         SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
-        client.createNewSecurityDomain(RHQ_REST_SECURITY_DOMAIN, loginModuleRequest);
+        InfinispanJBossASClient infinispanClient = new InfinispanJBossASClient(mcc);
+
+        // Create the cache used for the rest security domain
+        infinispanClient.createSecurityDomainInfinispanCache("LRU", 1000, 200000L, 900000L);
+        client.createNewSecurityDomain(RHQ_REST_SECURITY_DOMAIN, true, loginModuleRequest);
     }
 
     /**

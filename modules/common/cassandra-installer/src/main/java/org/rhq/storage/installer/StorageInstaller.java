@@ -147,6 +147,17 @@ public class StorageInstaller {
                 + "address of the local host (which depending on hostname configuration may not be localhost).");
         hostname.setArgName("HOSTNAME");
 
+        Option listenAddress = new Option("l", StorageProperty.LISTEN_ADDRESS.property(), true,
+                "The IP address or hostname that storage binds to for connecting to other storage nodes."
+                + "If not specified, will default to the value of " + StorageProperty.HOSTNAME.property());
+        listenAddress.setArgName("ADDRESS");
+
+        Option rpcAddress = new Option("r", StorageProperty.RPC_ADDRESS.property(), true,
+                "Publicly resolvable IP or host name that other storage nodes in the cluster"
+                + "will reach this storage nodes network listener. If not specified, will default to the value of "
+                + StorageProperty.HOSTNAME.property());
+        rpcAddress.setArgName("ADDRESS");
+
         Option seeds = new Option("s", StorageProperty.SEEDS.property(), true,
             "A comma-delimited list of hostnames or IP addresses that "
                 + "serve as contact points. Nodes use this list to find each other and to learn the cluster topology. "
@@ -218,7 +229,8 @@ public class StorageInstaller {
         Option verifyDataDirsEmptyOption = new Option(null, StorageProperty.VERIFY_DATA_DIRS_EMPTY.property(), true,
             "Will cause the installer " + "to abort if any of the data directories is not empty. Defaults to true.");
 
-        options = new Options().addOption(new Option("h", "help", false, "Show this message.")).addOption(hostname)
+        options = new Options().addOption(new Option("h", "help", false, "Show this message."))
+            .addOption(hostname).addOption(listenAddress).addOption(rpcAddress)
             .addOption(seeds).addOption(jmxPortOption).addOption(startOption).addOption(checkStatus)
             .addOption(commitLogOption).addOption(dataDirOption).addOption(savedCachesDirOption)
             .addOption(cqlPortOption).addOption(gossipPortOption).addOption(basedirOption).addOption(heapSizeOption)
@@ -263,7 +275,7 @@ public class StorageInstaller {
         PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
         Properties properties = new Properties();
 
-        properties.setProperty("rhq.storage.nodes", installerInfo.hostname);
+        properties.setProperty("rhq.storage.nodes", installerInfo.listenAddress);
         properties.setProperty(StorageProperty.CQL_PORT.property(), Integer.toString(installerInfo.cqlPort));
         properties.setProperty(StorageProperty.GOSSIP_PORT.property(), Integer.toString(installerInfo.gossipPort));
 
@@ -300,7 +312,7 @@ public class StorageInstaller {
         if (isUpgrade && !noStamp) {
             try {
                 String version = StorageInstaller.class.getPackage().getImplementationVersion();
-                stampStorageNodeVersion(dbProperties, installerInfo.hostname, version);
+                stampStorageNodeVersion(dbProperties, installerInfo.listenAddress, version);
             } catch (Exception e) {
                 log.error("Failed to update version stamp", e);
                 return STATUS_VERSION_STAMP_ERROR;
@@ -396,24 +408,32 @@ public class StorageInstaller {
         }
 
         try {
+            String hostname;
             if (cmdLine.hasOption("n")) {
-                installerInfo.hostname = cmdLine.getOptionValue("n");
+                hostname = cmdLine.getOptionValue("n");
                 // Make sure it is a reachable address
-                InetAddress.getByName(installerInfo.hostname);
+                InetAddress.getByName(hostname);
             } else {
-                installerInfo.hostname = InetAddress.getLocalHost().getHostName();
+                hostname = InetAddress.getLocalHost().getHostName();
             }
 
-            if (InetAddress.getByName(installerInfo.hostname).isLoopbackAddress()) {
-                log.warn("This Storage Node is bound to the loopback address " + installerInfo.hostname + " . "
+            installerInfo.listenAddress = cmdLine.getOptionValue(StorageProperty.LISTEN_ADDRESS.property(), hostname);
+            installerInfo.rpcAddress = cmdLine.getOptionValue(StorageProperty.RPC_ADDRESS.property(), hostname);
+
+            // Make sure it is a reachable address
+            InetAddress.getByName(installerInfo.listenAddress);
+            InetAddress.getByName(installerInfo.rpcAddress);
+
+            if (InetAddress.getByName(installerInfo.listenAddress).isLoopbackAddress()) {
+                log.warn("This Storage Node is bound to the loopback address " + installerInfo.listenAddress + " . "
                     + "It will not be able to communicate with Storage Nodes on other machines,"
                     + " and it can only receive client requests from this machine.");
             }
 
-            deploymentOptions.setListenAddress(installerInfo.hostname);
-            deploymentOptions.setRpcAddress(installerInfo.hostname);
+            deploymentOptions.setListenAddress(installerInfo.listenAddress);
+            deploymentOptions.setRpcAddress(installerInfo.rpcAddress);
 
-            String seeds = cmdLine.getOptionValue(StorageProperty.SEEDS.property(), installerInfo.hostname);
+            String seeds = cmdLine.getOptionValue(StorageProperty.SEEDS.property(), installerInfo.listenAddress);
             deploymentOptions.setSeeds(seeds);
 
             String commitlogDir = cmdLine
@@ -503,7 +523,7 @@ public class StorageInstaller {
             deployer.applyConfigChanges();
             deployer.updateFilePerms();
 
-            deployer.updateStorageAuthConf(asSet(installerInfo.hostname));
+            deployer.updateStorageAuthConf(asSet(installerInfo.listenAddress));
 
             return installerInfo;
         } catch (UnknownHostException unknownHostException) {
@@ -522,15 +542,15 @@ public class StorageInstaller {
 
     private void verifyPortStatus(CommandLine cmdLine, InstallerInfo installerInfo) throws StorageInstallerException {
         installerInfo.jmxPort = getPort(cmdLine, StorageProperty.JMX_PORT.property(), defaultJmxPort);
-        isPortBound(installerInfo.hostname, installerInfo.jmxPort, StorageProperty.JMX_PORT.property(),
+        isPortBound(installerInfo.listenAddress, installerInfo.jmxPort, StorageProperty.JMX_PORT.property(),
             STATUS_JMX_PORT_CONFLICT);
 
         installerInfo.cqlPort = getPort(cmdLine, StorageProperty.CQL_PORT.property(), defaultCqlPort);
-        isPortBound(installerInfo.hostname, installerInfo.cqlPort, StorageProperty.CQL_PORT.property(),
+        isPortBound(installerInfo.listenAddress, installerInfo.cqlPort, StorageProperty.CQL_PORT.property(),
             STATUS_CQL_PORT_CONFLICT);
 
         installerInfo.gossipPort = getPort(cmdLine, StorageProperty.GOSSIP_PORT.property(), defaultGossipPort);
-        isPortBound(installerInfo.hostname, installerInfo.gossipPort, StorageProperty.GOSSIP_PORT.property(),
+        isPortBound(installerInfo.listenAddress, installerInfo.gossipPort, StorageProperty.GOSSIP_PORT.property(),
             STATUS_GOSSIP_PORT_CONFLICT);
     }
 
@@ -604,9 +624,10 @@ public class StorageInstaller {
             ConfigEditor newYamlEditor = new ConfigEditor(newYamlFile);
             newYamlEditor.load();
 
-            installerInfo.hostname = oldYamlEditor.getListenAddress();
-            newYamlEditor.setListenAddress(installerInfo.hostname);
-            newYamlEditor.setRpcAddress(installerInfo.hostname);
+            installerInfo.listenAddress = oldYamlEditor.getListenAddress();
+            installerInfo.rpcAddress = oldYamlEditor.getRpcAddress();
+            newYamlEditor.setListenAddress(installerInfo.listenAddress);
+            newYamlEditor.setRpcAddress(installerInfo.rpcAddress);
 
             installerInfo.cqlPort = oldYamlEditor.getNativeTransportPort();
             newYamlEditor.setNativeTransportPort(installerInfo.cqlPort);
@@ -617,7 +638,7 @@ public class StorageInstaller {
             newYamlEditor.setCommitLogDirectory(oldYamlEditor.getCommitLogDirectory());
             newYamlEditor.setSavedCachesDirectory(oldYamlEditor.getSavedCachesDirectory());
             newYamlEditor.setDataFileDirectories(oldYamlEditor.getDataFileDirectories());
-            newYamlEditor.setSeeds(installerInfo.hostname);
+            newYamlEditor.setSeeds(installerInfo.listenAddress);
 
             newYamlEditor.save();
 
@@ -630,7 +651,7 @@ public class StorageInstaller {
 
                 propertiesUpdater.update(jvmProps);
 
-                deployer.updateStorageAuthConf(asSet(installerInfo.hostname));
+                deployer.updateStorageAuthConf(asSet(installerInfo.listenAddress));
             } else {
                 File oldStorageAuthConfFile = new File(oldConfDir, "rhq-storage-auth.conf");
                 File newStorageAuthConfFile = new File(newConfDir, "rhq-storage-auth.conf");
@@ -1147,7 +1168,8 @@ public class StorageInstaller {
         int jmxPort;
         int cqlPort;
         int gossipPort;
-        String hostname;
+        String listenAddress;
+        String rpcAddress;
     }
 
     public static void main(String[] args) throws Exception {

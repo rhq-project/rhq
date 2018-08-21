@@ -30,6 +30,8 @@ import org.rhq.core.util.PropertiesFileUpdate;
 
 public enum StorageProperty {
     HOSTNAME("rhq.storage.hostname"), //
+    RPC_ADDRESS("rhq.storage.rpc-address"), //
+    LISTEN_ADDRESS("rhq.storage.listen-address"), //
     SEEDS("rhq.storage.seeds"), //
     CQL_PORT("rhq.storage.cql-port"), //
     JMX_PORT("rhq.storage.jmx-port"), //

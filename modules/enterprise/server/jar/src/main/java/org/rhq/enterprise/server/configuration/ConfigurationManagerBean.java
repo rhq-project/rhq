@@ -226,8 +226,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // link to the newer, persisted configuration object -- regardless of errors
         resource.setAgentSynchronizationNeeded();
-        resource.setPluginConfiguration(update.getConfiguration());
-
+        setOrUpdatePluginConfiguration(resource, update.getConfiguration());
         if (response.getStatus() == ConfigurationUpdateStatus.SUCCESS) {
             update.setStatus(ConfigurationUpdateStatus.SUCCESS);
 
@@ -342,10 +341,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         entityManager.persist(update);
 
         resource.addPluginConfigurationUpdates(update);
-        resource.setPluginConfiguration(update.getConfiguration());
-
-        entityManager.merge(update);
-
+        setOrUpdatePluginConfiguration(resource, update.getConfiguration());
         return update;
     }
 
@@ -374,10 +370,26 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         if (resource == null) {
             throw new ResourceNotFoundException("Resource [" + resourceId + "] does not exist.");
         }
-        resource.setResourceConfiguration(configuration);
-        entityManager.merge(resource);
+        setOrUpdateResourceConfiguration(resource, configuration);
     }
 
+    private void setOrUpdateResourceConfiguration(Resource resource, Configuration configuration) {
+        Configuration currentConfiguration = resource.getResourceConfiguration();
+        if(currentConfiguration != null && currentConfiguration.getId() != 0) {
+            currentConfiguration.replaceWithConfig(configuration);
+        } else {
+            resource.setResourceConfiguration(configuration.deepCopyWithoutProxies());
+        }
+    }
+
+    private void setOrUpdatePluginConfiguration(Resource resource, Configuration configuration) {
+        Configuration currentConfiguration = resource.getPluginConfiguration();
+       if(currentConfiguration != null && currentConfiguration.getId() != 0) {
+           currentConfiguration.replaceWithConfig(configuration);
+        } else {
+            resource.setPluginConfiguration(configuration.deepCopyWithoutProxies());
+        }
+    }
     // Use new transaction because this only works if the resource in question has not
     // yet been loaded by Hibernate.  We want the query to return a non-proxied configuration,
     // this is critical for remote API use.
@@ -543,7 +555,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 liveConfig, ConfigurationUpdateStatus.SUCCESS, null, false);
 
         // resource.setResourceConfiguration(liveConfig.deepCopy(false));
-        resource.setResourceConfiguration(liveConfig.deepCopyWithoutProxies());
+        setOrUpdateResourceConfiguration(resource, liveConfig);
         return update;
     }
 
@@ -1568,7 +1580,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         } else if (response.getStatus() == ConfigurationUpdateStatus.SUCCESS) {
             // link to the newer, persisted configuration object
             Resource resource = update.getResource();
-            resource.setResourceConfiguration(update.getConfiguration().deepCopyWithoutProxies());
+            setOrUpdateResourceConfiguration(resource, update.getConfiguration());
             notifyAlertConditionCacheManager("completeResourceConfigurationUpdate", update);
         }
 

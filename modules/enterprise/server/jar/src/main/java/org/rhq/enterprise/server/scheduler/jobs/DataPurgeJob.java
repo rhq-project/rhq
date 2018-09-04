@@ -55,9 +55,11 @@ public class DataPurgeJob extends AbstractStatefulJob {
     private static final long HOUR = 60 * 60 * 1000L;
 
     private final ContentManagerLocal contentManager;
+    private final PurgeManagerLocal purgeManager;
 
     public DataPurgeJob() {
         contentManager = LookupUtil.getContentManager();
+        purgeManager = LookupUtil.getPurgeManager();
     }
 
     /**

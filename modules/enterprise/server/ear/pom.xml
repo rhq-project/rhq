@@ -364,7 +364,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>rhq-agent-plugin</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${rhq-agent-plugin.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>

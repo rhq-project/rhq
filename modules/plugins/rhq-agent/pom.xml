@@ -10,6 +10,7 @@
 
    <groupId>org.rhq</groupId>
    <artifactId>rhq-agent-plugin</artifactId>
+   <version>4.12.0.JON330GA-redhat-1</version>
    <packaging>jar</packaging>
 
    <name>RHQ RHQ-Agent Plugin</name>
@@ -20,7 +21,7 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-enterprise-agent</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq.pom.version}</version>
          <scope>provided</scope> <!-- by the RHQ agent -->
       </dependency>
 
@@ -65,7 +66,7 @@
                                     <include name="org/rhq/rhq-jmx-plugin/${rhq-jmx-plugin.version}/rhq-jmx-plugin-${rhq-jmx-plugin.version}.jar" />
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
-                                    <include name="rhq-agent-plugin-${project.version}.jar" />
+                                    <include name="rhq-agent-plugin-${rhq-agent-plugin.version}.jar" />
                                  </fileset>
                               </copy>
                               <unzip dest="target/itest/lib">
@@ -113,7 +114,7 @@
                            <argLine>${jacoco.integration-test.args} -Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
                            <systemPropertyVariables combine.children="append">
                               <project.artifactId>${project.artifactId}</project.artifactId>
-                              <project.version>${project.version}</project.version>
+                              <project.version>${rhq.pom.version}</project.version>
                            </systemPropertyVariables>
                         </configuration>
                      </execution>

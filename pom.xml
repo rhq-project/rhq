@@ -302,7 +302,7 @@
     <rhq-cassandra-util.version>${rhq.pom.version}</rhq-cassandra-util.version>
     <rhq-common-drift.version>${rhq.pom.version}</rhq-common-drift.version>
     <rhq-filetemplate-bundle-common.version>${rhq.pom.version}</rhq-filetemplate-bundle-common.version>
-    <rhq-jboss-as-dmr-client.version>${rhq.pom.version}</rhq-jboss-as-dmr-client.version>
+    <rhq-jboss-as-dmr-client.version>${rhq.pom.version}-redhat-1</rhq-jboss-as-dmr-client.version>
     <rhq-jboss-as-common.version>${rhq.pom.version}</rhq-jboss-as-common.version>
     <rhq-common-parent.version>${rhq.pom.version}</rhq-common-parent.version>
     <rhq-core-client-api.version>${rhq.pom.version}-redhat-2</rhq-core-client-api.version>
@@ -319,7 +319,7 @@
     <rhq-core-util.version>${rhq.pom.version}-redhat-1</rhq-core-util.version>
     <rhq-enterprise-agent.version>${rhq.pom.version}</rhq-enterprise-agent.version>
     <rhq-enterprise-agentupdate.version>${rhq.pom.version}</rhq-enterprise-agentupdate.version>
-    <rhq-script-bindings.version>${rhq.pom.version}-redhat-6</rhq-script-bindings.version>
+    <rhq-script-bindings.version>${rhq.pom.version}-redhat-7</rhq-script-bindings.version>
     <rhq-enterprise-comm.version>${rhq.pom.version}-redhat-4</rhq-enterprise-comm.version>
     <rhq-agentupdate-war.version>${rhq.pom.version}</rhq-agentupdate-war.version>
     <rhq-content_http.version>${rhq.pom.version}</rhq-content_http.version>
@@ -344,9 +344,9 @@
     <rhq-server-client-api.version>${rhq.pom.version}</rhq-server-client-api.version>
     <rhq-data-migration.version>${rhq.pom.version}</rhq-data-migration.version>
     <rhq-enterprise-server-ear.version>${rhq.pom.version}</rhq-enterprise-server-ear.version>
-    <rhq-installer-util.version>${rhq.pom.version}-redhat-4</rhq-installer-util.version>
+    <rhq-installer-util.version>${rhq.pom.version}-redhat-5</rhq-installer-util.version>
     <rhq-server-itests-2.version>${rhq.pom.version}</rhq-server-itests-2.version>
-    <rhq-enterprise-server.version>${rhq.pom.version}-redhat-9</rhq-enterprise-server.version>
+    <rhq-enterprise-server.version>${rhq.pom.version}-redhat-10</rhq-enterprise-server.version>
     <alert-cli.version>${rhq.pom.version}</alert-cli.version>
     <alert-email.version>${rhq.pom.version}</alert-email.version>
     <alert-irc.version>${rhq.pom.version}</alert-irc.version>
@@ -369,8 +369,8 @@
     <rhq-serverplugin-url.version>${rhq.pom.version}</rhq-serverplugin-url.version>
     <validate-all-serverplugins.version>${rhq.pom.version}</validate-all-serverplugins.version>
     <rhq-serverplugin-yum.version>${rhq.pom.version}</rhq-serverplugin-yum.version>
-    <rhq-serverplugin-wfly-10-patch-bundle.version>${rhq.pom.version}</rhq-serverplugin-wfly-10-patch-bundle.version>
-    <rhq-serverplugin-wfly-patch-bundle.version>${rhq.pom.version}</rhq-serverplugin-wfly-patch-bundle.version>
+    <rhq-serverplugin-wfly-10-patch-bundle.version>${rhq.pom.version}-redhat-1</rhq-serverplugin-wfly-10-patch-bundle.version>
+    <rhq-serverplugin-wfly-patch-bundle.version>${rhq.pom.version}-redhat-1</rhq-serverplugin-wfly-patch-bundle.version>
     <rhq-enterprise-server-parent.version>${rhq.pom.version}</rhq-enterprise-server-parent.version>
     <safe-invoker.version>${rhq.pom.version}</safe-invoker.version>
     <rhq-server-control.version>${rhq.pom.version}-redhat-6</rhq-server-control.version>
@@ -424,7 +424,7 @@
     <rhq-plugins-parent.version>${rhq.pom.version}</rhq-plugins-parent.version>
     <rhq-postfix-plugin.version>${rhq.pom.version}</rhq-postfix-plugin.version>
     <rhq-postgres-plugin.version>${rhq.pom.version}-redhat-2</rhq-postgres-plugin.version>
-    <rhq-agent-plugin.version>${rhq.pom.version}</rhq-agent-plugin.version>
+    <rhq-agent-plugin.version>${rhq.pom.version}-redhat-1</rhq-agent-plugin.version>
     <rhq-rhqserver-plugin.version>${rhq.pom.version}</rhq-rhqserver-plugin.version>
     <rhq-rhqstorage-plugin.version>${rhq.pom.version}-redhat-1</rhq-rhqstorage-plugin.version>
     <rhq-samba-plugin.version>${rhq.pom.version}</rhq-samba-plugin.version>

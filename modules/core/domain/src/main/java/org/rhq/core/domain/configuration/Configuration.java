@@ -945,6 +945,15 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         return copy;
     }
 
+    public void replaceWithConfig(Configuration config){
+        this.properties.clear();
+        rawConfigurations.clear();
+        this.notes = config.notes;
+        this.version = config.version;
+        config.createDeepCopyOfProperties(this, false);
+        config.createDeepCopyOfRawConfigs(this, false);
+    }
+
     public Configuration deepCopyWithoutProxies() {
         Configuration copy = new Configuration();
         copy.notes = this.notes;

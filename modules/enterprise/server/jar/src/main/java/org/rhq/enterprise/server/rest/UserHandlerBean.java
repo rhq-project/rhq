@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
@@ -52,11 +51,9 @@ import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
-import org.infinispan.manager.CacheContainer;
 import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.cache.Cache;
 
-import org.jboss.security.SimplePrincipal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -97,16 +94,6 @@ public class UserHandlerBean extends AbstractRestBean {
 
     @EJB
     private ResourceManagerLocal resourceManager;
-
-    @javax.annotation.Resource( name = "ISPNsecurity", mappedName = "java:jboss/infinispan/security")
-    private CacheContainer cacheContainer;
-    protected org.infinispan.Cache<CacheKey, Object> authCache;
-
-    @PostConstruct
-    public void start() {
-        super.start();
-        this.authCache = this.cacheContainer.getCache("RHQRESTSecurityDomain");
-    }
 
     @GZIP
     @GET
@@ -302,19 +289,6 @@ public class UserHandlerBean extends AbstractRestBean {
 
         }
         return builder.build();
-    }
-
-    @GET
-    @Path("logout")
-    @ApiOperation(value = "Force a REST logout by clearing the user cache")
-    public void logout() {
-        SimplePrincipal principal = new SimplePrincipal(caller.getName());
-        log.debug("Forcing REST logout of user: [" + principal + "]");
-        Object cachedValue = this.authCache.remove(principal);
-        if (cachedValue != null) {
-            log.debug("REST user logged out: [" + principal + "]" );
-        }
-
     }
 
     private void updateResourceFavorites(Set<Integer> favIds) {

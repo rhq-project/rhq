@@ -270,23 +270,19 @@ public class SecurityDomainJBossASClient extends JBossASClient {
      * @throws Exception if failed to create security domain
      */
     public void createNewSecurityDomain(String securityDomainName, LoginModuleRequest... loginModules) throws Exception {
-        createNewSecurityDomain(securityDomainName, false, loginModules);
-    }
-
-    public void createNewSecurityDomain(String securityDomainName, boolean useInfinispanCache, LoginModuleRequest... loginModules) throws Exception {
         //do not close the controller client here, we're using our own..
         CoreJBossASClient coreClient = new CoreJBossASClient(getModelControllerClient());
         String serverVersion = coreClient.getAppServerVersion();
         if (serverVersion.startsWith("7.2")) {
-            createNewSecurityDomain72(securityDomainName, useInfinispanCache, loginModules);
+            createNewSecurityDomain72(securityDomainName, loginModules);
         }
         else {
-            createNewSecurityDomain71(securityDomainName, useInfinispanCache, loginModules);
+            createNewSecurityDomain71(securityDomainName,loginModules);
         }
 
     }
 
-    private void createNewSecurityDomain71(String securityDomainName, boolean useInfinispanCache, LoginModuleRequest... loginModules) throws Exception {
+    private void createNewSecurityDomain71(String securityDomainName, LoginModuleRequest... loginModules) throws Exception {
 
         if (isSecurityDomain(securityDomainName)) {
             removeSecurityDomain(securityDomainName);
@@ -295,7 +291,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
 
         ModelNode addTopNode = createRequest(ADD, addr);
-        addTopNode.get(CACHE_TYPE).set(useInfinispanCache? "infinispan" : "default");
+        addTopNode.get(CACHE_TYPE).set("default");
 
         ModelNode addAuthNode = createRequest(ADD, addr.clone().add(AUTHENTICATION, CLASSIC));
         ModelNode loginModulesNode = addAuthNode.get(LOGIN_MODULES);
@@ -329,7 +325,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         return;
     }
 
-    private void createNewSecurityDomain72(String securityDomainName, boolean useInfinispanCache, LoginModuleRequest... loginModules) throws Exception {
+    private void createNewSecurityDomain72(String securityDomainName, LoginModuleRequest... loginModules) throws Exception {
 
         if (isSecurityDomain(securityDomainName)) {
             removeSecurityDomain(securityDomainName);
@@ -338,7 +334,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
 
         ModelNode addTopNode = createRequest(ADD, addr);
-        addTopNode.get(CACHE_TYPE).set(useInfinispanCache ? "infinispan" : "default");
+        addTopNode.get(CACHE_TYPE).set("default");
 
         Address authAddr = addr.clone().add(AUTHENTICATION, CLASSIC);
         ModelNode addAuthNode = createRequest(ADD, authAddr);

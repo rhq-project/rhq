@@ -32,16 +32,6 @@ public class InfinispanJBossASClient extends JBossASClient {
     public static final String SUBSYSTEM_INFINISPAN = "infinispan";
     public static final String CACHE_CONTAINER = "cache-container";
     public static final String LOCAL_CACHE = "local-cache";
-    public static final String SECURITY = "security";
-    public static final String AUTH_CACHE = "auth-cache";
-    public static final String DEFAULT_CACHE = "default-cache";
-    public static final String EVICTION = "eviction";
-    public static final String STRATEGY = "strategy";
-    public static final String MAX_ENTRIES = "max-entries";
-    public static final String EXPIRATION = "expiration";
-    public static final String MAX_IDLE = "max-idle";
-    public static final String LIFESPAN = "lifespan";
-    public static final String JNDI_NAME = "jndi-name";
 
     public InfinispanJBossASClient(ModelControllerClient client) {
         super(client);
@@ -57,61 +47,6 @@ public class InfinispanJBossASClient extends JBossASClient {
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_INFINISPAN);
         String haystack = CACHE_CONTAINER;
         return null != findNodeInList(addr, haystack, cacheContainerName);
-    }
-
-    /**
-     * Removes the cacheContainerName if it exists
-     *
-     * @param cacheContainerName the name of the cache container
-     * @throws Exception
-     */
-    public void removeCacheContainer(String cacheContainerName) throws Exception {
-        // If not there just return
-        if (!isCacheContainer(cacheContainerName)) {
-            return;
-        }
-
-        final Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_INFINISPAN, CACHE_CONTAINER, cacheContainerName);
-        ModelNode removeCacheContainerNode = createRequest(REMOVE, addr);
-
-        final ModelNode results = execute(removeCacheContainerNode);
-        if (!isSuccess(results)) {
-            throw new FailureException(results, "Failed to remove cache container [" + cacheContainerName + "]");
-        }
-
-        return;
-    }
-
-    public void createSecurityDomainInfinispanCache(String evictionStrategy, int evictionMaxEntries, Long expirationMaxIdle, Long expirationLifespan) throws Exception {
-
-        removeCacheContainer(SECURITY);
-
-        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_INFINISPAN, CACHE_CONTAINER, SECURITY);
-
-        String jndiName = "java:jboss/infinispan/" + SECURITY;
-
-        ModelNode addTopNode = createRequest(ADD, addr);
-        addTopNode.get(DEFAULT_CACHE).set(AUTH_CACHE);
-        addTopNode.get(JNDI_NAME).set(jndiName);
-
-        Address localCacheAddr = addr.clone().add(LOCAL_CACHE, AUTH_CACHE);
-
-        ModelNode addLocalCache = createRequest(ADD, localCacheAddr);
-
-        ModelNode addEviction = createRequest(ADD, localCacheAddr.clone().add(EVICTION, EVICTION.toUpperCase()));
-        addEviction.get(STRATEGY).set(evictionStrategy);
-        addEviction.get(MAX_ENTRIES).set(evictionMaxEntries);
-
-        ModelNode addExpiration = createRequest(ADD, localCacheAddr.clone().add(EXPIRATION, EXPIRATION.toUpperCase()));
-        addExpiration.get(MAX_IDLE).set(expirationMaxIdle);
-        addExpiration.get(LIFESPAN).set(expirationLifespan);
-
-        ModelNode batch = createBatchRequest(addTopNode, addLocalCache, addEviction, addExpiration);
-        ModelNode results = execute(batch);
-        if (!isSuccess(results)) {
-            throw new FailureException(results, "Failed to create infinispan cache [" + SECURITY + "]");
-        }
-        return;
     }
 
     /**

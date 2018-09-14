@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>rhq-cassandra-installer</artifactId>
-  <version>4.12.0.JON330GA-redhat-2</version>
+  <version>4.12.0.JON330GA-redhat-3</version>
   <name>RHQ Cassandra Installer</name>
 
   <properties>

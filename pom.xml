@@ -297,7 +297,7 @@
     <rhq-cassandra-ccm-maven-plugin.version>${rhq.pom.version}</rhq-cassandra-ccm-maven-plugin.version>
     <rhq-cassandra-ccm-testng.version>${rhq.pom.version}</rhq-cassandra-ccm-testng.version>
     <rhq-cassandra-ccm.version>${rhq.pom.version}</rhq-cassandra-ccm.version>
-    <rhq-cassandra-installer.version>${rhq.pom.version}-redhat-2</rhq-cassandra-installer.version>
+    <rhq-cassandra-installer.version>${rhq.pom.version}-redhat-3</rhq-cassandra-installer.version>
     <rhq-cassandra-schema.version>${rhq.pom.version}-redhat-2</rhq-cassandra-schema.version>
     <rhq-cassandra-util.version>${rhq.pom.version}</rhq-cassandra-util.version>
     <rhq-common-drift.version>${rhq.pom.version}</rhq-common-drift.version>
@@ -308,7 +308,7 @@
     <rhq-core-client-api.version>${rhq.pom.version}-redhat-2</rhq-core-client-api.version>
     <rhq-core-comm-api.version>${rhq.pom.version}</rhq-core-comm-api.version>
     <rhq-core-dbutils.version>${rhq.pom.version}</rhq-core-dbutils.version>
-    <rhq-core-domain.version>${rhq.pom.version}-redhat-6</rhq-core-domain.version>
+    <rhq-core-domain.version>${rhq.pom.version}-redhat-7</rhq-core-domain.version>
     <rhq-core-gui.version>${rhq.pom.version}</rhq-core-gui.version>
     <rhq-core-native-system.version>${rhq.pom.version}-redhat-4</rhq-core-native-system.version>
     <rhq-core-plugin-api.version>${rhq.pom.version}</rhq-core-plugin-api.version>
@@ -394,7 +394,7 @@
     <rhq-apache-plugin.version>${rhq.pom.version}</rhq-apache-plugin.version>
     <rhq-augeas-plugin.version>${rhq.pom.version}</rhq-augeas-plugin.version>
     <rhq-byteman-plugin.version>${rhq.pom.version}</rhq-byteman-plugin.version>
-    <rhq-cassandra-plugin.version>${rhq.pom.version}-redhat-1</rhq-cassandra-plugin.version>
+    <rhq-cassandra-plugin.version>${rhq.pom.version}-redhat-2</rhq-cassandra-plugin.version>
     <rhq-cobbler-plugin.version>${rhq.pom.version}</rhq-cobbler-plugin.version>
     <rhq-cron-plugin.version>${rhq.pom.version}</rhq-cron-plugin.version>
     <rhq-database-plugin.version>${rhq.pom.version}</rhq-database-plugin.version>

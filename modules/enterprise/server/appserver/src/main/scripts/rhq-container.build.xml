@@ -684,8 +684,7 @@ jboss.management.native.port=6999
 jboss.management.http.port=6990
 jboss.management.https.port=6443
 
-# This is high availability identifier for each RHQ Server instance. Must be unique, max 28 characters and can not
-# include dash character ('-')
+# This is high availability identifier for each RHQ Server instance. Must be unique within the cluster and maximum length of 23 characters.
 #jboss.tx.node.id=1
 
 rhq.server.socket.binding.port.ajp=7009

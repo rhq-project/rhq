@@ -29,6 +29,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import javax.transaction.TransactionManager;
 
+import org.infinispan.manager.CacheContainer;
 import org.jetbrains.annotations.NotNull;
 
 import org.jboss.mx.util.MBeanProxyExt;
@@ -279,6 +280,19 @@ public final class LookupUtil {
             return factory.createEntityManager();
         } catch (Exception e) {
             throw new RuntimeException("Failed to create an entity manager", e);
+        }
+    }
+
+    public static CacheContainer getSecurityCacheContainer() {
+        try {
+            InitialContext context = new InitialContext();
+            CacheContainer cacheContainer = (CacheContainer) context.lookup("java:jboss/infinispan/security");
+            context.close();
+            return cacheContainer;
+        } catch (NamingException e) {
+            return null;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get the CacheContainer", e);
         }
     }
 

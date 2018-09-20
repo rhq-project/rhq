@@ -69,6 +69,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 import org.rhq.enterprise.server.rest.domain.UserRest;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Class that deals with user specific stuff
@@ -98,14 +99,15 @@ public class UserHandlerBean extends AbstractRestBean {
     @EJB
     private ResourceManagerLocal resourceManager;
 
-    @javax.annotation.Resource( name = "ISPNsecurity", mappedName = "java:jboss/infinispan/security")
-    private CacheContainer cacheContainer;
     protected org.infinispan.Cache<CacheKey, Object> authCache;
 
     @PostConstruct
     public void start() {
         super.start();
-        this.authCache = this.cacheContainer.getCache("RHQRESTSecurityDomain");
+        CacheContainer cacheContainer = LookupUtil.getSecurityCacheContainer();
+        if (cacheContainer != null) {
+            this.authCache = cacheContainer.getCache("RHQRESTSecurityDomain");
+        }
     }
 
     @GZIP
@@ -308,6 +310,9 @@ public class UserHandlerBean extends AbstractRestBean {
     @Path("logout")
     @ApiOperation(value = "Force a REST logout by clearing the user cache")
     public void logout() {
+        if (this.authCache == null) {
+            throw new RuntimeException("RHQRESTSecurityDomain cache or java:jboss/infinispan/security cache container not found");
+        }
         SimplePrincipal principal = new SimplePrincipal(caller.getName());
         log.debug("Forcing REST logout of user: [" + principal + "]");
         Object cachedValue = this.authCache.remove(principal);

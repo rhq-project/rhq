@@ -41,13 +41,19 @@ public class AlertDefinitionPurge extends PurgeTemplate<Integer> {
     private static final String QUERY_SELECT_KEYS_FOR_PURGE_POSTGRES =
             "SELECT ad.id " +
                     "FROM rhq_alert_definition ad " +
-                    "WHERE ad.deleted = 'true' AND ad.id NOT IN (SELECT a.alert_definition_id FROM rhq_alert a)";
+                    "WHERE ad.deleted = 'true' AND " +
+                    "(ad.id NOT IN (SELECT a.alert_definition_id FROM rhq_alert a) " +
+                    "OR " +
+                    "ad.id NOT IN (SELECT ac.alert_definition_id FROM rhq_alert_condition ac))";
 
     // Oracle does not have boolean datatype, so JPA uses a mapping to NUMBER(0,1)
     private static final String QUERY_SELECT_KEYS_FOR_PURGE_ORACLE =
             "SELECT ad.id " +
                     "FROM rhq_alert_definition ad " +
-                    "WHERE ad.deleted = 1 AND ad.id NOT IN (SELECT a.alert_definition_id FROM rhq_alert a)";
+                    "WHERE ad.deleted = 1 AND " +
+                    "(ad.id NOT IN (SELECT a.alert_definition_id FROM rhq_alert a) " +
+                    "OR " +
+                    "ad.id NOT IN (SELECT ac.alert_definition_id FROM rhq_alert_condition ac))";
 
     private static final String QUERY_PURGE_BY_KEY = "DELETE FROM rhq_alert_definition WHERE id = ?";
 

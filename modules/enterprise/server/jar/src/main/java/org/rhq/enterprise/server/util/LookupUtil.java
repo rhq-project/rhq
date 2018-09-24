@@ -285,10 +285,7 @@ public final class LookupUtil {
 
     public static CacheContainer getSecurityCacheContainer() {
         try {
-            InitialContext context = new InitialContext();
-            CacheContainer cacheContainer = (CacheContainer) context.lookup("java:jboss/infinispan/security");
-            context.close();
-            return cacheContainer;
+            return (CacheContainer) lookup("java:jboss/infinispan/security");
         } catch (NamingException e) {
             return null;
         } catch (Exception e) {

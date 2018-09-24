@@ -177,8 +177,14 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
         }
     }
 
+    private int unlinkDeletedAlertConditions() {
+        Query unlinkQuery = entityManager.createNamedQuery(AlertCondition.QUERY_UPDATE_ORPHANED_DEFINITIONS);
+        return unlinkQuery.executeUpdate();
+    }
+
     @Override
     public int purgeOrphanedAlertConditions() {
+        unlinkDeletedAlertConditions(); // Done here to avoid changes to the Remote API
         Query purgeQuery = entityManager.createNamedQuery(AlertCondition.QUERY_DELETE_ORPHANED);
         return purgeQuery.executeUpdate();
     }

@@ -105,8 +105,8 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeCallTimeData(purgeManager, systemConfig);
         purgeEventData(purgeManager, systemConfig);
         purgeAlertData(purgeManager, systemConfig);
-        purgeUnusedAlertDefinitions(LookupUtil.getAlertDefinitionManager());
         purgeOrphanedAlertConditions(LookupUtil.getAlertConditionManager());
+        purgeUnusedAlertDefinitions(LookupUtil.getAlertDefinitionManager());
         purgeOrphanedAlertNotifications(LookupUtil.getAlertNotificationManager());
         purgeMeasurementTraitData(purgeManager, systemConfig);
         purgeAvailabilityData(purgeManager, systemConfig);

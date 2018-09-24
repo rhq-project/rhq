@@ -292,6 +292,14 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
         + "    JOIN ac.alertDefinition ad " //
         + "    JOIN ad.resource res " //
         + "   WHERE ac.id = :alertConditionId "),
+     @NamedQuery(name = AlertCondition.QUERY_UPDATE_ORPHANED_DEFINITIONS, query = "" +
+             "UPDATE AlertCondition rac SET " +
+             "rac.alertDefinition = NULL WHERE rac.id IN( " +
+             "SELECT ac.id " +
+             "FROM AlertCondition ac " +
+             "JOIN ac.alertDefinition ad " +
+             "WHERE ad.deleted = TRUE " +
+             ")"),
  @NamedQuery(name = AlertCondition.QUERY_DELETE_ORPHANED, query = "" //
         + "  DELETE FROM AlertCondition ac " //
         + "   WHERE ac.alertDefinition IS NULL " //
@@ -320,6 +328,7 @@ public class AlertCondition implements Serializable {
     public static final String QUERY_FIND_RESOURCE_STATUS_BY_CONDITION_ID = "AlertCondition.findResourceStatus";
 
     public static final String QUERY_DELETE_ORPHANED = "AlertCondition.deleteOrphaned";
+    public static final String QUERY_UPDATE_ORPHANED_DEFINITIONS = "AlertCondition.updateOrphanedDefinitions";
 
     public static final String RECOVERY_CONDITIONAL_EXPRESSION = "" //
         + " ( ad.recoveryId = 0 " //

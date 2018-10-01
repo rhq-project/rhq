@@ -1079,9 +1079,26 @@ ${comment}rhq.storage.jmx-port=${rhq.storage.jmx-port}
 #                  other and to learn the cluster topology. It does not need
 #                  to specify all nodes in the cluster.
 #                    Defaults to this node's hostname.
+# INSTALL TIME ONLY PROPERTIES:
+#                  rhq.storage.listen-address and rhq.storage.hostname will
+#                  only be used during the installation of a new storage node.
+#                  Storage nodes that have already been installed will not use
+#                  these properties.
+# rhq.storage.listen-address
+#                  The IP address or hostname that storage binds to for
+#                  connecting to other storage nodes. If not specified, will
+#                  default to the value of rhq.storage.hostname.
+# rhq.storage.rpc-address
+#                  Publicly resolvable IP or host name that other storage
+#                  nodes in the cluster will reach this storage nodes
+#                  network listener. If not specified, will default to the
+#                  value of rhq.storage.hostname.
+
 #############################################################################
 ${comment}rhq.storage.hostname=${rhq.storage.hostname}
 ${comment}rhq.storage.seeds=${rhq.storage.seeds}
+#rhq.storage.listen-address=
+#rhq.storage.rpc-address=
 
 #############################################################################
 # Advanced Settings

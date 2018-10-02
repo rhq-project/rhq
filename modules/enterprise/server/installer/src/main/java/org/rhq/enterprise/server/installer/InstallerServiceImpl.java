@@ -440,6 +440,9 @@ public class InstallerServiceImpl implements InstallerService {
             // create the obfuscation vault
             ServerInstallUtil.createObfuscationVault(mcc, serverProperties);
 
+            // create system properties
+            ServerInstallUtil.configureSystemProperties(mcc);
+
             // ensure the server info is up to date and stored in the DB
             ServerInstallUtil.setSocketBindings(mcc, serverProperties);
 

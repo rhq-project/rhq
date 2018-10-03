@@ -646,8 +646,10 @@ public class AlertDefinition implements Serializable {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
-        this.removeAllConditions();
-        this.removeAllAlertNotifications();
+        if(deleted) {
+            this.removeAllConditions();
+            this.removeAllAlertNotifications();
+        }
     }
 
     /**

@@ -1080,8 +1080,9 @@ ${comment}rhq.storage.jmx-port=${rhq.storage.jmx-port}
 #                  to specify all nodes in the cluster.
 #                    Defaults to this node's hostname.
 # INSTALL TIME ONLY PROPERTIES:
-#                  rhq.storage.listen-address and rhq.storage.hostname will
-#                  only be used during the installation of a new storage node.
+#                  rhq.storage.listen-address, rhq.storage.rpc-address and
+#                  rhq.storage.hostname will only be used during the
+#                  installation of a new storage node.
 #                  Storage nodes that have already been installed will not use
 #                  these properties.
 # rhq.storage.listen-address

@@ -241,11 +241,11 @@ public class ServerInstallUtil {
         client.setDefaultTransactionTimeout(600);
         LOG.info("Default transaction timeout set to 600 seconds.");
 
-        if(serverProperties.containsKey(ServerProperties.PROP_JBOSS_HA_NODE_ID)) {
-            String nodeId = buildExpression(ServerProperties.PROP_JBOSS_HA_NODE_ID, serverProperties, true, false, false);
-            client.setTransactionNodeId(nodeId);
-            LOG.info("Set high availability nodeId to " + nodeId);
-        }
+        // Set expression and its default regardless if a value was specified at install time
+        final HashMap<String, String> transactionNodeIdDefault = new HashMap();
+        transactionNodeIdDefault.put(ServerProperties.PROP_JBOSS_HA_NODE_ID, "1");
+        String nodeId = buildExpression(ServerProperties.PROP_JBOSS_HA_NODE_ID, transactionNodeIdDefault, true, false, false);
+        client.setTransactionNodeId(nodeId);
     }
 
     /**
@@ -259,6 +259,11 @@ public class ServerInstallUtil {
         // we do not want our RHQ Server to support hot deployments via the scanner
         client.setAppServerDefaultDeploymentScanEnabled(false);
         LOG.info("Deployment scanner turned off.");
+    }
+
+    public static void configureSystemProperties(ModelControllerClient mcc) throws Exception {
+        CoreJBossASClient client = new CoreJBossASClient(mcc);
+        client.setSystemProperty("jackson.deserialization.whitelist.packages", "org.rhq.enterprise.server.rest.domain");
     }
 
     /**

@@ -92,13 +92,18 @@ import java.util.Properties;
             if (slot.isEmpty()) {
                 throw new Exception("'slot' property not found in " + productConfFile + ".");
             }
-            //  EAP 7.1 use domain api 5.0 in "urn:jboss:domain:5.0" from <server xmlns="..." >
-            if(apiVersion.startsWith("4") || apiVersion.startsWith("5")) {
-                try {
+            // "urn:jboss:domain:<version>" parsing, EAP 7.0 = 4.0, EAP 7.1 = 5.0 and EAP 7.2 = 7.0
+            try {
+                Double version = Double.valueOf(apiVersion);
+                if(version >= 4) {
                     productType = getValueByShortName(slot);
-                } catch(IllegalArgumentException e) {
-                    productType = WILDFLY;
                 }
+            } catch(NumberFormatException e) {
+                // This is not a supported situation for this plugin
+                throw e;
+            } catch(IllegalArgumentException ie) {
+                // Wildfly could be newer than what we know
+                productType = WILDFLY;
             }
         }
 
